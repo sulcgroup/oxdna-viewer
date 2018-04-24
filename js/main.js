@@ -10,7 +10,11 @@ var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeig
 camera.position.z = 100;
 
 
-var renderer = new THREE.WebGLRenderer();
+var renderer = new THREE.WebGLRenderer({
+    preserveDrawingBuffer : true, 
+    alpha : true,
+    antialias : true
+});
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
@@ -30,7 +34,7 @@ scene.add( lights[1] );
 scene.add( lights[2] );
 
 // base geometry 
-var geometry = new THREE.SphereGeometry(.3,100,100);
+var geometry = new THREE.SphereGeometry(.3,10,10);
 
 // define strand colors 
 var materials = [
