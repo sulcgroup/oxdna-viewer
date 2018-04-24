@@ -1,2 +1,3 @@
 # oxdna-viewer
 oxDNA configuration viewer 
+just a proof of concept...
