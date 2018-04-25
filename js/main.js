@@ -20,6 +20,9 @@ document.body.appendChild( renderer.domElement );
 
 
 // set scene lighting 
+//var light = new THREE.AmbientLight(0x404040);
+//light.intensity = 3;
+//scene.add(light);
 var lights = [];
 lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
 lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
@@ -38,29 +41,29 @@ var geometry = new THREE.SphereGeometry(.3,10,10);
 
 // define strand colors 
 var materials = [
-    new THREE.MeshPhongMaterial({
+    new THREE.MeshLambertMaterial({
         color: 0x156289,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
-        flatShading: true
+        //flatShading: true
     }),
-    new THREE.MeshPhongMaterial({
+    new THREE.MeshLambertMaterial({
         color: 0xFF0089,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
-        flatShading: true
+        //flatShading: true
     }),
-    new THREE.MeshPhongMaterial({
+    new THREE.MeshLambertMaterial({
         color: 0xFFFF00,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
-        flatShading: true
+        //flatShading: true
     }),
-    new THREE.MeshPhongMaterial({
+    new THREE.MeshLambertMaterial({
         color: 0x00FF00,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
-        flatShading: true
+        //flatShading: true
     })
 ];
 
