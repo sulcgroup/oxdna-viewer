@@ -66,12 +66,37 @@ var materials = [
         //flatShading: true
     })
 ];
+var selection_material = new THREE.MeshLambertMaterial({
+    color: 0x000000,
+    side: THREE.DoubleSide,
+});
 
 // scene update call definition
 function render(){
     renderer.render(scene, camera);
 }
 
+
+// add base index visualistion
+var bases = []; 
+document.addEventListener('mousedown', event => {
+    // magic ... 
+    var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
+                                    -( event.clientY / window.innerHeight ) * 2 + 1,  
+                                     0.5 );
+    var raycaster =  new THREE.Raycaster();
+    // cast a ray from mose to viewpoint of camera 
+    raycaster.setFromCamera( mouse3D, camera );
+    // callect all objects that are in the vay
+    var intersects = raycaster.intersectObjects(bases);
+    if (intersects.length > 0){
+        // highlite the bases we've clicked 
+        intersects[0].object.material = selection_material;
+        // give index using global base coordinates 
+        console.log(bases.indexOf(intersects[0].object));
+        render();
+    }
+});
 
 // snippet borrowed from three.js examples 
 // adding mouse controll to the scene 
@@ -103,7 +128,6 @@ target.addEventListener("drop", function(event) {
         "G" : 2,
         "C" : 3 
     };
-
     // get the extention of one of the 2 files 
     let ext = files[0].name.slice(-3);
     // space to store the file paths 
@@ -173,6 +197,7 @@ target.addEventListener("drop", function(event) {
             else
                 material = strand_to_material[i];
             var base = new THREE.Mesh( geometry, material );
+            bases.push(base);
             scene.add(base);
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
