@@ -95,6 +95,14 @@ target.addEventListener("drop", function(event) {
         len = files.length;
     
     var strand_to_material = {};
+    var base_to_material = {};
+    var base_to_num = {
+        "A" : 0,
+        "T" : 1,
+        "U" : 1,
+        "G" : 2,
+        "C" : 3 
+    };
 
     // get the extention of one of the 2 files 
     let ext = files[0].name.slice(-3);
@@ -121,7 +129,10 @@ target.addEventListener("drop", function(event) {
             (line, i) => {
                 let l = line.split(" "); 
                 let id = parseInt(l[0]); // get the strand id 
+                let base = l[1]; // get base id
                 // create a lookup for
+                // coloring bases according to base id
+                base_to_material[i] = materials[base_to_num[base]];
                 // coloring bases according to strand id 
                 strand_to_material[i] = materials[Math.floor(id % materials.length )];
             });
@@ -155,9 +166,14 @@ target.addEventListener("drop", function(event) {
             l = line.split(" ");
             
             // adds a new "base" to the scene
-            var base = new THREE.Mesh( geometry, strand_to_material[i] );
+            URL = document.URL;
+            let material = null;
+            if (URL.includes("base"))
+                material = base_to_material[i];
+            else
+                material = strand_to_material[i];
+            var base = new THREE.Mesh( geometry, material );
             scene.add(base);
-            
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
             let x = parseFloat(l[0])- fx, 
