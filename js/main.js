@@ -64,6 +64,18 @@ var materials = [
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0x00FFFF,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0x888888,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
     })
 ];
 var selection_material = new THREE.MeshLambertMaterial({
