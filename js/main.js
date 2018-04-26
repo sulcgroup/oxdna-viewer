@@ -126,6 +126,8 @@ function render(){
 // add base index visualistion
 var backbones = []; 
 var nucleosides = [];
+var selected_bases = {};
+
 document.addEventListener('mousedown', event => {
     // magic ... 
     var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
@@ -136,12 +138,26 @@ document.addEventListener('mousedown', event => {
     raycaster.setFromCamera( mouse3D, camera );
     // callect all objects that are in the vay
     var intersects = raycaster.intersectObjects(backbones);
+
+    // make note of what's been clicked
     if (intersects.length > 0){
-        // highlite the bases we've clicked 
-        intersects[0].object.material = selection_material;
-        // give index using global base coordinates 
-        console.log(backbones.indexOf(intersects[0].object));
-        render();
+        let idx = backbones.indexOf(intersects[0].object);
+        
+        // highlight/remove highlight the bases we've clicked 
+        if ( intersects[0].object.material != selection_material){
+            selected_bases[idx] = {b_m:intersects[0].object.material, n_m:nucleosides[idx].material};
+            intersects[0].object.material = selection_material;
+            nucleosides[idx].material = selection_material;
+            // give index using global base coordinates 
+            console.log(idx); //I can't remove outputs from the console log...maybe open a popup instead?
+            render();
+        }
+        else{
+            // figure out what that base was before you painted it black and revert it
+            intersects[0].object.material = selected_bases[idx].b_m;
+            nucleosides[idx].material = selected_bases[idx].n_m;
+            render();
+        }
     }
 });
 
