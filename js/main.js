@@ -37,10 +37,11 @@ scene.add( lights[1] );
 scene.add( lights[2] );
 
 // base geometry 
-var geometry = new THREE.SphereGeometry(.3,10,10);
+var backbone_geometry = new THREE.SphereGeometry(.3,10,10);
+var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10);
 
 // define strand colors 
-var materials = [
+var backbone_materials = [
     new THREE.MeshLambertMaterial({
         color: 0x156289,
         //emissive: 0x072534,
@@ -78,6 +79,35 @@ var materials = [
         //flatShading: true
     })
 ];
+
+// define nucleoside colors
+var nucleoside_materials = [
+    new THREE.MeshLambertMaterial({
+        color: 0x3333FF,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0xFFFF33,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0x33FF33,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0xFF3333,
+        //emissive: 0x072534,
+        side: THREE.DoubleSide,
+        //flatShading: true
+    })
+];
+
 var selection_material = new THREE.MeshLambertMaterial({
     color: 0x000000,
     side: THREE.DoubleSide,
@@ -90,7 +120,8 @@ function render(){
 
 
 // add base index visualistion
-var bases = []; 
+var backbones = []; 
+var nucleosides = [];
 document.addEventListener('mousedown', event => {
     // magic ... 
     var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
@@ -100,12 +131,12 @@ document.addEventListener('mousedown', event => {
     // cast a ray from mose to viewpoint of camera 
     raycaster.setFromCamera( mouse3D, camera );
     // callect all objects that are in the vay
-    var intersects = raycaster.intersectObjects(bases);
+    var intersects = raycaster.intersectObjects(backbones);
     if (intersects.length > 0){
         // highlite the bases we've clicked 
         intersects[0].object.material = selection_material;
         // give index using global base coordinates 
-        console.log(bases.indexOf(intersects[0].object));
+        console.log(backbones.indexOf(intersects[0].object));
         render();
     }
 });
@@ -135,10 +166,10 @@ target.addEventListener("drop", function(event) {
     var base_to_material = {};
     var base_to_num = {
         "A" : 0,
-        "T" : 1,
-        "U" : 1,
-        "G" : 2,
-        "C" : 3 
+        "G" : 1,
+        "C" : 2,
+        "T" : 3,
+        "U" : 4 
     };
     // get the extention of one of the 2 files 
     let ext = files[0].name.slice(-3);
@@ -146,7 +177,7 @@ target.addEventListener("drop", function(event) {
     let dat_file = null,
         top_file = null;
     // assign files to the extentions 
-    if (ext == "dat"){
+    if (ext === "dat"){
         dat_file = files[0];    
         top_file = files[1];    
     }
@@ -167,10 +198,10 @@ target.addEventListener("drop", function(event) {
                 let id = parseInt(l[0]); // get the strand id 
                 let base = l[1]; // get base id
                 // create a lookup for
-                // coloring bases according to base id
-                base_to_material[i] = materials[base_to_num[base]];
+                // coloring base according to base id
+                base_to_material[i] = nucleoside_materials[base_to_num[base]];
                 // coloring bases according to strand id 
-                strand_to_material[i] = materials[Math.floor(id % materials.length )];
+                strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length )];
             });
     };
     top_reader.readAsText(top_file);
@@ -186,8 +217,6 @@ target.addEventListener("drop", function(event) {
 
         // everything but the header 
         lines = lines.slice(3);
-        // for some reason i have None values @ the end of a parsed file
-        lines.pop();
         
         // calculate offset to have the first strand @ the scene origin 
         let first_line = lines[0].split(" ");
@@ -201,16 +230,13 @@ target.addEventListener("drop", function(event) {
             // consume a new line 
             l = line.split(" ");
             
-            // adds a new "base" to the scene
-            URL = document.URL;
-            let material = null;
-            if (URL.includes("base"))
-                material = base_to_material[i];
-            else
-                material = strand_to_material[i];
-            var base = new THREE.Mesh( geometry, material );
-            bases.push(base);
-            scene.add(base);
+            // adds a new "backbone" and new "nucleoside" to the scene
+            var backbone = new THREE.Mesh( backbone_geometry, backbone_materials );
+            var nucleoside = new THREE.Mesh( backbone_geometry, nucleoside_materials)
+            backbones.push(backbone);
+            scene.add(backbone);
+            nucleosides.push(nucleoside);
+            scene.add(nucleoside);
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
             let x = parseFloat(l[0])- fx, 
@@ -227,8 +253,25 @@ target.addEventListener("drop", function(event) {
             y = y - dx;
             z = z - dx;
 
-            base.position.set(x, y, z);
+            // extract axis vector
+            let x_av = parseFloat(l[3]),
+                y_av = parseFloat(l[4]),
+                z_av = parseFloat(l[5]);
+
+            // compute backbone cm
+            let x_bb = x - 0.4 * x_av,
+                y_bb = y - 0.4 * y_av,
+                z_bb = z - 0.4 * z_av;
+
+            backbone.position.set(x_bb, y_bb, z_bb); 
             
+            // get nucleoside cm
+            let x_ns = x + 0.4 * x_av,
+                y_ns = y + 0.4 * y_av,
+                z_ns = z + 0.4 * z_av;
+
+            nucleoside.position.set(x_ns, y_ns, z_ns);
+
         });
         // update the scene
         render();
