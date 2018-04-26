@@ -300,22 +300,30 @@ target.addEventListener("drop", function(event) {
             y = y - dx;
             z = z - dx;
 
-            // extract axis vector
-            let x_av = parseFloat(l[3]),
-                y_av = parseFloat(l[4]),
-                z_av = parseFloat(l[5]);
+            // extract axis vector a1 and a3 
+            let x_a1 = parseFloat(l[3]),
+                y_a1 = parseFloat(l[4]),
+                z_a1 = parseFloat(l[5]), // 6, 7, 8 
+                x_a3 = parseFloat(l[6]),
+                y_a3 = parseFloat(l[7]),
+                z_a3 = parseFloat(l[8]);
+    
+
+            // according to base.py a2 is the cross of a1 and a3
+            let [x_a2,y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
 
             // compute backbone cm
-            let x_bb = x - 0.4 * x_av,
-                y_bb = y - 0.4 * y_av,
-                z_bb = z - 0.4 * z_av;
+            let x_bb = x - 0.34 * x_a1 + 0.3408 * x_a2,
+                y_bb = y - 0.34 * y_a1 + 0.3408 * y_a2,
+                z_bb = z - 0.34 * z_a1 + 0.3408 * z_a2;
 
             backbone.position.set(x_bb, y_bb, z_bb); 
             
+
             // get nucleoside cm
-            let x_ns = x + 0.4 * x_av,
-                y_ns = y + 0.4 * y_av,
-                z_ns = z + 0.4 * z_av;
+            let x_ns = x + 0.4 * x_a1,
+                y_ns = y + 0.4 * y_a1,
+                z_ns = z + 0.4 * z_a1;
 
             nucleoside.position.set(x_ns, y_ns, z_ns);
 
@@ -331,3 +339,10 @@ target.addEventListener("drop", function(event) {
 
 // update the scene
 render();
+
+
+function cross (a1,a2,a3,b1,b2,b3) {
+    return [ a2 * b3 - a3 * b2, 
+             a3 * b1 - a1 * b3, 
+             a1 * b2 - a2 * b1 ];
+}
