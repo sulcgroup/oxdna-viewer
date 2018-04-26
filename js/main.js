@@ -83,25 +83,29 @@ var backbone_materials = [
 // define nucleoside colors
 var nucleoside_materials = [
     new THREE.MeshLambertMaterial({
-        color: 0x3333FF,
+        //color: 0x3333FF,
+        color: 0x888888,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xFFFF33,
+        //color: 0xFFFF33,
+        color: 0x888888,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
     new THREE.MeshLambertMaterial({
-        color: 0x33FF33,
+        //color: 0x33FF33,
+        color: 0x888888,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xFF3333,
+        //color: 0xFF3333,
+        color: 0x888888,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
@@ -169,7 +173,7 @@ target.addEventListener("drop", function(event) {
         "G" : 1,
         "C" : 2,
         "T" : 3,
-        "U" : 4 
+        "U" : 3 
     };
     // get the extention of one of the 2 files 
     let ext = files[0].name.slice(-3);
@@ -231,8 +235,8 @@ target.addEventListener("drop", function(event) {
             l = line.split(" ");
             
             // adds a new "backbone" and new "nucleoside" to the scene
-            var backbone = new THREE.Mesh( backbone_geometry, backbone_materials );
-            var nucleoside = new THREE.Mesh( backbone_geometry, nucleoside_materials)
+            var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
+            var nucleoside = new THREE.Mesh( backbone_geometry, base_to_material[i])
             backbones.push(backbone);
             scene.add(backbone);
             nucleosides.push(nucleoside);
