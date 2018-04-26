@@ -117,10 +117,8 @@ var selection_material = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide,
 });
 
-// scene update call definition
-function render(){
-    renderer.render(scene, camera);
-}
+
+
 
 
 // add base index visualistion
@@ -163,9 +161,37 @@ document.addEventListener('mousedown', event => {
 
 // snippet borrowed from three.js examples 
 // adding mouse controll to the scene 
-var orbit = new THREE.OrbitControls( camera, renderer.domElement );
-orbit.addEventListener('change', render);
-  
+//var orbit = new THREE.OrbitControls( camera, renderer.domElement );
+//orbit.addEventListener('change', render);
+controls = new THREE.TrackballControls( camera );
+controls.rotateSpeed = 1.0;
+controls.zoomSpeed = 1.2;
+controls.panSpeed = 0.8;
+controls.noZoom = false;
+controls.noPan = false;
+controls.staticMoving = true;
+controls.dynamicDampingFactor = 0.3;
+controls.keys = [ 65, 83, 68 ];
+controls.addEventListener( 'change', render );
+
+// start animation cycle 
+animate();
+
+
+
+// scene update call definition
+function render(){
+    renderer.render(scene, camera);
+
+}
+// animation cycle and control updates
+function animate() {
+    requestAnimationFrame( animate );
+    controls.update();
+
+}
+
+
 
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
