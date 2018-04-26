@@ -37,8 +37,8 @@ scene.add( lights[1] );
 scene.add( lights[2] );
 
 // base geometry 
-var backbone_geometry = new THREE.SphereGeometry(.3,10,10);
-var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10);
+var backbone_geometry = new THREE.SphereGeometry(.4,10,10);
+var nucleoside_geometry = new THREE.SphereGeometry(.4,10,10);
 
 // define strand colors 
 var backbone_materials = [
@@ -73,7 +73,7 @@ var backbone_materials = [
         //flatShading: true
     }),
     new THREE.MeshLambertMaterial({
-        color: 0x888888,
+        color: 0xDA9100,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
