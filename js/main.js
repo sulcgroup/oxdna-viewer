@@ -120,6 +120,9 @@ var selection_material = new THREE.MeshLambertMaterial({
 
 
 
+// store rendering mode RNA  
+var RNA_MODE = false; // By default we do DNA
+
 
 // add base index visualistion
 var backbones = []; 
@@ -243,6 +246,10 @@ target.addEventListener("drop", function(event) {
                 let l = line.split(" "); 
                 let id = parseInt(l[0]); // get the strand id 
                 let base = l[1]; // get base id
+                //if we meet a U we have an RNA 
+                if(base === "U"){
+                    RNA_MODE = true;
+                }
                 // create a lookup for
                 // coloring base according to base id
                 base_to_material[i] = nucleoside_materials[base_to_num[base]];
@@ -312,10 +319,23 @@ target.addEventListener("drop", function(event) {
             let [x_a2,y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
 
             // compute backbone cm
-            let x_bb = x - 0.34 * x_a1 + 0.3408 * x_a2,
+            let x_bb = 0;
+                y_bb = 0;
+                z_bb = 0;
+            if(!RNA_MODE){
+                x_bb = x - 0.34 * x_a1 + 0.3408 * x_a2,
                 y_bb = y - 0.34 * y_a1 + 0.3408 * y_a2,
                 z_bb = z - 0.34 * z_a1 + 0.3408 * z_a2;
+            }
+            else{
+                x_bb = x - 0.4 * x_a1 + 0.2 * x_a3;
+                y_bb = y - 0.4 * y_a1 + 0.2 * y_a3;
+                z_bb = z - 0.4 * z_a1 + 0.2 * z_a3;
+                //RNA_POS_BACK_a1 = -0.4;
+		        //RNA_POS_BACK_a3 = 0.2;
+            }
 
+            
             backbone.position.set(x_bb, y_bb, z_bb); 
             
 
