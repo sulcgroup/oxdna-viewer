@@ -38,7 +38,7 @@ scene.add( lights[2] );
 
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.4,10,10);
-var nucleoside_geometry = new THREE.SphereGeometry(.4,10,10).applyMatrix(
+var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
         new THREE.Matrix4().makeScale( 1.0, 0.5, 1.0 ));
 
 // define strand colors 
