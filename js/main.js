@@ -39,7 +39,7 @@ scene.add( lights[2] );
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.4,10,10);
 var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
-        new THREE.Matrix4().makeScale( 1.0, 0.5, 1.0 ));
+        new THREE.Matrix4().makeScale( 0.3, 0.3, 1.3 ));
 
 // define strand colors 
 var backbone_materials = [
@@ -267,7 +267,7 @@ target.addEventListener("drop", function(event) {
         var lines = dat_reader.result.split(/[\r\n]+/g);
         
         //get the simulation box size 
-        let box = parseFloat(lines[1].split(" ")[3])
+        let box = parseFloat(lines[1].split(" ")[3]);
 
         // everything but the header 
         lines = lines.slice(3);
@@ -284,13 +284,6 @@ target.addEventListener("drop", function(event) {
             // consume a new line 
             l = line.split(" ");
             
-            // adds a new "backbone" and new "nucleoside" to the scene
-            var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
-            var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i])
-            backbones.push(backbone);
-            scene.add(backbone);
-            nucleosides.push(nucleoside);
-            scene.add(nucleoside);
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
             let x = parseFloat(l[0])- fx, 
@@ -299,13 +292,13 @@ target.addEventListener("drop", function(event) {
             
             // compute offset to bring strand in box
             let dx = Math.round(x / box) * box,
-                dy = Math.round(x / box) * box,
-                dz = Math.round(x / box) * box;
+                dy = Math.round(y / box) * box,
+                dz = Math.round(z / box) * box;
             
             //fix coordinates 
             x = x - dx;
-            y = y - dx;
-            z = z - dx;
+            y = y - dy;
+            z = z - dz;
 
             // extract axis vector a1 and a3 
             let x_a1 = parseFloat(l[3]),
@@ -336,6 +329,34 @@ target.addEventListener("drop", function(event) {
 		        //RNA_POS_BACK_a3 = 0.2;
             }
 
+            // let's have some fun with quaternions...
+            var rotationX = new THREE.Matrix4().makeRotationFromQuaternion(
+                new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(1,0,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
+
+            /*var yrot = new THREE.Vector3(0,0,1).angleTo( new THREE.Vector3(x_a3, y_a3, z_a3));
+            console.log(yrot);
+            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0).applyMatrix4(rotationX), yrot);
+*/
+            /*var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
+                new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0,0,1).applyMatrix4(rotationX),
+                new THREE.Vector3(x_a3, y_a3, z_a3).applyMatrix4(rotationX)));
+            */
+            var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
+                new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0,1,0),
+                new THREE.Vector3(x_a3, y_a3, z_a3)));
+            
+            // adds a new "backbone" and new "nucleoside" to the scene
+            var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
+            var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i]);
+            //nucleoside.applyMatrix(rotationX);
+            nucleoside.applyMatrix(rotationY);
+            backbones.push(backbone);
+            scene.add(backbone);
+            nucleosides.push(nucleoside);
+            scene.add(nucleoside);
             
             backbone.position.set(x_bb, y_bb, z_bb); 
             
