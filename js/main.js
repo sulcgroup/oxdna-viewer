@@ -39,7 +39,7 @@ scene.add( lights[2] );
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.4,10,10);
 var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
-        new THREE.Matrix4().makeScale( 0.3, 0.3, 1.3 ));
+        new THREE.Matrix4().makeScale( 1.3, 0.3, 0.3 ));
 
 // define strand colors 
 var backbone_materials = [
@@ -342,17 +342,17 @@ target.addEventListener("drop", function(event) {
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,0,1).applyMatrix4(rotationX),
                 new THREE.Vector3(x_a3, y_a3, z_a3).applyMatrix4(rotationX)));
-            */
+            
             var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,1,0),
                 new THREE.Vector3(x_a3, y_a3, z_a3)));
-            
+            */
             // adds a new "backbone" and new "nucleoside" to the scene
             var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
             var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i]);
-            //nucleoside.applyMatrix(rotationX);
-            nucleoside.applyMatrix(rotationY);
+            nucleoside.applyMatrix(rotationX);
+            //nucleoside.applyMatrix(rotationY);
             backbones.push(backbone);
             scene.add(backbone);
             nucleosides.push(nucleoside);
