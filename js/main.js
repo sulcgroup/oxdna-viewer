@@ -37,7 +37,7 @@ scene.add( lights[1] );
 scene.add( lights[2] );
 
 // base geometry 
-var backbone_geometry = new THREE.SphereGeometry(.4,10,10);
+var backbone_geometry = new THREE.SphereGeometry(.2,10,10);
 var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
         new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
 var connector_geometry = new THREE.CylinderGeometry(.1,.1,1);
@@ -264,6 +264,11 @@ target.addEventListener("drop", function(event) {
     top_reader.readAsText(top_file);
 
     // read a configuration file 
+    var x_bb_last,
+        y_bb_last,
+        z_bb_last;
+    var last_strand;
+
     let dat_reader = new FileReader();
     dat_reader.onload = ()=>{
         // parse file into lines 
@@ -306,7 +311,7 @@ target.addEventListener("drop", function(event) {
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
             let x_a1 = parseFloat(l[3]),
                 y_a1 = parseFloat(l[4]),
-                z_a1 = parseFloat(l[5]), // 6, 7, 8 
+                z_a1 = parseFloat(l[5]), 
                 x_a3 = parseFloat(l[6]),
                 y_a3 = parseFloat(l[7]),
                 z_a3 = parseFloat(l[8]);
@@ -343,23 +348,22 @@ target.addEventListener("drop", function(event) {
             let x_con = (x_bb + x_ns)/2,
                 y_con = (y_bb + y_ns)/2,
                 z_con = (z_bb + z_ns)/2;
-            
+
             //compute connector length
-            let con_len = Math.sqrt(Math.pow(x_bb-x_ns,2)+Math.pow(y_bb-y_ns,2)+Math.pow(z_bb-z_ns,2))
+            let con_len = Math.sqrt(Math.pow(x_bb-x_ns,2)+Math.pow(y_bb-y_ns,2)+Math.pow(z_bb-z_ns,2));
 
             // let's have some fun with quaternions...
             var rotationX = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(1,0,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
 
-            /*var yrot = new THREE.Vector3(0,0,1).angleTo( new THREE.Vector3(x_a3, y_a3, z_a3));
-            console.log(yrot);
-            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0).applyMatrix4(rotationX), yrot);
-*/
-            var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
+            var yrot = new THREE.Vector3(0,1,0).angleTo( new THREE.Vector3(x_a3, y_a3, z_a3));
+            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(x_a1, y_a1, z_a1), yrot);
+
+            /*var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,1,0).applyMatrix4(rotationX),
-                new THREE.Vector3(x_a3, y_a3, z_a3).applyMatrix4(rotationX)));
+                new THREE.Vector3(x_a3, y_a3, z_a3).applyMatrix4(rotationX)));*/
             /*
             var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
@@ -376,7 +380,7 @@ target.addEventListener("drop", function(event) {
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
             var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
             var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i]);
-            var con = new THREE.Mesh( connector_geometry, strand_to_material[i] )
+            var con = new THREE.Mesh( connector_geometry, strand_to_material[i] );
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
 
             //rotate the nucleoside and the cylinders to align with model
@@ -396,7 +400,34 @@ target.addEventListener("drop", function(event) {
             backbone.position.set(x_bb, y_bb, z_bb); 
             nucleoside.position.set(x_ns, y_ns, z_ns);
             con.position.set(x_con, y_con, z_con);
-            
+
+            //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+            if(x_bb_last != undefined && strand_to_material[i] == last_material){
+                let x_sp = (x_bb + x_bb_last)/2,
+                    y_sp = (y_bb + y_bb_last)/2,
+                    z_sp = (z_bb + z_bb_last)/2;
+
+                let sp_len = Math.sqrt(Math.pow(x_bb-x_bb_last,2)+Math.pow(y_bb-y_bb_last,2)+Math.pow(z_bb-z_bb_last,2));
+
+                var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0,1,0), new THREE.Vector3(x_sp-x_bb, y_sp-y_bb, z_sp-z_bb).normalize()
+                    )
+                );
+                var sp = new THREE.Mesh(connector_geometry, strand_to_material[i] );
+                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
+                sp.applyMatrix(rotation_sp);
+
+                connectors.push(sp);
+                scene.add(sp);
+                sp.position.set(x_sp, y_sp, z_sp);
+            }
+
+            //update last backbone position and last strand
+            x_bb_last = x_bb;
+            y_bb_last = y_bb;
+            z_bb_last = z_bb;
+            last_material = strand_to_material[i];
             
             /* old articulated connector code:
             var cm_geometry = new THREE.SphereGeometry(.1,10,10);
