@@ -142,7 +142,7 @@ document.addEventListener('mousedown', event => {
     // cast a ray from mose to viewpoint of camera 
     raycaster.setFromCamera( mouse3D, camera );
     // callect all objects that are in the vay
-    var intersects = raycaster.intersectObjects(backbones);
+    var intersects = raycaster.intersectObjects(backbones, nucleosides);
 
     // make note of what's been clicked
     if (intersects.length > 0){
@@ -358,7 +358,7 @@ target.addEventListener("drop", function(event) {
                 new THREE.Vector3(1,0,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
 
             var yrot = new THREE.Vector3(0,1,0).angleTo( new THREE.Vector3(x_a3, y_a3, z_a3));
-            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(x_a1, y_a1, z_a1), yrot);
+            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0).applyMatrix4(rotationX), yrot);
 
             /*var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
