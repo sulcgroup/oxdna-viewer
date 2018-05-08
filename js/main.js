@@ -142,7 +142,7 @@ document.addEventListener('mousedown', event => {
     // cast a ray from mose to viewpoint of camera 
     raycaster.setFromCamera( mouse3D, camera );
     // callect all objects that are in the vay
-    var intersects = raycaster.intersectObjects(backbones, nucleosides);
+    var intersects = raycaster.intersectObjects(backbones);
 
     // make note of what's been clicked
     if (intersects.length > 0){
@@ -171,13 +171,13 @@ document.addEventListener('mousedown', event => {
 //var orbit = new THREE.OrbitControls( camera, renderer.domElement );
 //orbit.addEventListener('change', render);
 controls = new THREE.TrackballControls( camera );
-controls.rotateSpeed = 1.0;
-controls.zoomSpeed = 1.2;
-controls.panSpeed = 0.8;
+controls.rotateSpeed = 1.5;
+controls.zoomSpeed = 1.5;
+controls.panSpeed = 1.0;
 controls.noZoom = false;
 controls.noPan = false;
 controls.staticMoving = true;
-controls.dynamicDampingFactor = 0.3;
+controls.dynamicDampingFactor = 0.2;
 controls.keys = [ 65, 83, 68 ];
 controls.addEventListener( 'change', render );
 
@@ -324,7 +324,7 @@ target.addEventListener("drop", function(event) {
             let x_bb = 0;
                 y_bb = 0;
                 z_bb = 0;
-            if(!RNA_MODE){
+            if(!RNA_MODE){ //calculations for DNA
                 x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2),
                 y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2),
                 z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
@@ -351,26 +351,13 @@ target.addEventListener("drop", function(event) {
 
             //compute connector length
             let con_len = Math.sqrt(Math.pow(x_bb-x_ns,2)+Math.pow(y_bb-y_ns,2)+Math.pow(z_bb-z_ns,2));
-
-            // let's have some fun with quaternions...
-            var rotationX = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(1,0,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
-
-            var yrot = new THREE.Vector3(0,1,0).angleTo( new THREE.Vector3(x_a3, y_a3, z_a3));
-            var rotationY = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1,0,0).applyMatrix4(rotationX), yrot);
-
-            /*var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0,1,0).applyMatrix4(rotationX),
-                new THREE.Vector3(x_a3, y_a3, z_a3).applyMatrix4(rotationX)));*/
-            /*
+            
             var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,1,0),
                 new THREE.Vector3(x_a3, y_a3, z_a3)));
-            */
-
+            
+            // correctly display stacking interactions
             var rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                     new THREE.Vector3(0,1,0), new THREE.Vector3(x_con-x_ns, y_con-y_ns, z_con-z_ns).normalize()
@@ -383,8 +370,7 @@ target.addEventListener("drop", function(event) {
             var con = new THREE.Mesh( connector_geometry, strand_to_material[i] );
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
 
-            //rotate the nucleoside and the cylinders to align with model
-            nucleoside.applyMatrix(rotationX);
+            // apply rotations
             nucleoside.applyMatrix(rotationY);
             con.applyMatrix(rotation_con);
             
@@ -428,73 +414,6 @@ target.addEventListener("drop", function(event) {
             y_bb_last = y_bb;
             z_bb_last = z_bb;
             last_material = strand_to_material[i];
-            
-            /* old articulated connector code:
-            var cm_geometry = new THREE.SphereGeometry(.1,10,10);
-
-            var cms = [];
-
-            if(!RNA_MODE){
-                var rotation_con_cm_bb = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(
-                        -0.34 * x_a1 - 0.3408 * x_a2,
-                        -0.34 * y_a1 - 0.3408 * y_a2, 
-                        -0.34 * z_a1 - 0.3408 * z_a2).normalize()));
-            };
-            else{
-                //used later to position connectors
-                var rotation_con_cm_bb = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(
-                        -0.4 * x_a1 - 0.2 * x_a3,
-                        -0.4 * y_a1 - 0.2 * y_a3, 
-                        -0.4 * z_a1 - 0.2 * z_a3).normalize()));
-            };
-            var rotation_con_cm_ns = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
-            
-            //adds a cylinder from the cm to the nucleoside
-            var connector_cm_ns = new THREE.Mesh( connector_geometry, strand_to_material[i]);
-            connector_cm_ns.applyMatrix(
-                new THREE.Matrix4().makeScale(
-                    1.0, Math.sqrt((x-x_ns)*(x-x_ns)+(y-y_ns)*(y-y_ns)+(z-z_ns)*(z-z_ns)), 1.0 ));
-
-            //adds a cylinder from the cm to the backbone
-            var connector_cm_bb = new THREE.Mesh( connector_geometry, strand_to_material[i]);
-            connector_cm_bb.applyMatrix(
-                new THREE.Matrix4().makeScale(
-                    1.0, Math.sqrt((x-x_bb)*(x-x_bb)+(y-y_bb)*(y-y_bb)+(z-z_bb)*(z-z_bb)), 1.0 ));
-            
-            //adds a sphere at the cm to smooth the cylinder connection
-            var cm = new THREE.Mesh( cm_geometry, strand_to_material[i]);
-
-            connector_cm_ns.applyMatrix(rotation_con_cm_ns);
-            connector_cm_bb.applyMatrix(rotation_con_cm_bb);
-
-            connectors.push(connector_cm_ns);
-            scene.add(connector_cm_ns);
-            connectors.push(connector_cm_bb);
-            scene.add(connector_cm_bb);
-            cms.push(cm);
-            scene.add(cm);
-
-            cm.position.set(x, y, z);
-            connector_cm_ns.position.set(x+(0.2*x_a1),y+(0.2*y_a1),z+(0.2*z_a1));
-
-            if(!RNA_MODE){
-                connector_cm_bb.position.set(
-                    x - (0.17 * x_a1 + 0.1704 * x_a2),
-                    y - (0.17 * y_a1 + 0.1704 * y_a2), 
-                    z - (0.17 * z_a1 + 0.1704 * z_a2));
-            }
-            else{
-                connector_cm_bb.position.set(
-                    x - (0.2 * x_a1 + 0.1 * x_a3),
-                    y - (0.2 * y_a1 + 0.1 * y_a3), 
-                    z - (0.2 * z_a1 + 0.1 * z_a3));
-            }*/
 
         });
         // update the scene
