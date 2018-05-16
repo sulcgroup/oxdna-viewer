@@ -433,23 +433,23 @@ target.addEventListener("drop", function(event) {
 
         });
         
-        // reposition center of mass of the system to 0,0,0
-        // cart
-        var cms = new THREE.Vector3(0,0,0);
-        var n_nucleosides = nucleosides.length; 
-        let i = 0;
-        for(; i < n_nucleosides; i++){
-            cms.add(nucleosides[i].position);
-        }
-        let mul = 1.0 / n_nucleosides;
-        cms.multiplyScalar(mul);
-        for(i = 0; i < n_nucleosides; i++){
-            nucleosides[i].position.sub(cms);
-            backbones[i].position.sub(cms);
-        }
-        connectors.forEach(cns =>{
-            cns.position =  cns.position.sub(cms);
-        });
+        //// reposition center of mass of the system to 0,0,0
+        //// cart
+        //var cms = new THREE.Vector3(0,0,0);
+        //var n_nucleosides = nucleosides.length; 
+        //let i = 0;
+        //for(; i < n_nucleosides; i++){
+        //    cms.add(nucleosides[i].position);
+        //}
+        //let mul = 1.0 / n_nucleosides;
+        //cms.multiplyScalar(mul);
+        //for(i = 0; i < n_nucleosides; i++){
+        //    nucleosides[i].position.sub(cms);
+        //    backbones[i].position.sub(cms);
+        //}
+        //connectors.forEach(cns =>{
+        //    cns.position =  cns.position.sub(cms);
+        //});
 
         // update the scene
         render();
