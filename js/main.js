@@ -7,7 +7,7 @@ scene.background = new THREE.Color();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 
 // set camera position 
-camera.position.z = 100;
+camera.position.z = 75;
 
 
 var renderer = new THREE.WebGLRenderer({
@@ -324,6 +324,9 @@ target.addEventListener("drop", function(event) {
             y = y - dy;
             z = z - dz;
 
+            //fixes empty lines out of the computation
+            if (isNaN(x)) return;
+
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
             let x_a1 = parseFloat(l[3]),
                 y_a1 = parseFloat(l[4]),
@@ -433,24 +436,25 @@ target.addEventListener("drop", function(event) {
 
         });
         
-        //// reposition center of mass of the system to 0,0,0
-        //// cart
-        //var cms = new THREE.Vector3(0,0,0);
-        //var n_nucleosides = nucleosides.length; 
-        //let i = 0;
-        //for(; i < n_nucleosides; i++){
-        //    cms.add(nucleosides[i].position);
-        //}
-        //let mul = 1.0 / n_nucleosides;
-        //cms.multiplyScalar(mul);
-        //for(i = 0; i < n_nucleosides; i++){
-        //    nucleosides[i].position.sub(cms);
-        //    backbones[i].position.sub(cms);
-        //}
-        //connectors.forEach(cns =>{
-        //    cns.position =  cns.position.sub(cms);
-        //});
+        // reposition center of mass of the system to 0,0,0
+        let cms = new THREE.Vector3(0,0,0);
+        let n_nucleosides = nucleosides.length; 
+        let i = 0;
+        for(; i < n_nucleosides; i++){
+            cms.add(nucleosides[i].position);
+            //cms.add(backbones[i].position);
+        }
+        let mul = 1.0 / n_nucleosides;
+        cms.multiplyScalar(mul);
+        for(i = 0; i < n_nucleosides; i++){
+            nucleosides[i].position.sub(cms);
+            backbones[i].position.sub(cms);
+        }
+        connectors.forEach(cns =>{
+            cns.position =  cns.position.sub(cms);
+        });
 
+        
         // update the scene
         render();
         
