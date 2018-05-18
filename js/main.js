@@ -131,7 +131,7 @@ var RNA_MODE = false; // By default we do DNA
 var backbones = []; 
 var nucleosides = [];
 var connectors = [];
-var selected_bases = {};
+var selected_bases = [];
 
 document.addEventListener('mousedown', event => {
     // magic ... 
@@ -147,22 +147,64 @@ document.addEventListener('mousedown', event => {
     // make note of what's been clicked
     if (intersects.length > 0){
         let idx = backbones.indexOf(intersects[0].object);
+		/*console.log("idx: " + idx);
+		console.log("selected_bases BEFORE");
+		for (x = 0; x < selected_bases.length; x++){
+			if (selected_bases[x] !== undefined){
+				console.log(x + ": ");
+				console.log(selected_bases[x].b_m);}}
+		console.log("Bacbones:");
+		for (x = 0; x < backbones.length; x++){
+		console.log(x + ":   ");
+		console.log(backbones[x].material);}*/
         
         // highlight/remove highlight the bases we've clicked 
-        if ( intersects[0].object.material != selection_material){
-            selected_bases[idx] = {b_m:intersects[0].object.material, n_m:nucleosides[idx].material};
-            intersects[0].object.material = selection_material;
+		var selected = false;
+		//console.log("Length before for " + selected_bases.length);
+		if (selected_bases[idx] !== null && selected_bases[idx] !== undefined && selected_bases[idx].b_m != selection_material){
+				selected = true;
+			}
+		/*console.log(selected);
+		if (selected_bases[idx] !== undefined)
+			console.log(selected_bases[idx].b_m);
+		console.log(backbones[idx].material);*/
+		if (selected){
+			// figure out what that base was before you painted it black and revert it
+            backbones[idx].material = selected_bases[idx].b_m;
+            nucleosides[idx].material = selected_bases[idx].n_m;
+			selected_bases[idx] = undefined;
+            render();
+		}
+        else{
+            selected_bases[idx] = {b_m:backbones[idx].material, n_m:nucleosides[idx].material};
+			//console.log("Length in else " + selected_bases.length);
+            backbones[idx].material = selection_material;
             nucleosides[idx].material = selection_material;
             // give index using global base coordinates 
             console.log(idx); //I can't remove outputs from the console log...maybe open a popup instead?
             render();
         }
-        else{
-            // figure out what that base was before you painted it black and revert it
-            intersects[0].object.material = selected_bases[idx].b_m;
-            nucleosides[idx].material = selected_bases[idx].n_m;
-            render();
-        }
+		var listBases = "";
+		var x;
+		for (x = 0; x < selected_bases.length; x++){
+			if (selected_bases[x] !== undefined){
+				listBases = listBases + x + "\n";
+				console.log(listBases);
+			}
+		}
+		makeTextArea(listBases);
+		/*console.log("selected_bases AFTER");
+		for (x = 0; x < selected_bases.length; x++){
+			if (selected_bases[x] !== undefined){
+				console.log(x + ": ");
+				console.log(selected_bases[x].b_m);}}
+		console.log("Bacbones:");
+		for (x = 0; x < backbones.length; x++){
+		console.log(x + ":   ");
+		console.log(backbones[x].material);}
+		if (selected_bases[idx] !== undefined)
+			console.log(selected_bases[idx].b_m);
+		console.log(backbones[idx].material);*/
     }
 });
 
@@ -485,4 +527,9 @@ function cross (a1,a2,a3,b1,b2,b3) {
     return [ a2 * b3 - a3 * b2, 
              a3 * b1 - a1 * b3, 
              a1 * b2 - a2 * b1 ];
+}
+
+function makeTextArea(bases){
+	var textArea = document.getElementById("BASES");
+	textArea.value = "Bases currently selected:\n" + bases;
 }
