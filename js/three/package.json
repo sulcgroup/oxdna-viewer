@@ -1,0 +1,118 @@
+{
+  "_from": "@types/three",
+  "_id": "@types/three@0.92.0",
+  "_inBundle": false,
+  "_integrity": "sha512-Co1oc80guF2rZM+jHf/AiHm6t4BcshBTgpthXyetTTT06znaSV0S4+j6cQFa9+lCpnk227teiWowXfd4kwWN2g==",
+  "_location": "/@types/three",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "@types/three",
+    "name": "@types/three",
+    "escapedName": "@types%2fthree",
+    "scope": "@types",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/@types/three/-/three-0.92.0.tgz",
+  "_shasum": "093c653a7ec66051c3279db39b3d967e70615cfb",
+  "_spec": "@types/three",
+  "_where": "/home/erik/Simulations/oxdna-viewer",
+  "bugs": {
+    "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git/issues"
+  },
+  "bundleDependencies": false,
+  "contributors": [
+    {
+      "name": "Kon",
+      "url": "http://phyzkit.net/"
+    },
+    {
+      "name": "Satoru Kimura",
+      "url": "https://github.com/gyohk"
+    },
+    {
+      "name": "Florent Poujol",
+      "url": "https://github.com/florentpoujol"
+    },
+    {
+      "name": "SereznoKot",
+      "url": "https://github.com/SereznoKot"
+    },
+    {
+      "name": "HouChunlei",
+      "url": "https://github.com/omni360"
+    },
+    {
+      "name": "Ivo",
+      "url": "https://github.com/ivoisbelongtous"
+    },
+    {
+      "name": "David Asmuth",
+      "url": "https://github.com/piranha771"
+    },
+    {
+      "name": "Brandon Roberge,\n//                 Qinsi ZHU",
+      "url": "https://github.com/qszhusightp"
+    },
+    {
+      "name": "Toshiya Nakakura",
+      "url": "https://github.com/nakakura"
+    },
+    {
+      "name": "Poul Kjeldager Sørensen",
+      "url": "https://github.com/s093294"
+    },
+    {
+      "name": "Stefan Profanter",
+      "url": "https://github.com/Pro"
+    },
+    {
+      "name": "Edmund Fokschaner",
+      "url": "https://github.com/efokschaner"
+    },
+    {
+      "name": "Roelof Jooste",
+      "url": "https://github.com/PsychoSTS"
+    },
+    {
+      "name": "Daniel Hritzkiv",
+      "url": "https://github.com/dhritzkiv"
+    },
+    {
+      "name": "Apurva Ojas",
+      "url": "https://github.com/apurvaojas"
+    },
+    {
+      "name": "Tiger Oakes",
+      "url": "https://github.com/NotWoods"
+    },
+    {
+      "name": "Seth Kingsley",
+      "url": "https://github.com/sethk"
+    }
+  ],
+  "dependencies": {
+    "@types/webvr-api": "*"
+  },
+  "deprecated": false,
+  "description": "TypeScript definitions for three.js",
+  "homepage": "https://github.com/DefinitelyTyped/DefinitelyTyped.git#readme",
+  "license": "MIT",
+  "main": "",
+  "name": "@types/three",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DefinitelyTyped/DefinitelyTyped.git.git"
+  },
+  "scripts": {},
+  "typeScriptVersion": "2.0",
+  "typesPublisherContentHash": "b901da67965bd79c77d828af1eb2488f7c3c4e01dd1ee7735d4884d5bfaa90ee",
+  "version": "0.92.0"
+}

@@ -1,3 +1,5 @@
+/// <reference path="../lib/three-core.d.ts" />
+
 /**
  * @author Eberhard Graether / http://egraether.com/
  * @author Mark Lundin 	/ http://mark-lundin.com
