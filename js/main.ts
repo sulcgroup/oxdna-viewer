@@ -1,28 +1,73 @@
 /// <reference path="./three/index.d.ts" />
 
-/*// systems are made of strands
-// systems can CRUD
-class system {
-    constructor(strands) { //should I just bite the bullet and write this in typescript?
-        this.strands = strands //this doesn't seem quite robust...
-    }
+// nucleotides store the information about position, orientation, ID
+// Eventually there should be a way to pair them
+// Everything is an Object3D, but only nucleotides have anything to render
+class Nucleotide {
+    local_id:number;
+    global_id:number;
+    pos:number[];
+    neighbor3:number;
+    neighbor5:number;
+    pair:number; //this is going to be optional
+    type:number; // 0:A 1:G 2:C 3:T
+    backbone_obj:THREE.Object3D[]
+    nuc_obj:THREE.Object3D[] //hopefully these can know their position/orientation
+
+
+    constructor(global_id:number, local_id:number, pos:number[], neighbor3:number, neighbor5:number, type:number){
+        this.global_id = global_id;
+        this.local_id = local_id;
+        this.pos = pos;
+        this.neighbor3 = neighbor3;
+        this.neighbor5 = neighbor5;
+        this.type = type;
+
+    };
 };
 
 // strands are made up of nucleotides
 // strands have an ID within the system
-class strand {
-    constructor(nucleotides, id) {
-        this.nucleotides = 
-    }
+class Strand {
+
+    strand_id:number;
+    nucleotides:Nucleotide[];
+
+
+    constructor(id) {
+        this.strand_id = id;
+    };
+
+    add_nucleotide(nuc:Nucleotide){
+        this.nucleotides.push(nuc); //not sure this works this way but ¯\_(ツ)_/¯ 
+        nuc.local_id = this.nucleotides.indexOf(nuc);
+    };
+
+    //delete_strand(){};
 };
 
-// nucleotides store the information about position, orientation, ID
-// Eventually there should be a way to pair them
-// Everything is an Object3D, but only nucleotides have anything to render
-class nucleotide {
-    constructor()
+// systems are made of strands
+// systems can CRUD
+class System {
+
+    system_id:number;
+    strands:Strand[];
+
+    constructor(id) {
+        this.system_id = id;
+    };
+
+    add_strand(strand:Strand){
+        this.strands.push(strand);
+        strand.strand_id = this.strands.indexOf(strand);
+    };
+
+    //remove_strand(){};
+    //remove_system(){};
+
 };
-*/
+
+
 // store rendering mode RNA  
 
 var RNA_MODE = false; // By default we do DNA

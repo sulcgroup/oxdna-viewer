@@ -9,7 +9,6 @@
         //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase            
     },
     "files": [
-        "./js/test.ts",
         "./js/main.ts",
         "./js/mesh_setup.ts",
         "./js/scene_setup.ts"
