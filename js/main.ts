@@ -9,7 +9,7 @@ class Nucleotide {
     pos:number[];
     neighbor3:number;
     neighbor5:number;
-    pair:number; //this is going to be optional
+    pair:number;
     type:number|string; // 0:A 1:G 2:C 3:T/U
     parent_strand:number;
     backbone_obj:THREE.Mesh;
@@ -116,10 +116,10 @@ var selected_bases = {};
 });*/
 
 //initialize the space
-let systems: System[] = [];
-let sys_count:number = 0;
-let strand_count:number = 0;
-let nuc_count:number = 0;
+var systems: System[] = [];
+var sys_count:number = 0;
+var strand_count:number = 0;
+var nuc_count:number = 0;
 
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
@@ -167,7 +167,7 @@ target.addEventListener("drop", function(event) {
     let top_reader = new FileReader();
     top_reader.onload = ()=> {
         // make first strand
-        let current_strand = new Strand(0);
+        var current_strand = new Strand(1);
         let nuc_local_id: number = 0;
         let last_strand: number = 1; //strands are 1-indexed in oxDNA .top files
         // parse file into lines
@@ -175,6 +175,7 @@ target.addEventListener("drop", function(event) {
         lines = lines.slice(1); // discard the header  
         lines.forEach(
             (line, i) => {
+                if (line == ""){return};
                 let l = line.split(" "); //split the file and read each column
                 let id = parseInt(l[0]); // get the strand id
                 if (id != last_strand){
@@ -193,6 +194,8 @@ target.addEventListener("drop", function(event) {
                 let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3, neighbor5, base, id);
                 current_strand.add_nucleotide(nuc);
                 nuc_count += 1;
+                nuc_local_id += 1;
+                last_strand = id;
                 if (neighbor5 == -1){
                     system.add_strand(current_strand);
                 };
@@ -212,10 +215,9 @@ target.addEventListener("drop", function(event) {
         z_bb_last;
     var last_strand;
 
-
     let dat_reader = new FileReader();
-    dat_reader.onload = ()=>{ //this is a function, it can't see the system
-        var current_nuc_local_id = 0;
+    dat_reader.onload = ()=>{ 
+        var nuc_local_id = 0;
         var current_strand = systems[sys_count].strands[0];
         // parse file into lines 
         var lines = dat_reader.result.split(/[\r\n]+/g);
@@ -236,8 +238,7 @@ target.addEventListener("drop", function(event) {
         // add the bases to the scene
         lines.forEach((line, i) => {
             if (line == ""){return};
-            console.log(current_nuc_local_id)
-            var current_nucleotide = current_strand.nucleotides[current_nuc_local_id];
+            var current_nucleotide = current_strand.nucleotides[nuc_local_id];
             //get nucleotide information
             // consume a new line 
             let l:string = line.split(" ");
@@ -369,11 +370,11 @@ target.addEventListener("drop", function(event) {
             z_bb_last = z_bb;
             last_material= strand_to_material[i];
             if (current_nucleotide.neighbor5 == -1){
-                current_strand = system.strands[current_strand.strand_id + 1];
-                current_nuc_local_id = 0;
+                current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+                nuc_local_id = 0;
             }
             else{
-                current_nuc_local_id += 1;
+                nuc_local_id += 1;
             };
 
         });
@@ -394,15 +395,15 @@ target.addEventListener("drop", function(event) {
         connectors.forEach(cns =>{
             cns.position =  cns.position.sub(cms);
         });
-        
+        sys_count += 1;
+        console.log(sys_count);
         // update the scene
         render();
         
     };
     // execute the read operation 
     dat_reader.readAsText(dat_file);
-    systems.push(system);
-    sys_count += 1;
+
 
 }, false);
 
