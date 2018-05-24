@@ -6,25 +6,20 @@
 class Nucleotide {
     local_id:number;
     global_id:number;
-    pos:number[];
-    neighbor3:number;
-    neighbor5:number;
+    pos:THREE.Vector3;
+    neighbor3:Nucleotide|null;
+    neighbor5:Nucleotide|null;
     pair:number;
     type:number|string; // 0:A 1:G 2:C 3:T/U
-    parent_strand:number;
-    backbone_obj:THREE.Mesh;
-    nuc_obj:THREE.Mesh; //hopefully these can know their position/orientation
-    bb_nuc_con:THREE.Mesh;
-    bb_bb_con:THREE.Mesh;
+    my_strand:number;
+    visual_object:THREE.Group;
 
-
-    constructor(global_id:number, local_id:number, neighbor3:number, neighbor5:number, type:number|string, parent_strand:number){
+    constructor(global_id:number, local_id:number, neighbor3:Nucleotide|null, type:number|string, parent_strand:number){
         this.global_id = global_id;
         this.local_id = local_id;
         this.neighbor3 = neighbor3;
-        this.neighbor5 = neighbor5;
         this.type = type;
-        this.parent_strand = parent_strand;
+        this.my_strand = parent_strand;
 
     };
 };
@@ -35,18 +30,28 @@ class Strand {
 
     strand_id:number;
     nucleotides:Nucleotide[] = [];
+    my_system:System;
 
 
-    constructor(id) {
+
+    constructor(id:number, parent_system:System) {
         this.strand_id = id;
+        this.my_system = parent_system;
     };
 
     add_nucleotide(nuc:Nucleotide){
-        this.nucleotides.push(nuc); //not sure this works this way but ¯\_(ツ)_/¯ 
+        this.nucleotides.push(nuc);
         nuc.local_id = this.nucleotides.indexOf(nuc);
     };
 
-    //delete_strand(){};
+    remove_nucleotide(to_remove:number){
+        this.nucleotides.forEach(function(nucleotide, i){
+            if (nucleotide.local_id === to_remove){
+                scene.remove(nucleotide.visual_object);
+            }
+        })
+    };
+
 };
 
 // systems are made of strands
@@ -55,65 +60,47 @@ class System {
 
     system_id:number;
     strands:Strand[] = [];
+    CoM:THREE.Vector3;
+    global_start_id: number;
 
-    constructor(id) {
+    constructor(id, start_id) {
         this.system_id = id;
+        this.global_start_id = start_id;
     };
+
+    system_length():number{
+        let count:number = 0;
+        for(let i = 0; i < this.strands.length; i++){
+            count += this.strands[i].nucleotides.length;
+            }
+        return count;
+    }
 
     add_strand(strand:Strand){
         this.strands.push(strand);
     };
 
-    //remove_strand(){};
+    remove_strand(to_remove:number){
+        this.strands.forEach(function(strand, i){
+            if (strand.strand_id === to_remove){
+                for(let j=0; j < strand.nucleotides.length; j++){
+                    strand.remove_nucleotide(j);
+                }
+            };
+        })
+    };
     //remove_system(){};
 
 };
 
-
 // store rendering mode RNA  
-
 var RNA_MODE = false; // By default we do DNA
-var last_material: THREE.Material;
 
 
 // add base index visualistion
-var backbones: THREE.Object3D[] = []; 
-var nucleosides: THREE.Object3D[] = [];
-var connectors: THREE.Object3D[] = [];
+var nucleotide_3objects: THREE.Group[] = []; //contains references to all meshes
+var nucleotides: Nucleotide[] = []; //contains references to all nucleotides
 var selected_bases = {};
-
-/*document.addEventListener('mousedown', event => {
-    // magic ... 
-    var mouse3D = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1,   
-                                    -( event.clientY / window.innerHeight ) * 2 + 1,  
-                                     0.5 );
-    var raycaster =  new THREE.Raycaster();
-    // cast a ray from mose to viewpoint of camera 
-    raycaster.setFromCamera( mouse3D, camera );
-    // callect all objects that are in the vay
-    var intersects: Intersection[] = raycaster.intersectObjects(backbones);
-
-    // make note of what's been clicked
-    if (intersects.length > 0){
-        let idx:number = backbones.indexOf(intersects[0].object);
-        
-        // highlight/remove highlight the bases we've clicked 
-        if ( intersects[0].object.material != selection_material){
-            selected_bases[idx] = {b_m:intersects[0].object.material, n_m:nucleosides[idx].material};
-            intersects[0].object.material = selection_material;
-            nucleosides[idx].material = selection_material;
-            // give index using global base coordinates 
-            console.log(idx); //I can't remove outputs from the console log...maybe open a popup instead?
-            render();
-        }
-        else{
-            // figure out what that base was before you painted it black and revert it
-            intersects[0].object.material = selected_bases[idx].b_m;
-            nucleosides[idx].material = selected_bases[idx].n_m;
-            render();
-        }
-    }
-});*/
 
 //initialize the space
 var systems: System[] = [];
@@ -133,7 +120,7 @@ target.addEventListener("drop", function(event) {
     event.preventDefault();
 
     //make system to store the dropped files in
-    var system = new System(sys_count);
+    var system = new System(sys_count, nucleotides.length);
 
     var i = 0,
         files = event.dataTransfer.files,
@@ -167,9 +154,11 @@ target.addEventListener("drop", function(event) {
     let top_reader = new FileReader();
     top_reader.onload = ()=> {
         // make first strand
-        var current_strand = new Strand(1);
+        var current_strand = new Strand(1, system);
         let nuc_local_id: number = 0;
         let last_strand: number = 1; //strands are 1-indexed in oxDNA .top files
+        let last_nuc: Nucleotide|null;
+        let neighbor3;
         // parse file into lines
         var lines = top_reader.result.split(/[\r\n]+/g);
         lines = lines.slice(1); // discard the header  
@@ -179,26 +168,34 @@ target.addEventListener("drop", function(event) {
                 let l = line.split(" "); //split the file and read each column
                 let id = parseInt(l[0]); // get the strand id
                 if (id != last_strand){
-                    current_strand = new Strand(id);
+                    current_strand = new Strand(id, system);
                     nuc_local_id = 0;
+                    last_nuc = null;
                 };
-                let base = l[1]; // get base id
-                let neighbor3 = l[2];
-                let neighbor5 = l[3];
 
-                //if we meet a U we have an RNA (its dumb, but its all we got)
+                let base = l[1]; // get base id
+                //if we meet a U, we have an RNA (its dumb, but its all we got)
                 if(base === "U"){
                     RNA_MODE = true;
                 }
 
-                let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3, neighbor5, base, id);
+                neighbor3 = last_nuc;
+
+                let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3, base, id); //create nucleotide
+                if (nuc.neighbor3 != null){ //link the previous one to it
+                    nuc.neighbor3.neighbor5 = nuc;
+                };
                 current_strand.add_nucleotide(nuc);
+                nucleotides.push(nuc);
                 nuc_count += 1;
                 nuc_local_id += 1;
                 last_strand = id;
-                if (neighbor5 == -1){
+                last_nuc = nuc;
+
+                if (parseInt(l[3]) == -1){ //if its the end of a strand
                     system.add_strand(current_strand);
                 };
+
                 // create a lookup for
                 // coloring base according to base id
                 base_to_material[i] = nucleoside_materials[base_to_num[base]];
@@ -213,7 +210,6 @@ target.addEventListener("drop", function(event) {
     var x_bb_last,
         y_bb_last,
         z_bb_last;
-    var last_strand;
 
     let dat_reader = new FileReader();
     dat_reader.onload = ()=>{ 
@@ -257,7 +253,7 @@ target.addEventListener("drop", function(event) {
             x = x - dx;
             y = y - dy;
             z = z - dz;
-            current_nucleotide.pos = [x, y, z];
+            current_nucleotide.pos = new THREE.Vector3(x, y, z);
 
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
             let x_a1 = parseFloat(l[3]),
@@ -282,12 +278,11 @@ target.addEventListener("drop", function(event) {
             }
 
             else{
-                //compute backbone position
+                // calculations for RNA
                 x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
                 y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
                 z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
-                //RNA_POS_BACK_a1 = -0.4;
-                //RNA_POS_BACK_a3 = 0.2;
+
             }
 
             // compute nucleoside cm
@@ -303,7 +298,7 @@ target.addEventListener("drop", function(event) {
             //compute connector length
             let con_len = Math.sqrt(Math.pow(x_bb-x_ns,2)+Math.pow(y_bb-y_ns,2)+Math.pow(z_bb-z_ns,2));
             
-            var rotationY = new THREE.Matrix4().makeRotationFromQuaternion(
+            var base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0,1,0),
                 new THREE.Vector3(x_a3, y_a3, z_a3)));
@@ -316,33 +311,25 @@ target.addEventListener("drop", function(event) {
             );
 
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
+            var group = new THREE.Group;
             var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
             var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i]);
             var con = new THREE.Mesh( connector_geometry, strand_to_material[i] );
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
-
             // apply rotations
-            nucleoside.applyMatrix(rotationY);
+            nucleoside.applyMatrix(base_rotation);
             con.applyMatrix(rotation_con);
-            
-            //actually add the new items to the scene
-            backbones.push(backbone);
-            scene.add(backbone);
-            nucleosides.push(nucleoside);
-            scene.add(nucleoside);
-            connectors.push(con);
-            scene.add(con);
-            
-            //set positions
+            //set positions and add to object
             backbone.position.set(x_bb, y_bb, z_bb); 
             nucleoside.position.set(x_ns, y_ns, z_ns);
             con.position.set(x_con, y_con, z_con);
-            current_nucleotide.backbone_obj = backbone;
-            current_nucleotide.nuc_obj = nucleoside;
-            current_nucleotide.bb_nuc_con = con;
+            group.add(backbone);
+            group.add(nucleoside);
+            group.add(con);
+            
 
             //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-            if(x_bb_last != undefined && strand_to_material[i] == last_material){
+            if(current_nucleotide.neighbor3 != null){
                 let x_sp = (x_bb + x_bb_last)/2,
                     y_sp = (y_bb + y_bb_last)/2,
                     z_sp = (z_bb + z_bb_last)/2;
@@ -357,19 +344,23 @@ target.addEventListener("drop", function(event) {
                 var sp = new THREE.Mesh(connector_geometry, strand_to_material[i] );
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                 sp.applyMatrix(rotation_sp);
-
-                connectors.push(sp);
-                scene.add(sp);
                 sp.position.set(x_sp, y_sp, z_sp);
-                current_nucleotide.bb_bb_con = sp;
+
+                group.add(sp);
             };
+            
+            //actually add the new items to the scene
+            current_nucleotide.visual_object = group;
+            nucleotide_3objects.push(group);
+            scene.add(group);
+            
+
 
             //update last backbone position and last strand
             x_bb_last = x_bb;
             y_bb_last = y_bb;
             z_bb_last = z_bb;
-            last_material= strand_to_material[i];
-            if (current_nucleotide.neighbor5 == -1){
+            if (current_nucleotide.neighbor5 == null){
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0;
             }
@@ -381,22 +372,21 @@ target.addEventListener("drop", function(event) {
 
         // reposition center of mass of the system to 0,0,0
         let cms = new THREE.Vector3(0,0,0);
-        let n_nucleosides = nucleosides.length; 
-        let i = 0;
-        for(; i < n_nucleosides; i++){
-            cms.add(nucleosides[i].position);
+        let n_nucleotides = system.system_length(); 
+        let i = system.global_start_id;
+        for(; i < system.global_start_id + n_nucleotides; i++){
+            cms.add(nucleotides[i].pos);
         }
-        let mul = 1.0 / n_nucleosides;
+        let mul = 1.0 / n_nucleotides;
         cms.multiplyScalar(mul);
-        for(i = 0; i < n_nucleosides; i++){
-            nucleosides[i].position.sub(cms);
-            backbones[i].position.sub(cms);
+        i = system.global_start_id;
+        for(; i < system.global_start_id + n_nucleotides; i++){
+            nucleotide_3objects[i].position.sub(cms);
         }
-        connectors.forEach(cns =>{
-            cns.position =  cns.position.sub(cms);
-        });
+
+        systems[sys_count].CoM = cms; //because system com may be useful to know
         sys_count += 1;
-        console.log(sys_count);
+
         // update the scene
         render();
         
@@ -411,8 +401,18 @@ target.addEventListener("drop", function(event) {
 render();
 
 
+
 function cross (a1,a2,a3,b1,b2,b3) {
     return [ a2 * b3 - a3 * b2, 
              a3 * b1 - a1 * b3, 
              a1 * b2 - a2 * b1 ];
 }
+
+
+//strand delete testcode
+document.addEventListener("keypress", event =>{
+    if(event.keyCode === 100){
+        systems[0].remove_strand(1);
+        render();
+    }
+});
