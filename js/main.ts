@@ -110,7 +110,8 @@ var target = renderer.domElement;
 target.addEventListener("dragover", function(event) {
     event.preventDefault();
 }, false);
-// the actual code to drop in the config files 
+// the actual code to drop in the config files
+var dat_fileout:string = "";
 target.addEventListener("drop", function(event) {
 
     // cancel default actions
@@ -207,9 +208,10 @@ target.addEventListener("drop", function(event) {
     var x_bb_last,
         y_bb_last,
         z_bb_last;
-
+    
     let dat_reader = new FileReader();
     dat_reader.onload = ()=>{ 
+        
         var nuc_local_id = 0;
         var current_strand = systems[sys_count].strands[0];
         // parse file into lines 
@@ -217,8 +219,10 @@ target.addEventListener("drop", function(event) {
         
         //get the simulation box size 
         let box = parseFloat(lines[1].split(" ")[3]);
-
         // everything but the header 
+        for (var t = 2; t < lines.length; t++){
+            dat_fileout = dat_fileout + lines[t] + "\n";
+        }
         lines = lines.slice(3);
         
         // calculate offset to have the first strand @ the scene origin 
@@ -227,7 +231,6 @@ target.addEventListener("drop", function(event) {
         let fx = parseFloat(first_line[0]), 
             fy = parseFloat(first_line[1]),
             fz = parseFloat(first_line[2]);
-        
         // add the bases to the scene
         lines.forEach((line, i) => {
             if (line == ""){return};
@@ -259,7 +262,6 @@ target.addEventListener("drop", function(event) {
                 x_a3 = parseFloat(l[6]),
                 y_a3 = parseFloat(l[7]),
                 z_a3 = parseFloat(l[8]);
-    
 
             // according to base.py a2 is the cross of a1 and a3
             let [x_a2,y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);

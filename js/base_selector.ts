@@ -124,6 +124,50 @@ function writeMutTrapText(base1: number, base2: number): string {
 		"stiff = 1.\n" +
 		"r0 = 1.2" + "\n}\n\n";
 }
+
+function makeOutputFiles(){
+	var top : string = "";
+	var tot_nuc:number = 0;
+	var tot_strands:number = 0;
+	var longest_strand_len:number = 0;
+	for (var i = 0; i < systems.length; i++){
+		for (var i2 = 0; i2 < systems[i].strands.length; i2++){
+			tot_strands++;
+			var strand_len:number = 0;
+			for (var i3 = 0; i3 < systems[i].strands[i2].nucleotides.length; i3++){
+				tot_nuc++;
+				strand_len++;
+			}
+			if (longest_strand_len < strand_len)
+				longest_strand_len = strand_len;
+		}
+	}
+	top = tot_nuc + " " + tot_strands + "\n";
+	for (var i = 0; i < nucleotides.length; i++){
+		top = top + nucleotides[i].my_strand + " " + nucleotides[i].type + " ";
+		var neighbor3 = nucleotides[i].neighbor3;
+		var neighbor5 = nucleotides[i].neighbor5;
+		if (neighbor3 === null || neighbor3 === undefined){
+			top = top + -1 + " ";
+		}
+		else if (neighbor3 !== null) {
+			top = top + neighbor3.global_id + " ";
+		}
+		if (neighbor5 === null || neighbor5 === undefined){
+			top = top + -1 + "\n";
+		}
+		else {
+			top = top + neighbor5.global_id + "\n";
+		}
+	}
+
+	var dat:string = "";
+	dat = "t = 0\n" + "b = " + 2*longest_strand_len + " " + 2*longest_strand_len+ " " + 2*longest_strand_len
+		+ "\n" + dat_fileout;
+
+	alert(".top file:\n" + makeTextFile(top) + "\n.dat file:\n" + makeTextFile(dat));
+}
+
 var textFile: string;
 function makeTextFile(text: string) {
 	var data = new Blob([text], {
