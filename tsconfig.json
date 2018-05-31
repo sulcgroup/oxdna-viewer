@@ -12,6 +12,7 @@
         "./js/main.ts",
         "./js/mesh_setup.ts",
         "./js/scene_setup.ts",
-        "./js/save_image.ts"
+        "./js/save_image.ts",
+		"./js/base_selector.ts"
     ]
 }

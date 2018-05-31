@@ -1,0 +1,163 @@
+
+
+class Selected_Base {
+	id: number;
+	b: THREE.Mesh;
+	n: THREE.Mesh;
+	constructor(idx: number, b: THREE.Mesh, n: THREE.Mesh) {
+		this.id = idx;
+		this.b = b;
+		this.n = n;
+	}
+}
+
+var selected_bases: Selected_Base[] = [];
+
+document.addEventListener('mousedown', event => {
+	// magic ... 
+	var mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
+		0.5);
+	var raycaster = new THREE.Raycaster();
+	// cast a ray from mose to viewpoint of camera 
+	raycaster.setFromCamera(mouse3D, camera);
+	// callect all objects that are in the vay
+	var backbones: THREE.Object3D[] = [];
+	for (var i = 0; i < nucleotides.length; i++) {
+		backbones.push(nucleotides[i].visual_object.children[0]);
+	}
+	var nucleosides: THREE.Object3D[] = [];
+	for (var i = 0; i < nucleotides.length; i++) {
+		nucleosides.push(nucleotides[i].visual_object.children[1]);
+	}
+	var intersects = raycaster.intersectObjects(backbones);
+
+	// make note of what's been clicked
+	var nucleotideID: number = -1;
+	if (intersects.length > 0) {
+		for (var i = 0; i < nucleotides.length; i++) {
+			if (nucleotides[i].visual_object.children[0] === intersects[0].object)
+				nucleotideID = i;
+		}
+		// highlight/remove highlight the bases we've clicked 
+		var selected: boolean = false;
+		var index: number = 0;
+		for (var i: number = 0; i < selected_bases.length; i++) {
+			if (selected_bases[i].id == nucleotideID) {
+				selected = true;
+				index = i;
+			}
+		}
+		var back_Mesh: THREE.Object3D = backbones[nucleotideID];
+		var nuc_Mesh: THREE.Object3D = nucleosides[nucleotideID];
+		if (selected) {
+			// figure out what that base was before you painted it black and revert it
+			var baseArr = selected_bases.slice(0, index + 1);
+			var baseArr2 = selected_bases.slice(index + 1, selected_bases.length);
+			var prevBack_Mesh: THREE.Mesh = baseArr[index].b;
+			if (back_Mesh instanceof THREE.Mesh) {
+				back_Mesh.material = prevBack_Mesh.material;
+			}
+			var prevNuc_Mesh: THREE.Mesh = baseArr[index].n;
+			if (nuc_Mesh instanceof THREE.Mesh) {
+				nuc_Mesh.material = prevNuc_Mesh.material;
+			}
+			baseArr.pop();
+			selected_bases = baseArr.concat(baseArr2);
+			render();
+		} 
+		else { 
+			if (back_Mesh instanceof THREE.Mesh && nuc_Mesh instanceof THREE.Mesh) {
+				var back_MeshCopy : THREE.Mesh = back_Mesh.clone();
+				var nuc_MeshCopy : THREE.Mesh = nuc_Mesh.clone();
+				selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy));
+			}
+			if (back_Mesh instanceof THREE.Mesh) {
+				back_Mesh.material = selection_material;
+			}
+			if (nuc_Mesh instanceof THREE.Mesh) {
+				nuc_Mesh.material = selection_material;
+			}
+			// give index using global base coordinates 
+			console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?
+			render();
+		}
+		var listBases = "";
+		for (var x: number = 0; x < selected_bases.length; x++) {
+			listBases = listBases + selected_bases[x].id + "\n";
+			console.log(listBases);
+		}
+		makeTextArea(listBases);
+	}
+
+});
+
+function makeTextArea(bases: string) {
+	var textArea: HTMLElement | null = document.getElementById("BASES");
+	if (textArea !== null) {
+		textArea.innerHTML = "Bases currently selected:\n" + bases;
+	}
+}
+
+function makeMutualTrapFile() {
+	var x: number, count: number = 0;
+	var base1: number = -1, base2: number = -1;
+	for (x = 0; x < selected_bases.length; x++) {
+		if (selected_bases[x] !== undefined) {
+			count++;
+			if (count == 1) base1 = x;
+			else if (count == 2) base2 = x;
+		}
+	}
+	if (count != 2) {
+		alert("Please select only 2 bases to create a Mutual Trap File.");
+	} else {
+		var mutTrapText: string = writeMutTrapText(base1, base2) + writeMutTrapText(base2, base1);
+		var mutTrapFile = makeTextFile(mutTrapText);
+		alert(mutTrapFile);
+	}
+}
+
+function writeMutTrapText(base1: number, base2: number): string {
+	return "{\n" + "type = mutual_trap\n" +
+		"particle = " + base1 + "\n" +
+		"ref_particle = " + base2 + "\n" +
+		"stiff = 1.\n" +
+		"r0 = 1.2" + "\n}\n\n";
+}
+var textFile: string;
+function makeTextFile(text: string) {
+	var data = new Blob([text], {
+		type: 'text/plain'
+	});
+
+	// If we are replacing a previously generated file we need to
+	// manually revoke the object URL to avoid memory leaks.
+	if (textFile !== null) {
+		window.URL.revokeObjectURL(textFile);
+	}
+
+	textFile = window.URL.createObjectURL(data);
+
+	// returns a URL you can use as a href
+	return textFile;
+};
+
+function openTab(evt, tabName) {
+	var i: number;
+	var tabcontent;
+	var tablinks;
+	tabcontent = document.getElementsByClassName("tabcontent");
+	for (i = 0; i < tabcontent.length; i++) {
+		tabcontent[i].style.display = "none";
+	}
+	tablinks = document.getElementsByClassName("tablinks");
+	for (i = 0; i < tablinks.length; i++) {
+		tablinks[i].className = tablinks[i].className.replace(" active", "");
+	}
+	var tab: HTMLElement | null = document.getElementById(tabName);
+	if (tab !== null) {
+		tab.style.display = "block";
+	}
+	evt.currentTarget.className += " active";
+}
+

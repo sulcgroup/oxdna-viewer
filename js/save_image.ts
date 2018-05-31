@@ -1,4 +1,4 @@
-/// <reference path="./three/index.d.ts" />
+// <reference path="./three/index.d.ts" />
 
 //Save image on "p" press 
 document.addEventListener("keypress", event =>{

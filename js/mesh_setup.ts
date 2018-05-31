@@ -1,4 +1,4 @@
-/// <reference path="./three/index.d.ts" />
+// <reference path="./three/index.d.ts" />
 
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.2,10,10);

@@ -1,5 +1,4 @@
 /// <reference path="./three/index.d.ts" />
-
 // nucleotides store the information about position, orientation, ID
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
@@ -90,17 +89,15 @@ class System {
         })
     };
     //remove_system(){};
-
 };
 
 // store rendering mode RNA  
 var RNA_MODE = false; // By default we do DNA
 
-
 // add base index visualistion
 var nucleotide_3objects: THREE.Group[] = []; //contains references to all meshes
 var nucleotides: Nucleotide[] = []; //contains references to all nucleotides
-var selected_bases = {};
+//var selected_bases = {};
 
 //initialize the space
 var systems: System[] = [];
