@@ -162,10 +162,63 @@ function makeOutputFiles(){
 	}
 
 	var dat:string = "";
-	dat = "t = 0\n" + "b = " + 2*longest_strand_len + " " + 2*longest_strand_len+ " " + 2*longest_strand_len
-		+ "\n" + dat_fileout;
+	var box:number = 2*longest_strand_len;
+	dat = "t = 0\n" + "b = " + box + " " + box + " " + box
+		+ "\n" + "E = 0 0 0 " + dat_fileout + "\n";
+	for (var i = 0; i < nucleotides.length; i++){
+		var nuc:Nucleotide = nucleotides[i];
+		var x:number = nuc.pos.x;
+		var y:number = nuc.pos.y;
+		var z:number = nuc.pos.z;
+		var x_bb:number = nuc.visual_object[0];
+		var y_bb:number = nuc.visual_object[0].y_bb;
+		var z_bb:number = nuc.visual_object[0].z_bb;
+		var x_ns:number = nuc.visual_object[1].x_ns;
+		var y_ns:number = nuc.visual_object[1].y_ns;
+		var z_ns:number = nuc.visual_object[1].z_ns;
+		var x_a1:number = 0;
+		var y_a1:number = 0;
+		var z_a1:number = 0;
+		x_a1 = (x_ns - x)/0.4;
+		y_a1 = (y_ns - y)/0.4;
+		z_a1 = (z_ns - z)/0.4;
+		var x_a3:number = 0;
+		var y_a3:number = 0;
+		var z_a3:number = 0;
+		var x_a2:number = 0;
+		var y_a2:number = 0;
+		var z_a2:number = 0;
+		if (RNA_MODE){
+			x_a3 = ((x_bb - x)+(0.4*x_a1))/(-0.2);
+			y_a3 = ((y_bb - y)+(0.4*y_a1))/(-0.2);
+			z_a3 = ((z_bb - z)+(0.4*z_a1))/(-0.2);
+		}
+		else{
+			x_a2 = ((x_bb - x)+(0.34*x_a1))/(-0.3408);
+			y_a2 = ((y_bb - y)+(0.34*y_a1))/(-0.3408);
+			z_a2 = ((z_bb - z)+(0.34*z_a1))/(-0.3408);
+			
+			var Coeff = [[0,-z_a1,y_a1],[-z_a1,0,x_a1],[-y_a1,x_a1,0]];
+			var x_matrix = [[x_a2,-z_a1,y_a1],[y_a2,0,x_a1],[z_a2,x_a1,0]];
+			var y_matrix = [[0,x_a2,y_a1],[-z_a1,y_a2,x_a1],[-y_a1,z_a2,0]];
+			var z_matrix = [[0,-z_a1,x_a2],[-z_a1,0,y_a2],[-y_a1,x_a1,z_a2]];
+
+			x_a3 = det(x_matrix)/det(Coeff);
+			y_a3 = det(y_matrix)/det(Coeff);
+			z_a3 = det(z_matrix)/det(Coeff);
+
+			var temp;
+
+			dat = dat + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 + " " + z_a3 + "\n";
+		}
+	}
 
 	alert(".top file:\n" + makeTextFile(top) + "\n.dat file:\n" + makeTextFile(dat));
+}
+
+function det(mat:number[][]){
+	return mat[0][0]* ((mat[1][1]*mat[2][2]) - (mat[1][2]*mat[2][1]))  - mat[0][1] * ((mat[1][0]*mat[2][2]) -
+		(mat[2][0]*mat[1][2])) + mat[0][2] * ((mat[1][0]*mat[2][1]) - (mat[2][0]*mat[1][1]));
 }
 
 var textFile: string;

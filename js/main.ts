@@ -1,4 +1,5 @@
 /// <reference path="./three/index.d.ts" />
+
 // nucleotides store the information about position, orientation, ID
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
@@ -219,11 +220,12 @@ target.addEventListener("drop", function(event) {
         
         //get the simulation box size 
         let box = parseFloat(lines[1].split(" ")[3]);
-        // everything but the header 
-        for (var t = 2; t < lines.length; t++){
-            dat_fileout = dat_fileout + lines[t] + "\n";
-        }
+        // everything but the header
         lines = lines.slice(3);
+        /*for (var t = 2; t < 3; t++){
+            dat_fileout = dat_fileout + lines[t] + "\n";
+        }*/
+        
         
         // calculate offset to have the first strand @ the scene origin 
         let first_line = lines[0].split(" ");
@@ -231,6 +233,7 @@ target.addEventListener("drop", function(event) {
         let fx = parseFloat(first_line[0]), 
             fy = parseFloat(first_line[1]),
             fz = parseFloat(first_line[2]);
+        console.log(fx);
         // add the bases to the scene
         lines.forEach((line, i) => {
             if (line == ""){return};
@@ -281,7 +284,6 @@ target.addEventListener("drop", function(event) {
                 x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
                 y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
                 z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
-
             }
 
             // compute nucleoside cm
