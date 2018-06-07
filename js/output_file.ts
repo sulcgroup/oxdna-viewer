@@ -4,10 +4,10 @@ function makeOutputFiles(){
 	let tot_strands:number = 0;
 	let longest_strand_len:number = 0;
 	for (let i = 0; i < systems.length; i++){
-		for (let i2 = 0; i2 < systems[i].strands.length; i2++){
+		for (let j = 0; j < systems[i].strands.length; j++){
 			tot_strands++;
 			let strand_len:number = 0;
-			for (let i3 = 0; i3 < systems[i].strands[i2].nucleotides.length; i3++){
+			for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++){
 				tot_nuc++;
 				strand_len++;
 			}
@@ -81,16 +81,18 @@ function makeOutputFiles(){
 			console.log(det(Coeff));
 			console.log(x_matrix);
 			console.log(det(x_matrix));
-
+ 
 			let a3:number[] = divAndNeg(cross(x_a1,y_a1,z_a1,x_a2,y_a2,z_a2),dot(x_a1,y_a1,z_a1,x_a1,y_a1,z_a1));
 			x_a3 = a3[0]; y_a3 = a3[1]; z_a3 = a3[2]; 
 			let temp;
 
-			dat = dat + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 + " " + z_a3 + " 0 0 0 0 0 0" + "\n";
+			dat = dat + x + " " + y + " " + z + " " + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 +
+			" " + z_a3 + " 0 0 0 0 0 0" + "\n";
 		}
 	}
 
-	alert(".top file:\n" + makeTextFile(top) + "\n.dat file:\n" + makeTextFile(dat));
+	makeTextFile("sim.top", top);
+	makeTextFile("last_conf.dat", dat);
 }
 
 function det(mat:number[][]){

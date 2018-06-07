@@ -112,8 +112,7 @@ function makeMutualTrapFile() {
 		alert("Please select only 2 bases to create a Mutual Trap File.");
 	} else {
 		let mutTrapText: string = writeMutTrapText(base1, base2) + writeMutTrapText(base2, base1);
-		let mutTrapFile = makeTextFile(mutTrapText);
-		alert(mutTrapFile);
+		makeTextFile("mutTrapFile", mutTrapText);
 	}
 }
 
@@ -126,8 +125,8 @@ function writeMutTrapText(base1: number, base2: number): string {
 }
 
 let textFile: string;
-function makeTextFile(text: string) {
-	let data = new Blob([text], {
+function makeTextFile(filename: string,text: string) {
+	/*let data = new Blob([text], {
 		type: 'text/plain'
 	});
 
@@ -140,7 +139,17 @@ function makeTextFile(text: string) {
 	textFile = window.URL.createObjectURL(data);
 
 	// returns a URL you can use as a href
-	return textFile;
+	return textFile;*/
+	var element = document.createElement('a');
+	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+	element.setAttribute('download', filename);
+  
+	element.style.display = 'none';
+	document.body.appendChild(element);
+  
+	element.click();
+  
+	document.body.removeChild(element);
 };
 
 function openTab(evt, tabName) {

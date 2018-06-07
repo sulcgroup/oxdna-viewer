@@ -268,9 +268,6 @@ target.addEventListener("drop", function(event) {
 
             // according to base.py a2 is the cross of a1 and a3
             let [x_a2,y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
-            console.log("x1" + x_a1 + " y1" + y_a1 + " z1" + z_a1);
-            console.log("x2" + x_a2 + " y2" + y_a2 + " z2" + z_a2);
-            console.log("x3" + x_a3 + " y3" + y_a3 + " z3" + z_a3);
             // compute backbone cm
             let x_bb: number = 0;
             let y_bb: number = 0;
