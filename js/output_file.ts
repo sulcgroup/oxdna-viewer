@@ -85,10 +85,9 @@ function makeOutputFiles(){
 			let a3:number[] = divAndNeg(cross(x_a1,y_a1,z_a1,x_a2,y_a2,z_a2),dot(x_a1,y_a1,z_a1,x_a1,y_a1,z_a1));
 			x_a3 = a3[0]; y_a3 = a3[1]; z_a3 = a3[2]; 
 			let temp;
-
+		}
 			dat = dat + x + " " + y + " " + z + " " + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 +
 			" " + z_a3 + " 0 0 0 0 0 0" + "\n";
-		}
 	}
 
 	makeTextFile("sim.top", top);

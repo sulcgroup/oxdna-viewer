@@ -4,91 +4,131 @@ class Selected_Base {
 	id: number;
 	b: THREE.Mesh;
 	n: THREE.Mesh;
-	constructor(idx: number, b: THREE.Mesh, n: THREE.Mesh) {
+	c: THREE.Mesh;
+	sp: THREE.Mesh;
+	constructor(idx: number, b: THREE.Mesh, n: THREE.Mesh, c: THREE.Mesh, sp: THREE.Mesh) {
 		this.id = idx;
 		this.b = b;
 		this.n = n;
+		this.c = c;
+		this.sp = sp;
 	}
 }
 
 let selected_bases: Selected_Base[] = [];
 
 document.addEventListener('mousedown', event => {
-	// magic ... 
-	let mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
-		0.5);
-	let raycaster = new THREE.Raycaster();
-	// cast a ray from mose to viewpoint of camera 
-	raycaster.setFromCamera(mouse3D, camera);
-	// callect all objects that are in the vay
-	let backbones: THREE.Object3D[] = [];
-	for (let i = 0; i < nucleotides.length; i++) {
-		backbones.push(nucleotides[i].visual_object.children[0]);
-	}
-	let nucleosides: THREE.Object3D[] = [];
-	for (let i = 0; i < nucleotides.length; i++) {
-		nucleosides.push(nucleotides[i].visual_object.children[1]);
-	}
-	let intersects = raycaster.intersectObjects(backbones);
-
-	// make note of what's been clicked
-	let nucleotideID: number = -1;
-	if (intersects.length > 0) {
+	if (getMode() == "baseSelect") {
+		// magic ... 
+		let mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
+			0.5);
+		let raycaster = new THREE.Raycaster();
+		// cast a ray from mose to viewpoint of camera 
+		raycaster.setFromCamera(mouse3D, camera);
+		// callect all objects that are in the vay
+		let backbones: THREE.Object3D[] = [];
 		for (let i = 0; i < nucleotides.length; i++) {
-			if (nucleotides[i].visual_object.children[0] === intersects[0].object)
-				nucleotideID = i;
+			backbones.push(nucleotides[i].visual_object.children[0]);
 		}
-		// highlight/remove highlight the bases we've clicked 
-		let selected: boolean = false;
-		let index: number = 0;
-		for (let i: number = 0; i < selected_bases.length; i++) {
-			if (selected_bases[i].id == nucleotideID) {
-				selected = true;
-				index = i;
-			}
+		let nucleosides: THREE.Object3D[] = [];
+		for (let i = 0; i < nucleotides.length; i++) {
+			nucleosides.push(nucleotides[i].visual_object.children[1]);
 		}
-		let back_Mesh: THREE.Object3D = backbones[nucleotideID];
-		let nuc_Mesh: THREE.Object3D = nucleosides[nucleotideID];
-		if (selected) {
-			// figure out what that base was before you painted it black and revert it
-			let baseArr = selected_bases.slice(0, index + 1);
-			let baseArr2 = selected_bases.slice(index + 1, selected_bases.length);
-			let prevBack_Mesh: THREE.Mesh = baseArr[index].b;
-			if (back_Mesh instanceof THREE.Mesh) {
-				back_Mesh.material = prevBack_Mesh.material;
-			}
-			let prevNuc_Mesh: THREE.Mesh = baseArr[index].n;
-			if (nuc_Mesh instanceof THREE.Mesh) {
-				nuc_Mesh.material = prevNuc_Mesh.material;
-			}
-			baseArr.pop();
-			selected_bases = baseArr.concat(baseArr2);
-			render();
-		} 
-		else { 
-			if (back_Mesh instanceof THREE.Mesh && nuc_Mesh instanceof THREE.Mesh) {
-				let back_MeshCopy : THREE.Mesh = back_Mesh.clone();
-				let nuc_MeshCopy : THREE.Mesh = nuc_Mesh.clone();
-				selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy));
-			}
-			if (back_Mesh instanceof THREE.Mesh) {
-				back_Mesh.material = selection_material;
-			}
-			if (nuc_Mesh instanceof THREE.Mesh) {
-				nuc_Mesh.material = selection_material;
-			}
-			// give index using global base coordinates 
-			console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?
-			render();
+		let con: THREE.Object3D[] = [];
+		for (let i = 0; i < nucleotides.length; i++) {
+			con.push(nucleotides[i].visual_object.children[2]);
 		}
-		let listBases = "";
-		for (let x: number = 0; x < selected_bases.length; x++) {
-			listBases = listBases + selected_bases[x].id + "\n";
-			console.log(listBases);
+		let sp: THREE.Object3D[] = [];
+		for (let i = 0; i < nucleotides.length; i++) {
+			sp.push(nucleotides[i].visual_object.children[3]);
 		}
-		makeTextArea(listBases);
-	}
+		let intersects = raycaster.intersectObjects(backbones);
 
+		// make note of what's been clicked
+		let nucleotideID: number = -1;
+		if (intersects.length > 0) {
+			for (let i = 0; i < nucleotides.length; i++) {
+				if (nucleotides[i].visual_object.children[0] === intersects[0].object)
+					nucleotideID = i;
+			}
+			// highlight/remove highlight the bases we've clicked 
+			let selected: boolean = false;
+			let index: number = 0;
+			for (let i: number = 0; i < selected_bases.length; i++) {
+				if (selected_bases[i].id == nucleotideID) {
+					selected = true;
+					index = i;
+				}
+			}
+			let back_Mesh: THREE.Object3D = backbones[nucleotideID];
+			let nuc_Mesh: THREE.Object3D = nucleosides[nucleotideID];
+			let con_Mesh: THREE.Object3D = con[nucleotideID];
+			let sp_Mesh: THREE.Object3D = sp[nucleotideID];
+			if (selected) {
+				// figure out what that base was before you painted it black and revert it
+				let baseArr = selected_bases.slice(0, index + 1);
+				let baseArr2 = selected_bases.slice(index + 1, selected_bases.length);
+				let prevBack_Mesh: THREE.Mesh = baseArr[index].b;
+				if (back_Mesh instanceof THREE.Mesh) {
+					back_Mesh.material = prevBack_Mesh.material;
+				}
+				let prevNuc_Mesh: THREE.Mesh = baseArr[index].n;
+				if (nuc_Mesh instanceof THREE.Mesh) {
+					nuc_Mesh.material = prevNuc_Mesh.material;
+				}
+				let prevCon_Mesh: THREE.Mesh = baseArr[index].c;
+				if (con_Mesh instanceof THREE.Mesh) {
+					con_Mesh.material = prevCon_Mesh.material;
+				}
+				let prevSP_Mesh: THREE.Mesh = baseArr[index].sp;
+				if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+					sp_Mesh.material = prevSP_Mesh.material;
+				}
+				baseArr.pop();
+				selected_bases = baseArr.concat(baseArr2);
+				render();
+			}
+			else {
+				if (back_Mesh instanceof THREE.Mesh && nuc_Mesh instanceof THREE.Mesh && con_Mesh instanceof THREE.Mesh) {
+					let back_MeshCopy: THREE.Mesh = back_Mesh.clone();
+					let nuc_MeshCopy: THREE.Mesh = nuc_Mesh.clone();
+					let con_MeshCopy: THREE.Mesh = con_Mesh.clone();
+					let sp_MeshCopy: THREE.Mesh;
+					if (sp_Mesh instanceof THREE.Mesh) {
+						sp_MeshCopy = sp_Mesh.clone();
+						selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy,
+							sp_MeshCopy));
+					}
+					else if (sp_Mesh === undefined) {
+						selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy,
+							sp_Mesh));
+					}
+
+				}
+				if (back_Mesh instanceof THREE.Mesh) {
+					back_Mesh.material = selection_material;
+				}
+				if (nuc_Mesh instanceof THREE.Mesh) {
+					nuc_Mesh.material = selection_material;
+				}
+				if (con_Mesh instanceof THREE.Mesh) {
+					con_Mesh.material = selection_material;
+				}
+				if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+					sp_Mesh.material = selection_material;
+				}
+				// give index using global base coordinates 
+				//console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?
+				render();
+			}
+			let listBases = "";
+			for (let x: number = 0; x < selected_bases.length; x++) {
+				listBases = listBases + selected_bases[x].id + "\n";
+				//console.log(listBases);
+			}
+			makeTextArea(listBases);
+		}
+	}
 });
 
 function makeTextArea(bases: string) {
@@ -125,7 +165,7 @@ function writeMutTrapText(base1: number, base2: number): string {
 }
 
 let textFile: string;
-function makeTextFile(filename: string,text: string) {
+function makeTextFile(filename: string, text: string) {
 	/*let data = new Blob([text], {
 		type: 'text/plain'
 	});
@@ -143,12 +183,12 @@ function makeTextFile(filename: string,text: string) {
 	var element = document.createElement('a');
 	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
 	element.setAttribute('download', filename);
-  
+
 	element.style.display = 'none';
 	document.body.appendChild(element);
-  
+
 	element.click();
-  
+
 	document.body.removeChild(element);
 };
 
