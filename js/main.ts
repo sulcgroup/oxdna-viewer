@@ -335,18 +335,21 @@ target.addEventListener("drop", function(event) {
                     z_sp = (z_bb + z_bb_last)/2;
 
                 let sp_len = Math.sqrt(Math.pow(x_bb-x_bb_last,2)+Math.pow(y_bb-y_bb_last,2)+Math.pow(z_bb-z_bb_last,2));
+                // easy periodic boundary condition fix  
+                // if the bonds are to long just don't add them 
+                if (sp_len <= 1.2){
+                    var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                        new THREE.Quaternion().setFromUnitVectors(
+                            new THREE.Vector3(0,1,0), new THREE.Vector3(x_sp-x_bb, y_sp-y_bb, z_sp-z_bb).normalize()
+                        )
+                    );
+                    var sp = new THREE.Mesh(connector_geometry, strand_to_material[i] );
+                    sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
+                    sp.applyMatrix(rotation_sp);
+                    sp.position.set(x_sp, y_sp, z_sp);
 
-                var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0,1,0), new THREE.Vector3(x_sp-x_bb, y_sp-y_bb, z_sp-z_bb).normalize()
-                    )
-                );
-                var sp = new THREE.Mesh(connector_geometry, strand_to_material[i] );
-                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
-                sp.applyMatrix(rotation_sp);
-                sp.position.set(x_sp, y_sp, z_sp);
-
-                group.add(sp);
+                    group.add(sp);
+                }
             };
             
             //actually add the new items to the scene
