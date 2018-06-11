@@ -50,18 +50,18 @@ function makeOutputFiles(){
 		let x_ns:number = nuc.visual_object.children[1].position.x;
 		let y_ns:number = nuc.visual_object.children[1].position.y;
 		let z_ns:number = nuc.visual_object.children[1].position.z;
-		let x_a1:number = 0;
-		let y_a1:number = 0;
-		let z_a1:number = 0;
+		let x_a1:number;
+		let y_a1:number;
+		let z_a1:number;
 		x_a1 = (x_ns - x)/0.4;
 		y_a1 = (y_ns - y)/0.4;
 		z_a1 = (z_ns - z)/0.4;
-		let x_a3:number = 0;
-		let y_a3:number = 0;
-		let z_a3:number = 0;
-		let x_a2:number = 0;
-		let y_a2:number = 0;
-		let z_a2:number = 0;
+		let x_a3:number;
+		let y_a3:number;
+		let z_a3:number;
+		let x_a2:number;
+		let y_a2:number;
+		let z_a2:number;
 		if (RNA_MODE){
 			x_a3 = ((x_bb - x)+(0.4*x_a1))/(-0.2);
 			y_a3 = ((y_bb - y)+(0.4*y_a1))/(-0.2);
