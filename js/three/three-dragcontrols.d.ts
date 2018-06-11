@@ -1,7 +1,7 @@
 import { Camera, EventDispatcher, Vector3 } from "../lib/three-core";
 
 export class DragControls extends EventDispatcher {
-    constructor(_objects,camera: Camera, individ : boolean, domElement?: HTMLElement);
+    constructor(_objects: THREE.Group[],camera: Camera, individ : boolean, domElement?: HTMLElement);
 
     object: Camera;
     domElement: HTMLElement;

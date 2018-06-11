@@ -6,14 +6,12 @@ function drag() {
         dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
     }
     else if (getMode() == "dragGroup") {
-        alert("IN HERE");
-        var objects:THREE.Group[] = [];
-
-        for (var i = 0; i < nucleotide_3objects.length; i++){
-            objects.push(nucleotide_3objects[i]);
-        }
+        let backbones: THREE.Object3D[] = [];
+		for (let i = 0; i < nucleotides.length; i++) {
+			backbones.push(nucleotides[i].visual_object.children[0]);
+		}
          // as a child of the grid
-        let dragControls = new THREE.DragControls(objects, camera, false, renderer.domElement);
+        let dragControls = new THREE.DragControls(backbones, camera, false, renderer.domElement);
         dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; });
         dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
     }
