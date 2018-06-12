@@ -9,7 +9,6 @@ var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeig
 // set camera position 
 camera.position.z = 100;
 
-
 var renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer : true, 
     alpha : true,
@@ -18,11 +17,11 @@ var renderer = new THREE.WebGLRenderer({
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
-
 // set scene lighting 
 //var light = new THREE.AmbientLight(0x404040);
 //light.intensity = 3;
 //scene.add(light);
+
 var lights = [];
 lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
 lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
@@ -41,7 +40,7 @@ var backbone_geometry = new THREE.SphereGeometry(.2,10,10);
 var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
         new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
 var connector_geometry = new THREE.CylinderGeometry(.1,.1,1);
-
+var crowder_geometry = new THREE.SphereGeometry(0.4,10,10);
 
 // define strand colors 
 var backbone_materials = [
@@ -120,7 +119,10 @@ var selection_material = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide,
 });
 
-
+var crowder_matrial = new THREE.MeshLambertMaterial({
+    color: 0x696969,
+    side: THREE.DoubleSide,
+});
 
 
 // store rendering mode RNA  
@@ -130,6 +132,7 @@ var RNA_MODE = false; // By default we do DNA
 // add base index visualistion
 var backbones = []; 
 var nucleosides = [];
+var crowders = []; 
 var connectors = [];
 var selected_bases = {};
 
@@ -184,8 +187,6 @@ controls.addEventListener( 'change', render );
 // start animation cycle 
 animate();
 
-
-
 // scene update call definition
 function render(){
     renderer.render(scene, camera);
@@ -197,8 +198,6 @@ function animate() {
     controls.update();
 
 }
-
-
 
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
@@ -224,6 +223,8 @@ target.addEventListener("drop", function(event) {
         "T" : 3,
         "U" : 3 
     };
+    var crowder_to_material = {};
+
     // get the extention of one of the 2 files 
     let ext = files[0].name.slice(-3);
     // space to store the file paths 
@@ -254,11 +255,18 @@ target.addEventListener("drop", function(event) {
                 if(base === "U"){
                     RNA_MODE = true;
                 }
-                // create a lookup for
-                // coloring base according to base id
-                base_to_material[i] = nucleoside_materials[base_to_num[base]];
-                // coloring bases according to strand id 
-                strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length )];
+                
+                if(base === "-1"){
+                    crowder_to_material[i] = crowder_matrial
+                }
+                else{
+                    // create a lookup for
+                    // coloring base according to base id
+                    base_to_material[i] = nucleoside_materials[base_to_num[base]];
+                    // coloring bases according to strand id 
+                    strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length )];
+                }
+
             });
     };
     top_reader.readAsText(top_file);
@@ -316,7 +324,6 @@ target.addEventListener("drop", function(event) {
                 y_a3 = parseFloat(l[7]),
                 z_a3 = parseFloat(l[8]);
     
-
             // according to base.py a2 is the cross of a1 and a3
             let [x_a2,y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
 
@@ -380,6 +387,7 @@ target.addEventListener("drop", function(event) {
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
             var backbone = new THREE.Mesh( backbone_geometry, strand_to_material[i] );
             var nucleoside = new THREE.Mesh( nucleoside_geometry, base_to_material[i]);
+            var crowder = new THREE.Mesh( crowder_geometry, crowder_to_material[i]);
             var con = new THREE.Mesh( connector_geometry, strand_to_material[i] );
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
 
@@ -393,6 +401,8 @@ target.addEventListener("drop", function(event) {
             scene.add(backbone);
             nucleosides.push(nucleoside);
             scene.add(nucleoside);
+            crowders.add(crowder);
+            scene.push(crowder);
             connectors.push(con);
             scene.add(con);
             
@@ -428,73 +438,6 @@ target.addEventListener("drop", function(event) {
             y_bb_last = y_bb;
             z_bb_last = z_bb;
             last_material = strand_to_material[i];
-            
-            /* old articulated connector code:
-            var cm_geometry = new THREE.SphereGeometry(.1,10,10);
-
-            var cms = [];
-
-            if(!RNA_MODE){
-                var rotation_con_cm_bb = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(
-                        -0.34 * x_a1 - 0.3408 * x_a2,
-                        -0.34 * y_a1 - 0.3408 * y_a2, 
-                        -0.34 * z_a1 - 0.3408 * z_a2).normalize()));
-            };
-            else{
-                //used later to position connectors
-                var rotation_con_cm_bb = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(
-                        -0.4 * x_a1 - 0.2 * x_a3,
-                        -0.4 * y_a1 - 0.2 * y_a3, 
-                        -0.4 * z_a1 - 0.2 * z_a3).normalize()));
-            };
-            var rotation_con_cm_ns = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0,1,0), new THREE.Vector3(x_a1, y_a1, z_a1)));
-            
-            //adds a cylinder from the cm to the nucleoside
-            var connector_cm_ns = new THREE.Mesh( connector_geometry, strand_to_material[i]);
-            connector_cm_ns.applyMatrix(
-                new THREE.Matrix4().makeScale(
-                    1.0, Math.sqrt((x-x_ns)*(x-x_ns)+(y-y_ns)*(y-y_ns)+(z-z_ns)*(z-z_ns)), 1.0 ));
-
-            //adds a cylinder from the cm to the backbone
-            var connector_cm_bb = new THREE.Mesh( connector_geometry, strand_to_material[i]);
-            connector_cm_bb.applyMatrix(
-                new THREE.Matrix4().makeScale(
-                    1.0, Math.sqrt((x-x_bb)*(x-x_bb)+(y-y_bb)*(y-y_bb)+(z-z_bb)*(z-z_bb)), 1.0 ));
-            
-            //adds a sphere at the cm to smooth the cylinder connection
-            var cm = new THREE.Mesh( cm_geometry, strand_to_material[i]);
-
-            connector_cm_ns.applyMatrix(rotation_con_cm_ns);
-            connector_cm_bb.applyMatrix(rotation_con_cm_bb);
-
-            connectors.push(connector_cm_ns);
-            scene.add(connector_cm_ns);
-            connectors.push(connector_cm_bb);
-            scene.add(connector_cm_bb);
-            cms.push(cm);
-            scene.add(cm);
-
-            cm.position.set(x, y, z);
-            connector_cm_ns.position.set(x+(0.2*x_a1),y+(0.2*y_a1),z+(0.2*z_a1));
-
-            if(!RNA_MODE){
-                connector_cm_bb.position.set(
-                    x - (0.17 * x_a1 + 0.1704 * x_a2),
-                    y - (0.17 * y_a1 + 0.1704 * y_a2), 
-                    z - (0.17 * z_a1 + 0.1704 * z_a2));
-            }
-            else{
-                connector_cm_bb.position.set(
-                    x - (0.2 * x_a1 + 0.1 * x_a3),
-                    y - (0.2 * y_a1 + 0.1 * y_a3), 
-                    z - (0.2 * z_a1 + 0.1 * z_a3));
-            }*/
 
         });
         // update the scene
@@ -508,7 +451,6 @@ target.addEventListener("drop", function(event) {
 
 // update the scene
 render();
-
 
 function cross (a1,a2,a3,b1,b2,b3) {
     return [ a2 * b3 - a3 * b2, 
