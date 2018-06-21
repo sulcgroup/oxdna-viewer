@@ -103,6 +103,19 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 					}
 				}
 			}
+			else if (mode == "dragSystem"){
+				for (let i = 0; i < systems.length; i++) {
+					for (let j = 0; j < systems[i].strands.length; j++) {
+						for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
+							for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
+								if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
+									object = systems[i].system_3objects;
+								}
+							}
+						}
+					}
+				}
+			}
 
 			_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
 
@@ -154,6 +167,19 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 								if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
 									_selected = systems[i].strands[j].strand_3objects;
 
+								}
+							}
+						}
+					}
+				}
+			}
+			else if (mode == "dragSystem"){
+				for (let i = 0; i < systems.length; i++) {
+					for (let j = 0; j < systems[i].strands.length; j++) {
+						for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
+							for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
+								if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
+									_selected = systems[i].system_3objects;
 								}
 							}
 						}
@@ -246,6 +272,19 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 							for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
 								if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
 									_selected = systems[i].strands[j].strand_3objects;
+								}
+							}
+						}
+					}
+				}
+			}
+			else if (mode == "dragSystem"){
+				for (let i = 0; i < systems.length; i++) {
+					for (let j = 0; j < systems[i].strands.length; j++) {
+						for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
+							for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
+								if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
+									_selected = systems[i].system_3objects;
 								}
 							}
 						}
