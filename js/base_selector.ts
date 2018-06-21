@@ -18,7 +18,8 @@ class Selected_Base {
 let selected_bases: Selected_Base[] = [];
 
 document.addEventListener('mousedown', event => {
-	if (getMode() == "baseSelect") {
+	getMode();
+	if (mode == "baseSelect") {
 		// magic ... 
 		let mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
 			0.5);

@@ -1,0 +1,10 @@
+[Log] THREE.WebGLRenderer – "92" (three.js, line 21174)
+[Error] TypeError: undefined is not an object (evaluating 'this.system_3objects.add')
+	add_strand (main.js:64)
+	(anonymous function) (main.js:171)
+	forEach
+	onload (main.js:140)
+[Error] TypeError: undefined is not an object (evaluating 'systems[sys_count].strands')
+	onload (main.js:188)
+[Error] TypeError: undefined is not an object (evaluating 'nucleotides[i].visual_object.children')
+	(anonymous function) (base_selector.js:23)

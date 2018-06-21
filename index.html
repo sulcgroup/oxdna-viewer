@@ -95,6 +95,7 @@
 			<textarea id="BASES" cols="20"> BASES </textarea>
 			<button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
 			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
+			<button onclick=controls.reset() type="button">Reset Camera</button>
 			<form action="" id="Mode">
 				<fieldset>
 					<legend>Mode:</legend>
@@ -103,14 +104,16 @@
 					<input type="radio" name="mode" value="drag">Drag
 					<br>
 					<input type="radio" name="mode" value="dragGroup">Drag Groups
+					<br>
+					<input type="radio" name="mode" value="dragStrand"> Drag Strand
 				</fieldset>
 			</form>
 		</div>
 	</div>
 	<div class="main">
 		<script src="./js/lib/three.js"></script>
-		<script src="./js/controls/TrackballControls.js"></script>
 		<script src="./js/controls/DragControls.js"></script>
+		<script src="./js/controls/TrackballControls.js"></script>		
 		<script src="./dist/scene_setup.js"></script>
 		<script src="./dist/mesh_setup.js"></script>
 		<script src="./dist/main.js"></script>
@@ -118,6 +121,7 @@
 		<script src="./dist/base_selector.js"></script>
 		<script src="./dist/output_file.js"></script>
 		<script src="./dist/translation.js"></script>
+		<!--<script src="./dist/cubes.js"></script>-->
 	</div>
 </body>
 

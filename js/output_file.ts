@@ -50,6 +50,7 @@ function makeOutputFiles(){
 		let x_ns:number = nuc.visual_object.children[1].position.x;
 		let y_ns:number = nuc.visual_object.children[1].position.y;
 		let z_ns:number = nuc.visual_object.children[1].position.z;
+		console.log(x_bb + " " + y_bb + " " + z_bb);
 		let x_a1:number;
 		let y_a1:number;
 		let z_a1:number;
