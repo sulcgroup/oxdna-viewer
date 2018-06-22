@@ -1,4 +1,5 @@
 function makeOutputFiles(){
+	let tempVec = new THREE.Vector3(0,0,0);
 	let top : string = "";
 	let tot_nuc:number = 0;
 	let tot_strands:number = 0;
@@ -40,16 +41,19 @@ function makeOutputFiles(){
 		+ "\n" + "E = 0 0 0 " + dat_fileout + "\n";
 	for (let i = 0; i < nucleotides.length; i++){
 		let nuc:Nucleotide = nucleotides[i];
-		let x:number = nuc.pos.x;
-		let y:number = nuc.pos.y;
-        let z:number = nuc.pos.z;
-        let fx:number, fy:number, fz:number;
-		let x_bb:number = nuc.visual_object.children[0].position.x;
-		let y_bb:number = nuc.visual_object.children[0].position.y;
-		let z_bb:number = nuc.visual_object.children[0].position.z;
-		let x_ns:number = nuc.visual_object.children[1].position.x;
-		let y_ns:number = nuc.visual_object.children[1].position.y;
-		let z_ns:number = nuc.visual_object.children[1].position.z;
+		nuc.visual_object.getWorldPosition(tempVec);
+		let x:number = tempVec.x;
+		let y:number = tempVec.y;
+        let z:number = tempVec.z;
+		let fx:number, fy:number, fz:number;
+		nuc.visual_object.children[0].getWorldPosition(tempVec);
+		let x_bb:number = tempVec.x;
+		let y_bb:number = tempVec.y;
+		let z_bb:number = tempVec.z;
+		nuc.visual_object.children[1].getWorldPosition(tempVec);
+		let x_ns:number = tempVec.x;
+		let y_ns:number = tempVec.y;
+		let z_ns:number = tempVec.z;
 		console.log(x_bb + " " + y_bb + " " + z_bb);
 		let x_a1:number;
 		let y_a1:number;
