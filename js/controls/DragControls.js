@@ -67,7 +67,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 		_raycaster.setFromCamera(_mouse, _camera);
 		if (_selected && scope.enabled) {
 			if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-				console.log("111111111");
 				_selected.position.copy(_intersection.sub(_offset));
 			}
 
@@ -188,7 +187,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			}
 
 			if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-				console.log("2222222222");
 				_offset.copy(_intersection).sub(_selected.position);
 			}
 

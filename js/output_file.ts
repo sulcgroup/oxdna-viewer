@@ -18,7 +18,7 @@ function makeOutputFiles(){
 	}
 	top = tot_nuc + " " + tot_strands + "\n";
 	for (let i = 0; i < nucleotides.length; i++){
-		top = top + nucleotides[i].my_strand + " " + nucleotides[i].type + " ";
+		top = top + (nucleotides[i].my_strand + 2*nucleotides[i].my_system) + " " + nucleotides[i].type + " ";
 		let neighbor3 = nucleotides[i].neighbor3;
 		let neighbor5 = nucleotides[i].neighbor5;
 		if (neighbor3 === null || neighbor3 === undefined){
@@ -41,7 +41,7 @@ function makeOutputFiles(){
 		+ "\n" + "E = 0 0 0 " + dat_fileout + "\n";
 	for (let i = 0; i < nucleotides.length; i++){
 		let nuc:Nucleotide = nucleotides[i];
-		nuc.visual_object.getWorldPosition(tempVec);
+		nuc.visual_object.children[3].getWorldPosition(tempVec);
 		let x:number = tempVec.x;
 		let y:number = tempVec.y;
         let z:number = tempVec.z;
@@ -54,7 +54,6 @@ function makeOutputFiles(){
 		let x_ns:number = tempVec.x;
 		let y_ns:number = tempVec.y;
 		let z_ns:number = tempVec.z;
-		console.log(x_bb + " " + y_bb + " " + z_bb);
 		let x_a1:number;
 		let y_a1:number;
 		let z_a1:number;
@@ -81,11 +80,6 @@ function makeOutputFiles(){
 			let x_matrix = [[x_a2,-(z_a1),y_a1],[y_a2,0,x_a1],[z_a2,x_a1,0]];
 			let y_matrix = [[0,x_a2,y_a1],[-(z_a1),y_a2,x_a1],[-(y_a1),z_a2,0]];
 			let z_matrix = [[0,-(z_a1),x_a2],[-(z_a1),0,y_a2],[-(y_a1),x_a1,z_a2]];
-
-			console.log(Coeff);
-			console.log(det(Coeff));
-			console.log(x_matrix);
-			console.log(det(x_matrix));
  
 			let a3:number[] = divAndNeg(cross(x_a1,y_a1,z_a1,x_a2,y_a2,z_a2),dot(x_a1,y_a1,z_a1,x_a1,y_a1,z_a1));
 			x_a3 = a3[0]; y_a3 = a3[1]; z_a3 = a3[2]; 
