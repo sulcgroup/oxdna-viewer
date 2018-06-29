@@ -47,22 +47,45 @@ lights[2].position.set(-100, -200, -100);
 scene.add(lights[0]);
 scene.add(lights[1]);
 scene.add(lights[2]);
-var dir = new THREE.Vector3(1, 0, 0);
+//Add arrows to scene
+let dir = new THREE.Vector3(1, 0, 0);
 //normalize the direction vector (convert to vector of length 1)
 dir.normalize();
-var origin = new THREE.Vector3(0, 0, 0);
+let origin = new THREE.Vector3(0, 0, 0);
 var length = 10;
-var hex = 0x000080;
-var arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+let hex = 0x000080;
+let arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+arrowHelper.name = "x-axis";
 scene.add(arrowHelper);
 dir = new THREE.Vector3(0, 1, 0);
 dir.normalize();
 arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+arrowHelper.name = "y-axis";
 scene.add(arrowHelper);
 dir = new THREE.Vector3(0, 0, 1);
 dir.normalize();
 arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+arrowHelper.name = "z-axis";
 scene.add(arrowHelper);
+function toggleArrows(chkBox) {
+    if (chkBox.checked) {
+        let arrowHelper = scene.getObjectByName("x-axis");
+        arrowHelper.visible = true;
+        arrowHelper = scene.getObjectByName("y-axis");
+        arrowHelper.visible = true;
+        arrowHelper = scene.getObjectByName("z-axis");
+        arrowHelper.visible = true;
+    }
+    else {
+        let arrowHelper = scene.getObjectByName("x-axis");
+        arrowHelper.visible = false;
+        arrowHelper = scene.getObjectByName("y-axis");
+        arrowHelper.visible = false;
+        arrowHelper = scene.getObjectByName("z-axis");
+        arrowHelper.visible = false;
+    }
+    render();
+}
 // snippet borrowed from three.js examples 
 // adding mouse controll to the scene 
 //var orbit = new THREE.OrbitControls( camera, renderer.domElement );

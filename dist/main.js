@@ -253,7 +253,7 @@ target.addEventListener("drop", function (event) {
             var backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
             var nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
             var con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
-            var posObj = new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            var posObj = new THREE.Mesh();
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
             // apply rotations
             nucleoside.applyMatrix(base_rotation);
@@ -308,20 +308,6 @@ target.addEventListener("drop", function (event) {
             ;
             render();
         });
-        // reposition center of mass of the system to 0,0,0
-        let cms = new THREE.Vector3(0, 0, 0);
-        let n_nucleotides = system.system_length();
-        let i = system.global_start_id;
-        for (; i < system.global_start_id + n_nucleotides; i++) {
-            cms.add(nucleotides[i].pos);
-        }
-        let mul = 1.0 / n_nucleotides;
-        cms.multiplyScalar(mul);
-        i = system.global_start_id;
-        for (; i < system.global_start_id + n_nucleotides; i++) {
-            nucleotide_3objects[i].position.sub(cms);
-        }
-        systems[sys_count].CoM = cms; //because system com may be useful to know
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
         // update the scene
@@ -336,6 +322,40 @@ function cross(a1, a2, a3, b1, b2, b3) {
     return [a2 * b3 - a3 * b2,
         a3 * b1 - a1 * b3,
         a1 * b2 - a2 * b1];
+}
+function centerSystems() {
+    for (let i = 0; i < nucleotides.length; i++) {
+        nucleotides[i].pos.x = nucleotides[i].visual_object.children[3].position.x;
+        nucleotides[i].pos.y = nucleotides[i].visual_object.children[3].position.y;
+        nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
+    }
+    for (let x = 0; x < systems.length; x++) {
+        let cms = new THREE.Vector3(0, 0, 0);
+        let n_nucleotides = systems[x].system_length();
+        let i = systems[x].global_start_id;
+        let temp = new THREE.Vector3(0, 0, 0);
+        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
+            cms.add(temp);
+        }
+        let mul = 1.0 / n_nucleotides;
+        cms.multiplyScalar(mul);
+        console.log(cms);
+        i = systems[x].global_start_id;
+        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+            nucleotide_3objects[i].position.sub(cms);
+        }
+        systems[x].CoM = cms; //because system com may be useful to know
+        cms = new THREE.Vector3(0, 0, 0);
+        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
+            cms.add(temp);
+        }
+        mul = 1.0 / n_nucleotides;
+        cms.multiplyScalar(mul);
+        console.log(cms);
+    }
+    render();
 }
 //strand delete testcode
 document.addEventListener("keypress", event => {

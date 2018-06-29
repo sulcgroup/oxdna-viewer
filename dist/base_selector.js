@@ -9,9 +9,12 @@ class Selected_Base {
     }
 }
 let selected_bases = [];
+let listBases = "";
+let basesInfo = "";
 document.addEventListener('mousedown', event => {
-    getMode();
-    if (mode == "baseSelect") {
+    getActionMode();
+    getScopeMode();
+    if (actionMode.includes("Select")) {
         // magic ... 
         let mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
         let raycaster = new THREE.Raycaster();
@@ -32,116 +35,134 @@ document.addEventListener('mousedown', event => {
         }
         let sp = [];
         for (let i = 0; i < nucleotides.length; i++) {
-            sp.push(nucleotides[i].visual_object.children[3]);
+            sp.push(nucleotides[i].visual_object.children[4]);
         }
         let intersects = raycaster.intersectObjects(backbones);
         // make note of what's been clicked
         let nucleotideID = -1;
         if (intersects.length > 0) {
-            for (let i = 0; i < nucleotides.length; i++) {
-                if (nucleotides[i].visual_object.children[0] === intersects[0].object)
-                    nucleotideID = i;
-            }
-            // highlight/remove highlight the bases we've clicked 
-            let selected = false;
-            let index = 0;
-            for (let i = 0; i < selected_bases.length; i++) {
-                if (selected_bases[i].id == nucleotideID) {
-                    selected = true;
-                    index = i;
-                }
-            }
-            let back_Mesh = backbones[nucleotideID];
-            let nuc_Mesh = nucleosides[nucleotideID];
-            let con_Mesh = con[nucleotideID];
-            let sp_Mesh = sp[nucleotideID];
-            if (selected) {
-                // figure out what that base was before you painted it black and revert it
-                let baseArr = selected_bases.slice(0, index + 1);
-                let baseArr2 = selected_bases.slice(index + 1, selected_bases.length);
-                let prevBack_Mesh = baseArr[index].b;
-                if (back_Mesh instanceof THREE.Mesh) {
-                    back_Mesh.material = prevBack_Mesh.material;
-                }
-                let prevNuc_Mesh = baseArr[index].n;
-                if (nuc_Mesh instanceof THREE.Mesh) {
-                    nuc_Mesh.material = prevNuc_Mesh.material;
-                }
-                let prevCon_Mesh = baseArr[index].c;
-                if (con_Mesh instanceof THREE.Mesh) {
-                    con_Mesh.material = prevCon_Mesh.material;
-                }
-                let prevSP_Mesh = baseArr[index].sp;
-                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                    sp_Mesh.material = prevSP_Mesh.material;
-                }
-                baseArr.pop();
-                selected_bases = baseArr.concat(baseArr2);
-                render();
-            }
-            else {
-                if (back_Mesh instanceof THREE.Mesh && nuc_Mesh instanceof THREE.Mesh && con_Mesh instanceof THREE.Mesh) {
-                    let back_MeshCopy = back_Mesh.clone();
-                    let nuc_MeshCopy = nuc_Mesh.clone();
-                    let con_MeshCopy = con_Mesh.clone();
-                    let sp_MeshCopy;
-                    if (sp_Mesh instanceof THREE.Mesh) {
-                        sp_MeshCopy = sp_Mesh.clone();
-                        selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy, sp_MeshCopy));
-                    }
-                    else if (sp_Mesh === undefined) {
-                        selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy, sp_Mesh));
+            if (scopeMode.includes("System")) {
+                var sysID;
+                for (let x = 0; x < nucleotides.length; x++) {
+                    if (nucleotides[x].visual_object.children[0] === intersects[0].object) {
+                        sysID = nucleotides[x].my_system;
+                        break;
                     }
                 }
-                if (back_Mesh instanceof THREE.Mesh) {
-                    back_Mesh.material = selection_material;
+                for (let i = 0; i < nucleotides.length; i++) {
+                    if (nucleotides[i].my_system == sysID) {
+                        select(i, backbones, nucleosides, con, sp);
+                    }
                 }
-                if (nuc_Mesh instanceof THREE.Mesh) {
-                    nuc_Mesh.material = selection_material;
-                }
-                if (con_Mesh instanceof THREE.Mesh) {
-                    con_Mesh.material = selection_material;
-                }
-                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                    sp_Mesh.material = selection_material;
-                }
-                // give index using global base coordinates 
-                //console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?
-                render();
+                basesInfo = "System ID: " + sysID + "\n" +
+                    "# of Strands: " + systems[sysID].strands.length + "\n" +
+                    "# of Nucleotides: " + systems[sysID].system_length();
+                makeTextArea(basesInfo, "BaseInfo");
             }
-            let listBases = "";
+            else if (scopeMode.includes("Strand")) {
+                var strandID;
+                for (let x = 0; x < nucleotides.length; x++) {
+                    if (nucleotides[x].visual_object.children[0] === intersects[0].object) {
+                        strandID = nucleotides[x].my_strand;
+                        break;
+                    }
+                }
+                for (let i = 0; i < nucleotides.length; i++) {
+                    if (nucleotides[i].my_strand == strandID) {
+                        select(i, backbones, nucleosides, con, sp);
+                    }
+                }
+            }
+            else if (scopeMode.includes("Nuc")) {
+                for (let nucleotideID = 0; nucleotideID < nucleotides.length; nucleotideID++) {
+                    if (nucleotides[nucleotideID].visual_object.children[0] === intersects[0].object) {
+                        select(nucleotideID, backbones, nucleosides, con, sp);
+                        break;
+                    }
+                }
+            }
+            listBases = "";
             for (let x = 0; x < selected_bases.length; x++) {
                 listBases = listBases + selected_bases[x].id + "\n";
                 //console.log(listBases);
             }
-            makeTextArea(listBases);
+            makeTextArea(listBases, "BaseList");
         }
     }
 });
-function makeTextArea(bases) {
-    let textArea = document.getElementById("BASES");
-    if (textArea !== null) {
-        textArea.innerHTML = "Bases currently selected:\n" + bases;
-    }
-}
-function makeMutualTrapFile() {
-    let x, count = 0;
-    let base1 = -1, base2 = -1;
-    for (x = 0; x < selected_bases.length; x++) {
-        if (selected_bases[x] !== undefined) {
-            count++;
-            if (count == 1)
-                base1 = x;
-            else if (count == 2)
-                base2 = x;
+function select(nucleotideID, backbones, nucleosides, con, sp) {
+    // highlight/remove highlight the bases we've clicked 
+    let selected = false;
+    let index = 0;
+    for (let i = 0; i < selected_bases.length; i++) {
+        if (selected_bases[i].id == nucleotideID) {
+            selected = true;
+            index = i;
         }
     }
-    if (count != 2) {
-        alert("Please select only 2 bases to create a Mutual Trap File.");
+    let back_Mesh = backbones[nucleotideID];
+    let nuc_Mesh = nucleosides[nucleotideID];
+    let con_Mesh = con[nucleotideID];
+    let sp_Mesh = sp[nucleotideID];
+    if (selected) {
+        // figure out what that base was before you painted it black and revert it
+        let baseArr = selected_bases.slice(0, index + 1);
+        let baseArr2 = selected_bases.slice(index + 1, selected_bases.length);
+        let prevBack_Mesh = baseArr[index].b;
+        if (back_Mesh instanceof THREE.Mesh) {
+            back_Mesh.material = prevBack_Mesh.material;
+        }
+        let prevNuc_Mesh = baseArr[index].n;
+        if (nuc_Mesh instanceof THREE.Mesh) {
+            nuc_Mesh.material = prevNuc_Mesh.material;
+        }
+        let prevCon_Mesh = baseArr[index].c;
+        if (con_Mesh instanceof THREE.Mesh) {
+            con_Mesh.material = prevCon_Mesh.material;
+        }
+        let prevSP_Mesh = baseArr[index].sp;
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            sp_Mesh.material = prevSP_Mesh.material;
+        }
+        baseArr.pop();
+        selected_bases = baseArr.concat(baseArr2);
+        render();
     }
     else {
-        let mutTrapText = writeMutTrapText(base1, base2) + writeMutTrapText(base2, base1);
-        makeTextFile("mutTrapFile", mutTrapText);
+        if (back_Mesh instanceof THREE.Mesh && nuc_Mesh instanceof THREE.Mesh && con_Mesh instanceof THREE.Mesh) {
+            let back_MeshCopy = back_Mesh.clone();
+            let nuc_MeshCopy = nuc_Mesh.clone();
+            let con_MeshCopy = con_Mesh.clone();
+            let sp_MeshCopy;
+            if (sp_Mesh instanceof THREE.Mesh) {
+                sp_MeshCopy = sp_Mesh.clone();
+                selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy, sp_MeshCopy));
+            }
+            else if (sp_Mesh === undefined) {
+                selected_bases.push(new Selected_Base(nucleotideID, back_MeshCopy, nuc_MeshCopy, con_MeshCopy, sp_Mesh));
+            }
+        }
+        if (back_Mesh instanceof THREE.Mesh) {
+            back_Mesh.material = selection_material;
+        }
+        if (nuc_Mesh instanceof THREE.Mesh) {
+            nuc_Mesh.material = selection_material;
+        }
+        if (con_Mesh instanceof THREE.Mesh) {
+            con_Mesh.material = selection_material;
+        }
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            sp_Mesh.material = selection_material;
+        }
+        // give index using global base coordinates 
+        //console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?
+        render();
+    }
+}
+function makeTextArea(bases, id) {
+    let textArea = document.getElementById(id);
+    if (textArea !== null) {
+        textArea.innerHTML = "Bases currently selected:\n" + bases;
     }
 }
 function writeMutTrapText(base1, base2) {
@@ -150,6 +171,22 @@ function writeMutTrapText(base1, base2) {
         "ref_particle = " + base2 + "\n" +
         "stiff = 1.\n" +
         "r0 = 1.2" + "\n}\n\n";
+}
+function makeMutualTrapFile() {
+    let x, count = 0;
+    let mutTrapText = "";
+    for (x = 0; x < selected_bases.length; x = x + 2) {
+        if (selected_bases[x + 1] !== undefined) {
+            mutTrapText = mutTrapText + writeMutTrapText(x, x + 1) + writeMutTrapText(x + 1, x);
+        }
+        else {
+            alert("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File.");
+        }
+    }
+    makeTextFile("mutTrapFile", mutTrapText);
+}
+function makeSelectedBasesFile() {
+    makeTextFile("baseListFile", listBases);
 }
 let textFile;
 function makeTextFile(filename, text) {
