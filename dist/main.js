@@ -213,12 +213,15 @@ target.addEventListener("drop", function (event) {
             var cube = new THREE.Mesh(geometry, material);
             cube.position.set(x, y, z);
             //scene.add(cube);
-            // compute offset to bring strand in box
-            let dx = Math.round(x / box) * box, dy = Math.round(y / box) * box, dz = Math.round(z / box) * box;
-            //fix coordinates 
-            x = x - dx;
-            y = y - dy;
-            z = z - dz;
+            /*             // compute offset to bring strand in box
+                        let dx = Math.round(x / box) * box,
+                            dy = Math.round(y / box) * box,
+                            dz = Math.round(z / box) * box;
+            
+                        //fix coordinates
+                        x = x - dx;
+                        y = y - dy;
+                        z = z - dz;*/
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
             let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
@@ -308,8 +311,26 @@ target.addEventListener("drop", function (event) {
             ;
             render();
         });
+        for (let i = 0; i < systems[sys_count].strands.length; i++) {
+            // compute offset to bring strand in box
+            let n = systems[sys_count].strands[i].nucleotides.length;
+            let cms = new THREE.Vector3(0, 0, 0);
+            for (let j = 0; j < n; j++) {
+                cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[3].position);
+            }
+            let mul = 1.0 / n;
+            cms.multiplyScalar(mul);
+            let dx = Math.round(cms.x / box) * box, dy = Math.round(cms.y / box) * box, dz = Math.round(cms.z / box) * box;
+            //fix coordinates 
+            systems[sys_count].strands[i].strand_3objects.position.sub(new THREE.Vector3(dx, dy, dz));
+        }
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
+        getActionMode();
+        getScopeMode();
+        if (actionMode.includes("Drag")) {
+            drag();
+        }
         // update the scene
         render();
     };
@@ -330,32 +351,28 @@ function centerSystems() {
         nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
     }
     for (let x = 0; x < systems.length; x++) {
-        let cms = new THREE.Vector3(0, 0, 0);
         let n_nucleotides = systems[x].system_length();
         let i = systems[x].global_start_id;
         let temp = new THREE.Vector3(0, 0, 0);
-        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
-            cms.add(temp);
-        }
-        let mul = 1.0 / n_nucleotides;
-        cms.multiplyScalar(mul);
-        console.log(cms);
+        let cms = calcCMS(x, n_nucleotides, i);
         i = systems[x].global_start_id;
         for (; i < systems[x].global_start_id + n_nucleotides; i++) {
             nucleotide_3objects[i].position.sub(cms);
         }
         systems[x].CoM = cms; //because system com may be useful to know
-        cms = new THREE.Vector3(0, 0, 0);
-        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
-            cms.add(temp);
-        }
-        mul = 1.0 / n_nucleotides;
-        cms.multiplyScalar(mul);
-        console.log(cms);
     }
     render();
+}
+function calcCMS(x, n_nucleotides, i) {
+    let cms = new THREE.Vector3(0, 0, 0);
+    let temp = new THREE.Vector3(0, 0, 0);
+    for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+        nucleotides[i].visual_object.children[3].getWorldPosition(temp);
+        cms.add(temp);
+    }
+    let mul = 1.0 / n_nucleotides;
+    cms.multiplyScalar(mul);
+    return cms;
 }
 //strand delete testcode
 document.addEventListener("keypress", event => {

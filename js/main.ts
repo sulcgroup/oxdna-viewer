@@ -247,21 +247,21 @@ target.addEventListener("drop", function (event) {
             let x = parseFloat(l[0]) - fx,
                 y = parseFloat(l[1]) - fy,
                 z = parseFloat(l[2]) - fz;
-            var geometry = new THREE.BoxGeometry(0.5,0.5,0.5);
+            var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             var cube = new THREE.Mesh(geometry, material);
-            cube.position.set(x,y,z);
+            cube.position.set(x, y, z);
             //scene.add(cube);
 
-            // compute offset to bring strand in box
-            let dx = Math.round(x / box) * box,
-                dy = Math.round(y / box) * box,
-                dz = Math.round(z / box) * box;
-
-            //fix coordinates 
-            x = x - dx;
-            y = y - dy;
-            z = z - dz;
+            /*             // compute offset to bring strand in box
+                        let dx = Math.round(x / box) * box,
+                            dy = Math.round(y / box) * box,
+                            dz = Math.round(z / box) * box;
+            
+                        //fix coordinates 
+                        x = x - dx;
+                        y = y - dy;
+                        z = z - dz;*/
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
 
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
@@ -330,7 +330,7 @@ target.addEventListener("drop", function (event) {
             backbone.position.set(x_bb, y_bb, z_bb);
             nucleoside.position.set(x_ns, y_ns, z_ns);
             con.position.set(x_con, y_con, z_con);
-            posObj.position.set(x,y,z);
+            posObj.position.set(x, y, z);
             //current_strand.strand_3objects.children.push(backbone);
             //current_strand.strand_3objects.children.push(nucleoside);
             //current_strand.strand_3objects.children.push(con);
@@ -385,12 +385,32 @@ target.addEventListener("drop", function (event) {
             render();
         });
 
-        
+        for (let i = 0; i < systems[sys_count].strands.length; i++) {
+            // compute offset to bring strand in box
+            let n = systems[sys_count].strands[i].nucleotides.length;
+            let cms = new THREE.Vector3(0, 0, 0);
+            for (let j = 0; j < n; j++) {
+                cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[3].position);
+            }
+            let mul = 1.0 / n;
+            cms.multiplyScalar(mul);
+            let dx = Math.round(cms.x / box) * box,
+                dy = Math.round(cms.y / box) * box,
+                dz = Math.round(cms.z / box) * box;
+
+            //fix coordinates 
+            systems[sys_count].strands[i].strand_3objects.position.sub(new THREE.Vector3(dx, dy, dz));
+        }
+
 
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
 
-        
+        getActionMode();
+        getScopeMode();
+        if (actionMode.includes("Drag")) {
+            drag();
+        }
         // update the scene
         render();
 
@@ -420,33 +440,31 @@ function centerSystems() {
         nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
     }
     for (let x = 0; x < systems.length; x++) {
-        let cms = new THREE.Vector3(0, 0, 0);
         let n_nucleotides = systems[x].system_length();
         let i = systems[x].global_start_id;
         let temp = new THREE.Vector3(0, 0, 0);
-        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
-            cms.add(temp);
-        }
-        let mul = 1.0 / n_nucleotides;
-        cms.multiplyScalar(mul);
-        console.log(cms);
+        let cms = calcCMS(x, n_nucleotides, i);
         i = systems[x].global_start_id;
         for (; i < systems[x].global_start_id + n_nucleotides; i++) {
             nucleotide_3objects[i].position.sub(cms);
         }
         systems[x].CoM = cms; //because system com may be useful to know
-        cms = new THREE.Vector3(0, 0, 0);
-        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-            nucleotides[i].visual_object.children[3].getWorldPosition(temp);
-            cms.add(temp);
-        }
-        mul = 1.0 / n_nucleotides;
-        cms.multiplyScalar(mul);
-        console.log(cms);
     }
     render();
 }
+
+function calcCMS(x, n_nucleotides, i) {
+    let cms = new THREE.Vector3(0, 0, 0);
+    let temp = new THREE.Vector3(0, 0, 0);
+    for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+        nucleotides[i].visual_object.children[3].getWorldPosition(temp);
+        cms.add(temp);
+    }
+    let mul = 1.0 / n_nucleotides;
+    cms.multiplyScalar(mul);
+    return cms;
+}
+
 
 //strand delete testcode
 document.addEventListener("keypress", event => {

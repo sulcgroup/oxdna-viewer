@@ -88,6 +88,8 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 				// }
 				if (scopeMode.includes("Nuc")) {
 					var object = intersects[0].object.parent;
+
+
 				}
 				else if (scopeMode.includes("Strand")) {
 					for (let i = 0; i < systems.length; i++) {
@@ -116,7 +118,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 						}
 					}
 				}
-
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
 
 				if (_hovered !== object) {
@@ -127,6 +128,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 					_hovered = object;
 
 				}
+				render();
 
 			} else {
 
@@ -140,11 +142,10 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 				}
 
 			}
-			render();
+
 		}
 
 	}
-
 	function onDocumentMouseDown(event) {
 		if (actionMode.includes("Drag")) {
 			event.preventDefault();
@@ -188,7 +189,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 						}
 					}
 				}
-
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
 					_offset.copy(_intersection).sub(_selected.position);
 				}
@@ -208,7 +208,29 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			event.preventDefault();
 
 			if (_selected) {
+				if (scopeMode.includes("Nuc")) {
+					let i, j, k, l;
+					for (i = 0; i < systems.length; i++) {
+						for (j = 0; j < systems[i].strands.length; j++) {
+							for (k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
+								for (l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
+									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == _selected.children[0].id) {
+										var current_nuc = systems[i].strands[j].nucleotides[k];
+										break;
+									}
+								}
+							}
+						}
+					}
 
+					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) {
+						calcsp(current_nuc);
+					}
+					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined){``
+						calcsp(systems[current_nuc.my_system].strands[current_nuc.my_strand - 1].nucleotides[current_nuc.local_id + 1]);
+					}
+					
+				}
 				scope.dispatchEvent({ type: 'dragend', object: _selected });
 
 				_selected = null;
@@ -216,7 +238,43 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			}
 
 			_domElement.style.cursor = 'auto';
+			render();
 		}
+	}
+
+	function calcsp(current_nuc) {
+		var temp = new THREE.Vector3();
+		current_nuc.neighbor3.visual_object.children[0].getWorldPosition(temp);
+		var x_bb_last = temp.x,
+			y_bb_last = temp.y,
+			z_bb_last = temp.z;
+
+		current_nuc.visual_object.children[0].getWorldPosition(temp);
+		// compute backbone cm
+		let x_bb = temp.x;
+		let y_bb = temp.y;
+		let z_bb = temp.z;
+
+		//last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+		let x_sp = (x_bb + x_bb_last) / 2,
+			y_sp = (y_bb + y_bb_last) / 2,
+			z_sp = (z_bb + z_bb_last) / 2;
+
+		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+		// easy periodic boundary condition fix  
+		var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+			new THREE.Quaternion().setFromUnitVectors(
+				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+			)
+		);
+		let tempsp = new THREE.Mesh(connector_geometry, backbone_materials[Math.floor(current_nuc.my_strand % backbone_materials.length)]);
+		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
+		tempsp.applyMatrix(rotation_sp);
+		tempsp.position.set(x_sp, y_sp, z_sp);
+		current_nuc.visual_object.getWorldPosition(temp);
+		tempsp.position.sub(temp);
+		current_nuc.visual_object.remove(current_nuc.visual_object.children[4]);
+		current_nuc.visual_object.add(tempsp);
 	}
 
 	function onDocumentTouchMove(event) {
@@ -235,7 +293,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			if (_selected && scope.enabled) {
 
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-					console.log("333333333333");
 					_selected.position.copy(_intersection.sub(_offset));
 				}
 

@@ -59,7 +59,7 @@
 		textarea {
 			margin: 5px 5px 5px 5px;
 			overflow-y: scroll;
-			font-size: 16px;
+			font-size: 10px;
 		}
 
 		button {
@@ -100,13 +100,15 @@
 			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
 			<button onclick=controls.reset() type="button">Reset Camera</button>
 			<button onclick="centerSystems()" type="button">Center Systems</button>
+			<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button>
+			<button onclick="rotateClock()" type="button">Rotate Clockwise</button>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 			<form action="" id="Action">
 				<fieldset>
 					<legend>Action:</legend>
 					<input type="checkbox" name="action" value="Select" checked> Select
 					<br>
-					<input type="checkbox" name="action" value="Drag"> Drag
+					<input type="checkbox" name="action" value="Drag" > Drag
 					<br>
 				</fieldset>
 			</form>
@@ -142,6 +144,8 @@
 		<script src="./dist/base_selector.js"></script>
 		<script src="./dist/output_file.js"></script>
 		<script src="./dist/translation.js"></script>
+		<script src="./js/controls/SceneUtils.js"></script>
+		<script src="./dist/rotate.js"></script>
 		<!--<script src="./dist/cubes.js"></script>-->
 	</div>
 </body>

@@ -1,4 +1,3 @@
-//let math = require('mathjs');
 class Selected_Base {
     constructor(idx, b, n, c, sp) {
         this.id = idx;
@@ -8,7 +7,7 @@ class Selected_Base {
         this.sp = sp;
     }
 }
-let selected_bases = [];
+var selected_bases = [];
 let listBases = "";
 let basesInfo = "";
 document.addEventListener('mousedown', event => {
@@ -39,10 +38,10 @@ document.addEventListener('mousedown', event => {
         }
         let intersects = raycaster.intersectObjects(backbones);
         // make note of what's been clicked
-        let nucleotideID = -1;
+        let nucleotideID;
         if (intersects.length > 0) {
             if (scopeMode.includes("System")) {
-                var sysID;
+                let sysID;
                 for (let x = 0; x < nucleotides.length; x++) {
                     if (nucleotides[x].visual_object.children[0] === intersects[0].object) {
                         sysID = nucleotides[x].my_system;
@@ -54,15 +53,12 @@ document.addEventListener('mousedown', event => {
                         select(i, backbones, nucleosides, con, sp);
                     }
                 }
-                basesInfo = "System ID: " + sysID + "\n" +
-                    "# of Strands: " + systems[sysID].strands.length + "\n" +
-                    "# of Nucleotides: " + systems[sysID].system_length();
-                makeTextArea(basesInfo, "BaseInfo");
             }
             else if (scopeMode.includes("Strand")) {
-                var strandID;
+                let sysID, strandID;
                 for (let x = 0; x < nucleotides.length; x++) {
                     if (nucleotides[x].visual_object.children[0] === intersects[0].object) {
+                        sysID = nucleotides[x].my_system;
                         strandID = nucleotides[x].my_strand;
                         break;
                     }
@@ -74,7 +70,7 @@ document.addEventListener('mousedown', event => {
                 }
             }
             else if (scopeMode.includes("Nuc")) {
-                for (let nucleotideID = 0; nucleotideID < nucleotides.length; nucleotideID++) {
+                for (nucleotideID = 0; nucleotideID < nucleotides.length; nucleotideID++) {
                     if (nucleotides[nucleotideID].visual_object.children[0] === intersects[0].object) {
                         select(nucleotideID, backbones, nucleosides, con, sp);
                         break;
@@ -86,7 +82,43 @@ document.addEventListener('mousedown', event => {
                 listBases = listBases + selected_bases[x].id + "\n";
                 //console.log(listBases);
             }
+            basesInfo = "";
+            let sysPrint = [], strandPrint = [], sys, strand;
+            for (let x = 0; x < selected_bases.length; x++) {
+                let temp = nucleotides[selected_bases[x].id];
+                sys = temp.my_system;
+                strand = temp.my_strand - 1;
+                if (sysPrint.indexOf(sys) < 0) {
+                    basesInfo += "SYSTEM:\n" +
+                        "System ID: " + sys + "\n" +
+                        "# of Strands: " + systems[sys].strands.length + "\n" +
+                        "# of Nucleotides: " + systems[sys].system_length() + "\n" +
+                        "System Position:\nx = " + systems[sys].system_3objects.position.x + "\n" +
+                        "y = " + systems[sys].system_3objects.position.y + "\n" +
+                        "z = " + systems[sys].system_3objects.position.z + "\n\n";
+                    sysPrint.push(sys);
+                }
+                if (strandPrint.indexOf(strand) < 0) {
+                    basesInfo += "STRAND:\n" +
+                        "System ID: " + sys + "\n" +
+                        "Strand ID: " + strand + "\n" +
+                        "# of Nucleotides: " + systems[sys].strands[strand].nucleotides.length + "\n" +
+                        "Strand Position:\nx = " + systems[sys].strands[strand].strand_3objects.position.x + "\n" +
+                        "y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
+                        "z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
+                    strandPrint.push(strand);
+                }
+                console.log();
+                basesInfo += "NUCLEOTIDE:\n" +
+                    "Strand ID: " + strand + "\n" +
+                    "Global ID: " + temp.global_id + "\n" +
+                    "Base ID: " + temp.type + "\n" +
+                    "Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.children[3].position.x + "\n" +
+                    "y = " + nucleotides[temp.global_id].visual_object.children[3].position.y + "\n" +
+                    "z = " + nucleotides[temp.global_id].visual_object.children[3].position.z + "\n";
+            }
             makeTextArea(listBases, "BaseList");
+            makeTextArea(basesInfo, "BaseInfo");
         }
     }
 });

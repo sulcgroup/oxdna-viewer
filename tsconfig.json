@@ -16,6 +16,7 @@
         "./js/base_selector.ts",
         "./js/output_file.ts",
         "./js/translation.ts",
-        "./js/cubes.ts"
+        "./js/cubes.ts",
+        "./js/rotate.ts"
     ]
 }
