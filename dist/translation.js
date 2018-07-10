@@ -52,3 +52,27 @@ function drag() {
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
+function rotateClock() {
+    for (let i = 0; i < selected_bases.length; i++) {
+        let visobj = nucleotides[selected_bases[i].id].visual_object;
+        for (let j = 0; j < visobj.children.length; j++) {
+            let temp = new THREE.Vector3();
+            visobj.children[0].getWorldPosition(temp);
+            //create a blue LineBasicMaterial
+            var material = new THREE.LineBasicMaterial({ color: 0x800000 });
+            material.linewidth = 2;
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(temp);
+            temp = new THREE.Vector3(temp.x, temp.y - 5, temp.z);
+            geometry.vertices.push(temp);
+            var line = new THREE.Line(geometry, material);
+            scene.add(line);
+            //let tempmesh = new THREE.Mesh(, backbone_materials)
+            //scene.add(tempmesh);
+            //visobj.children[j].rotateOnWorldAxis(temp, Math.PI / 2);
+        }
+        render();
+    }
+}
+function rotateCounter() {
+}

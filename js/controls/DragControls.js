@@ -83,7 +83,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 			if (intersects.length > 0) {
 
-				// if (scopeMode.includes("drag")) {
+				// if (scopeMode.includes("Drag")) {
 				// 	var object = intersects[0].object;
 				// }
 				if (scopeMode.includes("Nuc")) {
@@ -156,7 +156,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 			if (intersects.length > 0) {
 
-				// if (scopeMode.includes("drag")) {
+				// if (scopeMode.includes("Drag")) {
 				// 	_selected = intersects[0].object;
 				// }
 				if (scopeMode.includes("Nuc")) {
@@ -226,10 +226,11 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) {
 						calcsp(current_nuc);
 					}
-					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined){``
+					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined) {
+						``
 						calcsp(systems[current_nuc.my_system].strands[current_nuc.my_strand - 1].nucleotides[current_nuc.local_id + 1]);
 					}
-					
+
 				}
 				scope.dispatchEvent({ type: 'dragend', object: _selected });
 
@@ -320,7 +321,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			var intersects = _raycaster.intersectObjects(_objects, individ);
 
 			if (intersects.length > 0) {
-				// if (scopeMode.includes("drag")) {
+				// if (scopeMode.includes("Drag")) {
 				// 	_selected = intersects[0].object;
 				// }
 				if (scopeMode.includes("Nuc")) {

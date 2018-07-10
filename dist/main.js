@@ -207,7 +207,9 @@ target.addEventListener("drop", function (event) {
             let l = line.split(" ");
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
-            let x = parseFloat(l[0]) - fx, y = parseFloat(l[1]) - fy, z = parseFloat(l[2]) - fz;
+            let x = parseFloat(l[0]), // - fx,
+            y = parseFloat(l[1]), // - fy,
+            z = parseFloat(l[2]); // - fz;
             var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
             var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             var cube = new THREE.Mesh(geometry, material);
@@ -311,6 +313,7 @@ target.addEventListener("drop", function (event) {
             ;
             render();
         });
+        let dx, dy, dz;
         for (let i = 0; i < systems[sys_count].strands.length; i++) {
             // compute offset to bring strand in box
             let n = systems[sys_count].strands[i].nucleotides.length;
@@ -320,9 +323,20 @@ target.addEventListener("drop", function (event) {
             }
             let mul = 1.0 / n;
             cms.multiplyScalar(mul);
-            let dx = Math.round(cms.x / box) * box, dy = Math.round(cms.y / box) * box, dz = Math.round(cms.z / box) * box;
-            //fix coordinates 
-            systems[sys_count].strands[i].strand_3objects.position.sub(new THREE.Vector3(dx, dy, dz));
+            dx = Math.round(cms.x / box) * box;
+            dy = Math.round(cms.y / box) * box;
+            dz = Math.round(cms.z / box) * box;
+            //fix coordinates
+            let temp = new THREE.Vector3();
+            for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) {
+                for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) {
+                    let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position;
+                    pos.x = pos.x - dx;
+                    pos.y = pos.y - dy;
+                    pos.z = pos.z - dz;
+                    systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                }
+            }
         }
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
