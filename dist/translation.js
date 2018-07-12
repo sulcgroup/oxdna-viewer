@@ -53,9 +53,10 @@ function drag() {
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
 function rotateClock() {
-    for (let i = 0; i < selected_bases.length; i++) {
-        let visobj = nucleotides[selected_bases[i].id].visual_object;
-        for (let j = 0; j < visobj.children.length; j++) {
+    for (let it = 0; it < 10; it++) {
+        for (let i = 0; i < selected_bases.length; i++) {
+            let visobj = nucleotides[selected_bases[i].id].visual_object;
+            //for (let j = 0; j < visobj.children.length; j++) {
             let temp = new THREE.Vector3();
             visobj.children[0].getWorldPosition(temp);
             //create a blue LineBasicMaterial
@@ -63,16 +64,41 @@ function rotateClock() {
             material.linewidth = 2;
             var geometry = new THREE.Geometry();
             geometry.vertices.push(temp);
-            temp = new THREE.Vector3(temp.x, temp.y - 5, temp.z);
-            geometry.vertices.push(temp);
+            let temp1 = new THREE.Vector3(temp.x, temp.y - 3, temp.z);
+            geometry.vertices.push(temp1);
             var line = new THREE.Line(geometry, material);
             scene.add(line);
+            let temp3 = new THREE.Vector3();
+            temp3.copy(temp);
+            temp3.normalize();
+            //visobj.rotation.y += Math.PI / 2;
+            //console.log(visobj.rotation);
+            rotateAboutPoint(visobj, temp, temp3, Math.PI / 2, true);
             //let tempmesh = new THREE.Mesh(, backbone_materials)
             //scene.add(tempmesh);
-            //visobj.children[j].rotateOnWorldAxis(temp, Math.PI / 2);
+            console.log(visobj.rotation);
+            // }
+            render();
         }
-        render();
     }
 }
 function rotateCounter() {
+}
+// obj - your object (THREE.Object3D or derived)
+// point - the point of rotation (THREE.Vector3)
+// axis - the axis of rotation (normalized THREE.Vector3)
+// theta - radian value of rotation
+// pointIsWorld - boolean indicating the point is in world coordinates (default = false)
+function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
+    pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
+    if (pointIsWorld) {
+        obj.parent.localToWorld(obj.position); // compensate for world coordinate
+    }
+    obj.position.sub(point); // remove the offset
+    obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
+    obj.position.add(point); // re-add the offset
+    if (pointIsWorld) {
+        obj.parent.worldToLocal(obj.position); // undo world coordinates compensation
+    }
+    obj.rotateOnAxis(axis, theta); // rotate the OBJECT
 }
