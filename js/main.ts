@@ -1,5 +1,5 @@
 /// <reference path="./three/index.d.ts" />
-
+render();
 // nucleotides store the information about position, orientation, ID
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
@@ -338,7 +338,6 @@ target.addEventListener("drop", function (event) {
             group.add(nucleoside);
             group.add(con);
             group.add(posObj);
-
             //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
             if (current_nucleotide.neighbor3 != null) {
                 let x_sp = (x_bb + x_bb_last) / 2,
@@ -363,13 +362,10 @@ target.addEventListener("drop", function (event) {
                     group.add(sp);
                 }
             };
-
             //actually add the new items to the scene
             current_nucleotide.visual_object = group;
             nucleotide_3objects.push(group);
             current_strand.strand_3objects.add(group);
-            //scene.add(group);
-            //scene.add(current_strand.strand_3objects);
             //update last backbone position and last strand
             x_bb_last = x_bb;
             y_bb_last = y_bb;
@@ -404,8 +400,7 @@ target.addEventListener("drop", function (event) {
             let temp = new THREE.Vector3();
             for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) {
                 for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) {
-                    let pos = 
-                    systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position;
+                    let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position;
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
@@ -413,8 +408,6 @@ target.addEventListener("drop", function (event) {
                 }
             }
         }
-
-
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
 
@@ -425,18 +418,53 @@ target.addEventListener("drop", function (event) {
         }
         // update the scene
         render();
+        //updatePos(sys_count-1);
 
     };
-
     // execute the read operation 
     dat_reader.readAsText(dat_file);
-
 
 }, false);
 
 // update the scene
 render();
 
+function updatePos(sys_count) {
+    for (let h = sys_count; h < sys_count+1; h++) {
+        let cmssys = new THREE.Vector3();
+        let n = systems[h].system_length();
+        for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //each strand
+            let n1 = systems[h].system_3objects.children[i].children.length;
+            let cms = new THREE.Vector3();
+            for (let j = 0; j < n1; j++) { //each group
+                let rotobj = systems[h].system_3objects.children[i].children[j];
+                let n2 = rotobj.children.length;
+                let cms1 = new THREE.Vector3(), currentpos = new THREE.Vector3();
+                cms.add(rotobj.children[3].position);
+                cms1 = rotobj.children[3].position;
+                let cmsx = cms1.x, cmsy = cms1.y, cmsz = cms1.z;
+                cmssys.add(rotobj.children[3].position);
+
+                for (let k = 0; k < n2; k++) {
+                    rotobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
+                }
+                rotobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz));
+            }
+            let mul = 1.0 / n1;
+            cms.multiplyScalar(mul);
+            for (let k = 0; k < n1; k++) {
+                systems[h].strands[i].strand_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cms.x, -cms.y, -cms.z));
+            }
+            systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cms.x, cms.y, cms.z));
+        }
+        let mul = 1.0 / n;
+        cmssys.multiplyScalar(mul);
+        for (let k = 0; k < systems[h].system_3objects.children.length; k++) {
+            systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -cmssys.y, -cmssys.z));
+        }
+        systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z));
+    }
+}
 
 
 function cross(a1, a2, a3, b1, b2, b3) {
@@ -451,17 +479,25 @@ function centerSystems() {
         nucleotides[i].pos.y = nucleotides[i].visual_object.children[3].position.y;
         nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
     }
-    for (let x = 0; x < systems.length; x++) {
-        let n_nucleotides = systems[x].system_length();
-        let i = systems[x].global_start_id;
-        let temp = new THREE.Vector3(0, 0, 0);
-        let cms = calcCMS(x, n_nucleotides, i);
-        i = systems[x].global_start_id;
-        for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-            nucleotide_3objects[i].position.sub(cms);
-        }
-        systems[x].CoM = cms; //because system com may be useful to know
+    for (let x = 0; x < 1; x++) {
+        systems[x].system_3objects.position.set(0, 0, 0);
     }
+    /*let n_nucleotides = systems[x].system_length();
+    let i = systems[x].global_start_id;
+    let temp = new THREE.Vector3(0, 0, 0);
+    let cms = calcCMS(x, n_nucleotides, i);
+    let pos = systems[x].system_3objects.position;
+    pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
+    /*  i = systems[x].global_start_id;
+     for (; i < systems[x].global_start_id + n_nucleotides; i++) {
+         let pos = nucleotide_3objects[i].position;
+         pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
+     } */
+    // systems[x].CoM = cms; //because system com may be useful to know
+    //  console.log(calcCMS(x,n_nucleotides,i));
+    //}
+
+
     render();
 }
 

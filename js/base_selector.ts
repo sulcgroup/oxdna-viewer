@@ -59,23 +59,23 @@ document.addEventListener('mousedown', event => {
 				}
 				for (let i = 0; i < nucleotides.length; i++) {
 					if (nucleotides[i].my_system == sysID) {
-						select(i, backbones, nucleosides, con, sp);
+						toggle(i, backbones, nucleosides, con, sp);
 					}
 				}
 			}
 
 			else if (scopeMode.includes("Strand")) {
-				let sysID, strandID;
+				let /*sysID,*/ strandID;
 				for (let x = 0; x < nucleotides.length; x++) {
 					if (nucleotides[x].visual_object.children[0] === intersects[0].object) {
-						sysID = nucleotides[x].my_system;
+						//sysID = nucleotides[x].my_system;
 						strandID = nucleotides[x].my_strand;
 						break;
 					}
 				}
 				for (let i = 0; i < nucleotides.length; i++) {
 					if (nucleotides[i].my_strand == strandID) {
-						select(i, backbones, nucleosides, con, sp);
+						toggle(i, backbones, nucleosides, con, sp);
 					}
 				}
 			}
@@ -83,7 +83,7 @@ document.addEventListener('mousedown', event => {
 			else if (scopeMode.includes("Nuc")) {
 				for (nucleotideID = 0; nucleotideID < nucleotides.length; nucleotideID++) {
 					if (nucleotides[nucleotideID].visual_object.children[0] === intersects[0].object) {
-						select(nucleotideID, backbones, nucleosides, con, sp);
+						toggle(nucleotideID, backbones, nucleosides, con, sp);
 						break;
 					}
 				}
@@ -138,7 +138,7 @@ document.addEventListener('mousedown', event => {
 	}
 });
 
-function select(nucleotideID, backbones, nucleosides, con, sp) {
+function toggle(nucleotideID, backbones, nucleosides, con, sp) {
 	// highlight/remove highlight the bases we've clicked 
 	let selected: boolean = false;
 	let index: number = 0;
