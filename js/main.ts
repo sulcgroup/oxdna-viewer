@@ -1,4 +1,5 @@
 /// <reference path="./three/index.d.ts" />
+
 render();
 // nucleotides store the information about position, orientation, ID
 // Eventually there should be a way to pair them
@@ -141,16 +142,58 @@ target.addEventListener("drop", function (event) {
     // space to store the file paths 
     let dat_file;
     let top_file;
+    let json_file;
     // assign files to the extentions 
-    if (ext === "dat") {
-        dat_file = files[0];
-        top_file = files[1];
+    if (files.length == 2) {
+        if (ext == "dat") {
+            dat_file = files[0];
+            top_file = files[1];
+        }
+        else {
+            dat_file = files[1];
+            top_file = files[0];
+        }
     }
-    else {
-        dat_file = files[1];
-        top_file = files[0];
+    else if (files.length === 3) {
+        let ext1 = files[1].name.slice(-3);
+        if (ext === "dat") {
+            if (ext1 == "top") {
+                dat_file = files[0];
+                top_file = files[1];
+                json_file = files[2];
+            }
+            else if (ext1 === "son") {
+                dat_file = files[0];
+                top_file = files[2];
+                json_file = files[1];
+            }
+        }
+        else if (ext === "top") {
+            if (ext1 == "dat") {
+                dat_file = files[1];
+                top_file = files[0];
+                json_file = files[2];
+            }
+            else if (ext1 === "son") {
+                dat_file = files[2];
+                top_file = files[0];
+                json_file = files[1];
+            }
+        }
+        else {
+            if (ext1 == "dat") {
+                dat_file = files[1];
+                top_file = files[2];
+                json_file = files[0];
+            }
+            else if (ext1 === "top") {
+                dat_file = files[2];
+                top_file = files[1];
+                json_file = files[0];
+            }
+        }
     }
-
+    else (alert("Please drag and drop 1 .dat and 1 .top file. .json is optional."))
     //read topology file
     let top_reader = new FileReader();
     top_reader.onload = () => {
@@ -321,7 +364,7 @@ target.addEventListener("drop", function (event) {
             var backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
             var nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
             var con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
-            var posObj = new THREE.Mesh();
+            var posObj = new THREE.Mesh();  //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
             // apply rotations
             nucleoside.applyMatrix(base_rotation);
@@ -418,11 +461,38 @@ target.addEventListener("drop", function (event) {
         }
         // update the scene
         render();
-        //updatePos(sys_count-1);
+        updatePos(sys_count - 1);
 
     };
     // execute the read operation 
     dat_reader.readAsText(dat_file);
+
+    let json_reader = new FileReader();
+    json_reader.onload = () => {
+
+        let lines: string[] = json_reader.result.split(", ");
+        let devs: number[] = [];
+        for (let i = 0; i < lines.length; i++) {
+            devs.push(parseFloat(lines[i]));
+        }
+        //get the simulation box size 
+        let box = parseFloat(lines[1].split(" ")[3]);
+        let min = Math.min.apply(null, devs),
+            max = Math.max.apply(null, devs);
+        let lut = new THREE.Lut("rainbow", 4000);
+        lut.setMax(max);
+        lut.setMin(min);
+        let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 47 } });
+        scene.add(legend);
+        let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5 });
+        scene.add(labels['title']);
+
+        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+            scene.add(labels['ticks'][i]);
+            scene.add(labels['lines'][i]);
+        }
+    };
+    json_reader.readAsText(json_file);
 
 }, false);
 
@@ -430,7 +500,7 @@ target.addEventListener("drop", function (event) {
 render();
 
 function updatePos(sys_count) {
-    for (let h = sys_count; h < sys_count+1; h++) {
+    for (let h = sys_count; h < sys_count + 1; h++) {
         let cmssys = new THREE.Vector3();
         let n = systems[h].system_length();
         for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //each strand
@@ -479,29 +549,42 @@ function centerSystems() {
         nucleotides[i].pos.y = nucleotides[i].visual_object.children[3].position.y;
         nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
     }
-    for (let x = 0; x < 1; x++) {
-        systems[x].system_3objects.position.set(0, 0, 0);
+    let cms = new THREE.Vector3;
+    let n_nucleotides = 0;
+    for (let x = 0; x < systems.length; x++) {
+
+        for (let y = 0; y < systems[x].system_3objects.children.length; y++) {
+            for (let z = 0; z < systems[x].system_3objects.children[y].children.length; z++) {
+                let temp = new THREE.Vector3;
+                systems[x].system_3objects.children[y].children[z].children[3].getWorldPosition(temp);
+                cms.add(temp);
+                n_nucleotides++;
+            }
+        }
     }
-    /*let n_nucleotides = systems[x].system_length();
-    let i = systems[x].global_start_id;
-    let temp = new THREE.Vector3(0, 0, 0);
-    let cms = calcCMS(x, n_nucleotides, i);
+    let mul = 1.0 / n_nucleotides;
+    cms.multiplyScalar(mul);
+    for (let x = 0; x < systems.length; x++) {
+        let pos = systems[x].system_3objects.position;
+        pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
+    }
+    /*
+    systems[x].system_3objects.position.set(0, 0, 0);
+    n_nucleotides += systems[x].system_length();
+    cms.add(calcCMS(x, n_nucleotides, i));
     let pos = systems[x].system_3objects.position;
     pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
-    /*  i = systems[x].global_start_id;
+      i = systems[x].global_start_id;
      for (; i < systems[x].global_start_id + n_nucleotides; i++) {
          let pos = nucleotide_3objects[i].position;
          pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
-     } */
-    // systems[x].CoM = cms; //because system com may be useful to know
-    //  console.log(calcCMS(x,n_nucleotides,i));
-    //}
-
-
+     } 
+    systems[x].CoM = cms; //because system com may be useful to know
+    console.log(calcCMS(x, n_nucleotides, i));*/
     render();
 }
 
-function calcCMS(x, n_nucleotides, i) {
+/* function calcCMS(x, n_nucleotides, i) {
     let cms = new THREE.Vector3(0, 0, 0);
     let temp = new THREE.Vector3(0, 0, 0);
     for (; i < systems[x].global_start_id + n_nucleotides; i++) {
@@ -511,7 +594,7 @@ function calcCMS(x, n_nucleotides, i) {
     let mul = 1.0 / n_nucleotides;
     cms.multiplyScalar(mul);
     return cms;
-}
+} */
 
 
 //strand delete testcode

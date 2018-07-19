@@ -1,4 +1,4 @@
-var camera:THREE.PerspectiveCamera, scene:THREE.Scene, renderer:THREE.WebGLRenderer;
+/* var camera:THREE.PerspectiveCamera, scene:THREE.Scene, renderer:THREE.WebGLRenderer;
 var geometry:THREE.BoxGeometry, material:THREE.MeshNormalMaterial, mesh:THREE.Mesh, mesh1:THREE.Mesh;
 
 init();
@@ -45,4 +45,4 @@ function animate() {
     var meshG2:THREE.Group = new THREE.Group;
     meshG2.add(meshG);
     dragControls = new THREE.DragControls(meshGroup, camera, true, renderer.domElement);
-} 
+}  */
