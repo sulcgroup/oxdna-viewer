@@ -1,5 +1,6 @@
-var actionMode;
-var scopeMode;
+var actionMode = "";
+var scopeMode = "";
+var axisMode = "";
 function getActionMode() {
     // Get the checkbox
     actionMode = "";
@@ -94,7 +95,16 @@ function rotate() {
 }
 function rotateClock() {
     let rotobj = rotate();
-    rotobj.rotateY(Math.PI / 2);
+    getAxisMode();
+    if (axisMode == "X") {
+        rotobj.rotateX(Math.PI / 2);
+    }
+    else if (axisMode == "Y") {
+        rotobj.rotateY(Math.PI / 2);
+    }
+    else {
+        rotobj.rotateZ(Math.PI / 2);
+    }
     render();
     /* var geometry = new THREE.Geometry();
     geometry.vertices.push(temp);
@@ -109,6 +119,29 @@ function rotateClock() {
     //rotateAboutPoint(visobj, temp, temp3, Math.PI / 2, true);
     //console.log(visobj.rotation);
     //console.log(visobj);
+}
+function rotateCounter() {
+    let rotobj = rotate();
+    getAxisMode();
+    if (axisMode == "X") {
+        rotobj.rotateX(-Math.PI / 2);
+    }
+    else if (axisMode == "Y") {
+        rotobj.rotateY(-Math.PI / 2);
+    }
+    else {
+        rotobj.rotateZ(-Math.PI / 2);
+    }
+    render();
+}
+function getAxisMode() {
+    var modeRadioButtons = document.forms['Axis'].elements['rotate'];
+    for (let i = 0, len = modeRadioButtons.length; i < len; i++) {
+        if (modeRadioButtons[i].checked) {
+            axisMode = modeRadioButtons[i].value;
+            break;
+        }
+    }
 }
 //}
 /* var geometry3 = new THREE.CubeGeometry(3, 2, 1);
@@ -145,26 +178,25 @@ scene.add(group); */
  console.log(group.rotation);
  render(); */
 // }
-function rotateCounter() {
-    let rotobj = rotate();
-    rotobj.rotateY(-Math.PI / 2);
-    render();
-}
 // obj - your object (THREE.Object3D or derived)
 // point - the point of rotation (THREE.Vector3)
 // axis - the axis of rotation (normalized THREE.Vector3)
 // theta - radian value of rotation
 // pointIsWorld - boolean indicating the point is in world coordinates (default = false)
-function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
-    pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
+/*function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
+     pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
+
     if (pointIsWorld) {
         obj.parent.localToWorld(obj.position); // compensate for world coordinate
     }
+
     obj.position.sub(point); // remove the offset
     obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
     obj.position.add(point); // re-add the offset
+
     if (pointIsWorld) {
         obj.parent.worldToLocal(obj.position); // undo world coordinates compensation
     }
+
     obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-}
+} */ 

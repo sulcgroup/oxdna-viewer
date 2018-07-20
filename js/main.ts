@@ -527,6 +527,7 @@ target.addEventListener("drop", function (event) {
 
         getActionMode();
         getScopeMode();
+        getAxisMode();
         if (actionMode.includes("Drag")) {
             drag();
         }

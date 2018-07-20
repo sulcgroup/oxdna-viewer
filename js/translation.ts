@@ -1,5 +1,6 @@
-var actionMode: string;
-var scopeMode: string;
+var actionMode: string = "";
+var scopeMode: string = "";
+var axisMode: string = "";
 
 function getActionMode() {
     // Get the checkbox
@@ -98,9 +99,21 @@ function rotate() {
     return rotobj;
 }
 function rotateClock() {
-    let rotobj = rotate();
-    rotobj.rotateY(Math.PI / 2);
-    render();
+    if (selected_bases.length > 0) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(Math.PI / 2);
+        }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(Math.PI / 2);
+        }
+        render();
+    }
+
     /* var geometry = new THREE.Geometry();
     geometry.vertices.push(temp);
     //rotateAboutPoint(visobj, temp, temp.normalize(), Math.PI/2, true);
@@ -116,7 +129,32 @@ function rotateClock() {
     //console.log(visobj);
 }
 
+function rotateCounter() {
+    if (selected_bases.length > 0) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(-Math.PI / 2);
+        }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(-Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(-Math.PI / 2);
+        }
+        render();
+    }
+}
 
+function getAxisMode() {
+    var modeRadioButtons = document.forms['Axis'].elements['rotate'];
+    for (let i: number = 0, len: number = modeRadioButtons.length; i < len; i++) {
+        if (modeRadioButtons[i].checked) {
+            axisMode = modeRadioButtons[i].value;
+            break;
+        }
+    }
+}
 
 //}
 /* var geometry3 = new THREE.CubeGeometry(3, 2, 1);
@@ -154,18 +192,14 @@ scene.add(group); */
      console.log(group.rotation);
      render(); */
     // }
-function rotateCounter() {
-    let rotobj = rotate();
-    rotobj.rotateY(-Math.PI / 2);
-    render();
-}
+
 // obj - your object (THREE.Object3D or derived)
 // point - the point of rotation (THREE.Vector3)
 // axis - the axis of rotation (normalized THREE.Vector3)
 // theta - radian value of rotation
 // pointIsWorld - boolean indicating the point is in world coordinates (default = false)
-function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
-    pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
+/*function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
+     pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
 
     if (pointIsWorld) {
         obj.parent.localToWorld(obj.position); // compensate for world coordinate
@@ -180,4 +214,4 @@ function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
     }
 
     obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-}
+} */
