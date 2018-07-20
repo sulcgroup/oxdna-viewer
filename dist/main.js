@@ -85,6 +85,7 @@ var systems = [];
 var sys_count = 0;
 var strand_count = 0;
 var nuc_count = 0;
+var lut, devs;
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
@@ -97,7 +98,7 @@ target.addEventListener("drop", function (event) {
     event.preventDefault();
     //make system to store the dropped files in
     var system = new System(sys_count, nucleotides.length);
-    var i = 0, files = event.dataTransfer.files, len = files.length;
+    var i = 0, files = event.dataTransfer.files, files_len = files.length;
     var strand_to_material = {};
     var base_to_material = {};
     var base_to_num = {
@@ -114,7 +115,7 @@ target.addEventListener("drop", function (event) {
     let top_file;
     let json_file;
     // assign files to the extentions 
-    if (files.length == 2) {
+    if (files_len == 2) {
         if (ext == "dat") {
             dat_file = files[0];
             top_file = files[1];
@@ -124,7 +125,7 @@ target.addEventListener("drop", function (event) {
             top_file = files[0];
         }
     }
-    else if (files.length === 3) {
+    else if (files_len === 3) {
         let ext1 = files[1].name.slice(-3);
         if (ext === "dat") {
             if (ext1 == "top") {
@@ -219,6 +220,29 @@ target.addEventListener("drop", function (event) {
         });
         systems.push(system);
     };
+    if (files_len == 3) {
+        let json_reader = new FileReader();
+        json_reader.onload = () => {
+            let lines = json_reader.result.split(", ");
+            devs = [];
+            for (let i = 0; i < lines.length; i++) {
+                devs.push(parseFloat(lines[i]));
+            }
+            let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
+            lut = new THREE.Lut("rainbow", 4000);
+            lut.setMax(max);
+            lut.setMin(min);
+            let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+            scene.add(legend);
+            let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+            scene.add(labels['title']);
+            for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+                scene.add(labels['ticks'][i]);
+                scene.add(labels['lines'][i]);
+            }
+        };
+        json_reader.readAsText(json_file);
+    }
     top_reader.readAsText(top_file);
     // read a configuration file 
     var x_bb_last, y_bb_last, z_bb_last;
@@ -241,6 +265,7 @@ target.addEventListener("drop", function (event) {
         let fx = parseFloat(first_line[0]), fy = parseFloat(first_line[1]), fz = parseFloat(first_line[2]);
         // add the bases to the scene
         let test = 0;
+        let arb = 0;
         lines.forEach((line, i) => {
             if (line == "") {
                 return;
@@ -295,15 +320,41 @@ target.addEventListener("drop", function (event) {
             let x_con = (x_bb + x_ns) / 2, y_con = (y_bb + y_ns) / 2, z_con = (z_bb + z_ns) / 2;
             //compute connector length
             let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
-            var base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_a3, y_a3, z_a3)));
+            let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_a3, y_a3, z_a3)));
             // correctly display stacking interactions
-            var rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
+            let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
-            var group = new THREE.Group;
-            var backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
-            var nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
-            var con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
-            var posObj = new THREE.Mesh(); //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            let group = new THREE.Group;
+            let backbone, nucleoside, con;
+            if (files_len == 2) {
+                backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
+                nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
+                con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
+            }
+            else if (files_len == 3) {
+                let tmeshlamb = new THREE.MeshLambertMaterial({
+                    color: lut.getColor(devs[arb]),
+                    //emissive: 0x072534,
+                    side: THREE.DoubleSide,
+                });
+                backbone = new THREE.Mesh(backbone_geometry, tmeshlamb);
+                arb++;
+                tmeshlamb = new THREE.MeshLambertMaterial({
+                    color: lut.getColor(devs[arb]),
+                    //emissive: 0x072534,
+                    side: THREE.DoubleSide,
+                });
+                nucleoside = new THREE.Mesh(nucleoside_geometry, tmeshlamb);
+                arb++;
+                tmeshlamb = new THREE.MeshLambertMaterial({
+                    color: lut.getColor(devs[arb]),
+                    //emissive: 0x072534,
+                    side: THREE.DoubleSide,
+                });
+                con = new THREE.Mesh(connector_geometry, tmeshlamb);
+                arb++;
+            }
+            let posObj = new THREE.Mesh(); //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
             // apply rotations
             nucleoside.applyMatrix(base_rotation);
@@ -328,7 +379,19 @@ target.addEventListener("drop", function (event) {
                 // if the bonds are to long just don't add them 
                 if (sp_len <= 1.2) {
                     var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-                    var sp = new THREE.Mesh(connector_geometry, strand_to_material[i]);
+                    let sp;
+                    if (files_len == 2) {
+                        sp = new THREE.Mesh(connector_geometry, strand_to_material[i]);
+                    }
+                    else if (files_len == 3) {
+                        let tmeshlamb = new THREE.MeshLambertMaterial({
+                            color: lut.getColor(devs[arb]),
+                            //emissive: 0x072534,
+                            side: THREE.DoubleSide,
+                        });
+                        sp = new THREE.Mesh(connector_geometry, tmeshlamb);
+                        arb++;
+                    }
                     sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                     sp.applyMatrix(rotation_sp);
                     sp.position.set(x_sp, y_sp, z_sp);
@@ -394,30 +457,106 @@ target.addEventListener("drop", function (event) {
     };
     // execute the read operation 
     dat_reader.readAsText(dat_file);
-    let json_reader = new FileReader();
-    json_reader.onload = () => {
-        let lines = json_reader.result.split(", ");
-        let devs = [];
-        for (let i = 0; i < lines.length; i++) {
-            devs.push(parseFloat(lines[i]));
+    if (files_len == 1) {
+        if (files[0].name.slice(-4) == "json") {
+            json_file = files[0];
+            let json_reader = new FileReader();
+            json_reader.onload = () => {
+                let lines = json_reader.result.split(", ");
+                devs = [];
+                for (let i = 0; i < lines.length; i++) {
+                    devs.push(parseFloat(lines[i]));
+                }
+                let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
+                lut = new THREE.Lut("rainbow", 4000);
+                lut.setMax(max);
+                lut.setMin(min);
+                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(legend);
+                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(labels['title']);
+                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+                    scene.add(labels['ticks'][i]);
+                    scene.add(labels['lines'][i]);
+                }
+                let arb = 0;
+                for (let i = 0; i < nucleotides.length; i++) {
+                    for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+                        if (j != 3) {
+                            let tmeshlamb = new THREE.MeshLambertMaterial({
+                                color: lut.getColor(devs[arb]),
+                                //emissive: 0x072534,
+                                side: THREE.DoubleSide,
+                            });
+                            let tmesh = nucleotides[i].visual_object.children[j];
+                            if (tmesh instanceof THREE.Mesh) {
+                                tmesh.material = tmeshlamb;
+                            }
+                        }
+                        arb++;
+                    }
+                }
+                render();
+            };
+            json_reader.readAsText(json_file);
         }
-        //get the simulation box size 
-        let box = parseFloat(lines[1].split(" ")[3]);
-        let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
-        let lut = new THREE.Lut("rainbow", 4000);
-        lut.setMax(max);
-        lut.setMin(min);
-        let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 47 } });
-        scene.add(legend);
-        let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5 });
-        scene.add(labels['title']);
-        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-            scene.add(labels['ticks'][i]);
-            scene.add(labels['lines'][i]);
-        }
-    };
-    json_reader.readAsText(json_file);
+    }
 }, false);
+/* if (files_len == 1) {
+        if (files[0].name.slice(-4) == "json") {
+            json_file = files[0];
+            let json_reader = new FileReader();
+
+            json_reader.onload = () => {
+                let lines: string[] = json_reader.result.split(", ");
+                lines[0] = lines[0].slice(1);
+                lines[lines.length - 1] = lines[lines.length - 1].slice(-1);
+                console.log(lines);
+                devs = [];
+                for (let i = 0; i < lines.length; i++) {
+                    devs.push(parseFloat(lines[i]));
+                }
+                console.log(devs);
+                let min = Math.min.apply(null, devs),
+                    max = Math.max.apply(null, devs);
+                lut = new THREE.Lut("rainbow", 4000);
+                console.log(max);
+                console.log(min);
+                lut.setMax(max);
+                lut.setMin(min);
+                console.log(lut);
+                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(legend);
+                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(labels['title']);
+
+                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+                    scene.add(labels['ticks'][i]);
+                    scene.add(labels['lines'][i]);
+                }
+
+                let arb = 0;
+                for (let i = 0; i < nucleotides.length; i++) {
+                    //console.log(nucleotides[i]);
+                    for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+                        if (j != 3) {
+                            //console.log(devs[arb]);
+                            let tmeshlamb = new THREE.MeshLambertMaterial({
+                                color: lut.getColor(devs[arb]),
+                                //emissive: 0x072534,
+                                side: THREE.DoubleSide
+                                //flatShading: true
+                            });
+                            nucleotides[i].visual_object.children[j] = new THREE.Mesh(backbone_geometry, tmeshlamb);
+
+                        }
+                        arb++;
+                    }
+                }
+            };
+            json_reader.readAsText(json_file);
+        }
+    } */
 // update the scene
 render();
 function updatePos(sys_count) {
