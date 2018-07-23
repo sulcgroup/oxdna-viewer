@@ -45,6 +45,8 @@ class Strand {
 class System {
     constructor(id, start_id) {
         this.strands = [];
+        this.strand_to_material = {};
+        this.base_to_material = {};
         this.system_id = id;
         this.global_start_id = start_id;
         this.system_3objects = new THREE.Group;
@@ -72,6 +74,12 @@ class System {
         });
     }
     ;
+    setStrandMaterial(strand_to_material) {
+        this.strand_to_material = strand_to_material;
+    }
+    setBaseMaterial(base_to_material) {
+        this.base_to_material = base_to_material;
+    }
 }
 ;
 // store rendering mode RNA  
@@ -218,6 +226,8 @@ target.addEventListener("drop", function (event) {
             // coloring bases according to strand id 
             strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length)];
         });
+        system.setBaseMaterial(base_to_material);
+        system.setStrandMaterial(strand_to_material);
         systems.push(system);
     };
     top_reader.readAsText(top_file);
@@ -331,6 +341,7 @@ target.addEventListener("drop", function (event) {
             let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
             let group = new THREE.Group;
+            group.name = current_nucleotide.global_id + "";
             let backbone, nucleoside, con;
             if (files_len == 2) {
                 backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
