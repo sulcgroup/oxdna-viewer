@@ -113,7 +113,9 @@ function rotateClock() {
         }
         render();
     }
-
+    else {
+        alert("Please select an object to rotate.");
+    }
     /* var geometry = new THREE.Geometry();
     geometry.vertices.push(temp);
     //rotateAboutPoint(visobj, temp, temp.normalize(), Math.PI/2, true);
@@ -143,6 +145,9 @@ function rotateCounter() {
             rotobj.rotateZ(-Math.PI / 2);
         }
         render();
+    }
+    else {
+        alert("Please select an object to rotate.");
     }
 }
 

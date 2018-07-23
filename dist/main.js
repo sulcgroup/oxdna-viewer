@@ -164,7 +164,7 @@ target.addEventListener("drop", function (event) {
             }
         }
     }
-    else
+    else if (files_len > 3)
         (alert("Please drag and drop 1 .dat and 1 .top file. .json is optional."));
     //read topology file
     let top_reader = new FileReader();
@@ -220,30 +220,36 @@ target.addEventListener("drop", function (event) {
         });
         systems.push(system);
     };
+    top_reader.readAsText(top_file);
     if (files_len == 3) {
         let json_reader = new FileReader();
         json_reader.onload = () => {
             let lines = json_reader.result.split(", ");
             devs = [];
-            for (let i = 0; i < lines.length; i++) {
-                devs.push(parseFloat(lines[i]));
+            if (lines.length == nucleotides.length) {
+                for (let i = 0; i < lines.length; i++) {
+                    devs.push(parseFloat(lines[i]));
+                }
+                let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
+                lut = new THREE.Lut("rainbow", 4000);
+                lut.setMax(max);
+                lut.setMin(min);
+                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(legend);
+                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                scene.add(labels['title']);
+                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+                    scene.add(labels['ticks'][i]);
+                    scene.add(labels['lines'][i]);
+                }
             }
-            let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
-            lut = new THREE.Lut("rainbow", 4000);
-            lut.setMax(max);
-            lut.setMin(min);
-            let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-            scene.add(legend);
-            let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-            scene.add(labels['title']);
-            for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-                scene.add(labels['ticks'][i]);
-                scene.add(labels['lines'][i]);
+            else {
+                alert(".json and .top files are not compatible.");
+                files_len = 2;
             }
         };
         json_reader.readAsText(json_file);
     }
-    top_reader.readAsText(top_file);
     // read a configuration file 
     var x_bb_last, y_bb_last, z_bb_last;
     let dat_reader = new FileReader();
@@ -338,21 +344,21 @@ target.addEventListener("drop", function (event) {
                     side: THREE.DoubleSide,
                 });
                 backbone = new THREE.Mesh(backbone_geometry, tmeshlamb);
-                arb++;
+                //arb++;
                 tmeshlamb = new THREE.MeshLambertMaterial({
                     color: lut.getColor(devs[arb]),
                     //emissive: 0x072534,
                     side: THREE.DoubleSide,
                 });
                 nucleoside = new THREE.Mesh(nucleoside_geometry, tmeshlamb);
-                arb++;
+                //arb++;
                 tmeshlamb = new THREE.MeshLambertMaterial({
                     color: lut.getColor(devs[arb]),
                     //emissive: 0x072534,
                     side: THREE.DoubleSide,
                 });
                 con = new THREE.Mesh(connector_geometry, tmeshlamb);
-                arb++;
+                //arb++;
             }
             let posObj = new THREE.Mesh(); //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
@@ -390,7 +396,6 @@ target.addEventListener("drop", function (event) {
                             side: THREE.DoubleSide,
                         });
                         sp = new THREE.Mesh(connector_geometry, tmeshlamb);
-                        arb++;
                     }
                     sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                     sp.applyMatrix(rotation_sp);
@@ -398,6 +403,7 @@ target.addEventListener("drop", function (event) {
                     //current_strand.strand_3objects.children.push(sp);
                     group.add(sp);
                 }
+                arb++;
             }
             ;
             //actually add the new items to the scene
@@ -465,39 +471,45 @@ target.addEventListener("drop", function (event) {
             json_reader.onload = () => {
                 let lines = json_reader.result.split(", ");
                 devs = [];
-                for (let i = 0; i < lines.length; i++) {
-                    devs.push(parseFloat(lines[i]));
-                }
-                let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
-                lut = new THREE.Lut("rainbow", 4000);
-                lut.setMax(max);
-                lut.setMin(min);
-                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-                scene.add(legend);
-                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-                scene.add(labels['title']);
-                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-                    scene.add(labels['ticks'][i]);
-                    scene.add(labels['lines'][i]);
-                }
-                let arb = 0;
-                for (let i = 0; i < nucleotides.length; i++) {
-                    for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-                        if (j != 3) {
-                            let tmeshlamb = new THREE.MeshLambertMaterial({
-                                color: lut.getColor(devs[arb]),
-                                //emissive: 0x072534,
-                                side: THREE.DoubleSide,
-                            });
-                            let tmesh = nucleotides[i].visual_object.children[j];
-                            if (tmesh instanceof THREE.Mesh) {
-                                tmesh.material = tmeshlamb;
+                if (lines.length == nucleotides.length) {
+                    for (let i = 0; i < lines.length; i++) {
+                        devs.push(parseFloat(lines[i]));
+                    }
+                    let min = Math.min.apply(null, devs), max = Math.max.apply(null, devs);
+                    lut = new THREE.Lut("rainbow", 4000);
+                    lut.setMax(max);
+                    lut.setMin(min);
+                    let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                    scene.add(legend);
+                    let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
+                    scene.add(labels['title']);
+                    for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+                        scene.add(labels['ticks'][i]);
+                        scene.add(labels['lines'][i]);
+                    }
+                    let arb = 0;
+                    for (let i = 0; i < nucleotides.length; i++) {
+                        let tmeshlamb = new THREE.MeshLambertMaterial({
+                            color: lut.getColor(devs[arb]),
+                            //emissive: 0x072534,
+                            side: THREE.DoubleSide
+                            //flatShading: true
+                        });
+                        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+                            if (j != 3) {
+                                let tmesh = nucleotides[i].visual_object.children[j];
+                                if (tmesh instanceof THREE.Mesh) {
+                                    tmesh.material = tmeshlamb;
+                                }
                             }
                         }
                         arb++;
                     }
+                    render();
                 }
-                render();
+                else {
+                    alert(".json and .top files are not compatible.");
+                }
             };
             json_reader.readAsText(json_file);
         }

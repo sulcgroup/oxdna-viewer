@@ -94,18 +94,23 @@ function rotate() {
     return rotobj;
 }
 function rotateClock() {
-    let rotobj = rotate();
-    getAxisMode();
-    if (axisMode == "X") {
-        rotobj.rotateX(Math.PI / 2);
-    }
-    else if (axisMode == "Y") {
-        rotobj.rotateY(Math.PI / 2);
+    if (selected_bases.length > 0) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(Math.PI / 2);
+        }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(Math.PI / 2);
+        }
+        render();
     }
     else {
-        rotobj.rotateZ(Math.PI / 2);
+        alert("Please select an object to rotate.");
     }
-    render();
     /* var geometry = new THREE.Geometry();
     geometry.vertices.push(temp);
     //rotateAboutPoint(visobj, temp, temp.normalize(), Math.PI/2, true);
@@ -121,18 +126,23 @@ function rotateClock() {
     //console.log(visobj);
 }
 function rotateCounter() {
-    let rotobj = rotate();
-    getAxisMode();
-    if (axisMode == "X") {
-        rotobj.rotateX(-Math.PI / 2);
-    }
-    else if (axisMode == "Y") {
-        rotobj.rotateY(-Math.PI / 2);
+    if (selected_bases.length > 0) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(-Math.PI / 2);
+        }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(-Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(-Math.PI / 2);
+        }
+        render();
     }
     else {
-        rotobj.rotateZ(-Math.PI / 2);
+        alert("Please select an object to rotate.");
     }
-    render();
 }
 function getAxisMode() {
     var modeRadioButtons = document.forms['Axis'].elements['rotate'];
