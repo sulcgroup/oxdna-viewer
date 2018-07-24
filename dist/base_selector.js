@@ -29,18 +29,18 @@ document.addEventListener('mousedown', event => {
         for (let i = 0; i < nucleotides.length; i++) {
             backbones.push(nucleotides[i].visual_object.children[0]);
         }
-        let nucleosides = [];
+        /*let nucleosides: THREE.Object3D[] = [];
         for (let i = 0; i < nucleotides.length; i++) {
             nucleosides.push(nucleotides[i].visual_object.children[1]);
         }
-        let con = [];
+        let con: THREE.Object3D[] = [];
         for (let i = 0; i < nucleotides.length; i++) {
             con.push(nucleotides[i].visual_object.children[2]);
         }
-        let sp = [];
+        let sp: THREE.Object3D[] = [];
         for (let i = 0; i < nucleotides.length; i++) {
             sp.push(nucleotides[i].visual_object.children[4]);
-        }
+        } */
         let intersects = raycaster.intersectObjects(backbones);
         // make note of what's been clicked
         let nucleotideID;
@@ -56,7 +56,8 @@ document.addEventListener('mousedown', event => {
                 //}
                 for (let i = 0; i < nucleotides.length; i++) {
                     if (nucleotides[i].my_system == sysID) {
-                        toggle(i, sysID, backbones, nucleosides, con, sp);
+                        console.log(i);
+                        toggle(i, sysID); //, backbones, nucleosides, con, sp);
                     }
                 }
             }
@@ -73,7 +74,7 @@ document.addEventListener('mousedown', event => {
                 for (let i = 0; i < nucleotides.length; i++) {
                     if (nucleotides[i].my_strand == strandID) {
                         let sysID = nucleotides[i].my_system;
-                        toggle(i, sysID, backbones, nucleosides, con, sp);
+                        toggle(i, sysID); //, backbones, nucleosides, con, sp);
                     }
                 }
             }
@@ -82,7 +83,7 @@ document.addEventListener('mousedown', event => {
                 //for (nucleotideID = 0; nucleotideID < nucleotides.length; nucleotideID++) {
                 //	if (nucleotides[nucleotideID].visual_object.children[0] === intersects[0].object) {
                 let sysID = nucleotides[nucleotideID].my_system;
-                toggle(nucleotideID, sysID, backbones, nucleosides, con, sp);
+                toggle(nucleotideID, sysID); //, backbones, nucleosides, con, sp);
                 //		break;
                 //	}
                 //}
@@ -134,7 +135,7 @@ document.addEventListener('mousedown', event => {
         }
     }
 });
-function toggle(nucleotideID, sysID, backbones, nucleosides, con, sp) {
+function toggle(nucleotideID, sysID /*, backbones, nucleosides, con, sp*/) {
     // highlight/remove highlight the bases we've clicked 
     let selected = false;
     let index = 0;
@@ -145,10 +146,14 @@ function toggle(nucleotideID, sysID, backbones, nucleosides, con, sp) {
             break;
         }
     }
-    let back_Mesh = backbones[nucleotideID];
-    let nuc_Mesh = nucleosides[nucleotideID];
-    let con_Mesh = con[nucleotideID];
-    let sp_Mesh = sp[nucleotideID];
+    /*let back_Mesh: THREE.Object3D = backbones[nucleotideID];
+    let nuc_Mesh: THREE.Object3D = nucleosides[nucleotideID];
+    let con_Mesh: THREE.Object3D = con[nucleotideID];
+    let sp_Mesh: THREE.Object3D = sp[nucleotideID];*/
+    let back_Mesh = nucleotides[nucleotideID].visual_object.children[0];
+    let nuc_Mesh = nucleotides[nucleotideID].visual_object.children[1];
+    let con_Mesh = nucleotides[nucleotideID].visual_object.children[2];
+    let sp_Mesh = nucleotides[nucleotideID].visual_object.children[4];
     if (selected) {
         // figure out what that base was before you painted it black and revert it
         let baseArr = selected_bases.slice(0, index + 1);
@@ -180,22 +185,22 @@ function toggle(nucleotideID, sysID, backbones, nucleosides, con, sp) {
         } */
         if (back_Mesh instanceof THREE.Mesh) {
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id];
+                back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
             }
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial || nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = systems[sysID].base_to_material[nucleotides[nucleotideID].global_id];
+                nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[nucleotideID].global_id]);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id];
+                con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id];
+                sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
             }
         }
         selected_bases = baseArr.concat(baseArr2);
@@ -228,16 +233,24 @@ function toggle(nucleotideID, sysID, backbones, nucleosides, con, sp) {
             }
         }
         if (back_Mesh instanceof THREE.Mesh) {
-            back_Mesh.material = selection_material;
+            if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                back_Mesh.material = (selection_material);
+            }
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
-            nuc_Mesh.material = selection_material;
+            if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                nuc_Mesh.material = (selection_material);
+            }
         }
         if (con_Mesh instanceof THREE.Mesh) {
-            con_Mesh.material = selection_material;
+            if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                con_Mesh.material = (selection_material);
+            }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            sp_Mesh.material = selection_material;
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = (selection_material);
+            }
         }
         // give index using global base coordinates 
         //console.log(nucleotideID); //I can't remove outputs from the console log...maybe open a popup instead?

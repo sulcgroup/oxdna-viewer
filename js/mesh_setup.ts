@@ -49,30 +49,30 @@ var backbone_materials = [
 
 // define nucleoside colors
 var nucleoside_materials = [
-    new THREE.MeshLambertMaterial({
+    new THREE.MeshLambertMaterial({ //A
         //color: 0x3333FF,
-        color: 0x888888,
+        color: 0x888888,//6dc066,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
-    new THREE.MeshLambertMaterial({
+    new THREE.MeshLambertMaterial({ //G
         //color: 0xFFFF33,
-        color: 0x888888,
+        color: 0x888888,//ff6600,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
-    new THREE.MeshLambertMaterial({
+    new THREE.MeshLambertMaterial({ //C
         //color: 0x33FF33,
-        color: 0x888888,
+        color: 0x888888,//0x4286f4,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
     }),
-    new THREE.MeshLambertMaterial({
+    new THREE.MeshLambertMaterial({ //T/U
         //color: 0xFF3333,
-        color: 0x888888,
+        color: 0x888888,//ff0033,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
@@ -80,7 +80,7 @@ var nucleoside_materials = [
 ];
 
 var selection_material = new THREE.MeshLambertMaterial({
-    color: 0x000000,
+    color: 0x00EEEE,//000000,
     side: THREE.DoubleSide,
 });
 
