@@ -64,6 +64,6 @@ var nucleoside_materials = [
     })
 ];
 var selection_material = new THREE.MeshLambertMaterial({
-    color: 0x00EEEE,
+    color: 0x01796F,
     side: THREE.DoubleSide,
 });
