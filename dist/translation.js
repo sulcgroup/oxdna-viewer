@@ -54,61 +54,42 @@ function drag() {
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
 var temp = new THREE.Vector3();
-function rotate(i) {
+function rotate() {
     let rotobj;
-    for (let it = 0; it < 1; it++) {
-        //for (let i = 0; i < selected_bases.length; i++) {
-        let found = false;
-        if (scopeMode.includes("Nuc")) {
-            rotobj = nucleotides[selected_bases[i].id].visual_object;
-            temp = rotobj.children[3].position;
-        }
-        else if (scopeMode.includes("Strand")) {
-            for (let i = 0; i < systems.length; i++) {
-                for (let j = 0; j < systems[i].strands.length; j++) {
-                    if (systems[i].strands[j].strand_id == nucleotides[selected_bases[i].id].my_strand) {
-                        rotobj = systems[i].strands[j].strand_3objects;
-                        found = true;
-                        break;
-                    }
-                    if (found)
-                        break;
-                }
-                if (found)
-                    break;
-            }
-        }
-        else if (scopeMode.includes("System")) {
-            for (let i = 0; i < systems.length; i++) {
-                if (systems[i].system_id == nucleotides[selected_bases[i].id].my_system) {
-                    rotobj = systems[i].system_3objects;
-                    found = true;
-                    break;
-                }
-                if (found)
-                    break;
-            }
-        }
+    //for (let i = 0; i < selected_bases.length; i++) {
+    let found = false;
+    if (scopeMode.includes("Nuc")) {
+        rotobj = nucleotides[selected_bases[0].id].visual_object;
+    }
+    else if (scopeMode.includes("Strand")) {
+        let nuctemp = nucleotides[selected_bases[0].id];
+        console.log(systems[nuctemp.my_system]);
+        rotobj = systems[nuctemp.my_system].strands[nuctemp.my_strand - 1].strand_3objects;
+        console.log(rotobj);
+    }
+    else if (scopeMode.includes("System")) {
+        let nuctemp = nucleotides[selected_bases[0].id];
+        rotobj = systems[nuctemp.my_system].system_3objects;
     }
     //}
     return rotobj;
 }
 function rotateClock() {
     if (selected_bases.length > 0) {
-        for (let i = 0; i < selected_bases.length; i++) {
-            let rotobj = rotate(i);
-            getAxisMode();
-            if (axisMode == "X") {
-                rotobj.rotateX(Math.PI / 2);
-            }
-            else if (axisMode == "Y") {
-                rotobj.rotateY(Math.PI / 2);
-            }
-            else {
-                rotobj.rotateZ(Math.PI / 2);
-            }
-            render();
+        //for (let i = 0; i < selected_bases.length; i++) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(Math.PI / 2);
         }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(Math.PI / 2);
+        }
+        render();
+        //}
     }
     else {
         alert("Please select an object to rotate.");
@@ -129,20 +110,20 @@ function rotateClock() {
 }
 function rotateCounter() {
     if (selected_bases.length > 0) {
-        for (let i = 0; i < selected_bases.length; i++) {
-            let rotobj = rotate(i);
-            getAxisMode();
-            if (axisMode == "X") {
-                rotobj.rotateX(-Math.PI / 2);
-            }
-            else if (axisMode == "Y") {
-                rotobj.rotateY(-Math.PI / 2);
-            }
-            else {
-                rotobj.rotateZ(-Math.PI / 2);
-            }
-            render();
+        //for (let i = 0; i < selected_bases.length; i++) {
+        let rotobj = rotate();
+        getAxisMode();
+        if (axisMode == "X") {
+            rotobj.rotateX(-Math.PI / 2);
         }
+        else if (axisMode == "Y") {
+            rotobj.rotateY(-Math.PI / 2);
+        }
+        else {
+            rotobj.rotateZ(-Math.PI / 2);
+        }
+        render();
+        //}
     }
     else {
         alert("Please select an object to rotate.");
