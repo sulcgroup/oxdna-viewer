@@ -78,6 +78,7 @@ function getRotObj(i) {
     return rotobj;
 }
 function rotate(dir) {
+    console.log(dir);
     let sel = false;
     for (let i = 0; i < selected_bases.length; i++) {
         if (selected_bases[i] == 1) {
@@ -100,9 +101,8 @@ function rotate(dir) {
             i += systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length - 2;
         }
         else if (scopeMode.includes("System")) {
-            i += systems[tempnuc.my_system].system_length() - 2;
+            i += systems[tempnuc.my_system].system_length() - 1;
         }
-        console.log(i);
     }
     if (!sel) {
         alert("Please select an object to rotate.");

@@ -47,7 +47,8 @@ document.addEventListener('mousedown', event => {
             render();
             listBases = "";
             for (let x = 0; x < selected_bases.length; x++) {
-                listBases = listBases + selected_bases[x] + "\n";
+                if (selected_bases[x] == 1)
+                    listBases = listBases + x + "\n";
             }
             basesInfo = "";
             let sysPrint = [], strandPrint = [], sys, strand;

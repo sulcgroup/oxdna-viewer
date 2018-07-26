@@ -13,7 +13,7 @@ document.addEventListener('mousedown', event => {
 		// cast a ray from mose to viewpoint of camera 
 		raycaster.setFromCamera(mouse3D, camera);
 		// callect all objects that are in the vay
-		 let backbones: THREE.Object3D[] = [];
+		let backbones: THREE.Object3D[] = [];
 		for (let i = 0; i < nucleotides.length; i++) {
 			backbones.push(nucleotides[i].visual_object.children[0]);
 		}
@@ -52,7 +52,8 @@ document.addEventListener('mousedown', event => {
 			render();
 			listBases = "";
 			for (let x: number = 0; x < selected_bases.length; x++) {
-				listBases = listBases + selected_bases[x] + "\n";
+				if (selected_bases[x] == 1)
+					listBases = listBases + x + "\n";
 			}
 
 			basesInfo = "";
@@ -102,7 +103,7 @@ function toggle(nucleotideID, sysID) {
 	// highlight/remove highlight the bases we've clicked 
 	let selected: boolean = false;
 	let index: number = 0;
-	if (selected_bases[nucleotideID] == 1){
+	if (selected_bases[nucleotideID] == 1) {
 		selected = true;
 	}
 	let back_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[0];
