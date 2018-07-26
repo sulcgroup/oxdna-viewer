@@ -118,6 +118,7 @@ var systems: System[] = [];
 var sys_count: number = 0;
 var strand_count: number = 0;
 var nuc_count: number = 0;
+var selected_bases: number[] = [];
 var lut, devs: number[];
 
 // define the drag and drop behavior of the scene 
@@ -260,6 +261,12 @@ target.addEventListener("drop", function (event) {
         system.setBaseMaterial(base_to_material);
         system.setStrandMaterial(strand_to_material);
         systems.push(system);
+
+
+
+        for (let i = 0; i < nucleotides.length; i++) {
+            selected_bases.push(0);
+        }
     };
     top_reader.readAsText(top_file);
 
@@ -342,17 +349,6 @@ target.addEventListener("drop", function (event) {
             var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
             var cube = new THREE.Mesh(geometry, material);
             cube.position.set(x, y, z);
-            //scene.add(cube);
-
-            /*             // compute offset to bring strand in box
-                        let dx = Math.round(x / box) * box,
-                            dy = Math.round(y / box) * box,
-                            dz = Math.round(z / box) * box;
-            
-                        //fix coordinates 
-                        x = x - dx;
-                        y = y - dy;
-                        z = z - dz;*/
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
 
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
@@ -409,7 +405,7 @@ target.addEventListener("drop", function (event) {
 
             // adds a new "backbone", new "nucleoside", and new "connector" to the scene
             let group = new THREE.Group;
-            group.name = current_nucleotide.global_id+"";
+            group.name = current_nucleotide.global_id + "";
             let backbone, nucleoside, con;
             if (files_len == 2) {
                 backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
@@ -452,9 +448,6 @@ target.addEventListener("drop", function (event) {
             nucleoside.position.set(x_ns, y_ns, z_ns);
             con.position.set(x_con, y_con, z_con);
             posObj.position.set(x, y, z);
-            //current_strand.strand_3objects.children.push(backbone);
-            //current_strand.strand_3objects.children.push(nucleoside);
-            //current_strand.strand_3objects.children.push(con);
             group.add(backbone);
             group.add(nucleoside);
             group.add(con);
@@ -481,17 +474,13 @@ target.addEventListener("drop", function (event) {
                     else if (files_len == 3) {
                         let tmeshlamb = new THREE.MeshLambertMaterial({
                             color: lut.getColor(devs[arb]),
-                            //emissive: 0x072534,
                             side: THREE.DoubleSide,
-                            //flatShading: true
                         });
                         sp = new THREE.Mesh(connector_geometry, tmeshlamb);
                     }
                     sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                     sp.applyMatrix(rotation_sp);
                     sp.position.set(x_sp, y_sp, z_sp);
-
-                    //current_strand.strand_3objects.children.push(sp);
                     group.add(sp);
                 }
                 arb++;
@@ -592,9 +581,7 @@ target.addEventListener("drop", function (event) {
                     for (let i = 0; i < nucleotides.length; i++) {
                         let tmeshlamb = new THREE.MeshLambertMaterial({
                             color: lut.getColor(devs[arb]),
-                            //emissive: 0x072534,
                             side: THREE.DoubleSide
-                            //flatShading: true
                         });
                         for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
                             if (j != 3) {
@@ -617,63 +604,6 @@ target.addEventListener("drop", function (event) {
     }
 
 }, false);
-
-/* if (files_len == 1) {
-        if (files[0].name.slice(-4) == "json") {
-            json_file = files[0];
-            let json_reader = new FileReader();
-
-            json_reader.onload = () => {
-                let lines: string[] = json_reader.result.split(", ");
-                lines[0] = lines[0].slice(1);
-                lines[lines.length - 1] = lines[lines.length - 1].slice(-1);
-                console.log(lines);
-                devs = [];
-                for (let i = 0; i < lines.length; i++) {
-                    devs.push(parseFloat(lines[i]));
-                }
-                console.log(devs);
-                let min = Math.min.apply(null, devs),
-                    max = Math.max.apply(null, devs);
-                lut = new THREE.Lut("rainbow", 4000);
-                console.log(max);
-                console.log(min);
-                lut.setMax(max);
-                lut.setMin(min);
-                console.log(lut);
-                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-                scene.add(legend);
-                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } });
-                scene.add(labels['title']);
-
-                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-                    scene.add(labels['ticks'][i]);
-                    scene.add(labels['lines'][i]);
-                }
-
-                let arb = 0;
-                for (let i = 0; i < nucleotides.length; i++) {
-                    //console.log(nucleotides[i]);
-                    for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-                        if (j != 3) {
-                            //console.log(devs[arb]);
-                            let tmeshlamb = new THREE.MeshLambertMaterial({
-                                color: lut.getColor(devs[arb]),
-                                //emissive: 0x072534,
-                                side: THREE.DoubleSide
-                                //flatShading: true
-                            });
-                            nucleotides[i].visual_object.children[j] = new THREE.Mesh(backbone_geometry, tmeshlamb);
-
-                        }
-                        arb++;
-                    }
-                }
-            };
-            json_reader.readAsText(json_file);
-        }
-    } */
-
 // update the scene
 render();
 
@@ -714,7 +644,6 @@ function updatePos(sys_count) {
     }
 }
 
-
 function cross(a1, a2, a3, b1, b2, b3) {
     return [a2 * b3 - a3 * b2,
     a3 * b1 - a1 * b3,
@@ -746,34 +675,8 @@ function centerSystems() {
         let pos = systems[x].system_3objects.position;
         pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
     }
-    /*
-    systems[x].system_3objects.position.set(0, 0, 0);
-    n_nucleotides += systems[x].system_length();
-    cms.add(calcCMS(x, n_nucleotides, i));
-    let pos = systems[x].system_3objects.position;
-    pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
-      i = systems[x].global_start_id;
-     for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-         let pos = nucleotide_3objects[i].position;
-         pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
-     } 
-    systems[x].CoM = cms; //because system com may be useful to know
-    console.log(calcCMS(x, n_nucleotides, i));*/
     render();
 }
-
-/* function calcCMS(x, n_nucleotides, i) {
-    let cms = new THREE.Vector3(0, 0, 0);
-    let temp = new THREE.Vector3(0, 0, 0);
-    for (; i < systems[x].global_start_id + n_nucleotides; i++) {
-        nucleotides[i].visual_object.children[3].getWorldPosition(temp);
-        cms.add(temp);
-    }
-    let mul = 1.0 / n_nucleotides;
-    cms.multiplyScalar(mul);
-    return cms;
-} */
-
 
 //strand delete testcode
 document.addEventListener("keypress", event => {

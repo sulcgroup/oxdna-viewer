@@ -88,35 +88,12 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 				// }
 				if (scopeMode.includes("Nuc")) {
 					var object = intersects[0].object.parent;
-
-
 				}
 				else if (scopeMode.includes("Strand")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										var object = systems[i].strands[j].strand_3objects;
-
-									}
-								}
-							}
-						}
-					}
+					var object = intersects[0].object.parent.parent;
 				}
 				else if (scopeMode.includes("System")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										object = systems[i].system_3objects;
-									}
-								}
-							}
-						}
-					}
+					var object = intersects[0].object.parent.parent.parent;
 				}
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
 
@@ -163,31 +140,10 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 					_selected = intersects[0].object.parent;
 				}
 				else if (scopeMode.includes("Strand")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										_selected = systems[i].strands[j].strand_3objects;
-
-									}
-								}
-							}
-						}
-					}
+					_selected = intersects[0].object.parent.parent;
 				}
 				else if (scopeMode.includes("System")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										_selected = systems[i].system_3objects;
-									}
-								}
-							}
-						}
-					}
+					_selected = intersects[0].object.parent.parent.parent;
 				}
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
 					_offset.copy(_intersection).sub(_selected.position);
@@ -209,25 +165,12 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 			if (_selected) {
 				if (scopeMode.includes("Nuc")) {
-					let i, j, k, l;
-					for (i = 0; i < systems.length; i++) {
-						for (j = 0; j < systems[i].strands.length; j++) {
-							for (k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == _selected.children[0].id) {
-										var current_nuc = systems[i].strands[j].nucleotides[k];
-										break;
-									}
-								}
-							}
-						}
-					}
+					var current_nuc = nucleotides[parseInt(_selected.name)];
 
 					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) {
 						calcsp(current_nuc);
 					}
 					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined) {
-						``
 						calcsp(systems[current_nuc.my_system].strands[current_nuc.my_strand - 1].nucleotides[current_nuc.local_id + 1]);
 					}
 
@@ -245,11 +188,12 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 	function calcsp(current_nuc) {
 		var temp = new THREE.Vector3();
+		//temp = current_nuc.neighbor3.visual_object.children[0].position;
 		current_nuc.neighbor3.visual_object.children[0].getWorldPosition(temp);
 		var x_bb_last = temp.x,
 			y_bb_last = temp.y,
 			z_bb_last = temp.z;
-
+		//temp = current_nuc.visual_object.children[0].position;
 		current_nuc.visual_object.children[0].getWorldPosition(temp);
 		// compute backbone cm
 		let x_bb = temp.x;
@@ -328,31 +272,10 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 					_selected = intersects[0].object.parent;
 				}
 				else if (scopeMode.includes("Strand")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										_selected = systems[i].strands[j].strand_3objects;
-
-									}
-								}
-							}
-						}
-					}
+					_selected = intersects[0].object.parent.parent;
 				}
 				else if (scopeMode.includes("System")) {
-					for (let i = 0; i < systems.length; i++) {
-						for (let j = 0; j < systems[i].strands.length; j++) {
-							for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
-								for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
-									if (systems[i].strands[j].nucleotides[k].visual_object.children[l].id == intersects[0].object.id) {
-										_selected = systems[i].system_3objects;
-									}
-								}
-							}
-						}
-					}
+					_selected = intersects[0].object.parent.parent.parent;
 				}
 
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), _selected.position);

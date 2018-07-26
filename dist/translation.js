@@ -10,7 +10,6 @@ function getActionMode() {
             actionMode += checkBoxes[i].value;
         }
     }
-    //console.log(actionMode);
 }
 function getScopeMode() {
     var modeRadioButtons = document.forms['Mode'].elements['mode'];
@@ -20,7 +19,6 @@ function getScopeMode() {
             break;
         }
     }
-    //console.log(scopeMode);
 }
 // get list of radio buttons with name 'mode'
 var sz = document.forms['Mode'].elements['mode'];
@@ -54,78 +52,50 @@ function drag() {
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
 var temp = new THREE.Vector3();
-function rotate() {
+function getRotObj(i) {
     let rotobj;
-    //for (let i = 0; i < selected_bases.length; i++) {
     let found = false;
     if (scopeMode.includes("Nuc")) {
-        rotobj = nucleotides[selected_bases[0].id].visual_object;
+        rotobj = nucleotides[i].visual_object;
     }
     else if (scopeMode.includes("Strand")) {
-        let nuctemp = nucleotides[selected_bases[0].id];
-        console.log(systems[nuctemp.my_system]);
+        let nuctemp = nucleotides[i];
         rotobj = systems[nuctemp.my_system].strands[nuctemp.my_strand - 1].strand_3objects;
-        console.log(rotobj);
     }
     else if (scopeMode.includes("System")) {
-        let nuctemp = nucleotides[selected_bases[0].id];
+        let nuctemp = nucleotides[i];
         rotobj = systems[nuctemp.my_system].system_3objects;
     }
-    //}
     return rotobj;
 }
-function rotateClock() {
-    if (selected_bases.length > 0) {
-        //for (let i = 0; i < selected_bases.length; i++) {
-        let rotobj = rotate();
-        getAxisMode();
-        if (axisMode == "X") {
-            rotobj.rotateX(Math.PI / 2);
+function rotate(dir) {
+    let sel = false;
+    for (let i = 0; i < selected_bases.length; i++) {
+        if (selected_bases[i] == 1) {
+            let rotobj = getRotObj(i);
+            getAxisMode();
+            if (axisMode == "X") {
+                rotobj.rotateX(dir * Math.PI / 2);
+            }
+            else if (axisMode == "Y") {
+                rotobj.rotateY(dir * Math.PI / 2);
+            }
+            else {
+                rotobj.rotateZ(dir * Math.PI / 2);
+            }
+            render();
+            sel = true;
         }
-        else if (axisMode == "Y") {
-            rotobj.rotateY(Math.PI / 2);
+        let tempnuc = nucleotides[i];
+        if (scopeMode.includes("Strand")) {
+            i += systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length - 2;
         }
-        else {
-            rotobj.rotateZ(Math.PI / 2);
+        else if (scopeMode.includes("System")) {
+            i += systems[tempnuc.my_system].system_length() - 2;
         }
-        render();
-        //}
+        console.log(i);
     }
-    else {
-        alert("Please select an object to rotate.");
-    }
-    /* var geometry = new THREE.Geometry();
-    geometry.vertices.push(temp);
-    //rotateAboutPoint(visobj, temp, temp.normalize(), Math.PI/2, true);
-     
-    //create a blue LineBasicMaterial
-    var material = new THREE.LineBasicMaterial({ color: 0x800000 });
-    material.linewidth = 2;
-    geometry.vertices.push(temp.add(new THREE.Vector3(0, 0, 10)));
-    var line = new THREE.Line(geometry, material);
-    scene.add(line); */
-    //rotateAboutPoint(visobj, temp, temp3, Math.PI / 2, true);
-    //console.log(visobj.rotation);
-    //console.log(visobj);
-}
-function rotateCounter() {
-    if (selected_bases.length > 0) {
-        //for (let i = 0; i < selected_bases.length; i++) {
-        let rotobj = rotate();
-        getAxisMode();
-        if (axisMode == "X") {
-            rotobj.rotateX(-Math.PI / 2);
-        }
-        else if (axisMode == "Y") {
-            rotobj.rotateY(-Math.PI / 2);
-        }
-        else {
-            rotobj.rotateZ(-Math.PI / 2);
-        }
-        render();
-        //}
-    }
-    else {
+    if (!sel) {
         alert("Please select an object to rotate.");
     }
 }
@@ -138,60 +108,3 @@ function getAxisMode() {
         }
     }
 }
-//}
-/* var geometry3 = new THREE.CubeGeometry(3, 2, 1);
-var material1 = new THREE.MeshNormalMaterial();
-
-var mesh = new THREE.Mesh(geometry3, material1);
-var group = new THREE.Group();
-group.add(mesh);
-
-var geometry1 = new THREE.CylinderGeometry(2, 2, 2, 30);
-mesh = new THREE.Mesh(geometry1, material1);
-mesh.position.set(7, 2, 0);
-group.add(mesh);
-
-var geometry2 = new THREE.SphereGeometry(1);
-
-mesh = new THREE.Mesh(geometry2, material1);
-mesh.position.set(-5, 5, 0);
-group.add(mesh);
-render();
-
-scene.add(group); */
-//for (let p = 0; p < 99; p++) {
-/*  let temp = new THREE.Vector3();
- group.children[0].getWorldPosition(temp);
- //console.log(group);
- //temp.normalize();
- let temp3 = new THREE.Vector3();
- temp3.copy(temp);
- temp3.add(new THREE.Vector3(0, 0, 30));
- group.rotateOnAxis(temp3.normalize(), Math.PI / 2);
- //rotateAboutPoint(group, temp, temp.normalize(), Math.PI / 2, true);
- //console.log(temp);
- console.log(group.rotation);
- render(); */
-// }
-// obj - your object (THREE.Object3D or derived)
-// point - the point of rotation (THREE.Vector3)
-// axis - the axis of rotation (normalized THREE.Vector3)
-// theta - radian value of rotation
-// pointIsWorld - boolean indicating the point is in world coordinates (default = false)
-/*function rotateAboutPoint(obj, point, axis, theta, pointIsWorld) {
-     pointIsWorld = (pointIsWorld === undefined) ? false : pointIsWorld;
-
-    if (pointIsWorld) {
-        obj.parent.localToWorld(obj.position); // compensate for world coordinate
-    }
-
-    obj.position.sub(point); // remove the offset
-    obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
-    obj.position.add(point); // re-add the offset
-
-    if (pointIsWorld) {
-        obj.parent.worldToLocal(obj.position); // undo world coordinates compensation
-    }
-
-    obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-} */ 

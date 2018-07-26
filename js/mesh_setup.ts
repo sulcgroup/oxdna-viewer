@@ -1,4 +1,4 @@
-// <reference path="./three/index.d.ts" />
+/// <reference path="./three/index.d.ts" />
 
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.2,10,10);
@@ -11,33 +11,23 @@ var connector_geometry = new THREE.CylinderGeometry(.1,.1,1, 8);
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
         color: 0x156289,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
         color: 0xFF0089,
-        //emissive: 0x072534,
         side: THREE.DoubleSide,
-        //flatShading: true
     }),
     new THREE.MeshLambertMaterial({
         color: 0xFFFF00,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
         color: 0x00FF00,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
         color: 0x00FFFF,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
         color: 0xDA9100,
@@ -52,30 +42,22 @@ var nucleoside_materials = [
     new THREE.MeshLambertMaterial({ //A
         //color: 0x3333FF,
         color: 0x888888,//6dc066,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //G
         //color: 0xFFFF33,
         color: 0x888888,//ff6600,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //C
         //color: 0x33FF33,
         color: 0x888888,//0x4286f4,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //T/U
         //color: 0xFF3333,
         color: 0x888888,//ff0033,
-        //emissive: 0x072534,
-        side: THREE.DoubleSide,
-        //flatShading: true
+        side: THREE.DoubleSide
     })
 ];
 
