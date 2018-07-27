@@ -5,7 +5,7 @@
 	<style>
 		.sidenav {
 			height: 100%;
-			width: 243;
+			width: 243px;
 			position: fixed;
 			z-index: 1;
 			top: 0;
@@ -111,6 +111,7 @@
 				<button onclick="controls.reset()" type="button">Reset Camera</button>
 				<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>
 				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
+				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)" >Display Flexibility Coloring
 				<form action="" id="Action">
 					<fieldset>
 						<legend>Action:</legend>
@@ -173,7 +174,6 @@
 			<script src="./dist/output_file.js"></script>
 			<script src="./dist/translation.js"></script>
 			<script src="./js/controls/SceneUtils.js"></script>
-			<script src="./dist/rotate.js"></script>
 			<!--<script src="./dist/cubes.js"></script>-->
 		</div>
 	</body>

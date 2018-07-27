@@ -83,18 +83,21 @@ class System {
 }
 ;
 // store rendering mode RNA  
-var RNA_MODE = false; // By default we do DNA
+let RNA_MODE = false; // By default we do DNA
 // add base index visualistion
 var nucleotide_3objects = []; //contains references to all meshes
 var nucleotides = []; //contains references to all nucleotides
 //var selected_bases = {};
 //initialize the space
 var systems = [];
-var sys_count = 0;
-var strand_count = 0;
-var nuc_count = 0;
+let sys_count = 0;
+let strand_count = 0;
+let nuc_count = 0;
 var selected_bases = [];
-var lut, devs;
+var backbones = [];
+let lut, devs;
+let lutCols = [];
+let lutColsVis = false;
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
@@ -300,10 +303,21 @@ target.addEventListener("drop", function (event) {
             let x = parseFloat(l[0]), // - fx,
             y = parseFloat(l[1]), // - fy,
             z = parseFloat(l[2]); // - fz;
-            var geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-            var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            var cube = new THREE.Mesh(geometry, material);
+            /* // compute offset to bring strand in box
+            let dx = Math.round(x / box) * box,
+                dy = Math.round(y / box) * box,
+                dz = Math.round(z / box) * box;
+
+            //fix coordinates
+            x = x - dx;
+            y = y - dy;
+            z = z - dz; */
+            /* let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            let cube = new THREE.Mesh(geometry, material);
             cube.position.set(x, y, z);
+            scene.add(cube);
+            backbones.push(cube); */
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
             let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
@@ -337,35 +351,15 @@ target.addEventListener("drop", function (event) {
             let group = new THREE.Group;
             group.name = current_nucleotide.global_id + "";
             let backbone, nucleoside, con;
-            if (files_len == 2) {
-                backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
-                nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
-                con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
+            //if (files_len == 2) {
+            backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]);
+            nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]);
+            con = new THREE.Mesh(connector_geometry, strand_to_material[i]);
+            //}
+            if (files_len == 3) {
+                lutCols.push(lut.getColor(devs[arb]));
             }
-            else if (files_len == 3) {
-                let tmeshlamb = new THREE.MeshLambertMaterial({
-                    color: lut.getColor(devs[arb]),
-                    //emissive: 0x072534,
-                    side: THREE.DoubleSide,
-                });
-                backbone = new THREE.Mesh(backbone_geometry, tmeshlamb);
-                //arb++;
-                tmeshlamb = new THREE.MeshLambertMaterial({
-                    color: lut.getColor(devs[arb]),
-                    //emissive: 0x072534,
-                    side: THREE.DoubleSide,
-                });
-                nucleoside = new THREE.Mesh(nucleoside_geometry, tmeshlamb);
-                //arb++;
-                tmeshlamb = new THREE.MeshLambertMaterial({
-                    color: lut.getColor(devs[arb]),
-                    //emissive: 0x072534,
-                    side: THREE.DoubleSide,
-                });
-                con = new THREE.Mesh(connector_geometry, tmeshlamb);
-                //arb++;
-            }
-            let posObj = new THREE.Mesh(); //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            let posObj = new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
             // apply rotations
             nucleoside.applyMatrix(base_rotation);
@@ -386,18 +380,8 @@ target.addEventListener("drop", function (event) {
                 // easy periodic boundary condition fix  
                 // if the bonds are to long just don't add them 
                 if (sp_len <= 1.2) {
-                    var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-                    let sp;
-                    if (files_len == 2) {
-                        sp = new THREE.Mesh(connector_geometry, strand_to_material[i]);
-                    }
-                    else if (files_len == 3) {
-                        let tmeshlamb = new THREE.MeshLambertMaterial({
-                            color: lut.getColor(devs[arb]),
-                            side: THREE.DoubleSide,
-                        });
-                        sp = new THREE.Mesh(connector_geometry, tmeshlamb);
-                    }
+                    let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
+                    let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]);
                     sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                     sp.applyMatrix(rotation_sp);
                     sp.position.set(x_sp, y_sp, z_sp);
@@ -450,6 +434,21 @@ target.addEventListener("drop", function (event) {
                 }
             }
         }
+        /* // reposition center of mass of the system to 0,0,0
+        let cms = new THREE.Vector3(0, 0, 0);
+        let n_nucleotides = system.system_length();
+        let i = system.global_start_id;
+        for (; i < system.global_start_id + n_nucleotides; i++) {
+            cms.add(nucleotides[i].pos);
+        }
+        let mul = 1.0 / n_nucleotides;
+        cms.multiplyScalar(mul);
+        i = system.global_start_id;
+        for (; i < system.global_start_id + n_nucleotides; i++) {
+            nucleotide_3objects[i].position.sub(cms);
+        }
+
+        systems[sys_count].CoM = cms; //because system com may be useful to know */
         scene.add(systems[sys_count].system_3objects);
         sys_count += 1;
         getActionMode();
@@ -458,9 +457,23 @@ target.addEventListener("drop", function (event) {
         if (actionMode.includes("Drag")) {
             drag();
         }
+        /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+         let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+         let cube = new THREE.Mesh(geometry, material);
+         cube.position.set(0,0,0);
+         scene.add(cube);
+         backbones.push(cube);
+         cube = new THREE.Mesh(geometry, material);
+         cube.position.set(10,10,10);
+         scene.add(cube);
+         backbones.push(cube); */
         // update the scene
         render();
         updatePos(sys_count - 1);
+        for (let i = 0; i < nucleotides.length; i++) {
+            backbones.push(nucleotides[i].visual_object.children[0]);
+        }
+        //render();
     };
     // execute the read operation 
     dat_reader.readAsText(dat_file);
@@ -487,21 +500,8 @@ target.addEventListener("drop", function (event) {
                         scene.add(labels['ticks'][i]);
                         scene.add(labels['lines'][i]);
                     }
-                    let arb = 0;
                     for (let i = 0; i < nucleotides.length; i++) {
-                        let tmeshlamb = new THREE.MeshLambertMaterial({
-                            color: lut.getColor(devs[arb]),
-                            side: THREE.DoubleSide
-                        });
-                        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-                            if (j != 3) {
-                                let tmesh = nucleotides[i].visual_object.children[j];
-                                if (tmesh instanceof THREE.Mesh) {
-                                    tmesh.material = tmeshlamb;
-                                }
-                            }
-                        }
-                        arb++;
+                        lutCols.push(lut.getColor(devs[i]));
                     }
                     render();
                 }
@@ -550,6 +550,62 @@ function updatePos(sys_count) {
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z));
     }
 }
+function toggleLut(chkBox) {
+    if (lutCols.length > 0) {
+        if (lutColsVis) {
+            for (let i = 0; i < nucleotides.length; i++) {
+                let sysID = nucleotides[i].my_system;
+                let back_Mesh = nucleotides[i].visual_object.children[0];
+                let nuc_Mesh = nucleotides[i].visual_object.children[1];
+                let con_Mesh = nucleotides[i].visual_object.children[2];
+                let sp_Mesh = nucleotides[i].visual_object.children[4];
+                if (back_Mesh instanceof THREE.Mesh) {
+                    if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]);
+                    }
+                }
+                if (nuc_Mesh instanceof THREE.Mesh) {
+                    if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial || nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[i].global_id]);
+                    }
+                }
+                if (con_Mesh instanceof THREE.Mesh) {
+                    if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]);
+                    }
+                }
+                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+                    if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]);
+                    }
+                }
+            }
+            lutColsVis = false;
+        }
+        else {
+            for (let i = 0; i < nucleotides.length; i++) {
+                let tmeshlamb = new THREE.MeshLambertMaterial({
+                    color: lutCols[i],
+                    side: THREE.DoubleSide
+                });
+                for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+                    if (j != 3) {
+                        let tmesh = nucleotides[i].visual_object.children[j];
+                        if (tmesh instanceof THREE.Mesh) {
+                            tmesh.material = tmeshlamb;
+                        }
+                    }
+                }
+            }
+            lutColsVis = true;
+        }
+        render();
+    }
+    else {
+        alert("Please drag and drop the corresponding .json file.");
+        chkBox.checked = false;
+    }
+}
 function cross(a1, a2, a3, b1, b2, b3) {
     return [a2 * b3 - a3 * b2,
         a3 * b1 - a1 * b3,
@@ -557,9 +613,9 @@ function cross(a1, a2, a3, b1, b2, b3) {
 }
 function centerSystems() {
     for (let i = 0; i < nucleotides.length; i++) {
-        nucleotides[i].pos.x = nucleotides[i].visual_object.children[3].position.x;
-        nucleotides[i].pos.y = nucleotides[i].visual_object.children[3].position.y;
-        nucleotides[i].pos.z = nucleotides[i].visual_object.children[3].position.z;
+        nucleotides[i].pos.x = nucleotides[i].visual_object.position.x;
+        nucleotides[i].pos.y = nucleotides[i].visual_object.position.y;
+        nucleotides[i].pos.z = nucleotides[i].visual_object.position.z;
     }
     let cms = new THREE.Vector3;
     let n_nucleotides = 0;
@@ -567,7 +623,7 @@ function centerSystems() {
         for (let y = 0; y < systems[x].system_3objects.children.length; y++) {
             for (let z = 0; z < systems[x].system_3objects.children[y].children.length; z++) {
                 let temp = new THREE.Vector3;
-                systems[x].system_3objects.children[y].children[z].children[3].getWorldPosition(temp);
+                systems[x].system_3objects.children[y].children[z].getWorldPosition(temp);
                 cms.add(temp);
                 n_nucleotides++;
             }

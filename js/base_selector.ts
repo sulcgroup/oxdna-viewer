@@ -12,15 +12,19 @@ document.addEventListener('mousedown', event => {
 		let raycaster = new THREE.Raycaster();
 		// cast a ray from mose to viewpoint of camera 
 		raycaster.setFromCamera(mouse3D, camera);
-		// callect all objects that are in the vay
-		let backbones: THREE.Object3D[] = [];
-		for (let i = 0; i < nucleotides.length; i++) {
-			backbones.push(nucleotides[i].visual_object.children[0]);
-		}
+		// callect all objects that are in the way
 		let intersects = raycaster.intersectObjects(backbones);
+		console.log(raycaster);
+		console.log(intersects);
 		// make note of what's been clicked
 		let nucleotideID: number;
 		if (intersects.length > 0) {
+			/* let tint = intersects[0].object;
+			if (tint instanceof THREE.Mesh){
+				if (tint.material instanceof THREE.MeshBasicMaterial)
+				tint.material = selection_material;
+			}*/
+				
 			if (scopeMode.includes("System")) {
 				let sysID;
 				nucleotideID = parseInt(intersects[0].object.parent.name);
@@ -88,15 +92,15 @@ document.addEventListener('mousedown', event => {
 						"Strand ID: " + strand + "\n" +
 						"Global ID: " + temp.global_id + "\n" +
 						"Base ID: " + temp.type + "\n" +
-						"Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.children[3].position.x + "\n" +
-						"y = " + nucleotides[temp.global_id].visual_object.children[3].position.y + "\n" +
-						"z = " + nucleotides[temp.global_id].visual_object.children[3].position.z + "\n";
+						"Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.position.x + "\n" +
+						"y = " + nucleotides[temp.global_id].visual_object.position.y + "\n" +
+						"z = " + nucleotides[temp.global_id].visual_object.position.z + "\n";
 				}
 			}
 			makeTextArea(listBases, "BaseList");
 			makeTextArea(basesInfo, "BaseInfo");
 		}
-	}
+	} 
 });
 
 function toggle(nucleotideID, sysID) {

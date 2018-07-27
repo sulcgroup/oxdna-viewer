@@ -15,8 +15,8 @@
         "./js/save_image.ts",
         "./js/base_selector.ts",
         "./js/output_file.ts",
-        "./js/translation.ts",
+        "./js/translation.ts"//,
         //"./js/cubes.ts",
-        "./js/rotate.ts"
+        //"./js/rotate.ts"
     ]
 }

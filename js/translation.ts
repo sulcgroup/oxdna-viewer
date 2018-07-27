@@ -78,7 +78,6 @@ function getRotObj(i) {
     return rotobj;
 }
 function rotate(dir) {
-    console.log(dir);
     let sel = false;
     for (let i = 0; i < selected_bases.length; i++) {
         if (selected_bases[i] == 1) {
