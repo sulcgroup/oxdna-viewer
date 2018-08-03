@@ -1,30 +1,28 @@
 
 let listBases: string = "";
 let basesInfo: string = "";
+// magic ... 
+let mouse3D;
+let raycaster = new THREE.Raycaster();;
+let intersects;
 
 document.addEventListener('mousedown', event => {
 	getActionMode();
 	getScopeMode();
 	if (actionMode.includes("Select")) {
 		// magic ... 
-		let mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
+		mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1,
 			0.5);
-		let raycaster = new THREE.Raycaster();
 		// cast a ray from mose to viewpoint of camera 
 		raycaster.setFromCamera(mouse3D, camera);
 		// callect all objects that are in the way
-		let intersects = raycaster.intersectObjects(backbones);
+		intersects = raycaster.intersectObjects(backbones);
 		console.log(raycaster);
 		console.log(intersects);
 		// make note of what's been clicked
 		let nucleotideID: number;
 		if (intersects.length > 0) {
-			/* let tint = intersects[0].object;
-			if (tint instanceof THREE.Mesh){
-				if (tint.material instanceof THREE.MeshBasicMaterial)
-				tint.material = selection_material;
-			}*/
-				
+
 			if (scopeMode.includes("System")) {
 				let sysID;
 				nucleotideID = parseInt(intersects[0].object.parent.name);
@@ -63,44 +61,46 @@ document.addEventListener('mousedown', event => {
 			basesInfo = "";
 			let sysPrint: number[] = [], strandPrint: number[] = [], sys, strand;
 			for (let x: number = 0; x < selected_bases.length; x++) {
-				let temp = nucleotides[x];
-				sys = temp.my_system;
-				strand = temp.my_strand - 1;
-				if (sysPrint.indexOf(sys) < 0) {
-					basesInfo += "SYSTEM:\n" +
-						"System ID: " + sys + "\n" +
-						"# of Strands: " + systems[sys].strands.length + "\n" +
-						"# of Nucleotides: " + systems[sys].system_length() + "\n" +
-						"System Position:\nx = " + systems[sys].system_3objects.position.x + "\n" +
-						"y = " + systems[sys].system_3objects.position.y + "\n" +
-						"z = " + systems[sys].system_3objects.position.z + "\n\n";
-					sysPrint.push(sys);
-				}
-				let nucPrint: boolean = strandPrint.indexOf(strand) < 0;
-				if (nucPrint) {
-					basesInfo += "STRAND:\n" +
-						"System ID: " + sys + "\n" +
-						"Strand ID: " + strand + "\n" +
-						"# of Nucleotides: " + systems[sys].strands[strand].nucleotides.length + "\n" +
-						"Strand Position:\nx = " + systems[sys].strands[strand].strand_3objects.position.x + "\n" +
-						"y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
-						"z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
-					strandPrint.push(strand);
-				}
-				if (nucPrint || scopeMode.includes("Nuc")) {
-					basesInfo += "NUCLEOTIDE:\n" +
-						"Strand ID: " + strand + "\n" +
-						"Global ID: " + temp.global_id + "\n" +
-						"Base ID: " + temp.type + "\n" +
-						"Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.position.x + "\n" +
-						"y = " + nucleotides[temp.global_id].visual_object.position.y + "\n" +
-						"z = " + nucleotides[temp.global_id].visual_object.position.z + "\n";
+				if (selected_bases[x] == 1) {
+					let temp = nucleotides[x];
+					sys = temp.my_system;
+					strand = temp.my_strand - 1;
+					if (sysPrint.indexOf(sys) < 0) {
+						basesInfo += "SYSTEM:\n" +
+							"System ID: " + sys + "\n" +
+							"# of Strands: " + systems[sys].strands.length + "\n" +
+							"# of Nucleotides: " + systems[sys].system_length() + "\n" +
+							"System Position:\nx = " + systems[sys].system_3objects.position.x + "\n" +
+							"y = " + systems[sys].system_3objects.position.y + "\n" +
+							"z = " + systems[sys].system_3objects.position.z + "\n\n";
+						sysPrint.push(sys);
+					}
+					let nucPrint: boolean = strandPrint.indexOf(strand) < 0;
+					if (nucPrint) {
+						basesInfo += "STRAND:\n" +
+							"System ID: " + sys + "\n" +
+							"Strand ID: " + strand + "\n" +
+							"# of Nucleotides: " + systems[sys].strands[strand].nucleotides.length + "\n" +
+							"Strand Position:\nx = " + systems[sys].strands[strand].strand_3objects.position.x + "\n" +
+							"y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
+							"z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
+						strandPrint.push(strand);
+					}
+					if (nucPrint || scopeMode.includes("Nuc")) {
+						basesInfo += "NUCLEOTIDE:\n" +
+							"Strand ID: " + strand + "\n" +
+							"Global ID: " + temp.global_id + "\n" +
+							"Base ID: " + temp.type + "\n" +
+							"Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.position.x + "\n" +
+							"y = " + nucleotides[temp.global_id].visual_object.position.y + "\n" +
+							"z = " + nucleotides[temp.global_id].visual_object.position.z + "\n";
+					}
 				}
 			}
 			makeTextArea(listBases, "BaseList");
 			makeTextArea(basesInfo, "BaseInfo");
 		}
-	} 
+	}
 });
 
 function toggle(nucleotideID, sysID) {

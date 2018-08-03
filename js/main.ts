@@ -431,7 +431,7 @@ target.addEventListener("drop", function (event) {
             if (files_len == 3) {
                 lutCols.push(lut.getColor(devs[arb]));
             }
-            let posObj = new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+            let posObj = new THREE.Mesh; //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
             con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
             // apply rotations
             nucleoside.applyMatrix(base_rotation);

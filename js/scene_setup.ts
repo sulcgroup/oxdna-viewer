@@ -39,14 +39,13 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 // set camera position 
 camera.position.z = 100;
 
-
 var renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer: true,
     alpha: true,
     antialias: true
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+document.body.appendChild( renderer.domElement );
 
 // set scene lighting 
 //var light = new THREE.AmbientLight(0x404040);

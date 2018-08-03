@@ -58,8 +58,12 @@ function drag() {
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
+let angle:number = 90;
 
-var temp = new THREE.Vector3();
+function setRotAngle(textArea){
+    angle = parseInt(textArea.value);
+}
+
 function getRotObj(i) {
     let rotobj;
     let found = false;
@@ -84,13 +88,13 @@ function rotate(dir) {
             let rotobj = getRotObj(i);
             getAxisMode();
             if (axisMode == "X") {
-                rotobj.rotateX(dir * Math.PI / 2);
+                rotobj.rotateX(dir * angle * Math.PI / 180);
             }
             else if (axisMode == "Y") {
-                rotobj.rotateY(dir * Math.PI / 2);
+                rotobj.rotateY(dir * angle * Math.PI / 180);
             }
             else {
-                rotobj.rotateZ(dir * Math.PI / 2);
+                rotobj.rotateZ(dir * angle * Math.PI / 180);
             }
             render();
             sel = true;

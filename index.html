@@ -15,15 +15,6 @@
 			border: 1px solid black;
 		}
 
-		.main {
-			margin-left: 0px;
-			/* Same as the width of the sidenav */
-			margin-right: 900px;
-			font-size: 12px;
-			/* Increased text to enable scrolling */
-			padding: 10px 10px;
-		}
-
 		.tab {
 			overflow: auto;
 			border: 1px thin #ccc;
@@ -67,6 +58,7 @@
 			margin: 5px 5px 5px 5px;
 			overflow-y: scroll;
 			font-size: 12px;
+
 		}
 
 		button {
@@ -87,6 +79,8 @@
 			margin: 0;
 		}
 
+
+
 		canvas {
 			width: 100%;
 			height: 100%
@@ -103,15 +97,15 @@
 				<button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
 				<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
 			</div>
-			<div id="Nucleotides" class="tabcontent">                                                                                      
-				<textarea id="BaseList" cols="25" rows="3" name="textarea"> Selected Bases List </textarea>
+			<div id="Nucleotides" class="tabcontent">
+				<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 				<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
 				<button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
 				<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
 				<button onclick="controls.reset()" type="button">Reset Camera</button>
 				<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>
 				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
-				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)" >Display Flexibility Coloring
+				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Flexibility Coloring
 				<form action="" id="Action">
 					<fieldset>
 						<legend>Action:</legend>
@@ -130,12 +124,12 @@
 					<br>-->
 						<input type="radio" name="mode" value="Nuc" checked>Nucleotide
 						<br>
-						<input type="radio" name="mode" value="Strand" >Strand
+						<input type="radio" name="mode" value="Strand">Strand
 						<br>
-						<input type="radio" name="mode" value="System" >System
+						<input type="radio" name="mode" value="System">System
 					</fieldset>
 				</form>
-				<textarea id="BaseInfo" cols="25" rows="10" name="textarea"> Selected Base Information </textarea>
+				<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 				<form action="" id="Axis">
 					<fieldset>
 						<legend>Rotate Axis:</legend>
@@ -145,6 +139,8 @@
 						<br>
 						<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
 					</fieldset>
+					<label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
+					<textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
 				</form>
 				<button onclick="rotate(-1)" class="rot" style="font-size:25px">
 					<i class="fa fa-arrow-left"></i>
@@ -155,9 +151,8 @@
 				<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button>
 				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
 			</div>
-
 			<div id="Strands" class="tabcontent" style="display: none">
-				<button>APPLES</button>
+				<button>TEST</button>
 			</div>
 
 		</div>

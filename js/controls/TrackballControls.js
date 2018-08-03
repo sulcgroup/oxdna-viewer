@@ -19,7 +19,7 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 	this.enabled = true;
 
-	this.screen = { left: 0, top: 0, width: 0, height: 0 };
+	this.screen = { left: 0, top: 0, width: 0, height: 10 };
 
 	this.rotateSpeed = 1.0;
 	this.zoomSpeed = 1.2;
@@ -396,8 +396,8 @@ THREE.TrackballControls = function ( object, domElement ) {
 
 		if ( _this.enabled === false ) return;
 
-		event.preventDefault();
-		event.stopPropagation();
+		//event.preventDefault();
+		//event.stopPropagation();
 
 		if ( _state === STATE.NONE ) {
 
