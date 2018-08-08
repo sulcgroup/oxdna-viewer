@@ -83,9 +83,9 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 			if (intersects.length > 0) {
 
-				// if (scopeMode.includes("Drag")) {
-				// 	var object = intersects[0].object;
-				// }
+				 if (scopeMode.includes("Drag")) {
+				 	var object = intersects[0].object;
+				 }
 				if (scopeMode.includes("Nuc")) {
 					var object = intersects[0].object.parent;
 				}
@@ -133,9 +133,9 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 
 			if (intersects.length > 0) {
 
-				// if (scopeMode.includes("Drag")) {
-				// 	_selected = intersects[0].object;
-				// }
+				 if (scopeMode.includes("Drag")) {
+				 	_selected = intersects[0].object;
+				 }
 				if (scopeMode.includes("Nuc")) {
 					_selected = intersects[0].object.parent;
 				}
@@ -199,7 +199,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 		let x_bb = temp.x;
 		let y_bb = temp.y;
 		let z_bb = temp.z;
-		current_nuc.visual_object.children[4].getWorldPosition(temp);
 
 		//last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
 		let x_sp = (x_bb + x_bb_last) / 2,
@@ -210,7 +209,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 		// easy periodic boundary condition fix  
 		var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
 			new THREE.Quaternion().setFromUnitVectors(
-				temp.normalize(), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb-x_sp, y_bb-y_sp, z_bb-z_sp).normalize()
 			)
 		);
 		let tempsp = new THREE.Mesh(connector_geometry, backbone_materials[Math.floor(current_nuc.my_strand % backbone_materials.length)]);
@@ -250,7 +249,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 		}
 	}
 
-
 	function onDocumentTouchStart(event) {
 		if (actionMode.includes("Drag")) {
 
@@ -267,9 +265,9 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) {
 			var intersects = _raycaster.intersectObjects(_objects, individ);
 
 			if (intersects.length > 0) {
-				// if (scopeMode.includes("Drag")) {
-				// 	_selected = intersects[0].object;
-				// }
+				 if (scopeMode.includes("Drag")) {
+				 	_selected = intersects[0].object;
+				 }
 				if (scopeMode.includes("Nuc")) {
 					_selected = intersects[0].object.parent;
 				}

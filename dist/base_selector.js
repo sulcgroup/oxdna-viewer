@@ -15,8 +15,6 @@ document.addEventListener('mousedown', event => {
         raycaster.setFromCamera(mouse3D, camera);
         // callect all objects that are in the way
         intersects = raycaster.intersectObjects(backbones);
-        console.log(raycaster);
-        console.log(intersects);
         // make note of what's been clicked
         let nucleotideID;
         if (intersects.length > 0) {
@@ -111,22 +109,22 @@ function toggle(nucleotideID, sysID) {
         // figure out what that base was before you painted it black and revert it
         if (back_Mesh instanceof THREE.Mesh) {
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
+                back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
             }
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
-            if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial || nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[nucleotideID].global_id]);
+            if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[nucleotideID].local_id]);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
+                con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].global_id]);
+                sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
             }
         }
         selected_bases[nucleotideID] = 0;
