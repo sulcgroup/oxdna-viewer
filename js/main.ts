@@ -271,12 +271,9 @@ target.addEventListener("drop", function (event) {
         system.setStrandMaterial(strand_to_material);
         system.setDatFile(dat_file);
         systems.push(system);
-        console.log(base_to_material);
-        console.log(strand_to_material);
         for (let i = 0; i < nucleotides.length; i++) {
             selected_bases.push(0);
         }
-        console.log(selected_bases);
     };
     top_reader.readAsText(top_file);
 
