@@ -33,11 +33,12 @@ document.addEventListener('mousedown', event => {
 			}
 
 			else if (scopeMode.includes("Strand")) {
-				let strandID;
+				let strandID, sysID;
 				nucleotideID = parseInt(intersects[0].object.parent.name);
 				strandID = nucleotides[nucleotideID].my_strand;
+				sysID = nucleotides[nucleotideID].my_system;
 				for (let i = 0; i < nucleotides.length; i++) {
-					if (nucleotides[i].my_strand == strandID) {
+					if (nucleotides[i].my_strand == strandID && nucleotides[i].my_system == sysID) {
 						let sysID = nucleotides[i].my_system;
 						toggle(i, sysID);
 					}
@@ -114,24 +115,27 @@ function toggle(nucleotideID, sysID) {
 	let sp_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[4];
 	if (selected) {
 		// figure out what that base was before you painted it black and revert it
+		console.log(systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
+		let nuc = nucleotides[nucleotideID];
+		let locstrandID = (nuc.my_strand-1)*systems[sysID].strands[nuc.my_strand-1].nucleotides.length + nuc.local_id;
 		if (back_Mesh instanceof THREE.Mesh) {
 			if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
+				back_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
 			}
 		}
 		if (nuc_Mesh instanceof THREE.Mesh) {
 			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[nucleotideID].local_id]);
+				nuc_Mesh.material = (systems[sysID].base_to_material[locstrandID]);
 			}
 		}
 		if (con_Mesh instanceof THREE.Mesh) {
 			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
+				con_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
 			}
 		}
 		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
 			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
+				sp_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
 			}
 		}
 		selected_bases[nucleotideID] = 0;

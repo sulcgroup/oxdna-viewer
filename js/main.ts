@@ -271,14 +271,16 @@ target.addEventListener("drop", function (event) {
         system.setStrandMaterial(strand_to_material);
         system.setDatFile(dat_file);
         systems.push(system);
-
-
-
+        console.log(base_to_material);
+        console.log(strand_to_material);
         for (let i = 0; i < nucleotides.length; i++) {
             selected_bases.push(0);
         }
+        console.log(selected_bases);
     };
     top_reader.readAsText(top_file);
+
+
 
     if (files_len == 3) {
         let json_reader = new FileReader();
@@ -326,7 +328,6 @@ target.addEventListener("drop", function (event) {
     // execute the read operation 
     dat_reader.readAsText(dat_file);
 
-
     if (files_len == 1) {
         if (files[0].name.slice(-4) == "json") {
             json_file = files[0];
@@ -370,13 +371,13 @@ target.addEventListener("drop", function (event) {
 // update the scene
 render();
 
+var trajlines;
 function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_material, system, files_len, x_bb_last, y_bb_last, z_bb_last) {
-    console.log(dat_reader);
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
-    var lines = dat_reader.result.split(/[\r\n]+/g);
-
+    let lines = dat_reader.result.split(/[\r\n]+/g);
+    trajlines = lines;
     //get the simulation box size 
     let box = parseFloat(lines[1].split(" ")[3]);
     // everything but the header
@@ -396,7 +397,6 @@ function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_materia
     let arb = 0;
     let trajlen = (datnum + 1) * datlen;
     for (let i = datnum * datlen; i < trajlen; i++) {
-        console.log("HERE");
         if (lines[i] == "") { return };
         var current_nucleotide = current_strand.nucleotides[nuc_local_id];
         //get nucleotide information
@@ -614,33 +614,26 @@ function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_materia
     for (let i = 0; i < nucleotides.length; i++) {
         backbones.push(nucleotides[i].visual_object.children[0]);
     }
-    console.log(scene);
     //render();
 }
 let x_bb_last, y_bb_last, z_bb_last;
 function nextConfig() {
     for (let i = 0; i < systems.length; i++) {
         let system = systems[i];
-        let dat_reader = new FileReader();
-        // execute the read operation 
-        dat_reader.readAsText(system.dat_file);
-        console.log(dat_reader);
         let datlen = system.system_length();
 
         let nuc_local_id = 0;
         let current_strand = systems[i].strands[0];
-        // parse file into lines 
-        let lines = dat_reader.result.split(/[\r\n]+/g);
         //get the simulation box size 
-        let box = parseFloat(lines[datnum * datlen + 1].split(" ")[3]);
+        let box = parseFloat(trajlines[datnum * datlen + 1].split(" ")[3]);
         // everything but the header
-        lines = lines.slice(datnum * datlen + 3);
+        trajlines = trajlines.slice(datnum * datlen + 3);
         //for (var t = 2; t < 3; t++){
         //  dat_fileout = dat_fileout + lines[t] + "\n";
         //}
 
         // calculate offset to have the first strand @ the scene origin 
-        let first_line = lines[0 + datnum * datlen].split(" ");
+        let first_line = trajlines[0 + datnum * datlen].split(" ");
         // parse the coordinates
         let fx = parseFloat(first_line[0]),
             fy = parseFloat(first_line[1]),
@@ -650,11 +643,11 @@ function nextConfig() {
         let arb = 0;
         let trajlen = (datnum + 1) * datlen;
         for (let i = datnum * datlen; i < trajlen; i++) {
-            if (lines[i] == "") { return };
+            if (trajlines[i] == "") { return };
             let current_nucleotide = current_strand.nucleotides[nuc_local_id];
             //get nucleotide information
             // consume a new line 
-            let l: string = lines[i].split(" ");
+            let l: string = trajlines[i].split(" ");
             // shift coordinates such that the 1st base of the  
             // 1st strand is @ origin 
             let x = parseFloat(l[0]),// - fx,
@@ -791,7 +784,6 @@ function nextConfig() {
         }
         render();
         updatePos(i);
-        console.log(scene);
     }
 }
 
