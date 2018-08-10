@@ -272,14 +272,16 @@ target.addEventListener("drop", function (event) {
         };
         json_reader.readAsText(json_file);
     }
-    // read a configuration file 
-    var x_bb_last, y_bb_last, z_bb_last;
-    let dat_reader = new FileReader();
-    dat_reader.onload = () => {
-        readDat(datnum, system.system_length(), dat_reader, strand_to_material, base_to_material, system, files_len, x_bb_last, y_bb_last, z_bb_last);
-    };
-    // execute the read operation 
-    dat_reader.readAsText(dat_file);
+    if (files_len == 2 || files_len == 3) {
+        // read a configuration file 
+        var x_bb_last, y_bb_last, z_bb_last;
+        let dat_reader = new FileReader();
+        dat_reader.onload = () => {
+            readDat(/*datnum,*/ system.system_length(), dat_reader, strand_to_material, base_to_material, system, files_len, x_bb_last, y_bb_last, z_bb_last);
+        };
+        // execute the read operation 
+        dat_reader.readAsText(dat_file);
+    }
     if (files_len == 1) {
         if (files[0].name.slice(-4) == "json") {
             json_file = files[0];
@@ -315,11 +317,12 @@ target.addEventListener("drop", function (event) {
             json_reader.readAsText(json_file);
         }
     }
+    render();
 }, false);
 // update the scene
 render();
 var trajlines;
-function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_material, system, files_len, x_bb_last, y_bb_last, z_bb_last) {
+function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_material, system, files_len, x_bb_last, y_bb_last, z_bb_last) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -521,7 +524,7 @@ function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_materia
      backbones.push(cube); */
     // update the scene
     render();
-    updatePos(sys_count - 1);
+    //updatePos(sys_count - 1);
     for (let i = 0; i < nucleotides.length; i++) {
         backbones.push(nucleotides[i].visual_object.children[0]);
     }
@@ -534,132 +537,156 @@ function nextConfig() {
         let datlen = system.system_length();
         let nuc_local_id = 0;
         let current_strand = systems[i].strands[0];
+        let len = datnum * datlen + 3 * datnum;
         //get the simulation box size 
-        let box = parseFloat(trajlines[datnum * datlen + 1].split(" ")[3]);
-        // everything but the header
-        trajlines = trajlines.slice(datnum * datlen + 3);
-        //for (var t = 2; t < 3; t++){
-        //  dat_fileout = dat_fileout + lines[t] + "\n";
-        //}
-        // calculate offset to have the first strand @ the scene origin 
-        let first_line = trajlines[0 + datnum * datlen].split(" ");
-        // parse the coordinates
-        let fx = parseFloat(first_line[0]), fy = parseFloat(first_line[1]), fz = parseFloat(first_line[2]);
-        // add the bases to the scene
-        let test = 0;
-        let arb = 0;
-        let trajlen = (datnum + 1) * datlen;
-        for (let i = datnum * datlen; i < trajlen; i++) {
-            if (trajlines[i] == "") {
-                return;
-            }
-            ;
-            let current_nucleotide = current_strand.nucleotides[nuc_local_id];
-            //get nucleotide information
-            // consume a new line 
-            let l = trajlines[i].split(" ");
-            // shift coordinates such that the 1st base of the  
-            // 1st strand is @ origin 
-            let x = parseFloat(l[0]), // - fx,
-            y = parseFloat(l[1]), // - fy,
-            z = parseFloat(l[2]); // - fz;
-            current_nucleotide.pos = new THREE.Vector3(x, y, z);
-            // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-            let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
-            // according to base.py a2 is the cross of a1 and a3
-            let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
-            // compute backbone cm
-            let x_bb = 0;
-            let y_bb = 0;
-            let z_bb = 0;
-            if (!RNA_MODE) { //calculations for DNA
-                x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2),
-                    y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2),
-                    z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
-            }
-            else {
-                // calculations for RNA
-                x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
-                y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
-                z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
-            }
-            // compute nucleoside cm
-            let x_ns = x + 0.4 * x_a1, y_ns = y + 0.4 * y_a1, z_ns = z + 0.4 * z_a1;
-            //compute connector position
-            let x_con = (x_bb + x_ns) / 2, y_con = (y_bb + y_ns) / 2, z_con = (z_bb + z_ns) / 2;
-            //compute connector length
-            let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
-            let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_a3, y_a3, z_a3)));
-            // correctly display stacking interactions
-            let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
-            // adds a new "backbone", new "nucleoside", and new "connector" to the scene
-            let group = current_nucleotide.visual_object;
-            group.name = current_nucleotide.global_id + "";
-            group.children[2].applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
-            // apply rotations
-            group.children[1].applyMatrix(base_rotation);
-            group.children[2].applyMatrix(rotation_con);
-            //set positions
-            group.children[0].position.set(x_bb, y_bb, z_bb);
-            group.children[1].position.set(x_ns, y_ns, z_ns);
-            group.children[2].position.set(x_con, y_con, z_con);
-            group.children[3].position.set(x, y, z);
-            //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-            if (current_nucleotide.neighbor3 != null) {
-                let x_sp = (x_bb + current_nucleotide.neighbor3.visual_object.position.x) / 2, y_sp = (y_bb + current_nucleotide.neighbor3.visual_object.position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor3.visual_object.position.z) / 2;
-                let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor3.visual_object.position.x, 2)
-                    + Math.pow(y_bb - current_nucleotide.neighbor3.visual_object.position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor3.visual_object.position.z, 2));
-                // easy periodic boundary condition fix  
-                // if the bonds are to long just don't add them 
-                if (sp_len <= 1.2) {
-                    let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-                    let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]);
-                    group.children[4].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
-                    group.children[4].applyMatrix(rotation_sp);
-                    group.children[4].position.set(x_sp, y_sp, z_sp);
+        if (len < trajlines.length) {
+            console.log(datlen);
+            console.log(datnum);
+            console.log(len);
+            console.log(trajlines.length);
+            let box = parseFloat(trajlines[len + 1].split(" ")[3]);
+            // everything but the header
+            console.log(trajlines[len + 1].split(" ")[3]);
+            let temptrajlines = trajlines.slice(len + 3);
+            console.log(temptrajlines);
+            //for (var t = 2; t < 3; t++){
+            //  dat_fileout = dat_fileout + lines[t] + "\n";
+            //}
+            // calculate offset to have the first strand @ the scene origin 
+            let first_line = temptrajlines[0].split(" ");
+            // parse the coordinates
+            let fx = parseFloat(first_line[0]), fy = parseFloat(first_line[1]), fz = parseFloat(first_line[2]);
+            // add the bases to the scene
+            let test = 0;
+            let arb = 0;
+            let trajlen = (datnum + 1) * datlen + 3 * datnum;
+            for (let datx = 0; datx < 10; datx++) {
+                if (temptrajlines[datx] == "") {
+                    return;
                 }
+                ;
+                let current_nucleotide = current_strand.nucleotides[nuc_local_id];
+                //get nucleotide information
+                // consume a new line 
+                let l = temptrajlines[datx].split(" ");
+                console.log(l);
+                // shift coordinates such that the 1st base of the  
+                // 1st strand is @ origin 
+                let x = parseFloat(l[0]), // - fx,
+                y = parseFloat(l[1]), // - fy,
+                z = parseFloat(l[2]); // - fz;
+                current_nucleotide.pos = new THREE.Vector3(x, y, z);
+                // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
+                let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
+                // according to base.py a2 is the cross of a1 and a3
+                let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
+                // compute backbone cm
+                let x_bb = 0;
+                let y_bb = 0;
+                let z_bb = 0;
+                if (!RNA_MODE) { //calculations for DNA
+                    x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2),
+                        y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2),
+                        z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
+                }
+                else {
+                    // calculations for RNA
+                    x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
+                    y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
+                    z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
+                }
+                // compute nucleoside cm
+                let x_ns = x + 0.4 * x_a1, y_ns = y + 0.4 * y_a1, z_ns = z + 0.4 * z_a1;
+                //compute connector position
+                let x_con = (x_bb + x_ns) / 2, y_con = (y_bb + y_ns) / 2, z_con = (z_bb + z_ns) / 2;
+                //compute connector length
+                let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
+                let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_a3, y_a3, z_a3)));
+                // correctly display stacking interactions
+                let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
+                // adds a new "backbone", new "nucleoside", and new "connector" to the scene
+                let group = current_nucleotide.visual_object;
+                let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id;
+                group.name = current_nucleotide.global_id + "";
+                group.children[2] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
+                group.children[2].applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
+                // apply rotations
+                group.children[1].applyMatrix(base_rotation);
+                group.children[2].applyMatrix(rotation_con);
+                //set positions
+                group.children[0].position.set(x_bb, y_bb, z_bb);
+                group.children[1].position.set(x_ns, y_ns, z_ns);
+                group.children[2].position.set(x_con, y_con, z_con);
+                group.children[3].position.set(x, y, z);
+                console.log(x_bb, y_bb, z_bb);
+                console.log(x_ns, y_ns, z_ns);
+                console.log(x_con, y_con, z_con);
+                console.log(x, y, z);
+                //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+                if (current_nucleotide.neighbor3 != null) {
+                    let temp = new THREE.Vector3();
+                    current_nucleotide.neighbor3.visual_object.children[0].getWorldPosition(temp);
+                    let x_sp = (x_bb + temp.x) / 2, y_sp = (y_bb + temp.y) / 2, z_sp = (z_bb + temp.z) / 2;
+                    let sp_len = Math.sqrt(Math.pow(x_bb - temp.x, 2) + Math.pow(y_bb - temp.y, 2) + Math.pow(z_bb - temp.z, 2));
+                    //easy periodic boundary condition fix
+                    //if the bonds are to long just don't add them
+                    if (sp_len <= 1.2) {
+                        let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
+                        group.children[4] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
+                        group.children[4].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
+                        group.children[4].applyMatrix(rotation_sp);
+                        group.children[4].position.set(x_sp, y_sp, z_sp);
+                        //group.children[4].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
+                        //group.children[4].applyMatrix(rotation_sp);
+                        //group.children[4].position.set(x_sp, y_sp, z_sp);
+                        console.log(x_sp, y_sp, z_sp);
+                    }
+                }
+                ;
                 arb++;
-            }
-            ;
-            if (current_nucleotide.neighbor5 == null) {
-                system.system_3objects.add(current_strand.strand_3objects);
-                current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
-                nuc_local_id = 0;
-            }
-            else {
-                nuc_local_id += 1;
-            }
-            ;
-            render();
-        }
-        datnum++;
-        let dx, dy, dz;
-        for (let i = 0; i < systems[sys_count].strands.length; i++) {
-            // compute offset to bring strand in box
-            let n = systems[sys_count].strands[i].nucleotides.length;
-            let cms = new THREE.Vector3(0, 0, 0);
-            for (let j = 0; j < n; j++) {
-                cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[3].position);
-            }
-            let mul = 1.0 / n;
-            cms.multiplyScalar(mul);
-            dx = Math.round(cms.x / box) * box;
-            dy = Math.round(cms.y / box) * box;
-            dz = Math.round(cms.z / box) * box;
-            //fix coordinates
-            let temp = new THREE.Vector3();
-            for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) {
-                for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) {
-                    let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position;
-                    pos.x = pos.x - dx;
-                    pos.y = pos.y - dy;
-                    pos.z = pos.z - dz;
-                    systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                if (current_nucleotide.neighbor5 == null) {
+                    system.system_3objects.add(current_strand.strand_3objects);
+                    current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+                    nuc_local_id = 0;
                 }
+                else {
+                    nuc_local_id += 1;
+                }
+                ;
+                render();
+                let dx, dy, dz;
+                for (let j = 0; j < systems[i].strands.length; j++) {
+                    // compute offset to bring strand in box
+                    let n = systems[i].strands[j].nucleotides.length;
+                    let cms = new THREE.Vector3(0, 0, 0);
+                    for (let k = 0; k < n; k++) {
+                        cms.add(systems[i].strands[j].nucleotides[k].visual_object.children[3].position);
+                    }
+                    let mul = 1.0 / n;
+                    cms.multiplyScalar(mul);
+                    dx = Math.round(cms.x / box) * box;
+                    dy = Math.round(cms.y / box) * box;
+                    dz = Math.round(cms.z / box) * box;
+                    //fix coordinates
+                    let temp = new THREE.Vector3();
+                    for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) {
+                        for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) {
+                            let pos = systems[i].strands[j].nucleotides[k].visual_object.children[l].position;
+                            pos.x = pos.x - dx;
+                            pos.y = pos.y - dy;
+                            pos.z = pos.z - dz;
+                            systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z);
+                        }
+                    }
+                }
+                render();
+                //updatePos(i);
             }
+            datnum += 5;
         }
-        render();
-        updatePos(i);
+        else {
+            alert("No more configurations to load.");
+        }
     }
 }
 function updatePos(sys_count) {
@@ -680,6 +707,7 @@ function updatePos(sys_count) {
                 for (let k = 0; k < n2; k++) {
                     rotobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
                 }
+                rotobj.position.set(0, 0, 0);
                 rotobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz));
             }
             let mul = 1.0 / n1;
@@ -687,6 +715,7 @@ function updatePos(sys_count) {
             for (let k = 0; k < n1; k++) {
                 systems[h].strands[i].strand_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cms.x, -cms.y, -cms.z));
             }
+            systems[h].strands[i].strand_3objects.position.set(0, 0, 0);
             systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cms.x, cms.y, cms.z));
         }
         let mul = 1.0 / n;
@@ -694,6 +723,7 @@ function updatePos(sys_count) {
         for (let k = 0; k < systems[h].system_3objects.children.length; k++) {
             systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -cmssys.y, -cmssys.z));
         }
+        systems[h].system_3objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z));
     }
 }

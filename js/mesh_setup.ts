@@ -10,27 +10,27 @@ var connector_geometry = new THREE.CylinderGeometry(.1,.1,1, 8);
 // define strand colors 
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
-        color: 0x156289,
+        color: 0x888888,//0x156289,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xFF0089,
+        color: 0x888888,//0xFF0089,
         side: THREE.DoubleSide,
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xFFFF00,
+        color: 0x888888,//0xFFFF00,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
-        color: 0x00FF00,
+        color: 0x888888,//0x00FF00,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
-        color: 0x00FFFF,
+        color: 0x888888,//0x00FFFF,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xDA9100,
+        color: 0x888888,//0xDA9100,
         //emissive: 0x072534,
         side: THREE.DoubleSide,
         //flatShading: true
