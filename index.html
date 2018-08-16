@@ -2,8 +2,8 @@
 
 <head>
 	<title>oxDNA three.js viewer</title>
-	<style>
-		.sidenav {
+	<style> /*CSS*/
+		.sidenav { /*side bar settings*/
 			height: 100%;
 			width: 243px;
 			position: fixed;
@@ -15,7 +15,7 @@
 			border: 1px solid black;
 		}
 
-		.tab {
+		.tab { /*tab settings*/
 			overflow: auto;
 			border: 1px thin #ccc;
 			background-color: coral;
@@ -26,7 +26,7 @@
 			background-color: inherit;
 			border: none;
 			cursor: pointer;
-			padding: 5px 5px 5px 5px;
+			padding: 5px 5px 5px 5px; /*on each side of button*/
 			transition: 0.3s;
 			font-size: 17px;
 			float: left;
@@ -42,7 +42,7 @@
 			font-size: 17px;
 		}
 
-		.rot {
+		.rot { /*rotation button settings*/
 			background-color: white;
 			border: 0px;
 			width: 35px;
@@ -72,32 +72,31 @@
 		button:active {
 			background-color: darkcyan;
 			box-shadow: 0 5px currentColor;
-			transform: translateY(4px);
+			transform: translateY(4px); /*amt of movement when active*/
 		}
 
 		body {
 			margin: 0;
 		}
 
-
-
 		canvas {
 			width: 100%;
 			height: 100%
 		}
 	</style>
-
+	
+	<!--used for rotation arrow buttons-->
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
 
 	<body>
-		<div class="sidenav">
-			<div class="tab">
+		<div class="sidenav"> <!--sidebar-->
+			<div class="tab"> <!--2 tabs: Nucleotides. Strands(not used)-->
 				<button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
 				<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
-			</div>
-			<div id="Nucleotides" class="tabcontent">
+			</div> 
+			<div id="Nucleotides" class="tabcontent"> <!--in "Nucloetides" tab-->
 				<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 				<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
 				<button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
@@ -107,7 +106,7 @@
 				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Flexibility Coloring
 				<form action="" id="Action">
-					<fieldset>
+					<fieldset> <!--collection of checkboxes-->
 						<legend>Action:</legend>
 						<input type="checkbox" name="action" value="Select" checked> Select
 						<br>
@@ -115,10 +114,10 @@
 						<br>
 					</fieldset>
 				</form>
-				<form action="" id="Mode">
+				<form action="" id="Mode"> <!--collection of radio buttons-->
 					<fieldset>
 						<legend>Mode:</legend>
-						<!--<input type="radio" name="mode" value="baseSelect">Select Bases
+						<!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
 					<br>-->
 						<input type="radio" name="mode" value="Drag">Drag
 						<br>
@@ -131,7 +130,7 @@
 				</form>
 				<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 				<form action="" id="Axis">
-					<fieldset>
+					<fieldset> <!--collection of radio buttons-->
 						<legend>Rotate Axis:</legend>
 						<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
 						<br>
@@ -142,13 +141,14 @@
 					<label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
 					<textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
 				</form>
+				<!--Rotation arrow buttons-->
 				<button onclick="rotate(-1)" class="rot" style="font-size:25px">
 					<i class="fa fa-arrow-left"></i>
 				</button>
 				<button onclick="rotate(1)" class="rot" style="font-size:25px">
 					<i class="fa fa-arrow-right"></i>
 				</button>
-				<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button>
+				<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
 				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
 				<button onclick="nextConfig()" type="button">Next Configuration</button>
 			</div>
@@ -157,7 +157,7 @@
 			</div>
 
 		</div>
-		<div class="main">
+		<div class="main"> <!--all files to be loaded onload of html file-->
 			<script src="./js/lib/three.js"></script>
 			<script src="./js/lib/Lut.js"></script>
 			<script src="./js/controls/DragControls.js"></script>
@@ -170,7 +170,7 @@
 			<script src="./dist/output_file.js"></script>
 			<script src="./dist/translation.js"></script>
 			<script src="./js/controls/SceneUtils.js"></script>
-			<!--<script src="./dist/cubes.js"></script>-->
+			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
 		</div>
 	</body>
 
