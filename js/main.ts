@@ -5,8 +5,8 @@ render();
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
 class Nucleotide {
-    local_id: number; //strand location
-    global_id: number; //world location - all systems
+    local_id: number; //location on strand
+    global_id: number; //location in world - all systems
     pos: THREE.Vector3; //not automatically updated
     neighbor3: Nucleotide | null;
     neighbor5: Nucleotide | null;
@@ -265,11 +265,13 @@ target.addEventListener("drop", function (event) {
                 // coloring base according to base id
                 base_to_material[i] = nucleoside_materials[base_to_num[base]];
                 // coloring bases according to strand id 
-                strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length)];
-                for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
-                    selected_bases.push(0);
-                }
+                strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
+
+
             });
+        for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
+            selected_bases.push(0);
+        }
         system.setBaseMaterial(base_to_material); //store this system's base 
         system.setStrandMaterial(strand_to_material); //and strand coloring in current System object
         system.setDatFile(dat_file); //store dat_file in current System object
@@ -726,14 +728,14 @@ function nextConfig() { //attempts to display next configuration; same as readDa
 
                 // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
                 let group = current_nucleotide.visual_object;
-                let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id; //gets nucleotide id in relation to strand - used to color nucleotide Meshes properly
+                let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id; //gets nucleotide id in relation to system - used to color nucleotide Meshes properly
                 group.name = current_nucleotide.global_id + "";
                 //group.children[0] = backbone
                 //group.children[1] = nucleoside
                 //group.children[2] = backbone nucleoside connector / con
                 //group.children[3] = posObj - cms Mesh
                 //group.children[4] = sugar phosphate connector
-                group.children[2] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]); //new con
+                group.children[2] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]); //new con 
                 group.children[2].applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0)); //length
                 // apply rotations
                 group.children[1].applyMatrix(base_rotation); //nucleoside
@@ -861,7 +863,7 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
         let mul = 1.0 / n;
         cmssys.multiplyScalar(mul);
         for (let k = 0; k < systems[h].system_3objects.children.length; k++) { //for each strand, translate by -cmssys
-            systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -cmssys.y, -cmssys.z)); 
+            systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -cmssys.y, -cmssys.z));
         }
         systems[h].system_3objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z)); //translate system by cmssys
