@@ -513,7 +513,7 @@ function readDat(datnum, datlen, dat_reader, strand_to_material, base_to_materia
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
             // easy periodic boundary condition fix  
             // if the bonds are to long just don't add them 
-            if (sp_len <= 1.2) {
+            if (sp_len <= 4) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion().setFromUnitVectors(
                         new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
