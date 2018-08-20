@@ -115,7 +115,6 @@ function toggle(nucleotideID, sysID) {
 	let sp_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[4];
 	if (selected) {
 		// figure out what that base was before you painted it black and revert it
-		console.log(systems[sysID].strand_to_material[nucleotides[nucleotideID].local_id]);
 		let nuc = nucleotides[nucleotideID];
 		let locstrandID = (nuc.my_strand-1)*systems[sysID].strands[nuc.my_strand-1].nucleotides.length + nuc.local_id;
 		if (back_Mesh instanceof THREE.Mesh) {
