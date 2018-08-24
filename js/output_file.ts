@@ -67,7 +67,7 @@ function makeOutputFiles(){ //makes .dat and .top files with update position inf
 		let x_a2:number;
 		let y_a2:number;
 		let z_a2:number;
-		if (RNA_MODE){ //if RNAs
+		if (RNA_MODE){ //if RNA
 			x_a3 = ((x_bb - x)+(0.4*x_a1))/(-0.2);
 			y_a3 = ((y_bb - y)+(0.4*y_a1))/(-0.2);
 			z_a3 = ((z_bb - z)+(0.4*z_a1))/(-0.2);
