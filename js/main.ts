@@ -35,7 +35,7 @@ class Strand {
     strand_id: number; //system location
     nucleotides: Nucleotide[] = [];
     my_system: System;
-    strand_3objects: THREE.Group; //contains visual_objects
+    strand_3objects: THREE.Group; //contains Nucleotide.visual_objects
 
     constructor(id: number, parent_system: System) {
         this.strand_id = id;
@@ -638,41 +638,21 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         let len = datnum * datlen + 3 * datnum; //gets start position of nuc position data in .dat file
         //get the simulation box size 
         if (len < trajlines.length) { //for all nuc position data of current configuration
-            console.log(datlen); //troubleshooting
-            console.log(datnum);
-            console.log(len);
-            console.log(trajlines.length);
             let box = parseFloat(trajlines[len + 1].split(" ")[3]); //box numbers from .dat file
-            // everything but the header
-            console.log(trajlines[len + 1].split(" ")[3]);
             let temptrajlines = trajlines.slice(len + 3);
-            console.log(temptrajlines);
             //for (var t = 2; t < 3; t++){
             //  dat_fileout = dat_fileout + lines[t] + "\n";
             //}
 
-            // calculate offset to have the first strand @ the scene origin 
-            let first_line = temptrajlines[0].split(" ");
-            // parse the coordinates
-            let fx = parseFloat(first_line[0]),
-                fy = parseFloat(first_line[1]),
-                fz = parseFloat(first_line[2]);
-            // add the bases to the scene
-            let test = 0;
-            let arb = 0;
-            let trajlen = (datnum + 1) * datlen + 3 * datnum;
-            for (let datx = 0; datx < 10; datx++) {
+            for (let datx = 0; datx < datlen; datx++) {
                 if (temptrajlines[datx] == "") { return };
                 let current_nucleotide = current_strand.nucleotides[nuc_local_id];
                 //get nucleotide information
                 // consume a new line 
                 let l: string = temptrajlines[datx].split(" ");
-                console.log(l);
-                // shift coordinates such that the 1st base of the  
-                // 1st strand is @ origin 
-                let x = parseFloat(l[0]),// - fx,
-                    y = parseFloat(l[1]),// - fy,
-                    z = parseFloat(l[2]);// - fz;
+                let x = parseFloat(l[0]),
+                    y = parseFloat(l[1]),
+                    z = parseFloat(l[2]);
                 current_nucleotide.pos = new THREE.Vector3(x, y, z);
 
                 // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
@@ -712,22 +692,25 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                     y_con = (y_bb + y_ns) / 2,
                     z_con = (z_bb + z_ns) / 2;
 
-                //compute connector length
+                //compute connector length/position
                 let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
 
+                //correctly display stacking interactions
                 let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion().setFromUnitVectors(
                         new THREE.Vector3(0, 1, 0),
                         new THREE.Vector3(x_a3, y_a3, z_a3)));
 
-                // correctly display stacking interactions
+                // correctly display orient connectors
+                let curr_heading = current_nucleotide.visual_object.children[0].position.add(current_nucleotide.visual_object.children[1].position);
+
                 let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()
+                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize() //this is coming from (0,1,0)
                     )
                 );
 
-                // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
+                // update position and orientation of the nucleotides
                 let group = current_nucleotide.visual_object;
                 let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id; //gets nucleotide id in relation to system - used to color nucleotide Meshes properly
                 group.name = current_nucleotide.global_id + "";
@@ -746,21 +729,21 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                 group.children[1].position.set(x_ns, y_ns, z_ns);
                 group.children[2].position.set(x_con, y_con, z_con);
                 group.children[3].position.set(x, y, z);
-                console.log(x_bb, y_bb, z_bb); //troubleshooting
-                console.log(x_ns, y_ns, z_ns);
-                console.log(x_con, y_con, z_con);
-                console.log(x, y, z);
+                //console.log(x_bb, y_bb, z_bb); //troubleshooting
+                //console.log(x_ns, y_ns, z_ns);
+                //console.log(x_con, y_con, z_con);
+                //console.log(x, y, z);
                 //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
                 if (current_nucleotide.neighbor3 != null) {
                     let temp = new THREE.Vector3();
-                    current_nucleotide.neighbor3.visual_object.children[0].getWorldPosition(temp); //backone's world position
+                    temp = current_nucleotide.neighbor3.visual_object.children[0].position; //backone's world position
                     let x_sp = (x_bb + temp.x) / 2, //sp position
                         y_sp = (y_bb + temp.y) / 2,
                         z_sp = (z_bb + temp.z) / 2;
                     let sp_len = Math.sqrt(Math.pow(x_bb - temp.x, 2) + Math.pow(y_bb - temp.y, 2) + Math.pow(z_bb - temp.z, 2));
                     //easy periodic boundary condition fix
                     //if the bonds are to long just don't add them
-                    if (sp_len <= 1.2) {
+                    if (sp_len <= 5) {
                         let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                             new THREE.Quaternion().setFromUnitVectors(
                                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
@@ -773,10 +756,9 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                         //group.children[4].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0));
                         //group.children[4].applyMatrix(rotation_sp);
                         //group.children[4].position.set(x_sp, y_sp, z_sp);
-                        console.log(x_sp, y_sp, z_sp);
+                        //console.log(x_sp, y_sp, z_sp);
                     }
                 };
-                arb++; //used for coloring - not necessary here?
                 if (current_nucleotide.neighbor5 == null) {
                     system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
                     current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
@@ -827,7 +809,7 @@ function nextConfig() { //attempts to display next configuration; same as readDa
     }
 }
 
-function updatePos(sys_count) { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+/*function updatePos(sys_count) { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
     for (let h = sys_count; h < sys_count + 1; h++) { //for current system
         let cmssys = new THREE.Vector3(); //system cms
         let n = systems[h].system_length(); //# of nucleotides in system
@@ -869,7 +851,7 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
         systems[h].system_3objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z)); //translate system by cmssys
     }
-}
+}*/
 
 function toggleLut(chkBox) { //toggles display of coloring by flexibility / structure modeled off of base selector
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
@@ -934,37 +916,43 @@ function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Ve
     a1 * b2 - a2 * b1];
 }
 
-function centerSystems() { //centers systems based on cms calculated for world (all systems) - works only along with updatePos()
-    for (let i = 0; i < nucleotides.length; i++) { //for each nucleotide in all systems, set pos variable - not updated by updatePos(), rotation, + drag features
-        nucleotides[i].pos.x = nucleotides[i].visual_object.position.x;
-        nucleotides[i].pos.y = nucleotides[i].visual_object.position.y;
-        nucleotides[i].pos.z = nucleotides[i].visual_object.position.z;
+function centerSystems() { //centers systems based on cms calculated for world (all systems)
+    //get center of mass for all systems
+    let cms = new THREE.Vector3(0,0,0);
+    for (let i = 0; i < nucleotides.length; i++) { 
+        let tmp_pos = new THREE.Vector3;
+        tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[3].matrixWorld);  
+        cms.add(tmp_pos);
     }
-    let cms = new THREE.Vector3;
-    let n_nucleotides = 0;
-    for (let x = 0; x < systems.length; x++) { //for each system
-        for (let y = 0; y < systems[x].system_3objects.children.length; y++) { //for each strand_3objects
-            for (let z = 0; z < systems[x].system_3objects.children[y].children.length; z++) { //for each visual_object
-                let temp = new THREE.Vector3;
-                systems[x].system_3objects.children[y].children[z].getWorldPosition(temp); //get nucleotide's visual_object world position
-                cms.add(temp); //sum all visual_object cms
-                n_nucleotides++;
-            }
-        }
-    }
-    //calculate cms
-    let mul = 1.0 / n_nucleotides;
+    let mul = 1.0/nucleotides.length;
     cms.multiplyScalar(mul);
-    for (let x = 0; x < systems.length; x++) { //for each system, translate system by -world cms
-        let pos = systems[x].system_3objects.position;
-        pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
+
+    //change position by the center of mass
+    for (let x = 0; x < nucleotide_3objects.length; x++) { //for each system, translate system by -world cms
+        let curr_pos = new THREE.Vector3;
+        //console.log(systems[x].system_3objects.children.length);
+
+        nucleotide_3objects[x].position.add(cms.multiplyScalar(-1));
+            //for (let y = 0; y < systems[x].system_3objects.children.length; y++){
+            //    for (let z = 0; z < systems[x].system_3objects.children[y].children.length; z++) {
+            //        curr_pos.setFromMatrixPosition(systems[x].system_3objects.children[y].children[z].matrixWorld);
+            //        systems[x].system_3objects.children[y].children[z].position.add(cms.multiplyScalar(-1));
+                    //curr_pos.setFromMatrixPosition(systems[x].system_3objects.children[y].matrixWorld);
+                    //console.log(curr_pos);
+                    //systems[x].system_3objects.children[y].position.add(cms.multiplyScalar(-1));
+                    //console.log(systems[x].system_3objects.children);
+                //}
+            //}
+        //let pos = systems[x].system_3objects.position;
+        //pos.set(pos.x - cms.x, pos.y - cms.y, pos.z - cms.z);
     }
+
     render();
 }
 
 //strand delete testcode
 document.addEventListener("keypress", event => {
-    if (event.keyCode === 100) { //if p is pressed, delete first system's first strand
+    if (event.keyCode === 100) { //if d is pressed, delete first system's first strand
         systems[0].remove_strand(1);
         render();
     }
