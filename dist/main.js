@@ -452,11 +452,10 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
             }
             arb++; //increment for each nucleotide b/c each nucleotide has 
         }
-        console.log(current_nucleotide.neighbor5.local_id, current_nucleotide.local_id);
-        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) {
-            let x_sp = (x_bb + current_nucleotide.neighbor5.pos.x) / 2, //make sugar phosphate connection
-            y_sp = (y_bb + current_nucleotide.neighbor5.pos.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.pos.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+        else if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
+            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0]) / 2, //make sugar phosphate connection
+            y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1]) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2]) / 2;
+            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0], 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1], 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2], 2));
             console.log(sp_len);
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
             let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector

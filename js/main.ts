@@ -511,7 +511,6 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
         group.add(posObj);
 
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        console.log(current_nucleotide.neighbor5.local_id, current_nucleotide.local_id);
         if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id){
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
                 y_sp = (y_bb + y_bb_last) / 2,
@@ -534,11 +533,11 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
             }
             arb++; //increment for each nucleotide b/c each nucleotide has 
         }
-        else if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id){
-            let x_sp = (x_bb + current_nucleotide.neighbor5.pos.x) / 2, //make sugar phosphate connection
-                y_sp = (y_bb + current_nucleotide.neighbor5.pos.y) / 2,
-                z_sp = (z_bb + current_nucleotide.neighbor5.pos.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+        else if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id){ //handles strand end connection
+            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0]) / 2, //make sugar phosphate connection
+                y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1]) / 2,
+                z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2]) / 2;
+            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0], 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1], 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2], 2));
             console.log(sp_len);
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
