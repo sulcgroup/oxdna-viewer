@@ -9,12 +9,8 @@ render();
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
 class Nucleotide {
-    constructor(global_id, local_id, neighbor3, type, parent_strand, parent_system) {
+    constructor(global_id, parent_system) {
         this.global_id = global_id;
-        this.local_id = local_id;
-        this.neighbor3 = neighbor3;
-        this.type = type;
-        this.my_strand = parent_strand;
         this.my_system = parent_system;
     }
     ;
@@ -194,50 +190,65 @@ target.addEventListener("drop", function (event) {
         var current_strand = new Strand(1, system);
         let nuc_local_id = 0;
         let last_strand = 1; //strands are 1-indexed in oxDNA .top files
-        let last_nuc;
         let neighbor3;
+        let neighbor3_nuc;
         // parse file into lines
-        var lines = top_reader.result.split(/[\r\n]+/g);
-        lines = lines.slice(1); // discard the header  
+        var file = top_reader.result;
+        var lines = file.split(/[\r\n]+/g);
+        lines = lines.slice(1); // discard the header 
+        //create empty list of nucleotides with length equal to the topology
+        for (let j = 0; j < lines.length; j++) {
+            let nuc = new Nucleotide(j, system.system_id);
+            nucleotides.push(nuc);
+        }
         lines.forEach((line, i) => {
             if (line == "") {
+                nucleotides.pop();
+                system.add_strand(current_strand);
                 return;
             }
             ;
-            let l = line.split(" "); //split the file and read each column
-            let id = parseInt(l[0]); // get the strand id
-            if (id != last_strand) { //if new strand id, make new strand
-                current_strand = new Strand(id, system);
+            let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+            let nuc = nucleotides[nuc_count + i];
+            nuc.local_id = nuc_local_id;
+            let str_id = parseInt(l[0]);
+            nuc.my_strand = str_id;
+            neighbor3 = parseInt(l[2]);
+            if (neighbor3 != -1) {
+                nuc.neighbor3 = nucleotides[nuc_count + neighbor3];
+            }
+            else {
+                nuc.neighbor3 = null;
+            }
+            let neighbor5 = parseInt(l[3]);
+            if (neighbor5 != -1) {
+                nuc.neighbor5 = nucleotides[nuc_count + neighbor5];
+            }
+            else {
+                nuc.neighbor5 = null;
+            }
+            if (str_id != last_strand) { //if new strand id, make new strand
+                system.add_strand(current_strand);
+                current_strand = new Strand(str_id, system);
                 nuc_local_id = 0;
-                last_nuc = null;
             }
             ;
             let base = l[1]; // get base id
+            nuc.type = base;
             //if we meet a U, we have an RNA (its dumb, but its all we got)
             if (base === "U") {
                 RNA_MODE = true;
             }
-            neighbor3 = last_nuc;
-            let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3, base, id, system.system_id); //create nucleotide
-            if (nuc.neighbor3 != null) { //link the previous one to it
-                nuc.neighbor3.neighbor5 = nuc;
-            }
-            ;
+            //let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3_nuc, base, str_id, system.system_id); //create nucleotide
             current_strand.add_nucleotide(nuc); //add nuc into Strand object
-            nucleotides.push(nuc); //add nuc to global nucleotides array
-            nuc_count += 1;
+            //nucleotides.push(nuc); //add nuc to global nucleotides array
             nuc_local_id += 1;
-            last_strand = id;
-            last_nuc = nuc;
-            if (parseInt(l[3]) == -1) { //if its the end of a strand, add it to current system
-                system.add_strand(current_strand);
-            }
-            ;
+            last_strand = str_id;
             // create a lookup for
             // coloring base according to base id
             base_to_material[i] = nucleoside_materials[base_to_num[base]];
             // coloring bases according to strand id 
-            strand_to_material[i] = backbone_materials[Math.floor(id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
+            strand_to_material[i] = backbone_materials[Math.floor(str_id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
         });
         for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
             selected_bases.push(0);
@@ -246,12 +257,14 @@ target.addEventListener("drop", function (event) {
         system.setStrandMaterial(strand_to_material); //and strand coloring in current System object
         system.setDatFile(dat_file); //store dat_file in current System object
         systems.push(system); //add system to Systems[]
+        nuc_count = nucleotides.length;
     };
     top_reader.readAsText(top_file);
     if (files_len == 3) { //if dropped 3 files = also included .json
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
-            let lines = json_reader.result.split(", ");
+            let file = json_reader.result;
+            let lines = file.split(", ");
             devs = [];
             if (lines.length == system.system_length()) { //if json and dat files match/same length
                 for (let i = 0; i < lines.length; i++) {
@@ -297,7 +310,8 @@ target.addEventListener("drop", function (event) {
             json_file = files[0];
             let json_reader = new FileReader();
             json_reader.onload = () => {
-                let lines = json_reader.result.split(", "); //read numbers as strings
+                let file = json_reader.result;
+                let lines = file.split(", "); //read numbers as strings
                 devs = [];
                 if (lines.length == nucleotides.length) {
                     for (let i = 0; i < lines.length; i++) {
@@ -338,14 +352,10 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
     let lines = dat_reader.result.split(/[\r\n]+/g);
-    trajlines = lines;
     //get the simulation box size 
     let box = parseFloat(lines[1].split(" ")[3]);
     // everything but the header
     lines = lines.slice(3);
-    //for (var t = 2; t < 3; t++){
-    //  dat_fileout = dat_fileout + lines[t] + "\n";
-    //}
     // calculate offset to have the first strand @ the scene origin 
     let first_line = lines[0].split(" ");
     // parse the coordinates
@@ -403,18 +413,16 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
         let group = new THREE.Group; //create visual_object group
         group.name = current_nucleotide.global_id + ""; //set name (string) to nucleotide's global id
         let backbone, nucleoside, con;
-        //if (files_len == 2) {
-        //4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
+        // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
         backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cyclinder - backbone and nucleoside connector
-        //}
-        //if .dat, .top, and .json files dropped simultaneously
+        let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
+        con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
+        //if .dat, .top, and .json files dropped simultaneously, handle coloring
         if (files_len == 3) {
             lutCols.push(lut.getColor(devs[arb])); //add colors to lutCols[]
         }
-        let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  //new THREE.Mesh(new THREE.SphereGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
-        con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
         // apply rotations
         nucleoside.applyMatrix(base_rotation);
         con.applyMatrix(rotation_con);
@@ -428,13 +436,13 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
         group.add(con);
         group.add(posObj);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        if (current_nucleotide.neighbor3 != null) {
+        if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
             y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
             // easy periodic boundary condition fix  
             // if the bonds are to long just don't add them 
-            if (sp_len <= 4) {
+            if (sp_len <= 5) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
                 let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
@@ -444,7 +452,19 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
             }
             arb++; //increment for each nucleotide b/c each nucleotide has 
         }
-        ;
+        console.log(current_nucleotide.neighbor5.local_id, current_nucleotide.local_id);
+        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) {
+            let x_sp = (x_bb + current_nucleotide.neighbor5.pos.x) / 2, //make sugar phosphate connection
+            y_sp = (y_bb + current_nucleotide.neighbor5.pos.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.pos.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+            console.log(sp_len);
+            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
+            let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+            sp.applyMatrix(rotation_sp); //set rotation
+            sp.position.set(x_sp, y_sp, z_sp);
+            group.add(sp); //add to visual_object
+        }
         //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
         current_nucleotide.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
         nucleotide_3objects.push(group); //add group to nucleotide_3objects[] with THREE.Group for each nucleotide
@@ -453,15 +473,18 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
         x_bb_last = x_bb;
         y_bb_last = y_bb;
         z_bb_last = z_bb;
-        if (current_nucleotide.neighbor5 == null) { //if last nucleotide in strand
+        //catch the two possible cases for strand ends (no connection or circular)
+        if (current_nucleotide.neighbor5 == undefined) { //if last nucleotide in straight strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
-            nuc_local_id = 0;
+            nuc_local_id = -1;
         }
-        else {
-            nuc_local_id += 1;
+        else if (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //if last nucleotide in circular strand
+            system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
+            current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+            nuc_local_id = -1;
         }
-        ;
+        nuc_local_id += 1;
         render();
     }
     datnum++; //configuration # - currently only works for 1 system

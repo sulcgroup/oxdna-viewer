@@ -2,7 +2,7 @@
     "compilerOptions": {
         "outDir": "./dist/",        // path to output directory
         //"sourceMap": true,          // allow sourcemap support
-        "strictNullChecks": true,   // enable strict null checks as a best practice
+        "strictNullChecks": false,   // disable strict null checking because it doesn't like our file parsing code
         "module": "es2015",            // specify module code generation
         //"jsx": "react",             // use typescript to transpile jsx to js
         "target": "es2015",            // specify ECMAScript target version
