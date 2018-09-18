@@ -207,7 +207,6 @@ target.addEventListener("drop", function (event) {
                 system.add_strand(current_strand);
                 return;
             }
-            ;
             let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
             let nuc = nucleotides[nuc_count + i];
             nuc.local_id = nuc_local_id;
@@ -249,6 +248,11 @@ target.addEventListener("drop", function (event) {
             base_to_material[i] = nucleoside_materials[base_to_num[base]];
             // coloring bases according to strand id 
             strand_to_material[i] = backbone_materials[Math.floor(str_id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
+            if (i == lines.length - 1) {
+                system.add_strand(current_strand);
+                return;
+            }
+            ;
         });
         for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
             selected_bases.push(0);
@@ -293,7 +297,7 @@ target.addEventListener("drop", function (event) {
     }
     if (files_len == 2 || files_len == 3) {
         // read a configuration file 
-        var x_bb_last, //last backbone positions
+        let x_bb_last, //last backbone positions
         y_bb_last, z_bb_last;
         //read .dat
         let dat_reader = new FileReader();
@@ -360,7 +364,6 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
     let first_line = lines[0].split(" ");
     // parse the coordinates
     let fx = parseFloat(first_line[0]), fy = parseFloat(first_line[1]), fz = parseFloat(first_line[2]);
-    let test = 0;
     let arb = 0;
     let trajlen = (datnum + 1) * datlen; //end of current configuration's list of positions
     // add the bases to the scene
@@ -452,11 +455,10 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
             }
             arb++; //increment for each nucleotide b/c each nucleotide has 
         }
-        else if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
-            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0]) / 2, //make sugar phosphate connection
-            y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1]) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2]) / 2;
-            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0], 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1], 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2], 2));
-            console.log(sp_len);
+        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
+            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection
+            y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
             let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
@@ -484,7 +486,7 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
             nuc_local_id = -1;
         }
         nuc_local_id += 1;
-        render();
+        //render();
     }
     datnum++; //configuration # - currently only works for 1 system
     let dx, dy, dz;
@@ -557,7 +559,6 @@ function readDat(/*datnum, */ datlen, dat_reader, strand_to_material, base_to_ma
     }
     //render();
 }
-let x_bb_last, y_bb_last, z_bb_last; //last nucleotide's backbone positions
 function nextConfig() {
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];

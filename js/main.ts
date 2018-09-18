@@ -134,6 +134,7 @@ var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
 }, false);
+
 // the actual code to drop in the config files
 var dat_fileout: string = "";
 var datnum = 0;
@@ -238,10 +239,11 @@ target.addEventListener("drop", function (event) {
         } 
         lines.forEach(
             (line, i) => {
-                if (line == "") { 
+                if (line == "") {
                     nucleotides.pop();
                     system.add_strand(current_strand);
-                    return };
+                    return
+                }
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
                 let nuc = nucleotides[nuc_count + i];
                 nuc.local_id = nuc_local_id;
@@ -286,6 +288,9 @@ target.addEventListener("drop", function (event) {
                 // coloring bases according to strand id 
                 strand_to_material[i] = backbone_materials[Math.floor(str_id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
 
+                if (i == lines.length-1) {
+                    system.add_strand(current_strand);
+                    return };
 
             });
         for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
@@ -298,7 +303,6 @@ target.addEventListener("drop", function (event) {
         nuc_count = nucleotides.length;
     };
     top_reader.readAsText(top_file);
-
 
     if (files_len == 3) { //if dropped 3 files = also included .json
         let json_reader = new FileReader(); //read .json
@@ -335,7 +339,7 @@ target.addEventListener("drop", function (event) {
 
     if (files_len == 2 || files_len == 3) {
         // read a configuration file 
-        var x_bb_last, //last backbone positions
+        let x_bb_last, //last backbone positions
             y_bb_last,
             z_bb_last;
         //read .dat
@@ -345,7 +349,6 @@ target.addEventListener("drop", function (event) {
         };
         // execute the read operation 
         dat_reader.readAsText(dat_file);
-
     }
 
 
@@ -411,7 +414,6 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
     let fx = parseFloat(first_line[0]),
         fy = parseFloat(first_line[1]),
         fz = parseFloat(first_line[2]);
-    let test = 0;
     let arb = 0;
     let trajlen = (datnum + 1) * datlen; //end of current configuration's list of positions
 
@@ -533,12 +535,11 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
             }
             arb++; //increment for each nucleotide b/c each nucleotide has 
         }
-        else if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id){ //handles strand end connection
-            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0]) / 2, //make sugar phosphate connection
-                y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1]) / 2,
-                z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2]) / 2;
-            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[0], 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[1], 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position[2], 2));
-            console.log(sp_len);
+        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id){ //handles strand end connection
+            let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection
+                y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2,
+                z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
@@ -573,7 +574,6 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
         }
 
         nuc_local_id += 1
-        render();
 
     }
     datnum++; //configuration # - currently only works for 1 system
@@ -651,7 +651,6 @@ function readDat(/*datnum, */datlen, dat_reader, strand_to_material, base_to_mat
     //render();
 }
 
-let x_bb_last, y_bb_last, z_bb_last; //last nucleotide's backbone positions
 function nextConfig() { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
