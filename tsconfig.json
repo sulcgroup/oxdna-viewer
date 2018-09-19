@@ -3,13 +3,14 @@
         "outDir": "./dist/",        // path to output directory
         //"sourceMap": true,          // allow sourcemap support
         "strictNullChecks": false,   // disable strict null checking because it doesn't like our file parsing code
-        "module": "es2015",            // specify module code generation
+        "module": "esnext",            // specify module code generation
         //"jsx": "react",             // use typescript to transpile jsx to js
-        "target": "es2015",            // specify ECMAScript target version
+        "target": "esnext",            // specify ECMAScript target version
         //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase            
     },
     "files": [
         "./js/main.ts",
+        "./js/file_reading.ts",
         "./js/mesh_setup.ts",
         "./js/scene_setup.ts",
         "./js/save_image.ts",
