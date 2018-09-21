@@ -4,6 +4,9 @@ function makeOutputFiles() {
     let tot_nuc = 0; //total # of nucleotides
     let tot_strands = 0; //total # of strands
     let longest_strand_len = 0;
+    let uncorrected_strand_id;
+    let old_system;
+    let current_strand = 1;
     for (let i = 0; i < systems.length; i++) { //for each system
         for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in current system
             tot_strands++;
@@ -17,8 +20,15 @@ function makeOutputFiles() {
         }
     }
     top = tot_nuc + " " + tot_strands + "\n";
+    uncorrected_strand_id = nucleotides[0].my_strand;
+    old_system = nucleotides[0].my_system;
     for (let i = 0; i < nucleotides.length; i++) { //for each nucleotide in the system
-        top = top + (nucleotides[i].my_strand + 2 * nucleotides[i].my_system) + " " + nucleotides[i].type + " "; //strand id in global world + base type
+        if (nucleotides[i].my_strand != uncorrected_strand_id || nucleotides[i].my_system != old_system) {
+            current_strand += 1;
+            uncorrected_strand_id = nucleotides[i].my_strand;
+            old_system = nucleotides[i].my_system;
+        }
+        top = top + current_strand + " " + nucleotides[i].type + " "; //strand id in global world + base type
         let neighbor3 = nucleotides[i].neighbor3;
         let neighbor5 = nucleotides[i].neighbor5;
         if (neighbor3 === null || neighbor3 === undefined) { // if no neigbor3, neighbor3's global id = -1

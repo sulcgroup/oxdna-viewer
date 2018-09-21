@@ -52,7 +52,6 @@ function extract_next_conf() {
     if(need_next_chunk) {
         get_next_chunk (dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
-    console.log(next_conf);
     return (next_conf);
 }
 
@@ -206,7 +205,7 @@ target.addEventListener("drop", function (event) {
 
             //create empty list of nucleotides with length equal to the topology
             for (let j = 0; j < lines.length; j++) {
-                let nuc = new Nucleotide(j, system.system_id);
+                let nuc = new Nucleotide(nucleotides.length, system.system_id);
                 nucleotides.push(nuc);
             }
             lines.forEach(
@@ -656,6 +655,10 @@ var trajlines;
 var need_next_chunk: boolean = false;
 var need_previous_chunk: boolean = false;
 function nextConfig() { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
+    if (systems.length > 1) {
+        alert("Only one file at a time can be read as a trajectory, sorry...");
+        return
+    }
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
         let num_nuc: number = system.system_length(); //gets # of nuc in system
