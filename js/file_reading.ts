@@ -28,7 +28,7 @@ function extract_next_conf() {
         end.chunk = start.chunk;
         end.line_id = start.line_id + conf_len;
         for (let i = start.line_id; i < end.line_id+1; i++) {
-            //console.log(current_chunk_lines[i]);
+            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
             next_conf.push(current_chunk_lines[i]);
         }
     }
@@ -38,12 +38,11 @@ function extract_next_conf() {
         need_next_chunk = true
         let j = 0
         for (let i = start.line_id; i < current_chunk_length; i++) {
-            console.log(j, current_chunk_lines[i]);
+            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
             next_conf.push(current_chunk_lines[i]);
             j+=1;
         }
         for (let i = 0; i < end.line_id+1; i++) {
-            console.log(j,next_chunk_lines[i]);
             next_conf.push(next_chunk_lines[i]);
             j+=1;
         }
@@ -53,6 +52,7 @@ function extract_next_conf() {
     if(need_next_chunk) {
         get_next_chunk (dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
+    console.log(next_conf);
     return (next_conf);
 }
 
@@ -98,7 +98,6 @@ var approx_dat_len: number,
     conf_end = new marker,
     conf_len: number,
     dat_fileout: string = "",
-    datnum = 0,
     dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
 
 
@@ -421,7 +420,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     conf_end.line_id = num_nuc + 2; //end of current configuration
 
     // add the bases to the scene
-    for (let i = datnum * num_nuc; i < conf_end.line_id; i++) {//from beginning to end of current configuration's list of positions; for each nucleotide in the system
+    for (let i = 0; i < conf_end.line_id; i++) {//from beginning to end of current configuration's list of positions; for each nucleotide in the system
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break
         };
@@ -579,7 +578,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
 
         nuc_local_id += 1
     }
-    datnum++; //configuration # - currently only works for 1 system
     let dx, dy, dz;
 
     //bring strand in box
@@ -663,17 +661,24 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         let num_nuc: number = system.system_length(); //gets # of nuc in system
 
         let lines = extract_next_conf();
+        if (lines == undefined) {
+            alert("No more confs to load!");
+            return
+        }
+
         let nuc_local_id = 0;
         let current_strand = systems[i].strands[0];
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[3]);
-        //console.log(lines);
         // discard the header
         lines = lines.slice(3);
 
         for (let line_num = 0; line_num < num_nuc; line_num++) {
-            if (lines[line_num] == "") { break };
+            if (lines[line_num] == "" || undefined) {
+                alert("There's an empty line in the middle of your configuration!")
+                break 
+            };
             let current_nucleotide = current_strand.nucleotides[nuc_local_id];
             //get nucleotide information
             // consume a new line 
@@ -823,6 +828,5 @@ function nextConfig() { //attempts to display next configuration; same as readDa
             render();
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
-        datnum += 5;
     }
 }
