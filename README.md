@@ -1,6 +1,6 @@
 # oxDNA-Viewer-Master
 
-[Try it](https://sulcgroup.github.io/oxdna-viewer/)) 
+[Try it](https://sulcgroup.github.io/oxdna-viewer/)
 
 A web app for viewing oxDNA configuration files.  Simply drag and drop your .dat and .top files onto the browser window, or select the files in the "Upload local files" dialogue box.
 
