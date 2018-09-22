@@ -1,4 +1,4 @@
-/// <reference path="./three/index.d.ts" />
+/// <reference path="/home/erik/Simulations/oxdna-viewer/ts/three/index.d.ts" />
 // base geometry 
 var backbone_geometry = new THREE.SphereGeometry(.2, 10, 10);
 var nucleoside_geometry = new THREE.SphereGeometry(.3, 10, 10).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));

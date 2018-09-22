@@ -1,4 +1,4 @@
-/// <reference path="./three/index.d.ts" />
+/// <reference path="/home/erik/Simulations/oxdna-viewer/ts/three/index.d.ts" />
 // define the drag and drop behavior of the scene 
 var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {

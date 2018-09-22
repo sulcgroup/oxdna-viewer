@@ -35,35 +35,33 @@ dat_reader.onload = () => {
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
-
     let files = event.dataTransfer.files;
-    
     handleFiles(files);
 }, false);
 
 //get files from URL
 function getFileFromURL() {
-let url = new URL(window.location.href);
-let top_file = url.searchParams.get("topology") || '';
-let dat_file = url.searchParams.get("configuration") || '';
-if (top_file != '' && dat_file != '') {
-    let top_xhr = new XMLHttpRequest();
-    let dat_xhr = new XMLHttpRequest();
-    top_xhr.open("GET", top_file);
-    dat_xhr.open("GET", dat_file)
-    top_xhr.responseType = "blob";
-    dat_xhr.responseType = "blob";
-    top_xhr.onload = () => {
-        let top_blob = top_xhr.response;
-        top_reader.readAsText(top_blob);
+    let url = new URL(window.location.href);
+    let top_file = url.searchParams.get("topology") || '';
+    let dat_file = url.searchParams.get("configuration") || '';
+    if (top_file != '' && dat_file != '') {
+        let top_xhr = new XMLHttpRequest();
+        let dat_xhr = new XMLHttpRequest();
+        top_xhr.open("GET", top_file);
+        dat_xhr.open("GET", dat_file)
+        top_xhr.responseType = "blob";
+        dat_xhr.responseType = "blob";
+        top_xhr.onload = () => {
+            let top_blob = top_xhr.response;
+            top_reader.readAsText(top_blob);
+        }
+        top_xhr.send();
+        dat_xhr.onload = () => {
+            let dat_blob = dat_xhr.response;
+            dat_reader.readAsText(dat_blob);
+        }
+        dat_xhr.send();
     }
-    top_xhr.send();
-    dat_xhr.onload = () => {
-        let dat_blob = dat_xhr.response;
-        dat_reader.readAsText(dat_blob);
-    }
-    dat_xhr.send();
-}
 }
 getFileFromURL();
 

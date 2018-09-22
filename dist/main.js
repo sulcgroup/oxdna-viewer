@@ -1,4 +1,4 @@
-/// <reference path="./three/index.d.ts" />
+/// <reference path="/home/erik/Simulations/oxdna-viewer/ts/three/index.d.ts" />
 var BACKBONE = 0;
 var NUCLEOSIDE = 1;
 var BB_NS_CON = 2;
