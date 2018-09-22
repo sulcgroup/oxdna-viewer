@@ -70,7 +70,6 @@ class System {
     system_3objects: THREE.Group; //contains strand_3objects
     strand_to_material = {};
     base_to_material = {};
-    dat_file;
     constructor(id, start_id) {
         this.system_id = id;
         this.global_start_id = start_id;
@@ -104,9 +103,6 @@ class System {
     }
     setBaseMaterial(base_to_material) {
         this.base_to_material = base_to_material;
-    }
-    setDatFile(dat_file) { //allows for trajectory function
-        this.dat_file = dat_file;
     }
 
     //remove_system(){};

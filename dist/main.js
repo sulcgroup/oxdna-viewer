@@ -81,9 +81,6 @@ class System {
     setBaseMaterial(base_to_material) {
         this.base_to_material = base_to_material;
     }
-    setDatFile(dat_file) {
-        this.dat_file = dat_file;
-    }
 }
 ;
 function dat_loader(file) {
