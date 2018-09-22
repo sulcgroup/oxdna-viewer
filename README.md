@@ -12,4 +12,5 @@ The code is written in Typescript and rendered using Three.js, so if you want to
 4) Go to oxdna-viewer folder
 5) "tsc"
 6) The compiled Javascript will be in the dist/ directory
+7) Open index.html in any browser 
 
