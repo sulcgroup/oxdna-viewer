@@ -110,7 +110,7 @@ target.addEventListener("drop", function (event) {
         }
     }
     if (files_len == 2) {
-        if (ext == "dat") {
+        if (ext == "dat" || ext == "onf") {
             dat_file = files[0];
             top_file = files[1];
         }
@@ -121,7 +121,7 @@ target.addEventListener("drop", function (event) {
     }
     else if (files_len === 3) {
         let ext1 = files[1].name.slice(-3);
-        if (ext === "dat") {
+        if (ext === "dat" || ext == "onf") {
             if (ext1 == "top") {
                 dat_file = files[0];
                 top_file = files[1];
@@ -134,7 +134,7 @@ target.addEventListener("drop", function (event) {
             }
         }
         else if (ext === "top") {
-            if (ext1 == "dat") {
+            if (ext1 == "dat" || ext1 == "onf") {
                 dat_file = files[1];
                 top_file = files[0];
                 json_file = files[2];
@@ -146,7 +146,7 @@ target.addEventListener("drop", function (event) {
             }
         }
         else {
-            if (ext1 == "dat") {
+            if (ext1 == "dat" || ext1 == "onf") {
                 dat_file = files[1];
                 top_file = files[2];
                 json_file = files[0];
@@ -368,7 +368,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     conf_end.chunk = current_chunk;
     conf_end.line_id = num_nuc + 2; //end of current configuration
     // add the bases to the scene
-    for (let i = 0; i < conf_end.line_id; i++) { //from beginning to end of current configuration's list of positions; for each nucleotide in the system
+    for (let i = 0; i < conf_end.line_id - 2; i++) { //from beginning to end of current configuration's list of positions; for each nucleotide in the system
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break;
         }
