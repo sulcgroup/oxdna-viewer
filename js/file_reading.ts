@@ -26,7 +26,7 @@ function extract_next_conf() {
     let end = new marker;
     if (start.line_id + conf_len <= current_chunk_length) {
         end.chunk = start.chunk;
-        end.line_id = start.line_id + conf_len;
+        end.line_id = start.line_id + conf_len-1;
         for (let i = start.line_id; i < end.line_id+1; i++) {
             if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
             next_conf.push(current_chunk_lines[i]);
@@ -36,15 +36,12 @@ function extract_next_conf() {
         end.chunk = next_chunk;
         end.line_id = conf_len - (current_chunk_length - start.line_id)-1;
         need_next_chunk = true
-        let j = 0
         for (let i = start.line_id; i < current_chunk_length; i++) {
             if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
             next_conf.push(current_chunk_lines[i]);
-            j+=1;
         }
         for (let i = 0; i < end.line_id+1; i++) {
             next_conf.push(next_chunk_lines[i]);
-            j+=1;
         }
     }
     conf_begin = start;
@@ -52,6 +49,7 @@ function extract_next_conf() {
     if(need_next_chunk) {
         get_next_chunk (dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
+    console.log(next_conf);
     return (next_conf);
 }
 
@@ -378,7 +376,7 @@ target.addEventListener("drop", function (event) {
         };
 
         // read the first chunk
-        approx_dat_len = top_file.size * 30; //the relation between .top and .dat size is very variable, the largest I've found is 27x, although most are around 15x
+        approx_dat_len = top_file.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
         let first_chunk_blob = dat_chunker(dat_file, 0, approx_dat_len);
         dat_reader.readAsText(first_chunk_blob);
 
@@ -522,7 +520,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
             // easy periodic boundary condition fix  
             // if the bonds are to long just don't add them 
-            if (sp_len <= 5) {
+            if (sp_len <= 500) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                     new THREE.Quaternion().setFromUnitVectors(
                         new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
@@ -661,7 +659,6 @@ function nextConfig() { //attempts to display next configuration; same as readDa
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
         let num_nuc: number = system.system_length(); //gets # of nuc in system
-
         let lines = extract_next_conf();
         if (lines == undefined) {
             alert("No more confs to load!");
@@ -672,7 +669,8 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         let current_strand = systems[i].strands[0];
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
-        let time = parseInt(lines[0].split(" ")[3]);
+        let time = parseInt(lines[0].split(" ")[2]);
+        console.log(time);
         // discard the header
         lines = lines.slice(3);
 
