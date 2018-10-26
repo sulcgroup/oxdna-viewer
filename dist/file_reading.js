@@ -671,36 +671,35 @@ function nextConfig() {
                 nuc_local_id += 1;
             }
             ;
-            render();
-            //box by strand
-            let dx, dy, dz;
-            for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
-                // compute offset to bring strand in box
-                let n = systems[i].strands[j].nucleotides.length; //# of nucleotides on strand
-                let cms = new THREE.Vector3(0, 0, 0);
-                for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
-                    cms.add(systems[i].strands[j].nucleotides[k].visual_object.children[COM].position);
-                }
-                //calculate cms
-                let mul = 1.0 / n;
-                cms.multiplyScalar(mul);
-                dx = Math.round(cms.x / box) * box;
-                dy = Math.round(cms.y / box) * box;
-                dz = Math.round(cms.z / box) * box;
-                //fix coordinates
-                for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) { //for each nucleotide in strand
-                    for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
-                        let pos = systems[i].strands[j].nucleotides[k].visual_object.children[l].position; //get Mesh position
-                        //calculate new positions by offset
-                        pos.x = pos.x - dx;
-                        pos.y = pos.y - dy;
-                        pos.z = pos.z - dz;
-                        systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
-                    }
+        }
+        //box by strand
+        let dx, dy, dz;
+        for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
+            // compute offset to bring strand in box
+            let n = systems[i].strands[j].nucleotides.length; //# of nucleotides on strand
+            let cms = new THREE.Vector3(0, 0, 0);
+            for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
+                cms.add(systems[i].strands[j].nucleotides[k].visual_object.children[COM].position);
+            }
+            //calculate cms
+            let mul = 1.0 / n;
+            cms.multiplyScalar(mul);
+            dx = Math.round(cms.x / box) * box;
+            dy = Math.round(cms.y / box) * box;
+            dz = Math.round(cms.z / box) * box;
+            //fix coordinates
+            for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) { //for each nucleotide in strand
+                for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
+                    let pos = systems[i].strands[j].nucleotides[k].visual_object.children[l].position; //get Mesh position
+                    //calculate new positions by offset
+                    pos.x = pos.x - dx;
+                    pos.y = pos.y - dy;
+                    pos.z = pos.z - dz;
+                    systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
-            render();
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
+        render();
     }
 }
