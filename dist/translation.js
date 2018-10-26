@@ -43,7 +43,7 @@ for (let i = 0, len = sz.length; i < len; i++) {
 }
 let dragControls; //dragging functionality
 function drag() {
-    dragControls = new THREE.DragControls(nucleotide_3objects, camera, true, renderer.domElement);
+    dragControls = new THREE.DragControls(scene.children[6].children, camera, true, renderer.domElement);
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }

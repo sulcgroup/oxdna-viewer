@@ -513,7 +513,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
 
         //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
         current_nucleotide.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
-        nucleotide_3objects.push(group); //add group to nucleotide_3objects[] with THREE.Group for each nucleotide
         current_strand.strand_3objects.add(group); //add group to strand_3objects
         //update last backbone position and last strand
         x_bb_last = x_bb;
@@ -564,21 +563,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
             }
         }
     }
-    /* // reposition center of mass of the system to 0,0,0
-    let cms = new THREE.Vector3(0, 0, 0);
-    let n_nucleotides = system.system_length();
-    let i = system.global_start_id;
-    for (; i < system.global_start_id + n_nucleotides; i++) {
-        cms.add(nucleotides[i].pos);
-    }
-    let mul = 1.0 / n_nucleotides;
-    cms.multiplyScalar(mul);
-    i = system.global_start_id;
-    for (; i < system.global_start_id + n_nucleotides; i++) {
-        nucleotide_3objects[i].position.sub(cms);
-    }
 
-    systems[sys_count].CoM = cms; //because system com may be useful to know */
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
 
@@ -743,7 +728,8 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                     group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
                     group.children[SP_CON].applyMatrix(rotation_sp); //rotate
                     group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
-                    group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position  
+                    group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
+                    group.children[SP_CON].parent = current_nucleotide.visual_object;
                 }
             };
             if (current_nucleotide.neighbor5 == null) {
@@ -783,6 +769,9 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                 }
             }
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+        }
+        if (actionMode.includes("Drag")) {
+            drag();
         }
         render();
     }

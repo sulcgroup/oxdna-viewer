@@ -119,7 +119,6 @@ function dat_loader (file) {
 // store rendering mode RNA  
 let RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
-var nucleotide_3objects: THREE.Group[] = []; //contains references to all THREE.Group obj
 var nucleotides: Nucleotide[] = []; //contains references to all nucleotides
 //var selected_bases = {};
 //initialize the space
@@ -217,6 +216,16 @@ function toggleLut(chkBox) { //toggles display of coloring by json file / struct
     }
 }
 
+function toggleBackground() {
+    if (scene.background == WHITE) {
+        scene.background = BLACK;
+        render();
+    }
+    else{
+        scene.background = WHITE;
+        render();
+    }
+}
 
 function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
     return [a2 * b3 - a3 * b2,
@@ -236,8 +245,10 @@ function centerSystems() { //centers systems based on cms calculated for world (
     cms.multiplyScalar(mul*-1);
 
     //change position by the center of mass
-    for (let x = 0; x < nucleotide_3objects.length; x++) { //for each system, translate system by -world cms
-        nucleotide_3objects[x].position.add(cms);
+    for (let i = 0; i < nucleotides.length; i++) {
+        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++){
+            nucleotides[i].visual_object.children[j].position.add(cms);
+        }
     }
     render();
 }

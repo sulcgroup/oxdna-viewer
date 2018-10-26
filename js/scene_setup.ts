@@ -32,7 +32,9 @@ function onWindowResize() {
 var scene = new THREE.Scene();
 // make the background white 
 // default is black
-scene.background = new THREE.Color();
+var BLACK = new THREE.Color(0x000000);
+var WHITE = new THREE.Color();
+scene.background = WHITE
 
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
 
