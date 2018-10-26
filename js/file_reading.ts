@@ -49,7 +49,6 @@ function extract_next_conf() {
     if(need_next_chunk) {
         get_next_chunk (dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
-    console.log(next_conf);
     return (next_conf);
 }
 
@@ -670,7 +669,6 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
-        console.log(time);
         // discard the header
         lines = lines.slice(3);
 
