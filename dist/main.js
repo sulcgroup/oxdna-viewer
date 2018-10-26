@@ -148,6 +148,7 @@ let lutColsVis = false;
     }
 }*/
 function toggleLut(chkBox) {
+    console.log("here!");
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
             for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides in all systems - does not work for more than one system

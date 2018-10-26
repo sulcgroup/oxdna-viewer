@@ -26,46 +26,46 @@ function extract_next_conf() {
     let end = new marker;
     if (start.line_id + conf_len <= current_chunk_length) {
         end.chunk = start.chunk;
-        end.line_id = start.line_id + conf_len-1;
-        for (let i = start.line_id; i < end.line_id+1; i++) {
-            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
+        end.line_id = start.line_id + conf_len - 1;
+        for (let i = start.line_id; i < end.line_id + 1; i++) {
+            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) { return undefined }
             next_conf.push(current_chunk_lines[i]);
         }
     }
     else {
         end.chunk = next_chunk;
-        end.line_id = conf_len - (current_chunk_length - start.line_id)-1;
+        end.line_id = conf_len - (current_chunk_length - start.line_id) - 1;
         need_next_chunk = true
         for (let i = start.line_id; i < current_chunk_length; i++) {
-            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) {return undefined}
+            if (current_chunk_lines[i] == "" || current_chunk_lines == undefined) { return undefined }
             next_conf.push(current_chunk_lines[i]);
         }
-        for (let i = 0; i < end.line_id+1; i++) {
+        for (let i = 0; i < end.line_id + 1; i++) {
             next_conf.push(next_chunk_lines[i]);
         }
     }
     conf_begin = start;
     conf_end = end;
-    if(need_next_chunk) {
-        get_next_chunk (dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
+    if (need_next_chunk) {
+        get_next_chunk(dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
     return (next_conf);
 }
 
 //can probably just use this to get previous chunk with some if statements and chunk number
-function get_next_chunk (dat_file, chunk_number) {
+function get_next_chunk(dat_file, chunk_number) {
     previous_chunk = current_chunk;
     conf_begin.chunk = previous_chunk;
     current_chunk = next_chunk;
 
-    if(conf_end.chunk == current_chunk) {
+    if (conf_end.chunk == current_chunk) {
         conf_end.chunk = previous_chunk;
     }
     else if (conf_end.chunk == next_chunk) {
         conf_end.chunk = current_chunk;
     }
 
-    let next_chunk_blob = dat_chunker (dat_file, chunk_number, approx_dat_len);
+    let next_chunk_blob = dat_chunker(dat_file, chunk_number, approx_dat_len);
     next_reader.readAsText(next_chunk_blob);
     current_chunk_number += 1
 }
@@ -117,75 +117,24 @@ target.addEventListener("drop", function (event) {
         "T": 3,
         "U": 3
     };
+    let top_file, json_file;
 
-    // get the extention of one of the 2 files 
-    let ext = files[0].name.slice(-3);
-    // space to store the file paths 
-
-    let top_file;
-    let json_file;
     // assign files to the extentions; all possible combinations of entered files
-    if (files_len == 1) {
-        if (ext == "son") {
-            json_file = files[0];
-        }
-        else {
-            alert("please drag and drop a .dat and a .top file  (and .json for flexibility coloring");
-        }
-    }
+    for (let i = 0; i < files_len; i++) {
+        // get file extension
+        let file_name = files[i].name;
+        let ext = file_name.split('.').pop();
 
-    if (files_len == 2) {
-        if (ext == "dat" || ext == "onf") {
-            dat_file = files[0];
-            top_file = files[1];
-        }
-        else {
-            dat_file = files[1];
-            top_file = files[0];
-        }
+        if (ext === "dat") dat_file = files[i];
+        if (ext === "conf") dat_file = files[i];
+        if (ext === "top")  top_file = files[i];
+        if (ext === "json")  json_file = files[i];
     }
-    else if (files_len === 3) {
-        let ext1 = files[1].name.slice(-3);
-        if (ext === "dat" || ext == "onf") {
-            if (ext1 == "top") {
-                dat_file = files[0];
-                top_file = files[1];
-                json_file = files[2];
-            }
-            else if (ext1 === "son") {
-                dat_file = files[0];
-                top_file = files[2];
-                json_file = files[1];
-            }
-        }
-        else if (ext === "top") {
-            if (ext1 == "dat" || ext1 == "onf") {
-                dat_file = files[1];
-                top_file = files[0];
-                json_file = files[2];
-            }
-            else if (ext1 === "son") {
-                dat_file = files[2];
-                top_file = files[0];
-                json_file = files[1];
-            }
-        }
-        else {
-            if (ext1 == "dat" || ext1 == "onf") {
-                dat_file = files[1];
-                top_file = files[2];
-                json_file = files[0];
-            }
-            else if (ext1 === "top") {
-                dat_file = files[2];
-                top_file = files[1];
-                json_file = files[0];
-            }
-        }
-    }
-    else if (files_len > 3) (alert("Please drag and drop 1 .dat and 1 .top file. .json is optional.")) //error message
+    let json_alone = false
+    if (json_file && !top_file) json_alone = true;
+    if (files_len > 3) alert("Please drag and drop 1 .dat and 1 .top file. .json is optional."); //error message
 
-    if (files_len == 2 || files_len == 3) {
+    if (top_file) {
         //read topology file
         let top_reader = new FileReader();
         top_reader.onload = () => {
@@ -275,47 +224,11 @@ target.addEventListener("drop", function (event) {
         };
         top_reader.readAsText(top_file);
         //test_dat_read(dat_file);
-
-        if (files_len == 3) { //if dropped 3 files = also included flexibility coloring .json
-            lutColsVis = true;
-            document.getElementById("lutToggle").checked = true //typescript doesn't like this for some reason, but it works
-            let json_reader = new FileReader(); //read .json
-            json_reader.onload = () => {
-                let file = json_reader.result as string;
-                let devs: string[] = file.split(", ");
-                devs[0] = devs[0].slice(1, -1)
-                devs[devs.length-1] = devs[devs.length-1].slice(0, -1)
-                if (devs.length == system.system_length()) { //if json and dat files match/same length
-                    let min = Math.min.apply(null, devs), //find min and max
-                        max = Math.max.apply(null, devs);
-                    lut = new THREE.Lut("rainbow", 4000);
-                    lut.setMax(max)
-                    lut.setMin(min);
-                    let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
-                    scene.add(legend);
-                    let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //set up legend format
-                    scene.add(labels['title']); //add title
-
-                    for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
-                        scene.add(labels['ticks'][i]);
-                        scene.add(labels['lines'][i]);
-                    }
-                    for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                        lutCols.push(lut.getColor(devs[i]));
-                    }
-                }
-                else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
-                    alert(".json and .top files are not compatible.");
-                    files_len = 2;
-                }
-            };
-            json_reader.readAsText(json_file);
-        }
     }
 
     //Lut coloring - colors nucleotides based on flexibility during oxDNA simulation run
     //doesn't work for more than one system
-    if (files_len == 1) { //if .json dropped after .dat and .top
+    /*if (files_len == 1) { //if .json dropped after .dat and .top
         if (files[0].name.slice(-4) == "json") { //if actually a .json file
             json_file = files[0];
             let json_reader = new FileReader();
@@ -352,10 +265,10 @@ target.addEventListener("drop", function (event) {
             };
             json_reader.readAsText(json_file);
         }
-    }
+    }*/
 
     // asynchronously read the first two chunks of a configuration file
-    if (files_len == 2 || files_len == 3) {
+    if (dat_file) {
         //read information in dat file into system
         dat_reader.onload = () => {
             current_chunk = dat_reader.result as string;
@@ -376,16 +289,59 @@ target.addEventListener("drop", function (event) {
         };
 
         // read the first chunk
-        approx_dat_len = top_file.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-        let first_chunk_blob = dat_chunker(dat_file, 0, approx_dat_len);
-        dat_reader.readAsText(first_chunk_blob);
+        if (dat_file && top_file) {
+            approx_dat_len = top_file.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
+            let first_chunk_blob = dat_chunker(dat_file, 0, approx_dat_len);
+            dat_reader.readAsText(first_chunk_blob);
 
-        //if its a trajectory, read in the second chunk
-        if (dat_file.size > approx_dat_len) {
-            let next_chunk_blob = dat_chunker(dat_file, 1, approx_dat_len);
-            next_reader.readAsText(next_chunk_blob);
+            //if its a trajectory, read in the second chunk
+            if (dat_file.size > approx_dat_len) {
+                let next_chunk_blob = dat_chunker(dat_file, 1, approx_dat_len);
+                next_reader.readAsText(next_chunk_blob);
+            }
         }
 
+    }
+
+    if (json_file) { 
+        //lutColsVis = true;
+        let check_box = <HTMLInputElement>document.getElementById("lutToggle");
+        let json_reader = new FileReader(); //read .json
+        json_reader.onload = () => {
+            let file = json_reader.result as string;
+            let devs: string[] = file.split(", ");
+            devs[0] = devs[0].slice(1, -1)
+            devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1)
+            let curr_sys;
+            if (json_alone) curr_sys = sys_count-1;
+            else curr_sys = sys_count;
+            if (devs.length == systems[curr_sys].system_length()) { //if json and dat files match/same length
+                let min = Math.min.apply(null, devs), //find min and max
+                    max = Math.max.apply(null, devs);
+                lut = new THREE.Lut("rainbow", 4000);
+                lut.setMax(max)
+                lut.setMin(min);
+                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+                scene.add(legend);
+                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //set up legend format
+                scene.add(labels['title']); //add title
+
+                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                    scene.add(labels['ticks'][i]);
+                    scene.add(labels['lines'][i]);
+                }
+                for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                    lutCols.push(lut.getColor(devs[i]));
+                }
+                if (!json_alone) lutColsVis = true;
+                check_box.checked = true;
+                if (json_alone) toggleLut(check_box);
+            }
+            else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+                alert(".json and .top files are not compatible.");
+            }
+        };
+        json_reader.readAsText(json_file);
     }
 
     render();
@@ -489,13 +445,13 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
-        if (lutColsVis){
+        if (lutColsVis) {
             material = new THREE.MeshLambertMaterial({
                 color: lutCols[i],
                 side: THREE.DoubleSide
             })
         }
-        else{
+        else {
             material = strand_to_material[i]
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
@@ -680,7 +636,7 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         for (let line_num = 0; line_num < num_nuc; line_num++) {
             if (lines[line_num] == "" || undefined) {
                 alert("There's an empty line in the middle of your configuration!")
-                break 
+                break
             };
             let current_nucleotide = current_strand.nucleotides[nuc_local_id];
             //get nucleotide information
@@ -825,7 +781,7 @@ function nextConfig() { //attempts to display next configuration; same as readDa
                     pos.z = pos.z - dz;
                     systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
-            }            
+            }
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
         render();
