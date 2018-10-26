@@ -240,18 +240,16 @@ target.addEventListener("drop", function (event) {
         };
         top_reader.readAsText(top_file);
         //test_dat_read(dat_file);
-        var show_flex = false;
         if (files_len == 3) { //if dropped 3 files = also included flexibility coloring .json
-            show_flex = true;
+            lutColsVis = true;
+            document.getElementById("lutToggle").checked = true; //typescript doesn't like this for some reason, but it works
             let json_reader = new FileReader(); //read .json
             json_reader.onload = () => {
                 let file = json_reader.result;
-                let lines = file.split(", ");
-                devs = [];
-                if (lines.length == system.system_length()) { //if json and dat files match/same length
-                    for (let i = 0; i < lines.length; i++) {
-                        devs.push(parseFloat(lines[i])); //insert numbers from json file into devs[]
-                    }
+                let devs = file.split(", ");
+                devs[0] = devs[0].slice(1, -1);
+                devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1);
+                if (devs.length == system.system_length()) { //if json and dat files match/same length
                     let min = Math.min.apply(null, devs), //find min and max
                     max = Math.max.apply(null, devs);
                     lut = new THREE.Lut("rainbow", 4000);
@@ -264,6 +262,9 @@ target.addEventListener("drop", function (event) {
                     for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
                         scene.add(labels['ticks'][i]);
                         scene.add(labels['lines'][i]);
+                    }
+                    for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                        lutCols.push(lut.getColor(devs[i]));
                     }
                 }
                 else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
@@ -282,12 +283,10 @@ target.addEventListener("drop", function (event) {
             let json_reader = new FileReader();
             json_reader.onload = () => {
                 let file = json_reader.result;
-                let lines = file.split(", "); //read numbers as strings
-                devs = [];
-                if (lines.length == nucleotides.length) {
-                    for (let i = 0; i < lines.length; i++) {
-                        devs.push(parseFloat(lines[i])); //insert lines[i] strings as numbers into devs[]
-                    }
+                let devs = file.split(", ");
+                devs[0] = devs[0].slice(1, -1);
+                devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1);
+                if (devs.length == nucleotides.length) {
                     let min = Math.min.apply(null, devs), //set min and max
                     max = Math.max.apply(null, devs);
                     lut = new THREE.Lut("rainbow", 4000); //create Lut obj
@@ -304,6 +303,8 @@ target.addEventListener("drop", function (event) {
                     for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
                         lutCols.push(lut.getColor(devs[i]));
                     }
+                    document.getElementById("lutToggle").checked = true; //typescript doesn't like this for some reason, but it works
+                    toggleLut(false);
                     render();
                 }
                 else {
@@ -319,7 +320,7 @@ target.addEventListener("drop", function (event) {
         dat_reader.onload = () => {
             current_chunk = dat_reader.result;
             current_chunk_number = 0;
-            readDat(system.system_length(), dat_reader, strand_to_material, base_to_material, system, show_flex);
+            readDat(system.system_length(), dat_reader, strand_to_material, base_to_material, system, lutColsVis);
         };
         next_reader.onload = () => {
             //chunking bytewise often leaves incomplete lines, so take the start of next_chunk and append it to current_chunk
@@ -346,7 +347,7 @@ target.addEventListener("drop", function (event) {
     render();
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;
-function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, system, show_flex) {
+function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, system, lutColsVis) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -356,7 +357,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     let time = parseInt(lines[0].split(" ")[3]);
     // discard the header
     lines = lines.slice(3);
-    let arb = 0; //used in flexibility coloring
     conf_begin.chunk = current_chunk;
     conf_begin.line_id = 0;
     if (lines.length < num_nuc) {
@@ -415,15 +415,22 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
         group.name = current_nucleotide.global_id + ""; //set name (string) to nucleotide's global id
         let backbone, nucleoside, con;
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
-        backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]); //sphere - sugar phosphate backbone
+        //make material depending on whether there is an alternate color scheme available
+        var material;
+        if (lutColsVis) {
+            material = new THREE.MeshLambertMaterial({
+                color: lutCols[i],
+                side: THREE.DoubleSide
+            });
+        }
+        else {
+            material = strand_to_material[i];
+        }
+        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide
-        con = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cyclinder - backbone and nucleoside connector
+        con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
-        //if .dat, .top, and .json files dropped simultaneously, handle coloring
-        if (show_flex) {
-            lutCols.push(lut.getColor(devs[arb])); //add colors to lutCols[]
-        }
         // apply rotations
         nucleoside.applyMatrix(base_rotation);
         con.applyMatrix(rotation_con);
@@ -445,13 +452,12 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
             // if the bonds are to long just don't add them 
             if (sp_len <= 500) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-                let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+                let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
                 group.add(sp); //add to visual_object
             }
-            arb++; //increment for each nucleotide b/c each nucleotide has 
         }
         if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
             let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection

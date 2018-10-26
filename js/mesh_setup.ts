@@ -40,23 +40,23 @@ var backbone_materials = [
 // define nucleoside colors: grey OR traditional colors
 var nucleoside_materials = [
     new THREE.MeshLambertMaterial({ //A
-        //color: 0x3333FF, //neon blue
-        color: 0x888888,//6dc066,
+        color: 0x3333FF, //neon blue
+        //color: 0x888888,//6dc066,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //G
-        //color: 0xFFFF33, //yellow; "gorse"
-        color: 0x888888,//ff6600,
+        color: 0xFFFF33, //yellow; "gorse"
+        //color: 0x888888,//ff6600,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //C
-        //color: 0x33FF33, //lime green
-        color: 0x888888,//0x4286f4,
+        color: 0x33FF33, //lime green
+        //color: 0x888888,//0x4286f4,
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({ //T/U
-        //color: 0xFF3333, //red orange
-        color: 0x888888,//ff0033,
+        color: 0xFF3333, //red orange
+        //color: 0x888888,//ff0033,
         side: THREE.DoubleSide
     })
 ];
