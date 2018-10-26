@@ -1,0 +1,122 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/nodejs',
+1 verbose cli   '/usr/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   '--save',
+1 verbose cli   '@types/three' ]
+2 info using npm@3.5.2
+3 info using node@v4.2.6
+4 silly loadCurrentTree Starting
+5 silly install loadCurrentTree
+6 silly install readLocalPackageData
+7 silly fetchPackageMetaData @types/three
+8 silly fetchNamedPackageData @types/three
+9 silly mapToRegistry name @types/three
+10 silly mapToRegistry scope (from package name) @types
+11 verbose mapToRegistry no registry URL found in name for scope @types
+12 silly mapToRegistry using default registry
+13 silly mapToRegistry registry https://registry.npmjs.org/
+14 silly mapToRegistry uri https://registry.npmjs.org/@types%2fthree
+15 verbose request uri https://registry.npmjs.org/@types%2fthree
+16 verbose request no auth needed
+17 info attempt registry request try #1 at 7:46:21 PM
+18 verbose request id d9a2d54b12cc5a61
+19 verbose etag W/"5d72c122e6c705fe534a0989b5e0da39"
+20 verbose lastModified Sat, 20 Oct 2018 00:07:26 GMT
+21 http request GET https://registry.npmjs.org/@types%2fthree
+22 http 304 https://registry.npmjs.org/@types%2fthree
+23 verbose headers { date: 'Fri, 26 Oct 2018 02:46:21 GMT',
+23 verbose headers   connection: 'keep-alive',
+23 verbose headers   'set-cookie': [ '__cfduid=d07a11a8f1602d8db8b4e1ab22c57257a1540521981; expires=Sat, 26-Oct-19 02:46:21 GMT; path=/; domain=.registry.npmjs.org; HttpOnly' ],
+23 verbose headers   'cf-cache-status': 'HIT',
+23 verbose headers   'cache-control': 'public, max-age=300',
+23 verbose headers   'cf-ray': '46f9979309333982-PHX',
+23 verbose headers   etag: '"5d72c122e6c705fe534a0989b5e0da39"',
+23 verbose headers   'expect-ct': 'max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"',
+23 verbose headers   'last-modified': 'Sat, 20 Oct 2018 00:07:26 GMT',
+23 verbose headers   vary: 'Accept-Encoding',
+23 verbose headers   'x-amz-meta-rev': '1133-c2657bf0c2346f622245c380a37fff3a',
+23 verbose headers   server: 'cloudflare' }
+24 silly get cb [ 304,
+24 silly get   { date: 'Fri, 26 Oct 2018 02:46:21 GMT',
+24 silly get     connection: 'keep-alive',
+24 silly get     'set-cookie': [ '__cfduid=d07a11a8f1602d8db8b4e1ab22c57257a1540521981; expires=Sat, 26-Oct-19 02:46:21 GMT; path=/; domain=.registry.npmjs.org; HttpOnly' ],
+24 silly get     'cf-cache-status': 'HIT',
+24 silly get     'cache-control': 'public, max-age=300',
+24 silly get     'cf-ray': '46f9979309333982-PHX',
+24 silly get     etag: '"5d72c122e6c705fe534a0989b5e0da39"',
+24 silly get     'expect-ct': 'max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"',
+24 silly get     'last-modified': 'Sat, 20 Oct 2018 00:07:26 GMT',
+24 silly get     vary: 'Accept-Encoding',
+24 silly get     'x-amz-meta-rev': '1133-c2657bf0c2346f622245c380a37fff3a',
+24 silly get     server: 'cloudflare' } ]
+25 verbose etag https://registry.npmjs.org/@types%2fthree from cache
+26 verbose get saving @types/three to /home/hliu220/.npm/registry.npmjs.org/_40types_252fthree/.cache.json
+27 silly install normalizeTree
+28 silly loadCurrentTree Finishing
+29 silly loadIdealTree Starting
+30 silly install loadIdealTree
+31 silly cloneCurrentTree Starting
+32 silly install cloneCurrentTreeToIdealTree
+33 silly cloneCurrentTree Finishing
+34 silly loadShrinkwrap Starting
+35 silly install loadShrinkwrap
+36 silly loadShrinkwrap Finishing
+37 silly loadAllDepsIntoIdealTree Starting
+38 silly install loadAllDepsIntoIdealTree
+39 silly resolveWithNewModule @types/three@0.93.4 checking installable status
+40 silly cache add args [ '@types/three', null ]
+41 verbose cache add spec @types/three
+42 silly cache add parsed spec Result {
+42 silly cache add   raw: '@types/three',
+42 silly cache add   scope: '@types',
+42 silly cache add   name: '@types/three',
+42 silly cache add   rawSpec: '',
+42 silly cache add   spec: 'latest',
+42 silly cache add   type: 'tag' }
+43 silly addNamed @types/three@latest
+44 verbose addNamed "latest" is being treated as a dist-tag for @types/three
+45 info addNameTag [ '@types/three', 'latest' ]
+46 silly mapToRegistry name @types/three
+47 silly mapToRegistry scope (from package name) @types
+48 verbose mapToRegistry no registry URL found in name for scope @types
+49 silly mapToRegistry using default registry
+50 silly mapToRegistry registry https://registry.npmjs.org/
+51 silly mapToRegistry uri https://registry.npmjs.org/@types%2fthree
+52 verbose addNameTag registry:https://registry.npmjs.org/@types%2fthree not in flight; fetching
+53 verbose get https://registry.npmjs.org/@types%2fthree not expired, no request
+54 silly addNameTag next cb for @types/three with tag latest
+55 silly addNamed @types/three@0.93.4
+56 verbose addNamed "0.93.4" is a plain semver version for @types/three
+57 silly cache afterAdd @types/three@0.93.4
+58 verbose afterAdd /home/hliu220/.npm/@types/three/0.93.4/package/package.json not in flight; writing
+59 verbose afterAdd /home/hliu220/.npm/@types/three/0.93.4/package/package.json written
+60 silly loadAllDepsIntoIdealTree Finishing
+61 silly idealTree:prePrune @types/three-test@0.92.0
+61 silly idealTree:prePrune └── @types/three@0.93.4
+62 silly loadIdealTree Finishing
+63 silly currentTree @types/three-test@0.92.0
+64 silly idealTree @types/three-test@0.92.0
+64 silly idealTree └── @types/three@0.93.4
+65 silly generateActionsToTake Starting
+66 silly install generateActionsToTake
+67 verbose stack TypeError: Cannot read property 'target' of null
+67 verbose stack     at module.exports (/usr/share/npm/lib/install/filter-invalid-actions.js:24:35)
+67 verbose stack     at Array.<anonymous> (/usr/share/npm/node_modules/slide/lib/bind-actor.js:15:8)
+67 verbose stack     at LOOP (/usr/share/npm/node_modules/slide/lib/chain.js:15:14)
+67 verbose stack     at /usr/share/npm/node_modules/slide/lib/chain.js:18:7
+67 verbose stack     at Object.Installer.computeLinked (/usr/share/npm/lib/install.js:411:41)
+67 verbose stack     at Array.<anonymous> (/usr/share/npm/node_modules/slide/lib/bind-actor.js:15:8)
+67 verbose stack     at LOOP (/usr/share/npm/node_modules/slide/lib/chain.js:15:14)
+67 verbose stack     at /usr/share/npm/node_modules/slide/lib/chain.js:18:7
+67 verbose stack     at module.exports (/usr/share/npm/lib/install/diff-trees.js:50:3)
+67 verbose stack     at Array.<anonymous> (/usr/share/npm/node_modules/slide/lib/bind-actor.js:15:8)
+68 verbose cwd /home/hliu220/software/oxviewer/oxdna-viewer/ts/three
+69 error Linux 4.15.0-38-generic
+70 error argv "/usr/bin/nodejs" "/usr/bin/npm" "install" "--save" "@types/three"
+71 error node v4.2.6
+72 error npm  v3.5.2
+73 error Cannot read property 'target' of null
+74 error If you need help, you may report this error at:
+74 error     <https://github.com/npm/npm/issues>
+75 verbose exit [ 1, true ]
