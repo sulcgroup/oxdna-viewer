@@ -178,35 +178,19 @@ let lutColsVis: boolean = false;
 }*/
 
 function toggleLut(chkBox) { //toggles display of coloring by json file / structure modeled off of base selector
-    console.log("here!");
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
             for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides in all systems - does not work for more than one system
                 let sysID = nucleotides[i].my_system;
-                let back_Mesh: THREE.Object3D = nucleotides[i].visual_object.children[BACKBONE]; //backbone
-                let nuc_Mesh: THREE.Object3D = nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
-                let con_Mesh: THREE.Object3D = nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector; cms posObj Mesh does not have a shape or color, etc.
-                let sp_Mesh: THREE.Object3D = nucleotides[i].visual_object.children[SP_CON]; //sugar phosphate connector
-                if (back_Mesh instanceof THREE.Mesh) { //needed because Object3D "may not be" THREE.Mesh
-                    if (back_Mesh.material instanceof THREE.MeshLambertMaterial) { //needed because Mesh.material "may not be" MeshLambertMaterial
-                        back_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]); //set material to material stored earlier based on strandID
-                    }
-                }
-                if (nuc_Mesh instanceof THREE.Mesh) {
-                    if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial || nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        nuc_Mesh.material = (systems[sysID].base_to_material[nucleotides[i].global_id]); //set material to material stored earlier based on base id
-                    }
-                }
-                if (con_Mesh instanceof THREE.Mesh) {
-                    if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        con_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]);
-                    }
-                }
-                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                    if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        sp_Mesh.material = (systems[sysID].strand_to_material[nucleotides[i].global_id]);
-                    }
-                }
+                let back_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[BACKBONE]; //backbone
+                let nuc_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
+                let con_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector
+                let sp_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[SP_CON]; //sugar phosphate connector
+
+                back_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
+                nuc_Mesh.material = systems[sysID].base_to_material[nucleotides[i].global_id];
+                con_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
+                if (nucleotides[i].visual_object[SP_CON]) sp_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
             }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
         }
@@ -218,10 +202,8 @@ function toggleLut(chkBox) { //toggles display of coloring by json file / struct
                 });
                 for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
                     if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh: THREE.Object3D = nucleotides[i].visual_object.children[j];
-                        if (tmesh instanceof THREE.Mesh) { //needed because nucleotides[i].visual_object.children[j] "may not be" a Mesh
-                            tmesh.material = tmeshlamb;
-                        }
+                        let tmesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[j];
+                        tmesh.material = tmeshlamb;
                     }
                 }
             }
