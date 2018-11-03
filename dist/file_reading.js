@@ -321,7 +321,8 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     let lines = dat_reader.result.split(/[\r\n]+/g);
     //get the simulation box size 
     let box = parseFloat(lines[1].split(" ")[3]);
-    let time = parseInt(lines[0].split(" ")[3]);
+    let time = parseInt(lines[0].split(" ")[2]);
+    console.log(lines[0]);
     // discard the header
     lines = lines.slice(3);
     conf_begin.chunk = current_chunk;
