@@ -76,7 +76,7 @@ target.addEventListener("dragover", function (event) {
 }, false);
 // the actual code to drop in the config files
 var approx_dat_len, current_chunk_number, //this is the chunk in the middle of the three in memory
-previous_chunk, current_chunk, next_chunk, dat_reader = new FileReader(), next_reader = new FileReader(), last_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, dat_fileout = "", dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+previous_chunk, current_chunk, next_chunk, dat_reader = new FileReader(), next_reader = new FileReader(), last_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -276,6 +276,8 @@ target.addEventListener("drop", function (event) {
             let file = json_reader.result;
             let devs = file.split(", ");
             devs[0] = devs[0].slice(1, -1);
+            devs[devs.length - 1] = devs[devs.length - 1].replace(/^\s+|\s+$/g, "");
+            console.log(devs[3299].slice(-1));
             devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1);
             let curr_sys;
             if (json_alone)
@@ -322,7 +324,8 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     //get the simulation box size 
     let box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
-    console.log(lines[0]);
+    conf_num += 1;
+    console.log(conf_num, "t =", time);
     // discard the header
     lines = lines.slice(3);
     conf_begin.chunk = current_chunk;
@@ -534,6 +537,8 @@ function nextConfig() {
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
+        conf_num += 1;
+        console.log(conf_num, 't =', time);
         // discard the header
         lines = lines.slice(3);
         for (let line_num = 0; line_num < num_nuc; line_num++) {

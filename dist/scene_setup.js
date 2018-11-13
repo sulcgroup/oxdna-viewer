@@ -52,20 +52,20 @@ scene.add(lights[2]);
 //Add arrows to scene to add reference location for DNA/RNA in scene
 let dir = new THREE.Vector3(1, 0, 0); //direction for x-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
-let origin = new THREE.Vector3(0, 0, 0);
+let Origin = new THREE.Vector3(0, 0, 0);
 var length = 10;
 let hex = 0x000080; //arrow colors
-let arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex); //create x-axis arrow
+let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex); //create x-axis arrow
 arrowHelper.name = "x-axis";
 scene.add(arrowHelper); //add x-axis arrow to scene
 dir = new THREE.Vector3(0, 1, 0); //direction for y-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
-arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
 arrowHelper.name = "y-axis";
 scene.add(arrowHelper); //add y-axis arrow to scene
 dir = new THREE.Vector3(0, 0, 1); //direction for z-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
-arrowHelper = new THREE.ArrowHelper(dir, origin, length, hex);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
 function toggleArrows(chkBox) {

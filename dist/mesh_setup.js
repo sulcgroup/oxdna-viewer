@@ -31,7 +31,7 @@ var backbone_materials = [
         side: THREE.DoubleSide,
     })
 ];
-// define nucleoside colors: grey OR tiamat-matching colors
+// define nucleoside colors: grey OR traditional colors
 var nucleoside_materials = [
     new THREE.MeshLambertMaterial({
         color: 0x3333FF,

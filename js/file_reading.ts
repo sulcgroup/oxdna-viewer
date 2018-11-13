@@ -93,6 +93,7 @@ var approx_dat_len: number,
     conf_begin = new marker,
     conf_end = new marker,
     conf_len: number,
+    conf_num: number = 0,
     dat_fileout: string = "",
     dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
 
@@ -311,6 +312,7 @@ target.addEventListener("drop", function (event) {
             let file = json_reader.result as string;
             let devs: string[] = file.split(", ");
             devs[0] = devs[0].slice(1, -1)
+            devs[devs.length - 1] = devs[devs.length - 1].replace(/^\s+|\s+$/g, "")
             devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1)
             let curr_sys;
             if (json_alone) curr_sys = sys_count-1;
@@ -358,7 +360,8 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     //get the simulation box size 
     let box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
-    console.log(lines[0]);
+    conf_num += 1
+    console.log(conf_num, "t =", time);
     // discard the header
     lines = lines.slice(3);
 
@@ -616,6 +619,8 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
+        conf_num += 1
+        console.log(conf_num, 't =', time);
         // discard the header
         lines = lines.slice(3);
 
