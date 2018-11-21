@@ -50,6 +50,7 @@ for (let i = 0, len = sz.length; i < len; i++) {
 
 let dragControls: THREE.DragControls; //dragging functionality
 function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
+    //right now this only allows you to move the first system.  That 6 needs to be changed to what is under the mouse...
     dragControls = new THREE.DragControls(scene.children[6].children, camera, true, renderer.domElement);
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
