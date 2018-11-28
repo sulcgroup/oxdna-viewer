@@ -146,6 +146,14 @@ let lutColsVis = false;
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z)); //translate system by cmssys
     }
 }*/
+function nextConfig() {
+    getNextConfig();
+    let centering_on = document.getElementById("centering").checked;
+    console.log(centering_on);
+    if (centering_on) {
+        centerSystems();
+    }
+}
 function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean

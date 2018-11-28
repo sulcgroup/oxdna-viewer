@@ -555,7 +555,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
         dz = Math.round(cms.z / box) * box;
 
         //fix coordinates
-        let temp = new THREE.Vector3();
         for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) { //for every nucleotide in strand
             for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
                 let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position; //get Mesh position
@@ -588,6 +587,8 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
      cube.position.set(10,10,10);
      scene.add(cube);
      backbones.push(cube); */
+    // set camera position based on structure
+    camera.position.x = largestX + 20
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
@@ -597,10 +598,9 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     //render();
 }
 
-var trajlines;
 var need_next_chunk: boolean = false;
 var need_previous_chunk: boolean = false;
-function nextConfig() { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
+function getNextConfig() { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
         return
@@ -779,6 +779,6 @@ function nextConfig() { //attempts to display next configuration; same as readDa
         if (actionMode.includes("Drag")) {
             drag();
         }
-        render();
     }
+    render();
 }

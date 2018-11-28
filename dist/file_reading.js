@@ -277,7 +277,6 @@ target.addEventListener("drop", function (event) {
             let devs = file.split(", ");
             devs[0] = devs[0].slice(1, -1);
             devs[devs.length - 1] = devs[devs.length - 1].replace(/^\s+|\s+$/g, "");
-            console.log(devs[3299].slice(-1));
             devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1);
             let curr_sys;
             if (json_alone)
@@ -463,6 +462,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     }
     let dx, dy, dz;
     //bring strand in box
+    let largestX = 0;
     for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
         // compute offset to bring strand in box
         let n = systems[sys_count].strands[i].nucleotides.length; //strand's nucleotides[] length
@@ -477,7 +477,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
         dy = Math.round(cms.y / box) * box;
         dz = Math.round(cms.z / box) * box;
         //fix coordinates
-        let temp = new THREE.Vector3();
         for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) { //for every nucleotide in strand
             for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
                 let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position; //get Mesh position
@@ -486,6 +485,9 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
                 systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                if (systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position[0] > largestX) {
+                    largestX = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position[0];
+                }
             }
         }
     }
@@ -508,6 +510,8 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
      cube.position.set(10,10,10);
      scene.add(cube);
      backbones.push(cube); */
+    // set camera position based on structure
+    camera.position.x = largestX + 20;
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
@@ -516,10 +520,9 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     }
     //render();
 }
-var trajlines;
 var need_next_chunk = false;
 var need_previous_chunk = false;
-function nextConfig() {
+function getNextConfig() {
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
         return;
@@ -661,6 +664,6 @@ function nextConfig() {
         if (actionMode.includes("Drag")) {
             drag();
         }
-        render();
     }
+    render();
 }
