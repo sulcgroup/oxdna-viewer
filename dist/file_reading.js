@@ -462,7 +462,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
     }
     let dx, dy, dz;
     //bring strand in box
-    let largestX = 0;
     for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
         // compute offset to bring strand in box
         let n = systems[sys_count].strands[i].nucleotides.length; //strand's nucleotides[] length
@@ -485,9 +484,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
                 systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
-                if (systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position[0] > largestX) {
-                    largestX = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position[0];
-                }
             }
         }
     }
@@ -511,7 +507,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
      scene.add(cube);
      backbones.push(cube); */
     // set camera position based on structure
-    camera.position.x = largestX + 20;
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory

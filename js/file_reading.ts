@@ -588,7 +588,6 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
      scene.add(cube);
      backbones.push(cube); */
     // set camera position based on structure
-    camera.position.x = largestX + 20
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
