@@ -381,6 +381,7 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
         }
     }
     // reposition center of mass of the system to 0,0,0
+    let largestX = 0
     let cms = new THREE.Vector3(0, 0, 0);
     let n_nucleotides = system.system_length();
     let i = system.global_start_id;
@@ -392,7 +393,13 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
     i = system.global_start_id;
     for (; i < system.global_start_id + n_nucleotides; i++) {
         nucleotide_3objects[i].position.sub(cms);
+        if (nucleotide_3objects[i].position.x > largestX) {
+            largestX = nucleotide_3objects[i].position.x;
+        }
     }
+
+    //set the camera 20 be 20 x units out from the largest x value
+    camera.position.x = largestX + 20;
 
     systems[sys_count].CoM = cms;
 
