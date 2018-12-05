@@ -25,7 +25,7 @@ var scene = new THREE.Scene();
 scene.background = new THREE.Color();
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
 // set camera position 
-camera.position.x = 100; //YOU WERE WORKING ON MAKING THE CAMERA POSITION ON LOAD BASED ON NUCLEOTIDE POSITOINS
+camera.position.x = 100;
 var renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer: true,
     alpha: true,

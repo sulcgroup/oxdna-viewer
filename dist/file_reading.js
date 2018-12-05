@@ -74,6 +74,7 @@ function handleFiles(files) {
     else {
         alert("Please drag and drop 1 .dat and 1 .top file.");
     }
+    renderer.domElement.style.cursor = "wait";
     top_reader.readAsText(top_file);
     dat_reader.readAsText(dat_file);
     render();
@@ -313,6 +314,8 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
     }
     // reposition center of mass of the system to 0,0,0
     let largestX = 0;
+    let largestY = 0;
+    let largestZ = 0;
     let cms = new THREE.Vector3(0, 0, 0);
     let n_nucleotides = system.system_length();
     let i = system.global_start_id;
@@ -323,13 +326,25 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
     cms.multiplyScalar(mul);
     i = system.global_start_id;
     for (; i < system.global_start_id + n_nucleotides; i++) {
-        nucleotide_3objects[i].position.sub(cms);
-        if (nucleotide_3objects[i].position.x > largestX) {
-            largestX = nucleotide_3objects[i].position.x;
+        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+            nucleotides[i].visual_object.children[j].position.sub(cms);
+        }
+        nucleotides[i].visual_object.children[COM].position.sub(cms);
+        if (nucleotides[i].visual_object.children[COM].position.x > largestX) {
+            largestX = nucleotides[i].visual_object.children[COM].position.x;
+        }
+        if (nucleotides[i].visual_object.children[COM].position.y > largestY) {
+            largestY = nucleotides[i].visual_object.children[COM].position.y;
+        }
+        if (nucleotides[i].visual_object.children[COM].position.z > largestZ) {
+            largestZ = nucleotides[i].visual_object.children[COM].position.z;
         }
     }
     //set the camera 20 be 20 x units out from the largest x value
     camera.position.x = largestX + 20;
+    camera.position.y = largestY + 20;
+    camera.position.z = largestZ + 20;
+    camera.lookAt(0, 0, 0);
     systems[sys_count].CoM = cms;
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
@@ -338,4 +353,5 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
     for (let i = 0; i < nucleotides.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(nucleotides[i].visual_object.children[BACKBONE]);
     }
+    renderer.domElement.style.cursor = "auto";
 }
