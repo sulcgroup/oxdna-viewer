@@ -28,7 +28,7 @@ top_reader.onload = () => {
 }
 
 dat_reader.onload = () => {
-    readDat(dat_reader, strand_to_material, base_to_material, current_system);
+    readDat(dat_reader, base_to_material, current_system);
 }
 
 //get files from a drag-and-drop action
@@ -120,6 +120,7 @@ function readTop(top_reader) {
             if (line == "") {
                 nucleotides.pop();
                 current_system.add_strand(current_strand);
+                current_system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                 return
             }
             let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
@@ -143,6 +144,7 @@ function readTop(top_reader) {
             }
             if (str_id != last_strand) { //if new strand id, make new strand
                 current_system.add_strand(current_strand);
+                current_system.strand_to_material[last_strand] = backbone_materials[Math.floor(last_strand % backbone_materials.length)];
                 current_strand = new Strand(str_id, current_system);
                 nuc_local_id = 0;
             };
@@ -163,10 +165,9 @@ function readTop(top_reader) {
             // create a lookup for
             // coloring base according to base id
             base_to_material[i] = nucleoside_materials[base_to_num[base]];
-            // coloring bases according to strand id 
-            strand_to_material[i] = backbone_materials[Math.floor(str_id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
 
             if (i == lines.length - 1) {
+                current_system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                 current_system.add_strand(current_strand);
                 return
             };
@@ -176,7 +177,6 @@ function readTop(top_reader) {
         selected_bases.push(0);
     }
     current_system.setBaseMaterial(base_to_material); //store this system's base 
-    current_system.setStrandMaterial(strand_to_material); //and strand coloring in current System object
     systems.push(current_system); //add system to Systems[]
     nuc_count = nucleotides.length;
     conf_len = nuc_count + 3;
@@ -187,7 +187,7 @@ function readTop(top_reader) {
 let x_bb_last,
     y_bb_last,
     z_bb_last;
-function readDat(dat_reader, strand_to_material, base_to_material, system) {
+function readDat(dat_reader, base_to_material, system) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -271,9 +271,9 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
         group.name = current_nucleotide.global_id + ""; //set name (string) to nucleotide's global id
         let backbone, nucleoside, con;
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
-        backbone = new THREE.Mesh(backbone_geometry, strand_to_material[i]); //sphere - sugar phosphate backbone
+        backbone = new THREE.Mesh(backbone_geometry, current_system.strand_to_material[current_strand.strand_id]); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide
-        con = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cyclinder - backbone and nucleoside connector
+        con = new THREE.Mesh(connector_geometry, current_system.strand_to_material[current_strand.strand_id]); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
         // apply rotations
@@ -301,7 +301,7 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, current_system.strand_to_material[current_strand.strand_id]); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
@@ -317,7 +317,7 @@ function readDat(dat_reader, strand_to_material, base_to_material, system) {
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, current_system.strand_to_material[current_strand.strand_id]); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
