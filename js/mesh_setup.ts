@@ -7,7 +7,7 @@ var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
 var connector_geometry = new THREE.CylinderGeometry(.1,.1,1, 8);
 
 
-// define strand colors //Grey for testing
+// define strand colors
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
         color: 0x156289,

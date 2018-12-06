@@ -134,6 +134,7 @@ target.addEventListener("drop", function (event) {
                 if (line == "") {
                     nucleotides.pop();
                     system.add_strand(current_strand);
+                    system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                     return;
                 }
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
@@ -157,6 +158,7 @@ target.addEventListener("drop", function (event) {
                 }
                 if (str_id != last_strand) { //if new strand id, make new strand
                     system.add_strand(current_strand);
+                    system.strand_to_material[last_strand] = backbone_materials[Math.floor(last_strand % backbone_materials.length)];
                     current_strand = new Strand(str_id, system);
                     nuc_local_id = 0;
                 }
@@ -175,9 +177,8 @@ target.addEventListener("drop", function (event) {
                 // create a lookup for
                 // coloring base according to base id
                 base_to_material[i] = nucleoside_materials[base_to_num[base]];
-                // coloring bases according to strand id 
-                strand_to_material[i] = backbone_materials[Math.floor(str_id % backbone_materials.length)]; //i = nucleotide id in system but not = global id b/c global id takes all systems into account
                 if (i == lines.length - 1) {
+                    system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                     system.add_strand(current_strand);
                     return;
                 }
@@ -187,7 +188,6 @@ target.addEventListener("drop", function (event) {
                 selected_bases.push(0);
             }
             system.setBaseMaterial(base_to_material); //store this system's base 
-            system.setStrandMaterial(strand_to_material); //and strand coloring in current System object
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = nucleotides.length;
@@ -242,7 +242,7 @@ target.addEventListener("drop", function (event) {
         dat_reader.onload = () => {
             current_chunk = dat_reader.result;
             current_chunk_number = 0;
-            readDat(system.system_length(), dat_reader, strand_to_material, base_to_material, system, lutColsVis);
+            readDat(system.system_length(), dat_reader, base_to_material, system, lutColsVis);
         };
         next_reader.onload = () => {
             //chunking bytewise often leaves incomplete lines, so take the start of next_chunk and append it to current_chunk
@@ -315,7 +315,7 @@ target.addEventListener("drop", function (event) {
     render();
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;
-function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, system, lutColsVis) {
+function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -394,7 +394,7 @@ function readDat(num_nuc, dat_reader, strand_to_material, base_to_material, syst
             });
         }
         else {
-            material = strand_to_material[i];
+            material = system.strand_to_material[current_strand.strand_id];
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide

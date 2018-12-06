@@ -111,7 +111,7 @@ function toggle(nucleotideID, sysID) {
     if (selected) { //if clicked nucleotide is already selected
         // figure out what that base was before you painted it black and revert it
         let nuc = nucleotides[nucleotideID]; //get Nucleotide object
-        let locstrandID = (nuc.my_strand - 1) * systems[sysID].strands[nuc.my_strand - 1].nucleotides.length + nuc.local_id; //get nucleotide's id with respect to its strand only
+        let locstrandID = nuc.my_strand;
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
@@ -120,7 +120,7 @@ function toggle(nucleotideID, sysID) {
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = (systems[sysID].base_to_material[locstrandID]);
+                nuc_Mesh.material = (systems[sysID].base_to_material[nucleotideID]);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {

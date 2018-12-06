@@ -50,8 +50,6 @@ for (let i = 0, len = sz.length; i < len; i++) {
 
 let dragControls: THREE.DragControls; //dragging functionality
 function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
-    //right now this only allows you to move the first system.  That 6 needs to be changed to what is under the mouse...
-    //var nucleotide_objects = scene.children.slice(6).children.flat(1)
     var nucleotide_objects = []
     for (let i = 6; i < scene.children.length; i++){
         nucleotide_objects.push(scene.children[i].children)
