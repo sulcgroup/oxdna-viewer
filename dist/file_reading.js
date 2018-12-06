@@ -5,6 +5,9 @@ function dat_chunker(dat_file, current_chunk, chunk_size) {
     return sliced;
 }
 function extract_next_conf() {
+    if (!next_chunk) {
+        return (undefined);
+    }
     let need_next_chunk = false;
     let current_chunk_lines = current_chunk.split(/[\r\n]+/g);
     let next_chunk_lines = next_chunk.split(/[\r\n]+/g);
@@ -83,7 +86,6 @@ target.addEventListener("drop", function (event) {
     //make system to store the dropped files in
     var system = new System(sys_count, nucleotides.length);
     var files = event.dataTransfer.files, files_len = files.length;
-    var strand_to_material = {};
     var base_to_material = {};
     var base_to_num = {
         "A": 0,
@@ -238,6 +240,7 @@ target.addEventListener("drop", function (event) {
     }*/
     // asynchronously read the first two chunks of a configuration file
     if (dat_file) {
+        renderer.domElement.style.cursor = "wait";
         //read information in dat file into system
         dat_reader.onload = () => {
             current_chunk = dat_reader.result;
@@ -434,7 +437,7 @@ function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
             y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-            let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
@@ -513,7 +516,7 @@ function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
     for (let i = 0; i < nucleotides.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(nucleotides[i].visual_object.children[BACKBONE]);
     }
-    //render();
+    renderer.domElement.style.cursor = "auto";
 }
 var need_next_chunk = false;
 var need_previous_chunk = false;

@@ -7,6 +7,9 @@ function dat_chunker(dat_file: Blob, current_chunk: number, chunk_size: number) 
 }
 
 function extract_next_conf() {
+    if (!next_chunk) {
+        return(undefined)
+    }
     let need_next_chunk: boolean = false;
     let current_chunk_lines: string[] = current_chunk.split(/[\r\n]+/g);
     let next_chunk_lines: string[] = next_chunk.split(/[\r\n]+/g);
@@ -109,7 +112,6 @@ target.addEventListener("drop", function (event) {
     var files = event.dataTransfer.files,
         files_len = files.length;
 
-    var strand_to_material = {};
     var base_to_material = {};
     var base_to_num = {
         "A": 0,
@@ -270,6 +272,7 @@ target.addEventListener("drop", function (event) {
 
     // asynchronously read the first two chunks of a configuration file
     if (dat_file) {
+        renderer.domElement.style.cursor = "wait";
         //read information in dat file into system
         dat_reader.onload = () => {
             current_chunk = dat_reader.result as string;
@@ -508,7 +511,7 @@ function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
@@ -594,7 +597,7 @@ function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
     for (let i = 0; i < nucleotides.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(nucleotides[i].visual_object.children[BACKBONE]);
     }
-    //render();
+    renderer.domElement.style.cursor = "auto";
 }
 
 var need_next_chunk: boolean = false;

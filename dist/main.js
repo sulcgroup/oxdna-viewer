@@ -149,7 +149,6 @@ let lutColsVis = false;
 function nextConfig() {
     getNextConfig();
     let centering_on = document.getElementById("centering").checked;
-    console.log(centering_on);
     if (centering_on) {
         centerSystems();
     }
