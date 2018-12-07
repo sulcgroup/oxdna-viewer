@@ -28,7 +28,7 @@ top_reader.onload = () => {
 }
 
 dat_reader.onload = () => {
-    readDat(dat_reader, base_to_material, current_system);
+    readDat(dat_reader, current_system);
 }
 
 //get files from a drag-and-drop action
@@ -164,7 +164,7 @@ function readTop(top_reader) {
 
             // create a lookup for
             // coloring base according to base id
-            base_to_material[i] = nucleoside_materials[base_to_num[base]];
+            base_to_material[nuc.global_id] = nucleoside_materials[base_to_num[base]];
 
             if (i == lines.length - 1) {
                 current_system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
@@ -187,7 +187,7 @@ function readTop(top_reader) {
 let x_bb_last,
     y_bb_last,
     z_bb_last;
-function readDat(dat_reader, base_to_material, system) {
+function readDat(dat_reader, system) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -272,7 +272,7 @@ function readDat(dat_reader, base_to_material, system) {
         let backbone, nucleoside, con;
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
         backbone = new THREE.Mesh(backbone_geometry, current_system.strand_to_material[current_strand.strand_id]); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide
+        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, current_system.strand_to_material[current_strand.strand_id]); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
