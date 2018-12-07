@@ -206,7 +206,7 @@ target.addEventListener("drop", function (event) {
 
                     // create a lookup for
                     // coloring base according to base id
-                    base_to_material[i] = nucleoside_materials[base_to_num[base]];
+                    base_to_material[nuc.global_id] = nucleoside_materials[base_to_num[base]];
 
                     if (i == lines.length - 1) {
                         system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
@@ -277,7 +277,7 @@ target.addEventListener("drop", function (event) {
         dat_reader.onload = () => {
             current_chunk = dat_reader.result as string;
             current_chunk_number = 0;
-            readDat(system.system_length(), dat_reader, base_to_material, system, lutColsVis);
+            readDat(system.system_length(), dat_reader, system, lutColsVis);
         };
         next_reader.onload = () => {
             //chunking bytewise often leaves incomplete lines, so take the start of next_chunk and append it to current_chunk
@@ -355,7 +355,7 @@ target.addEventListener("drop", function (event) {
 let x_bb_last,
     y_bb_last,
     z_bb_last;
-function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
+function readDat(num_nuc, dat_reader, system, lutColsVis) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -462,7 +462,7 @@ function readDat(num_nuc, dat_reader, base_to_material, system, lutColsVis) {
             material = system.strand_to_material[current_strand.strand_id]
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, base_to_material[i]); //sphere - nucleotide
+        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));

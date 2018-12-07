@@ -99,15 +99,15 @@ document.addEventListener('mousedown', event => {
 });
 function toggle(nucleotideID, sysID) {
     // highlight/remove highlight the bases we've clicked 
+    console.log(nucleotideID);
     let selected = false;
-    let index = 0;
     if (selected_bases[nucleotideID] == 1) { //if clicked nucleotide is selected, set selected boolean to true 
         selected = true;
     }
-    let back_Mesh = nucleotides[nucleotideID].visual_object.children[0]; //get clicked nucleotide's Meshes
-    let nuc_Mesh = nucleotides[nucleotideID].visual_object.children[1];
-    let con_Mesh = nucleotides[nucleotideID].visual_object.children[2];
-    let sp_Mesh = nucleotides[nucleotideID].visual_object.children[4];
+    let back_Mesh = nucleotides[nucleotideID].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+    let nuc_Mesh = nucleotides[nucleotideID].visual_object.children[NUCLEOSIDE];
+    let con_Mesh = nucleotides[nucleotideID].visual_object.children[BB_NS_CON];
+    let sp_Mesh = nucleotides[nucleotideID].visual_object.children[SP_CON];
     if (selected) { //if clicked nucleotide is already selected
         // figure out what that base was before you painted it black and revert it
         let nuc = nucleotides[nucleotideID]; //get Nucleotide object
@@ -120,7 +120,7 @@ function toggle(nucleotideID, sysID) {
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = (systems[sysID].base_to_material[nucleotideID]);
+                nuc_Mesh.material = (systems[sysID].base_to_material[nuc.global_id]);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
