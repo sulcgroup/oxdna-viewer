@@ -99,7 +99,6 @@ document.addEventListener('mousedown', event => {
 });
 function toggle(nucleotideID, sysID) {
     // highlight/remove highlight the bases we've clicked 
-    console.log(nucleotideID);
     let selected = false;
     if (selected_bases[nucleotideID] == 1) { //if clicked nucleotide is selected, set selected boolean to true 
         selected = true;
