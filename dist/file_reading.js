@@ -587,7 +587,7 @@ function getNextConfig() {
             let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(curr_heading.normalize(), new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize()));
             // update position and orientation of the nucleotides
             let group = current_nucleotide.visual_object;
-            let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id; //gets nucleotide id in relation to system - used to color nucleotide Meshes properly
+            let locstrandID = current_strand.strand_id;
             group.name = current_nucleotide.global_id + "";
             //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
             //if you position.set() before applyMatrix() everything explodes and I don't know why

@@ -697,7 +697,7 @@ function getNextConfig() { //attempts to display next configuration; same as rea
 
             // update position and orientation of the nucleotides
             let group = current_nucleotide.visual_object;
-            let locstrandID = (current_nucleotide.my_strand - 1) * system.strands[current_nucleotide.my_strand - 1].nucleotides.length + current_nucleotide.local_id; //gets nucleotide id in relation to system - used to color nucleotide Meshes properly
+            let locstrandID = current_strand.strand_id
             group.name = current_nucleotide.global_id + "";
 
             //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
