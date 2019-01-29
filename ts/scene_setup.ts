@@ -1,5 +1,12 @@
 // <reference path="./three/index.d.ts" />
 // <reference path="./controls/three-trackballcontrols.d.ts" />
+// <reference path="./lib/stats.js" />
+
+// stats code 
+var stats = new Stats();
+document.body.append(
+    stats.dom
+);
 
 // scene update call definition
 function render() {
@@ -10,7 +17,7 @@ function render() {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
-
+    stats.update()
 }
 
 //Fix Resize problems
