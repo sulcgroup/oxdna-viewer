@@ -11,4 +11,11 @@ document.addEventListener("keypress", event =>{
         a.click();
         }, 'image/png', 1.0);
     }
+    //mapping the next conf button to the ' button (can't figure out the arrow keys)
+    if(event.keyCode === 39){
+        nextConfig()
+    }
+    if(event.keyCode === 59){
+        previousConfig()
+    }
 });

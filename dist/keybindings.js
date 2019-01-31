@@ -12,6 +12,9 @@ document.addEventListener("keypress", event => {
     }
     //mapping the next conf button to the ' button (can't figure out the arrow keys)
     if (event.keyCode === 39) {
-        getNextConfig();
+        nextConfig();
+    }
+    if (event.keyCode === 59) {
+        previousConfig();
     }
 });

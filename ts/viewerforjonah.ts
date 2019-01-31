@@ -1,5 +1,8 @@
 /// <reference path="./three/index.d.ts" />
 
+//This is a horrible hack of the file_reading script for a different model
+//It breaks a lot of things, not recommended to use.
+
 // chunk .dat file so its not trying to read the entire thing at once
 function dat_chunker(dat_file: Blob, current_chunk: number, chunk_size: number) {
     let sliced = dat_file.slice(current_chunk * chunk_size, current_chunk * chunk_size + chunk_size);
@@ -7,6 +10,9 @@ function dat_chunker(dat_file: Blob, current_chunk: number, chunk_size: number) 
 }
 
 function extract_next_conf() {
+    if (!next_chunk) {
+        return(undefined)
+    }
     let need_next_chunk: boolean = false;
     let current_chunk_lines: string[] = current_chunk.split(/[\r\n]+/g);
     let next_chunk_lines: string[] = next_chunk.split(/[\r\n]+/g);
@@ -15,7 +21,7 @@ function extract_next_conf() {
     let start = new marker;
     if (conf_end.line_id != current_chunk_length) { //handle very rare edge case where conf ended exactly at end of chunk
         start.chunk = conf_end.chunk;
-        start.line_id = conf_end.line_id + 1;
+        start.line_id = conf_end.line_id + 1; //that +1 is necessary for the first one and bad for all the rest.  Why?
     }
     else {
         start.chunk = next_chunk;
@@ -24,7 +30,7 @@ function extract_next_conf() {
     }
 
     let end = new marker;
-    if (start.line_id + conf_len <= current_chunk_length) { //is the whole conf in a single chunk?
+    if (start.line_id + conf_len <= current_chunk_length) {
         end.chunk = start.chunk;
         end.line_id = start.line_id + conf_len - 1;
         for (let i = start.line_id; i < end.line_id + 1; i++) {
@@ -47,103 +53,27 @@ function extract_next_conf() {
     conf_begin = start;
     conf_end = end;
     if (need_next_chunk) {
-        get_next_chunk(dat_file, current_chunk_number + 2); //current is the old middle, so need two ahead
+        get_next_chunk(dat_file, current_chunk_number + 2) //current is the old middle, so need two ahead
     }
     return (next_conf);
 }
 
-function extract_previous_conf() {
-    let need_previous_chunk: boolean = false;
-    let previous_conf: string[] = []
-    let end = new marker;
-    if (conf_begin.line_id != 0) { //handle rare edge case where a conf began at the start of a chunk
-        end.chunk = conf_begin.chunk;
-        if (end.chunk == previous_chunk){
-            need_previous_chunk = true;
-        }
-        end.line_id = conf_begin.line_id - 1;
-    }
-    else {
-        end.chunk = previous_chunk;
-        end.line_id = previous_chunk.length - 1;
-        need_previous_chunk = true;
-    }
-    let end_chunk_lines: string[] = end.chunk.split(/[\r\n]+/g);
-
-    let start = new marker;
-    if (end.line_id - conf_len >= 0) { //is the whole conf in a single chunk?
-        start.chunk = end.chunk;
-        start.line_id = end.line_id - conf_len + 1;
-        let start_chunk_lines: string[] = start.chunk.split(/[\r\n]+/g);
-        for (let i = start.line_id; i < end.line_id + 1; i++) {
-            if (start_chunk_lines[i] == "" || start_chunk_lines == undefined) { return undefined }
-            previous_conf.push(start_chunk_lines[i]);
-        }
-    }
-    else {
-        if (end.chunk == current_chunk){
-            start.chunk = previous_chunk;
-        }
-        if (end.chunk == previous_chunk){
-            start.chunk = previous_previous_chunk;
-        }
-        let start_chunk_lines: string[] = start.chunk.split(/[\r\n]+/g);
-        start.line_id = start_chunk_lines.length - (conf_len - (end.line_id + 1));
-        for (let i = start.line_id; i < start_chunk_lines.length; i++) {
-            if (start_chunk_lines[i] == "" || start_chunk_lines == undefined) {return undefined}
-            previous_conf.push(start_chunk_lines[i]);
-        }
-        for (let i = 0; i < end.line_id + 1; i++) {
-            if (end_chunk_lines[i] == "" || end_chunk_lines == undefined) {return undefined}
-            previous_conf.push(end_chunk_lines[i]);
-        }
-    }
-    conf_begin = start;
-    conf_end = end;
-    if (need_previous_chunk) {
-        get_previous_chunk(dat_file, current_chunk_number - 3);
-    }
-    return (previous_conf);
-}
-
+//can probably just use this to get previous chunk with some if statements and chunk number
 function get_next_chunk(dat_file, chunk_number) {
-    previous_previous_chunk = previous_chunk;
-    p_p_hanging_line = p_hanging_line;
     previous_chunk = current_chunk;
-    p_hanging_line = c_hanging_line;
+    conf_begin.chunk = previous_chunk;
     current_chunk = next_chunk;
-    c_hanging_line = n_hanging_line;
 
-
+    if (conf_end.chunk == current_chunk) {
+        conf_end.chunk = previous_chunk;
+    }
+    else if (conf_end.chunk == next_chunk) {
+        conf_end.chunk = current_chunk;
+    }
 
     let next_chunk_blob = dat_chunker(dat_file, chunk_number, approx_dat_len);
     next_reader.readAsText(next_chunk_blob);
-    current_chunk_number += 1;
-}
-
-function get_previous_chunk(dat_file, chunk_number) {
-    next_chunk = current_chunk;
-    n_hanging_line = c_hanging_line;
-    current_chunk = previous_chunk;
-    c_hanging_line = p_hanging_line;
-    previous_chunk = previous_previous_chunk;
-    p_hanging_line = p_p_hanging_line;
-
-    if (chunk_number < 0) {
-        console.log("tried to load conf -1");
-        if (previous_previous_chunk == undefined) {
-            previous_chunk = undefined;
-        }
-        else {
-            previous_previous_chunk = undefined;
-        }
-        current_chunk_number -= 1;
-        return
-    }
-
-    let previous_previous_chunk_blob = dat_chunker(dat_file, chunk_number, approx_dat_len);
-    previous_previous_reader.readAsText(previous_previous_chunk_blob);
-    current_chunk_number -= 1
+    current_chunk_number += 1
 }
 
 class marker {
@@ -158,21 +88,14 @@ target.addEventListener("dragover", function (event) {
 }, false);
 
 // the actual code to drop in the config files
-//First, a bunch of global variables everybody loves
 var approx_dat_len: number,
-    current_chunk_number: number, //this is the chunk containing the end of the current conf
-    previous_previous_chunk: String, //Space to store the chunks
+    current_chunk_number: number, //this is the chunk in the middle of the three in memory
     previous_chunk: String,
     current_chunk: String,
     next_chunk: String,
-    p_p_hanging_line, //Deal with bad linebreaks caused by splitting the trajectory bitwise
-    p_hanging_line,
-    c_hanging_line,
-    n_hanging_line,
     dat_reader = new FileReader(),
     next_reader = new FileReader(),
-    previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
-    previous_previous_reader = new FileReader(),
+    last_reader = new FileReader(),
     conf_begin = new marker,
     conf_end = new marker,
     conf_len: number,
@@ -309,46 +232,67 @@ target.addEventListener("drop", function (event) {
         //test_dat_read(dat_file);
     }
 
+    //Lut coloring - colors nucleotides based on flexibility during oxDNA simulation run
+    //doesn't work for more than one system
+    /*if (files_len == 1) { //if .json dropped after .dat and .top
+        if (files[0].name.slice(-4) == "json") { //if actually a .json file
+            json_file = files[0];
+            let json_reader = new FileReader();
+            json_reader.onload = () => {
+                let file = json_reader.result as string;
+                let devs: string[] = file.split(", ");
+                devs[0] = devs[0].slice(1, -1)
+                devs[devs.length-1] = devs[devs.length-1].slice(0, -1)
+                if (devs.length == nucleotides.length) {
+                    let min = Math.min.apply(null, devs), //set min and max
+                        max = Math.max.apply(null, devs);
+                    lut = new THREE.Lut("rainbow", 4000); //create Lut obj
+                    lut.setMax(max)
+                    lut.setMin(min);
+                    let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create and add legend
+                    scene.add(legend);
+                    let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend formatting
+                    scene.add(labels['title']); //add title
+
+                    for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                        scene.add(labels['ticks'][i]);
+                        scene.add(labels['lines'][i]);
+                    }
+                    for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                        lutCols.push(lut.getColor(devs[i]));
+                    }
+                    document.getElementById("lutToggle").checked = true //typescript doesn't like this for some reason, but it works
+                    toggleLut(false);
+                    render();
+                }
+                else {
+                    alert(".json and .top files are not compatible."); //error message if dat_file does not match/same length as .json file
+                }
+            };
+            json_reader.readAsText(json_file);
+        }
+    }*/
+
     // asynchronously read the first two chunks of a configuration file
     if (dat_file) {
         renderer.domElement.style.cursor = "wait";
-        //anonymous functions to handle fileReader outputs
+        //read information in dat file into system
         dat_reader.onload = () => {
-            current_chunk = dat_reader.result as String;
+            current_chunk = dat_reader.result as string;
             current_chunk_number = 0;
             readDat(system.system_length(), dat_reader, system, lutColsVis);
         };
-        //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
         next_reader.onload = () => {
-            next_chunk = next_reader.result as String;
-            if (next_chunk == ""){return}
-            n_hanging_line = "";
-            let c = "";
-            for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
-                n_hanging_line += c;
+            //chunking bytewise often leaves incomplete lines, so take the start of next_chunk and append it to current_chunk
+            next_chunk = next_reader.result as string;
+            if (current_chunk.slice(-1) != '\n') {
+                let c;
+                for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
+                    current_chunk += c;
+                    next_chunk = next_chunk.substring(1);
+                }
                 next_chunk = next_chunk.substring(1);
             }
-            try{
-                current_chunk = current_chunk.concat(n_hanging_line);
-            }
-            catch(error){
-                alert("File readers got all topsy-turvy, traj reading will not work :( \n Please reload and try again")
-            }
-            next_chunk = next_chunk.substring(1);
-            conf_end.chunk = current_chunk;
-        };
-        previous_previous_reader.onload = () => {
-            previous_previous_chunk = previous_previous_reader.result as String;
-            if (previous_previous_chunk == ""){return}
-            p_p_hanging_line = "";
-            let c = "";
-            for (c = previous_previous_chunk.slice(0, 1); c != '\n'; c = previous_previous_chunk.slice(0, 1)) {
-                p_p_hanging_line += c;
-                previous_previous_chunk = previous_previous_chunk.substring(1);
-            }
-            previous_previous_chunk = previous_previous_chunk.substring(1);
-            previous_previous_chunk = previous_previous_chunk.concat(p_hanging_line);
-            conf_end.chunk = current_chunk;
         };
 
         // read the first chunk
@@ -446,68 +390,16 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let l: string = lines[i].split(" ");
         // shift coordinates such that the 1st base of the  
         // 1st strand is @ origin 
-        let x = parseFloat(l[0]),// - fx,
-            y = parseFloat(l[1]),// - fy,
-            z = parseFloat(l[2]);// - fz;
+        let x_bb = parseFloat(l[0]),// - fx,
+            y_bb = parseFloat(l[1]),// - fy,
+            z_bb = parseFloat(l[2]);// - fz;
 
-        current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
-
-        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-        let x_a1 = parseFloat(l[3]),
-            y_a1 = parseFloat(l[4]),
-            z_a1 = parseFloat(l[5]),
-            x_a3 = parseFloat(l[6]),
-            y_a3 = parseFloat(l[7]),
-            z_a3 = parseFloat(l[8]);
-
-        // according to base.py a2 is the cross of a1 and a3
-        let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
-        // compute backbone cm
-        let x_bb: number = 0;
-        let y_bb: number = 0;
-        let z_bb: number = 0;
-        if (!RNA_MODE) { //calculations for DNA
-            x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2),
-                y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2),
-                z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
-        }
-
-        else {
-            // calculations for RNA
-            x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
-            y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
-            z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
-        }
-
-        // compute nucleoside cm
-        let x_ns = x + 0.4 * x_a1,
-            y_ns = y + 0.4 * y_a1,
-            z_ns = z + 0.4 * z_a1;
-
-        //compute connector position
-        let x_con = (x_bb + x_ns) / 2,
-            y_con = (y_bb + y_ns) / 2,
-            z_con = (z_bb + z_ns) / 2;
-
-        //compute connector length
-        let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
-
-        let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion( //create base sphere rotation
-            new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0),
-                new THREE.Vector3(x_a3, y_a3, z_a3)));
-
-        // correctly display stacking interactions
-        let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion( //creat nucleoside sphere rotation
-            new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()
-            )
-        );
+        current_nucleotide.pos = new THREE.Vector3(x_bb, y_bb, z_bb); //set pos; not updated by DragControls
 
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
         let group = new THREE.Group; //create visual_object group
         group.name = current_nucleotide.global_id + ""; //set name (string) to nucleotide's global id
-        let backbone, nucleoside, con;
+        let backbone;
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
@@ -520,23 +412,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         else {
             material = system.strand_to_material[current_strand.strand_id]
         }
-        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
-        con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
-        let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
-        con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
-        // apply rotations
-        nucleoside.applyMatrix(base_rotation);
-        con.applyMatrix(rotation_con);
-        //set positions and add to object (group - visual_object)
+        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone 
         backbone.position.set(x_bb, y_bb, z_bb);
-        nucleoside.position.set(x_ns, y_ns, z_ns);
-        con.position.set(x_con, y_con, z_con);
-        posObj.position.set(x, y, z);
         group.add(backbone);
-        group.add(nucleoside);
-        group.add(con);
-        group.add(posObj);
 
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
@@ -557,6 +435,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
+                sp.name = "sp"+group.id
                 group.add(sp); //add to visual_object
             }
         }
@@ -607,7 +486,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let n = systems[sys_count].strands[i].nucleotides.length; //strand's nucleotides[] length
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
-            cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[COM].position); //sum center of masses - children[3] = posObj Mesh at cms
+            cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[BACKBONE].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -659,8 +538,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     renderer.domElement.style.cursor = "auto";
 }
 
-
-function getNewConfig(mode) { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
+var need_next_chunk: boolean = false;
+var need_previous_chunk: boolean = false;
+function getNextConfig() { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
         return
@@ -668,15 +548,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
         let num_nuc: number = system.system_length(); //gets # of nuc in system
-        let lines
-        if (mode == 1) {
-            lines = extract_next_conf()
-            conf_num += 1
-        }
-        if (mode == -1) {
-            lines = extract_previous_conf()
-            conf_num -= 1
-        }
+        let lines = extract_next_conf();
         if (lines == undefined) {
             alert("No more confs to load!");
             return
@@ -687,6 +559,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
+        conf_num += 1
         console.log(conf_num, 't =', time);
         // discard the header
         lines = lines.slice(3);
@@ -700,67 +573,11 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             //get nucleotide information
             // consume a new line 
             let l = lines[line_num].split(" ");
-            let x = parseFloat(l[0]),
-                y = parseFloat(l[1]),
-                z = parseFloat(l[2]);
-            current_nucleotide.pos = new THREE.Vector3(x, y, z);
+            let x_bb = parseFloat(l[0]),
+                y_bb = parseFloat(l[1]),
+                z_bb = parseFloat(l[2]);
+            current_nucleotide.pos = new THREE.Vector3(x_bb, y_bb, z_bb);
 
-            // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-            let x_a1 = parseFloat(l[3]),
-                y_a1 = parseFloat(l[4]),
-                z_a1 = parseFloat(l[5]),
-                x_a3 = parseFloat(l[6]),
-                y_a3 = parseFloat(l[7]),
-                z_a3 = parseFloat(l[8]);
-
-            // according to base.py a2 is the cross of a1 and a3
-            let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
-            // compute backbone cm
-            let x_bb: number = 0;
-            let y_bb: number = 0;
-            let z_bb: number = 0;
-            if (!RNA_MODE) { //calculations for DNA
-                x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2),
-                    y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2),
-                    z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
-            }
-
-            else {
-                // calculations for RNA
-                x_bb = x - (0.4 * x_a1 + 0.2 * x_a3);
-                y_bb = y - (0.4 * y_a1 + 0.2 * y_a3);
-                z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
-            }
-
-            // compute nucleoside cm
-            let x_ns = x + 0.4 * x_a1,
-                y_ns = y + 0.4 * y_a1,
-                z_ns = z + 0.4 * z_a1;
-
-            //compute connector position
-            let x_con = (x_bb + x_ns) / 2,
-                y_con = (y_bb + y_ns) / 2,
-                z_con = (z_bb + z_ns) / 2;
-
-            //correctly display stacking interactions
-            let old_a3 = new THREE.Matrix4();
-            old_a3.extractRotation(current_nucleotide.visual_object.children[NUCLEOSIDE].matrix);
-            let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(old_a3.elements[4], old_a3.elements[5], old_a3.elements[6]),
-                    new THREE.Vector3(x_a3, y_a3, z_a3)));
-
-            // correctly orient connectors
-            let neg_NS_pos = current_nucleotide.visual_object.children[NUCLEOSIDE].position.multiplyScalar(-1);
-            let curr_heading = current_nucleotide.visual_object.children[BACKBONE].position.add(neg_NS_pos);
-
-            let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    curr_heading.normalize(), new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize()
-                )
-            );
-
-            // update position and orientation of the nucleotides
             let group = current_nucleotide.visual_object;
             let locstrandID = current_strand.strand_id
             group.name = current_nucleotide.global_id + "";
@@ -768,43 +585,77 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
             //if you position.set() before applyMatrix() everything explodes and I don't know why
             group.children[BACKBONE].position.set(x_bb, y_bb, z_bb);
-            group.children[NUCLEOSIDE].applyMatrix(base_rotation);
-            group.children[NUCLEOSIDE].position.set(x_ns, y_ns, z_ns);
-            //not going to change the BB_NS_CON length because its the same out to 7 decimal places each time
-            group.children[BB_NS_CON].applyMatrix(rotation_con);
-            group.children[BB_NS_CON].position.set(x_con, y_con, z_con);
-            group.children[COM].position.set(x, y, z);
+
 
             //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-            if (current_nucleotide.neighbor3 != null) {
-                //remove the current sugar-phosphate bond to make room for the new one
-                scene.remove(group.children[SP_CON]);
-
-                //get current and 3' backbone positions and set length/rotation
-                let last_pos = new THREE.Vector3();
-                current_nucleotide.neighbor3.visual_object.children[BACKBONE].getWorldPosition(last_pos);
-                let this_pos = new THREE.Vector3
-                group.children[BACKBONE].getWorldPosition(this_pos);
-                let x_sp = (this_pos.x + last_pos.x) / 2,
-                    y_sp = (this_pos.y + last_pos.y) / 2,
-                    z_sp = (this_pos.z + last_pos.z) / 2;
-                let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
-
-                //easy periodic boundary condition fix
-                //if the bonds are too long just don't add them
-                if (sp_len <= 5) {
+            /*if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
+                scene.remove(group.children[NUCLEOSIDE]);
+                let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
+                    y_sp = (y_bb + y_bb_last) / 2,
+                    z_sp = (z_bb + z_bb_last) / 2;
+            
+                let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+                // easy periodic boundary condition fix  
+                // if the bonds are to long just don't add them 
+                if (sp_len <= 500) {
                     let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
                         new THREE.Quaternion().setFromUnitVectors(
-                            new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()
+                            new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
                         )
                     );
-                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
-                    group.children[SP_CON].applyMatrix(rotation_sp); //rotate
-                    group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
-                    group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
-                    group.children[SP_CON].parent = current_nucleotide.visual_object;
+                    let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
+                    sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+                    sp.applyMatrix(rotation_sp); //set rotation
+                    sp.position.set(x_sp, y_sp, z_sp);
+                    group.add(sp); //add to visual_object
                 }
-            };
+            }
+            if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
+                scene.remove(group.children[NUCLEOSIDE]);
+                let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection
+                    y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2,
+                    z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
+                let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
+                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                    )
+                );
+                let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
+                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+                sp.applyMatrix(rotation_sp); //set rotation
+                sp.position.set(x_sp, y_sp, z_sp);
+                group.add(sp); //add to visual_object
+            }*/
+
+
+
+            //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+            if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
+                let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
+                    y_sp = (y_bb + y_bb_last) / 2,
+                    z_sp = (z_bb + z_bb_last) / 2;
+    
+                let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+                // easy periodic boundary condition fix  
+                // if the bonds are to long just don't add them 
+                if (sp_len <= 500) {
+                    let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                        new THREE.Quaternion().setFromUnitVectors(
+                            new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                        )
+                    );
+                    let sp = new THREE.Mesh(connector_geometry, group.children[BACKBONE].material); //cylinder - sugar phosphate connector
+                    sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+                    sp.applyMatrix(rotation_sp); //set rotation
+                    sp.position.set(x_sp, y_sp, z_sp);
+                    group.children[NUCLEOSIDE] = sp; //add to visual_object
+                }
+            }
+            x_bb_last = x_bb;
+            y_bb_last = y_bb;
+            z_bb_last = z_bb;
+
             if (current_nucleotide.neighbor5 == null) {
                 system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
@@ -813,35 +664,6 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             else {
                 nuc_local_id += 1;
             };
-        }
-        //box by strand
-        let dx, dy, dz;
-        for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
-            // compute offset to bring strand in box
-            let n = systems[i].strands[j].nucleotides.length; //# of nucleotides on strand
-            let cms = new THREE.Vector3(0, 0, 0);
-            for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
-                cms.add(systems[i].strands[j].nucleotides[k].visual_object.children[COM].position);
-            }
-            //calculate cms
-            let mul = 1.0 / n;
-            cms.multiplyScalar(mul);
-            dx = Math.round(cms.x / box) * box;
-            dy = Math.round(cms.y / box) * box;
-            dz = Math.round(cms.z / box) * box;
-
-            //fix coordinates
-            for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i].strands[j].nucleotides[k].visual_object.children[l].position; //get Mesh position
-                    //calculate new positions by offset
-                    pos.x = pos.x - dx;
-                    pos.y = pos.y - dy;
-                    pos.z = pos.z - dz;
-                    systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
-                }
-            }
-            //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
         if (actionMode.includes("Drag")) {
             drag();

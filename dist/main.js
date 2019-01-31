@@ -147,7 +147,14 @@ let lutColsVis = false;
     }
 }*/
 function nextConfig() {
-    getNextConfig();
+    getNewConfig(1);
+    let centering_on = document.getElementById("centering").checked;
+    if (centering_on) {
+        centerSystems();
+    }
+}
+function previousConfig() {
+    getNewConfig(-1);
     let centering_on = document.getElementById("centering").checked;
     if (centering_on) {
         centerSystems();

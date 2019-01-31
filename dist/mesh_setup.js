@@ -10,7 +10,7 @@ var backbone_materials = [
         side: THREE.DoubleSide
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xFF0089,
+        color: 0xd81717,
         side: THREE.DoubleSide,
     }),
     new THREE.MeshLambertMaterial({

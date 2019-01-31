@@ -40,15 +40,18 @@ document.body.appendChild(renderer.domElement); //add renderer to document body
 //light.intensity = 3;
 //scene.add(light);
 var lights = [];
-lights[0] = new THREE.PointLight(0xffffff, 1, 0);
-lights[1] = new THREE.PointLight(0xffffff, 1, 0);
-lights[2] = new THREE.PointLight(0xffffff, 1, 0);
-lights[0].position.set(0, 200, 0);
-lights[1].position.set(100, 200, 100);
-lights[2].position.set(-100, -200, -100);
+lights[0] = new THREE.PointLight(0xffffff, 0.85, 0);
+lights[1] = new THREE.PointLight(0xffffff, 0.85, 0);
+lights[2] = new THREE.PointLight(0xffffff, 0.85, 0);
+lights[3] = new THREE.PointLight(0xffffff, 0.85, 0);
+lights[0].position.set(0, 0, -200);
+lights[1].position.set(94, 163, 67);
+lights[2].position.set(94, -163, 67);
+lights[3].position.set(-189, 0, 67);
 scene.add(lights[0]);
 scene.add(lights[1]);
 scene.add(lights[2]);
+scene.add(lights[3]);
 //Add arrows to scene to add reference location for DNA/RNA in scene
 let dir = new THREE.Vector3(1, 0, 0); //direction for x-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
