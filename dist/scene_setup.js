@@ -1,5 +1,11 @@
 // <reference path="./three/index.d.ts" />
 // <reference path="./controls/three-trackballcontrols.d.ts" />
+// <reference path="./lib/stats.js" />
+// stats code 
+//var stats = new stats();
+//document.body.append(
+//    stats.dom
+//);
 // scene update call definition
 function render() {
     renderer.render(scene, camera);
@@ -8,6 +14,8 @@ function render() {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
+    render();
+    //stats.update();
 }
 //Fix Resize problems
 window.addEventListener('resize', onWindowResize, false);
@@ -103,6 +111,6 @@ controls.noPan = false;
 controls.staticMoving = true;
 controls.dynamicDampingFactor = 0.2;
 controls.keys = [65, 83, 68];
-controls.addEventListener('change', render); //if anything occurs on scene, controls will be activated/called
+//controls.addEventListener('change', render); //if anything occurs on scene, controls will be activated/called
 // start animation cycle 
 animate();

@@ -3,10 +3,10 @@
 // <reference path="./lib/stats.js" />
 
 // stats code 
-var stats = new Stats();
-document.body.append(
-    stats.dom
-);
+//var stats = new stats();
+//document.body.append(
+//    stats.dom
+//);
 
 // scene update call definition
 function render() {
@@ -18,7 +18,7 @@ function animate() {
     requestAnimationFrame(animate);
     controls.update();
     render();
-    stats.update();
+    //stats.update();
 }
 
 //Fix Resize problems

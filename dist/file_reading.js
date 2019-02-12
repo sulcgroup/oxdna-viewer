@@ -375,6 +375,7 @@ target.addEventListener("drop", function (event) {
             }
         };
         json_reader.readAsText(json_file);
+        renderer.domElement.style.cursor = "auto";
     }
     render();
 }, false);

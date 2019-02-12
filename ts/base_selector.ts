@@ -207,17 +207,14 @@ function makeSelectedBasesFile() { //make selected base file by addign listBases
 }
 
 let textFile: string;
-function makeTextFile(filename: string, text: string) { //make text file - Idk how this works
-	var element = document.createElement('a');
-	element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-	element.setAttribute('download', filename);
-
-	element.style.display = 'none';
-	document.body.appendChild(element);
-
-	element.click();
-
-	document.body.removeChild(element);
+function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
+	let blob = new Blob([text], {type:'text'});
+	var elem = window.document.createElement('a');
+                elem.href = window.URL.createObjectURL(blob);
+                elem.download = filename;
+                document.body.appendChild(elem);
+                elem.click();
+                document.body.removeChild(elem);
 };
 
 function openTab(evt, tabName) { //open clicked tab - Idk how this works
