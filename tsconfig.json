@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "outDir": "./dist/",        // path to output directory
+        //"sourceMap": true,          // allow sourcemap support
+        "strictNullChecks": false,   // disable strict null checking because it doesn't like our file parsing code
+        "module": "esnext",            // specify module code generation
+        //"jsx": "react",             // use typescript to transpile jsx to js
+        "target": "esnext",            // specify ECMAScript target version
+        //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase            
+    },
+    "files": [
+        "./ts/main.ts",
+        "./ts/file_reading.ts",
+        //"./ts/viewerforjonah.ts",
+        "./ts/mesh_setup.ts",
+        "./ts/scene_setup.ts",
+        "./ts/keybindings.ts",
+        "./ts/base_selector.ts",
+        "./ts/output_file.ts",
+        "./ts/translation.ts"//,
+        //"./js/cubes.ts",
+        //"./js/rotate.ts"
+    ]
+}
