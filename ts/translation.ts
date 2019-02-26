@@ -87,6 +87,7 @@ function rotate(dir) { //rotate according to given direction depending on which 
         if (selected_bases[i] == 1) { //if nucleotide is selected
             let rotobj = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
             getAxisMode(); //get axis on which to rotate
+            updatePos(nucleotides[i].my_system); //update class positions
             //rotate around user selected axis - default is X - and user entered angle - updated every time textarea is changed; default is 90
             if (axisMode == "X") {
                 rotobj.rotateX(dir * angle * Math.PI / 180);

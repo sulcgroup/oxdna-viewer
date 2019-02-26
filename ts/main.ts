@@ -13,7 +13,7 @@ render();
 class Nucleotide {
     local_id: number; //location on strand
     global_id: number; //location in world - all systems
-    pos: THREE.Vector3; //not automatically updated
+    pos: THREE.Vector3; //automatically updated
     neighbor3: Nucleotide | null;
     neighbor5: Nucleotide | null;
     pair: number;
@@ -33,6 +33,7 @@ class Nucleotide {
 // strands have an ID within the system
 class Strand {
 
+    pos: THREE.Vector3; //automatically updated
     strand_id: number; //system location
     nucleotides: Nucleotide[] = [];
     my_system: System;
@@ -63,6 +64,7 @@ class Strand {
 // systems can CRUD
 class System {
 
+    pos: THREE.Vector3; //automatically updated
     system_id: number;
     strands: Strand[] = [];
     CoM: THREE.Vector3; //System center of mass
@@ -132,49 +134,53 @@ let lut, devs: number[]; //need for Lut coloring
 let lutCols: THREE.Color[] = [];
 let lutColsVis: boolean = false;
 
-/*function updatePos(sys_count) { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+function updatePos(sys_count) { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
     for (let h = sys_count; h < sys_count + 1; h++) { //for current system
-        let cmssys = new THREE.Vector3(); //system cms
+        let syscms = new THREE.Vector3(); //system cms
         let n = systems[h].system_length(); //# of nucleotides in system
         for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //for each strand
             let n1 = systems[h].system_3objects.children[i].children.length; //for strand_3objects in system_3objects
-            let cms = new THREE.Vector3(); //strand cms
+            let strandcms = new THREE.Vector3(); //strand cms
             for (let j = 0; j < n1; j++) { //for each visual_object
-                let rotobj = systems[h].system_3objects.children[i].children[j]; //current nuc's visual_object
-                let n2 = rotobj.children.length; //# of Meshes in visual_object/rot obj
-                let cms1 = new THREE.Vector3(); //group cms
-                let currentpos = new THREE.Vector3();
+                let nucobj = systems[h].system_3objects.children[i].children[j]; //current nuc's visual_object
+                let n2 = nucobj.children.length; //# of Meshes in visual_object/rot obj
+                let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
-                cms.add(rotobj.children[3].position); //strand cms
-                cms1 = rotobj.children[3].position; //rotobj cms
-                let cmsx = cms1.x, cmsy = cms1.y, cmsz = cms1.z;
-                cmssys.add(rotobj.children[3].position); //system cms
+                strandcms.add(nucobj.children[3].position); //strand cms
+                objcms = nucobj.children[3].position; //nucobj cms
+                //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;
+                syscms.add(nucobj.children[3].position); //system cms
 
-                for (let k = 0; k < n2; k++) { //for all Meshes in rotobj/visual_object translate by -cms1
-                    rotobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
+                /*for (let k = 0; k < n2; k++) { //for all Meshes in nucobj/visual_object translate by -cms1
+                    nucobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
                 }
-                rotobj.position.set(0, 0, 0);
-                rotobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz)); //translate rotobj by cms1
+                nucobj.position.set(0, 0, 0);
+                nucobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz)); //translate nucobj by cms1
+                */
+                systems[h].strands[i].nucleotides[j].pos = objcms; // set nucleotide object position to objcms
             }
             //calculate strand cms
             let mul = 1.0 / n1;
-            cms.multiplyScalar(mul);
-            for (let k = 0; k < n1; k++) { //for each nucleotide in strand, translate by -cms
-                systems[h].strands[i].strand_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cms.x, -cms.y, -cms.z));
+            strandcms.multiplyScalar(mul);
+            /*for (let k = 0; k < n1; k++) { //for each nucleotide in strand, translate by -cms
+                systems[h].strands[i].strand_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-strandcms.x, -strandcms.y, -strandcms.z));
             }
             systems[h].strands[i].strand_3objects.position.set(0, 0, 0);
-            systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cms.x, cms.y, cms.z)); //translate strand by cms
+            systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(strandcms.x, strandcms.y, strandcms.z)); //translate strand by strandcms
+            */
+            systems[h].strands[i].pos = strandcms; //set strand object position to strand cms
         }
         //calculate system cms
         let mul = 1.0 / n;
-        cmssys.multiplyScalar(mul);
-        for (let k = 0; k < systems[h].system_3objects.children.length; k++) { //for each strand, translate by -cmssys
-            systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -cmssys.y, -cmssys.z));
+        syscms.multiplyScalar(mul);
+        /*for (let k = 0; k < systems[h].system_3objects.children.length; k++) { //for each strand, translate by syscms
+            systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -syscms.y, -syscms.z));
         }
         systems[h].system_3objects.position.set(0, 0, 0);
-        systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(cmssys.x, cmssys.y, cmssys.z)); //translate system by cmssys
+        systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(syscms.x, syscms.y, syscms.z)); //translate system by syscms*/
+        systems[h].pos = syscms; //set system object position to system cms
     }
-}*/
+}
 
 function nextConfig(){
     getNewConfig(1)

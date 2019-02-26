@@ -30,7 +30,8 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					if (nucleotides[i].my_system == sysID) { //if nucleotide - x, for example, is in the selected nucleotide's system, toggle x
 						toggle(i, sysID);
 					}
-				}
+                }
+                updatePos(sysID); //update class positions
 			}
 
 			else if (scopeMode.includes("Strand")) { //if scope mode is strand
@@ -43,13 +44,15 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 						//let sysID = nucleotides[i].my_system;
 						toggle(i, sysID);
 					}
-				}
+                }
+                updatePos(sysID); //update class positions
 			}
 
 			else if (scopeMode.includes("Nuc")) { //if scope mode is nucleotide
 				nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
 				let sysID = nucleotides[nucleotideID].my_system; //get selected nucleotide's system id
-				toggle(nucleotideID, sysID); //toggle selected nucleotide
+                toggle(nucleotideID, sysID); //toggle selected nucleotide
+                updatePos(sysID); //update class positions
 			}
 			render(); //update scene;
 			listBases = ""; //reset list of selected bases

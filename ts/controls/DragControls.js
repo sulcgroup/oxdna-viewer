@@ -70,7 +70,10 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			_mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //get mouse position
 			_mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-			_raycaster.setFromCamera(_mouse, _camera); //set raycaster - object that determines click location relative to objects on scene
+            _raycaster.setFromCamera(_mouse, _camera); //set raycaster - object that determines click location relative to objects on scene
+
+            let sysID;
+
 			if (_selected && scope.enabled) {
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
 					_selected.position.copy(_intersection.sub(_offset));
@@ -92,13 +95,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				 	var object = intersects[0].object;
 				 }*/
 				if (scopeMode.includes("Nuc")) { //if scope mode is "Nuc", set objects to be dragged to the clicked nucleotide
-					var object = intersects[0].object.parent;
+                    var object = intersects[0].object.parent;
 				}
 				else if (scopeMode.includes("Strand")) { //if scope mode is "Strand", set objects to be dragged to the clicked strand
 					var object = intersects[0].object.parent.parent;
 				}
 				else if (scopeMode.includes("System")) { //if scope mode is "System", set objects to be dragged to the clicked system
-					var object = intersects[0].object.parent.parent.parent;
+                    var object = intersects[0].object.parent.parent.parent;
 				}
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
 
@@ -122,11 +125,9 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 					_hovered = null;
 
 				}
-
 			}
-
-		}
-
+            //updatePos(object.sysID); //update class positions
+        }
 	}
 	function onDocumentMouseDown(event) { //if mouse is moved
 		if (actionMode.includes("Drag")) { //if actionMode includes "Drag"
