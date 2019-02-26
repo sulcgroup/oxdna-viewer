@@ -12,8 +12,8 @@ class Nucleotide {
     constructor(global_id, parent_system) {
         this.global_id = global_id;
         this.my_system = parent_system;
-        this.position = new THREE.Vector3();
-    };
+    }
+    ;
 }
 ;
 // strands are made up of nucleotides
@@ -24,7 +24,6 @@ class Strand {
         this.strand_id = id;
         this.my_system = parent_system;
         this.strand_3objects = new THREE.Group;
-        this.position = new THREE.Vector3();
     }
     ;
     add_nucleotide(nuc) {
@@ -52,7 +51,6 @@ class System {
         this.system_id = id;
         this.global_start_id = start_id;
         this.system_3objects = new THREE.Group;
-        this.position = new THREE.Vector3();
     }
     ;
     system_length() {
@@ -105,9 +103,9 @@ var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];
 let lutColsVis = false;
-function updatePos(sys_count) { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+function updatePos(sys_count) {
     for (let h = sys_count; h < sys_count + 1; h++) { //for current system
-        let syscms= new THREE.Vector3(); //system cms
+        let syscms = new THREE.Vector3(); //system cms
         let n = systems[h].system_length(); //# of nucleotides in system
         for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //for each strand
             let n1 = systems[h].system_3objects.children[i].children.length; //for strand_3objects in system_3objects
@@ -121,14 +119,13 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
                 objcms = nucobj.children[3].position; //nucobj cms
                 //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;
                 syscms.add(nucobj.children[3].position); //system cms
-
                 /*for (let k = 0; k < n2; k++) { //for all Meshes in nucobj/visual_object translate by -cms1
                     nucobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
                 }
                 nucobj.position.set(0, 0, 0);
                 nucobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz)); //translate nucobj by cms1
                 */
-                systems[h].strands[i].nucleotides[j].position = objcms; // set nucleotide object position to objcms
+                systems[h].strands[i].nucleotides[j].pos = objcms; // set nucleotide object position to objcms
             }
             //calculate strand cms
             let mul = 1.0 / n1;
@@ -139,7 +136,7 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
             systems[h].strands[i].strand_3objects.position.set(0, 0, 0);
             systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(strandcms.x, strandcms.y, strandcms.z)); //translate strand by strandcms
             */
-            systems[h].strands[i].position = strandcms; //set strand object position to strand cms
+            systems[h].strands[i].pos = strandcms; //set strand object position to strand cms
         }
         //calculate system cms
         let mul = 1.0 / n;
@@ -149,7 +146,7 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
         }
         systems[h].system_3objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(syscms.x, syscms.y, syscms.z)); //translate system by syscms*/
-        systems[h] = syscms; //set system object position to system cms
+        systems[h].pos = syscms; //set system object position to system cms
     }
 }
 function nextConfig() {
@@ -217,8 +214,8 @@ function toggleBackground() {
 }
 function cross(a1, a2, a3, b1, b2, b3) {
     return [a2 * b3 - a3 * b2,
-    a3 * b1 - a1 * b3,
-    a1 * b2 - a2 * b1];
+        a3 * b1 - a1 * b3,
+        a1 * b2 - a2 * b1];
 }
 function centerSystems() {
     //get center of mass for all systems

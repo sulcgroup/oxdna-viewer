@@ -81,6 +81,29 @@ function getRotObj(i) { //identify selected objects and rotate
     }
     return rotobj;
 }
+
+
+/**
+setFromAxisAngle: function ( axis, angle ) {
+
+		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
+
+		// assumes axis is normalized
+
+		var halfAngle = angle / 2, s = Math.sin( halfAngle );
+
+		this._x = axis.x * s;
+		this._y = axis.y * s;
+		this._z = axis.z * s;
+		this._w = Math.cos( halfAngle );
+
+		this.onChangeCallback();
+
+		return this;
+
+	}
+ */
+
 function rotate(dir) { //rotate according to given direction depending on which arrow button is pressed; left = -1 = counterclockwise; right = 1 = clockwise
     var rot = false; //rotation success boolean
     for (let i = 0; i < selected_bases.length; i++) { //go through each nucleotide in all systems

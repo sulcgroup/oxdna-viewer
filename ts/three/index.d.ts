@@ -50,7 +50,7 @@ export * from "./three-filmpass";
 export * from "./three-tgaloader";
 export * from "./three-trackballcontrols";
 export * from "./three-transformcontrols";
-export * from "./three-vrcontrols";
-export * from "./three-vreffect";
+//export * from "./three-vrcontrols";
+//export * from "./three-vreffect";
 
 export as namespace THREE;

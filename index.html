@@ -1,273 +1,291 @@
-<html>
-	<head>
-		<title>oxDNA three.js viewer</title>
-		<style>
-			.sidenav{
-				height: 100%;
-				width: 243px;
-				position: fixed;
-				z-index: 1;
-				top: 0;
-				left: 1050;
-				overflow-x: scroll;
-				border: 1px solid black;
-			}
-			.main {
-    			margin-left: 0px; /* Same as the width of the sidenav */
-				margin-right: 900px;
-    			font-size: 12px; /* Increased text to enable scrolling */
-    			padding: 0px 10px;
-			}
-			.tab{
-				overflow: hidden;
-				border: 1px thin #ccc;
-				background-color: coral;
-			}
-			.tab button {
-				margin: 5px 5px 5px 5px;
-				background-color: inherit;
-				border: none;
-				float: left;
-				cursor: pointer;
-				padding: 10px 10px;
-				transition: 0.3s;
-				font-size: 15px;
-			}
-			.tab button:hover{
-				background-color: azure;
-			}
-			.tab button.active{
-				background-color: azure;
-				font-size: 14px;
-			}
-			.tabcontent{
-				display: contents;
-				padding: 6px 12x;
-				border-top: none;
-			}
-			textarea {
-				margin: 5px 5px 0px 5px;
-				overflow: scroll;}
-			button {
-				margin: 5px 5px 5px 5px;
-				padding: 5px;
-				width: 100px;
-				background-color: azure;
-				border: 1px solid;
-			}
-			body { margin: 0; }
-			canvas { width: 100%; height: 100% }
-			<script type="text/javascript" src="dat.gui.min.js"></script>
-		</style>
-	</head>
-	<body>
-		<div class="sidenav">
-			<div class="tab">
-				<button class="tablinks" onclick="openTab(event, 'BasesList')">Base List</button>
-			</div>
-			<div id="BasesList" class="tabcontent">
-				<textarea id="BASES" cols="20"> BASES </textarea>
-				<button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
-			</div>
-		</div>
-		<div class="main">
-        	<script src="js/lib/three.js"></script>
-        	<script src="js/controls/TrackballControls.js"></script>
-			<script src="js/main.js"></script>
-		</div>
-    </body>
-
+<!--<html>
 <head>
-	<title>oxDNA three.js viewer</title>
-	<style>
-		/*CSS*/
-		.sidenav { /*side bar settings*/
-			height: 100%;
-			width: 243px;
-			position: fixed;
-			z-index: 1;
-			top: 0;
-			right: 1;
-			text-align: left;
-			overflow-x: scroll;
-			background-color: gray;
-			border: 1px solid black;
-		}
+    <title>oxDNA three.js viewer</title>
+    <style>
+        .sidenav {
+            height: 100%;
+            width: 243px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            left: 1050px;
+            overflow-x: scroll;
+            overflow-y: scroll;
+            border: 1px solid black;
+        }
 
-		.tab { /*tab settings*/
-			overflow: auto;
-			border: 1px thin #ccc;
-			background-color: coral;
-		}
+        .main {
+            margin-left: 0px; /* Same as the width of the sidenav */
+            margin-right: 900px;
+            font-size: 12px; /* Increased text to enable scrolling */
+            padding: 0px 10px;
+        }
 
-		.tab button {
-			margin: 2px 2px 2px 2px;
-			background-color: inherit;
-			border: none;
-			cursor: pointer;
-			padding: 5px 5px 5px 5px; /*on each side of button*/
-			transition: 0.3s;
-			font-size: 17px;
-			float: left;
-			width: auto;
-		}
+        .tab {
+            overflow: hidden;
+            border: 1px thin #ccc;
+            background-color: coral;
+        }
 
-		.tab button:hover {
-			background-color: azure;
-		}
+            .tab button {
+                margin: 5px 5px 5px 5px;
+                background-color: inherit;
+                border: none;
+                float: left;
+                cursor: pointer;
+                padding: 10px 10px;
+                transition: 0.3s;
+                font-size: 15px;
+            }
 
-		.tab button.active {
-			background-color: azure;
-			font-size: 17px;
-		}
+                .tab button:hover {
+                    background-color: azure;
+                }
 
-		.rot { /*rotation button settings*/
-			background-color: white;
-			border: 0px;
-			width: 35px;
-			border-radius: 8px;
-		}
+                .tab button.active {
+                    background-color: azure;
+                    font-size: 14px;
+                }
 
-		.tabcontent {
-			padding: 6px 12x;
-			border-top: none;
-		}
+        .tabcontent {
+            display: contents;
+            padding: 6px 12px;
+            border-top: none;
+        }
 
-		textarea {
-			margin: 5px 5px 5px 5px;
-			overflow-y: scroll;
-			font-size: 12px;
+        textarea {
+            margin: 5px 5px 0px 5px;
+            overflow: scroll;
+        }
 
-		}
+        button {
+            margin: 5px 5px 5px 5px;
+            padding: 5px;
+            width: 100px;
+            background-color: azure;
+            border: 1px solid;
+        }
 
-		button {
-			margin: 5px 5px 5px 5px;
-			padding: 5px;
-			width: 100px;
-			background-color: mediumturquoise;
-			border: 1px solid;
-		}
+        body {
+            margin: 0;
+        }
 
-		button:active {
-			background-color: darkcyan;
-			box-shadow: 0 5px currentColor;
-			transform: translateY(4px); /*amt of movement when active*/
-		}
+        canvas {
+            width: 100%;
+            height: 100%
+        }
 
-		body {
-			margin: 0;
-		}
-
-		canvas {
-			width: 100%;
-			height: 100%
-		}
-	</style>
-
-	<!--used for rotation arrow buttons-->
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-
+        <script type="text/javascript" src="dat.gui.min.js" > </script >
+    </style>
+</head>
 <body>
-	<div class="sidenav">
-		<!--sidebar-->
-		<div class="tab">
-			<!--2 tabs: Nucleotides. Strands(not used)-->
-			<button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
-			<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
-		</div>
-		<div id="Nucleotides" class="tabcontent">
-			<!--in "Nucloetides" tab-->
-			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
-			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
-			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
-			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
-			<br>
-			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
-			<br>
-			<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
-			<br>
-			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
-			<form action="" id="Action">
-				<fieldset>
-					<!--collection of checkboxes-->
-					<legend>Action:</legend>
-					<input type="checkbox" name="action" value="Select" checked> Select
-					<br>
-					<input type="checkbox" name="action" value="Drag"> Drag
-					<br>
-				</fieldset>
-			</form>
-			<form action="" id="Mode">
-				<!--collection of radio buttons-->
-				<fieldset>
-					<legend>Mode:</legend>
-					<!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
-					<br>
-						<input type="radio" name="mode" value="Drag">Drag
-						<br>-->
-					<input type="radio" name="mode" value="Nuc" checked>Nucleotide
-					<!--default mode is Nucleotide-->
-					<br>
-					<input type="radio" name="mode" value="Strand">Strand
-					<br>
-					<input type="radio" name="mode" value="System">System
-				</fieldset>
-			</form>
-			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-			<form action="" id="Axis">
-				<fieldset>
-					<!--collection of radio buttons-->
-					<legend>Rotate Axis:</legend>
-					<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
-					<!--default checked is x-axis-->
-					<br>
-					<input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
-					<br>
-					<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
-				</fieldset>
-				<label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
-				<textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
-			</form>
-			<!--Rotation arrow buttons-->
-			<button onclick="rotate(-1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-left"></i>
-			</button>
-			<button onclick="rotate(1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-right"></i>
-			</button>
-			<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
-				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
-				<button onclick="nextConfig()" type="button">Next Configuration</button>
-				<button onclick="previousConfig()"type="button"> Prev Configuration</button>
-			</div>
-			<div id="Strands" class="tabcontent" style="display: none">
-				<button>TEST</button>
-			</div>
+    <!--<div class="sidenav">
+        <div class="tab">
+            <button class="tablinks" onclick="openTab(event, 'BasesList')">Base List</button>
+        </div>
+        <div id="BasesList" class="tabcontent">
+            <textarea id="BASES" cols="20"> BASES </textarea>
+            <button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
+        </div>
+    </div>
+    <div class="main">
+        <script src="js/lib/three.js"></script>
+        <script src="js/controls/TrackballControls.js"></script>
+        <script src="js/main.js"></script>
+    </div>
+</body>
+</html>
+-->
 
-		</div>
-		<div class="main"> <!--all files to be loaded onload of html file-->
-			<script src="./ts/lib/three.js"></script>
-			<script src="./ts/lib/Lut.js"></script>
-			<script src="./ts/controls/DragControls.js"></script>
-			<script src="./ts/controls/TrackballControls.js"></script>
-			<script src="./dist/scene_setup.js"></script>
-			<script src="./dist/mesh_setup.js"></script>
-			<script src="./dist/file_reading.js"></script>
-			<script src="./dist/main.js"></script>
-			<script src="./dist/keybindings.js"></script>
-			<script src="./dist/base_selector.js"></script>
-			<script src="./dist/output_file.js"></script>
-			<script src="./dist/translation.js"></script>
-			<script src="./ts/controls/SceneUtils.js"></script>
-			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
-		</div>
+<html>
+<head>
+    <title>oxDNA three.js viewer</title>
+    <style>
+        /*CSS*/
+        .sidenav { /*side bar settings*/
+            height: 100%;
+            width: 243px;
+            position: fixed;
+            z-index: 1;
+            top: 0;
+            text-align: left;
+            overflow-x: scroll;
+            overflow-y: scroll;
+            background-color: gray;
+            border: 1px solid black;
+        }
 
-	</div>
+        .tab { /*tab settings*/
+            overflow: auto;
+            border: 1px thin #ccc;
+            background-color: coral;
+        }
+
+            .tab button {
+                margin: 2px 2px 2px 2px;
+                background-color: inherit;
+                border: none;
+                cursor: pointer;
+                padding: 5px 5px 5px 5px; /*on each side of button*/
+                transition: 0.3s;
+                font-size: 17px;
+                float: left;
+                width: auto;
+            }
+
+                .tab button:hover {
+                    background-color: azure;
+                }
+
+                .tab button.active {
+                    background-color: azure;
+                    font-size: 17px;
+                }
+
+        .rot { /*rotation button settings*/
+            background-color: white;
+            border: 0px;
+            width: 35px;
+            border-radius: 8px;
+        }
+
+        .tabcontent {
+            padding: 6px 12px;
+            border-top: none;
+        }
+
+        textarea {
+            margin: 5px 5px 5px 5px;
+            overflow-y: scroll;
+            font-size: 12px;
+        }
+
+        button {
+            margin: 5px 5px 5px 5px;
+            padding: 5px;
+            width: 100px;
+            background-color: mediumturquoise;
+            border: 1px solid;
+        }
+
+            button:active {
+                background-color: darkcyan;
+                box-shadow: 0 5px currentColor;
+                transform: translateY(4px); /*amt of movement when active*/
+            }
+
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+    </style>
+
+    <!--used for rotation arrow buttons-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+    <div class="sidenav">
+        <!--sidebar-->
+        <div class="tab">
+            <!--2 tabs: Nucleotides. Strands(not used)-->
+            <button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
+            <button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
+        </div>
+        <div id="Nucleotides" class="tabcontent">
+            <!--in "Nucloetides" tab-->
+            <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
+            <button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
+            <button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
+            <button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
+            <button onclick="controls.reset()" type="button">Reset Camera</button>
+            <!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
+            <input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
+            <br>
+            <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
+            <br>
+            <input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
+            <br>
+            <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
+            <form action="" id="Action">
+                <fieldset>
+                    <!--collection of checkboxes-->
+                    <legend>Action:</legend>
+                    <input type="checkbox" name="action" value="Select" checked> Select
+                    <br>
+                    <input type="checkbox" name="action" value="Drag"> Drag
+                    <br>
+                </fieldset>
+            </form>
+            <form action="" id="Mode">
+                <!--collection of radio buttons-->
+                <fieldset>
+                    <legend>Mode:</legend>
+                    <!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
+                    <br>
+                        <input type="radio" name="mode" value="Drag">Drag
+                        <br>-->
+                    <input type="radio" name="mode" value="Nuc" checked>Nucleotide
+                    <!--default mode is Nucleotide-->
+                    <br>
+                    <input type="radio" name="mode" value="Strand">Strand
+                    <br>
+                    <input type="radio" name="mode" value="System">System
+                </fieldset>
+            </form>
+            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
+            <form action="" id="Axis">
+                <fieldset>
+                    <!--collection of radio buttons-->
+                    <legend>Rotate Axis:</legend>
+                    <input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
+                    <!--default checked is x-axis-->
+                    <br>
+                    <input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
+                    <br>
+                    <input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
+                </fieldset>
+                <label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
+                <textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
+            </form>
+            <!--Rotation arrow buttons-->
+            <button onclick="rotate(-1)" class="rot" style="font-size:25px">
+                <i class="fa fa-arrow-left"></i>
+            </button>
+            <button onclick="rotate(1)" class="rot" style="font-size:25px">
+                <i class="fa fa-arrow-right"></i>
+            </button>
+            <!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
+                <button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
+            <button onclick="nextConfig()" type="button">Next Configuration</button>
+            <button onclick="previousConfig()" type="button"> Prev Configuration</button>
+        </div>
+        <div id="Strands" class="tabcontent" style="display: none">
+            <button>TEST</button>
+        </div>
+
+    </div>
+    <div class="main">
+        <!--all files to be loaded onload of html file-->
+        <script src="./ts/lib/three.js"></script>
+        <script src="./ts/lib/Lut.js"></script>
+        <script src="./ts/controls/DragControls.js"></script>
+        <script src="./ts/controls/TrackballControls.js"></script>
+        <script src="./dist/scene_setup.js"></script>
+        <script src="./dist/mesh_setup.js"></script>
+        <script src="./dist/file_reading.js"></script>
+        <script src="./dist/main.js"></script>
+        <script src="./dist/keybindings.js"></script>
+        <script src="./dist/base_selector.js"></script>
+        <script src="./dist/output_file.js"></script>
+        <script src="./dist/translation.js"></script>
+        <script src="./ts/controls/SceneUtils.js"></script>
+        <!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
+    </div>
 
 </body>
 </html>
