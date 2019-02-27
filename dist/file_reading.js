@@ -351,8 +351,10 @@ target.addEventListener("drop", function (event) {
                 let min = Math.min.apply(null, devs), //find min and max
                 max = Math.max.apply(null, devs);
                 lut = new THREE.Lut("rainbow", 4000);
-                lut.setMax(max);
-                lut.setMin(min);
+                lut.setMax(12.12);
+                lut.setMin(1.67);
+                //lut.setMax(max)
+                //lut.setMin(min);
                 let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
                 scene.add(legend);
                 let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //set up legend format
@@ -362,7 +364,7 @@ target.addEventListener("drop", function (event) {
                     scene.add(labels['lines'][i]);
                 }
                 for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                    lutCols.push(lut.getColor(devs[i]));
+                    lutCols.push(lut.getColor(Number(devs[i]) * 0.85));
                 }
                 if (!json_alone)
                     lutColsVis = true;
