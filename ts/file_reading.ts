@@ -372,39 +372,49 @@ target.addEventListener("drop", function (event) {
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
             let file = json_reader.result as string;
-            let devs: string[] = file.split(", ");
-            devs[0] = devs[0].slice(1, -1)
-            devs[devs.length - 1] = devs[devs.length - 1].replace(/^\s+|\s+$/g, "")
-            devs[devs.length - 1] = devs[devs.length - 1].slice(0, -1)
+            let data = JSON.parse(file);
             let curr_sys;
             if (json_alone) curr_sys = sys_count-1;
             else curr_sys = sys_count;
-            if (devs.length == systems[curr_sys].system_length()) { //if json and dat files match/same length
-                let min = Math.min.apply(null, devs), //find min and max
-                    max = Math.max.apply(null, devs);
-                lut = new THREE.Lut("rainbow", 4000);
-                //lut.setMax(12.12);
-                //lut.setMin(1.67);
-                lut.setMax(max)
-                lut.setMin(min);
-                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
-                scene.add(legend);
-                let labels = lut.setLegendLabels({ 'title': 'Number', 'um': 'id', 'ticks': 5, 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //set up legend format
-                scene.add(labels['title']); //add title
+            for (var key in data) {
+                if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
+                    if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
+                        let min = Math.min.apply(null, data[key]), //find min and max
+                            max = Math.max.apply(null, data[key]);
+                        lut = new THREE.Lut("rainbow", 4000);
+                        //lut.setMax(12.12);
+                        //lut.setMin(1.67);
+                        lut.setMax(max);
+                        lut.setMin(min);
+                        let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+                        scene.add(legend);
+                        let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5}); //set up legend format
+                        scene.add(labels['title']); //add title
 
-                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
-                    scene.add(labels['ticks'][i]);
-                    scene.add(labels['lines'][i]);
+                        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                            scene.add(labels['ticks'][i]);
+                            scene.add(labels['lines'][i]);
+                        }
+                        for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                            lutCols.push(lut.getColor(Number(data[key][i])));
+                        }
+                        if (!json_alone) lutColsVis = true;
+                        check_box.checked = true;
+                        if (json_alone) toggleLut(check_box);
+                    }
+                    if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
+                        for (let i = 0; i < nucleotides.length; i++) {
+                            console.log(data[key][i])
+                            let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                            let arrowHelper = new THREE.ArrowHelper(vec, nucleotides[i].visual_object.children[BACKBONE].position, vec.length(), 0x000000);
+                            arrowHelper.name = i+"disp";
+                            scene.add(arrowHelper);
+                        }
+                    } 
                 }
-                for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                    lutCols.push(lut.getColor(Number(devs[i])*0.85));
+                else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+                    alert(".json and .top files are not compatible.");
                 }
-                if (!json_alone) lutColsVis = true;
-                check_box.checked = true;
-                if (json_alone) toggleLut(check_box);
-            }
-            else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
-                alert(".json and .top files are not compatible.");
             }
         };
         json_reader.readAsText(json_file);
