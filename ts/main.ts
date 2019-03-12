@@ -4,7 +4,7 @@ var BACKBONE = 0
 var NUCLEOSIDE = 1 
 var BB_NS_CON = 2
 var COM = 3
-var SP_CON= 4
+var SP_CON = 4
 
 render();
 // nucleotides store the information about position, orientation, ID
@@ -146,6 +146,8 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
                 let n2 = nucobj.children.length; //# of Meshes in visual_object/rot obj
                 let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
+                let tempposition: THREE.Vector3 = new THREE.Vector3();
+                //nucobj.children[3].getWorldPosition(tempposition);
                 strandcms.add(nucobj.children[3].position); //strand cms
                 objcms = nucobj.children[3].position; //nucobj cms
                 //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;
@@ -176,7 +178,8 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
         /*for (let k = 0; k < systems[h].system_3objects.children.length; k++) { //for each strand, translate by syscms
             systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -syscms.y, -syscms.z));
         }
-        systems[h].system_3objects.position.set(0, 0, 0);
+        systems[h].system_3
+        objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(syscms.x, syscms.y, syscms.z)); //translate system by syscms*/
         systems[h].pos = syscms; //set system object position to system cms
     }

@@ -1,102 +1,3 @@
-<!--<html>
-<head>
-    <title>oxDNA three.js viewer</title>
-    <style>
-        .sidenav {
-            height: 100%;
-            width: 243px;
-            position: fixed;
-            z-index: 1;
-            top: 0;
-            left: 1050px;
-            overflow-x: scroll;
-            overflow-y: scroll;
-            border: 1px solid black;
-        }
-
-        .main {
-            margin-left: 0px; /* Same as the width of the sidenav */
-            margin-right: 900px;
-            font-size: 12px; /* Increased text to enable scrolling */
-            padding: 0px 10px;
-        }
-
-        .tab {
-            overflow: hidden;
-            border: 1px thin #ccc;
-            background-color: coral;
-        }
-
-            .tab button {
-                margin: 5px 5px 5px 5px;
-                background-color: inherit;
-                border: none;
-                float: left;
-                cursor: pointer;
-                padding: 10px 10px;
-                transition: 0.3s;
-                font-size: 15px;
-            }
-
-                .tab button:hover {
-                    background-color: azure;
-                }
-
-                .tab button.active {
-                    background-color: azure;
-                    font-size: 14px;
-                }
-
-        .tabcontent {
-            display: contents;
-            padding: 6px 12px;
-            border-top: none;
-        }
-
-        textarea {
-            margin: 5px 5px 0px 5px;
-            overflow: scroll;
-        }
-
-        button {
-            margin: 5px 5px 5px 5px;
-            padding: 5px;
-            width: 100px;
-            background-color: azure;
-            border: 1px solid;
-        }
-
-        body {
-            margin: 0;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%
-        }
-
-        <script type="text/javascript" src="dat.gui.min.js" > </script >
-    </style>
-</head>
-<body>
-    <!--<div class="sidenav">
-        <div class="tab">
-            <button class="tablinks" onclick="openTab(event, 'BasesList')">Base List</button>
-        </div>
-        <div id="BasesList" class="tabcontent">
-            <textarea id="BASES" cols="20"> BASES </textarea>
-            <button onclick="makeMutualTrapFile()" type="button">Download Mutual Trap File</button>
-        </div>
-    </div>
-    <div class="main">
-        <script src="js/lib/three.js"></script>
-        <script src="js/controls/TrackballControls.js"></script>
-        <script src="js/main.js"></script>
-    </div>
-</body>
-</html>
--->
-
 <html>
 <head>
     <title>oxDNA three.js viewer</title>
@@ -106,89 +7,78 @@
             height: 100%;
             width: 243px;
             position: fixed;
-            z-index: 1;
+            /*z-index: 1;*/
             top: 0;
+            right: 1px;
             text-align: left;
             overflow-x: scroll;
             overflow-y: scroll;
             background-color: gray;
             border: 1px solid black;
         }
-
         .tab { /*tab settings*/
-            overflow: auto;
+            overflow: scroll;
             border: 1px thin #ccc;
             background-color: coral;
         }
-
             .tab button {
                 margin: 2px 2px 2px 2px;
                 background-color: inherit;
                 border: none;
                 cursor: pointer;
-                padding: 5px 5px 5px 5px; /*on each side of button*/
+                padding: 2px 2px 2px 2px; /*on each side of button*/
                 transition: 0.3s;
                 font-size: 17px;
                 float: left;
                 width: auto;
             }
-
                 .tab button:hover {
                     background-color: azure;
                 }
-
                 .tab button.active {
                     background-color: azure;
                     font-size: 17px;
                 }
-
         .rot { /*rotation button settings*/
             background-color: white;
             border: 0px;
             width: 35px;
             border-radius: 8px;
         }
-
         .tabcontent {
             padding: 6px 12px;
             border-top: none;
         }
-
         textarea {
             margin: 5px 5px 5px 5px;
             overflow-y: scroll;
             font-size: 12px;
         }
-
         button {
             margin: 5px 5px 5px 5px;
-            padding: 5px;
             width: 100px;
             background-color: mediumturquoise;
             border: 1px solid;
         }
-
             button:active {
                 background-color: darkcyan;
                 box-shadow: 0 5px currentColor;
-                transform: translateY(4px); /*amt of movement when active*/
+                transform: translateY(2px); /*amt of movement when active*/
             }
-
         body {
             margin: 0;
         }
-
         canvas {
             width: 100%;
             height: 100%
         }
     </style>
-
+</head>
+<body>
     <!--used for rotation arrow buttons-->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-</head>
-<body>
+
     <div class="sidenav">
         <!--sidebar-->
         <div class="tab">
@@ -210,8 +100,8 @@
             <br>
             <input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
             <br>
-            <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
-            <form action="" id="Action">
+            <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color            <form action="" id="Action">
+
                 <fieldset>
                     <!--collection of checkboxes-->
                     <legend>Action:</legend>
@@ -226,7 +116,7 @@
                 <fieldset>
                     <legend>Mode:</legend>
                     <!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
-                    <br>
+                        <br>
                         <input type="radio" name="mode" value="Drag">Drag
                         <br>-->
                     <input type="radio" name="mode" value="Nuc" checked>Nucleotide
@@ -237,6 +127,7 @@
                     <input type="radio" name="mode" value="System">System
                 </fieldset>
             </form>
+
             <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
             <form action="" id="Axis">
                 <fieldset>
@@ -256,19 +147,23 @@
             <button onclick="rotate(-1)" class="rot" style="font-size:25px">
                 <i class="fa fa-arrow-left"></i>
             </button>
+
             <button onclick="rotate(1)" class="rot" style="font-size:25px">
                 <i class="fa fa-arrow-right"></i>
             </button>
+
             <!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
-                <button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
+            <button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
             <button onclick="nextConfig()" type="button">Next Configuration</button>
             <button onclick="previousConfig()" type="button"> Prev Configuration</button>
+
         </div>
+
         <div id="Strands" class="tabcontent" style="display: none">
             <button>TEST</button>
         </div>
-
     </div>
+
     <div class="main">
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/three.js"></script>
@@ -286,6 +181,5 @@
         <script src="./ts/controls/SceneUtils.js"></script>
         <!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
     </div>
-
 </body>
 </html>

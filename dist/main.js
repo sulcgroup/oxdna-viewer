@@ -115,10 +115,12 @@ function updatePos(sys_count) {
                 let n2 = nucobj.children.length; //# of Meshes in visual_object/rot obj
                 let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
-                strandcms.add(nucobj.children[3].position); //strand cms
-                objcms = nucobj.children[3].position; //nucobj cms
+                let tempposition = new THREE.Vector3();
+                nucobj.children[3].getWorldPosition(tempposition);
+                strandcms.add(tempposition); //strand cms
+                objcms = tempposition; //nucobj cms
                 //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;
-                syscms.add(nucobj.children[3].position); //system cms
+                syscms.add(tempposition); //system cms
                 /*for (let k = 0; k < n2; k++) { //for all Meshes in nucobj/visual_object translate by -cms1
                     nucobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
                 }
@@ -144,7 +146,8 @@ function updatePos(sys_count) {
         /*for (let k = 0; k < systems[h].system_3objects.children.length; k++) { //for each strand, translate by syscms
             systems[h].system_3objects.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmssys.x, -syscms.y, -syscms.z));
         }
-        systems[h].system_3objects.position.set(0, 0, 0);
+        systems[h].system_3
+        objects.position.set(0, 0, 0);
         systems[h].system_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(syscms.x, syscms.y, syscms.z)); //translate system by syscms*/
         systems[h].pos = syscms; //set system object position to system cms
     }

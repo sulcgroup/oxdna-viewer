@@ -52,9 +52,9 @@ function drag() {
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
-let angle = 90;
+let angle = 90 * Math.PI / 180;
 function setRotAngle(textArea) {
-    angle = parseInt(textArea.value);
+    angle = parseInt(textArea.value) * Math.PI / 180;
 }
 function getRotObj(i) {
     let rotobj;
@@ -79,15 +79,33 @@ function rotate(dir) {
             getAxisMode(); //get axis on which to rotate
             updatePos(nucleotides[i].my_system); //update class positions
             //rotate around user selected axis - default is X - and user entered angle - updated every time textarea is changed; default is 90
+            let p = rotobj.position;
+            let c = new THREE.Vector3();
+            if (scopeMode.includes("Nuc"))
+                c = nucleotides[i].pos;
+            else if (scopeMode.includes("Strand"))
+                c = systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].pos;
+            else if (scopeMode.includes("System"))
+                c = systems[nucleotides[i].my_system].pos;
+            console.log(c.x);
+            let d = p.sub(c);
+            let matrix;
+            matrix = new THREE.Matrix3();
             if (axisMode == "X") {
-                rotobj.rotateX(dir * angle * Math.PI / 180);
+                matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+                //rotobj.rotateX(dir * angle * Math.PI / 180);
             }
             else if (axisMode == "Y") {
-                rotobj.rotateY(dir * angle * Math.PI / 180);
+                matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                //rotobj.rotateY(dir * angle * Math.PI / 180);
             }
             else {
-                rotobj.rotateZ(dir * angle * Math.PI / 180);
+                matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                //rotobj.rotateZ(dir * angle * Math.PI / 180);
             }
+            d.applyMatrix3(matrix);
+            d.add(c);
+            rotobj.position = d;
             render();
             rot = true;
         }

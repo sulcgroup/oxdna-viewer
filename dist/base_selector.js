@@ -68,9 +68,9 @@ document.addEventListener('mousedown', event => {
                             "System ID: " + sys + "\n" +
                             "# of Strands: " + systems[sys].strands.length + "\n" +
                             "# of Nucleotides: " + systems[sys].system_length() + "\n" +
-                            "System Position:\nx = " + systems[sys].system_3objects.position.x + "\n" +
-                            "y = " + systems[sys].system_3objects.position.y + "\n" +
-                            "z = " + systems[sys].system_3objects.position.z + "\n\n";
+                            "System Position:\nx = " + systems[sys].pos.x + "\n" +
+                            "y = " + systems[sys].pos.y + "\n" +
+                            "z = " + systems[sys].pos.z + "\n\n";
                         sysPrint.push(sys); //add sys id to sysPrint array
                     }
                     let nucPrint = strandPrint.indexOf(strand) < 0;
@@ -79,19 +79,22 @@ document.addEventListener('mousedown', event => {
                             "System ID: " + sys + "\n" +
                             "Strand ID: " + strand + "\n" +
                             "# of Nucleotides: " + systems[sys].strands[strand].nucleotides.length + "\n" +
-                            "Strand Position:\nx = " + systems[sys].strands[strand].strand_3objects.position.x + "\n" +
-                            "y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
-                            "z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
+                            "Strand Position:\nx = " + systems[sys].strands[strand].pos.x + "\n" +
+                            "y = " + systems[sys].strands[strand].pos.y + "\n" +
+                            "z = " + systems[sys].strands[strand].pos.z + "\n\n";
                         strandPrint.push(strand); //add strand id to strandPrint array
                     }
                     if (nucPrint || scopeMode.includes("Nuc")) { //if strand has not been added to basesInfo or scope mode is Nuc
+                        let tempposition = new THREE.Vector3();
+                        //tempposition = nucleotides[temp.global_id].pos;
+                        nucleotides[temp.global_id].visual_object.getWorldPosition(tempposition);
                         basesInfo += "NUCLEOTIDE:\n" + //add nucleotide info to basesInfo
                             "Strand ID: " + strand + "\n" +
                             "Global ID: " + temp.global_id + "\n" +
                             "Base ID: " + temp.type + "\n" +
-                            "Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.position.x + "\n" +
-                            "y = " + nucleotides[temp.global_id].visual_object.position.y + "\n" +
-                            "z = " + nucleotides[temp.global_id].visual_object.position.z + "\n";
+                            "Nucleotide Position:\nx = " + tempposition.x + "\n" +
+                            "y = " + tempposition.y + "\n" +
+                            "z = " + tempposition.z + "\n";
                     }
                 }
             }

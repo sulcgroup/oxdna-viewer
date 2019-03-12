@@ -59,10 +59,10 @@ function drag() { //sets up DragControls - allows dragging of DNA - if action mo
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; })
 }
-let angle: number = 90;
+let angle: number = 90 * Math.PI / 180;
 
 function setRotAngle(textArea) { //get angle in text area and store it
-    angle = parseInt(textArea.value);
+    angle = parseInt(textArea.value) * Math.PI / 180;
 }
 
 function getRotObj(i) { //identify selected objects and rotate
@@ -82,45 +82,41 @@ function getRotObj(i) { //identify selected objects and rotate
     return rotobj;
 }
 
-
-/**
-setFromAxisAngle: function ( axis, angle ) {
-
-		// http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToQuaternion/index.htm
-
-		// assumes axis is normalized
-
-		var halfAngle = angle / 2, s = Math.sin( halfAngle );
-
-		this._x = axis.x * s;
-		this._y = axis.y * s;
-		this._z = axis.z * s;
-		this._w = Math.cos( halfAngle );
-
-		this.onChangeCallback();
-
-		return this;
-
-	}
- */
-
 function rotate(dir) { //rotate according to given direction depending on which arrow button is pressed; left = -1 = counterclockwise; right = 1 = clockwise
     var rot = false; //rotation success boolean
     for (let i = 0; i < selected_bases.length; i++) { //go through each nucleotide in all systems
         if (selected_bases[i] == 1) { //if nucleotide is selected
-            let rotobj = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
+            let rotobj: THREE.Group = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
             getAxisMode(); //get axis on which to rotate
             updatePos(nucleotides[i].my_system); //update class positions
             //rotate around user selected axis - default is X - and user entered angle - updated every time textarea is changed; default is 90
+            let p: THREE.Vector3 = rotobj.position;
+            let c: THREE.Vector3 = new THREE.Vector3();
+            if (scopeMode.includes("Nuc"))
+                c = nucleotides[i].pos;
+            else if (scopeMode.includes("Strand"))
+                c = systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].pos;
+            else if (scopeMode.includes("System"))
+                c = systems[nucleotides[i].my_system].pos;
+            console.log(c.x);
+            let d: THREE.Vector3 = p.sub(c);
+            let matrix: THREE.Matrix3;
+            matrix = new THREE.Matrix3();
             if (axisMode == "X") {
-                rotobj.rotateX(dir * angle * Math.PI / 180);
+                matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+               //rotobj.rotateX(dir * angle * Math.PI / 180);
             }
             else if (axisMode == "Y") {
-                rotobj.rotateY(dir * angle * Math.PI / 180);
+               matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                //rotobj.rotateY(dir * angle * Math.PI / 180);
             }
             else {
-                rotobj.rotateZ(dir * angle * Math.PI / 180);
+               matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                //rotobj.rotateZ(dir * angle * Math.PI / 180);
             }
+            d.applyMatrix3(matrix);
+            d.add(c);
+            rotobj.position = d;
             render();
             rot = true;
         }
