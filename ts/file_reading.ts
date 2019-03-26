@@ -382,8 +382,8 @@ target.addEventListener("drop", function (event) {
                         let min = Math.min.apply(null, data[key]), //find min and max
                             max = Math.max.apply(null, data[key]);
                         lut = new THREE.Lut("rainbow", 4000);
-                        //lut.setMax(12.12);
-                        //lut.setMin(1.67);
+                        //lut.setMax(0.23);
+                        //lut.setMin(0.04);
                         lut.setMax(max);
                         lut.setMin(min);
                         let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
@@ -404,13 +404,23 @@ target.addEventListener("drop", function (event) {
                     }
                     if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                         for (let i = 0; i < nucleotides.length; i++) {
-                            console.log(data[key][i])
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
-                            let arrowHelper = new THREE.ArrowHelper(vec, nucleotides[i].visual_object.children[BACKBONE].position, vec.length(), 0x000000);
+                            let len = vec.length();
+                            vec.normalize();
+                            let arrowHelper = new THREE.ArrowHelper(vec, nucleotides[i].visual_object.children[BACKBONE].position, len, 0x000000);
                             arrowHelper.name = i+"disp";
                             scene.add(arrowHelper);
                         }
-                    } 
+                    }
+                } 
+                else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
+                    for (let entry of data[key]) {
+                        let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                        let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                        vec.normalize();
+                        let arrowHelper = new THREE.ArrowHelper(vec, pos, 5*vec.length(), 0x00000);
+                        scene.add(arrowHelper);
+                    }
                 }
                 else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
                     alert(".json and .top files are not compatible.");
