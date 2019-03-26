@@ -86,8 +86,8 @@ document.addEventListener('mousedown', event => {
                     }
                     if (nucPrint || scopeMode.includes("Nuc")) { //if strand has not been added to basesInfo or scope mode is Nuc
                         let tempposition = new THREE.Vector3();
-                        //tempposition = nucleotides[temp.global_id].pos;
-                        nucleotides[temp.global_id].visual_object.getWorldPosition(tempposition);
+                        tempposition = nucleotides[temp.global_id].pos;
+                        //nucleotides[temp.global_id].visual_object.getWorldPosition(tempposition);
                         basesInfo += "NUCLEOTIDE:\n" + //add nucleotide info to basesInfo
                             "Strand ID: " + strand + "\n" +
                             "Global ID: " + temp.global_id + "\n" +

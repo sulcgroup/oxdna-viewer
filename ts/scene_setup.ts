@@ -42,7 +42,7 @@ var scene = new THREE.Scene();
 // default is black
 var BLACK = new THREE.Color(0x000000);
 var WHITE = new THREE.Color();
-scene.background = WHITE
+scene.background = WHITE;
 
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
 

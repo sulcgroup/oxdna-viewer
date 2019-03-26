@@ -1,4 +1,5 @@
-/* var camera:THREE.PerspectiveCamera, scene:THREE.Scene, renderer:THREE.WebGLRenderer;
+/// <reference path="./three/index.d.ts" />
+var camera: THREE.PerspectiveCamera, scene: THREE.Scene, renderer: THREE.WebGLRenderer;
 var geometry:THREE.BoxGeometry, material:THREE.MeshNormalMaterial, mesh:THREE.Mesh, mesh1:THREE.Mesh;
 
 init();
@@ -14,17 +15,23 @@ function init() {
 
     scene = new THREE.Scene();
 
-    geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
+    geometry = new THREE.BoxGeometry( 0.1, 0.1, 0.1 );
     material = new THREE.MeshNormalMaterial();
 
     mesh = new THREE.Mesh( geometry, material );
-    scene.add( mesh );
+    //scene.add( mesh );
     mesh1 = new THREE.Mesh(geometry, material);
-    scene.add(mesh1);
+    mesh1.position = new THREE.Vector3(10, 10, 10);
+    //scene.add(mesh1);
+    let group: THREE.Group = new THREE.Group();
+    group.add(mesh);
+    group.add(mesh1);
+    scene.add(group);
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( renderer.domElement );
+    document.body.appendChild(renderer.domElement);
+    render();
 
 }
 
@@ -35,7 +42,7 @@ function animate() {
     //mesh.rotation.x += 0.01;
     //mesh.rotation.y += 0.02;
 
-    renderer.render( scene, camera ); 
+    /*renderer.render( scene, camera ); 
     var meshGroup:THREE.Group[] = [];
     meshGroup.push(mesh);
     meshGroup.push(mesh1);
@@ -44,5 +51,5 @@ function animate() {
     meshG.children.push(mesh1);
     var meshG2:THREE.Group = new THREE.Group;
     meshG2.add(meshG);
-    dragControls = new THREE.DragControls(meshGroup, camera, true, renderer.domElement);
-}  */
+   // dragControls = new THREE.DragControls(meshGroup, camera, true, renderer.domElement);*/
+} 

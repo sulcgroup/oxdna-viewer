@@ -1,10 +1,10 @@
 {
   "ExpandedNodes": [
     "",
+    "\\dist",
     "\\ts",
-    "\\ts\\controls",
-    "\\ts\\lib"
+    "\\ts\\controls"
   ],
-  "SelectedNode": "\\index.html",
+  "SelectedNode": "\\ts\\scene_setup.ts",
   "PreviewInSolutionExplorer": false
 }

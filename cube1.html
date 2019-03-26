@@ -1,0 +1,112 @@
+<html lang="en">
+<head>
+    <title>three.js canvas - geometry - cube</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <style type="text/css">
+        body {
+            background-color: #f0f0f0;
+            margin: 0px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <!-- include javascript files -->
+    <script src="./ts/lib/three.js"></script>
+    <script type="text/javascript">
+			var container, stats;
+			var camera, scene, renderer;
+			var cube, plane;
+			var startTime	= Date.now();
+			var targetRotation = 0;
+			var targetRotationOnMouseDown = 0;
+			var mouseX = 0;
+			var mouseXOnMouseDown = 0;
+			var windowHalfX = window.innerWidth / 2;
+			var windowHalfY = window.innerHeight / 2;
+			init();
+			animate();
+			function init() {
+				// create the camera
+				camera = new THREE.Camera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
+				camera.position.y = 150;
+				camera.position.z = 350;
+				camera.position.y = 150;
+				// create the Scene
+                scene = new THREE.Scene();
+                var WHITE = new THREE.Color();
+                scene.background = WHITE;
+				// create the Cube
+                var material = new THREE.MeshStandardMaterial();
+                material.color = 0x00FFFF;
+                cube = new THREE.Mesh(new THREE.CubeGeometry(0.1, 0.1, 0.1), material);
+                cube.position = new THREE.Vector3(10, 10, 10);
+				// add the object to the scene
+                scene.add(cube);
+
+                //Add arrows to scene to add reference location for DNA/RNA in scene
+                let dir = new THREE.Vector3(1, 0, 0); //direction for x-axis
+                dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+                let Origin = new THREE.Vector3(0, 0, 0);
+                var length = 10;
+                let hex = 0x000080; //arrow colors
+                let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex); //create x-axis arrow
+                arrowHelper.name = "x-axis";
+                scene.add(arrowHelper); //add x-axis arrow to scene
+                dir = new THREE.Vector3(0, 1, 0); //direction for y-axis
+                dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+                arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
+                arrowHelper.name = "y-axis";
+                scene.add(arrowHelper); //add y-axis arrow to scene
+                dir = new THREE.Vector3(0, 0, 1); //direction for z-axis
+                dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+                arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
+                arrowHelper.name = "z-axis";
+                scene.add(arrowHelper); //add z-axis to scene
+
+				// create the container element
+				container = document.createElement( 'div' );
+                document.body.appendChild(container);
+
+				// init the WebGL renderer and append it to the Dom
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				container.appendChild( renderer.domElement );
+				// create the Stats element and append it to the Dome
+				/*stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild( stats.domElement );*/
+			}
+			/**
+			 * animate and display the scene
+			*/
+			function animate() {
+				// render the 3D scene
+				render();
+				// relaunch the 'timer'
+				//requestAnimationFrame( animate );
+				// update the Stats element
+				//stats.update();
+			}
+			/**
+			 * Render the 3D scene
+			*/
+			function render() {
+				/*// animate the cube
+				cube.rotation.x += 0.02;
+				cube.rotation.y += 0.0225;
+				cube.rotation.z += 0.0175;
+				// make the cube bounce
+				var dtime	= Date.now() - startTime;
+				cube.scale.x	= 1.0 + 0.3*Math.sin(dtime/300);
+				cube.scale.y	= 1.0 + 0.3*Math.sin(dtime/300);
+				cube.scale.z	= 1.0 + 0.3*Math.sin(dtime/300);*/
+				// actually display the scene in the Dom element
+				renderer.render( scene, camera );
+			}
+    </script>
+
+</body>
+</html>

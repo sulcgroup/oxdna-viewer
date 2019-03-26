@@ -140,6 +140,8 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
         let n = systems[h].system_length(); //# of nucleotides in system
         for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //for each strand
             let n1 = systems[h].system_3objects.children[i].children.length; //for strand_3objects in system_3objects
+            //systems[h].system_3objects.updateMatrixWorld(true);
+            //systems[h].system_3objects.updateMatrix();
             let strandcms = new THREE.Vector3(); //strand cms
             for (let j = 0; j < n1; j++) { //for each visual_object
                 let nucobj = systems[h].system_3objects.children[i].children[j]; //current nuc's visual_object
@@ -147,11 +149,11 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
                 let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
                 let tempposition: THREE.Vector3 = new THREE.Vector3();
-                //nucobj.children[3].getWorldPosition(tempposition);
-                strandcms.add(nucobj.children[3].position); //strand cms
-                objcms = nucobj.children[3].position; //nucobj cms
+                nucobj.children[3].getWorldPosition(tempposition);
+                strandcms.add(tempposition)//nucobj.children[3].position); //strand cms
+                objcms = tempposition; // nucobj.children[3].position; //nucobj cms
                 //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;
-                syscms.add(nucobj.children[3].position); //system cms
+                syscms.add(tempposition);//nucobj.children[3].position); //system cms
 
                 /*for (let k = 0; k < n2; k++) { //for all Meshes in nucobj/visual_object translate by -cms1
                     nucobj.children[k].applyMatrix(new THREE.Matrix4().makeTranslation(-cmsx, -cmsy, -cmsz));
@@ -171,6 +173,8 @@ function updatePos(sys_count) { //sets positions of system, strands, and visual 
             systems[h].strands[i].strand_3objects.applyMatrix(new THREE.Matrix4().makeTranslation(strandcms.x, strandcms.y, strandcms.z)); //translate strand by strandcms
             */
             systems[h].strands[i].pos = strandcms; //set strand object position to strand cms
+            //console.log(systems[h].strands[i].pos);
+            //console.log(strandcms);
         }
         //calculate system cms
         let mul = 1.0 / n;

@@ -75,11 +75,14 @@ function rotate(dir) {
     var rot = false; //rotation success boolean
     for (let i = 0; i < selected_bases.length; i++) { //go through each nucleotide in all systems
         if (selected_bases[i] == 1) { //if nucleotide is selected
+            //for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
             let rotobj = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
             getAxisMode(); //get axis on which to rotate
             updatePos(nucleotides[i].my_system); //update class positions
+            //systems[nucleotides[i].my_system].system_3objects.updateMatrixWorld(true);
             //rotate around user selected axis - default is X - and user entered angle - updated every time textarea is changed; default is 90
-            let p = rotobj.position;
+            let p = new THREE.Vector3();
+            p = nucleotides[i].visual_object.position;
             let c = new THREE.Vector3();
             if (scopeMode.includes("Nuc"))
                 c = nucleotides[i].pos;
@@ -87,7 +90,12 @@ function rotate(dir) {
                 c = systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].pos;
             else if (scopeMode.includes("System"))
                 c = systems[nucleotides[i].my_system].pos;
+            /*console.log(p.x);
+            console.log(p.y);
+            console.log(p.z);
             console.log(c.x);
+            console.log(c.y);
+            console.log(c.z);*/
             let d = p.sub(c);
             let matrix;
             matrix = new THREE.Matrix3();
@@ -105,12 +113,23 @@ function rotate(dir) {
             }
             d.applyMatrix3(matrix);
             d.add(c);
-            rotobj.position = d;
-            render();
+            //rotobj.rotateOnWorldAxis(c.normalize(), angle);
+            //nucleotides[i].visual_object.children[j].position = d;
+            nucleotides[i].visual_object.position = d;
+            /*let q1: THREE.Quaternion = new THREE.Quaternion();
+            let q2: THREE.Quaternion = new THREE.Quaternion();
+            q1.setFromAxisAngle(c.normalize(), angle);
+            rotobj.getWorldQuaternion(q2);
+            //q2.setFromAxisAngle(p.normalize(), angle);
+            rotobj.quaternion = q1.multiply(q2);*/
+            //console.log(nucleotides[i].visual_object.worldToLocal(new THREE.Vector3(10, 10, 10)));
+            //console.log(nucleotides[i].visual_object.localToWorld(new THREE.Vector3(10, 10, 10)));
+            //render();
             rot = true;
+            // }
         }
         let tempnuc = nucleotides[i];
-        if (rot) {
+        /*if (rot) {
             if (scopeMode.includes("Strand")) {
                 i += systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length - tempnuc.local_id - 1; //increment i to get to end of strand; subtract 1 because add 1 in loop automatically
             }
@@ -118,11 +137,12 @@ function rotate(dir) {
                 let locsysID = (tempnuc.my_strand - 1) * systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length + tempnuc.local_id; //gets nucleotide id in relation to system
                 i += systems[tempnuc.my_system].system_length() - locsysID - 1; //increment i to get to end of system; subtract 1 to undo automatic increment by for loop
             }
-        }
+        }*/
     }
     if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
         alert("Please select an object to rotate.");
     }
+    render();
 }
 function getAxisMode() {
     var modeRadioButtons = document.forms['Axis'].elements['rotate']; //get radio buttons in form with id 'Axis' and radio buttons with name 'rotate'
