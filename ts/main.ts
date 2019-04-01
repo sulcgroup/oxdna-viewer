@@ -269,6 +269,36 @@ function centerSystems() { //centers systems based on cms calculated for world (
     render();
 }
 
+function changeResolution() { //changes resolution on the nucleotide visual objects
+    let resolution = (<HTMLInputElement>document.getElementById("resolution")).valueAsNumber;
+
+    //change mesh_setup with the given resolution
+    backbone_geometry = new THREE.SphereGeometry(.2,resolution,resolution);
+    nucleoside_geometry = new THREE.SphereGeometry(.3,resolution,resolution).applyMatrix(
+        new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
+    connector_geometry = new THREE.CylinderGeometry(.1,.1,1, Math.max(2,resolution));
+
+    //update all nucleotides and hide some meshes if resolution is low enough
+    for (let i = 0; i < nucleotides.length; i++) {
+        let nuc_group: THREE.Mesh[] = <THREE.Mesh[]>nucleotides[i].visual_object.children;
+
+        nuc_group[BACKBONE].visible = resolution > 1;
+        nuc_group[BACKBONE].geometry = backbone_geometry;
+
+        nuc_group[NUCLEOSIDE].visible = resolution > 1;
+        nuc_group[NUCLEOSIDE].geometry = nucleoside_geometry;
+
+        if(nuc_group[BB_NS_CON]) {
+            nuc_group[BB_NS_CON].geometry = connector_geometry;
+            nuc_group[BB_NS_CON].visible = resolution > 1;
+        }
+        if(nuc_group[SP_CON]) {
+            nuc_group[SP_CON].geometry = connector_geometry;
+        }
+    }
+    render();
+}
+
 //strand delete testcode
 document.addEventListener("keypress", event => {
     if (event.keyCode === 100) { //if d is pressed, delete first system's first strand

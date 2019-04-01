@@ -105,6 +105,7 @@
 			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
 			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
+			Resolution: <input id="resolution" onchange="changeResolution()" type="number" min="1" value="10"></input>
 			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
 			<!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
