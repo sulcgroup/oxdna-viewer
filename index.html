@@ -4,23 +4,30 @@
 	<title>oxDNA three.js viewer</title>
 	<style>
 		/*CSS*/
+
+		body {
+			padding: 0;
+			margin: 0;
+			overflow: hidden;
+		}
+
 		.sidenav { /*side bar settings*/
 			height: 100%;
-			width: 243px;
+			width: 250px;
 			position: fixed;
 			z-index: 1;
-			top: 0;
 			right: 1;
 			text-align: left;
-			overflow-x: scroll;
-			background-color: gray;
-			border: 1px solid black;
+			overflow-y: scroll;
+			background-color: #eee;
+			padding: 5px;
+			opacity: 0.9;
 		}
 
 		.tab { /*tab settings*/
 			overflow: auto;
 			border: 1px thin #ccc;
-			background-color: coral;
+			background-color: #acc;
 		}
 
 		.tab button {
@@ -57,40 +64,21 @@
 		}
 
 		textarea {
-			margin: 5px 5px 5px 5px;
+			width: 100%;
 			overflow-y: scroll;
 			font-size: 12px;
-
 		}
 
 		button {
-			margin: 5px 5px 5px 5px;
-			padding: 5px;
-			width: 100px;
-			background-color: mediumturquoise;
-			border: 1px solid;
-		}
-
-		button:active {
-			background-color: darkcyan;
-			box-shadow: 0 5px currentColor;
-			transform: translateY(4px); /*amt of movement when active*/
-		}
-
-		body {
-			margin: 0;
-		}
-
-		canvas {
 			width: 100%;
-			height: 100%
+			margin: 5px 5px 5px 5px;
 		}
+
+		input[type=number] {
+			width: 80px;
+		}
+
 	</style>
-
-	<!--used for rotation arrow buttons-->
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
 
 <body>
 	<div class="sidenav">
@@ -105,69 +93,44 @@
 			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
 			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
-			Resolution: <input id="resolution" onchange="changeResolution()" type="number" min="1" value="10"></input>
-			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
+			Resolution: <input id="resolution" onchange="changeResolution()" type="number" min="1" value="10" width="3"></input>
+			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
+			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems</button>
 			<br>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 			<br>
 			<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
 			<br>
 			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
-			<form action="" id="Action">
-				<fieldset>
-					<!--collection of checkboxes-->
-					<legend>Action:</legend>
-					<input type="checkbox" name="action" value="Select" checked> Select
-					<br>
-					<input type="checkbox" name="action" value="Drag"> Drag
-					<br>
-				</fieldset>
-			</form>
-			<form action="" id="Mode">
-				<!--collection of radio buttons-->
-				<fieldset>
-					<legend>Mode:</legend>
-					<!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
-					<br>
-						<input type="radio" name="mode" value="Drag">Drag
-						<br>-->
-					<input type="radio" name="mode" value="Nuc" checked>Nucleotide
-					<!--default mode is Nucleotide-->
-					<br>
-					<input type="radio" name="mode" value="Strand">Strand
-					<br>
-					<input type="radio" name="mode" value="System">System
-				</fieldset>
-			</form>
+			<fieldset>
+				<legend>Action:</legend>
+				<input type="checkbox" name="action" value="Select" checked> Select <br>
+				<input type="checkbox" name="action" value="Drag"> Drag
+			</fieldset>
+			<fieldset>
+				<legend>Selection mode:</legend>
+				<input type="radio" name="scope" value="Nuc" checked>Nucleotide<br> <!--default mode is Nucleotide-->
+				<input type="radio" name="scope" value="Strand">Strand<br>
+				<input type="radio" name="scope" value="System">System
+			</fieldset>
+			<br>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-			<form action="" id="Axis">
-				<fieldset>
-					<!--collection of radio buttons-->
-					<legend>Rotate Axis:</legend>
-					<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
-					<!--default checked is x-axis-->
-					<br>
-					<input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
-					<br>
-					<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
-				</fieldset>
-				<label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
-				<textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
-			</form>
-			<!--Rotation arrow buttons-->
-			<button onclick="rotate(-1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-left"></i>
-			</button>
-			<button onclick="rotate(1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-right"></i>
-			</button>
-			<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
-				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
-				<button onclick="nextConfig()" type="button">Next Configuration</button>
-				<button onclick="previousConfig()"type="button"> Prev Configuration</button>
+			<fieldset>
+				<legend>Rotate:</legend>
+				<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis <!--default checked is x-axis-->
+				<br>
+				<input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
+				<br>
+				<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
+				<br>
+				Rotation angle:
+				<input type="number" value="-90" id="rotAngle" width="20px"></input>
+				<button onclick="rotate()">Rotate</button>
+			</fieldset>
+			<br>
+			<button onclick="nextConfig()" type="button" width=40%>Next<br>Config</button>
+			<button onclick="previousConfig()"type="button" width=40%> Prev<br>Config</button>
 			</div>
 			<div id="Strands" class="tabcontent" style="display: none">
 				<button>TEST</button>
