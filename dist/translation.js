@@ -1,6 +1,13 @@
 // select and/or drag
-function getActionMode() {
-    return document.querySelector('input[name="action"]:checked')['value'];
+function getActionModes() {
+    let modes = document.getElementsByName("action");
+    let checked = [];
+    for (let i = 0; i < modes.length; i++) {
+        if (modes[i].checked) {
+            checked.push(modes[i].value);
+        }
+    }
+    return checked;
 }
 // nucleotides/strand/system
 function getScopeMode() {

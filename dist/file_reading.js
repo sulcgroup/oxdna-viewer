@@ -577,7 +577,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     //radio button/checkbox selections
-    if (getActionMode() == "Drag") {
+    if (getActionModes().includes("Drag")) {
         drag();
     }
     /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -745,7 +745,7 @@ function getNewConfig(mode) {
             }
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
-        if (getActionMode() == "Drag") {
+        if (getActionModes().includes("Drag")) {
             drag();
         }
     }

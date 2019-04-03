@@ -657,7 +657,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
     //radio button/checkbox selections
 
-    if (getActionMode() == "Drag") {
+    if (getActionModes().includes("Drag")) {
         drag();
     }
     /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -864,7 +864,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             }
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
-        if (getActionMode() == "Drag") {
+        if (getActionModes().includes("Drag")) {
             drag();
         }
     }

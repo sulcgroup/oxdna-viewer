@@ -8,7 +8,7 @@ let raycaster = new THREE.Raycaster();;
 let intersects;
 
 document.addEventListener('mousedown', event => { //if mouse is pressed down
-	if (getActionMode() == "Select") {
+	if (getActionModes().includes("Select")) {
 		// magic ... 
 		mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, //get mouse position
 			0.5);
