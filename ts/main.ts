@@ -299,6 +299,23 @@ function changeResolution() { //changes resolution on the nucleotide visual obje
     render();
 }
 
+function toggleSideNav(button: HTMLInputElement) {
+    let hidden =  "show";
+    let visible = "hide";
+    let tabcontent = <HTMLCollectionOf<HTMLElement>>document.getElementsByClassName("tabcontent");
+    let allNone = false;
+    if (button.innerText == hidden) {
+        tabcontent[0].style.display = "block";
+        console.log("All was hidden, so we revealed");
+        button.innerHTML = visible;
+    } else {
+        for (let i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        button.innerHTML = hidden;
+    }
+}
+
 //strand delete testcode
 document.addEventListener("keypress", event => {
     if (event.keyCode === 100) { //if d is pressed, delete first system's first strand

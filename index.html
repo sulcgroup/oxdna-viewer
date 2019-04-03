@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <html>
 
 <head>
@@ -12,16 +13,17 @@
 		}
 
 		.sidenav { /*side bar settings*/
-			height: 100%;
-			width: 250px;
+			width: 200px;
+			max-height: 100%;
 			position: fixed;
 			z-index: 1;
-			right: 1;
+			font-size: 12px;
+			right: 0;
 			text-align: left;
 			overflow-y: scroll;
 			background-color: #eee;
-			padding: 5px;
 			opacity: 0.9;
+			padding: 2px;
 		}
 
 		.tab { /*tab settings*/
@@ -31,11 +33,11 @@
 		}
 
 		.tab button {
-			margin: 2px 2px 2px 2px;
+			margin: 2px;
 			background-color: inherit;
 			border: none;
 			cursor: pointer;
-			padding: 5px 5px 5px 5px; /*on each side of button*/
+			padding: 5px; /*on each side of button*/
 			transition: 0.3s;
 			font-size: 17px;
 			float: left;
@@ -51,18 +53,6 @@
 			font-size: 17px;
 		}
 
-		.rot { /*rotation button settings*/
-			background-color: white;
-			border: 0px;
-			width: 35px;
-			border-radius: 8px;
-		}
-
-		.tabcontent {
-			padding: 6px 12x;
-			border-top: none;
-		}
-
 		textarea {
 			width: 100%;
 			overflow-y: scroll;
@@ -71,7 +61,7 @@
 
 		button {
 			width: 100%;
-			margin: 5px 5px 5px 5px;
+			margin: 2px 0px;
 		}
 
 		input[type=number] {
@@ -114,7 +104,6 @@
 				<input type="radio" name="scope" value="Strand">Strand<br>
 				<input type="radio" name="scope" value="System">System
 			</fieldset>
-			<br>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 			<fieldset>
 				<legend>Rotate:</legend>
@@ -128,13 +117,13 @@
 				<input type="number" value="-90" id="rotAngle" width="20px"></input>
 				<button onclick="rotate()">Rotate</button>
 			</fieldset>
-			<br>
-			<button onclick="nextConfig()" type="button" width=40%>Next<br>Config</button>
-			<button onclick="previousConfig()"type="button" width=40%> Prev<br>Config</button>
+			<button onclick="previousConfig()"type="button" style="width: 45%; left: 0"> Prev Config</button>
+			<button onclick="nextConfig()" type="button" style="width: 45%; right: 0; float: right">Next Config</button>
 			</div>
 			<div id="Strands" class="tabcontent" style="display: none">
 				<button>TEST</button>
 			</div>
+			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
 
 		</div>
 		<div class="main"> <!--all files to be loaded onload of html file-->
@@ -153,7 +142,6 @@
 			<script src="./ts/controls/SceneUtils.js"></script>
 			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
 		</div>
-
 	</div>
 
 </body>
