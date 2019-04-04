@@ -8,9 +8,7 @@ let raycaster = new THREE.Raycaster();;
 let intersects;
 
 document.addEventListener('mousedown', event => { //if mouse is pressed down
-	getActionMode(); //get mode: selection and/or dragging
-	getScopeMode(); //get scope mode: nuc, strand, or system (or individual Meshes)
-	if (actionMode.includes("Select")) {
+    if (getActionMode().includes("Select")) {
 		// magic ... 
 		mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, //get mouse position
 			0.5);
@@ -22,7 +20,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 		let nucleotideID: number;
 		if (intersects.length > 0) { //if something has been clicked / is in the intersects array / intersects array's length is above 0
 
-			if (scopeMode.includes("System")) { //if scope mode is system
+			if (getScopeMode() == "System") { //if scope mode is system
 				let sysID;
 				nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
 				sysID = nucleotides[nucleotideID].my_system; //get selected nucleotide's system id
@@ -33,7 +31,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 				}
 			}
 
-			else if (scopeMode.includes("Strand")) { //if scope mode is strand
+			else if (getScopeMode() == "Strand") { //if scope mode is strand
 				let strandID, sysID;
 				nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
 				strandID = nucleotides[nucleotideID].my_strand; //get selected nucleotide's strand id
@@ -46,7 +44,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 				}
 			}
 
-			else if (scopeMode.includes("Nuc")) { //if scope mode is nucleotide
+			else if (getScopeMode() == "Nuc") { //if scope mode is nucleotide
 				nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
 				let sysID = nucleotides[nucleotideID].my_system; //get selected nucleotide's system id
 				toggle(nucleotideID, sysID); //toggle selected nucleotide
@@ -85,8 +83,8 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 							"y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
 							"z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
 						strandPrint.push(strand); //add strand id to strandPrint array
-					}
-					if (nucPrint || scopeMode.includes("Nuc")) { //if strand has not been added to basesInfo or scope mode is Nuc
+                    }
+                    if (nucPrint || getScopeMode() == "Nuc") { //if strand has not been added to basesInfo or scope mode is Nuc
 						basesInfo += "NUCLEOTIDE:\n" + //add nucleotide info to basesInfo
 							"Strand ID: " + strand + "\n" +
 							"Global ID: " + temp.global_id + "\n" +

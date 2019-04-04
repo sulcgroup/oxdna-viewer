@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <html>
 
 <head>
@@ -68,102 +69,94 @@
     </style>
 
 
-    <!--used for rotation arrow buttons-->
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 </head>
 
 <body>
-	<div class="sidenav">
-		<!--sidebar-->
-		<div class="tab">
-			<!--2 tabs: Nucleotides. Strands(not used)-->
-			<button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
-			<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
-		</div>
-		<div id="Nucleotides" class="tabcontent">
-			<!--in "Nucloetides" tab-->
-			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
-			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
-			<button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
-			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
-			<br>
-			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
-			<br>
-			<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
-			<br>
-			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
-			<form action="" id="Action">
-				<fieldset>
-					<!--collection of checkboxes-->
-					<legend>Action:</legend>
-					<input type="checkbox" name="action" value="Select" checked> Select
-					<br>
-					<input type="checkbox" name="action" value="Drag"> Drag
-					<br>
-				</fieldset>
-			</form>
-			<form action="" id="Mode">
-				<!--collection of radio buttons-->
-				<fieldset>
-					<legend>Mode:</legend>
-					<!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
-					<br>
-						<input type="radio" name="mode" value="Drag">Drag
-						<br>-->
-					<input type="radio" name="mode" value="Nuc" checked>Nucleotide
-					<!--default mode is Nucleotide-->
-					<br>
-					<input type="radio" name="mode" value="Strand">Strand
-					<br>
-					<input type="radio" name="mode" value="System">System
-				</fieldset>
-			</form>
-			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-            <form action="" id="Axis">
-                <fieldset>
-                    <!--collection of radio buttons-->
-                    <legend>Rotate Axis:</legend>
-                    <input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
-                    <!--default checked is x-axis-->
-                    <br>
-                    <input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
-                    <br>
-                    <input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
-                </fieldset>
+    <div class="sidenav">
+        <!--sidebar-->
+        <div class="tab">
+            <!--2 tabs: Nucleotides. Strands(not used)-->
+            <button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
+            <button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
+        </div>
+        <div id="Nucleotides" class="tabcontent">
+            <!--in "Nucloetides" tab-->
+            <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
+            <button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
+            <button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
+            <button onclick="makeOutputFiles()" type="button">Download Output Files (.dat and .top)</button>
+            <button onclick="controls.reset()" type="button">Reset Camera</button>
+            <!--<button onclick="centerSystems()" class="Sys" type="button">Center Systems</button>-->
+            <input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
+            <br>
+            <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
+            <br>
+            <input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
+            <br>
+            <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
+            <fieldset>
+                <!--collection of checkboxes-->
+                <legend>Action:</legend>
+                <input type="checkbox" name="action" value="Select" checked> Select
+                <input type="checkbox" name="action" value="Drag" onchange="drag()"> Drag
+                <br>
+            </fieldset>
+            <!--collection of radio buttons-->
+            <fieldset>
+                <legend>Selection Mode:</legend>
+                <!--<input type="radio" name="mode" value="baseSelect">Select Bases //previous base selection
+                <br>
+                    <input type="radio" name="mode" value="Drag">Drag
+                    <br>-->
+                <input type="radio" name="scope" value="Nuc" checked>Nucleotide
+                <!--default mode is Nucleotide-->
+                <br>
+                <input type="radio" name="scope" value="Strand">Strand
+                <br>
+                <input type="radio" name="scope" value="System">System
+            </fieldset>
+            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
+            <fieldset>
+                <!--collection of radio buttons-->
+                <legend>Rotate Axis:</legend>
+                <input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
+                <!--default checked is x-axis-->
+                <br>
+                <input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
+                <br>
+                <input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
                 Rotation angle:
-                <input type="number" value="-90" id="rotAngle" width="20">
+                <input type="number" value="-90" id="rotAngle" width="20px">
                 <button onclick="rotate()">Rotate</button>
-            </form>
-			<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
-				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
-				<button onclick="nextConfig()" type="button" style="width: 45%; left: 0">Next Configuration</button>
-				<button onclick="previousConfig()"type="button" style="width: 45%; right: 0; float: right"> Prev Configuration</button>
-			</div>
-			<div id="Strands" class="tabcontent" style="display: none">
-				<button>TEST</button>
-			</div>
+            </fieldset>
+            <!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
+                <button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
+            <button onclick="nextConfig()" type="button" style="width: 45%; left: 0">Next Configuration</button>
+            <button onclick="previousConfig()" type="button" style="width: 45%; right: 0; float: right"> Prev Configuration</button>
+        </div>
+        <div id="Strands" class="tabcontent" style="display: none">
+            <button>TEST</button>
+        </div>
 
-		</div>
-		<div class="main"> <!--all files to be loaded onload of html file-->
-			<script src="./ts/lib/three.js"></script>
-			<script src="./ts/lib/Lut.js"></script>
-			<script src="./ts/controls/DragControls.js"></script>
-			<script src="./ts/controls/TrackballControls.js"></script>
-			<script src="./dist/scene_setup.js"></script>
-			<script src="./dist/mesh_setup.js"></script>
-			<script src="./dist/file_reading.js"></script>
-			<script src="./dist/main.js"></script>
-			<script src="./dist/keybindings.js"></script>
-			<script src="./dist/base_selector.js"></script>
-			<script src="./dist/output_file.js"></script>
-			<script src="./dist/translation.js"></script>
-			<script src="./ts/controls/SceneUtils.js"></script>
-			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
-		</div>
+    </div>
+    <div class="main">
+        <!--all files to be loaded onload of html file-->
+        <script src="./ts/lib/three.js"></script>
+        <script src="./ts/lib/Lut.js"></script>
+        <script src="./ts/controls/DragControls.js"></script>
+        <script src="./ts/controls/TrackballControls.js"></script>
+        <script src="./dist/scene_setup.js"></script>
+        <script src="./dist/mesh_setup.js"></script>
+        <script src="./dist/file_reading.js"></script>
+        <script src="./dist/main.js"></script>
+        <script src="./dist/keybindings.js"></script>
+        <script src="./dist/base_selector.js"></script>
+        <script src="./dist/output_file.js"></script>
+        <script src="./dist/translation.js"></script>
+        <script src="./ts/controls/SceneUtils.js"></script>
+        <!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
+    </div>
 
 </body>
 
