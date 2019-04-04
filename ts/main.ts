@@ -269,9 +269,8 @@ function centerSystems() { //centers systems based on cms calculated for world (
     render();
 }
 
-function changeResolution() { //changes resolution on the nucleotide visual objects
-    let resolution = (<HTMLInputElement>document.getElementById("resolution")).valueAsNumber;
-
+//changes resolution on the nucleotide visual objects
+function setResolution(resolution: number) {
     //change mesh_setup with the given resolution
     backbone_geometry = new THREE.SphereGeometry(.2,resolution,resolution);
     nucleoside_geometry = new THREE.SphereGeometry(.3,resolution,resolution).applyMatrix(

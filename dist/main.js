@@ -232,8 +232,8 @@ function centerSystems() {
     }
     render();
 }
-function changeResolution() {
-    let resolution = document.getElementById("resolution").valueAsNumber;
+//changes resolution on the nucleotide visual objects
+function setResolution(resolution) {
     //change mesh_setup with the given resolution
     backbone_geometry = new THREE.SphereGeometry(.2, resolution, resolution);
     nucleoside_geometry = new THREE.SphereGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
