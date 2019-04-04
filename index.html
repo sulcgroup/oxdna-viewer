@@ -1,96 +1,77 @@
 <html>
 
 <head>
-	<title>oxDNA three.js viewer</title>
-	<style>
-		/*CSS*/
-		.sidenav { /*side bar settings*/
-			height: 100%;
-			width: 243px;
-			position: fixed;
-			z-index: 1;
-			top: 0;
-			right: 1;
-			text-align: left;
-			overflow-x: scroll;
-			background-color: gray;
-			border: 1px solid black;
-		}
+    <title>oxDNA three.js viewer</title>
+    <style>
+        /*CSS*/
+        body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+        }
 
-		.tab { /*tab settings*/
-			overflow: auto;
-			border: 1px thin #ccc;
-			background-color: coral;
-		}
+        .sidenav { /*side bar settings*/
+            width: 200px;
+            max-height: 100%;
+            position: fixed;
+            z-index: 1;
+            font-size: 12px;
+            right: 0;
+            text-align: left;
+            overflow-y: scroll;
+            background-color: #eee;
+            opacity: 0.9;
+            padding: 2px;
+        }
 
-		.tab button {
-			margin: 2px 2px 2px 2px;
-			background-color: inherit;
-			border: none;
-			cursor: pointer;
-			padding: 5px 5px 5px 5px; /*on each side of button*/
-			transition: 0.3s;
-			font-size: 17px;
-			float: left;
-			width: auto;
-		}
+        .tab { /*tab settings*/
+            overflow: auto;
+            border: 1px thin #ccc;
+            background-color: #acc;
+        }
 
-		.tab button:hover {
-			background-color: azure;
-		}
+            .tab button {
+                margin: 2px;
+                background-color: inherit;
+                border: none;
+                cursor: pointer;
+                padding: 5px; /*on each side of button*/
+                transition: 0.3s;
+                font-size: 17px;
+                float: left;
+                width: auto;
+            }
 
-		.tab button.active {
-			background-color: azure;
-			font-size: 17px;
-		}
+                .tab button:hover {
+                    background-color: azure;
+                }
 
-		.rot { /*rotation button settings*/
-			background-color: white;
-			border: 0px;
-			width: 35px;
-			border-radius: 8px;
-		}
+                .tab button.active {
+                    background-color: azure;
+                    font-size: 17px;
+                }
 
-		.tabcontent {
-			padding: 6px 12x;
-			border-top: none;
-		}
+        textarea {
+            width: 100%;
+            overflow-y: scroll;
+            font-size: 12px;
+        }
 
-		textarea {
-			margin: 5px 5px 5px 5px;
-			overflow-y: scroll;
-			font-size: 12px;
+        button {
+            width: 100%;
+            margin: 2px 0px;
+        }
 
-		}
+        input[type=number] {
+            width: 80px;
+        }
+    </style>
 
-		button {
-			margin: 5px 5px 5px 5px;
-			padding: 5px;
-			width: 100px;
-			background-color: mediumturquoise;
-			border: 1px solid;
-		}
 
-		button:active {
-			background-color: darkcyan;
-			box-shadow: 0 5px currentColor;
-			transform: translateY(4px); /*amt of movement when active*/
-		}
-
-		body {
-			margin: 0;
-		}
-
-		canvas {
-			width: 100%;
-			height: 100%
-		}
-	</style>
-
-	<!--used for rotation arrow buttons-->
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
+    <!--used for rotation arrow buttons-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
 
 <body>
 	<div class="sidenav">
@@ -142,31 +123,25 @@
 				</fieldset>
 			</form>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-			<form action="" id="Axis">
-				<fieldset>
-					<!--collection of radio buttons-->
-					<legend>Rotate Axis:</legend>
-					<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
-					<!--default checked is x-axis-->
-					<br>
-					<input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
-					<br>
-					<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
-				</fieldset>
-				<label for="RotAngle" style="margin-left: 5px"> Rotation Angle (degrees): </label>
-				<textarea id="RotAngle" placeholder="Ex. 5" onchange="setRotAngle(this)" cols="10" rows="1"></textarea>
-			</form>
-			<!--Rotation arrow buttons-->
-			<button onclick="rotate(-1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-left"></i>
-			</button>
-			<button onclick="rotate(1)" class="rot" style="font-size:25px">
-				<i class="fa fa-arrow-right"></i>
-			</button>
+            <form action="" id="Axis">
+                <fieldset>
+                    <!--collection of radio buttons-->
+                    <legend>Rotate Axis:</legend>
+                    <input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis
+                    <!--default checked is x-axis-->
+                    <br>
+                    <input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
+                    <br>
+                    <input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
+                </fieldset>
+                Rotation angle:
+                <input type="number" value="-90" id="rotAngle" width="20">
+                <button onclick="rotate()">Rotate</button>
+            </form>
 			<!--<button onclick="rotateCounter()" type="button">Rotate Counterclockwise</button> //previous buttons
 				<button onclick="rotateClock()" type="button">Rotate Clockwise</button>-->
-				<button onclick="nextConfig()" type="button">Next Configuration</button>
-				<button onclick="previousConfig()"type="button"> Prev Configuration</button>
+				<button onclick="nextConfig()" type="button" style="width: 45%; left: 0">Next Configuration</button>
+				<button onclick="previousConfig()"type="button" style="width: 45%; right: 0; float: right"> Prev Configuration</button>
 			</div>
 			<div id="Strands" class="tabcontent" style="display: none">
 				<button>TEST</button>
@@ -189,8 +164,6 @@
 			<script src="./ts/controls/SceneUtils.js"></script>
 			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
 		</div>
-
-	</div>
 
 </body>
 
