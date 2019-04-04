@@ -101,15 +101,15 @@ function rotate(dir) {
             matrix = new THREE.Matrix3();
             if (axisMode == "X") {
                 matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
-                //rotobj.rotateX(dir * angle * Math.PI / 180);
+                nucleotides[i].visual_object.rotateX(-1 * angle * Math.PI / 180);
             }
             else if (axisMode == "Y") {
                 matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
-                //rotobj.rotateY(dir * angle * Math.PI / 180);
+                nucleotides[i].visual_object.rotateY(-1 * angle * Math.PI / 180);
             }
             else {
                 matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
-                //rotobj.rotateZ(dir * angle * Math.PI / 180);
+                nucleotides[i].visual_object.rotateZ(-1 * angle * Math.PI / 180);
             }
             d.applyMatrix3(matrix);
             d.add(c);
@@ -128,7 +128,7 @@ function rotate(dir) {
             rot = true;
             // }
         }
-        let tempnuc = nucleotides[i];
+        // let tempnuc = nucleotides[i];
         /*if (rot) {
             if (scopeMode.includes("Strand")) {
                 i += systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length - tempnuc.local_id - 1; //increment i to get to end of strand; subtract 1 because add 1 in loop automatically
