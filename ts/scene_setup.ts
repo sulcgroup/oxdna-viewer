@@ -17,9 +17,11 @@ function render() {
 function animate() {
     requestAnimationFrame(animate);
     controls.update();
-    render();
-    //stats.update();
 }
+// start animation cycle / actually control update cycle 
+// requestAnimationFrame could be replaced with a 
+// timer event as it is misleading. 
+animate();
 
 //Fix Resize problems
 window.addEventListener('resize', onWindowResize, false);
@@ -134,7 +136,6 @@ controls.noPan = false;
 controls.staticMoving = true;
 controls.dynamicDampingFactor = 0.2;
 controls.keys = [65, 83, 68];
-//controls.addEventListener('change', render); //if anything occurs on scene, controls will be activated/called
-
-// start animation cycle 
-animate();
+// following the logic of updating the scene only when the scene changes 
+// controlls induce change so we update the scene when we move it  
+controls.addEventListener('change', render);

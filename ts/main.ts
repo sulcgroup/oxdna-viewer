@@ -1,10 +1,10 @@
 /// <reference path="./three/index.d.ts" />
 
 var BACKBONE = 0
-var NUCLEOSIDE = 1 
+var NUCLEOSIDE = 1
 var BB_NS_CON = 2
 var COM = 3
-var SP_CON= 4
+var SP_CON = 4
 
 render();
 // nucleotides store the information about position, orientation, ID
@@ -112,7 +112,7 @@ class System {
     //remove_system(){};
 };
 
-function dat_loader (file) {
+function dat_loader(file) {
 
 }
 
@@ -176,7 +176,7 @@ let lutColsVis: boolean = false;
     }
 }*/
 
-function nextConfig(){
+function nextConfig() {
     getNewConfig(1)
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
@@ -184,7 +184,7 @@ function nextConfig(){
     }
 }
 
-function previousConfig(){
+function previousConfig() {
     getNewConfig(-1)
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
@@ -237,7 +237,7 @@ function toggleBackground() {
         scene.background = BLACK;
         render();
     }
-    else{
+    else {
         scene.background = WHITE;
         render();
     }
@@ -251,18 +251,18 @@ function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Ve
 
 function centerSystems() { //centers systems based on cms calculated for world (all systems)
     //get center of mass for all systems
-    let cms = new THREE.Vector3(0,0,0);
-    for (let i = 0; i < nucleotides.length; i++) { 
+    let cms = new THREE.Vector3(0, 0, 0);
+    for (let i = 0; i < nucleotides.length; i++) {
         let tmp_pos = new THREE.Vector3;
-        tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[COM].matrixWorld);  
+        tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[COM].matrixWorld);
         cms.add(tmp_pos);
     }
-    let mul = 1.0/nucleotides.length;
-    cms.multiplyScalar(mul*-1);
+    let mul = 1.0 / nucleotides.length;
+    cms.multiplyScalar(mul * -1);
 
     //change position by the center of mass
     for (let i = 0; i < nucleotides.length; i++) {
-        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++){
+        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
             nucleotides[i].visual_object.children[j].position.add(cms);
         }
     }
