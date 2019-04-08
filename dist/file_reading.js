@@ -156,7 +156,8 @@ var approx_dat_len, current_chunk_number, //this is the chunk containing the end
 previous_previous_chunk, //Space to store the chunks
 previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad linebreaks caused by splitting the trajectory bitwise
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
-previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+box; //box size for system
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -408,7 +409,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // parse file into lines 
     let lines = dat_reader.result.split(/[\r\n]+/g);
     //get the simulation box size 
-    let box = parseFloat(lines[1].split(" ")[3]);
+    box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
     conf_num += 1;
     console.log(conf_num, "t =", time);

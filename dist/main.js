@@ -214,20 +214,56 @@ function cross(a1, a2, a3, b1, b2, b3) {
         a3 * b1 - a1 * b3,
         a1 * b2 - a2 * b1];
 }
+/*
+function moveWithinBox(pos, dpos) {
+    a = pos.x + dpos.x;
+    b = (pos.x+1.5*box)%box - box/2 + dpos.x)
+    return Math.abs(a) < Math.abs(b) ? a:b;
+}
+*/
+// Calculate center of mass taking periodic boundary conditions into account:
+// https://doi.org/10.1080/2151237X.2008.10129266
+// https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 function centerSystems() {
-    //get center of mass for all systems
-    let cms = new THREE.Vector3(0, 0, 0);
+    // Create one averaging variable for each dimension, representing that 1D
+    // interval as a unit circle in 2D (with the circumference being the 
+    // bounding box side length)
+    let cm_x = new THREE.Vector2(), cm_y = new THREE.Vector2(), cm_z = new THREE.Vector2();
     for (let i = 0; i < nucleotides.length; i++) {
-        let tmp_pos = new THREE.Vector3;
-        tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[COM].matrixWorld);
-        cms.add(tmp_pos);
+        let p = nucleotides[i].visual_object.children[COM].position.clone();
+        // Shift coordinates so that the origin is in the corner of the 
+        // bounding box, instead of the centre.
+        p.add(new THREE.Vector3().addScalar(1.5 * box));
+        p.x %= box;
+        p.y %= box;
+        p.z %= box;
+        // Calculate positions on unit circle for each dimension and that to the
+        // sum.
+        let angle = p.clone().multiplyScalar(2 * Math.PI / box);
+        cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
+        cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
+        cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
     }
-    let mul = 1.0 / nucleotides.length;
-    cms.multiplyScalar(mul * -1);
-    //change position by the center of mass
+    // Divide center of mass sums to get the averages
+    cm_x.divideScalar(nucleotides.length);
+    cm_y.divideScalar(nucleotides.length);
+    cm_z.divideScalar(nucleotides.length);
+    // Convert back from unit circle coordinates into x,y,z
+    let cms = new THREE.Vector3(box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI));
+    // Shift back origin to center of the box
+    cms.sub(new THREE.Vector3().addScalar(box / 2));
+    // Change nucleotide positions by the center of mass
     for (let i = 0; i < nucleotides.length; i++) {
         for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-            nucleotides[i].visual_object.children[j].position.add(cms);
+            let p = nucleotides[i].visual_object.children[j].position;
+            // Shift with centre of mass
+            p.add(cms);
+            // Keep positions within bounding box
+            p.add(new THREE.Vector3().addScalar(1.5 * box));
+            p.x %= box;
+            p.y %= box;
+            p.z %= box;
+            p.sub(new THREE.Vector3().addScalar(0.75 * box));
         }
     }
     render();

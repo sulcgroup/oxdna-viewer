@@ -178,7 +178,8 @@ var approx_dat_len: number,
     conf_len: number,
     conf_num: number = 0,
     dat_fileout: string = "",
-    dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+    dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+    box: number; //box size for system
 
 
 target.addEventListener("drop", function (event) {
@@ -443,7 +444,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // parse file into lines 
     let lines = dat_reader.result.split(/[\r\n]+/g);
     //get the simulation box size 
-    let box = parseFloat(lines[1].split(" ")[3]);
+    box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
     conf_num += 1
     console.log(conf_num, "t =", time);
