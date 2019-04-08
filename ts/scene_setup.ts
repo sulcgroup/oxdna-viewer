@@ -49,12 +49,17 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 // set camera position 
 camera.position.x = 100;
 
+// import canvas capture library
+declare var CCapture: any;
 
+var canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
 var renderer = new THREE.WebGLRenderer({ //create renderer
     preserveDrawingBuffer: true,
     alpha: true,
-    antialias: true
+    antialias: true,
+    canvas: canvas
 });
+
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
 

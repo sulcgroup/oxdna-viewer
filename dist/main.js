@@ -160,6 +160,28 @@ function previousConfig() {
         centerSystems();
     }
 }
+function createVideo() {
+    // get canvas
+    let canvas = document.getElementById("threeCanvas");
+    // set up movie capturer
+    const capturer = new CCapture({
+        format: 'webm',
+        framerate: 24,
+        name: 'trajectory',
+        verbose: true, display: true
+    });
+    document.addEventListener('nextConfigLoaded', function (e) {
+        e.preventDefault(); // cancel default actions
+        capturer.capture(canvas);
+        nextConfig();
+    });
+    document.addEventListener('finalConfig', function (e) {
+        capturer.stop();
+        capturer.save();
+    });
+    capturer.start();
+    nextConfig();
+}
 function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean

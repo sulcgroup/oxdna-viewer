@@ -176,20 +176,48 @@ let lutColsVis: boolean = false;
     }
 }*/
 
-function nextConfig(){
-    getNewConfig(1)
+function nextConfig() {
+    getNewConfig(1);
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
         centerSystems()
     }
 }
 
-function previousConfig(){
-    getNewConfig(-1)
+function previousConfig() {
+    getNewConfig(-1);
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
         centerSystems()
     }
+}
+
+function createVideo() {
+    // get canvas
+    let canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
+
+    // set up movie capturer
+    const capturer = new CCapture({
+        format: 'webm',
+        framerate: 24,
+        name: 'trajectory',
+        verbose: true, display: true
+    });
+
+    document.addEventListener('nextConfigLoaded', function (e) {
+        e.preventDefault(); // cancel default actions
+        capturer.capture(canvas);
+        nextConfig();
+    });
+
+    document.addEventListener('finalConfig', function (e) {
+        capturer.stop();
+        capturer.save();
+    });
+
+    capturer.start();
+    nextConfig();
+
 }
 
 function toggleLut(chkBox) { //toggles display of coloring by json file / structure modeled off of base selector

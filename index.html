@@ -85,6 +85,7 @@
 			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
 			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3"></input>
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
+			<button onclick="createVideo()" type="button">Create video</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
 			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems</button>
 			<br>
@@ -124,9 +125,10 @@
 				<button>TEST</button>
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
-
 		</div>
+		<canvas id="threeCanvas" width=100% height=100%></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->
+			<script src="./ts/lib/CCapture.all.min.js"></script>
 			<script src="./ts/lib/three.js"></script>
 			<script src="./ts/lib/Lut.js"></script>
 			<script src="./ts/controls/DragControls.js"></script>

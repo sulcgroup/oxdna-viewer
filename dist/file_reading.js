@@ -50,6 +50,10 @@ function extract_next_conf() {
     if (need_next_chunk) {
         get_next_chunk(dat_file, current_chunk_number + 2); //current is the old middle, so need two ahead
     }
+    else {
+        // Signal that config has been loaded
+        document.dispatchEvent(new Event('nextConfigLoaded'));
+    }
     return (next_conf);
 }
 function extract_previous_conf() {
@@ -305,6 +309,8 @@ target.addEventListener("drop", function (event) {
             }
             next_chunk = next_chunk.substring(1);
             conf_end.chunk = current_chunk;
+            // Signal that config has been loaded
+            document.dispatchEvent(new Event('nextConfigLoaded'));
         };
         previous_previous_reader.onload = () => {
             previous_previous_chunk = previous_previous_reader.result;
@@ -619,6 +625,7 @@ function getNewConfig(mode) {
         }
         if (lines == undefined) {
             alert("No more confs to load!");
+            document.dispatchEvent(new Event('finalConfig'));
             return;
         }
         let nuc_local_id = 0;

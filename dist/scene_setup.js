@@ -36,10 +36,12 @@ scene.background = WHITE;
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
 // set camera position 
 camera.position.x = 100;
+var canvas = document.getElementById("threeCanvas");
 var renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer: true,
     alpha: true,
-    antialias: true
+    antialias: true,
+    canvas: canvas
 });
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body

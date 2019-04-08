@@ -48,7 +48,11 @@ function extract_next_conf() {
     conf_end = end;
     if (need_next_chunk) {
         get_next_chunk(dat_file, current_chunk_number + 2); //current is the old middle, so need two ahead
+    } else {
+        // Signal that config has been loaded
+        document.dispatchEvent(new Event('nextConfigLoaded'));
     }
+
     return (next_conf);
 }
 
@@ -337,6 +341,10 @@ target.addEventListener("drop", function (event) {
             }
             next_chunk = next_chunk.substring(1);
             conf_end.chunk = current_chunk;
+
+            // Signal that config has been loaded
+            document.dispatchEvent(new Event('nextConfigLoaded'));
+
         };
         previous_previous_reader.onload = () => {
             previous_previous_chunk = previous_previous_reader.result as String;
@@ -685,7 +693,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 function getNewConfig(mode) { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
-        return
+        return;
     }
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
@@ -701,7 +709,8 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         }
         if (lines == undefined) {
             alert("No more confs to load!");
-            return
+            document.dispatchEvent(new Event('finalConfig'));
+            return;
         }
 
         let nuc_local_id = 0;
