@@ -130,7 +130,7 @@ function toggleArrows(chkBox) { //make arrows visible or invisible based on chec
 // adding mouse control to the scene 
 //var orbit = new THREE.OrbitControls( camera, renderer.domElement );
 //orbit.addEventListener('change', render);
-var controls = new THREE.TrackballControls(camera);
+var controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
 controls.zoomSpeed = 1.5;
 controls.panSpeed = 1.0;

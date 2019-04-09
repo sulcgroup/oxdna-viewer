@@ -11,6 +11,10 @@
 			margin: 0;
 			overflow: hidden;
 		}
+		canvas {
+			position: absolute;
+			height: 100%;
+		}
 
 		.sidenav { /*side bar settings*/
 			width: 200px;
@@ -55,6 +59,8 @@
 
 		textarea {
 			width: 100%;
+			max-width: 100%;
+			min-width: 100%;
 			overflow-y: scroll;
 			font-size: 12px;
 		}
@@ -126,7 +132,7 @@
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
 		</div>
-		<canvas id="threeCanvas" width=100% height=100%></canvas>
+		<canvas id="threeCanvas"></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->
 			<script src="./ts/lib/CCapture.all.min.js"></script>
 			<script src="./ts/lib/three.js"></script>
