@@ -326,7 +326,10 @@ target.addEventListener("drop", function (event) {
         //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
         next_reader.onload = () => {
             next_chunk = next_reader.result as String;
-            if (next_chunk == ""){return}
+            if (next_chunk == ""){
+                document.dispatchEvent(new Event('finalConfig'));
+                return;
+            }
             n_hanging_line = "";
             let c = "";
             for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
@@ -709,7 +712,6 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         }
         if (lines == undefined) {
             alert("No more confs to load!");
-            document.dispatchEvent(new Event('finalConfig'));
             return;
         }
 

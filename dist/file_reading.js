@@ -293,6 +293,7 @@ target.addEventListener("drop", function (event) {
         next_reader.onload = () => {
             next_chunk = next_reader.result;
             if (next_chunk == "") {
+                document.dispatchEvent(new Event('finalConfig'));
                 return;
             }
             n_hanging_line = "";
@@ -625,7 +626,6 @@ function getNewConfig(mode) {
         }
         if (lines == undefined) {
             alert("No more confs to load!");
-            document.dispatchEvent(new Event('finalConfig'));
             return;
         }
         let nuc_local_id = 0;

@@ -15,6 +15,12 @@
 			position: absolute;
 			height: 100%;
 		}
+		.videoopts {
+			width: 200px;
+			position: fixed;
+			z-index: 1;
+			background-color: #eee;
+		}
 
 		.sidenav { /*side bar settings*/
 			width: 200px;
@@ -91,7 +97,7 @@
 			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
 			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3"></input>
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
-			<button onclick="createVideo()" type="button">Create video</button>
+			<button onclick="toggleVideoOptions()" type="button">Create video</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
 			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems</button>
 			<br>
@@ -131,6 +137,17 @@
 				<button>TEST</button>
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
+		</div>
+		<div class="videoopts" id="videoOptions" hidden=true>
+			<fieldset>
+				<legend>File format:</legend>
+				<input type="radio" name="videoFormat" value="webm" checked>webm<br>
+				<input type="radio" name="videoFormat" value="gif" >gif<br>
+				<input type="radio" name="videoFormat" value="png" >png<br>
+				<input type="radio" name="videoFormat" value="jpg" >jpg<br>
+			</fieldset>
+			<input type="number" value="24" id="videoFramerate" width="20px">framerate</input>
+			<button onclick="createVideo()">Start</button>
 		</div>
 		<canvas id="threeCanvas"></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->

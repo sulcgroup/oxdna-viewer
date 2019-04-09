@@ -192,21 +192,37 @@ function previousConfig() {
     }
 }
 
+function toggleVideoOptions() {
+    let opt = document.getElementById("videoOptions");
+    opt.hidden = !opt.hidden;
+}
+
 function createVideo() {
     // get canvas
     let canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
 
+    // get options:
+    let format = (<HTMLInputElement>document.querySelector('input[name="videoFormat"]:checked')).value;
+    let framerate = (<HTMLInputElement>document.getElementById("videoFramerate")).value;
     // set up movie capturer
     const capturer = new CCapture({
-        format: 'webm',
-        framerate: 24,
+        format: format,
+        framerate: framerate,
         name: 'trajectory',
-        verbose: true, display: true
+        verbose: true,
+        display: true,
+        workersPath: 'ts/lib/'
     });
 
     document.addEventListener('nextConfigLoaded', function (e) {
         e.preventDefault(); // cancel default actions
-        capturer.capture(canvas);
+        try {
+            capturer.capture(canvas);
+        } catch (e) {
+            alert("Failed to capture video: \n"+e);
+            capturer.stop();
+            return;
+        }
         nextConfig();
     });
 
