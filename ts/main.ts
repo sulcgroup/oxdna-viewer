@@ -197,6 +197,29 @@ function toggleVideoOptions() {
     opt.hidden = !opt.hidden;
 }
 
+function toggleColorOptions() {
+    let opt = document.getElementById("colorOptions");
+    opt.hidden = !opt.hidden;
+    if(!opt.hidden) {
+        opt.innerHTML = "";  //Clear content
+        for(let i=0; i<backbone_materials.length; i++) {
+            let m = backbone_materials[i];
+            let c = document.createElement('input');
+            c.type = 'color';
+            c.value = "#" + m.color.getHexString();
+            c.id = 'backboneColor'+i;
+            c.oninput = function() {
+                backbone_materials[i].color = new THREE.Color(c.value);
+            };
+            c['materialIdx'] = i;
+            opt.appendChild(c);
+        }
+    }
+}
+
+function updateColor(colorPicker) {
+}
+
 function createVideo() {
     // get canvas
     let canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");

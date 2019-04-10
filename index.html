@@ -15,11 +15,12 @@
 			position: absolute;
 			height: 100%;
 		}
-		.videoopts {
+		.opts {
 			width: 200px;
-			position: fixed;
+			position: auto;
 			z-index: 1;
 			background-color: #eee;
+			padding: 2px;
 		}
 
 		.sidenav { /*side bar settings*/
@@ -98,6 +99,7 @@
 			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3"></input>
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
 			<button onclick="toggleVideoOptions()" type="button">Create video</button>
+			<button onclick="toggleColorOptions()" type="button">Edit colors</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
 			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems</button>
 			<br>
@@ -138,7 +140,7 @@
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
 		</div>
-		<div class="videoopts" id="videoOptions" hidden=true>
+		<div class="opts" id="videoOptions" hidden=true>
 			<fieldset>
 				<legend>File format:</legend>
 				<input type="radio" name="videoFormat" value="webm" checked>webm<br>
@@ -148,6 +150,9 @@
 			</fieldset>
 			<input type="number" value="24" id="videoFramerate" width="20px">framerate</input>
 			<button onclick="createVideo()">Start</button>
+		</div>
+		<div title="Click a color to edit, right click to remove" class="opts"
+			id="colorOptions" hidden=true style="background-color: transparent">
 		</div>
 		<canvas id="threeCanvas"></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->
