@@ -114,26 +114,25 @@ function toggle(nucleotideID, sysID) { //toggle clicked nucleotide coloring
 	if (selected) { //if clicked nucleotide is already selected
 		// figure out what that base was before you painted it black and revert it
 		let nuc = nucleotides[nucleotideID]; //get Nucleotide object
-		let locstrandID = nuc.my_strand;
 		//recalculate Mesh's proper coloring and set Mesh material on scene to proper material
 		if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
 			if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				back_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
+				back_Mesh.material = systems[sysID].strand_to_material(nuc.my_strand);
 			}
 		}
 		if (nuc_Mesh instanceof THREE.Mesh) {
 			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				nuc_Mesh.material = (systems[sysID].base_to_material[nuc.global_id]);
+				nuc_Mesh.material = systems[sysID].base_to_material(nuc.type);
 			}
 		}
 		if (con_Mesh instanceof THREE.Mesh) {
 			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				con_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
+				con_Mesh.material = systems[sysID].strand_to_material(nuc.my_strand);
 			}
 		}
 		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
 			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				sp_Mesh.material = (systems[sysID].strand_to_material[locstrandID]);
+				sp_Mesh.material = systems[sysID].strand_to_material(nuc.my_strand);
 			}
 		}
 		let x = selList.indexOf(nucleotideID);
@@ -148,22 +147,22 @@ function toggle(nucleotideID, sysID) { //toggle clicked nucleotide coloring
 		//set all materials to selection_material color - currently aqua
 		if (back_Mesh instanceof THREE.Mesh) {
 			if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				back_Mesh.material = (selection_material);
+				back_Mesh.material = selection_material;
 			}
 		}
 		if (nuc_Mesh instanceof THREE.Mesh) {
 			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				nuc_Mesh.material = (selection_material);
+				nuc_Mesh.material = selection_material;
 			}
 		}
 		if (con_Mesh instanceof THREE.Mesh) {
 			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				con_Mesh.material = (selection_material);
+				con_Mesh.material = selection_material;
 			}
 		}
 		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
 			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				sp_Mesh.material = (selection_material);
+				sp_Mesh.material = selection_material;
 			}
 		}
 		selList.push(nucleotideID);

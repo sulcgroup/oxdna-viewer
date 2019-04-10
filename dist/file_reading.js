@@ -168,7 +168,6 @@ target.addEventListener("drop", function (event) {
     //make system to store the dropped files in
     var system = new System(sys_count, nucleotides.length);
     var files = event.dataTransfer.files, files_len = files.length;
-    var base_to_material = {};
     var base_to_num = {
         "A": 0,
         "G": 1,
@@ -218,7 +217,6 @@ target.addEventListener("drop", function (event) {
                 if (line == "") {
                     nucleotides.pop();
                     system.add_strand(current_strand);
-                    system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                     return;
                 }
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
@@ -242,7 +240,6 @@ target.addEventListener("drop", function (event) {
                 }
                 if (str_id != last_strand) { //if new strand id, make new strand
                     system.add_strand(current_strand);
-                    system.strand_to_material[last_strand] = backbone_materials[Math.floor(last_strand % backbone_materials.length)];
                     current_strand = new Strand(str_id, system);
                     nuc_local_id = 0;
                 }
@@ -258,11 +255,7 @@ target.addEventListener("drop", function (event) {
                 //nucleotides.push(nuc); //add nuc to global nucleotides array
                 nuc_local_id += 1;
                 last_strand = str_id;
-                // create a lookup for
-                // coloring base according to base id
-                base_to_material[nuc.global_id] = nucleoside_materials[base_to_num[base]];
                 if (i == lines.length - 1) {
-                    system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                     system.add_strand(current_strand);
                     return;
                 }
@@ -271,7 +264,6 @@ target.addEventListener("drop", function (event) {
             for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
                 selected_bases.push(0);
             }
-            system.setBaseMaterial(base_to_material); //store this system's base 
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = nucleotides.length;
@@ -489,10 +481,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             });
         }
         else {
-            material = system.strand_to_material[current_strand.strand_id];
+            material = system.strand_to_material(current_strand.strand_id);
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
+        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material(current_nucleotide.type)); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
@@ -529,7 +521,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material(i)); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
@@ -707,7 +699,7 @@ function getNewConfig(mode) {
                 //if the bonds are too long just don't add them
                 if (sp_len <= 5) {
                     let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
+                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
                     group.children[SP_CON].applyMatrix(rotation_sp); //rotate
                     group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
                     group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position

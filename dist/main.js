@@ -46,8 +46,6 @@ class Strand {
 class System {
     constructor(id, start_id) {
         this.strands = [];
-        this.strand_to_material = {};
-        this.base_to_material = {};
         this.system_id = id;
         this.global_start_id = start_id;
         this.system_3objects = new THREE.Group;
@@ -75,12 +73,17 @@ class System {
         });
     }
     ;
-    setStrandMaterial(strand_to_material) {
-        this.strand_to_material = strand_to_material;
+    strand_to_material(strandIndex) {
+        return backbone_materials[strandIndex % backbone_materials.length];
     }
-    setBaseMaterial(base_to_material) {
-        this.base_to_material = base_to_material;
+    ;
+    base_to_material(base) {
+        if (typeof base == "string") {
+            base = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[base];
+        }
+        return nucleoside_materials[base];
     }
+    ;
     setDatFile(dat_file) {
         this.dat_file = dat_file;
     }
@@ -174,13 +177,29 @@ function toggleColorOptions() {
             let c = document.createElement('input');
             c.type = 'color';
             c.value = "#" + m.color.getHexString();
-            c.id = 'backboneColor' + i;
             c.oninput = function () {
                 backbone_materials[i].color = new THREE.Color(c.value);
             };
-            c['materialIdx'] = i;
+            c.oncontextmenu = function (event) {
+                event.preventDefault();
+                opt.removeChild(c);
+                backbone_materials.splice(i, 1);
+                return false;
+            };
             opt.appendChild(c);
         }
+        let addButton = document.createElement('button');
+        addButton.innerText = "Add color";
+        addButton.onclick = function () {
+            backbone_materials.push(new THREE.MeshLambertMaterial({
+                color: 0x156289,
+                side: THREE.DoubleSide
+            }));
+            render();
+            opt.hidden = true;
+            toggleColorOptions();
+        };
+        opt.appendChild(addButton);
     }
 }
 function updateColor(colorPicker) {
@@ -228,11 +247,11 @@ function toggleLut(chkBox) {
                 let nuc_Mesh = nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
                 let con_Mesh = nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector
                 let sp_Mesh = nucleotides[i].visual_object.children[SP_CON]; //sugar phosphate connector
-                back_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
-                nuc_Mesh.material = systems[sysID].base_to_material[nucleotides[i].global_id];
-                con_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
+                back_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
+                nuc_Mesh.material = systems[sysID].base_to_material(nucleotides[i].global_id);
+                con_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
                 if (nucleotides[i].visual_object[SP_CON])
-                    sp_Mesh.material = systems[sysID].strand_to_material[nucleotides[i].global_id];
+                    sp_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
             }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
         }
