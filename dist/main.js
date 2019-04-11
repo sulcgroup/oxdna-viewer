@@ -32,11 +32,13 @@ class Strand {
     }
     ;
     remove_nucleotide(to_remove) {
-        this.nucleotides.forEach(function (nucleotide, i) {
-            if (nucleotide.local_id === to_remove) {
-                scene.remove(nucleotide.visual_object);
+        for (let i = 0; i < this.nucleotides.length; i++) {
+            let n = this.nucleotides[i];
+            if (n.local_id == to_remove) {
+                scene.remove(n.visual_object);
+                n = null;
             }
-        });
+        }
     }
     ;
 }
@@ -63,14 +65,20 @@ class System {
     }
     ;
     remove_strand(to_remove) {
-        this.strands.forEach(function (strand, i) {
-            if (strand.strand_id === to_remove) {
-                for (let j = 0; j < strand.nucleotides.length; j++) {
-                    strand.remove_nucleotide(j);
+        for (let i = 0; i < this.strands.length; i++) {
+            let s = this.strands[i];
+            if (s.strand_id == to_remove) {
+                this.system_3objects.remove(s.strand_3objects);
+                for (let j = 0; j < s.nucleotides.length; j++) {
+                    s.strand_3objects.remove(s.nucleotides[j].visual_object);
+                    s.remove_nucleotide(j);
                 }
+                scene.remove(s.strand_3objects);
+                s = null;
             }
             ;
-        });
+            render();
+        }
     }
     ;
     strand_to_material(strandIndex) {
