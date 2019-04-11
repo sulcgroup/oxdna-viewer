@@ -191,7 +191,7 @@ target.addEventListener("drop", function (event) {
             for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
                 selected_bases.push(0);
             }
-            system.setBaseMaterial(base_to_material); //store this system's base 
+            //system.setBaseMaterial(base_to_material); //store this system's base 
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = nucleotides.length;
@@ -452,10 +452,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     //radio button/checkbox selections
-    getActionMode();
-    getScopeMode();
-    getAxisMode();
-    if (actionMode.includes("Drag")) {
+    //getActionMode();
+    //getScopeMode();
+    //getAxisMode();
+    if (getActionModes().includes("Drag")) {
         drag();
     }
     /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -479,7 +479,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 }
 var need_next_chunk = false;
 var need_previous_chunk = false;
-function getNextConfig() {
+function getNewConfig(mode) {
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
         return;
@@ -487,7 +487,15 @@ function getNextConfig() {
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
         let num_nuc = system.system_length(); //gets # of nuc in system
-        let lines = extract_next_conf();
+        let lines;
+        if (mode == 1) {
+            lines = extract_next_conf();
+            conf_num += 1;
+        }
+        if (mode == -1) {
+            lines = extract_previous_conf();
+            conf_num -= 1;
+        }
         if (lines == undefined) {
             alert("No more confs to load!");
             return;
@@ -588,7 +596,7 @@ function getNextConfig() {
             }
             ;
         }
-        if (actionMode.includes("Drag")) {
+        if (getActionModes().includes("Drag")) {
             drag();
         }
     }

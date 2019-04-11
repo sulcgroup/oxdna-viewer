@@ -192,7 +192,6 @@ function nextConfig() {
     if (next_reader.readyState == 1) { //0: nothing loaded 1: working 2: done
         return;
     }
-    console.log("getting conf");
     getNewConfig(1);
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
