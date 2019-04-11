@@ -118,8 +118,6 @@ function get_next_chunk(dat_file, chunk_number) {
     current_chunk = next_chunk;
     c_hanging_line = n_hanging_line;
 
-
-
     let next_chunk_blob = dat_chunker(dat_file, chunk_number, approx_dat_len);
     next_reader.readAsText(next_chunk_blob);
     current_chunk_number += 1;
@@ -313,6 +311,7 @@ target.addEventListener("drop", function (event) {
             current_chunk = dat_reader.result as String;
             current_chunk_number = 0;
             readDat(system.system_length(), dat_reader, system, lutColsVis);
+            document.dispatchEvent(new Event('nextConfigLoaded'));
         };
         //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
         next_reader.onload = () => {
@@ -338,7 +337,6 @@ target.addEventListener("drop", function (event) {
 
             // Signal that config has been loaded
             document.dispatchEvent(new Event('nextConfigLoaded'));
-
         };
         previous_previous_reader.onload = () => {
             previous_previous_chunk = previous_previous_reader.result as String;
@@ -352,6 +350,9 @@ target.addEventListener("drop", function (event) {
             previous_previous_chunk = previous_previous_chunk.substring(1);
             previous_previous_chunk = previous_previous_chunk.concat(p_hanging_line);
             conf_end.chunk = current_chunk;
+
+            // Signal that config has been loaded
+            document.dispatchEvent(new Event('nextConfigLoaded'));
         };
 
         // read the first chunk

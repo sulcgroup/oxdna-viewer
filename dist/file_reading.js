@@ -280,6 +280,7 @@ target.addEventListener("drop", function (event) {
             current_chunk = dat_reader.result;
             current_chunk_number = 0;
             readDat(system.system_length(), dat_reader, system, lutColsVis);
+            document.dispatchEvent(new Event('nextConfigLoaded'));
         };
         //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
         next_reader.onload = () => {
@@ -319,6 +320,8 @@ target.addEventListener("drop", function (event) {
             previous_previous_chunk = previous_previous_chunk.substring(1);
             previous_previous_chunk = previous_previous_chunk.concat(p_hanging_line);
             conf_end.chunk = current_chunk;
+            // Signal that config has been loaded
+            document.dispatchEvent(new Event('nextConfigLoaded'));
         };
         // read the first chunk
         if (dat_file && top_file) {

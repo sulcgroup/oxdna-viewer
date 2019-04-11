@@ -150,6 +150,10 @@ let lutColsVis = false;
     }
 }*/
 function nextConfig() {
+    if (next_reader.readyState == 1) { //0: nothing loaded 1: working 2: done
+        return;
+    }
+    console.log("getting conf");
     getNewConfig(1);
     let centering_on = document.getElementById("centering").checked;
     if (centering_on) {
@@ -157,6 +161,9 @@ function nextConfig() {
     }
 }
 function previousConfig() {
+    if (previous_previous_reader.readyState == 1) {
+        return;
+    }
     getNewConfig(-1);
     let centering_on = document.getElementById("centering").checked;
     if (centering_on) {
@@ -303,6 +310,17 @@ function moveWithinBox(pos, dpos) {
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 function centerSystems() {
+    /*
+        //get center of mass for all systems
+        let cms = new THREE.Vector3(0, 0, 0);
+        for (let i = 0; i < nucleotides.length; i++) {
+            let tmp_pos = new THREE.Vector3;
+            tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[COM].matrixWorld);
+            cms.add(tmp_pos);
+        }
+        let mul = 1.0 / nucleotides.length;
+        cms.multiplyScalar(mul * -1);
+    */
     // Create one averaging variable for each dimension, representing that 1D
     // interval as a unit circle in 2D (with the circumference being the 
     // bounding box side length)
@@ -333,6 +351,9 @@ function centerSystems() {
     // Change nucleotide positions by the center of mass
     for (let i = 0; i < nucleotides.length; i++) {
         for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+            /*
+                        nucleotides[i].visual_object.children[j].position.add(cms);
+            */
             let p = nucleotides[i].visual_object.children[j].position;
             // Shift with centre of mass
             p.add(cms);

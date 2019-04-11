@@ -180,11 +180,11 @@ let lutColsVis: boolean = false;
 }*/
 
 function nextConfig() {
-<<<<<<< HEAD
-    getNewConfig(1)
-=======
+    if (next_reader.readyState == 1) { //0: nothing loaded 1: working 2: done
+        return;
+    }
+    console.log("getting conf");
     getNewConfig(1);
->>>>>>> Joakim-dev
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
         centerSystems()
@@ -192,11 +192,10 @@ function nextConfig() {
 }
 
 function previousConfig() {
-<<<<<<< HEAD
-    getNewConfig(-1)
-=======
+    if (previous_previous_reader.readyState == 1) {
+        return;
+    }
     getNewConfig(-1);
->>>>>>> Joakim-dev
     let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
     if (centering_on) {
         centerSystems()
@@ -354,7 +353,7 @@ function moveWithinBox(pos, dpos) {
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
 function centerSystems() { //centers systems based on cms calculated for world (all systems)
-<<<<<<< HEAD
+/*
     //get center of mass for all systems
     let cms = new THREE.Vector3(0, 0, 0);
     for (let i = 0; i < nucleotides.length; i++) {
@@ -364,7 +363,7 @@ function centerSystems() { //centers systems based on cms calculated for world (
     }
     let mul = 1.0 / nucleotides.length;
     cms.multiplyScalar(mul * -1);
-=======
+*/
     // Create one averaging variable for each dimension, representing that 1D
     // interval as a unit circle in 2D (with the circumference being the 
     // bounding box side length)
@@ -386,7 +385,6 @@ function centerSystems() { //centers systems based on cms calculated for world (
         cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
         cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
     }
->>>>>>> Joakim-dev
 
     // Divide center of mass sums to get the averages
     cm_x.divideScalar(nucleotides.length);
@@ -405,9 +403,9 @@ function centerSystems() { //centers systems based on cms calculated for world (
     // Change nucleotide positions by the center of mass
     for (let i = 0; i < nucleotides.length; i++) {
         for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-<<<<<<< HEAD
+/*
             nucleotides[i].visual_object.children[j].position.add(cms);
-=======
+*/
             let p = nucleotides[i].visual_object.children[j].position;
             // Shift with centre of mass
             p.add(cms);
@@ -415,7 +413,6 @@ function centerSystems() { //centers systems based on cms calculated for world (
             p.add(new THREE.Vector3().addScalar(1.5*box));
             p.x %= box; p.y %= box; p.z %= box;
             p.sub(new THREE.Vector3().addScalar(0.75*box));
->>>>>>> Joakim-dev
         }
     }
     render();
