@@ -61,7 +61,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 	}
 
 	function onDocumentMouseMove(event) { //when mouse is moved
-		if (actionMode.includes("Drag")) { //if in drag mode
+		if (getActionModes().includes("Drag")) { //if in drag mode
 			render();
 			event.preventDefault(); //prevent default functions such as clicking in text areas, etc
 
@@ -91,14 +91,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
 				 	var object = intersects[0].object;
 				 }*/
-				if (scopeMode.includes("Nuc")) { //if scope mode is "Nuc", set objects to be dragged to the clicked nucleotide
-					var object = intersects[0].object.parent;
-				}
-				else if (scopeMode.includes("Strand")) { //if scope mode is "Strand", set objects to be dragged to the clicked strand
-					var object = intersects[0].object.parent.parent;
-				}
-				else if (scopeMode.includes("System")) { //if scope mode is "System", set objects to be dragged to the clicked system
-					var object = intersects[0].object.parent.parent.parent;
+				switch (getScopeMode()) {
+					case "Nuc": //if scope mode is "Nuc", set objects to be dragged to the clicked nucleotide
+						var object = intersects[0].object.parent; break;
+					case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
+						var object = intersects[0].object.parent.parent; break;
+					case "System": //if scope mode is "System", set objects to be dragged to the clicked system
+						var object = intersects[0].object.parent.parent.parent; break;
 				}
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
 
@@ -129,7 +128,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 	}
 	function onDocumentMouseDown(event) { //if mouse is moved
-		if (actionMode.includes("Drag")) { //if actionMode includes "Drag"
+		if (getActionModes().includes("Drag")) { //if getActionModes() includes "Drag"
 			event.preventDefault(); //prevent default mouse functions
 
 			_raycaster.setFromCamera(_mouse, _camera); //set raycaster - object that determines click location relative to objects on scene
@@ -141,14 +140,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
 				 	_selected = intersects[0].object;
 				 }*/
-				if (scopeMode.includes("Nuc")) { //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
-					_selected = intersects[0].object.parent;
-				}
-				else if (scopeMode.includes("Strand")) { //if scope mode is "Strand", set objects to be dragged to the clicked strand
-					_selected = intersects[0].object.parent.parent;
-				}
-				else if (scopeMode.includes("System")) { //if scope mode is "System", set objects to be dragged to the clicked system
-					_selected = intersects[0].object.parent.parent.parent;
+				switch (getScopeMode()) {
+					case "Nuc": //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
+						_selected = intersects[0].object.parent; break;
+					case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
+						_selected = intersects[0].object.parent.parent; break;
+					case "System": //if scope mode is "System", set objects to be dragged to the clicked system
+						_selected = intersects[0].object.parent.parent.parent; break;
 				}
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
 					_offset.copy(_intersection).sub(_selected.position);
@@ -164,13 +162,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 	}
 
 	function onDocumentMouseCancel(event) { //if mouse is ??
-		if (actionMode.includes("Drag")) { //if action mode includes "Drag"
+		if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
 
 			event.preventDefault();
 
 			//calculate new sp connectors - does not work after rotation
 			if (_selected) { //if there is a clicked object
-				if (scopeMode.includes("Nuc")) { //if scopeMode is "Nuc"
+				if (getScopeMode() == "Nuc") {
 					var current_nuc = nucleotides[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
 
 					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) { //if neighbor3 exists
@@ -228,7 +226,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 	}
 
 	function onDocumentTouchMove(event) { //if mouse moves
-		if (actionMode.includes("Drag")) { //if action mode includes "Drag"
+		if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
 			event.preventDefault(); //prevent default mouse functions
 			event = event.changedTouches[0];
 
@@ -254,7 +252,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 	}
 
 	function onDocumentTouchStart(event) { //on mouse start on document
-		if (actionMode.includes("Drag")) { //if actionMode includes "Drag"
+		if (getActionModes().includes("Drag")) { //if getActionModes() includes "Drag"
 
 			event.preventDefault(); //prevent default mouse functions
 			event = event.changedTouches[0];
@@ -269,17 +267,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			var intersects = _raycaster.intersectObjects(_objects, individ);
 
 			if (intersects.length > 0) { //if something in scene was clicked - i.e. is in intersects array
-				if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set _selected to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
-					_selected = intersects[0].object;
-				}
-				if (scopeMode.includes("Nuc")) {
-					_selected = intersects[0].object.parent;//if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
-				}
-				else if (scopeMode.includes("Strand")) {
-					_selected = intersects[0].object.parent.parent;//if scope mode is "Strand", set _selected to be dragged to the clicked strand
-				}
-				else if (scopeMode.includes("System")) {//if scope mode is "System", set _selected to be dragged to the clicked system
-					_selected = intersects[0].object.parent.parent.parent;
+				switch (getScopeMode()) {
+					case "Nuc": //if "Nuc", set _selected to be dragged to the clicked nucleotide
+						_selected = intersects[0].object.parent; break;
+					case "Strand": //if "Strand", set _selected to be dragged to the clicked strand
+						_selected = intersects[0].object.parent.parent; break;
+					case "System": //if "System", set _selected to be dragged to the clicked system
+						_selected = intersects[0].object.parent.parent.parent; break;
 				}
 
 				_plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), _selected.position);
@@ -300,7 +294,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 	}
 
 	function onDocumentTouchEnd(event) { //if mouse ??
-		if (actionMode.includes("Drag")) { //if actionMode includes "Drag"
+		if (getActionModes().includes("Drag")) {
 
 			event.preventDefault(); //prevent default mouse functions
 

@@ -48,7 +48,11 @@ function extract_next_conf() {
     conf_end = end;
     if (need_next_chunk) {
         get_next_chunk(dat_file, current_chunk_number + 2); //current is the old middle, so need two ahead
+    } else {
+        // Signal that config has been loaded
+        document.dispatchEvent(new Event('nextConfigLoaded'));
     }
+
     return (next_conf);
 }
 
@@ -178,7 +182,8 @@ var approx_dat_len: number,
     conf_len: number,
     conf_num: number = 0,
     dat_fileout: string = "",
-    dat_file; //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+    dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
+    box: number; //box size for system
 
 
 target.addEventListener("drop", function (event) {
@@ -192,7 +197,6 @@ target.addEventListener("drop", function (event) {
     var files = event.dataTransfer.files,
         files_len = files.length;
 
-    var base_to_material = {};
     var base_to_num = {
         "A": 0,
         "G": 1,
@@ -242,7 +246,6 @@ target.addEventListener("drop", function (event) {
                     if (line == "") {
                         nucleotides.pop();
                         system.add_strand(current_strand);
-                        system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                         return
                     }
                     let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
@@ -266,7 +269,6 @@ target.addEventListener("drop", function (event) {
                     }
                     if (str_id != last_strand) { //if new strand id, make new strand
                         system.add_strand(current_strand);
-                        system.strand_to_material[last_strand] = backbone_materials[Math.floor(last_strand % backbone_materials.length)];
                         current_strand = new Strand(str_id, system);
                         nuc_local_id = 0;
                     };
@@ -284,12 +286,7 @@ target.addEventListener("drop", function (event) {
                     nuc_local_id += 1;
                     last_strand = str_id;
 
-                    // create a lookup for
-                    // coloring base according to base id
-                    base_to_material[nuc.global_id] = nucleoside_materials[base_to_num[base]];
-
                     if (i == lines.length - 1) {
-                        system.strand_to_material[current_strand.strand_id] = backbone_materials[Math.floor(current_strand.strand_id % backbone_materials.length)];
                         system.add_strand(current_strand);
                         return
                     };
@@ -298,7 +295,6 @@ target.addEventListener("drop", function (event) {
             for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
                 selected_bases.push(0);
             }
-            system.setBaseMaterial(base_to_material); //store this system's base 
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = nucleotides.length;
@@ -321,7 +317,10 @@ target.addEventListener("drop", function (event) {
         //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
         next_reader.onload = () => {
             next_chunk = next_reader.result as String;
-            if (next_chunk == ""){return}
+            if (next_chunk == ""){
+                document.dispatchEvent(new Event('finalConfig'));
+                return;
+            }
             n_hanging_line = "";
             let c = "";
             for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
@@ -336,6 +335,10 @@ target.addEventListener("drop", function (event) {
             }
             next_chunk = next_chunk.substring(1);
             conf_end.chunk = current_chunk;
+
+            // Signal that config has been loaded
+            document.dispatchEvent(new Event('nextConfigLoaded'));
+
         };
         previous_previous_reader.onload = () => {
             previous_previous_chunk = previous_previous_reader.result as String;
@@ -443,7 +446,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // parse file into lines 
     let lines = dat_reader.result.split(/[\r\n]+/g);
     //get the simulation box size 
-    let box = parseFloat(lines[1].split(" ")[3]);
+    box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
     conf_num += 1
     console.log(conf_num, "t =", time);
@@ -541,10 +544,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             })
         }
         else {
-            material = system.strand_to_material[current_strand.strand_id]
+            material = system.strand_to_material(current_strand.strand_id);
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
+        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material(current_nucleotide.type)); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
@@ -593,7 +596,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material[i]); //cylinder - sugar phosphate connector
+            let sp = new THREE.Mesh(connector_geometry, system.strand_to_material(i)); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
@@ -656,10 +659,8 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     sys_count += 1;
 
     //radio button/checkbox selections
-    getActionMode();
-    getScopeMode();
-    getAxisMode();
-    if (actionMode.includes("Drag")) {
+
+    if (getActionModes().includes("Drag")) {
         drag();
     }
     /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
@@ -686,7 +687,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 function getNewConfig(mode) { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     if (systems.length > 1) {
         alert("Only one file at a time can be read as a trajectory, sorry...");
-        return
+        return;
     }
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
         let system = systems[i];
@@ -702,7 +703,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         }
         if (lines == undefined) {
             alert("No more confs to load!");
-            return
+            return;
         }
 
         let nuc_local_id = 0;
@@ -821,7 +822,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
                             new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()
                         )
                     );
-                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material[locstrandID]);
+                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
                     group.children[SP_CON].applyMatrix(rotation_sp); //rotate
                     group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
                     group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
@@ -866,7 +867,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             }
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
-        if (actionMode.includes("Drag")) {
+        if (getActionModes().includes("Drag")) {
             drag();
         }
     }

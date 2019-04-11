@@ -47,12 +47,17 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 // set camera position 
 camera.position.x = 100;
 
+// import canvas capture library
+declare var CCapture: any;
 
+var canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
 var renderer = new THREE.WebGLRenderer({ //create renderer
     preserveDrawingBuffer: true,
     alpha: true,
-    antialias: true
+    antialias: true,
+    canvas: canvas
 });
+
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
 
@@ -123,7 +128,7 @@ function toggleArrows(chkBox) { //make arrows visible or invisible based on chec
 // adding mouse control to the scene 
 //var orbit = new THREE.OrbitControls( camera, renderer.domElement );
 //orbit.addEventListener('change', render);
-var controls = new THREE.TrackballControls(camera);
+var controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
 controls.zoomSpeed = 1.5;
 controls.panSpeed = 1.0;
