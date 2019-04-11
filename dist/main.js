@@ -226,7 +226,7 @@ function createVideo() {
         display: true,
         workersPath: 'ts/lib/'
     });
-    document.addEventListener('nextConfigLoaded', function (e) {
+    function _load(e) {
         e.preventDefault(); // cancel default actions
         try {
             capturer.capture(canvas);
@@ -237,11 +237,16 @@ function createVideo() {
             return;
         }
         nextConfig();
-    });
-    document.addEventListener('finalConfig', function (e) {
+    }
+    function _done() {
+        document.removeEventListener('nextConfigLoaded', _load);
         capturer.stop();
         capturer.save();
-    });
+        document.removeEventListener('finalConfig', _done);
+        return;
+    }
+    document.addEventListener('nextConfigLoaded', _load);
+    document.addEventListener('finalConfig', _done);
     capturer.start();
     nextConfig();
 }
