@@ -103,22 +103,23 @@ var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];
 let lutColsVis = false;
-function updatePos(sys_count) {
-    for (let h = sys_count; h < sys_count + 1; h++) { //for current system
+function updatePos( /*sys_count*/) {
+    for (let h = 0 /*sys_count*/; h < systems.length /*sys_count + 1*/; h++) { //for current system
         let syscms = new THREE.Vector3(); //system cms
         let n = systems[h].system_length(); //# of nucleotides in system
         for (let i = 0; i < systems[h].system_3objects.children.length; i++) { //for each strand
-            let n1 = systems[h].system_3objects.children[i].children.length; //for strand_3objects in system_3objects
+            let n1 = systems[h].strands[i].nucleotides.length; //for strand_3objects in system_3objects
             //systems[h].system_3objects.updateMatrixWorld(true);
             //systems[h].system_3objects.updateMatrix();
             let strandcms = new THREE.Vector3(); //strand cms
             for (let j = 0; j < n1; j++) { //for each visual_object
-                let nucobj = systems[h].system_3objects.children[i].children[j]; //current nuc's visual_object
+                let nucobj = systems[h].strands[i].nucleotides[j].visual_object; //current nuc's visual_object
                 let n2 = nucobj.children.length; //# of Meshes in visual_object/rot obj
                 let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
                 let tempposition = new THREE.Vector3();
-                nucobj.children[3].getWorldPosition(tempposition);
+                tempposition = nucobj.children[3].position;
+                //nucobj.children[3].getWorldPosition(tempposition);
                 strandcms.add(tempposition); //nucobj.children[3].position); //strand cms
                 objcms = tempposition; // nucobj.children[3].position; //nucobj cms
                 //let cmsx = objcms.x, cmsy = objcms.y, cmsz = objcms.z;

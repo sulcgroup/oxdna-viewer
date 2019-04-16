@@ -574,7 +574,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // set camera position based on structure
     // update the scene
     render();
-    updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+    updatePos( /*sys_count - 1*/); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
     for (let i = 0; i < nucleotides.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(nucleotides[i].visual_object.children[BACKBONE]);
     }
