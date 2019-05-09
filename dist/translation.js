@@ -73,58 +73,108 @@ function getRotObj(i) {
 }
 function rotate(dir) {
     let dirangle = dir * angle;
-    let angleInner = -1 * dirangle;
+    //let angleInner: number = -1 * dirangle;
     updatePos(); //update class positions
     let rot = false;
     getAxisMode(); //get axis on which to rotate //rotate around user selected axis - default is X - and user entered angle - updated every time textarea is changed; default is 90
+    let matrix;
+    matrix = new THREE.Matrix3();
+    if (axisMode == "X") {
+        matrix.set(1, 0, 0, 0, Math.cos(dirangle), -Math.sin(dirangle), 0, Math.sin(dirangle), Math.cos(dirangle));
+    }
+    else if (axisMode == "Y") {
+        matrix.set(Math.cos(dirangle), 0, Math.sin(dirangle), 0, 1, 0, -Math.sin(dirangle), 0, Math.cos(dirangle));
+    }
+    else {
+        matrix.set(Math.cos(dirangle), -Math.sin(dirangle), 0, Math.sin(dirangle), Math.cos(dirangle), 0, 0, 0, 1);
+    }
+    let matrix4;
+    matrix4 = new THREE.Matrix4();
+    if (axisMode == "X") {
+        matrix4.set(1, 0, 0, 0, 0, Math.cos(dirangle), -Math.sin(dirangle), 0, 0, Math.sin(dirangle), Math.cos(dirangle), 0, 0, 0, 0, 1);
+    }
+    else if (axisMode == "Y") {
+        matrix4.set(Math.cos(dirangle), 0, Math.sin(dirangle), 0, 0, 1, 0, 0, -Math.sin(dirangle), 0, Math.cos(dirangle), 0, 0, 0, 0, 1);
+    }
+    else {
+        matrix4.set(Math.cos(dirangle), -Math.sin(dirangle), 0, 0, Math.sin(dirangle), Math.cos(dirangle), 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+    }
+    let q = new THREE.Quaternion();
+    q.setFromRotationMatrix(matrix4);
     for (let i = 0; i < selected_bases.length; i++) { //go through each nucleotide in all systems
         if (selected_bases[i] == 1) { //if nucleotide is selected
-            console.log(i);
+            let temp = new THREE.Vector3(nucleotides[i].visual_object.children[3].position.x, 0, 0);
+            //temp.normalize();
+            //q.setFromAxisAngle(temp, angle);
+            //nucleotides[i].visual_object.quaternion.multiply(q);
+            render();
+            rot = true;
+            let originalObjPos = new THREE.Vector3();
+            originalObjPos.copy(nucleotides[i].visual_object.children[3].position);
             //let rotobj: THREE.Group = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
             for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-                let p = new THREE.Vector3();
-                p = nucleotides[i].visual_object.children[j].position;
-                let c = new THREE.Vector3();
-                if (scopeMode.includes("Nuc"))
-                    c = systems[nucleotides[i].my_system].system_3objects.children[i].children[j].position;
-                else if (scopeMode.includes("Strand"))
-                    c = systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].pos;
-                else if (scopeMode.includes("System"))
-                    c = systems[nucleotides[i].my_system].pos;
-                let d = p.sub(c);
-                let matrix;
-                matrix = new THREE.Matrix3();
+                if (true) {
+                    let p = new THREE.Vector3();
+                    p.copy(nucleotides[i].visual_object.children[j].position);
+                    let c = new THREE.Vector3();
+                    if (scopeMode.includes("Nuc"))
+                        c = originalObjPos;
+                    else if (scopeMode.includes("Strand"))
+                        c.copy(systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].pos);
+                    else if (scopeMode.includes("System"))
+                        c.copy(systems[nucleotides[i].my_system].pos);
+                    let d = p.sub(c);
+                    let v1;
+                    if (axisMode == "X") {
+                        v1 = new THREE.Vector3(1, 0, 0);
+                    }
+                    else if (axisMode == "Y") {
+                        v1 = new THREE.Vector3(0, 1, 0);
+                    }
+                    else {
+                        v1 = new THREE.Vector3(0, 0, 1);
+                    }
+                    nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, dirangle);
+                    d.applyMatrix3(matrix);
+                    d.add(c);
+                    nucleotides[i].visual_object.children[j].position.set(d.x, d.y, d.z);
+                    rot = true;
+                    //}
+                }
+                /*if (!scopeMode.includes("Nuc")) {
+                    let p: THREE.Vector3 = nucleotides[i].visual_object.children[j].position;
+                    let c1: THREE.Vector3 = originalObjPos;
+                    let d1: THREE.Vector3 = p.sub(c1);
+                    d1.applyMatrix3(matrix);
+                    d1.add(c1);
+                    nucleotides[i].visual_object.children[j].position.set(d1.x, d1.y, d1.z);
+                }
+                let v1: THREE.Vector3;
                 if (axisMode == "X") {
-                    matrix.set(1, 0, 0, 0, Math.cos(dirangle), -Math.sin(dirangle), 0, Math.sin(dirangle), Math.cos(dirangle));
+                    v1 = new THREE.Vector3(1,0,0);
                 }
                 else if (axisMode == "Y") {
-                    matrix.set(Math.cos(dirangle), 0, Math.sin(dirangle), 0, 1, 0, -Math.sin(dirangle), 0, Math.cos(dirangle));
+                    v1 = new THREE.Vector3(0, 1, 0);
                 }
                 else {
-                    matrix.set(Math.cos(dirangle), -Math.sin(dirangle), 0, Math.sin(dirangle), Math.cos(dirangle), 0, 0, 0, 1);
+                    v1 = new THREE.Vector3(0, 0, 1);
                 }
-                d.applyMatrix3(matrix);
-                d.add(c);
-                nucleotides[i].visual_object.children[j].position = d;
-                rot = true;
-                /*p = nucleotides[i].visual_object.children[j].position;
-                updatePos(nucleotides[i].my_system);
-                let c1 = systems[nucleotides[i].my_system].strands[nucleotides[i].my_strand].nucleotides[nucleotides[i].local_id].pos;
-                let d1: THREE.Vector3 = p.sub(c1);
-                
-                if (axisMode == "X") {
-                    matrix.set(1, 0, 0, 0, Math.cos(angleInner), -Math.sin(angleInner), 0, Math.sin(angleInner), Math.cos(angleInner));
-                }
-                else if (axisMode == "Y") {
-                    matrix.set(Math.cos(angleInner), 0, Math.sin(angleInner), 0, 1, 0, -Math.sin(angleInner), 0, Math.cos(angleInner));
-                }
-                else {
-                    matrix.set(Math.cos(angleInner), -Math.sin(angleInner), 0, Math.sin(angleInner), Math.cos(angleInner), 0, 0, 0, 1);
-                }
-                d1.applyMatrix3(matrix);
-                d1.add(c1);
-                nucleotides[i].visual_object.children[j].position = d1;*/
+                nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, dirangle);
+                rot = true;*/
             }
+            /*for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+                let v1: THREE.Vector3;
+                if (axisMode == "X") {
+                    v1 = new THREE.Vector3(1, 0, 0);
+                }
+                else if (axisMode == "Y") {
+                    v1 = new THREE.Vector3(0, 1, 0);
+                }
+                else {
+                    v1 = new THREE.Vector3(0, 0, 1);
+                }
+                nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, dirangle);
+            }*/
             // }
         }
         // let tempnuc = nucleotides[i];

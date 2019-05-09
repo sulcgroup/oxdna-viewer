@@ -131,6 +131,7 @@ function updatePos( /*sys_count*/) {
                 nucobj.applyMatrix(new THREE.Matrix4().makeTranslation(cmsx, cmsy, cmsz)); //translate nucobj by cms1
                 */
                 systems[h].strands[i].nucleotides[j].pos = objcms; // set nucleotide object position to objcms
+                nucleotides[systems[h].strands[i].nucleotides[j].global_id].pos = objcms;
             }
             //calculate strand cms
             let mul = 1.0 / n1;

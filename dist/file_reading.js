@@ -464,7 +464,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
-        let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
+        let posObj = new THREE.Mesh(nucleoside_geometry, system.base_to_material[current_nucleotide.global_id]); //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
         // apply rotations
         nucleoside.applyMatrix(base_rotation);

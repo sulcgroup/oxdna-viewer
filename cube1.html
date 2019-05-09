@@ -29,6 +29,12 @@
         <!-- include javascript files -->
         <script src="./ts/lib/three.js"></script>
         <script type="text/javascript">
+            function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
+                return [a2 * b3 - a3 * b2,
+                a3 * b1 - a1 * b3,
+                a1 * b2 - a2 * b1];
+            }
+
             var width = window.innerWidth;
             var height = window.innerHeight;
 
@@ -42,19 +48,49 @@
 
             var cubeGeometry = new THREE.CubeGeometry(50, 50, 50);
             var cubeMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
-            var cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            var cube = new THREE.Mesh(new THREE.CubeGeometry(5, 5, 5), cubeMaterial);
             var cube1 = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            var cube2 = new THREE.Mesh(cubeGeometry, cubeMaterial);
+            var cylinder = new THREE.Mesh(new THREE.CylinderGeometry(50, 25, 80, 8), cubeMaterial);
             //cube.rotation.y = Math.PI * 45 / 180;
-            cube.translateX(50);
-            cube1.translateX(150);
+            let v1 = new THREE.Vector3(0, 1, 0);
+            let v2 = new THREE.Vector3(5, 5, 5);
+            let crossprod = new THREE.Vector3();
+            crossprod.crossVectors(v1, v2);
+            crossprod.normalize();
+            let a = v1.angleTo(v2);
+            cylinder.rotateOnAxis(crossprod, a);
+            cube1.rotateOnAxis(crossprod, a);
+            /*let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion( //creat nucleoside sphere rotation
+                new THREE.Quaternion().setFromUnitVectors(
+                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(5, 5, 5).normalize()
+                )
+            );*/
+            //cylinder.applyMatrix(new THREE.Matrix4().makeScale(1.0, 80, 1.0));
+            //cube1.applyMatrix(rotation_con);
+            //cylinder.applyMatrix(rotation_con);
+
+            cube1.position.set(30, 30, 32);
+            
+            //let x = cube1.position.x;
+            //let y = cube1.position.y;
+            //let z = cube1.position.z;
+            //let v = cube1.position.clone();
+            ///cube.position.set(v.x, v.y, v.z);
+            cube2.position.set(175, 0, 0);
+            cylinder.position.set(50, 50, 50);
+            
             var group = new THREE.Group();
             group.add(cube);
             group.add(cube1);
+            //group.add(cube2);
+            group.add(cylinder);
             scene.add(group);
 
             var camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 10000);
-            camera.position.y = 160;
-            camera.position.z = 400;
+            camera.position.x = 0;
+            camera.position.y = 0;
+            camera.position.z = -500;
             camera.lookAt(new THREE.Vector3());
 
             scene.add(camera);
@@ -66,7 +102,7 @@
             //scene.add(skybox);
 
             var pointLight = new THREE.PointLight(0xffffff);
-            pointLight.position.set(0, 300, 200);
+            pointLight.position.set(0, -500, 0);
 
             scene.add(pointLight);
 
@@ -91,6 +127,23 @@
             arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
             arrowHelper.name = "z-axis";
             scene.add(arrowHelper); //add z-axis to scene
+           
+            let or = new THREE.Vector3(100, -35, 50);
+            let or1 = new THREE.Vector3(100, -35, 50);
+            let or2 = new THREE.Vector3(100, -35, 50);
+            let l = cube1.position.clone().sub(or1).length();
+            dir = cube1.position.clone().sub(or2);
+            dir.normalize();
+            arrowHelper = new THREE.ArrowHelper(dir, or, l, hex);
+            let arrow1 = arrowHelper;
+            scene.add(arrowHelper); //add arrow from cylinder to point of rotation
+
+            l = cylinder.position.clone().sub(or1).length();
+            dir = cylinder.position.clone().sub(or2);
+            dir.normalize();
+            arrowHelper = new THREE.ArrowHelper(dir, or, l, hex);
+            let arrow2 = arrowHelper;
+            scene.add(arrowHelper); //add arrow from cylinder to point of rotation
 
             function render() {
                 requestAnimationFrame(render);
@@ -101,28 +154,118 @@
             }
 
             function rotate() {
-                let axisMode = "X";
+                let axisMode = "Y";
+                let c = new THREE.Vector3(100, -35, 50);
                 let angle = 30 * Math.PI / 180;
-                let p = cube.position;
-                let c = new THREE.Vector3(100,0,0);
-                let d = p.sub(c);
-                let matrix;
-                matrix = new THREE.Matrix3();
-                if (axisMode == "X") {
-                    matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
-                    cube.rotateX(-1 * angle);
+                if (true) {
+                    let p = cube.position;
+                    let d = p.sub(c);
+                    let matrix;
+                    matrix = new THREE.Matrix3();
+                    if (axisMode == "X") {
+                        matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+                        cube.rotateX( angle);
+                    }
+                    else if (axisMode == "Y") {
+                        matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                        cube.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), angle);;
+                    }
+                    else {
+                        matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                        cube.rotateZ( angle);
+                    }
+                    d.applyMatrix3(matrix);
+                    d.add(c);
+                    cube.position = d;
                 }
-                else if (axisMode == "Y") {
-                    matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
-                    cube.rotateY(-1 * angle);
+                if (true) {
+                    let angle = 30 * Math.PI / 180;
+                    let p = cube1.position;
+                    let d = p.sub(c);
+                    let matrix;
+                    matrix = new THREE.Matrix3();
+                    if (axisMode == "X") {
+                        matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+                        cube1.rotateX( angle);
+                    }
+                    else if (axisMode == "Y") {
+                        matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                        cube1.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), angle);;
+                    }
+                    else {
+                        matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                        cube1.rotateZ( angle);
+                    }
+                    d.applyMatrix3(matrix);
+                    d.add(c);
+                    cube1.position = d;
                 }
-                else {
-                    matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
-                    cube.rotateZ(-1 * angle);
+                if (true) {
+                    let p = cube2.position;
+                    let d = p.sub(c);
+                    let matrix;
+                    matrix = new THREE.Matrix3();
+                    if (axisMode == "X") {
+                        matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+                        cube2.rotateX(angle);
+                    }
+                    else if (axisMode == "Y") {
+                        matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                        cube2.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), angle);;
+                    }
+                    else {
+                        matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                        cube2.rotateZ(angle);
+                    }
+                    d.applyMatrix3(matrix);
+                    d.add(c);
+                    cube2.position = d;
                 }
-                d.applyMatrix3(matrix);
-                d.add(c);
-                cube.position = d;
+                if (true) {
+                    let p = cylinder.position;
+                    let d = p.sub(c);
+                    let matrix;
+                    matrix = new THREE.Matrix3();
+                    if (axisMode == "X") {
+                        matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
+                        cylinder.rotateX(angle);
+                    }
+                    else if (axisMode == "Y") {
+                        matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
+                        cylinder.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), angle);;
+                    }
+                    else {
+                        matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
+                        cylinder.rotateZ(angle);
+                    }
+                    d.applyMatrix3(matrix);
+                    d.add(c);
+                    cylinder.position = d;
+                }
+                scene.remove(arrow1);
+                scene.remove(arrow2);
+                l = cube1.position.clone().sub(or1).length();
+                dir = cube1.position.clone().sub(or2);
+                dir.normalize();
+                arrowHelper = new THREE.ArrowHelper(dir, or, l, hex);
+                arrow1 = arrowHelper;
+                scene.add(arrowHelper); //add arrow from cylinder to point of rotation
+
+                l = cylinder.position.clone().sub(or1).length();
+                dir = cylinder.position.clone().sub(or2);
+                dir.normalize();
+                arrowHelper = new THREE.ArrowHelper(dir, or, l, hex);
+                arrow2 = arrowHelper;
+                scene.add(arrowHelper); //add arrow from cylinder to point of rotation
+                
+                let newcube = new THREE.Mesh(new THREE.CubeGeometry(5, 5, 5), cubeMaterial);
+                let v = cube1.position.clone();
+                newcube.position.set(v.x, v.y, v.z);
+                scene.add(newcube);
+                newcube = new THREE.Mesh(new THREE.CubeGeometry(5, 5, 5), cubeMaterial);
+                v = cylinder.position.clone();
+                newcube.position.set(v.x, v.y, v.z);
+                scene.add(newcube);
                 render();
             }
 
