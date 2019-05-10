@@ -33,11 +33,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
 			nucleotide = nucleotides[nucleotideID];
 			sys = nucleotide.parent.parent;
-			
-			//nucleotide.my_strand
-			//strandID = nucleotides[nucleotideID].my_strand; //get selected nucleotide's strand id
-			//sysID = nucleotides[nucleotideID].my_system; //get selected nucleotide's system id
-			
+						
 			switch(scope_mode){
 				case "System" : 
 					let strand_count = sys.strands.length;
@@ -47,23 +43,24 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 						for(let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
 							toggle(strand.nucleotides[j]);
 					}
+					console.log("jada");
 				break;
 				case "Strand" :
 					let strand_length = nucleotide.parent.nucleotides.length;
 					for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
 						toggle(nucleotide.parent.nucleotides[i]);
+					console.log("buga");
 				break;
 				case "Nuc":
 					toggle(nucleotide); //toggle selected nucleotide
+					console.log("123");
 				break;
 
 			}
 
 			render(); //update scene;
 			
-			////Hack to get the selection done in the right order 
-			//gSelectedBases.push(nucleotideID);
-
+			
 			//listBases = ""; //reset list of selected bases
 			//for (let x: number = 0; x < selected_bases.length; x++) { //for all nucleotides in system/selected_bases array
 			//	if (selected_bases[x] == 1) //if nucleotide is selected
@@ -121,44 +118,50 @@ function toggle(nucleotide: Nucleotide) { //toggle clicked nucleotide coloring
 	let nucleotideID: number = nucleotide.global_id;
 	let sysID: number = nucleotide.parent.parent.system_id;
 
-	if (selected_bases[nucleotideID] == 1) { //if clicked nucleotide is selected, set selected boolean to true 
+	//if (selected_bases[nucleotideID] == 1) { //if clicked nucleotide is selected, set selected boolean to true 
+	//	selected = true;
+	//}
+
+	if (selected_bases.has(nucleotide)) { //if clicked nucleotide is selected, set selected boolean to true 
 		selected = true;
 	}
-	let back_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
-	let nuc_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[NUCLEOSIDE];
-	let con_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[BB_NS_CON];
-	let sp_Mesh: THREE.Object3D = nucleotides[nucleotideID].visual_object.children[SP_CON];
+
+
+
+	let back_Mesh: THREE.Object3D = nucleotide.visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+	let nuc_Mesh: THREE.Object3D =  nucleotide.visual_object.children[NUCLEOSIDE];
+	let con_Mesh: THREE.Object3D =  nucleotide.visual_object.children[BB_NS_CON];
+	let sp_Mesh: THREE.Object3D =   nucleotide.visual_object.children[SP_CON];
 	if (selected) { //if clicked nucleotide is already selected
 		// figure out what that base was before you painted it black and revert it
-		let nuc = nucleotides[nucleotideID]; //get Nucleotide object
 		//recalculate Mesh's proper coloring and set Mesh material on scene to proper material
 		if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
 			if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				back_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+				back_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
 			}
 		}
 		if (nuc_Mesh instanceof THREE.Mesh) {
 			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				nuc_Mesh.material = systems[sysID].base_to_material(nuc.type);
+				nuc_Mesh.material = systems[sysID].base_to_material(nucleotide.type);
 			}
 		}
 		if (con_Mesh instanceof THREE.Mesh) {
 			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				con_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+				con_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
 			}
 		}
 		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
 			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				sp_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+				sp_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
 			}
 		}
-		let x = selList.indexOf(nucleotideID);
-		let sel1 = selList.slice(0,x+1);
-		let sel2 = selList.slice(x+1,selList.length);
-		sel1.pop();
-		selList = sel1.concat(sel2);
+		//let x = selList.indexOf(nucleotideID);
+		//let sel1 = selList.slice(0,x+1);
+		//let sel2 = selList.slice(x+1,selList.length);
+		//sel1.pop();
+		//selList = sel1.concat(sel2);
 
-		selected_bases[nucleotideID] = 0; //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
+		selected_bases.delete(nucleotide); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
 	}
 	else {
 		//set all materials to selection_material color - currently aqua
@@ -178,8 +181,8 @@ function toggle(nucleotide: Nucleotide) { //toggle clicked nucleotide coloring
 			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) 
 				sp_Mesh.material = selection_material;
 		}
-		selList.push(nucleotideID);
-		selected_bases[nucleotideID] = 1; //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
+		//selList.push(nucleotideID);
+		selected_bases.add(nucleotide); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
 	}
 }
 

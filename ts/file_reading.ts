@@ -296,9 +296,9 @@ target.addEventListener("drop", function (event) {
                     };
 
                 });
-            for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
-                selected_bases.push(0);
-            }
+            //for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
+            //    selected_bases.push(0);
+            //}
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = nucleotides.length;
@@ -667,9 +667,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
     //radio button/checkbox selections
 
-    if (getActionModes().includes("Drag")) {
-        drag();
-    }
+    //if (getActionModes().includes("Drag")) {
+    //    drag();
+    //}
     /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
      let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
      let cube = new THREE.Mesh(geometry, material);

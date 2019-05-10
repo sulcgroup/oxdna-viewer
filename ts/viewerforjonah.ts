@@ -218,9 +218,9 @@ target.addEventListener("drop", function (event) {
                     };
 
                 });
-            for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
-                selected_bases.push(0);
-            }
+            //for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
+            //    selected_bases.push(0);
+            //}
             //system.setBaseMaterial(base_to_material); //store this system's base 
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
