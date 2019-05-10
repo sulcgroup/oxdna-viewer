@@ -698,16 +698,12 @@ function getNewConfig(mode) {
                 group.children[BACKBONE].getWorldPosition(this_pos);
                 let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
                 let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
-                //easy periodic boundary condition fix
-                //if the bonds are too long just don't add them
-                if (sp_len <= 5) {
-                    let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-                    group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
-                    group.children[SP_CON].applyMatrix(rotation_sp); //rotate
-                    group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
-                    group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
-                    group.children[SP_CON].parent = current_nucleotide.visual_object;
-                }
+                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
+                group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
+                group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
+                group.children[SP_CON].applyMatrix(rotation_sp); //rotate
+                group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
+                group.children[SP_CON].parent = current_nucleotide.visual_object;
             }
             ;
             if (current_nucleotide.neighbor5 == null) {
@@ -719,6 +715,7 @@ function getNewConfig(mode) {
                 nuc_local_id += 1;
             }
             ;
+            //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
         //box by strand
         let dx, dy, dz;
@@ -746,7 +743,6 @@ function getNewConfig(mode) {
                     systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
-            //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
         if (getActionModes().includes("Drag")) {
             drag();
