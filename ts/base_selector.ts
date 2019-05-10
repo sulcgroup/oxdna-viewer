@@ -60,7 +60,48 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 
 			render(); //update scene;
 			
+			let listBases = [];
+			let baseInfoStrands = {};
+
+			//sort selection info into respective containers 
+			selected_bases.forEach(
+				(base) => {
+					//store global ids for BaseList view 
+					listBases.push(base.global_id);
+
+					//assign each of the selected bases to a strand 
+					let strand_id = base.parent.strand_id;
+					if(strand_id in baseInfoStrands)
+						baseInfoStrands[strand_id].push(base);
+					else
+						baseInfoStrands[strand_id] = [base];
+				}
+			);
+
+			//Display every selected nucleotide id (top txt box)
+			makeTextArea(listBases.join(","), "BaseList");
 			
+			//Brake down info (low txt box)
+			let baseInfoLines = [];
+			for (let strand_id in baseInfoStrands){
+				let s_bases = baseInfoStrands[strand_id];
+				//make a fancy header for each strand
+				let header = ["Str#:", strand_id, "Sys#:", s_bases[0].parent.parent.system_id];
+				baseInfoLines.push("----------------------");
+				baseInfoLines.push(header.join(" "));
+				baseInfoLines.push("----------------------");
+				
+				//fish out all the required base info 
+				//one could also sort it if neaded ...
+				for(let i = 0; i < s_bases.length; i++){
+					baseInfoLines.push(["gID:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
+				}
+			}
+			makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
+
+
+			
+
 			//listBases = ""; //reset list of selected bases
 			//for (let x: number = 0; x < selected_bases.length; x++) { //for all nucleotides in system/selected_bases array
 			//	if (selected_bases[x] == 1) //if nucleotide is selected
@@ -192,7 +233,7 @@ function toggle(nucleotide: Nucleotide) { //toggle clicked nucleotide coloring
 function makeTextArea(bases: string, id) { //insert "bases" string into text area with ID, id
 	let textArea: HTMLElement | null = document.getElementById(id);
 	if (textArea !== null) { //as long as text area was retrieved by its ID, id
-		textArea.innerHTML = "Bases currently selected:\n" + bases; //set innerHTML / content to bases
+		textArea.innerHTML =  bases; //set innerHTML / content to bases
 	}
 }
 
