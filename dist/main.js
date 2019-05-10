@@ -29,6 +29,7 @@ class Strand {
     add_nucleotide(nuc) {
         this.nucleotides.push(nuc);
         nuc.local_id = this.nucleotides.indexOf(nuc);
+        nuc.parent = this;
     }
     ;
     remove_nucleotide(to_remove) {
@@ -103,14 +104,13 @@ function dat_loader(file) {
 let RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
 var nucleotides = []; //contains references to all nucleotides
-//var selected_bases = {};
 //initialize the space
 var systems = [];
 let sys_count = 0;
 let strand_count = 0;
 let nuc_count = 0;
-var selected_bases = [];
-//var selected_bases = new Set<Nucleotide>();
+//var selected_bases: number[] = [];
+var selected_bases = new Set();
 var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];

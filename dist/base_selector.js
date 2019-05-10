@@ -29,9 +29,6 @@ document.addEventListener('mousedown', event => {
             nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
             nucleotide = nucleotides[nucleotideID];
             sys = nucleotide.parent.parent;
-            //nucleotide.my_strand
-            //strandID = nucleotides[nucleotideID].my_strand; //get selected nucleotide's strand id
-            //sysID = nucleotides[nucleotideID].my_system; //get selected nucleotide's system id
             switch (scope_mode) {
                 case "System":
                     let strand_count = sys.strands.length;
@@ -52,54 +49,37 @@ document.addEventListener('mousedown', event => {
                     break;
             }
             render(); //update scene;
-            ////Hack to get the selection done in the right order 
-            //gSelectedBases.push(nucleotideID);
-            //listBases = ""; //reset list of selected bases
-            //for (let x: number = 0; x < selected_bases.length; x++) { //for all nucleotides in system/selected_bases array
-            //	if (selected_bases[x] == 1) //if nucleotide is selected
-            //		listBases = listBases + x + "\n"; //add nucleotide's global id to listBases - list of selected bases
-            //}
-            //basesInfo = ""; //reset list of selected bases' info
-            //let sysPrint: number[] = [], strandPrint: number[] = [], sys, strand; //sysPrint - array of numbers with system ids that have been listed in basesInfo; strandPrint - array of numbers with strand ids that have been listed in basesInfo
-            //for (let x: number = 0; x < selected_bases.length; x++) { //for every nucleotide in world / selected_bases array
-            //	if (selected_bases[x] == 1) { //if nucleotide is selected
-            //		let temp = nucleotides[x]; //get Nucleotide object
-            //		sys = temp.my_system; //get nucleotide's system
-            //		strand = temp.my_strand - 1; //get nucleotide's strand
-            //		if (sysPrint.indexOf(sys) < 0) { //if system id is not already in sysPrint array
-            //			basesInfo += "SYSTEM:\n" + //add system's information to basesInfo
-            //				"System ID: " + sys + "\n" +
-            //				"# of Strands: " + systems[sys].strands.length + "\n" +
-            //				"# of Nucleotides: " + systems[sys].system_length() + "\n" +
-            //				"System Position:\nx = " + systems[sys].system_3objects.position.x + "\n" +
-            //				"y = " + systems[sys].system_3objects.position.y + "\n" +
-            //				"z = " + systems[sys].system_3objects.position.z + "\n\n";
-            //			sysPrint.push(sys); //add sys id to sysPrint array
-            //		}
-            //		let nucPrint: boolean = strandPrint.indexOf(strand) < 0;
-            //		if (nucPrint) { //if strand id is not already in strandPrint array
-            //			basesInfo += "STRAND:\n" + //add strand's information to basesInfo
-            //				"System ID: " + sys + "\n" +
-            //				"Strand ID: " + strand + "\n" +
-            //				"# of Nucleotides: " + systems[sys].strands[strand].nucleotides.length + "\n" +
-            //				"Strand Position:\nx = " + systems[sys].strands[strand].strand_3objects.position.x + "\n" +
-            //				"y = " + systems[sys].strands[strand].strand_3objects.position.y + "\n" +
-            //				"z = " + systems[sys].strands[strand].strand_3objects.position.z + "\n\n";
-            //			strandPrint.push(strand); //add strand id to strandPrint array
-            //		}
-            //		if (nucPrint || getScopeMode() == "Nuc") { //if strand has not been added to basesInfo or scope mode is Nuc
-            //			basesInfo += "NUCLEOTIDE:\n" + //add nucleotide info to basesInfo
-            //				"Strand ID: " + strand + "\n" +
-            //				"Global ID: " + temp.global_id + "\n" +
-            //				"Base ID: " + temp.type + "\n" +
-            //				"Nucleotide Position:\nx = " + nucleotides[temp.global_id].visual_object.position.x + "\n" +
-            //				"y = " + nucleotides[temp.global_id].visual_object.position.y + "\n" +
-            //				"z = " + nucleotides[temp.global_id].visual_object.position.z + "\n";
-            //		}
-            //	}
-            //}
-            //makeTextArea(listBases, "BaseList"); //insert list of bases into "BaseList" text area
-            //makeTextArea(basesInfo, "BaseInfo"); //insert basesInfo into "BaseInfo" text area
+            let listBases = [];
+            let baseInfoStrands = {};
+            //sort selection info into respective containers 
+            selected_bases.forEach((base) => {
+                //store global ids for BaseList view 
+                listBases.push(base.global_id);
+                //assign each of the selected bases to a strand 
+                let strand_id = base.parent.strand_id;
+                if (strand_id in baseInfoStrands)
+                    baseInfoStrands[strand_id].push(base);
+                else
+                    baseInfoStrands[strand_id] = [base];
+            });
+            //Display every selected nucleotide id (top txt box)
+            makeTextArea(listBases.join(","), "BaseList");
+            //Brake down info (low txt box)
+            let baseInfoLines = [];
+            for (let strand_id in baseInfoStrands) {
+                let s_bases = baseInfoStrands[strand_id];
+                //make a fancy header for each strand
+                let header = ["Str#:", strand_id, "Sys#:", s_bases[0].parent.parent.system_id];
+                baseInfoLines.push("----------------------");
+                baseInfoLines.push(header.join(" "));
+                baseInfoLines.push("----------------------");
+                //fish out all the required base info 
+                //one could also sort it if neaded ...
+                for (let i = 0; i < s_bases.length; i++) {
+                    baseInfoLines.push(["gID:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
+                }
+            }
+            makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
         }
     }
 });
@@ -108,43 +88,34 @@ function toggle(nucleotide) {
     let selected = false;
     let nucleotideID = nucleotide.global_id;
     let sysID = nucleotide.parent.parent.system_id;
-    if (selected_bases[nucleotideID] == 1) { //if clicked nucleotide is selected, set selected boolean to true 
-        selected = true;
-    }
-    let back_Mesh = nucleotides[nucleotideID].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
-    let nuc_Mesh = nucleotides[nucleotideID].visual_object.children[NUCLEOSIDE];
-    let con_Mesh = nucleotides[nucleotideID].visual_object.children[BB_NS_CON];
-    let sp_Mesh = nucleotides[nucleotideID].visual_object.children[SP_CON];
-    if (selected) { //if clicked nucleotide is already selected
+    let back_Mesh = nucleotide.visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+    let nuc_Mesh = nucleotide.visual_object.children[NUCLEOSIDE];
+    let con_Mesh = nucleotide.visual_object.children[BB_NS_CON];
+    let sp_Mesh = nucleotide.visual_object.children[SP_CON];
+    if (selected_bases.has(nucleotide)) { //if clicked nucleotide is already selected
         // figure out what that base was before you painted it black and revert it
-        let nuc = nucleotides[nucleotideID]; //get Nucleotide object
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+                back_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
             }
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = systems[sysID].base_to_material(nuc.type);
+                nuc_Mesh.material = systems[sysID].base_to_material(nucleotide.type);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+                con_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = systems[sysID].strand_to_material(nuc.parent.strand_id);
+                sp_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
             }
         }
-        let x = selList.indexOf(nucleotideID);
-        let sel1 = selList.slice(0, x + 1);
-        let sel2 = selList.slice(x + 1, selList.length);
-        sel1.pop();
-        selList = sel1.concat(sel2);
-        selected_bases[nucleotideID] = 0; //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
+        selected_bases.delete(nucleotide); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
     }
     else {
         //set all materials to selection_material color - currently aqua
@@ -164,14 +135,14 @@ function toggle(nucleotide) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial)
                 sp_Mesh.material = selection_material;
         }
-        selList.push(nucleotideID);
-        selected_bases[nucleotideID] = 1; //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
+        //selList.push(nucleotideID);
+        selected_bases.add(nucleotide); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
     }
 }
 function makeTextArea(bases, id) {
     let textArea = document.getElementById(id);
     if (textArea !== null) { //as long as text area was retrieved by its ID, id
-        textArea.innerHTML = "Bases currently selected:\n" + bases; //set innerHTML / content to bases
+        textArea.innerHTML = bases; //set innerHTML / content to bases
     }
 }
 function writeMutTrapText(base1, base2) {
