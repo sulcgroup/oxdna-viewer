@@ -9,9 +9,9 @@ render();
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only nucleotides have anything to render
 class Nucleotide {
-    constructor(global_id, parent_system) {
+    constructor(global_id, parent) {
         this.global_id = global_id;
-        this.my_system = parent_system;
+        this.parent = parent;
     }
     ;
 }
@@ -19,10 +19,10 @@ class Nucleotide {
 // strands are made up of nucleotides
 // strands have an ID within the system
 class Strand {
-    constructor(id, parent_system) {
+    constructor(id, parent) {
         this.nucleotides = [];
         this.strand_id = id;
-        this.my_system = parent_system;
+        this.parent = parent;
         this.strand_3objects = new THREE.Group;
     }
     ;
@@ -110,6 +110,7 @@ let sys_count = 0;
 let strand_count = 0;
 let nuc_count = 0;
 var selected_bases = [];
+//var selected_bases = new Set<Nucleotide>();
 var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];
@@ -302,7 +303,7 @@ function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
             for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides in all systems - does not work for more than one system
-                let sysID = nucleotides[i].my_system;
+                let sysID = nucleotides[i].parent.parent.system_id;
                 let back_Mesh = nucleotides[i].visual_object.children[BACKBONE]; //backbone
                 let nuc_Mesh = nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
                 let con_Mesh = nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector
