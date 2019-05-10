@@ -18,14 +18,12 @@ class Nucleotide {
     neighbor5: Nucleotide | null;
     pair: number;
     type: number | string; // 0:A 1:G 2:C 3:T/U
-    my_strand: number;
-    my_system: number;
+    parent : Strand; 
     visual_object: THREE.Group; //contains 4 THREE.Mesh
 
-    constructor(global_id: number, parent_system: number) {
+    constructor(global_id: number, parent: Strand) {
         this.global_id = global_id;
-        this.my_system = parent_system;
-
+        this.parent = parent;
     };
 };
 
@@ -35,12 +33,13 @@ class Strand {
 
     strand_id: number; //system location
     nucleotides: Nucleotide[] = [];
-    my_system: System;
+    
+    parent: System;
     strand_3objects: THREE.Group; //contains Nucleotide.visual_objects
 
-    constructor(id: number, parent_system: System) {
+    constructor(id: number, parent: System) {
         this.strand_id = id;
-        this.my_system = parent_system;
+        this.parent = parent;
         this.strand_3objects = new THREE.Group;
     };
 
@@ -58,7 +57,6 @@ class Strand {
             }
         }
     };
-
 };
 
 // systems are made of strands
@@ -139,6 +137,8 @@ let sys_count: number = 0;
 let strand_count: number = 0;
 let nuc_count: number = 0;
 var selected_bases: number[] = [];
+//var selected_bases = new Set<Nucleotide>();
+
 var backbones: THREE.Object3D[] = [];
 let lut, devs: number[]; //need for Lut coloring
 let lutCols: THREE.Color[] = [];
@@ -351,7 +351,7 @@ function toggleLut(chkBox) { //toggles display of coloring by json file / struct
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
             for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides in all systems - does not work for more than one system
-                let sysID = nucleotides[i].my_system;
+                let sysID = nucleotides[i].parent.parent.system_id;
                 let back_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[BACKBONE]; //backbone
                 let nuc_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
                 let con_Mesh: THREE.Mesh = <THREE.Mesh>nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector

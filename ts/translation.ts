@@ -43,11 +43,11 @@ function getRotObj(i) { //identify selected objects and rotate
             break;
         case "Strand":
             //set rotobj to current nuc's strand's strand_3objects
-            rotobj = systems[nuctemp.my_system].strands[nuctemp.my_strand - 1].strand_3objects;
+            rotobj = systems[nuctemp.parent.parent.system_id].strands[nuctemp.parent.strand_id - 1].strand_3objects;
             break;
         case "System":
             //set rotobj to current nuc's system's system_3objects
-            rotobj = systems[nuctemp.my_system].system_3objects;
+            rotobj = systems[nuctemp.parent.parent.system_id].system_3objects;
     }
     return rotobj;
 }
@@ -74,14 +74,14 @@ function rotate() { //rotate according to given angle given in number input
                 case "Strand":
                     // increment i to get to end of strand;
                     // subtract 1 because add 1 in loop automatically
-                    i += systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length - tempnuc.local_id - 1;
+                    i += systems[tempnuc.parent.parent.system_id].strands[tempnuc.parent.strand_id - 1].nucleotides.length - tempnuc.local_id - 1;
                     break;
                 case "System":
                     //gets nucleotide id in relation to system
-                    let locsysID = (tempnuc.my_strand - 1) * systems[tempnuc.my_system].strands[tempnuc.my_strand - 1].nucleotides.length + tempnuc.local_id;
+                    let locsysID = (tempnuc.parent.strand_id - 1) * systems[tempnuc.parent.parent.system_id].strands[tempnuc.parent.strand_id - 1].nucleotides.length + tempnuc.local_id;
                     // increment i to get to end of system;
                     // subtract 1 to undo automatic increment by for loop
-                    i += systems[tempnuc.my_system].system_length() - locsysID - 1;
+                    i += systems[tempnuc.parent.parent.system_id].system_length() - locsysID - 1;
                     break;
             }
         }

@@ -20,13 +20,13 @@ function makeOutputFiles(){ //makes .dat and .top files with update position inf
 		}
 	}
 	top = tot_nuc + " " + tot_strands + "\n";
-	uncorrected_strand_id = nucleotides[0].my_strand;
-	old_system = nucleotides[0].my_system;
+	uncorrected_strand_id = nucleotides[0].parent.strand_id;
+	old_system = nucleotides[0].parent.parent.system_id;
 	for (let i = 0; i < nucleotides.length; i++){ //for each nucleotide in the system
-		if (nucleotides[i].my_strand != uncorrected_strand_id || nucleotides[i].my_system != old_system) {
+		if (nucleotides[i].parent.strand_id != uncorrected_strand_id || nucleotides[i].parent.parent.system_id != old_system) {
 			current_strand += 1;
-			uncorrected_strand_id = nucleotides[i].my_strand;
-			old_system = nucleotides[i].my_system;
+			uncorrected_strand_id = nucleotides[i].parent.strand_id;
+			old_system = nucleotides[i].parent.parent.system_id;
 		}
 		top = top + current_strand + " " + nucleotides[i].type + " "; //strand id in global world + base type
 		let neighbor3 = nucleotides[i].neighbor3;

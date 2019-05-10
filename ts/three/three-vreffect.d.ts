@@ -1,4 +1,4 @@
-/// <reference types="webvr-api" />
+//// <reference types="webvr-api" />
 
 import { Camera, Matrix4, Renderer, Scene } from "./three-core";
 

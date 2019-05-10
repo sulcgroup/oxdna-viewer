@@ -234,11 +234,13 @@ target.addEventListener("drop", function (event) {
             var lines = file.split(/[\r\n]+/g);
             lines = lines.slice(1); // discard the header
 
-            //create empty list of nucleotides with length equal to the topology
+            // create empty list of nucleotides with length equal to the topology
+            // Note: this is implemented such that we have the nucleotides for the DAT reader 
             for (let j = 0; j < lines.length; j++) {
-                let nuc = new Nucleotide(nucleotides.length, system.system_id);
+                let nuc = new Nucleotide(nucleotides.length, null);
                 nucleotides.push(nuc);
             }
+            //nucleotides[lines.length] =  null;
             lines.forEach(
                 (line, i) => {
                     if (line == "") {
@@ -246,11 +248,15 @@ target.addEventListener("drop", function (event) {
                         system.add_strand(current_strand);
                         return
                     }
-                    let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+
+                    //let nuc = new Nucleotide(nucleotides.length, current_strand);
                     let nuc = nucleotides[nuc_count + i];
+                    nuc.parent = current_strand;
+                    let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+                    
                     nuc.local_id = nuc_local_id;
                     let str_id = parseInt(l[0]);
-                    nuc.my_strand = str_id;
+                    //nuc.parent = str_id;
                     neighbor3 = parseInt(l[2]);
                     if (neighbor3 != -1) {
                         nuc.neighbor3 = nucleotides[nuc_count + neighbor3];
