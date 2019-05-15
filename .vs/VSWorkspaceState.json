@@ -1,6 +1,9 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\dist",
+    "\\ts",
+    "\\ts\\controls"
   ],
   "SelectedNode": "\\index.html",
   "PreviewInSolutionExplorer": false
