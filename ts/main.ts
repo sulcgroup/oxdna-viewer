@@ -199,6 +199,13 @@ function previousConfig() {
     }
 }
 
+document.addEventListener("keydown", function(event) {
+    switch(event.key) {
+        case 'n': nextConfig(); break;
+        case 'b': previousConfig(); break;
+    }
+}, true);
+
 function toggleVideoOptions() {
     let opt = document.getElementById("videoOptions");
     opt.hidden = !opt.hidden;
