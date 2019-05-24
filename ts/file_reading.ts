@@ -8,8 +8,8 @@ function dat_chunker(dat_file: Blob, current_chunk: number, chunk_size: number) 
 
 function extract_next_conf() {
     let need_next_chunk: boolean = false;
-    let current_chunk_lines: string[] = current_chunk.split(/[\r\n]+/g);
-    let next_chunk_lines: string[] = next_chunk.split(/[\r\n]+/g);
+    let current_chunk_lines: string[] = current_chunk.split(/[\n]+/g);
+    let next_chunk_lines: string[] = next_chunk.split(/[\n]+/g);
     let current_chunk_length: number = current_chunk_lines.length;
     let next_conf: string[] = [];
     let start = new marker;
@@ -72,13 +72,13 @@ function extract_previous_conf() {
         end.line_id = previous_chunk.length - 1;
         need_previous_chunk = true;
     }
-    let end_chunk_lines: string[] = end.chunk.split(/[\r\n]+/g);
+    let end_chunk_lines: string[] = end.chunk.split(/[\n]+/g);
 
     let start = new marker;
     if (end.line_id - conf_len >= 0) { //is the whole conf in a single chunk?
         start.chunk = end.chunk;
         start.line_id = end.line_id - conf_len + 1;
-        let start_chunk_lines: string[] = start.chunk.split(/[\r\n]+/g);
+        let start_chunk_lines: string[] = start.chunk.split(/[\n]+/g);
         for (let i = start.line_id; i < end.line_id + 1; i++) {
             if (start_chunk_lines[i] == "" || start_chunk_lines == undefined) { return undefined }
             previous_conf.push(start_chunk_lines[i]);
@@ -91,7 +91,7 @@ function extract_previous_conf() {
         if (end.chunk == previous_chunk){
             start.chunk = previous_previous_chunk;
         }
-        let start_chunk_lines: string[] = start.chunk.split(/[\r\n]+/g);
+        let start_chunk_lines: string[] = start.chunk.split(/[\n]+/g);
         start.line_id = start_chunk_lines.length - (conf_len - (end.line_id + 1));
         for (let i = start.line_id; i < start_chunk_lines.length; i++) {
             if (start_chunk_lines[i] == "" || start_chunk_lines == undefined) {return undefined}
@@ -231,7 +231,7 @@ target.addEventListener("drop", function (event) {
 
             // parse file into lines
             var file = top_reader.result as string
-            var lines = file.split(/[\r\n]+/g);
+            var lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header
 
             // create empty list of nucleotides with length equal to the topology
@@ -451,7 +451,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
-    let lines = dat_reader.result.split(/[\r\n]+/g);
+    let lines = dat_reader.result.split(/[\n]+/g);
     //get the simulation box size 
     box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
