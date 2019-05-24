@@ -194,6 +194,7 @@ function toggleColorOptions() {
             c.value = "#" + m.color.getHexString();
             c.oninput = function () {
                 backbone_materials[i].color = new THREE.Color(c.value);
+                render();
             };
             c.oncontextmenu = function (event) {
                 event.preventDefault();
@@ -210,6 +211,29 @@ function toggleColorOptions() {
                 color: 0x156289,
                 side: THREE.DoubleSide
             }));
+            let index = 0;
+            for (; index < nucleotides.length; index++) {
+                let nuc = nucleotides[index];
+                let back_Mesh = nucleotides[index].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+                let con_Mesh = nucleotides[index].visual_object.children[BB_NS_CON];
+                let sp_Mesh = nucleotides[index].visual_object.children[SP_CON];
+                //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+                if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
+                    if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        back_Mesh.material = nuc.parent.parent.strand_to_material(nuc.parent.strand_id);
+                    }
+                }
+                if (con_Mesh instanceof THREE.Mesh) {
+                    if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        con_Mesh.material = nuc.parent.parent.strand_to_material(nuc.parent.strand_id);
+                    }
+                }
+                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+                    if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        sp_Mesh.material = nuc.parent.parent.strand_to_material(nuc.parent.strand_id);
+                    }
+                }
+            }
             render();
             opt.hidden = true;
             toggleColorOptions();
