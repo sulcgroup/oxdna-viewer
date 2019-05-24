@@ -1,4 +1,4 @@
-<meta charset="UTF-8">
+﻿<meta charset="UTF-8">
 <html>
 
 <head>
@@ -82,6 +82,7 @@
 		}
 
 	</style>
+    </head>
 
 <body>
 	<div class="sidenav">
@@ -96,12 +97,12 @@
 			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
 			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
-			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3"></input>
+			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3">
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
 			<button onclick="toggleVideoOptions()" type="button">Create video</button>
 			<button onclick="toggleColorOptions()" type="button">Edit colors</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems</button>
+			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems>
 			<br>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 			<br>
@@ -115,21 +116,21 @@
 			</fieldset>
 			<fieldset>
 				<legend>Selection mode:</legend>
-				<input type="radio" name="scope" value="Nuc" checked>Nucleotide<br> <!--default mode is Nucleotide-->
-				<input type="radio" name="scope" value="Strand">Strand<br>
-				<input type="radio" name="scope" value="System">System
+				<input type="radio" name="scope" value="Nuc" onclick="setScopeMode()" checked>Nucleotide<br> <!--default mode is Nucleotide-->
+				<input type="radio" name="scope" value="Strand" onclick="setScopeMode()">Strand<br>
+				<input type="radio" name="scope" value="System" onclick="setScopeMode()">System
 			</fieldset>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 			<fieldset>
 				<legend>Rotate:</legend>
-				<input type="radio" name="rotate" value="X" onclick="getAxisMode()" checked>X Axis <!--default checked is x-axis-->
+				<input type="radio" name="rotate" value="X" onclick="setAxisMode()" checked>X Axis <!--default checked is x-axis-->
 				<br>
-				<input type="radio" name="rotate" value="Y" onclick="getAxisMode()">Y Axis
+				<input type="radio" name="rotate" value="Y" onclick="setAxisMode()">Y Axis
 				<br>
-				<input type="radio" name="rotate" value="Z" onclick="getAxisMode()">Z Axis
+				<input type="radio" name="rotate" value="Z" onclick="setAxisMode()">Z Axis
 				<br>
 				Rotation angle:
-				<input type="number" value="-90" id="rotAngle" width="20px"></input>
+				<input type="number" value="-90" id="rotAngle" onchange="setAngle()" width="20">
 				<button onclick="rotate()">Rotate</button>
 			</fieldset>
 			<button onclick="previousConfig()"type="button" style="width: 45%; left: 0" title="'b' on the keyboard"> Prev Config</button>
@@ -140,7 +141,7 @@
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
 		</div>
-		<div class="opts" id="videoOptions" hidden=true>
+		<div class="opts" id="videoOptions" hidden="hidden">
 			Video type
 			<select id="videoType">
 				<option value="trajectory">Trajectory</option>
@@ -153,11 +154,11 @@
 				<input type="radio" name="videoFormat" value="png" >png<br>
 				<input type="radio" name="videoFormat" value="jpg" >jpg<br>
 			</fieldset>
-			<input type="number" value="24" id="videoFramerate" width="20px">framerate</input>
+			<input type="number" value="24" id="videoFramerate" width="20">framerate
 			<button onclick="createVideo()">Start</button>
 		</div>
 		<div title="Click a color to edit, right click to remove" class="opts"
-			id="colorOptions" hidden=true style="background-color: transparent">
+			id="colorOptions" hidden="hidden" style="background-color: transparent">
 		</div>
 		<canvas id="threeCanvas"></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->
@@ -178,7 +179,6 @@
 			<script src="./ts/controls/SceneUtils.js"></script>
 			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
 		</div>
-	</div>
 
 </body>
 

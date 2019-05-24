@@ -24,12 +24,15 @@ class Strand {
         this.strand_id = id;
         this.parent = parent;
         this.strand_3objects = new THREE.Group;
+        this.system_id = parent.system_id;
     }
     ;
     add_nucleotide(nuc) {
         this.nucleotides.push(nuc);
         nuc.local_id = this.nucleotides.indexOf(nuc);
         nuc.parent = this;
+        nuc.strand_id = this.strand_id;
+        nuc.system_id = this.system_id;
     }
     ;
     remove_nucleotide(to_remove) {
@@ -115,8 +118,8 @@ var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];
 let lutColsVis = false;
-function updatePos( /*sys_count*/) {
-    for (let h = 0 /*sys_count*/; h < systems.length /*sys_count + 1*/; h++) { //for current system
+function updatePos() {
+    for (let h = 0; h < systems.length; h++) { //for current system
         let syscms = new THREE.Vector3(0, 0, 0); //system cms
         let n = systems[h].system_length(); //# of nucleotides in system
         for (let i = 0; i < systems[h].strands.length; i++) { //for each strand

@@ -1,4 +1,12 @@
 // select and/or drag
+let axisMode = "X";
+let scopeMode = "Nuc";
+let angle = 90 * Math.PI / 180;
+let matrix = new THREE.Matrix3();
+let v1 = new THREE.Vector3();
+let p = new THREE.Vector3();
+let c = new THREE.Vector3();
+let d = new THREE.Vector3();
 function getActionModes() {
     let modes = document.getElementsByName("action");
     let checked = [];
@@ -10,105 +18,166 @@ function getActionModes() {
     return checked;
 }
 // nucleotides/strand/system
-function getScopeMode() {
-    return document.querySelector('input[name="scope"]:checked')['value'];
+function setScopeMode() {
+    scopeMode = document.querySelector('input[name="scope"]:checked')['value'];
 }
 // X/Y/Z
-function getAxisMode() {
-    return document.querySelector('input[name="rotate"]:checked')['value'];
+function setAxisMode() {
+    axisMode = document.querySelector('input[name="rotate"]:checked')['value'];
+}
+function setAngle() {
+    angle = document.getElementById("rotAngle").valueAsNumber * Math.PI / 180;
+    console.log(angle);
 }
 let dragControls; //dragging functionality
 function drag() {
     var nucleotide_objects = [];
-    //for( let i = 0; i < selected_bases.size; i++){
-    //    nucleotide_objects.push(selected_bases[i].visual_object);
-    //}
-    //selected_bases.forEach((base) => {
-    //    nucleotide_objects.push(base.visual_object)
-    //});
     // accounts for lights camera and arrows << i = 7 
     for (let i = 7; i < scene.children.length; i++) {
         nucleotide_objects.push(scene.children[i].children);
     }
-    //    //nucleotide_objects.push(scene.children[i].children);
-    //}
     nucleotide_objects = nucleotide_objects.flat(1);
     //selected_bases
     dragControls = new THREE.DragControls(nucleotide_objects, camera, true, renderer.domElement);
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
-function getRotObj(base) {
-    let rotobj;
-    switch (getScopeMode()) {
-        case "Nuc":
-            //set rotobj to nucleotide's visual_object
-            rotobj = base.visual_object;
-            break;
-        case "Strand":
-            //set rotobj to current nuc's strand's strand_3objects
-            //rotobj = systems[base.parent.parent.system_id].strands[base.parent.strand_id - 1].strand_3objects;
-            rotobj = base.parent.strand_3objects;
-            //systems[base.parent.parent.system_id].strands[base.parent.strand_id - 1].strand_3objects;
-            break;
-        case "System":
-            //set rotobj to current nuc's system's system_3objects
-            rotobj = systems[base.parent.parent.system_id].system_3objects;
-    }
-    return rotobj;
-}
+let i;
+let originalObjPos;
 function rotate() {
-    let angle = document.getElementById("rotAngle").valueAsNumber;
-    var rot = false; //rotation success boolean
+    let rot = false; //rotation success boolean
+    updatePos(); //update class positions
+    //let index: number = 0;
+    //let setEntries = selected_bases.keys();
+    //let setEntry = setEntries.next();
+    //while (!setEntry.done) {
     selected_bases.forEach((base) => {
-        let rotobj = getRotObj(base); //get object to rotate - nucleotide, strand, or system based on mode
         //rotate around user selected axis with user entered angle
-        switch (getAxisMode()) {
+        rot = true;
+        i = base.global_id;
+        originalObjPos = base.pos.clone();
+        switch (scopeMode) {
+            case "Nuc": {
+                c = originalObjPos;
+                break;
+            }
+            case "Strand": {
+                c = base.parent.pos.clone();
+                break;
+            }
+            case "System": {
+                c = base.parent.parent.pos.clone();
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+        switch (axisMode) {
             case "X":
-                rotobj.rotateX(angle * Math.PI / 180);
+                matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
                 break;
             case "Y":
-                rotobj.rotateY(angle * Math.PI / 180);
+                matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle));
                 break;
             case "Z":
-                rotobj.rotateZ(angle * Math.PI / 180);
+                matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1);
                 break;
-            default: alert("Unknown rotation axis: " + getAxisMode());
+            default: alert("Unknown rotation axis: " + axisMode);
         }
-        render();
+        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+            p = (nucleotides[i].visual_object.children[j].position.clone());
+            d = p.sub(c);
+            switch (axisMode) {
+                case "X": {
+                    v1.set(1, 0, 0);
+                    break;
+                }
+                case "Y": {
+                    v1.set(0, 1, 0);
+                    break;
+                }
+                case "Z": {
+                    v1.set(0, 0, 1);
+                    break;
+                }
+                default: break;
+            }
+            nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, angle);
+            d.applyMatrix3(matrix);
+            d.add(c);
+            nucleotides[i].visual_object.children[j].position.set(d.x, d.y, d.z);
+            rot = true;
+        }
+        //setEntry = setEntries.next();
     });
-    //for (let i = 0; i < selected_bases.length; i++) { //go through each nucleotide in all systems
-    //    if (selected_bases[i] == 1) { //if nucleotide is selected
-    //        let rotobj = getRotObj(i); //get object to rotate - nucleotide, strand, or system based on mode
-    //        //rotate around user selected axis with user entered angle
-    //        switch(getAxisMode()) {
-    //            case "X": rotobj.rotateX(angle * Math.PI / 180); break;
-    //            case "Y": rotobj.rotateY(angle * Math.PI / 180); break;
-    //            case "Z": rotobj.rotateZ(angle * Math.PI / 180); break;
-    //            default: alert("Unknown rotation axis: "+getAxisMode());
-    //        }
-    //        render();
-    //        rot = true;
-    //    }
-    //    let tempnuc = nucleotides[i];
-    //    if (rot) {
-    //        switch (getScopeMode()) {
-    //            case "Strand":
-    //                // increment i to get to end of strand;
-    //                // subtract 1 because add 1 in loop automatically
-    //                i += systems[tempnuc.parent.parent.system_id].strands[tempnuc.parent.strand_id - 1].nucleotides.length - tempnuc.local_id - 1;
-    //                break;
-    //            case "System":
-    //                //gets nucleotide id in relation to system
-    //                let locsysID = (tempnuc.parent.strand_id - 1) * systems[tempnuc.parent.parent.system_id].strands[tempnuc.parent.strand_id - 1].nucleotides.length + tempnuc.local_id;
-    //                // increment i to get to end of system;
-    //                // subtract 1 to undo automatic increment by for loop
-    //                i += systems[tempnuc.parent.parent.system_id].system_length() - locsysID - 1;
-    //                break;
-    //        }
-    //    }
-    //}
-    //if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
-    //    alert("Please select an object to rotate.");
-    //}
+    if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
+        alert("Please select an object to rotate.");
+    }
+    render();
+    //});
 }
+//function rotate() { //rotate according to given angle given in number input
+//    let rot: boolean = false; //rotation success boolean
+//    updatePos(); //update class positions
+//    //let index: number = 0;
+//    //let setEntries = selected_bases.keys();
+//    //let setEntry = setEntries.next();
+//    //while (!setEntry.done) {
+//    selected_bases.forEach((base) => {
+//        //rotate around user selected axis with user entered angle
+//        rot = true;
+//        i = base.global_id;
+//        originalObjPos = nucleotides[i].pos.clone();
+//        switch (scopeMode) {
+//            case "Nuc": {
+//                c = originalObjPos; break;
+//            }
+//            case "Strand": {
+//                c = (systems[nucleotides[i].system_id].strands[nucleotides[i].strand_id - 1].pos.clone());
+//                break;
+//            }
+//            case "System": {
+//                c = (systems[nucleotides[i].system_id].pos.clone());
+//                break;
+//            }
+//            default: { break; }
+//        }
+//        switch (axisMode) {
+//            case "X": matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle)); break;
+//            case "Y": matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle)); break;
+//            case "Z": matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1); break;
+//            default: alert("Unknown rotation axis: " + axisMode);
+//        }
+//        for (let j: number = 0; j < nucleotides[i].visual_object.children.length; j++) {
+//            p = (nucleotides[i].visual_object.children[j].position.clone());
+//            d = p.sub(c);
+//            switch (axisMode) {
+//                case "X": {
+//                    v1.set(1, 0, 0);
+//                    break;
+//                }
+//                case "Y": {
+//                    v1.set(0, 1, 0);
+//                    break;
+//                }
+//                case "Z": {
+//                    v1.set(0, 0, 1);
+//                    break;
+//                }
+//                default: break;
+//            }
+//            nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, angle);
+//            d.applyMatrix3(matrix);
+//            d.add(c);
+//            nucleotides[i].visual_object.children[j].position.set(d.x, d.y, d.z);
+//            rot = true;
+//        }
+//        //setEntry = setEntries.next();
+//    });
+//    if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
+//        alert("Please select an object to rotate.");
+//    }
+//    render();
+//    //});
+//}

@@ -1,5 +1,6 @@
-let listBases = ""; //list of bases to download in .txt file
-let selList = [];
+//let listBases: string = ""; //list of bases to download in .txt file
+let listBases = []; //list of bases to download in .txt file
+//let selList:number[] = [];
 let basesInfo = ""; //list of bases' info - location, strand and system ids, etc. - to download in .txt file
 // magic ... 
 let mouse3D;
@@ -21,7 +22,7 @@ document.addEventListener('mousedown', event => {
         var nucleotide;
         let sys;
         let sysID, strandID;
-        let scope_mode = getScopeMode();
+        let scope_mode = scopeMode;
         if (intersects.length > 0) { //if something has been clicked / is in the intersects array / intersects array's length is above 0
             // hence we click only on nucleotides 
             // this section retrives info about the clicked object 
@@ -49,7 +50,7 @@ document.addEventListener('mousedown', event => {
                     break;
             }
             render(); //update scene;
-            let listBases = [];
+            listBases = [];
             let baseInfoStrands = {};
             //sort selection info into respective containers 
             selected_bases.forEach((base) => {
@@ -155,9 +156,9 @@ function writeMutTrapText(base1, base2) {
 function makeMutualTrapFile() {
     let x, count = 0;
     let mutTrapText = "";
-    for (x = 0; x < selList.length; x = x + 2) { //for every selected nucleotide in listBases string
-        if (selList[x + 1] !== undefined) { //if there is another nucleotide in the pair
-            mutTrapText = mutTrapText + writeMutTrapText(selList[x], selList[x + 1]) + writeMutTrapText(selList[x + 1], selList[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
+    for (x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
+        if (listBases[x + 1] !== undefined) { //if there is another nucleotide in the pair
+            mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
         }
         else { //if there is no 2nd nucleotide in the pair
             alert("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
@@ -166,7 +167,7 @@ function makeMutualTrapFile() {
     makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
 function makeSelectedBasesFile() {
-    makeTextFile("baseListFile", listBases);
+    makeTextFile("baseListFile", listBases.join(", "));
 }
 let textFile;
 function makeTextFile(filename, text) {

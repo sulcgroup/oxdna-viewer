@@ -91,7 +91,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
 				 	var object = intersects[0].object;
 				 }*/
-				switch (getScopeMode()) {
+				switch (scopeMode) {
 					case "Nuc": //if scope mode is "Nuc", set objects to be dragged to the clicked nucleotide
 						var object = intersects[0].object.parent; break;
 					case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
@@ -140,7 +140,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
 				 	_selected = intersects[0].object;
 				 }*/
-				switch (getScopeMode()) {
+				switch (scopeMode) {
 					case "Nuc": //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
 						_selected = intersects[0].object.parent; break;
 					case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
@@ -168,7 +168,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 			//calculate new sp connectors - does not work after rotation
 			if (_selected) { //if there is a clicked object
-				if (getScopeMode() == "Nuc") {
+				if (scopeMode == "Nuc") {
 					var current_nuc = nucleotides[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
 
 					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) { //if neighbor3 exists
@@ -267,7 +267,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			var intersects = _raycaster.intersectObjects(_objects, individ);
 
 			if (intersects.length > 0) { //if something in scene was clicked - i.e. is in intersects array
-				switch (getScopeMode()) {
+				switch (scopeMode) {
 					case "Nuc": //if "Nuc", set _selected to be dragged to the clicked nucleotide
 						_selected = intersects[0].object.parent; break;
 					case "Strand": //if "Strand", set _selected to be dragged to the clicked strand
