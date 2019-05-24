@@ -27,7 +27,6 @@ function setAxisMode() {
 }
 function setAngle() {
     angle = document.getElementById("rotAngle").valueAsNumber * Math.PI / 180;
-    console.log(angle);
 }
 let dragControls; //dragging functionality
 function drag() {

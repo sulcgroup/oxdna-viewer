@@ -30,7 +30,6 @@ function setAxisMode(): void {
 
 function setAngle(): void {
     angle = (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
-    console.log(angle);
 }
 
 

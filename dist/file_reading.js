@@ -703,7 +703,36 @@ function getNewConfig(mode) {
                 let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
                 let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-                group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
+                let sp_Mesh = group.children[SP_CON];
+                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+                    if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                        sp_Mesh.material = system.strand_to_material(locstrandID);
+                    }
+                    let geo = sp_Mesh.geometry;
+                    geo = connector_geometry;
+                    if (geo instanceof THREE.CylinderGeometry) {
+                        console.log(geo.parameters);
+                    }
+                    sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+                    sp_Mesh.updateMorphTargets();
+                    sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+                    sp_Mesh.position.set(0, 0, 0);
+                    sp_Mesh.rotation.set(0, 0, 0);
+                    sp_Mesh.quaternion.set(0, 0, 0, 0);
+                    sp_Mesh.scale.set(1, 1, 1);
+                    sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                    sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                    sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+                    sp_Mesh.matrixWorldNeedsUpdate = false;
+                    //sp_Mesh.layers.set(1);
+                    sp_Mesh.visible = true;
+                    sp_Mesh.castShadow = false;
+                    sp_Mesh.receiveShadow = false;
+                    sp_Mesh.frustumCulled = true;
+                    sp_Mesh.renderOrder = 0;
+                    sp_Mesh.userData = {};
+                }
+                //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
                 group.children[SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
                 group.children[SP_CON].applyMatrix(rotation_sp); //rotate
                 group.children[SP_CON].position.set(x_sp, y_sp, z_sp); //set position
