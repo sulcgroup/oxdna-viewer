@@ -204,33 +204,40 @@ target.addEventListener("drop", function (event) {
             var lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header
             let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
-            //nuc.local_id = nuc_local_id;
             let str_id = parseInt(l0[0]);
-            // make first strand
-            var current_strand = system.create_Strand(str_id);
+            let current_strand = system.create_Strand(str_id);
+            system.add_strand(current_strand);
             let nuc_local_id = 0;
             let last_strand = 1; //strands are 1-indexed in oxDNA .top files
             let neighbor3;
             // create empty list of elements with length equal to the topology
             // Note: this is implemented such that we have the elements for the DAT reader 
             for (let j = 0; j < lines.length; j++) {
-                let nuc = new BasicElement(elements.length, null);
+                let nuc;
                 elements.push(nuc);
             }
             //elements[lines.length] =  null;
             lines.forEach((line, i) => {
                 if (line == "") {
                     elements.pop();
-                    system.add_strand(current_strand);
+                    //system.add_strand(current_strand);
                     return;
                 }
-                //let nuc = new Nucleotide(elements.length, current_strand);
-                let nuc = elements[nuc_count + i];
-                nuc.parent = current_strand;
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
-                //nuc.local_id = nuc_local_id;
                 str_id = parseInt(l[0]);
-                //nuc.parent = str_id;
+                if (str_id != last_strand) { //if new strand id, make new strand                        
+                    current_strand = system.create_Strand(str_id);
+                    system.add_strand(current_strand);
+                    nuc_local_id = 0;
+                }
+                ;
+                //let nuc = new Nucleotide(elements.length, current_strand);
+                if (elements[nuc_count + i] == null || elements[nuc_count + i] == undefined)
+                    elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
+                let nuc = elements[nuc_count + i];
+                console.log("1000");
+                console.log(nuc);
+                nuc.local_id = nuc_local_id;
                 neighbor3 = parseInt(l[2]);
                 if (neighbor3 != -1) {
                     nuc.neighbor3 = elements[nuc_count + neighbor3];
@@ -240,17 +247,14 @@ target.addEventListener("drop", function (event) {
                 }
                 let neighbor5 = parseInt(l[3]);
                 if (neighbor5 != -1) {
+                    if (elements[nuc_count + neighbor5] == null || elements[nuc_count + neighbor5] == undefined) {
+                        elements[nuc_count + neighbor5] = current_strand.create_basicElement(nuc_count + neighbor5);
+                    }
                     nuc.neighbor5 = elements[nuc_count + neighbor5];
                 }
                 else {
                     nuc.neighbor5 = null;
                 }
-                if (str_id != last_strand) { //if new strand id, make new strand
-                    system.add_strand(current_strand);
-                    current_strand = system.create_Strand(str_id);
-                    nuc_local_id = 0;
-                }
-                ;
                 let base = l[1]; // get base id
                 nuc.type = base;
                 //if we meet a U, we have an RNA (its dumb, but its all we got)
@@ -263,7 +267,7 @@ target.addEventListener("drop", function (event) {
                 nuc_local_id += 1;
                 last_strand = str_id;
                 if (i == lines.length - 1) {
-                    system.add_strand(current_strand);
+                    //system.add_strand(current_strand);
                     return;
                 }
                 ;
@@ -278,67 +282,67 @@ target.addEventListener("drop", function (event) {
         };
         top_reader.readAsText(top_file);
         //test_dat_read(dat_file);
-    }
-    // asynchronously read the first two chunks of a configuration file
-    if (dat_file) {
-        renderer.domElement.style.cursor = "wait";
-        //anonymous functions to handle fileReader outputs
-        dat_reader.onload = () => {
-            current_chunk = dat_reader.result;
-            current_chunk_number = 0;
-            readDat(system.system_length(), dat_reader, system, lutColsVis);
-            document.dispatchEvent(new Event('nextConfigLoaded'));
-        };
-        //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
-        next_reader.onload = () => {
-            next_chunk = next_reader.result;
-            if (next_chunk == "") {
-                document.dispatchEvent(new Event('finalConfig'));
-                return;
-            }
-            n_hanging_line = "";
-            let c = "";
-            for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
-                n_hanging_line += c;
+        // asynchronously read the first two chunks of a configuration file
+        if (dat_file) {
+            renderer.domElement.style.cursor = "wait";
+            //anonymous functions to handle fileReader outputs
+            dat_reader.onload = () => {
+                current_chunk = dat_reader.result;
+                current_chunk_number = 0;
+                readDat(system.system_length(), dat_reader, system, lutColsVis);
+                document.dispatchEvent(new Event('nextConfigLoaded'));
+            };
+            //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
+            next_reader.onload = () => {
+                next_chunk = next_reader.result;
+                if (next_chunk == "") {
+                    document.dispatchEvent(new Event('finalConfig'));
+                    return;
+                }
+                n_hanging_line = "";
+                let c = "";
+                for (c = next_chunk.slice(0, 1); c != '\n'; c = next_chunk.slice(0, 1)) {
+                    n_hanging_line += c;
+                    next_chunk = next_chunk.substring(1);
+                }
+                try {
+                    current_chunk = current_chunk.concat(n_hanging_line);
+                }
+                catch (error) {
+                    alert("File readers got all topsy-turvy, traj reading will not work :( \n Please reload and try again");
+                }
                 next_chunk = next_chunk.substring(1);
-            }
-            try {
-                current_chunk = current_chunk.concat(n_hanging_line);
-            }
-            catch (error) {
-                alert("File readers got all topsy-turvy, traj reading will not work :( \n Please reload and try again");
-            }
-            next_chunk = next_chunk.substring(1);
-            conf_end.chunk = current_chunk;
-            // Signal that config has been loaded
-            document.dispatchEvent(new Event('nextConfigLoaded'));
-        };
-        previous_previous_reader.onload = () => {
-            previous_previous_chunk = previous_previous_reader.result;
-            if (previous_previous_chunk == "") {
-                return;
-            }
-            p_p_hanging_line = "";
-            let c = "";
-            for (c = previous_previous_chunk.slice(0, 1); c != '\n'; c = previous_previous_chunk.slice(0, 1)) {
-                p_p_hanging_line += c;
+                conf_end.chunk = current_chunk;
+                // Signal that config has been loaded
+                document.dispatchEvent(new Event('nextConfigLoaded'));
+            };
+            previous_previous_reader.onload = () => {
+                previous_previous_chunk = previous_previous_reader.result;
+                if (previous_previous_chunk == "") {
+                    return;
+                }
+                p_p_hanging_line = "";
+                let c = "";
+                for (c = previous_previous_chunk.slice(0, 1); c != '\n'; c = previous_previous_chunk.slice(0, 1)) {
+                    p_p_hanging_line += c;
+                    previous_previous_chunk = previous_previous_chunk.substring(1);
+                }
                 previous_previous_chunk = previous_previous_chunk.substring(1);
-            }
-            previous_previous_chunk = previous_previous_chunk.substring(1);
-            previous_previous_chunk = previous_previous_chunk.concat(p_hanging_line);
-            conf_end.chunk = current_chunk;
-            // Signal that config has been loaded
-            document.dispatchEvent(new Event('nextConfigLoaded'));
-        };
-        // read the first chunk
-        if (dat_file && top_file) {
-            approx_dat_len = top_file.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-            let first_chunk_blob = dat_chunker(dat_file, 0, approx_dat_len);
-            dat_reader.readAsText(first_chunk_blob);
-            //if its a trajectory, read in the second chunk
-            if (dat_file.size > approx_dat_len) {
-                let next_chunk_blob = dat_chunker(dat_file, 1, approx_dat_len);
-                next_reader.readAsText(next_chunk_blob);
+                previous_previous_chunk = previous_previous_chunk.concat(p_hanging_line);
+                conf_end.chunk = current_chunk;
+                // Signal that config has been loaded
+                document.dispatchEvent(new Event('nextConfigLoaded'));
+            };
+            // read the first chunk
+            if (dat_file && top_file) {
+                approx_dat_len = top_file.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
+                let first_chunk_blob = dat_chunker(dat_file, 0, approx_dat_len);
+                dat_reader.readAsText(first_chunk_blob);
+                //if its a trajectory, read in the second chunk
+                if (dat_file.size > approx_dat_len) {
+                    let next_chunk_blob = dat_chunker(dat_file, 1, approx_dat_len);
+                    next_reader.readAsText(next_chunk_blob);
+                }
             }
         }
     }
@@ -437,6 +441,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             break;
         }
         ;
+        console.log(current_strand);
         var current_nucleotide = current_strand.elements[nuc_local_id];
         //get nucleotide information
         // consume a new line 
@@ -510,8 +515,17 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         group.add(nucleoside);
         group.add(con);
         group.add(posObj);
+        console.log("2000");
+        console.log(current_nucleotide);
+        console.log("3000");
+        console.log(current_nucleotide.neighbor3);
+        if (current_nucleotide.neighbor3 != null) {
+            console.log(current_nucleotide.neighbor3.local_id);
+            console.log(current_nucleotide.local_id);
+        }
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.global_id < current_nucleotide.global_id) {
+        if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
+            console.log("here4000");
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
             y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
@@ -526,7 +540,16 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 group.add(sp); //add to visual_object
             }
         }
-        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.global_id < current_nucleotide.global_id) { //handles strand end connection
+        console.log("2500");
+        console.log(current_nucleotide);
+        console.log("3500");
+        console.log(current_nucleotide.neighbor5);
+        if (current_nucleotide.neighbor5 != null) {
+            console.log(current_nucleotide.neighbor5.local_id);
+            console.log(current_nucleotide.local_id);
+        }
+        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
+            console.log("here5000");
             let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection
             y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
@@ -545,12 +568,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         y_bb_last = y_bb;
         z_bb_last = z_bb;
         //catch the two possible cases for strand ends (no connection or circular)
-        if (current_nucleotide.neighbor5 == undefined) { //if last nucleotide in straight strand
+        if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in straight strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
         }
-        else if (current_nucleotide.neighbor5.global_id < current_nucleotide.global_id) { //if last nucleotide in circular strand
+        else if (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //if last nucleotide in circular strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
@@ -604,6 +627,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+    console.log(elements);
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(elements[i].visual_object.children[BACKBONE]);
     }

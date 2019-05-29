@@ -11,6 +11,7 @@ render();
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only elements have anything to render
 class BasicElement {
+    local_id: number;
     global_id: number; //location in world - all systems
     pos: THREE.Vector3; //not automatically updated; updated before rotation
     neighbor3: BasicElement | null;
@@ -66,6 +67,10 @@ class Strand {
         elem.parent = this;
     };
 
+    create_basicElement(global_id: number): AminoAcid {
+        return new AminoAcid(global_id, this);
+    }
+
     remove_basicElement(to_remove: number) {
         for (let i = 0; i < this.elements.length; i++) {
             let n = this.elements[i];
@@ -95,7 +100,7 @@ class Peptide extends Strand {
     constructor(id: number, parent: System) {
         super(id, parent);
     };
-    create_basicElement(global_id: number): BasicElement {
+    create_basicElement(global_id: number): AminoAcid {
         return new AminoAcid(global_id, this);
     }
 }
@@ -198,7 +203,6 @@ function updatePos() { //sets positions of system, strands, and visual objects t
         let n: number = systems[h].system_length(); //# of BasicElements in system
         for (let i = 0; i < systems[h].strands.length; i++) { //for each strand
             let n1 = systems[h].strands[i].elements.length; //for strand_3objects in system_3objects
-            console.log("strand length: " + n1);
             let strandcms = new THREE.Vector3(0, 0, 0); //strand cms
             for (let j = 0; j < n1; j++) { //for each visual_object
                 let nucobj = systems[h].strands[i].elements[j].visual_object; //current nuc's visual_object
