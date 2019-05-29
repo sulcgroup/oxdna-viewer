@@ -28,22 +28,22 @@ document.addEventListener('mousedown', event => {
             // this section retrives info about the clicked object 
             // !!! this may change in the future 
             nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
-            nucleotide = nucleotides[nucleotideID];
+            nucleotide = elements[nucleotideID];
             sys = nucleotide.parent.parent;
             switch (scope_mode) {
                 case "System":
                     let strand_count = sys.strands.length;
                     for (let i = 0; i < strand_count; i++) { //for every strand in the System
                         let strand = sys.strands[i];
-                        let nuc_count = strand.nucleotides.length;
+                        let nuc_count = strand.elements.length;
                         for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-                            toggle(strand.nucleotides[j]);
+                            toggle(strand.elements[j]);
                     }
                     break;
                 case "Strand":
-                    let strand_length = nucleotide.parent.nucleotides.length;
+                    let strand_length = nucleotide.parent.elements.length;
                     for (let i = 0; i < strand_length; i++) //for every nucleotide in world
-                        toggle(nucleotide.parent.nucleotides[i]);
+                        toggle(nucleotide.parent.elements[i]);
                     break;
                 case "Nuc":
                     toggle(nucleotide); //toggle selected nucleotide
@@ -103,7 +103,7 @@ function toggle(nucleotide) {
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = systems[sysID].base_to_material(nucleotide.type);
+                nuc_Mesh.material = systems[sysID].elem_to_material(nucleotide.type);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {

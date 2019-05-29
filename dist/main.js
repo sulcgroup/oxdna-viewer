@@ -5,10 +5,10 @@ var BB_NS_CON = 2;
 var COM = 3;
 var SP_CON = 4;
 render();
-// nucleotides store the information about position, orientation, ID
+// elements store the information about position, orientation, ID
 // Eventually there should be a way to pair them
-// Everything is an Object3D, but only nucleotides have anything to render
-class Nucleotide {
+// Everything is an Object3D, but only elements have anything to render
+class BasicElement {
     constructor(global_id, parent) {
         this.global_id = global_id;
         this.parent = parent;
@@ -16,29 +16,46 @@ class Nucleotide {
     ;
 }
 ;
-// strands are made up of nucleotides
+class DNANucleotide extends BasicElement {
+    constructor(global_id, parent) {
+        super(global_id, parent);
+    }
+    ;
+}
+;
+class RNANucleotide extends BasicElement {
+    constructor(global_id, parent) {
+        super(global_id, parent);
+    }
+    ;
+}
+;
+class AminoAcid extends BasicElement {
+    constructor(global_id, parent) {
+        super(global_id, parent);
+    }
+    ;
+}
+;
+// strands are made up of elements
 // strands have an ID within the system
 class Strand {
     constructor(id, parent) {
-        this.nucleotides = [];
+        this.elements = [];
         this.strand_id = id;
         this.parent = parent;
         this.strand_3objects = new THREE.Group;
-        this.system_id = parent.system_id;
     }
     ;
-    add_nucleotide(nuc) {
-        this.nucleotides.push(nuc);
-        nuc.local_id = this.nucleotides.indexOf(nuc);
-        nuc.parent = this;
-        nuc.strand_id = this.strand_id;
-        nuc.system_id = this.system_id;
+    add_basicElement(elem) {
+        this.elements.push(elem);
+        elem.parent = this;
     }
     ;
-    remove_nucleotide(to_remove) {
-        for (let i = 0; i < this.nucleotides.length; i++) {
-            let n = this.nucleotides[i];
-            if (n.local_id == to_remove) {
+    remove_basicElement(to_remove) {
+        for (let i = 0; i < this.elements.length; i++) {
+            let n = this.elements[i];
+            if (n.global_id == to_remove) { //changed from local to global id
                 scene.remove(n.visual_object);
                 n = null;
             }
@@ -47,6 +64,28 @@ class Strand {
     ;
 }
 ;
+class NucleicAcidStrand extends Strand {
+    constructor(id, parent) {
+        super(id, parent);
+    }
+    ;
+    create_basicElement(global_id) {
+        if (RNA_MODE)
+            return new RNANucleotide(global_id, this);
+        else
+            return new DNANucleotide(global_id, this);
+    }
+    ;
+}
+class Peptide extends Strand {
+    constructor(id, parent) {
+        super(id, parent);
+    }
+    ;
+    create_basicElement(global_id) {
+        return new AminoAcid(global_id, this);
+    }
+}
 // systems are made of strands
 // systems can CRUD
 class System {
@@ -60,10 +99,18 @@ class System {
     system_length() {
         let count = 0;
         for (let i = 0; i < this.strands.length; i++) {
-            count += this.strands[i].nucleotides.length;
+            count += this.strands[i].elements.length;
         }
         return count;
     }
+    ;
+    create_Strand(str_id) {
+        if (str_id < 0)
+            return new Peptide(str_id, this);
+        else
+            return new NucleicAcidStrand(str_id, this);
+    }
+    ;
     add_strand(strand) {
         this.strands.push(strand);
     }
@@ -73,9 +120,9 @@ class System {
             let s = this.strands[i];
             if (s.strand_id == to_remove) {
                 this.system_3objects.remove(s.strand_3objects);
-                for (let j = 0; j < s.nucleotides.length; j++) {
-                    s.strand_3objects.remove(s.nucleotides[j].visual_object);
-                    s.remove_nucleotide(j);
+                for (let j = 0; j < s.elements.length; j++) {
+                    s.strand_3objects.remove(s.elements[j].visual_object);
+                    s.remove_basicElement(j);
                 }
                 scene.remove(s.strand_3objects);
                 s = null;
@@ -89,11 +136,11 @@ class System {
         return backbone_materials[strandIndex % backbone_materials.length];
     }
     ;
-    base_to_material(base) {
-        if (typeof base == "string") {
-            base = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[base];
+    elem_to_material(elem) {
+        if (typeof elem == "string") {
+            elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
         }
-        return nucleoside_materials[base];
+        return nucleoside_materials[elem];
     }
     ;
     setDatFile(dat_file) {
@@ -106,7 +153,7 @@ function dat_loader(file) {
 // store rendering mode RNA  
 let RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
-var nucleotides = []; //contains references to all nucleotides
+var elements = []; //contains references to all BasicElements
 //initialize the space
 var systems = [];
 let sys_count = 0;
@@ -121,21 +168,21 @@ let lutColsVis = false;
 function updatePos() {
     for (let h = 0; h < systems.length; h++) { //for current system
         let syscms = new THREE.Vector3(0, 0, 0); //system cms
-        let n = systems[h].system_length(); //# of nucleotides in system
+        let n = systems[h].system_length(); //# of BasicElements in system
         for (let i = 0; i < systems[h].strands.length; i++) { //for each strand
-            let n1 = systems[h].strands[i].nucleotides.length; //for strand_3objects in system_3objects
+            let n1 = systems[h].strands[i].elements.length; //for strand_3objects in system_3objects
             console.log("strand length: " + n1);
             let strandcms = new THREE.Vector3(0, 0, 0); //strand cms
             for (let j = 0; j < n1; j++) { //for each visual_object
-                let nucobj = systems[h].strands[i].nucleotides[j].visual_object; //current nuc's visual_object
+                let nucobj = systems[h].strands[i].elements[j].visual_object; //current nuc's visual_object
                 let objcms = new THREE.Vector3(); //group cms
                 //sum cms of all visual_object in each system, strand, and itself
                 let tempposition = nucobj.children[3].position.clone();
                 objcms = tempposition; // nucobj.children[3].position; //nucobj cms
                 strandcms.add(tempposition); //nucobj.children[3].position); //strand cms
                 syscms.add(tempposition); //nucobj.children[3].position); //system cms
-                systems[h].strands[i].nucleotides[j].pos = objcms.clone(); // set nucleotide object position to objcms
-                nucleotides[systems[h].strands[i].nucleotides[j].global_id].pos = objcms.clone();
+                systems[h].strands[i].elements[j].pos = objcms.clone(); // set nucleotide object position to objcms
+                //elements[systems[h].strands[i].elements[j].global_id].pos = objcms.clone();
             }
             //calculate strand cms
             let mul = 1.0 / n1;
@@ -212,11 +259,11 @@ function toggleColorOptions() {
                 side: THREE.DoubleSide
             }));
             let index = 0;
-            for (; index < nucleotides.length; index++) {
-                let nuc = nucleotides[index];
-                let back_Mesh = nucleotides[index].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
-                let con_Mesh = nucleotides[index].visual_object.children[BB_NS_CON];
-                let sp_Mesh = nucleotides[index].visual_object.children[SP_CON];
+            for (; index < elements.length; index++) {
+                let nuc = elements[index];
+                let back_Mesh = elements[index].visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+                let con_Mesh = elements[index].visual_object.children[BB_NS_CON];
+                let sp_Mesh = elements[index].visual_object.children[SP_CON];
                 //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
                 if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
                     if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
@@ -326,29 +373,29 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides in all systems - does not work for more than one system
-                let sysID = nucleotides[i].parent.parent.system_id;
-                let back_Mesh = nucleotides[i].visual_object.children[BACKBONE]; //backbone
-                let nuc_Mesh = nucleotides[i].visual_object.children[NUCLEOSIDE]; //nucleoside
-                let con_Mesh = nucleotides[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector
-                let sp_Mesh = nucleotides[i].visual_object.children[SP_CON]; //sugar phosphate connector
-                back_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
-                nuc_Mesh.material = systems[sysID].base_to_material(nucleotides[i].global_id);
-                con_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
-                if (nucleotides[i].visual_object[SP_CON])
-                    sp_Mesh.material = systems[sysID].strand_to_material(nucleotides[i].global_id);
+            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
+                let sysID = elements[i].parent.parent.system_id;
+                let back_Mesh = elements[i].visual_object.children[BACKBONE]; //backbone
+                let nuc_Mesh = elements[i].visual_object.children[NUCLEOSIDE]; //nucleoside
+                let con_Mesh = elements[i].visual_object.children[BB_NS_CON]; //backbone nucleoside connector
+                let sp_Mesh = elements[i].visual_object.children[SP_CON]; //sugar phosphate connector
+                back_Mesh.material = systems[sysID].strand_to_material(elements[i].global_id);
+                nuc_Mesh.material = systems[sysID].elem_to_material(elements[i].global_id);
+                con_Mesh.material = systems[sysID].strand_to_material(elements[i].global_id);
+                if (elements[i].visual_object[SP_CON])
+                    sp_Mesh.material = systems[sysID].strand_to_material(elements[i].global_id);
             }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
         }
         else {
-            for (let i = 0; i < nucleotides.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
+            for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
                 let tmeshlamb = new THREE.MeshLambertMaterial({
                     color: lutCols[i],
                     side: THREE.DoubleSide
                 });
-                for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
+                for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
                     if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh = nucleotides[i].visual_object.children[j];
+                        let tmesh = elements[i].visual_object.children[j];
                         tmesh.material = tmeshlamb;
                     }
                 }
@@ -391,20 +438,20 @@ function centerSystems() {
     /*
         //get center of mass for all systems
         let cms = new THREE.Vector3(0, 0, 0);
-        for (let i = 0; i < nucleotides.length; i++) {
+        for (let i = 0; i < elements.length; i++) {
             let tmp_pos = new THREE.Vector3;
-            tmp_pos.setFromMatrixPosition(nucleotides[i].visual_object.children[COM].matrixWorld);
+            tmp_pos.setFromMatrixPosition(elements[i].visual_object.children[COM].matrixWorld);
             cms.add(tmp_pos);
         }
-        let mul = 1.0 / nucleotides.length;
+        let mul = 1.0 / elements.length;
         cms.multiplyScalar(mul * -1);
     */
     // Create one averaging variable for each dimension, representing that 1D
     // interval as a unit circle in 2D (with the circumference being the 
     // bounding box side length)
     let cm_x = new THREE.Vector2(), cm_y = new THREE.Vector2(), cm_z = new THREE.Vector2();
-    for (let i = 0; i < nucleotides.length; i++) {
-        let p = nucleotides[i].visual_object.children[COM].position.clone();
+    for (let i = 0; i < elements.length; i++) {
+        let p = elements[i].visual_object.children[COM].position.clone();
         // Shift coordinates so that the origin is in the corner of the 
         // bounding box, instead of the centre.
         p.add(new THREE.Vector3().addScalar(1.5 * box));
@@ -419,20 +466,20 @@ function centerSystems() {
         cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
     }
     // Divide center of mass sums to get the averages
-    cm_x.divideScalar(nucleotides.length);
-    cm_y.divideScalar(nucleotides.length);
-    cm_z.divideScalar(nucleotides.length);
+    cm_x.divideScalar(elements.length);
+    cm_y.divideScalar(elements.length);
+    cm_z.divideScalar(elements.length);
     // Convert back from unit circle coordinates into x,y,z
     let cms = new THREE.Vector3(box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI));
     // Shift back origin to center of the box
     cms.sub(new THREE.Vector3().addScalar(box / 2));
     // Change nucleotide positions by the center of mass
-    for (let i = 0; i < nucleotides.length; i++) {
-        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
+    for (let i = 0; i < elements.length; i++) {
+        for (let j = 0; j < elements[i].visual_object.children.length; j++) {
             /*
-                        nucleotides[i].visual_object.children[j].position.add(cms);
+                        elements[i].visual_object.children[j].position.add(cms);
             */
-            let p = nucleotides[i].visual_object.children[j].position;
+            let p = elements[i].visual_object.children[j].position;
             // Shift with centre of mass
             p.add(cms);
             // Keep positions within bounding box
@@ -451,9 +498,9 @@ function setResolution(resolution) {
     backbone_geometry = new THREE.SphereGeometry(.2, resolution, resolution);
     nucleoside_geometry = new THREE.SphereGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
     connector_geometry = new THREE.CylinderGeometry(.1, .1, 1, Math.max(2, resolution));
-    //update all nucleotides and hide some meshes if resolution is low enough
-    for (let i = 0; i < nucleotides.length; i++) {
-        let nuc_group = nucleotides[i].visual_object.children;
+    //update all elements and hide some meshes if resolution is low enough
+    for (let i = 0; i < elements.length; i++) {
+        let nuc_group = elements[i].visual_object.children;
         nuc_group[BACKBONE].visible = resolution > 1;
         nuc_group[BACKBONE].geometry = backbone_geometry;
         nuc_group[NUCLEOSIDE].visible = resolution > 1;

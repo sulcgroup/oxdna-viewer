@@ -84,8 +84,8 @@ function rotate() {
                 break;
             default: alert("Unknown rotation axis: " + axisMode);
         }
-        for (let j = 0; j < nucleotides[i].visual_object.children.length; j++) {
-            p = (nucleotides[i].visual_object.children[j].position.clone());
+        for (let j = 0; j < elements[i].visual_object.children.length; j++) {
+            p = (elements[i].visual_object.children[j].position.clone());
             d = p.sub(c);
             switch (axisMode) {
                 case "X": {
@@ -102,10 +102,10 @@ function rotate() {
                 }
                 default: break;
             }
-            nucleotides[i].visual_object.children[j].rotateOnWorldAxis(v1, angle);
+            elements[i].visual_object.children[j].rotateOnWorldAxis(v1, angle);
             d.applyMatrix3(matrix);
             d.add(c);
-            nucleotides[i].visual_object.children[j].position.set(d.x, d.y, d.z);
+            elements[i].visual_object.children[j].position.set(d.x, d.y, d.z);
             rot = true;
         }
         //setEntry = setEntries.next();

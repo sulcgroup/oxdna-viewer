@@ -166,7 +166,7 @@ target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
     //make system to store the dropped files in
-    var system = new System(sys_count, nucleotides.length);
+    var system = new System(sys_count, elements.length);
     var files = event.dataTransfer.files, files_len = files.length;
     var base_to_num = {
         "A": 0,
@@ -199,52 +199,55 @@ target.addEventListener("drop", function (event) {
         //read topology file
         let top_reader = new FileReader();
         top_reader.onload = () => {
-            // make first strand
-            var current_strand = new Strand(1, system);
-            let nuc_local_id = 0;
-            let last_strand = 1; //strands are 1-indexed in oxDNA .top files
-            let neighbor3;
             // parse file into lines
             var file = top_reader.result;
             var lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header
-            // create empty list of nucleotides with length equal to the topology
-            // Note: this is implemented such that we have the nucleotides for the DAT reader 
+            let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+            //nuc.local_id = nuc_local_id;
+            let str_id = parseInt(l0[0]);
+            // make first strand
+            var current_strand = system.create_Strand(str_id);
+            let nuc_local_id = 0;
+            let last_strand = 1; //strands are 1-indexed in oxDNA .top files
+            let neighbor3;
+            // create empty list of elements with length equal to the topology
+            // Note: this is implemented such that we have the elements for the DAT reader 
             for (let j = 0; j < lines.length; j++) {
-                let nuc = new Nucleotide(nucleotides.length, null);
-                nucleotides.push(nuc);
+                let nuc = new BasicElement(elements.length, null);
+                elements.push(nuc);
             }
-            //nucleotides[lines.length] =  null;
+            //elements[lines.length] =  null;
             lines.forEach((line, i) => {
                 if (line == "") {
-                    nucleotides.pop();
+                    elements.pop();
                     system.add_strand(current_strand);
                     return;
                 }
-                //let nuc = new Nucleotide(nucleotides.length, current_strand);
-                let nuc = nucleotides[nuc_count + i];
+                //let nuc = new Nucleotide(elements.length, current_strand);
+                let nuc = elements[nuc_count + i];
                 nuc.parent = current_strand;
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
-                nuc.local_id = nuc_local_id;
-                let str_id = parseInt(l[0]);
+                //nuc.local_id = nuc_local_id;
+                str_id = parseInt(l[0]);
                 //nuc.parent = str_id;
                 neighbor3 = parseInt(l[2]);
                 if (neighbor3 != -1) {
-                    nuc.neighbor3 = nucleotides[nuc_count + neighbor3];
+                    nuc.neighbor3 = elements[nuc_count + neighbor3];
                 }
                 else {
                     nuc.neighbor3 = null;
                 }
                 let neighbor5 = parseInt(l[3]);
                 if (neighbor5 != -1) {
-                    nuc.neighbor5 = nucleotides[nuc_count + neighbor5];
+                    nuc.neighbor5 = elements[nuc_count + neighbor5];
                 }
                 else {
                     nuc.neighbor5 = null;
                 }
                 if (str_id != last_strand) { //if new strand id, make new strand
                     system.add_strand(current_strand);
-                    current_strand = new Strand(str_id, system);
+                    current_strand = system.create_Strand(str_id);
                     nuc_local_id = 0;
                 }
                 ;
@@ -255,8 +258,8 @@ target.addEventListener("drop", function (event) {
                     RNA_MODE = true;
                 }
                 //let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3_nuc, base, str_id, system.system_id); //create nucleotide
-                current_strand.add_nucleotide(nuc); //add nuc into Strand object
-                //nucleotides.push(nuc); //add nuc to global nucleotides array
+                current_strand.add_basicElement(nuc); //add nuc into Strand object
+                //elements.push(nuc); //add nuc to global elements array
                 nuc_local_id += 1;
                 last_strand = str_id;
                 if (i == lines.length - 1) {
@@ -265,12 +268,12 @@ target.addEventListener("drop", function (event) {
                 }
                 ;
             });
-            //for (let i = system.global_start_id; i < nucleotides.length; i++) { //set selected_bases[] to 0 for nucleotides[]-system start
+            //for (let i = system.global_start_id; i < elements.length; i++) { //set selected_bases[] to 0 for elements[]-system start
             //    selected_bases.push(0);
             //}
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
-            nuc_count = nucleotides.length;
+            nuc_count = elements.length;
             conf_len = nuc_count + 3;
         };
         top_reader.readAsText(top_file);
@@ -369,7 +372,7 @@ target.addEventListener("drop", function (event) {
                             scene.add(labels['ticks'][i]);
                             scene.add(labels['lines'][i]);
                         }
-                        for (let i = 0; i < nucleotides.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                        for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
                             lutCols.push(lut.getColor(Number(data[key][i])));
                         }
                         if (!json_alone)
@@ -379,11 +382,11 @@ target.addEventListener("drop", function (event) {
                             toggleLut(check_box);
                     }
                     if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
-                        for (let i = 0; i < nucleotides.length; i++) {
+                        for (let i = 0; i < elements.length; i++) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, nucleotides[i].visual_object.children[BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].visual_object.children[BACKBONE].position, len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -434,7 +437,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             break;
         }
         ;
-        var current_nucleotide = current_strand.nucleotides[nuc_local_id];
+        var current_nucleotide = current_strand.elements[nuc_local_id];
         //get nucleotide information
         // consume a new line 
         let l = lines[i].split(" ");
@@ -491,7 +494,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             material = system.strand_to_material(current_strand.strand_id);
         }
         backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, system.base_to_material(current_nucleotide.type)); //sphere - nucleotide
+        nucleoside = new THREE.Mesh(nucleoside_geometry, system.elem_to_material(current_nucleotide.type)); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
@@ -508,7 +511,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         group.add(con);
         group.add(posObj);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.local_id < current_nucleotide.local_id) {
+        if (current_nucleotide.neighbor3 != null && current_nucleotide.neighbor3.global_id < current_nucleotide.global_id) {
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
             y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
@@ -523,7 +526,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 group.add(sp); //add to visual_object
             }
         }
-        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //handles strand end connection
+        if (current_nucleotide.neighbor5 != null && current_nucleotide.neighbor5.global_id < current_nucleotide.global_id) { //handles strand end connection
             let x_sp = (x_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x) / 2, //make sugar phosphate connection
             y_sp = (y_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y) / 2, z_sp = (z_bb + current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.x, 2) + Math.pow(y_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.y, 2) + Math.pow(z_bb - current_nucleotide.neighbor5.visual_object.children[BACKBONE].position.z, 2));
@@ -547,7 +550,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
         }
-        else if (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //if last nucleotide in circular strand
+        else if (current_nucleotide.neighbor5.global_id < current_nucleotide.global_id) { //if last nucleotide in circular strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
@@ -558,10 +561,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     //bring strand in box
     for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
         // compute offset to bring strand in box
-        let n = systems[sys_count].strands[i].nucleotides.length; //strand's nucleotides[] length
+        let n = systems[sys_count].strands[i].elements.length; //strand's elements[] length
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
-            cms.add(systems[sys_count].strands[i].nucleotides[j].visual_object.children[COM].position); //sum center of masses - children[3] = posObj Mesh at cms
+            cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[COM].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -570,14 +573,14 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         dy = Math.round(cms.y / box) * box;
         dz = Math.round(cms.z / box) * box;
         //fix coordinates
-        for (let j = 0; j < systems[sys_count].strands[i].nucleotides.length; j++) { //for every nucleotide in strand
-            for (let k = 0; k < systems[sys_count].strands[i].nucleotides[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
-                let pos = systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position; //get Mesh position
+        for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
+            for (let k = 0; k < systems[sys_count].strands[i].elements[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
+                let pos = systems[sys_count].strands[i].elements[j].visual_object.children[k].position; //get Mesh position
                 //update pos by offset <dx, dy, dz>
                 pos.x = pos.x - dx;
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
-                systems[sys_count].strands[i].nucleotides[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
             }
         }
     }
@@ -601,8 +604,8 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
-    for (let i = 0; i < nucleotides.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(nucleotides[i].visual_object.children[BACKBONE]);
+    for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
+        backbones.push(elements[i].visual_object.children[BACKBONE]);
     }
     renderer.domElement.style.cursor = "auto";
 }
@@ -641,7 +644,7 @@ function getNewConfig(mode) {
                 break;
             }
             ;
-            let current_nucleotide = current_strand.nucleotides[nuc_local_id];
+            let current_nucleotide = current_strand.elements[nuc_local_id];
             //get nucleotide information
             // consume a new line 
             let l = lines[line_num].split(" ");
@@ -678,7 +681,7 @@ function getNewConfig(mode) {
             let neg_NS_pos = current_nucleotide.visual_object.children[NUCLEOSIDE].position.multiplyScalar(-1);
             let curr_heading = current_nucleotide.visual_object.children[BACKBONE].position.add(neg_NS_pos);
             let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(curr_heading.normalize(), new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize()));
-            // update position and orientation of the nucleotides
+            // update position and orientation of the elements
             let group = current_nucleotide.visual_object;
             let locstrandID = current_strand.strand_id;
             group.name = current_nucleotide.global_id + "";
@@ -754,10 +757,10 @@ function getNewConfig(mode) {
         let dx, dy, dz;
         for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
             // compute offset to bring strand in box
-            let n = systems[i].strands[j].nucleotides.length; //# of nucleotides on strand
+            let n = systems[i].strands[j].elements.length; //# of elements on strand
             let cms = new THREE.Vector3(0, 0, 0);
             for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
-                cms.add(systems[i].strands[j].nucleotides[k].visual_object.children[COM].position);
+                cms.add(systems[i].strands[j].elements[k].visual_object.children[COM].position);
             }
             //calculate cms
             let mul = 1.0 / n;
@@ -766,14 +769,14 @@ function getNewConfig(mode) {
             dy = Math.round(cms.y / box) * box;
             dz = Math.round(cms.z / box) * box;
             //fix coordinates
-            for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i].strands[j].nucleotides[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i].strands[j].nucleotides[k].visual_object.children[l].position; //get Mesh position
+            for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in strand
+                for (let l = 0; l < systems[i].strands[j].elements[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
+                    let pos = systems[i].strands[j].elements[k].visual_object.children[l].position; //get Mesh position
                     //calculate new positions by offset
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
-                    systems[i].strands[j].nucleotides[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
+                    systems[i].strands[j].elements[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
         }

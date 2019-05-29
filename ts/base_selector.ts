@@ -22,7 +22,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 		intersects = raycaster.intersectObjects(backbones);
 		// make note of what's been clicked
 		let nucleotideID: number;
-		var nucleotide: Nucleotide;
+		var nucleotide: BasicElement;
 		let sys: System; 
 		let sysID:number, strandID:number;	
 
@@ -32,7 +32,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			// this section retrives info about the clicked object 
 			// !!! this may change in the future 
 			nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
-			nucleotide = nucleotides[nucleotideID];
+			nucleotide = elements[nucleotideID];
 			sys = nucleotide.parent.parent;
 						
 			switch(scope_mode){
@@ -40,15 +40,15 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					let strand_count = sys.strands.length;
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
 						let strand = sys.strands[i];
-						let nuc_count = strand.nucleotides.length;
+						let nuc_count = strand.elements.length;
 						for(let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-							toggle(strand.nucleotides[j]);
+							toggle(strand.elements[j]);
 					}
 				break;
 				case "Strand" :
-					let strand_length = nucleotide.parent.nucleotides.length;
+					let strand_length = nucleotide.parent.elements.length;
 					for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
-						toggle(nucleotide.parent.nucleotides[i]);
+						toggle(nucleotide.parent.elements[i]);
 				break;
 				case "Nuc":
 					toggle(nucleotide); //toggle selected nucleotide
@@ -100,7 +100,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 	}
 });
 
-function toggle(nucleotide: Nucleotide) { //toggle clicked nucleotide coloring
+function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
 	// highlight/remove highlight the bases we've clicked 
 	let selected: boolean = false;
 	let nucleotideID: number = nucleotide.global_id;
@@ -120,8 +120,8 @@ function toggle(nucleotide: Nucleotide) { //toggle clicked nucleotide coloring
 			}
 		}
 		if (nuc_Mesh instanceof THREE.Mesh) {
-			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				nuc_Mesh.material = systems[sysID].base_to_material(nucleotide.type);
+            if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                nuc_Mesh.material = systems[sysID].elem_to_material(nucleotide.type);
 			}
 		}
 		if (con_Mesh instanceof THREE.Mesh) {

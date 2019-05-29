@@ -1,7 +1,7 @@
 function makeOutputFiles() {
     let tempVec = new THREE.Vector3(0, 0, 0);
     let top = ""; //string of contents of .top file
-    let tot_nuc = 0; //total # of nucleotides
+    let tot_nuc = 0; //total # of elements
     let tot_strands = 0; //total # of strands
     let longest_strand_len = 0;
     let uncorrected_strand_id;
@@ -11,7 +11,7 @@ function makeOutputFiles() {
         for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in current system
             tot_strands++;
             let strand_len = 0; //current strand length
-            for (let k = 0; k < systems[i].strands[j].nucleotides.length; k++) { //for each nucleotide in current strand
+            for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in current strand
                 tot_nuc++;
                 strand_len++;
             }
@@ -20,17 +20,17 @@ function makeOutputFiles() {
         }
     }
     top = tot_nuc + " " + tot_strands + "\n";
-    uncorrected_strand_id = nucleotides[0].parent.strand_id;
-    old_system = nucleotides[0].parent.parent.system_id;
-    for (let i = 0; i < nucleotides.length; i++) { //for each nucleotide in the system
-        if (nucleotides[i].parent.strand_id != uncorrected_strand_id || nucleotides[i].parent.parent.system_id != old_system) {
+    uncorrected_strand_id = elements[0].parent.strand_id;
+    old_system = elements[0].parent.parent.system_id;
+    for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
+        if (elements[i].parent.strand_id != uncorrected_strand_id || elements[i].parent.parent.system_id != old_system) {
             current_strand += 1;
-            uncorrected_strand_id = nucleotides[i].parent.strand_id;
-            old_system = nucleotides[i].parent.parent.system_id;
+            uncorrected_strand_id = elements[i].parent.strand_id;
+            old_system = elements[i].parent.parent.system_id;
         }
-        top = top + current_strand + " " + nucleotides[i].type + " "; //strand id in global world + base type
-        let neighbor3 = nucleotides[i].neighbor3;
-        let neighbor5 = nucleotides[i].neighbor5;
+        top = top + current_strand + " " + elements[i].type + " "; //strand id in global world + base type
+        let neighbor3 = elements[i].neighbor3;
+        let neighbor5 = elements[i].neighbor5;
         if (neighbor3 === null || neighbor3 === undefined) { // if no neigbor3, neighbor3's global id = -1
             top = top + -1 + " ";
         }
@@ -48,8 +48,8 @@ function makeOutputFiles() {
     let box = 2 * longest_strand_len;
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box
         + "\n" + "E = 0 0 0 " + dat_fileout + "\n";
-    for (let i = 0; i < nucleotides.length; i++) { //for all nucleotides
-        let nuc = nucleotides[i];
+    for (let i = 0; i < elements.length; i++) { //for all elements
+        let nuc = elements[i];
         nuc.visual_object.children[3].getWorldPosition(tempVec); //nucleotide's center of mass in world
         let x = tempVec.x;
         let y = tempVec.y;
