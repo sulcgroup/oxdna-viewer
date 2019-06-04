@@ -6,6 +6,9 @@ A web app for viewing oxDNA configuration files.  Simply drag and drop your .dat
 
 The version running on the "Try it" link is the simple master branch.  If you want to see the latest updates with full functionality, please checkout or download the dev branch
 
+To use:
+1) open index.html in any web browser
+2) drag and drop a .dat and .top file pair
 
 If you want to use the viewer as-is locally, simply download or clone the repository and open the index.html in a web browser (Chrome works best).  If you would like to make custom changes, you will need to make sure you have the following dependencies installed: Typescript, Node.js, and Three.js.  Here are some instructions to install the required packages and compile the code:
 
