@@ -169,7 +169,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			//calculate new sp connectors - does not work after rotation
 			if (_selected) { //if there is a clicked object
 				if (scopeMode == "Nuc") {
-					var current_nuc = nucleotides[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
+					var current_nuc = elements[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
 
 					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) { //if neighbor3 exists
 						calcsp(current_nuc); //calculate sp between current and neighbor3
@@ -177,14 +177,12 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined) { //if neighbor5 exists
 						calcsp(current_nuc.neighbor5); //calculate sp between current and neighbor5
 					}
-
 				}
 				scope.dispatchEvent({ type: 'dragend', object: _selected });
 
 				_selected = null; //now nothing is selected for dragging b/c click event is over
 
 			}
-
 			_domElement.style.cursor = 'auto';
 			render();
 		}
@@ -214,14 +212,15 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			new THREE.Quaternion().setFromUnitVectors(
 				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
 			)
-		);
-		let tempsp = new THREE.Mesh(connector_geometry, backbone_materials[Math.floor(current_nuc.my_strand % backbone_materials.length)]); //create new Mesh w/ proper coloring
+        );
+        let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
+        let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
 		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
 		tempsp.applyMatrix(rotation_sp); //set rotation
 		tempsp.position.set(x_sp, y_sp, z_sp); //set position
 		current_nuc.visual_object.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
-		tempsp.position.sub(temp);
-		current_nuc.visual_object.remove(current_nuc.visual_object.children[4]); //remove old sp
+        tempsp.position.sub(temp);
+        current_nuc.visual_object.remove(current_nuc.visual_object.children[current_nuc.SP_CON]); //remove old sp
 		current_nuc.visual_object.add(tempsp); //add new sp
 	}
 

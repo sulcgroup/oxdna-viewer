@@ -37,23 +37,103 @@ var backbone_materials = [
 
 // define nucleoside colors: grey OR traditional colors
 var nucleoside_materials = [
-    new THREE.MeshLambertMaterial({ //A
+    new THREE.MeshLambertMaterial({ //A or R
         color: 0x3333FF, //neon blue
         //color: 0x888888,//6dc066,
         side: THREE.DoubleSide
     }),
-    new THREE.MeshLambertMaterial({ //G
+    new THREE.MeshLambertMaterial({ //G or H
         color: 0xFFFF33, //yellow; "gorse"
         //color: 0x888888,//ff6600,
         side: THREE.DoubleSide
     }),
-    new THREE.MeshLambertMaterial({ //C
+    new THREE.MeshLambertMaterial({ //C or K
         color: 0x33FF33, //lime green
         //color: 0x888888,//0x4286f4,
         side: THREE.DoubleSide
     }),
-    new THREE.MeshLambertMaterial({ //T/U
+    new THREE.MeshLambertMaterial({ //T/U or D
         color: 0xFF3333, //red orange
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //E
+        color: 0xE60A0A, //bright red
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //S
+        color: 0xFA9600, //orange
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //T
+        color: 0x3232AA, //mid blue
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //N
+        color: 0xE60A0A, //bright red
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //Q
+        color: 0x00DCDC, //cyan
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //C
+        color: 0xE6E600, //yellow
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //G
+        color: 0xEBEBEB, // light grey
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //P
+        color: 0xDC9682, //peach
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //A
+        color: 0xC8C8C8, //dark grey
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //V
+        color: 0x0F820F, //green
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //I
+        color: 0x0F820F, //green
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //L
+        color: 0x0F820F, //green
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //M
+        color: 0xE6E600, //yellow
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //F
+        color: 0xFF3333, //red orange
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //Y
+        color: 0x3232AA, //mid blue
+        //color: 0x888888,//ff0033,
+        side: THREE.DoubleSide
+    }),
+    new THREE.MeshLambertMaterial({ //W
+        color: 0xB45AB4, //pink
         //color: 0x888888,//ff0033,
         side: THREE.DoubleSide
     })

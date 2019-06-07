@@ -41,17 +41,17 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
 						let strand = sys.strands[i];
 						let nuc_count = strand.elements.length;
-						for(let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-							toggle(strand.elements[j]);
+                        for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
+                            strand.elements[j].toggle();
 					}
 				break;
 				case "Strand" :
 					let strand_length = nucleotide.parent.elements.length;
-					for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
-						toggle(nucleotide.parent.elements[i]);
+                    for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
+                        nucleotide.parent.elements[i].toggle();
 				break;
-				case "Nuc":
-					toggle(nucleotide); //toggle selected nucleotide
+                case "Nuc":
+                    nucleotide.toggle(); //toggle selected nucleotide
 				break;
 
 			}
@@ -100,7 +100,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 	}
 });
 
-function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
+/*function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
 	// highlight/remove highlight the bases we've clicked 
 	let selected: boolean = false;
 	let nucleotideID: number = nucleotide.global_id;
@@ -158,7 +158,7 @@ function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
 		//selList.push(nucleotideID);
 		selected_bases.add(nucleotide); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
 	}
-}
+}*/
 
 
 
