@@ -276,9 +276,6 @@ function toggleColorOptions() {
     }
 }
 
-function updateColor(colorPicker) {
-}
-
 function createVideo() {
     // Get canvas
     let canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
@@ -297,6 +294,13 @@ function createVideo() {
         display: true,
         workersPath: 'ts/lib/'
     });
+
+    let button = <HTMLInputElement> document.getElementById("videoStartStop");
+    button.innerText = "Stop";
+    button.onclick = function() {
+        capturer.stop();
+        capturer.save();
+    }
     try {
         switch (videoType.value) {
             case "trajectory":
@@ -310,7 +314,9 @@ function createVideo() {
         alert("Failed to capture video: \n"+e);
         capturer.stop();
     }
+
 }
+
 function createTrajectoryVideo(canvas, capturer) {
     // Listen for configuration loaded events
     function _load(e){
@@ -325,8 +331,14 @@ function createTrajectoryVideo(canvas, capturer) {
         document.removeEventListener('finalConfig', _done);
         capturer.stop();
         capturer.save();
+        button.innerText = "Start";
+        button.onclick = createVideo;
         return;
     }
+
+    // Overload stop button so that we don't forget to remove listeners
+    let button = <HTMLInputElement> document.getElementById("videoStartStop");
+    button.onclick = _done;
 
     document.addEventListener('nextConfigLoaded', _load);
     document.addEventListener('finalConfig', _done);
@@ -348,6 +360,10 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 
     capturer.start();
 
+    // Overload stop button so that we don't forget to remove listeners
+    let button = <HTMLInputElement> document.getElementById("videoStartStop");
+    button.onclick = function() {tMax=0;};
+
     // Move camera and capture frames
     // This is not a for-loop since we need to use
     // requestAnimationFrame recursively.
@@ -356,6 +372,8 @@ function createLemniscateVideo(canvas, capturer, framerate) {
         if (t>=tMax) {
             capturer.stop();
             capturer.save();
+            button.innerText = "Start";
+            button.onclick = createVideo;
             return;
         }
         requestAnimationFrame(animate);
@@ -421,6 +439,16 @@ function toggleBackground() {
         scene.background = WHITE;
         render();
     }
+}
+
+function toggleFog(near, far) {
+    if (scene.fog == null) {
+        scene.fog = new THREE.Fog(scene.background, near, far);
+    }
+    else {
+        scene.fog = null;
+    }
+    render();
 }
 
 function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
