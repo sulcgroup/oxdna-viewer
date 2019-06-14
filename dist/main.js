@@ -50,6 +50,9 @@ class BasicElement {
     elem_to_material(type) {
         return new THREE.MeshLambertMaterial();
     }
+    getDatFileOutput() {
+        return "";
+    }
 }
 ;
 class Nucleotide extends BasicElement {
@@ -308,6 +311,45 @@ class Nucleotide extends BasicElement {
         return nucleoside_materials[elem];
     }
     ;
+    getDatFileOutput() {
+        let dat = "";
+        let tempVec = new THREE.Vector3(0, 0, 0);
+        this.visual_object.children[3].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        let x = tempVec.x;
+        let y = tempVec.y;
+        let z = tempVec.z;
+        let fx, fy, fz;
+        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's sugar phosphate backbone's world position
+        let x_bb = tempVec.x;
+        let y_bb = tempVec.y;
+        let z_bb = tempVec.z;
+        this.visual_object.children[1].getWorldPosition(tempVec); //nucleotide's nucleoside's world position
+        let x_ns = tempVec.x;
+        let y_ns = tempVec.y;
+        let z_ns = tempVec.z;
+        let x_a1;
+        let y_a1;
+        let z_a1;
+        //calculate axis vector a1 (backbone vector) and a3 (stacking vector)
+        x_a1 = (x_ns - x) / 0.4;
+        y_a1 = (y_ns - y) / 0.4;
+        z_a1 = (z_ns - z) / 0.4;
+        let x_a2;
+        let y_a2;
+        let z_a2;
+        let a3 = this.getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a2, x_a2, y_a2, z_a2);
+        let x_a3 = a3.x;
+        let y_a3 = a3.y;
+        let z_a3 = a3.z;
+        dat = x + " " + y + " " + z + " " + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 +
+            " " + z_a3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
+        return dat;
+    }
+    ;
+    getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2) {
+        return new THREE.Vector3();
+    }
+    ;
 }
 ;
 class DNANucleotide extends Nucleotide {
@@ -319,6 +361,21 @@ class DNANucleotide extends Nucleotide {
     calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3) {
         let x_bb = x - (0.34 * x_a1 + 0.3408 * x_a2), y_bb = y - (0.34 * y_a1 + 0.3408 * y_a2), z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
+    }
+    ;
+    getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2) {
+        x_a2 = ((x_bb - x) + (0.34 * x_a1)) / (-0.3408);
+        y_a2 = ((y_bb - y) + (0.34 * y_a1)) / (-0.3408);
+        z_a2 = ((z_bb - z) + (0.34 * z_a1)) / (-0.3408);
+        let Coeff = [[0, -(z_a1), y_a1], [-(z_a1), 0, x_a1], [-(y_a1), x_a1, 0]];
+        let x_matrix = [[x_a2, -(z_a1), y_a1], [y_a2, 0, x_a1], [z_a2, x_a1, 0]];
+        let y_matrix = [[0, x_a2, y_a1], [-(z_a1), y_a2, x_a1], [-(y_a1), z_a2, 0]];
+        let z_matrix = [[0, -(z_a1), x_a2], [-(z_a1), 0, y_a2], [-(y_a1), x_a1, z_a2]];
+        let a3 = divAndNeg(cross(x_a1, y_a1, z_a1, x_a2, y_a2, z_a2), dot(x_a1, y_a1, z_a1, x_a1, y_a1, z_a1));
+        let x_a3 = a3[0];
+        let y_a3 = a3[1];
+        let z_a3 = a3[2];
+        return new THREE.Vector3(x_a3, y_a3, z_a3);
     }
     ;
 }
@@ -333,6 +390,14 @@ class RNANucleotide extends Nucleotide {
         let x_bb = x - (0.4 * x_a1 + 0.2 * x_a3), y_bb = y - (0.4 * y_a1 + 0.2 * y_a3), z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
     }
+    ;
+    getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2) {
+        let x_a3 = ((x_bb - x) + (0.4 * x_a1)) / (-0.2);
+        let y_a3 = ((y_bb - y) + (0.4 * y_a1)) / (-0.2);
+        let z_a3 = ((z_bb - z) + (0.4 * z_a1)) / (-0.2);
+        return new THREE.Vector3(x_a3, y_a3, z_a3);
+    }
+    ;
 }
 ;
 class AminoAcid extends BasicElement {
@@ -477,6 +542,17 @@ class AminoAcid extends BasicElement {
             selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
         }
     }
+    getDatFileOutput() {
+        let dat = "";
+        let tempVec = new THREE.Vector3(0, 0, 0);
+        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        let x = tempVec.x;
+        let y = tempVec.y;
+        let z = tempVec.z;
+        dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
+        return dat;
+    }
+    ;
 }
 ;
 // strands are made up of elements

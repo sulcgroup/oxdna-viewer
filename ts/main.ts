@@ -67,6 +67,9 @@ class BasicElement {
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();
     }
+    getDatFileOutput(): string {
+        return "";
+    }
 };
 
 class Nucleotide extends BasicElement {
@@ -396,12 +399,50 @@ class Nucleotide extends BasicElement {
             selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
         }
     };
-    elem_to_material(elem: number | string): THREE.MeshLambertMaterial  {
+    elem_to_material(elem: number | string): THREE.MeshLambertMaterial {
         if (typeof elem == "string") {
             elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
         }
         else elem = Math.abs(elem);
         return nucleoside_materials[elem];
+    };
+    getDatFileOutput(): string {
+        let dat: string = "";
+        let tempVec: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+        this.visual_object.children[3].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        let x: number = tempVec.x;
+        let y: number = tempVec.y;
+        let z: number = tempVec.z;
+        let fx: number, fy: number, fz: number;
+        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's sugar phosphate backbone's world position
+        let x_bb: number = tempVec.x;
+        let y_bb: number = tempVec.y;
+        let z_bb: number = tempVec.z;
+        this.visual_object.children[1].getWorldPosition(tempVec); //nucleotide's nucleoside's world position
+        let x_ns: number = tempVec.x;
+        let y_ns: number = tempVec.y;
+        let z_ns: number = tempVec.z;
+        let x_a1: number;
+        let y_a1: number;
+        let z_a1: number;
+        //calculate axis vector a1 (backbone vector) and a3 (stacking vector)
+        x_a1 = (x_ns - x) / 0.4;
+        y_a1 = (y_ns - y) / 0.4;
+        z_a1 = (z_ns - z) / 0.4;
+
+        let x_a2: number;
+        let y_a2: number;
+        let z_a2: number;
+        let a3: THREE.Vector3 = this.getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a2, x_a2, y_a2, z_a2);
+        let x_a3: number = a3.x;
+        let y_a3: number = a3.y;
+        let z_a3: number = a3.z;
+        dat = x + " " + y + " " + z + " " + x_a1 + " " + y_a1 + " " + z_a1 + " " + x_a3 + " " + y_a3 +
+            " " + z_a3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
+        return dat;
+    };
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+        return new THREE.Vector3();
     };
 };
 
@@ -416,6 +457,20 @@ class DNANucleotide extends Nucleotide {
             z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
     };
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+        x_a2 = ((x_bb - x) + (0.34 * x_a1)) / (-0.3408);
+        y_a2 = ((y_bb - y) + (0.34 * y_a1)) / (-0.3408);
+        z_a2 = ((z_bb - z) + (0.34 * z_a1)) / (-0.3408);
+
+        let Coeff = [[0, -(z_a1), y_a1], [-(z_a1), 0, x_a1], [-(y_a1), x_a1, 0]];
+        let x_matrix = [[x_a2, -(z_a1), y_a1], [y_a2, 0, x_a1], [z_a2, x_a1, 0]];
+        let y_matrix = [[0, x_a2, y_a1], [-(z_a1), y_a2, x_a1], [-(y_a1), z_a2, 0]];
+        let z_matrix = [[0, -(z_a1), x_a2], [-(z_a1), 0, y_a2], [-(y_a1), x_a1, z_a2]];
+
+        let a3: number[] = divAndNeg(cross(x_a1, y_a1, z_a1, x_a2, y_a2, z_a2), dot(x_a1, y_a1, z_a1, x_a1, y_a1, z_a1));
+        let x_a3 = a3[0]; let y_a3 = a3[1]; let z_a3 = a3[2];
+        return new THREE.Vector3(x_a3, y_a3, z_a3);
+    };
 };
 class RNANucleotide extends Nucleotide {
     constructor(global_id: number, parent: Strand) {
@@ -427,7 +482,13 @@ class RNANucleotide extends Nucleotide {
             y_bb = y - (0.4 * y_a1 + 0.2 * y_a3),
             z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
-    }
+    };
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+        let x_a3 = ((x_bb - x) + (0.4 * x_a1)) / (-0.2);
+        let y_a3 = ((y_bb - y) + (0.4 * y_a1)) / (-0.2);
+        let z_a3 = ((z_bb - z) + (0.4 * z_a1)) / (-0.2);
+        return new THREE.Vector3(x_a3, y_a3, z_a3);
+    };
 };
 class AminoAcid extends BasicElement {
     constructor(global_id: number, parent: Strand) {
@@ -591,6 +652,16 @@ class AminoAcid extends BasicElement {
             selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
         }
     }
+    getDatFileOutput(): string {
+        let dat: string = "";
+        let tempVec: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
+        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        let x: number = tempVec.x;
+        let y: number = tempVec.y;
+        let z: number = tempVec.z;
+        dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
+        return dat;
+    };
 };
 
 // strands are made up of elements
