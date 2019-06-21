@@ -677,14 +677,10 @@ class AminoAcid extends BasicElement {
     getDatFileOutput(): string {
         let dat: string = "";
         let tempVec: THREE.Vector3 = new THREE.Vector3();
-        console.log(this);
         this.visual_object.children[this.BACKBONE].getWorldPosition(tempVec); //nucleotide's center of mass in world
         let x: number = tempVec.x;
         let y: number = tempVec.y;
         let z: number = tempVec.z;
-        console.log("x: " + x);
-        console.log("y: " + y);
-        console.log("z: " + z);
         dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
         return dat;
     };
@@ -883,32 +879,15 @@ function toggleVideoOptions() {
 }
 
 function toggleColorOptions() {
-    let opt = document.getElementById("colorOptions");
+    let opt: HTMLElement = document.getElementById("colorOptions");
     opt.hidden = !opt.hidden;
+    colorOptions();
+}
+
+function colorOptions() {
+    let opt: HTMLElement = document.getElementById("colorOptions");
     if (!opt.hidden) {
         opt.innerHTML = "";  //Clear content
-        for (let i = 0; i < backbone_materials.length; i++) {
-            let m = backbone_materials[i];
-            let c = document.createElement('input');
-            c.type = 'color';
-            c.value = "#" + m.color.getHexString();
-            c.oninput = function () {
-                m.color = new THREE.Color(c.value);
-                render();
-            };
-            c.oncontextmenu = function (event) {
-                event.preventDefault();
-                opt.removeChild(c);
-                backbone_materials.splice(i, 1);
-                let index: number = 0;
-                for (; index < elements.length; index++) {
-                    elements[index].editStrandColor();
-                }
-                render();
-                return false;
-            }
-            opt.appendChild(c);
-        }
         let addButton = document.createElement('button');
         addButton.innerText = "Add Color";
         addButton.onclick = function () {
@@ -921,10 +900,38 @@ function toggleColorOptions() {
             for (; index < elements.length; index++) {
                 elements[index].editStrandColor();
             }
+            colorOptions();
             render();
-            opt.hidden = true; toggleColorOptions();
+        }
+        for (let i = 0; i < backbone_materials.length; i++) {
+            let m = backbone_materials[i];
+            let c = document.createElement('input');
+            c.type = 'color';
+            c.value = "#" + m.color.getHexString();
+            c.oninput = function () {
+                m.color = new THREE.Color(c.value);
+                render();
+            };
+            c.oncontextmenu = function (event) {
+                event.preventDefault();
+                backbone_materials.splice(i, 1);
+                colorOptions();
+                /*opt.removeChild(c);                
+                let index: number = 0;
+                for (; index < elements.length; index++) {
+                    elements[index].editStrandColor();
+                }
+                render();*/
+                return false;
+            }
+            opt.appendChild(c);
         }
         opt.appendChild(addButton);
+        let index: number = 0;
+        for (; index < elements.length; index++) {
+            elements[index].editStrandColor();
+        }
+        render();
     }
 }
 

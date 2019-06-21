@@ -671,11 +671,11 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //fix coordinates
         for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
             let current_nucleotide = systems[sys_count].strands[i].elements[j];
-            console.log("HERE");
+            /*console.log("HERE");
             let tempV: THREE.Vector3 = new THREE.Vector3();
             current_nucleotide.visual_object.children[current_nucleotide.getCOM()].getWorldPosition(tempV);
             console.log(tempV);
-            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);
+            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);*/
             for (let k = 0; k < systems[sys_count].strands[i].elements[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
                 let pos = systems[sys_count].strands[i].elements[j].visual_object.children[k].position; //get Mesh position
                 //update pos by offset <dx, dy, dz>
@@ -685,10 +685,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
             }
 
-            console.log("HERE2");
+            /*console.log("HERE2");
             current_nucleotide.visual_object.children[current_nucleotide.getCOM()].getWorldPosition(tempV);
             console.log(tempV);
-            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);
+            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);*/
         }
     }
 
