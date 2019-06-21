@@ -55,7 +55,7 @@ class BasicElement {
         return "";
     }
     ;
-    editStrandColor() {
+    resetColor(nucNec) {
     }
     ;
 }
@@ -254,6 +254,36 @@ class Nucleotide extends BasicElement {
         return this.COM;
     }
     ;
+    resetColor(nucNec) {
+        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
+        let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
+        let con_Mesh = this.visual_object.children[this.BB_NS_CON];
+        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        // figure out what that base was before you painted it black and revert it
+        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
+            if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+        if (nucNec) {
+            if (nuc_Mesh instanceof THREE.Mesh) {
+                if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                    nuc_Mesh.material = this.elem_to_material(this.type);
+                }
+            }
+        }
+        if (con_Mesh instanceof THREE.Mesh) {
+            if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+    }
     toggle() {
         // highlight/remove highlight the bases we've clicked 
         let selected = false;
@@ -264,28 +294,7 @@ class Nucleotide extends BasicElement {
         let con_Mesh = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh = this.visual_object.children[this.SP_CON];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
-            // figure out what that base was before you painted it black and revert it
-            //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-            if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-                if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    back_Mesh.material = this.strand_to_material(this.parent.strand_id);
-                }
-            }
-            if (nuc_Mesh instanceof THREE.Mesh) {
-                if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    nuc_Mesh.material = this.elem_to_material(this.type);
-                }
-            }
-            if (con_Mesh instanceof THREE.Mesh) {
-                if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    con_Mesh.material = this.strand_to_material(this.parent.strand_id);
-                }
-            }
-            if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-                }
-            }
+            this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
@@ -353,28 +362,6 @@ class Nucleotide extends BasicElement {
     ;
     getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a1) {
         return new THREE.Vector3();
-    }
-    ;
-    editStrandColor() {
-        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
-        let con_Mesh = this.visual_object.children[this.BB_NS_CON];
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
-        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-        if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-            if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
-        }
-        if (con_Mesh instanceof THREE.Mesh) {
-            if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
-        }
-        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
-        }
     }
     ;
 }
@@ -537,6 +524,25 @@ class AminoAcid extends BasicElement {
         return this.BACKBONE;
     }
     ;
+    resetColor(nucNec) {
+        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
+        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        // figure out what that base was before you painted it black and revert it
+        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        if (nucNec) {
+            if (back_Mesh != undefined && back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
+                if (back_Mesh.material != undefined && (back_Mesh.material instanceof THREE.MeshBasicMaterial || back_Mesh.material instanceof THREE.MeshLambertMaterial)) {
+                    back_Mesh.material = this.elem_to_material(this.type);
+                }
+            }
+        }
+        if (sp_Mesh != undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshBasicMaterial || sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+    }
+    ;
     toggle() {
         // highlight/remove highlight the bases we've clicked 
         let selected = false;
@@ -545,18 +551,7 @@ class AminoAcid extends BasicElement {
         let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
         let sp_Mesh = this.visual_object.children[this.SP_CON];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
-            // figure out what that base was before you painted it black and revert it
-            //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-            if (back_Mesh != undefined && back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-                if (back_Mesh.material != undefined && (back_Mesh.material instanceof THREE.MeshBasicMaterial || back_Mesh.material instanceof THREE.MeshLambertMaterial)) {
-                    back_Mesh.material = this.elem_to_material(this.type);
-                }
-            }
-            if (sp_Mesh != undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshBasicMaterial || sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-                }
-            }
+            this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
@@ -584,16 +579,6 @@ class AminoAcid extends BasicElement {
         let z = tempVec.z;
         dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
         return dat;
-    }
-    ;
-    editStrandColor() {
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
-        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
-        }
     }
     ;
 }
@@ -783,7 +768,7 @@ function colorOptions() {
             }));
             let index = 0;
             for (; index < elements.length; index++) {
-                elements[index].editStrandColor();
+                elements[index].resetColor(false);
             }
             colorOptions();
             render();
@@ -801,12 +786,6 @@ function colorOptions() {
                 event.preventDefault();
                 backbone_materials.splice(i, 1);
                 colorOptions();
-                /*opt.removeChild(c);
-                let index: number = 0;
-                for (; index < elements.length; index++) {
-                    elements[index].editStrandColor();
-                }
-                render();*/
                 return false;
             };
             opt.appendChild(c);
@@ -814,7 +793,7 @@ function colorOptions() {
         opt.appendChild(addButton);
         let index = 0;
         for (; index < elements.length; index++) {
-            elements[index].editStrandColor();
+            elements[index].resetColor(false);
         }
         render();
     }
@@ -905,16 +884,7 @@ function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
             for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
-                let sysID = elements[i].parent.parent.system_id;
-                let back_Mesh = elements[i].visual_object.children[elements[i].BACKBONE]; //backbone
-                let nuc_Mesh = elements[i].visual_object.children[elements[i].NUCLEOSIDE]; //nucleoside
-                let con_Mesh = elements[i].visual_object.children[elements[i].BB_NS_CON]; //backbone nucleoside connector
-                let sp_Mesh = elements[i].visual_object.children[elements[i].SP_CON]; //sugar phosphate connector
-                back_Mesh.material = elements[i].strand_to_material(elements[i].global_id);
-                nuc_Mesh.material = elements[i].elem_to_material(elements[i].type);
-                con_Mesh.material = elements[i].strand_to_material(elements[i].global_id);
-                if (elements[i].visual_object[elements[i].SP_CON])
-                    sp_Mesh.material = elements[i].strand_to_material(elements[i].global_id);
+                elements[i].resetColor(true);
             }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
         }
