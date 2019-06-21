@@ -66,10 +66,13 @@ class BasicElement {
     };
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();
-    }
+    };
     getDatFileOutput(): string {
         return "";
-    }
+    };
+    editStrandColor() {
+
+    };
 };
 
 class Nucleotide extends BasicElement {
@@ -200,10 +203,10 @@ class Nucleotide extends BasicElement {
         x_bb_last = x_bb;
         y_bb_last = y_bb;
         z_bb_last = z_bb;
-    }
+    };
     calcBBPos(x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number, x_a3: number, y_a3: number, z_a3: number): THREE.Vector3 {
         return new THREE.Vector3(x, y, z);
-    }
+    };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
@@ -337,10 +340,10 @@ class Nucleotide extends BasicElement {
             group.children[this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
             group.children[this.SP_CON].parent = this.visual_object;
         };
-    }
+    };
     getCOM(): number {
         return this.COM;
-    }
+    };
     toggle() {
         // highlight/remove highlight the bases we've clicked 
         let selected: boolean = false;
@@ -413,7 +416,6 @@ class Nucleotide extends BasicElement {
         let x: number = tempVec.x;
         let y: number = tempVec.y;
         let z: number = tempVec.z;
-        let fx: number, fy: number, fz: number;
         this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's sugar phosphate backbone's world position
         let x_bb: number = tempVec.x;
         let y_bb: number = tempVec.y;
@@ -429,11 +431,7 @@ class Nucleotide extends BasicElement {
         x_a1 = (x_ns - x) / 0.4;
         y_a1 = (y_ns - y) / 0.4;
         z_a1 = (z_ns - z) / 0.4;
-
-        let x_a2: number;
-        let y_a2: number;
-        let z_a2: number;
-        let a3: THREE.Vector3 = this.getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a2, x_a2, y_a2, z_a2);
+        let a3: THREE.Vector3 = this.getA3(x_bb, y_bb, z_bb, x, y, z, x_a1, y_a1, z_a1);
         let x_a3: number = a3.x;
         let y_a3: number = a3.y;
         let z_a3: number = a3.z;
@@ -441,8 +439,29 @@ class Nucleotide extends BasicElement {
             " " + z_a3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
         return dat;
     };
-    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number): THREE.Vector3 {
         return new THREE.Vector3();
+    };
+    editStrandColor() {
+        let back_Mesh: THREE.Object3D = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
+        let con_Mesh: THREE.Object3D = this.visual_object.children[this.BB_NS_CON];
+        let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
+        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
+            if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+        if (con_Mesh instanceof THREE.Mesh) {
+            if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
     };
 };
 
@@ -457,7 +476,10 @@ class DNANucleotide extends Nucleotide {
             z_bb = z - (0.34 * z_a1 + 0.3408 * z_a2);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
     };
-    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number): THREE.Vector3 {
+        let x_a2: number;
+        let y_a2: number;
+        let z_a2: number;
         x_a2 = ((x_bb - x) + (0.34 * x_a1)) / (-0.3408);
         y_a2 = ((y_bb - y) + (0.34 * y_a1)) / (-0.3408);
         z_a2 = ((z_bb - z) + (0.34 * z_a1)) / (-0.3408);
@@ -483,7 +505,7 @@ class RNANucleotide extends Nucleotide {
             z_bb = z - (0.4 * z_a1 + 0.2 * z_a3);
         return new THREE.Vector3(x_bb, y_bb, z_bb);
     };
-    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number): THREE.Vector3 {
+    getA3(x_bb: number, y_bb: number, z_bb: number, x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number): THREE.Vector3 {
         let x_a3 = ((x_bb - x) + (0.4 * x_a1)) / (-0.2);
         let y_a3 = ((y_bb - y) + (0.4 * y_a1)) / (-0.2);
         let z_a3 = ((z_bb - z) + (0.4 * z_a1)) / (-0.2);
@@ -505,9 +527,9 @@ class AminoAcid extends BasicElement {
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        let group = new THREE.Group; //create visual_object group
+        let group = new THREE.Group(); //create visual_object group
         group.name = this.global_id + ""; //set name (string) to nucleotide's global id
-        let backbone;
+        let backbone: THREE.Mesh;
         // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material: THREE.MeshLambertMaterial;
@@ -520,7 +542,7 @@ class AminoAcid extends BasicElement {
         else {
             material = this.elem_to_material(this.type);
         }
-        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone 
+        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
         backbone.position.set(x, y, z);
         group.add(backbone);
 
@@ -572,7 +594,7 @@ class AminoAcid extends BasicElement {
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
-    }
+    };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
         let group: THREE.Group = this.visual_object;
         let locstrandID: number = this.parent.strand_id;
@@ -608,10 +630,10 @@ class AminoAcid extends BasicElement {
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
-    }
+    };
     getCOM(): number {
         return this.BACKBONE;
-    }
+    };
 
     toggle() {
         // highlight/remove highlight the bases we've clicked 
@@ -654,13 +676,26 @@ class AminoAcid extends BasicElement {
     }
     getDatFileOutput(): string {
         let dat: string = "";
-        let tempVec: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        let tempVec: THREE.Vector3 = new THREE.Vector3();
+        console.log(this);
+        this.visual_object.children[this.BACKBONE].getWorldPosition(tempVec); //nucleotide's center of mass in world
         let x: number = tempVec.x;
         let y: number = tempVec.y;
         let z: number = tempVec.z;
+        console.log("x: " + x);
+        console.log("y: " + y);
+        console.log("z: " + z);
         dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
         return dat;
+    };
+    editStrandColor() {
+        let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
+        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
     };
 };
 
@@ -782,13 +817,6 @@ class System {
     }
 };
 
-
-function dat_loader(file) {
-
-}
-
-
-
 function updatePos() { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
     for (let h = 0; h < systems.length; h++) { //for current system
         let syscms = new THREE.Vector3(0, 0, 0); //system cms
@@ -865,19 +893,24 @@ function toggleColorOptions() {
             c.type = 'color';
             c.value = "#" + m.color.getHexString();
             c.oninput = function () {
-                backbone_materials[i].color = new THREE.Color(c.value);
+                m.color = new THREE.Color(c.value);
                 render();
             };
             c.oncontextmenu = function (event) {
                 event.preventDefault();
                 opt.removeChild(c);
                 backbone_materials.splice(i, 1);
+                let index: number = 0;
+                for (; index < elements.length; index++) {
+                    elements[index].editStrandColor();
+                }
+                render();
                 return false;
             }
             opt.appendChild(c);
         }
         let addButton = document.createElement('button');
-        addButton.innerText = "Add color";
+        addButton.innerText = "Add Color";
         addButton.onclick = function () {
             backbone_materials.push(
                 new THREE.MeshLambertMaterial({
@@ -886,26 +919,7 @@ function toggleColorOptions() {
                 }));
             let index: number = 0;
             for (; index < elements.length; index++) {
-                let nuc: BasicElement = elements[index];
-                let back_Mesh: THREE.Object3D = elements[index].visual_object.children[elements[index].BACKBONE]; //get clicked nucleotide's Meshes
-                let con_Mesh: THREE.Object3D = elements[index].visual_object.children[elements[index].BB_NS_CON];
-                let sp_Mesh: THREE.Object3D = elements[index].visual_object.children[elements[index].SP_CON];
-                //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-                if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-                    if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        back_Mesh.material = nuc.strand_to_material(nuc.parent.strand_id);
-                    }
-                }
-                if (con_Mesh instanceof THREE.Mesh) {
-                    if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        con_Mesh.material = nuc.strand_to_material(nuc.parent.strand_id);
-                    }
-                }
-                if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                    if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                        sp_Mesh.material = nuc.strand_to_material(nuc.parent.strand_id);
-                    }
-                }
+                elements[index].editStrandColor();
             }
             render();
             opt.hidden = true; toggleColorOptions();

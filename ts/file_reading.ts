@@ -264,8 +264,6 @@ target.addEventListener("drop", function (event) {
                     if (elements[nuc_count + i] == null || elements[nuc_count + i] == undefined)
                         elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
                     let nuc = elements[nuc_count + i];
-                    console.log("1000");
-                    console.log(nuc);
                     nuc.local_id = nuc_local_id;
 
                     neighbor3 = parseInt(l[2]);
@@ -485,8 +483,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break
         };
-        console.log(current_strand);
-        var current_nucleotide = current_strand.elements[nuc_local_id];
+        var current_nucleotide: BasicElement = current_strand.elements[nuc_local_id];
         //get nucleotide information
         // consume a new line 
         let l: string = lines[i].split(" ");
@@ -498,7 +495,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
         current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
-
         //// extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         //let x_a1 = parseFloat(l[3]),
         //    y_a1 = parseFloat(l[4]),
@@ -674,6 +670,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
         //fix coordinates
         for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
+            let current_nucleotide = systems[sys_count].strands[i].elements[j];
+            console.log("HERE");
+            let tempV: THREE.Vector3 = new THREE.Vector3();
+            current_nucleotide.visual_object.children[current_nucleotide.getCOM()].getWorldPosition(tempV);
+            console.log(tempV);
+            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);
             for (let k = 0; k < systems[sys_count].strands[i].elements[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
                 let pos = systems[sys_count].strands[i].elements[j].visual_object.children[k].position; //get Mesh position
                 //update pos by offset <dx, dy, dz>
@@ -682,6 +684,11 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 pos.z = pos.z - dz;
                 systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
             }
+
+            console.log("HERE2");
+            current_nucleotide.visual_object.children[current_nucleotide.getCOM()].getWorldPosition(tempV);
+            console.log(tempV);
+            console.log(current_nucleotide.visual_object.children[current_nucleotide.getCOM()].position);
         }
     }
 
@@ -707,7 +714,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
-    console.log(elements);
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
     }
