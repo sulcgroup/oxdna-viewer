@@ -17,7 +17,9 @@
         "./ts/keybindings.ts",
         "./ts/base_selector.ts",
         "./ts/output_file.ts",
-        "./ts/translation.ts"//,
+        "./ts/translation.ts",
+        "./ts/adhoc_api.ts"
+        //,
         //"./js/cubes.ts",
         //"./js/rotate.ts"
     ]

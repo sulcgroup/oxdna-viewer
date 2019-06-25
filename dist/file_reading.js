@@ -583,21 +583,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     }
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
-    //radio button/checkbox selections
-    //if (getActionModes().includes("Drag")) {
-    //    drag();
-    //}
-    /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-     let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-     let cube = new THREE.Mesh(geometry, material);
-     cube.position.set(0,0,0);
-     scene.add(cube);
-     backbones.push(cube);
-     cube = new THREE.Mesh(geometry, material);
-     cube.position.set(10,10,10);
-     scene.add(cube);
-     backbones.push(cube); */
-    // set camera position based on structure
+    
     // update the scene
     render();
     //updatePos(sys_count - 1); //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory

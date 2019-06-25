@@ -7,33 +7,64 @@ var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
 var connector_geometry = new THREE.CylinderGeometry(.1,.1,1, 8);
 
 
-// define strand colors
+0xfdd291	
+0xffb322	
+0x437092	
+0x6ea4cc	
+0x517dc7
+
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
-        color: 0x4C7489,
-        side: THREE.DoubleSide
+        color: 0xfdd291,
+        side: THREE.DoubleSide,
     }),
+    
     new THREE.MeshLambertMaterial({
-        color: 0xD44848,
+        color: 0xffb322,
         side: THREE.DoubleSide,
     }),
     new THREE.MeshLambertMaterial({
-        color: 0xF7D412,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x78D984,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x6AC4D4,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xCE9B47,
+        color: 0x437092,
         side: THREE.DoubleSide,
-    })
-];
+    }),
+    new THREE.MeshLambertMaterial({
+        color: 0x6ea4cc,
+        side: THREE.DoubleSide,
+    }),
+    
+    new THREE.MeshLambertMaterial({
+        color: 0x517dc7,
+        side: THREE.DoubleSide,
+    }),];
+
+// define strand colors    
+//var backbone_materials = [
+//    //new THREE.MeshLambertMaterial({
+//    //    color: 0xD44848,
+//    //    side: THREE.DoubleSide,
+//    //}),
+//    new THREE.MeshLambertMaterial({
+//        color: 0x4C7489,
+//        side: THREE.DoubleSide
+//    }),
+//    new THREE.MeshLambertMaterial({
+//        color: 0x78D984,
+//        side: THREE.DoubleSide
+//    }),
+//    
+//    new THREE.MeshLambertMaterial({
+//        color: 0xF7D412,
+//        side: THREE.DoubleSide
+//    }),
+//    new THREE.MeshLambertMaterial({
+//        color: 0x6AC4D4,
+//        side: THREE.DoubleSide
+//    }),
+//    new THREE.MeshLambertMaterial({
+//        color: 0xCE9B47,
+//        side: THREE.DoubleSide,
+//    })
+//];
 
 // define nucleoside colors: grey OR traditional colors
 var nucleoside_materials = [
