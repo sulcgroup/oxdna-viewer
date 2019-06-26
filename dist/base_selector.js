@@ -28,25 +28,25 @@ document.addEventListener('mousedown', event => {
             // this section retrives info about the clicked object 
             // !!! this may change in the future 
             nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
-            nucleotide = nucleotides[nucleotideID];
+            nucleotide = elements[nucleotideID];
             sys = nucleotide.parent.parent;
             switch (scope_mode) {
                 case "System":
                     let strand_count = sys.strands.length;
                     for (let i = 0; i < strand_count; i++) { //for every strand in the System
                         let strand = sys.strands[i];
-                        let nuc_count = strand.nucleotides.length;
+                        let nuc_count = strand.elements.length;
                         for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-                            toggle(strand.nucleotides[j]);
+                            strand.elements[j].toggle();
                     }
                     break;
                 case "Strand":
-                    let strand_length = nucleotide.parent.nucleotides.length;
+                    let strand_length = nucleotide.parent.elements.length;
                     for (let i = 0; i < strand_length; i++) //for every nucleotide in world
-                        toggle(nucleotide.parent.nucleotides[i]);
+                        nucleotide.parent.elements[i].toggle();
                     break;
                 case "Nuc":
-                    toggle(nucleotide); //toggle selected nucleotide
+                    nucleotide.toggle(); //toggle selected nucleotide
                     break;
             }
             render(); //update scene;
@@ -84,15 +84,17 @@ document.addEventListener('mousedown', event => {
         }
     }
 });
-function toggle(nucleotide) {
-    // highlight/remove highlight the bases we've clicked 
-    let selected = false;
-    let nucleotideID = nucleotide.global_id;
-    let sysID = nucleotide.parent.parent.system_id;
-    let back_Mesh = nucleotide.visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
-    let nuc_Mesh = nucleotide.visual_object.children[NUCLEOSIDE];
-    let con_Mesh = nucleotide.visual_object.children[BB_NS_CON];
-    let sp_Mesh = nucleotide.visual_object.children[SP_CON];
+/*function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
+    // highlight/remove highlight the bases we've clicked
+    let selected: boolean = false;
+    let nucleotideID: number = nucleotide.global_id;
+    let sysID: number = nucleotide.parent.parent.system_id;
+
+    let back_Mesh: THREE.Object3D = nucleotide.visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
+    let nuc_Mesh: THREE.Object3D =  nucleotide.visual_object.children[NUCLEOSIDE];
+    let con_Mesh: THREE.Object3D =  nucleotide.visual_object.children[BB_NS_CON];
+    let sp_Mesh: THREE.Object3D =   nucleotide.visual_object.children[SP_CON];
+
     if (selected_bases.has(nucleotide)) { //if clicked nucleotide is already selected
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
@@ -103,7 +105,7 @@ function toggle(nucleotide) {
         }
         if (nuc_Mesh instanceof THREE.Mesh) {
             if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = systems[sysID].base_to_material(nucleotide.type);
+                nuc_Mesh.material = systems[sysID].elem_to_material(nucleotide.type);
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
@@ -116,6 +118,7 @@ function toggle(nucleotide) {
                 sp_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
             }
         }
+
         selected_bases.delete(nucleotide); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
     }
     else {
@@ -139,7 +142,7 @@ function toggle(nucleotide) {
         //selList.push(nucleotideID);
         selected_bases.add(nucleotide); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
     }
-}
+}*/
 function makeTextArea(bases, id) {
     let textArea = document.getElementById(id);
     if (textArea !== null) { //as long as text area was retrieved by its ID, id
