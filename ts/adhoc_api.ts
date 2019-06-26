@@ -20,7 +20,7 @@ module api{
     };
 
     export function get_sequence(strand : Strand) : string {
-        let seq : string[]; 
+        let seq : string[] = []; 
         let nucleotides = strand.nucleotides; 
         nucleotides.reverse().map( 
             (n: Nucleotide) => seq.push(<string> n.type));
@@ -44,7 +44,7 @@ module api{
         system.strands.map((strand)=>{
             toggle(strand.nucleotides[strand.nucleotides.length -1]);
         });
-    }
+    };
 
     
 }
