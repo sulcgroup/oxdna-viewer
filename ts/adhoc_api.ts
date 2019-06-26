@@ -4,34 +4,34 @@
 
 module api{
     export function toggle_strand(strand : Strand): Strand{
-        let nucleotides = strand.nucleotides; 
+        let nucleotides = strand.elements; 
         nucleotides.map( 
-            (n:Nucleotide) => n.visual_object.visible = !n.visual_object.visible);
+            (n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
         render();
         return strand;
     }
 
     // TODO: integrate with the selection mechanism 
     export function mark_stand(strand: Strand) : Strand{
-        let nucleotides = strand.nucleotides; 
-        nucleotides.map((n: Nucleotide) => toggle(n));
+        let nucleotides = strand.elements; 
+        nucleotides.map((n: BasicElement) => n.toggle());
         render();
         return strand;
     };
 
-    export function get_sequence(strand : Strand) : string {
+    export function get_sequence(strand : NucleicAcidStrand) : string {
         let seq : string[] = []; 
-        let nucleotides = strand.nucleotides; 
+        let nucleotides = strand.elements; 
         nucleotides.reverse().map( 
-            (n: Nucleotide) => seq.push(<string> n.type));
+            (n: BasicElement) => seq.push(<string> n.type));
         return seq.join("");
     };
 
     // get a dictionary with every strand length : [strand] listed   
     export function count_stand_length({system = systems[0]} = {}) {
-        let strand_length : { [index: number]: [Strand] } = {};
-        system.strands.map((strand: Strand) =>{
-            let l = strand.nucleotides.length;
+        let strand_length : { [index: number]: [NucleicAcidStrand] } = {};
+        system.strands.map((strand: NucleicAcidStrand) =>{
+            let l = strand.elements.length;
             if( l in strand_length) 
                 strand_length[l].push(strand);
             else
@@ -42,7 +42,7 @@ module api{
 
     export function highlite5ps({system = systems[0]} = {}){
         system.strands.map((strand)=>{
-            toggle(strand.nucleotides[strand.nucleotides.length -1]);
+            strand.elements[strand.elements.length -1].toggle();
         });
     };
 
