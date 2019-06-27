@@ -175,3 +175,8 @@ var selection_material = new THREE.MeshLambertMaterial({
     side: THREE.DoubleSide,
 });
 
+var grey_material = new THREE.MeshLambertMaterial({ 
+    color: 0x888888, 
+    side: THREE.DoubleSide
+});
+

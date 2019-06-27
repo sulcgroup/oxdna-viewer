@@ -46,5 +46,19 @@ module api{
         });
     };
 
+    export function toggle_base_colors() {
+        elements.map(
+            (n: BasicElement) => {
+                let obj = n.visual_object.children[n.NUCLEOSIDE] as any 
+                if (obj.material == grey_material){
+                    obj.material = n.elem_to_material(n.type);
+                }
+                else {
+                    obj.material = grey_material;
+                }
+            }
+        )
+        render();
+    }
     
 }

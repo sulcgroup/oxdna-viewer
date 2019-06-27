@@ -47,4 +47,17 @@ var api;
     }
     api.highlite5ps = highlite5ps;
     ;
+    function toggle_base_colors() {
+        elements.map((n) => {
+            let obj = n.visual_object.children[n.NUCLEOSIDE];
+            if (obj.material == grey_material) {
+                obj.material = n.elem_to_material(n.type);
+            }
+            else {
+                obj.material = grey_material;
+            }
+        });
+        render();
+    }
+    api.toggle_base_colors = toggle_base_colors;
 })(api || (api = {}));
