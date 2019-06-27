@@ -168,13 +168,6 @@ target.addEventListener("drop", function (event) {
     //make system to store the dropped files in
     var system = new System(sys_count, elements.length);
     var files = event.dataTransfer.files, files_len = files.length;
-    var base_to_num = {
-        "A": 0,
-        "G": 1,
-        "C": 2,
-        "T": 3,
-        "U": 3
-    };
     let top_file, json_file;
     // assign files to the extentions; all possible combinations of entered files
     for (let i = 0; i < files_len; i++) {
@@ -193,7 +186,7 @@ target.addEventListener("drop", function (event) {
     let json_alone = false;
     if (json_file && !top_file)
         json_alone = true;
-    if (files_len > 3 || files_len < 2) {
+    if ((files_len > 3 || files_len < 2) && !json_alone) {
         alert("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
         return;
     }
@@ -456,7 +449,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //catch the two possible cases for strand ends (no connection or circular)
         console.log(current_nucleotide.neighbor5);
         if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in linear strand
-            console.log("here");
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             nuc_local_id = -1;
             if (elements[current_nucleotide.global_id + 1] != undefined) {
