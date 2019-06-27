@@ -48,6 +48,7 @@ var api;
     }
     api.highlite5ps = highlite5ps;
     ;
+<<<<<<< HEAD
     function toggle_all({ system = systems[0] } = {}) {
         system.strands.map(api.toggle_strand);
         render();
@@ -86,4 +87,19 @@ var api;
         render();
     }
     api.nick = nick;
+=======
+    function toggle_base_colors() {
+        elements.map((n) => {
+            let obj = n.visual_object.children[n.NUCLEOSIDE];
+            if (obj.material == grey_material) {
+                obj.material = n.elem_to_material(n.type);
+            }
+            else {
+                obj.material = grey_material;
+            }
+        });
+        render();
+    }
+    api.toggle_base_colors = toggle_base_colors;
+>>>>>>> 8a95e2a8744ca2b522fc31f5052b53822302aee9
 })(api || (api = {}));

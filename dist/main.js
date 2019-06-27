@@ -217,11 +217,6 @@ class Nucleotide extends BasicElement {
                 if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
                     sp_Mesh.material = this.strand_to_material(locstrandID);
                 }
-                let geo = sp_Mesh.geometry;
-                geo = connector_geometry;
-                if (geo instanceof THREE.CylinderGeometry) {
-                    console.log(geo.parameters);
-                }
                 sp_Mesh.drawMode = THREE.TrianglesDrawMode;
                 sp_Mesh.updateMorphTargets();
                 sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
@@ -1064,7 +1059,6 @@ function toggleSideNav(button) {
     let allNone = false;
     if (button.innerText == hidden) {
         tabcontent[0].style.display = "block";
-        console.log("All was hidden, so we revealed");
         button.innerHTML = visible;
     }
     else {
