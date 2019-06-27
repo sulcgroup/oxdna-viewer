@@ -447,7 +447,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
         //catch the two possible cases for strand ends (no connection or circular)
-        console.log(current_nucleotide.neighbor5);
         if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in linear strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
             nuc_local_id = -1;
@@ -465,7 +464,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         nuc_local_id += 1;
     }
     let dx, dy, dz;
-    console.log(system);
     //bring strand in box
     for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
         // compute offset to bring strand in box
@@ -473,7 +471,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint = systems[sys_count].strands[i].elements[j].getCOM();
-            console.log(systems[sys_count].strands[i].elements[j]);
             cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
