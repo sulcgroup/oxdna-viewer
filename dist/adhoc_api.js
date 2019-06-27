@@ -3,16 +3,16 @@
 var api;
 (function (api) {
     function toggle_strand(strand) {
-        let nucleotides = strand.nucleotides;
-        nucleotides.map((n) => n.visual_object.visible = !n.visual_object.visible);
+        let nucleotides = strand.elements;
+        nucleotides.map((n) => n.visible = !n.visible);
         render();
         return strand;
     }
     api.toggle_strand = toggle_strand;
     // TODO: integrate with the selection mechanism 
     function mark_stand(strand) {
-        let nucleotides = strand.nucleotides;
-        nucleotides.map((n) => toggle(n));
+        let nucleotides = strand.elements;
+        nucleotides.map((n) => n.toggle());
         render();
         return strand;
     }
@@ -20,7 +20,7 @@ var api;
     ;
     function get_sequence(strand) {
         let seq;
-        let nucleotides = strand.nucleotides;
+        let nucleotides = strand.elements;
         nucleotides.reverse().map((n) => seq.push(n.type));
         return seq.join("");
     }
@@ -30,7 +30,7 @@ var api;
     function count_stand_length({ system = systems[0] } = {}) {
         let strand_length = {};
         system.strands.map((strand) => {
-            let l = strand.nucleotides.length;
+            let l = strand.elements.length;
             if (l in strand_length)
                 strand_length[l].push(strand);
             else
@@ -42,7 +42,7 @@ var api;
     ;
     function highlite5ps({ system = systems[0] } = {}) {
         system.strands.map((strand) => {
-            toggle(strand.nucleotides[strand.nucleotides.length - 1]);
+            strand.elements[strand.elements.length - 1].toggle();
         });
     }
     api.highlite5ps = highlite5ps;
