@@ -44,7 +44,46 @@ var api;
         system.strands.map((strand) => {
             strand.elements[strand.elements.length - 1].toggle();
         });
+        render();
     }
     api.highlite5ps = highlite5ps;
     ;
+    function toggle_all({ system = systems[0] } = {}) {
+        system.strands.map(api.toggle_strand);
+        render();
+    }
+    api.toggle_all = toggle_all;
+    function trace_53(element) {
+        let elements = [];
+        let c = element;
+        while (c) {
+            elements.push(c);
+            c = c.neighbor3;
+        }
+        return elements.reverse();
+    }
+    api.trace_53 = trace_53;
+    function nick(element) {
+        // we break connection to the 3' neighbor 
+        let neighbor = element.neighbor3;
+        element.neighbor3 = null;
+        neighbor.neighbor5 = null;
+        element.visual_object.children[element.SP_CON].visible = false;
+        // initial strand
+        let strand = element.parent;
+        // nucleotides which are after the nick
+        let new_nucleotides = trace_53(neighbor);
+        strand.exclude_Elements(new_nucleotides);
+        //create fill and deploy new strand 
+        let new_strand = strand.parent.create_Strand(strand.parent.strands.length + 1);
+        new_nucleotides.forEach((n) => {
+            new_strand.add_basicElement(n);
+            new_strand.strand_3objects.add(n.visual_object);
+        });
+        //voodoo
+        strand.parent.add_strand(new_strand);
+        strand.parent.system_3objects.add(new_strand.strand_3objects);
+        render();
+    }
+    api.nick = nick;
 })(api || (api = {}));

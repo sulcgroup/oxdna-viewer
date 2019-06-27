@@ -596,6 +596,7 @@ class Strand {
     add_basicElement(elem) {
         this.elements.push(elem);
         elem.parent = this;
+        //this.strand_3objects.add(elem.visual_object);
     }
     ;
     create_basicElement(global_id) {
@@ -611,6 +612,18 @@ class Strand {
         }
     }
     ;
+    exclude_Elements(elements) {
+        // detach from parent
+        elements.forEach((e) => {
+            e.parent = null;
+            this.strand_3objects.remove(e.visual_object);
+        });
+        // create a new list of strand elements  
+        let filtered = this.elements.filter((v, i, arr) => {
+            return !elements.includes(v);
+        });
+        this.elements = filtered;
+    }
 }
 ;
 class NucleicAcidStrand extends Strand {
@@ -662,6 +675,10 @@ class System {
     ;
     add_strand(strand) {
         this.strands.push(strand);
+        strand.parent = this;
+        //this.system_3objects.children.push(
+        //    strand.strand_3objects
+        //);
     }
     ;
     remove_strand(to_remove) {
