@@ -143,6 +143,10 @@ var api;
                 element1.visual_object.add(sp); //add to visual_object
             }
         }
+        // Strand id update
+        let str_id = 1;
+        let sys = element1.parent.parent;
+        sys.strands.forEach((strand) => strand.strand_id = str_id++);
         render();
     }
     api.ligate = ligate;
