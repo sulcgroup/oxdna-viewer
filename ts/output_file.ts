@@ -4,7 +4,7 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
 }
 
 function makeTopFile(): number {
-    let top: string = ""; //string of contents of .top file
+    let top: string[] = []; //string of contents of .top file
     let tot_nuc: number = 0; //total # of elements
     let tot_strands: number = 0; //total # of strands
     let longest_strand_len: number = 0;
@@ -23,7 +23,7 @@ function makeTopFile(): number {
                 longest_strand_len = strand_len;
         }
     }
-    top = tot_nuc + " " + tot_strands + "\n";
+    top.push(tot_nuc + " " + tot_strands);
     uncorrected_strand_id = elements[0].parent.strand_id;
     old_system = elements[0].parent.parent.system_id;
     for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
@@ -32,23 +32,20 @@ function makeTopFile(): number {
             uncorrected_strand_id = elements[i].parent.strand_id;
             old_system = elements[i].parent.parent.system_id;
         }
-        top = top + current_strand + " " + elements[i].type + " "; //strand id in global world + base type
+        let tl = [current_strand , elements[i].type ]; //strand id in global world + base type
         let neighbor3 = elements[i].neighbor3;
         let neighbor5 = elements[i].neighbor5;
-        if (neighbor3 === null || neighbor3 === undefined) { // if no neigbor3, neighbor3's global id = -1
-            top = top + -1 + " ";
-        }
-        else if (neighbor3 !== null) { //if neighbor3 exists, append neighbor3's global id
-            top = top + neighbor3.global_id + " ";
-        }
-        if (neighbor5 === null || neighbor5 === undefined) { //if neighbor5 doesn't exist, append neighbor5's position = -1
-            top = top + -1 + "\n";
-        }
-        else { //if neighbor5 exists, append neighbor5's position
-            top = top + neighbor5.global_id + "\n";
-        }
+        if (neighbor3 === null || neighbor3 === undefined) 
+            tl.push(-1); // if no neigbor3, neighbor3's global id = -1
+        else if (neighbor3 !== null) 
+            tl.push(neighbor3.global_id); //if neighbor3 exists, append neighbor3's global id
+        if (neighbor5 === null || neighbor5 === undefined) 
+            tl.push(-1); //if neighbor5 doesn't exist, append neighbor5's position = -1
+        else  
+            tl.push(neighbor5.global_id); //if neighbor5 exists, append neighbor5's position
+        top.push(tl.join(" "));
     }
-    makeTextFile("sim.top", top); //make .top file
+    makeTextFile("sim.top", top.join("\n")); //make .top file
     return longest_strand_len;
 }
 function makeDatFile(longest_strand_len: number) {

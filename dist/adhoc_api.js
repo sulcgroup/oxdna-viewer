@@ -49,7 +49,11 @@ var api;
     api.highlite5ps = highlite5ps;
     ;
     function toggle_all({ system = systems[0] } = {}) {
-        system.strands.map(api.toggle_strand);
+        system.strands.map((strand) => {
+            let nucleotides = strand.elements;
+            nucleotides.map((n) => n.visual_object.visible = !n.visual_object.visible);
+        });
+        render();
     }
     api.toggle_all = toggle_all;
     function toggle_base_colors() {
@@ -99,6 +103,9 @@ var api;
     api.nick = nick;
     function ligate(element1, element2) {
         console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
+        if (element1.parent.parent !== element2.parent.parent) {
+            return;
+        }
         // assume for now that element1 is 5' and element2 is 3' 
         // get the refference to the strands 
         // strand2 will be merged into strand1 
@@ -107,11 +114,14 @@ var api;
         // lets orphan strand2 element
         let bases2 = [...strand2.elements]; // clone the refferences to the elements
         strand2.exclude_Elements(strand2.elements);
-        //remove strand2 object 
-        strand2.parent.system_3objects.remove(strand2.strand_3objects);
-        strand2.parent.strands = strand2.parent.strands.filter((ele) => {
-            return ele != strand2;
-        });
+        //check that it is not the same strand
+        if (strand1 !== strand2) {
+            //remove strand2 object 
+            strand2.parent.system_3objects.remove(strand2.strand_3objects);
+            strand2.parent.strands = strand2.parent.strands.filter((ele) => {
+                return ele != strand2;
+            });
+        }
         // and add them back into strand1 
         //create fill and deploy new strand 
         bases2.forEach((n) => {
@@ -150,4 +160,17 @@ var api;
         render();
     }
     api.ligate = ligate;
+    function strand_add_to_system(strand, system) {
+        // api.strand_add_to_system(systems[1].strands[1], systems[0])
+        // kill strand in its previous system
+        strand.parent.strands = strand.parent.strands.filter((ele) => {
+            return ele != strand;
+        });
+        // add strand to the desired system
+        let str_id = system.strands.length + 1;
+        system.strands.push(strand);
+        strand.strand_id = str_id;
+        strand.parent = system;
+    }
+    api.strand_add_to_system = strand_add_to_system;
 })(api || (api = {}));

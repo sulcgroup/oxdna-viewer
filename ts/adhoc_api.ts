@@ -1,7 +1,6 @@
 /// <reference path="./main.ts" />
 // Usefull bits of code simplifying quering the structure
 
-
 module api{
     export function toggle_strand(strand : Strand): Strand{
         let nucleotides = strand.elements; 
@@ -48,7 +47,11 @@ module api{
     };
 
     export function toggle_all({system = systems[0]} = {}){
-        system.strands.map(api.toggle_strand);
+        system.strands.map((strand)=>{
+            let nucleotides = strand.elements; 
+            nucleotides.map((n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
+        });
+        render();
     }
 
     export function toggle_base_colors() {
@@ -106,6 +109,9 @@ module api{
 
     export function ligate(element1 :BasicElement, element2: BasicElement){
         console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
+        if(element1.parent.parent !== element2.parent.parent){
+            return;
+        }
         // assume for now that element1 is 5' and element2 is 3' 
         // get the refference to the strands 
         // strand2 will be merged into strand1 
@@ -115,11 +121,14 @@ module api{
         let bases2 = [...strand2.elements]; // clone the refferences to the elements
         strand2.exclude_Elements(strand2.elements);
         
-        //remove strand2 object 
-        strand2.parent.system_3objects.remove(strand2.strand_3objects);
-        strand2.parent.strands = strand2.parent.strands.filter((ele)=>{
-            return ele != strand2;
-        });
+        //check that it is not the same strand
+        if (strand1 !== strand2){
+            //remove strand2 object 
+            strand2.parent.system_3objects.remove(strand2.strand_3objects);
+            strand2.parent.strands = strand2.parent.strands.filter((ele)=>{
+                return ele != strand2;
+            });
+        }
 
         // and add them back into strand1 
         //create fill and deploy new strand 
@@ -171,7 +180,22 @@ module api{
         let str_id = 1; 
         let sys = element1.parent.parent;
         sys.strands.forEach((strand) =>strand.strand_id = str_id++);
-
         render();
     }
+    
+    export function strand_add_to_system(strand:Strand, system: System){
+        // api.strand_add_to_system(systems[1].strands[1], systems[0])
+        // kill strand in its previous system
+        strand.parent.strands = strand.parent.strands.filter((ele)=>{
+            return ele != strand;
+        }); 
+
+        // add strand to the desired system
+        let str_id = system.strands.length + 1;
+        system.strands.push(strand);
+        strand.strand_id = str_id;
+        strand.parent = system;
+    }
+
+    
 }

@@ -30,6 +30,9 @@ document.addEventListener('mousedown', event => {
             nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
             nucleotide = elements[nucleotideID];
             sys = nucleotide.parent.parent;
+            // note: it is not enough to use the intersects[0].object.visible property %)
+            if (!nucleotide.visual_object.visible)
+                return; // exclude invisible objects  
             switch (scope_mode) {
                 case "System":
                     let strand_count = sys.strands.length;
