@@ -209,7 +209,7 @@ class Nucleotide extends BasicElement {
             //get current and 3' backbone positions and set length/rotation
             let last_pos = new THREE.Vector3();
             this.neighbor3.children[this.BACKBONE].getWorldPosition(last_pos);
-            let this_pos = new THREE.Vector3;
+            let this_pos = new THREE.Vector3();
             group.children[this.BACKBONE].getWorldPosition(this_pos);
             let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
             let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));

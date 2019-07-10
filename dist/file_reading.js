@@ -339,9 +339,72 @@ target.addEventListener("drop", function (event) {
                     next_reader.readAsText(next_chunk_blob);
                 }
             }
+            if (json_file) {
+                console.log("HERE");
+                //lutColsVis = true;
+                let check_box = document.getElementById("lutToggle");
+                let json_reader = new FileReader(); //read .json
+                json_reader.onload = () => {
+                    let file = json_reader.result;
+                    let data = JSON.parse(file);
+                    let curr_sys;
+                    curr_sys = sys_count - 1;
+                    for (var key in data) {
+                        if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
+                            if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
+                                let min = Math.min.apply(null, data[key]), //find min and max
+                                max = Math.max.apply(null, data[key]);
+                                lut = new THREE.Lut("rainbow", 4000);
+                                //lut.setMax(0.23);
+                                //lut.setMin(0.04);
+                                lut.setMax(max);
+                                lut.setMin(min);
+                                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+                                scene.add(legend);
+                                let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
+                                scene.add(labels['title']); //add title
+                                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                                    scene.add(labels['ticks'][i]);
+                                    scene.add(labels['lines'][i]);
+                                }
+                                for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                                    lutCols.push(lut.getColor(Number(data[key][i])));
+                                }
+                                lutColsVis = false;
+                                toggleLut(check_box);
+                                check_box.checked = true;
+                            }
+                            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
+                                for (let i = 0; i < elements.length; i++) {
+                                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                                    let len = vec.length();
+                                    vec.normalize();
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
+                                    arrowHelper.name = i + "disp";
+                                    scene.add(arrowHelper);
+                                }
+                            }
+                        }
+                        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
+                            for (let entry of data[key]) {
+                                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                                vec.normalize();
+                                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                                scene.add(arrowHelper);
+                            }
+                        }
+                        else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+                            alert(".json and .top files are not compatible.");
+                        }
+                    }
+                };
+                json_reader.readAsText(json_file);
+                renderer.domElement.style.cursor = "auto";
+            }
         }
     }
-    if (json_file) {
+    if (json_file && json_alone) {
         //lutColsVis = true;
         let check_box = document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
