@@ -62,7 +62,7 @@ class BasicElement {
 
     }
     strand_to_material(strandIndex: number) {
-        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length];
+        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length + this.parent.parent.system_id];
     };
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();

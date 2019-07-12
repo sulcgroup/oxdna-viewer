@@ -28,7 +28,7 @@ module api{
     };
 
     // get a dictionary with every strand length : [strand] listed   
-    export function count_stand_length({system = systems[0]} = {}) {
+    export function count_strand_length({system = systems[0]} = {}) {
         let strand_length : { [index: number]: [NucleicAcidStrand] } = {};
         system.strands.map((strand: NucleicAcidStrand) =>{
             let l = strand.elements.length;
@@ -47,8 +47,13 @@ module api{
         render();
     };
 
-    export function toggle_all({system = systems[0]} = {}){
-        system.strands.map(api.toggle_strand);
+    export function toggle_all(system = systems[0]){
+        system.strands.map((strand) =>{
+            let nucleotides = strand.elements; 
+            nucleotides.map( 
+            (n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
+        });
+        render();
     }
     
     export function toggle_base_colors() {

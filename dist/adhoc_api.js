@@ -27,7 +27,7 @@ var api;
     api.get_sequence = get_sequence;
     ;
     // get a dictionary with every strand length : [strand] listed   
-    function count_stand_length({ system = systems[0] } = {}) {
+    function count_strand_length({ system = systems[0] } = {}) {
         let strand_length = {};
         system.strands.map((strand) => {
             let l = strand.elements.length;
@@ -38,7 +38,7 @@ var api;
         });
         return strand_length;
     }
-    api.count_stand_length = count_stand_length;
+    api.count_strand_length = count_strand_length;
     ;
     function highlite5ps({ system = systems[0] } = {}) {
         system.strands.map((strand) => {
@@ -48,12 +48,27 @@ var api;
     }
     api.highlite5ps = highlite5ps;
     ;
-<<<<<<< HEAD
-    function toggle_all({ system = systems[0] } = {}) {
-        system.strands.map(api.toggle_strand);
+    function toggle_all(system = systems[0]) {
+        system.strands.map((strand) => {
+            let nucleotides = strand.elements;
+            nucleotides.map((n) => n.visual_object.visible = !n.visual_object.visible);
+        });
         render();
     }
     api.toggle_all = toggle_all;
+    function toggle_base_colors() {
+        elements.map((n) => {
+            let obj = n.visual_object.children[n.NUCLEOSIDE];
+            if (obj.material == grey_material) {
+                obj.material = n.elem_to_material(n.type);
+            }
+            else {
+                obj.material = grey_material;
+            }
+        });
+        render();
+    }
+    api.toggle_base_colors = toggle_base_colors;
     function trace_53(element) {
         let elements = [];
         let c = element;
@@ -87,19 +102,4 @@ var api;
         render();
     }
     api.nick = nick;
-=======
-    function toggle_base_colors() {
-        elements.map((n) => {
-            let obj = n.visual_object.children[n.NUCLEOSIDE];
-            if (obj.material == grey_material) {
-                obj.material = n.elem_to_material(n.type);
-            }
-            else {
-                obj.material = grey_material;
-            }
-        });
-        render();
-    }
-    api.toggle_base_colors = toggle_base_colors;
->>>>>>> 8a95e2a8744ca2b522fc31f5052b53822302aee9
 })(api || (api = {}));

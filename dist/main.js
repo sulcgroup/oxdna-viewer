@@ -44,7 +44,7 @@ class BasicElement {
     toggle() {
     }
     strand_to_material(strandIndex) {
-        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length];
+        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length + this.parent.parent.system_id];
     }
     ;
     elem_to_material(type) {
