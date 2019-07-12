@@ -693,6 +693,7 @@ class Strand {
     add_basicElement(elem: BasicElement) {
         this.elements.push(elem);
         elem.parent = this;
+        
         //this.strand_3objects.add(elem.visual_object);
     };
 

@@ -1,7 +1,6 @@
 /// <reference path="./main.ts" />
 // Usefull bits of code simplifying quering the structure
 
-
 module api{
     export function toggle_strand(strand : Strand): Strand{
         let nucleotides = strand.elements; 
@@ -47,15 +46,14 @@ module api{
         render();
     };
 
-    export function toggle_all(system = systems[0]){
-        system.strands.map((strand) =>{
+    export function toggle_all({system = systems[0]} = {}){
+        system.strands.map((strand)=>{
             let nucleotides = strand.elements; 
-            nucleotides.map( 
-            (n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
+            nucleotides.map((n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
         });
         render();
     }
-    
+
     export function toggle_base_colors() {
         elements.map(
             (n: BasicElement) => {
@@ -86,9 +84,10 @@ module api{
         let neighbor =  element.neighbor3;
         element.neighbor3 = null;
         neighbor.neighbor5 = null;
-        element.visual_object.children[element.SP_CON].visible = false;
+        element.visual_object.remove(
+            element.visual_object.children[element.SP_CON]
+        );
 
-        // initial strand
         let strand = element.parent;
         // nucleotides which are after the nick
         let new_nucleotides : BasicElement[] = trace_53(neighbor);
@@ -108,4 +107,95 @@ module api{
         render(); 
     }
 
+    export function ligate(element1 :BasicElement, element2: BasicElement){
+        console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
+        if(element1.parent.parent !== element2.parent.parent){
+            return;
+        }
+        // assume for now that element1 is 5' and element2 is 3' 
+        // get the refference to the strands 
+        // strand2 will be merged into strand1 
+        let strand1 = element1.parent;
+        let strand2 = element2.parent;
+        // lets orphan strand2 element
+        let bases2 = [...strand2.elements]; // clone the refferences to the elements
+        strand2.exclude_Elements(strand2.elements);
+        
+        //check that it is not the same strand
+        if (strand1 !== strand2){
+            //remove strand2 object 
+            strand2.parent.system_3objects.remove(strand2.strand_3objects);
+            strand2.parent.strands = strand2.parent.strands.filter((ele)=>{
+                return ele != strand2;
+            });
+        }
+
+        // and add them back into strand1 
+        //create fill and deploy new strand 
+        bases2.forEach(
+            (n) => {
+                strand1.add_basicElement(n);
+                strand1.strand_3objects.add(n.visual_object);
+            }
+        );
+        //interconnect the 2 element objects 
+        element1.neighbor3 = element2;
+        element2.neighbor5 = element1;
+        //TODO: CLEAN UP!!!
+        //////last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+        if (element1.neighbor3 != null && element1.neighbor3.local_id < element1.local_id) {
+            let p2 = element2.visual_object.children[element2.BACKBONE].position;
+            let x_bb = p2.x,
+                y_bb = p2.y,
+                z_bb = p2.z;
+        
+            let p1 = element1.visual_object.children[element1.BACKBONE].position;
+            let x_bb_last = p1.x,
+                y_bb_last = p1.y,
+                z_bb_last = p1.z;
+        
+        
+            let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
+                y_sp = (y_bb + y_bb_last) / 2,
+                z_sp = (z_bb + z_bb_last) / 2;
+                
+            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+            // easy periodic boundary condition fix  
+            // if the bonds are to long just don't add them 
+            if (sp_len <= 500) {
+                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                    )
+                );
+                let sp = new THREE.Mesh(connector_geometry,  element1.strand_to_material(element1.parent.strand_id)); 
+                    // material); //cylinder - sugar phosphate connector
+                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+                sp.applyMatrix(rotation_sp); //set rotation
+                sp.position.set(x_sp, y_sp, z_sp);
+                element1.visual_object.add(sp); //add to visual_object
+            }
+        }
+        // Strand id update
+        let str_id = 1; 
+        let sys = element1.parent.parent;
+        sys.strands.forEach((strand) =>strand.strand_id = str_id++);
+        render();
+    }
+    
+    export function strand_add_to_system(strand:Strand, system: System){
+        // api.strand_add_to_system(systems[1].strands[1], systems[0])
+        // kill strand in its previous system
+        strand.parent.strands = strand.parent.strands.filter((ele)=>{
+            return ele != strand;
+        }); 
+
+        // add strand to the desired system
+        let str_id = system.strands.length + 1;
+        system.strands.push(strand);
+        strand.strand_id = str_id;
+        strand.parent = system;
+    }
+
+    
 }
