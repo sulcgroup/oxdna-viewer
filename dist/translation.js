@@ -106,6 +106,7 @@ function rotate() {
             d.applyMatrix3(matrix);
             d.add(c);
             elements[i].visual_object.children[j].position.set(d.x, d.y, d.z);
+            elements[i].visual_object.children[j].updateMatrix();
             rot = true;
         }
         //setEntry = setEntries.next();

@@ -410,6 +410,7 @@ target.addEventListener("drop", function (event) {
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;
 function readDat(num_nuc, dat_reader, system, lutColsVis) {
+    var start = Date.now();
     var nuc_local_id = 0;
     var current_strand = systems[sys_count].strands[0];
     // parse file into lines 
@@ -490,15 +491,21 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
                 pos.z = pos.z - dz;
                 systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
             }
+            current_nucleotide.visual_object.children.forEach(child => child.matrixAutoUpdate = false);
+            current_nucleotide.visual_object.matrixAutoUpdate = false;
         }
+        systems[sys_count].strands[i].strand_3objects.matrixAutoUpdate = false;
     }
+    systems[sys_count].system_3objects.matrixAutoUpdate = false;
     scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
+    elements.forEach(e => e.visual_object.children.forEach(child => child.updateMatrix()));
     sys_count += 1;
     render();
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
         backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
     }
     renderer.domElement.style.cursor = "auto";
+    console.log("loadtime was", Date.now() - start);
 }
 function getNewConfig(mode) {
     if (systems.length > 1) {
@@ -542,8 +549,8 @@ function getNewConfig(mode) {
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
-            if (current_nucleotide.neighbor5 == null) {
-                system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
+            if (current_nucleotide.neighbor5 == null || current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) {
+                //system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0; //reset
             }
@@ -566,6 +573,7 @@ function getNewConfig(mode) {
             //calculate cms
             let mul = 1.0 / n;
             cms.multiplyScalar(mul);
+            //console.log(cms);
             dx = Math.round(cms.x / box) * box;
             dy = Math.round(cms.y / box) * box;
             dz = Math.round(cms.z / box) * box;
@@ -573,11 +581,14 @@ function getNewConfig(mode) {
             for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in strand
                 for (let l = 0; l < systems[i].strands[j].elements[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
                     let pos = systems[i].strands[j].elements[k].visual_object.children[l].position; //get Mesh position
+                    //console.log(pos);
                     //calculate new positions by offset
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
                     systems[i].strands[j].elements[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
+                    //console.log(systems[i].strands[j].elements[k].visual_object.children)
+                    systems[i].strands[j].elements[k].visual_object.children[l].updateMatrix();
                 }
             }
         }

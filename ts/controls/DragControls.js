@@ -148,6 +148,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 					case "System": //if scope mode is "System", set objects to be dragged to the clicked system
 						_selected = intersects[0].object.parent.parent.parent; break;
 				}
+				_selected.matrixAutoUpdate = true;
 				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
 					_offset.copy(_intersection).sub(_selected.position);
 				}
@@ -158,7 +159,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 			}
 		}
-
 	}
 
 	function onDocumentMouseCancel(event) { //if mouse is ??
@@ -166,7 +166,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 			event.preventDefault();
 
-			//calculate new sp connectors - does not work after rotation
+			//calculate new sp connectors
 			if (_selected) { //if there is a clicked object
 				if (scopeMode == "Nuc") {
 					var current_nuc = elements[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
@@ -179,6 +179,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 					}
 				}
 				scope.dispatchEvent({ type: 'dragend', object: _selected });
+				_selected.matrixAutoUpdate = false;
 
 				_selected = null; //now nothing is selected for dragging b/c click event is over
 
@@ -212,8 +213,8 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			new THREE.Quaternion().setFromUnitVectors(
 				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
 			)
-        );
-        let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
+		);
+        let material = current_nuc.visual_object.children[current_nuc.SP_CON].material;
         let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
 		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
 		tempsp.applyMatrix(rotation_sp); //set rotation

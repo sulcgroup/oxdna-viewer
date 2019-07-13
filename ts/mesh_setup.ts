@@ -1,10 +1,10 @@
 /// <reference path="./three/index.d.ts" />
 
 // base geometry 
-var backbone_geometry = new THREE.SphereGeometry(.2,10,10);
-var nucleoside_geometry = new THREE.SphereGeometry(.3,10,10).applyMatrix(
+var backbone_geometry = new THREE.SphereBufferGeometry(.2,10,10);
+var nucleoside_geometry = new THREE.SphereBufferGeometry(.3,10,10).applyMatrix(
         new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
-var connector_geometry = new THREE.CylinderGeometry(.1,.1,1, 8);
+var connector_geometry = new THREE.CylinderBufferGeometry(.1,.1,1, 8);
 
 var backbone_materials = [
     new THREE.MeshLambertMaterial({

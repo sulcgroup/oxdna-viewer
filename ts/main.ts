@@ -62,7 +62,7 @@ class BasicElement {
 
     }
     strand_to_material(strandIndex: number) {
-        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length + this.parent.parent.system_id];
+        return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length];
     };
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();
@@ -273,13 +273,15 @@ class Nucleotide extends BasicElement {
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null) {
             //remove the current sugar-phosphate bond to make room for the new one
-            scene.remove(group.children[this.SP_CON]);
+            //scene.remove(group.children[this.SP_CON]);
 
             //get current and 3' backbone positions and set length/rotation
-            let last_pos = new THREE.Vector3();
-            this.neighbor3.visual_object.children[this.BACKBONE].getWorldPosition(last_pos);
-            let this_pos = new THREE.Vector3
-            group.children[this.BACKBONE].getWorldPosition(this_pos);
+            //let last_pos = new THREE.Vector3();
+            //this.neighbor3.visual_object.children[this.BACKBONE].getWorldPosition(last_pos);
+            let last_pos = this.neighbor3.visual_object.children[this.BACKBONE].position;
+            //let this_pos = new THREE.Vector3
+            //group.children[this.BACKBONE].getWorldPosition(this_pos);
+            let this_pos = group.children[this.BACKBONE].position
             let x_sp = (this_pos.x + last_pos.x) / 2,
                 y_sp = (this_pos.y + last_pos.y) / 2,
                 z_sp = (this_pos.z + last_pos.z) / 2;
@@ -291,49 +293,50 @@ class Nucleotide extends BasicElement {
                 )
             );
 
-            let sp_Mesh: THREE.Object3D = group.children[this.SP_CON];
-            if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    sp_Mesh.material = this.strand_to_material(locstrandID);
-                }
-                sp_Mesh.drawMode = THREE.TrianglesDrawMode;
-                sp_Mesh.updateMorphTargets();
+            let sp_Mesh: THREE.Mesh = <THREE.Mesh>group.children[this.SP_CON];
+            let bb: THREE.Mesh = <THREE.Mesh>group.children[this.BACKBONE];
+            sp_Mesh.material = bb.material;
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
 
-                sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
 
-                sp_Mesh.position.set(0, 0, 0);
-                sp_Mesh.rotation.set(0, 0, 0);
-                sp_Mesh.quaternion.set(0, 0, 0, 0);
-                sp_Mesh.scale.set(1, 1, 1);
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
 
-                sp_Mesh.matrix.set(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-                sp_Mesh.matrixWorld.set(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
+            sp_Mesh.matrix.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
 
-                sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-                sp_Mesh.matrixWorldNeedsUpdate = false;
+            //sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            //sp_Mesh.matrixWorldNeedsUpdate = false;
 
-                //sp_Mesh.layers.set(1);
-                sp_Mesh.visible = true;
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
 
-                sp_Mesh.castShadow = false;
-                sp_Mesh.receiveShadow = false;
+            //sp_Mesh.castShadow = false;
+            //sp_Mesh.receiveShadow = false;
 
-                sp_Mesh.frustumCulled = true;
-                sp_Mesh.renderOrder = 0;
+            //sp_Mesh.frustumCulled = true;
+            //sp_Mesh.renderOrder = 0;
 
-                sp_Mesh.userData = {};
-            }
+            //sp_Mesh.userData = {};
+
             //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
             group.children[this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
             group.children[this.SP_CON].applyMatrix(rotation_sp); //rotate
             group.children[this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
-            group.children[this.SP_CON].parent = this.visual_object;
+            //let a = new THREE.Vector3;
+            //group.children[this.SP_CON].getWorldPosition(a)
+            //console.log(a)
+            //group.children[this.SP_CON].parent = this.visual_object;
         };
     };
     getCOM(): number {
@@ -1169,6 +1172,7 @@ function centerSystems() { //centers systems based on cms calculated for world (
             p.add(new THREE.Vector3().addScalar(1.5 * box));
             p.x %= box; p.y %= box; p.z %= box;
             p.sub(new THREE.Vector3().addScalar(0.75 * box));
+            elements[i].visual_object.children[j].updateMatrix()
         }
     }
     render();
@@ -1177,10 +1181,10 @@ function centerSystems() { //centers systems based on cms calculated for world (
 //changes resolution on the nucleotide visual objects
 function setResolution(resolution: number) {
     //change mesh_setup with the given resolution
-    backbone_geometry = new THREE.SphereGeometry(.2, resolution, resolution);
-    nucleoside_geometry = new THREE.SphereGeometry(.3, resolution, resolution).applyMatrix(
+    backbone_geometry = new THREE.SphereBufferGeometry(.2, resolution, resolution);
+    nucleoside_geometry = new THREE.SphereBufferGeometry(.3, resolution, resolution).applyMatrix(
         new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
-    connector_geometry = new THREE.CylinderGeometry(.1, .1, 1, Math.max(2, resolution));
+    connector_geometry = new THREE.CylinderBufferGeometry(.1, .1, 1, Math.max(2, resolution));
 
     //update all elements and hide some meshes if resolution is low enough
     for (let i = 0; i < elements.length; i++) {
