@@ -51,17 +51,20 @@ class BasicElement extends THREE.Group{
 
     calculatePositions(x: number, y: number, z: number, l: string) {
 
-    }
+    };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
 
-    }
+    };
+    updateSP(): THREE.Object3D {
+        return new THREE.Object3D();
+    };
     getCOM(): number {
         return this.BACKBONE;
-    }
+    };
     //abstract rotate(): void;
     toggle() {
 
-    }
+    };
     strand_to_material(strandIndex: number) {
         return backbone_materials[Math.abs(strandIndex) % backbone_materials.length];
     };
@@ -258,7 +261,7 @@ class Nucleotide extends BasicElement {
 
         // update position and orientation of the elements
         let group = this;
-        let locstrandID = this.parent.strand_id
+        let locstrandID = this.parent.strand_id;
         group.name = this.global_id + "";
 
         //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
@@ -291,50 +294,8 @@ class Nucleotide extends BasicElement {
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()
                 )
             );
-
-            let sp_Mesh: THREE.Object3D = group.children[this.SP_CON];
-            if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    sp_Mesh.material = this.strand_to_material(locstrandID);
-                }
-                let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
-                geo = connector_geometry;
-                if (geo instanceof THREE.CylinderGeometry) {
-                    console.log(geo.parameters);
-                }
-                sp_Mesh.drawMode = THREE.TrianglesDrawMode;
-                sp_Mesh.updateMorphTargets();
-
-                sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
-
-                sp_Mesh.position.set(0, 0, 0);
-                sp_Mesh.rotation.set(0, 0, 0);
-                sp_Mesh.quaternion.set(0, 0, 0, 0);
-                sp_Mesh.scale.set(1, 1, 1);
-
-                sp_Mesh.matrix.set(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-                sp_Mesh.matrixWorld.set(1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1);
-
-                sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-                sp_Mesh.matrixWorldNeedsUpdate = false;
-
-                //sp_Mesh.layers.set(1);
-                sp_Mesh.visible = true;
-
-                sp_Mesh.castShadow = false;
-                sp_Mesh.receiveShadow = false;
-
-                sp_Mesh.frustumCulled = true;
-                sp_Mesh.renderOrder = 0;
-
-                sp_Mesh.userData = {};
-            }
+            this.updateSP();
+            
             //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
             group.children[this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
             group.children[this.SP_CON].applyMatrix(rotation_sp); //rotate
@@ -342,6 +303,52 @@ class Nucleotide extends BasicElement {
             group.children[this.SP_CON].parent = this;
         };
     };
+    updateSP(): THREE.Object3D{
+        let sp_Mesh: THREE.Object3D = this.children[this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
+            geo = connector_geometry;
+            if (geo instanceof THREE.CylinderGeometry) {
+                console.log(geo.parameters);
+            }
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
+
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
+
+            sp_Mesh.matrix.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
+
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
+
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+
+            sp_Mesh.userData = {};
+        }
+        return sp_Mesh;
+    }
     getCOM(): number {
         return this.COM;
     };
@@ -606,17 +613,66 @@ class AminoAcid extends BasicElement {
                         new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
                     )
                 );
-                let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
-                let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                //let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
+                //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                let sp = group.children[this.SP_CON];
+                this.updateSP();
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
-                group.children[this.SP_CON] = sp; //add to
+                group.children[this.SP_CON].parent = this;
+                //group.children[this.SP_CON] = sp; //add to
             }
         }
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
+    };
+    updateSP(): THREE.Object3D {
+        let sp_Mesh: THREE.Object3D = this.children[this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
+            geo = connector_geometry;
+            if (geo instanceof THREE.CylinderGeometry) {
+                console.log(geo.parameters);
+            }
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
+
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
+
+            sp_Mesh.matrix.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0,
+                0, 1, 0, 0,
+                0, 0, 1, 0,
+                0, 0, 0, 1);
+
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
+
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
+
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+
+            sp_Mesh.userData = {};
+        }
+        return sp_Mesh;
     };
     getCOM(): number {
         return this.BACKBONE;
