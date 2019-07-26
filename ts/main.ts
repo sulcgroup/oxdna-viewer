@@ -62,7 +62,7 @@ class BasicElement {
 
     }
     strand_to_material(strandIndex: number) {
-        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length + this.parent.parent.system_id];
+        return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length ];
     };
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();
@@ -523,7 +523,7 @@ class AminoAcid extends BasicElement {
         else {
             material = this.elem_to_material(this.type);
         }
-        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
+        backbone = new THREE.Mesh(backbone_geometry, material);
         backbone.position.set(x, y, z);
         group.add(backbone);
 

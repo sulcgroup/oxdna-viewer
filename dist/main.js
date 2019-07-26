@@ -44,7 +44,7 @@ class BasicElement {
     toggle() {
     }
     strand_to_material(strandIndex) {
-        return backbone_materials[Math.abs(strandIndex) % backbone_materials.length + this.parent.parent.system_id];
+        return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length];
     }
     ;
     elem_to_material(type) {
@@ -445,7 +445,7 @@ class AminoAcid extends BasicElement {
         else {
             material = this.elem_to_material(this.type);
         }
-        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
+        backbone = new THREE.Mesh(backbone_geometry, material);
         backbone.position.set(x, y, z);
         group.add(backbone);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand

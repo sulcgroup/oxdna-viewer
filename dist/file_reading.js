@@ -203,7 +203,7 @@ target.addEventListener("drop", function (event) {
             let current_strand = system.create_Strand(str_id);
             system.add_strand(current_strand);
             let nuc_local_id = 0;
-            let last_strand = 1; //strands are 1-indexed in oxDNA .top files
+            let last_strand;
             let neighbor3;
             // create empty list of elements with length equal to the topology
             // Note: this is implemented such that we have the elements for the DAT reader 
@@ -220,6 +220,9 @@ target.addEventListener("drop", function (event) {
                 }
                 let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
                 str_id = parseInt(l[0]);
+                if (i === 0) { //you cannot assume that strands start with 1 because amino acids have negatve strand numbers
+                    last_strand = str_id;
+                }
                 if (str_id != last_strand) { //if new strand id, make new strand                        
                     current_strand = system.create_Strand(str_id);
                     system.add_strand(current_strand);
@@ -357,8 +360,8 @@ target.addEventListener("drop", function (event) {
                         let min = Math.min.apply(null, data[key]), //find min and max
                         max = Math.max.apply(null, data[key]);
                         lut = new THREE.Lut("rainbow", 4000);
-                        //lut.setMax(0.23);
-                        //lut.setMin(0.04);
+                        //lut.setMax(25.54);
+                        //lut.setMin(4.86);
                         lut.setMax(max);
                         lut.setMin(min);
                         let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
@@ -435,7 +438,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             break;
         }
         ;
-        var current_nucleotide = current_strand.elements[nuc_local_id];
+        var current_nucleotide = elements[i + system.global_start_id];
         //get nucleotide information
         // consume a new line 
         let l = lines[i].split(" ");
@@ -471,6 +474,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint = systems[sys_count].strands[i].elements[j].getCOM();
+            console.log(sys_count);
             cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations

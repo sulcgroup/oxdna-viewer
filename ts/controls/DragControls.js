@@ -213,7 +213,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
 			)
         );
-        let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
+        let material = current_nuc.strand_to_material(current_nuc.parent.strand_id);
         let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
 		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
 		tempsp.applyMatrix(rotation_sp); //set rotation
