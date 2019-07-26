@@ -156,8 +156,9 @@ function writeMutTrapText(base1, base2) {
     return "{\n" + "type = mutual_trap\n" +
         "particle = " + base1 + "\n" +
         "ref_particle = " + base2 + "\n" +
-        "stiff = 1.\n" +
-        "r0 = 1.2" + "\n}\n\n";
+        "stiff = 0.09\n" +
+        "r0 = 1.2 \n" +
+        "PBC = 1" + "\n}\n\n";
 }
 function makeMutualTrapFile() {
     let x, count = 0;
