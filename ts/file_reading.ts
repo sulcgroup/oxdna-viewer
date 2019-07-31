@@ -395,8 +395,8 @@ target.addEventListener("drop", function (event) {
             let file = json_reader.result as string;
             let data = JSON.parse(file);
             let curr_sys;
-            if (json_alone) curr_sys = sys_count - 1;
-            else curr_sys = sys_count;
+            /*if (json_alone) */curr_sys = sys_count - 1;
+            //else curr_sys = sys_count;
             for (var key in data) {
                 if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                     if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
@@ -419,9 +419,12 @@ target.addEventListener("drop", function (event) {
                         for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
                             lutCols.push(lut.getColor(Number(data[key][i])));
                         }
-                        if (!json_alone) lutColsVis = true;
+                        lutColsVis = false;
+                        toggleLut(check_box);
                         check_box.checked = true;
-                        if (json_alone) toggleLut(check_box);
+                        //if (!json_alone) lutColsVis = true;
+                        //check_box.checked = true;
+                        //if (json_alone) toggleLut(check_box);
                     }
                     if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                         for (let i = 0; i < elements.length; i++) {
