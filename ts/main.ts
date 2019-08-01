@@ -276,7 +276,7 @@ class Nucleotide extends BasicElement {
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null) {
             //remove the current sugar-phosphate bond to make room for the new one
-            scene.remove(group.children[this.SP_CON]);
+            //scene.remove(group.children[this.SP_CON]);
 
             //get current and 3' backbone positions and set length/rotation
             let last_pos = new THREE.Vector3();
@@ -305,9 +305,9 @@ class Nucleotide extends BasicElement {
     updateSP(): THREE.Object3D {
         let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
+            //if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+            //    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            //}
             let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
             geo = connector_geometry;
             if (geo instanceof THREE.CylinderGeometry) {
@@ -612,7 +612,7 @@ class AminoAcid extends BasicElement {
                         new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
                     )
                 );
-                let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
+                //let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
                 //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
                 let sp = this.updateSP();
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
@@ -628,9 +628,9 @@ class AminoAcid extends BasicElement {
     updateSP(): THREE.Object3D {
         let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
-            }
+            //if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+            //    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            //}
             let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
             geo = connector_geometry;
             if (geo instanceof THREE.CylinderGeometry) {
