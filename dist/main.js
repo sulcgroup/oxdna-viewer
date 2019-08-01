@@ -37,7 +37,7 @@ class BasicElement {
     }
     calculateNewConfigPositions(x, y, z, l) {
     }
-    updateSP() {
+    updateSP(num) {
         return new THREE.Object3D();
     }
     ;
@@ -216,7 +216,7 @@ class Nucleotide extends BasicElement {
             let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
             let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-            this.updateSP();
+            this.updateSP(this.SP_CON);
             //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
             group.children[this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
             group.children[this.SP_CON].applyMatrix(rotation_sp); //rotate
@@ -226,8 +226,8 @@ class Nucleotide extends BasicElement {
         ;
     }
     ;
-    updateSP() {
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+    updateSP(num) {
+        let sp_Mesh = this.visual_object.children[num];
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             //if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
             //    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
@@ -268,6 +268,7 @@ class Nucleotide extends BasicElement {
         let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
         let con_Mesh = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let sp_Mesh5 = this.visual_object.children[this.SP_CON + 1];
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let tmeshlamb;
@@ -311,6 +312,14 @@ class Nucleotide extends BasicElement {
                     sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
+        if (sp_Mesh5 !== undefined && sp_Mesh5 instanceof THREE.Mesh) {
+            if (sp_Mesh5.material instanceof THREE.MeshLambertMaterial) {
+                if (lutColsVis)
+                    sp_Mesh5.material = tmeshlamb;
+                else
+                    sp_Mesh5.material = this.strand_to_material(this.parent.strand_id);
+            }
+        }
     }
     toggle() {
         // highlight/remove highlight the bases we've clicked 
@@ -321,6 +330,7 @@ class Nucleotide extends BasicElement {
         let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
         let con_Mesh = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let sp_Mesh5 = this.visual_object.children[this.SP_CON + 1];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
@@ -342,6 +352,10 @@ class Nucleotide extends BasicElement {
             if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
                 if (sp_Mesh.material instanceof THREE.MeshLambertMaterial)
                     sp_Mesh.material = selection_material;
+            }
+            if (sp_Mesh5 !== undefined && sp_Mesh5 instanceof THREE.Mesh) {
+                if (sp_Mesh5.material instanceof THREE.MeshLambertMaterial)
+                    sp_Mesh5.material = selection_material;
             }
             //selList.push(nucleotideID);
             selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
@@ -537,7 +551,7 @@ class AminoAcid extends BasicElement {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()));
                 //let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
                 //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-                let sp = this.updateSP();
+                let sp = this.updateSP(this.SP_CON);
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
@@ -549,8 +563,8 @@ class AminoAcid extends BasicElement {
         z_bb_last = z;
     }
     ;
-    updateSP() {
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+    updateSP(num) {
+        let sp_Mesh = this.visual_object.children[num];
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             //if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
             //    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
