@@ -270,26 +270,45 @@ class Nucleotide extends BasicElement {
         let sp_Mesh = this.visual_object.children[this.SP_CON];
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        let tmeshlamb;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    back_Mesh.material = tmeshlamb;
+                else
+                    back_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (nucNec) {
             if (nuc_Mesh instanceof THREE.Mesh) {
                 if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    nuc_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        nuc_Mesh.material = tmeshlamb;
+                    else
+                        nuc_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    con_Mesh.material = tmeshlamb;
+                else
+                    con_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     }
@@ -452,7 +471,7 @@ class AminoAcid extends BasicElement {
         var material;
         if (lutColsVis) {
             material = new THREE.MeshLambertMaterial({
-                color: lutCols[i],
+                color: lutCols[this.global_id],
                 side: THREE.DoubleSide
             });
         }
@@ -570,18 +589,31 @@ class AminoAcid extends BasicElement {
     resetColor(nucNec) {
         let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
         let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let tmeshlamb;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         if (nucNec) {
             if (back_Mesh != undefined && back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
                 if (back_Mesh.material != undefined && (back_Mesh.material instanceof THREE.MeshBasicMaterial || back_Mesh.material instanceof THREE.MeshLambertMaterial)) {
-                    back_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        back_Mesh.material = tmeshlamb;
+                    else
+                        back_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (sp_Mesh != undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshBasicMaterial || sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     }
@@ -828,7 +860,8 @@ function colorOptions() {
             }));
             let index = 0;
             for (; index < elements.length; index++) {
-                elements[index].resetColor(false);
+                if (!selected_bases.has(elements[i]))
+                    elements[index].resetColor(false);
             }
             colorOptions();
             render();
@@ -957,21 +990,24 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
-                elements[i].resetColor(true);
-            }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
+            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
+                if (!selected_bases.has(elements[i]))
+                    elements[i].resetColor(true);
+            }
         }
         else {
             for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
-                let tmeshlamb = new THREE.MeshLambertMaterial({
-                    color: lutCols[i],
-                    side: THREE.DoubleSide
-                });
-                for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
-                    if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh = elements[i].visual_object.children[j];
-                        tmesh.material = tmeshlamb;
+                if (!selected_bases.has(elements[i])) {
+                    let tmeshlamb = new THREE.MeshLambertMaterial({
+                        color: lutCols[i],
+                        side: THREE.DoubleSide
+                    });
+                    for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
+                        if (j != 3) { //for all except cms posObj Mesh
+                            let tmesh = elements[i].visual_object.children[j];
+                            tmesh.material = tmeshlamb;
+                        }
                     }
                 }
             }

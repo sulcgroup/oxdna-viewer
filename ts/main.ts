@@ -65,7 +65,7 @@ class BasicElement {
 
     }
     strand_to_material(strandIndex: number) {
-        return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length ];
+        return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length];
     };
     elem_to_material(type: number | string): THREE.MeshLambertMaterial {
         return new THREE.MeshLambertMaterial();
@@ -351,33 +351,52 @@ class Nucleotide extends BasicElement {
     getCOM(): number {
         return this.COM;
     };
-    resetColor(nucNec : boolean) {
+    resetColor(nucNec: boolean) {
         let back_Mesh: THREE.Object3D = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
         let nuc_Mesh: THREE.Object3D = this.visual_object.children[this.NUCLEOSIDE];
         let con_Mesh: THREE.Object3D = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        let tmeshlamb: THREE.MeshLambertMaterial;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    back_Mesh.material = tmeshlamb;
+                else
+                    back_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (nucNec) {
             if (nuc_Mesh instanceof THREE.Mesh) {
                 if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    nuc_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        nuc_Mesh.material = tmeshlamb;
+                    else
+                        nuc_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    con_Mesh.material = tmeshlamb;
+                else
+                    con_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     }
@@ -528,7 +547,7 @@ class AminoAcid extends BasicElement {
         var material: THREE.MeshLambertMaterial;
         if (lutColsVis) {
             material = new THREE.MeshLambertMaterial({
-                color: lutCols[i],
+                color: lutCols[this.global_id],
                 side: THREE.DoubleSide
             })
         }
@@ -677,19 +696,31 @@ class AminoAcid extends BasicElement {
     resetColor(nucNec: boolean) {
         let back_Mesh: THREE.Object3D = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
         let sp_Mesh: THREE.Object3D = this.visual_object.children[this.SP_CON];
-
+        let tmeshlamb: THREE.MeshLambertMaterial;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         if (nucNec) {
             if (back_Mesh != undefined && back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
                 if (back_Mesh.material != undefined && (back_Mesh.material instanceof THREE.MeshBasicMaterial || back_Mesh.material instanceof THREE.MeshLambertMaterial)) {
-                    back_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        back_Mesh.material = tmeshlamb;
+                    else
+                        back_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (sp_Mesh != undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshBasicMaterial || sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     };
@@ -752,7 +783,7 @@ class Strand {
     add_basicElement(elem: BasicElement) {
         this.elements.push(elem);
         elem.parent = this;
-        
+
         //this.strand_3objects.add(elem.visual_object);
     };
 
@@ -770,14 +801,14 @@ class Strand {
         }
     };
 
-    exclude_Elements(elements : BasicElement[]){
+    exclude_Elements(elements: BasicElement[]) {
         // detach from parent
         elements.forEach((e) => {
             e.parent = null;
             this.strand_3objects.remove(e.visual_object);
         });
         // create a new list of strand elements  
-        let filtered =  this.elements.filter((v, i, arr)=>{
+        let filtered = this.elements.filter((v, i, arr) => {
             return !elements.includes(v);
         });
         this.elements = filtered;
@@ -953,7 +984,8 @@ function colorOptions() {
                 }));
             let index: number = 0;
             for (; index < elements.length; index++) {
-                elements[index].resetColor(false);
+                if (!selected_bases.has(elements[i]))
+                    elements[index].resetColor(false);
             }
             colorOptions();
             render();
@@ -1003,9 +1035,9 @@ function createVideo() {
         workersPath: 'ts/lib/'
     });
 
-    let button = <HTMLInputElement> document.getElementById("videoStartStop");
+    let button = <HTMLInputElement>document.getElementById("videoStartStop");
     button.innerText = "Stop";
-    button.onclick = function() {
+    button.onclick = function () {
         capturer.stop();
         capturer.save();
     }
@@ -1045,7 +1077,7 @@ function createTrajectoryVideo(canvas, capturer) {
     }
 
     // Overload stop button so that we don't forget to remove listeners
-    let button = <HTMLInputElement> document.getElementById("videoStartStop");
+    let button = <HTMLInputElement>document.getElementById("videoStartStop");
     button.onclick = _done;
 
     document.addEventListener('nextConfigLoaded', _load);
@@ -1069,8 +1101,8 @@ function createLemniscateVideo(canvas, capturer, framerate) {
     capturer.start();
 
     // Overload stop button so that we don't forget to remove listeners
-    let button = <HTMLInputElement> document.getElementById("videoStartStop");
-    button.onclick = function() {tMax=0;};
+    let button = <HTMLInputElement>document.getElementById("videoStartStop");
+    button.onclick = function () { tMax = 0; };
 
     // Move camera and capture frames
     // This is not a for-loop since we need to use
@@ -1101,21 +1133,24 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 function toggleLut(chkBox) { //toggles display of coloring by json file / structure modeled off of base selector
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
-                elements[i].resetColor(true);
-            }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
+            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
+                if (!selected_bases.has(elements[i]))
+                    elements[i].resetColor(true);
+            }            
         }
         else {
             for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
-                let tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
-                    color: lutCols[i],
-                    side: THREE.DoubleSide
-                });
-                for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
-                    if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh: THREE.Mesh = <THREE.Mesh>elements[i].visual_object.children[j];
-                        tmesh.material = tmeshlamb;
+                if (!selected_bases.has(elements[i])) {
+                    let tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
+                        color: lutCols[i],
+                        side: THREE.DoubleSide
+                    });
+                    for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
+                        if (j != 3) { //for all except cms posObj Mesh
+                            let tmesh: THREE.Mesh = <THREE.Mesh>elements[i].visual_object.children[j];
+                            tmesh.material = tmeshlamb;
+                        }
                     }
                 }
             }
