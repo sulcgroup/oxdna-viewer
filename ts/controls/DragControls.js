@@ -213,15 +213,16 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
 			)
         );
-        let material = current_nuc.strand_to_material(current_nuc.parent.strand_id);
-        let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
-		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
-		tempsp.applyMatrix(rotation_sp); //set rotation
-		tempsp.position.set(x_sp, y_sp, z_sp); //set position
-		current_nuc.visual_object.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
+        //let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
+        //let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
+        let tempsp = current_nuc.updateSP();
+        tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
+        tempsp.applyMatrix(rotation_sp); //set rotation
+        tempsp.position.set(x_sp, y_sp, z_sp); //set position
+        current_nuc.visual_object.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
         tempsp.position.sub(temp);
         current_nuc.visual_object.remove(current_nuc.visual_object.children[current_nuc.SP_CON]); //remove old sp
-		current_nuc.visual_object.add(tempsp); //add new sp
+        current_nuc.visual_object.add(tempsp); //add new sp
 	}
 
 	function onDocumentTouchMove(event) { //if mouse moves

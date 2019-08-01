@@ -37,6 +37,10 @@ class BasicElement {
     }
     calculateNewConfigPositions(x, y, z, l) {
     }
+    updateSP() {
+        return new THREE.Object3D();
+    }
+    ;
     getCOM() {
         return this.BACKBONE;
     }
@@ -212,30 +216,7 @@ class Nucleotide extends BasicElement {
             let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
             let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-            let sp_Mesh = group.children[this.SP_CON];
-            if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    sp_Mesh.material = this.strand_to_material(locstrandID);
-                }
-                sp_Mesh.drawMode = THREE.TrianglesDrawMode;
-                sp_Mesh.updateMorphTargets();
-                sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
-                sp_Mesh.position.set(0, 0, 0);
-                sp_Mesh.rotation.set(0, 0, 0);
-                sp_Mesh.quaternion.set(0, 0, 0, 0);
-                sp_Mesh.scale.set(1, 1, 1);
-                sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-                sp_Mesh.matrixWorldNeedsUpdate = false;
-                //sp_Mesh.layers.set(1);
-                sp_Mesh.visible = true;
-                sp_Mesh.castShadow = false;
-                sp_Mesh.receiveShadow = false;
-                sp_Mesh.frustumCulled = true;
-                sp_Mesh.renderOrder = 0;
-                sp_Mesh.userData = {};
-            }
+            this.updateSP();
             //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
             group.children[this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
             group.children[this.SP_CON].applyMatrix(rotation_sp); //rotate
@@ -243,6 +224,39 @@ class Nucleotide extends BasicElement {
             group.children[this.SP_CON].parent = this.visual_object;
         }
         ;
+    }
+    ;
+    updateSP() {
+        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo = sp_Mesh.geometry;
+            geo = connector_geometry;
+            if (geo instanceof THREE.CylinderGeometry) {
+                console.log(geo.parameters);
+            }
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
+            sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+            sp_Mesh.userData = {};
+        }
+        return sp_Mesh;
     }
     ;
     getCOM() {
@@ -503,7 +517,8 @@ class AminoAcid extends BasicElement {
             if (sp_len <= 500) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()));
                 let material = this.strand_to_material(this.parent.strand_id);
-                let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                let sp = this.updateSP();
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
@@ -513,6 +528,39 @@ class AminoAcid extends BasicElement {
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
+    }
+    ;
+    updateSP() {
+        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo = sp_Mesh.geometry;
+            geo = connector_geometry;
+            if (geo instanceof THREE.CylinderGeometry) {
+                console.log(geo.parameters);
+            }
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
+            sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+            sp_Mesh.userData = {};
+        }
+        return sp_Mesh;
     }
     ;
     getCOM() {
