@@ -28,7 +28,7 @@ function onWindowResize() {
 //Setup the scene and renderer and camera 
 var scene = new THREE.Scene();
 // make the background white 
-// default is black
+// default is white
 var BLACK = new THREE.Color(0x000000);
 var WHITE = new THREE.Color();
 scene.background = WHITE;

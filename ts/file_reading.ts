@@ -300,9 +300,7 @@ target.addEventListener("drop", function (event) {
                     };
 
                 });
-            //for (let i = system.global_start_id; i < elements.length; i++) { //set selected_bases[] to 0 for elements[]-system start
-            //    selected_bases.push(0);
-            //}
+
             system.setDatFile(dat_file); //store dat_file in current System object
             systems.push(system); //add system to Systems[]
             nuc_count = elements.length;
@@ -340,7 +338,7 @@ target.addEventListener("drop", function (event) {
                     current_chunk = current_chunk.concat(n_hanging_line);
                 }
                 catch (error) {
-                    alert("File readers got all topsy-turvy, traj reading will not work :( \n Please reload and try again")
+                    alert("File readers got all topsy-turvy.  If trajectory reading does not work, reload and try again.")
                 }
                 next_chunk = next_chunk.substring(1);
                 conf_end.chunk = current_chunk;
@@ -477,23 +475,87 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
     conf_end.chunk = current_chunk;
     conf_end.line_id = num_nuc + 2; //end of current configuration
+
+    //set up the instancing with the number of particles
+    instanced_backbone.maxInstancedCount = num_nuc;
+    const arraySize = num_nuc*4;
+    var matrixArray = [
+        new Float32Array(arraySize),
+        new Float32Array(arraySize),
+        new Float32Array(arraySize),
+        new Float32Array(arraySize)
+    ]
+    var attributeArray = []
+    for( let i = 0 ; i < matrixArray.length ; i ++ ){
+        const attribute = new THREE.InstancedBufferAttribute( matrixArray[i], 4 ) 
+        attribute.dynamic = true
+
+        attributeArray.push(attribute)
+        instanced_backbone.addAttribute( 
+           `aInstanceMatrix${i}`, 
+           new THREE.InstancedBufferAttribute( matrixArray[i], 4 ) 
+        )
+    }
+    const instanceColorArray = new Uint8Array(num_nuc*3);
+    instanced_backbone.addAttribute(
+        'aInstanceColor',
+        new THREE.InstancedBufferAttribute( instanceColorArray, 3, 1 )
+    );
+
+    const instanceEmissiveArray = new Uint8Array(num_nuc*3)
+    var instanceEmissive = new THREE.InstancedBufferAttribute( instanceEmissiveArray, 3, 1 )
+    instanced_backbone.addAttribute(
+        'aInstanceEmissive',
+        instanceEmissive
+      )
+
     // add the bases to the scene
     for (let i = 0; i < num_nuc; i++) {//from beginning to end of current configuration's list of positions; for each nucleotide in the system
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break
         };
         var current_nucleotide: BasicElement = current_strand.elements[nuc_local_id];
-        //get nucleotide information
         // consume a new line 
         let l: string = lines[i].split(" ");
-        // shift coordinates such that the 1st base of the  
-        // 1st strand is @ origin 
-        let x = parseFloat(l[0]),// - fx,
-            y = parseFloat(l[1]),// - fy,
-            z = parseFloat(l[2]);// - fz;
+
+        let x = parseFloat(l[0]),
+            y = parseFloat(l[1]),
+            z = parseFloat(l[2]);
+        
+        let x_a1 = parseFloat(l[3]),
+            y_a1 = parseFloat(l[4]),
+            z_a1 = parseFloat(l[5]),
+            x_a3 = parseFloat(l[6]),
+            y_a3 = parseFloat(l[7]),
+            z_a3 = parseFloat(l[8]);
+
+        let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
 
         current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
+
+        var backbone = new THREE.Object3D();
+        const test_color = new THREE.Color(0xfdd291);
+        var backbone_color = new THREE.Color();
+        backbone_color.copy(current_nucleotide.strand_to_material(current_nucleotide.parent.strand_id).color);
+        console.log(backbone_color, test_color);
+
+        let pos = current_nucleotide.calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3);
+        backbone.position.set(pos.x, pos.y, pos.z );
+        intersectsScene.add(backbone);
+        backbone.updateMatrixWorld(true);
+        
+        //scene.add(current_nucleotide.visual_object.children[current_nucleotide.BACKBONE]);
+        current_nucleotide.visual_object.children[current_nucleotide.BACKBONE].updateMatrixWorld(true);
+        for ( let r = 0 ; r < 4 ; r ++ )
+            for ( let c = 0 ; c < 4 ; c ++ ){
+                matrixArray[r][i*4 + c] = backbone.matrixWorld.elements[r*4 + c];
+        }
+        const colorArray = backbone_color.toArray().map(col=>Math.floor(col*255))
+        backbone.userData.color = colorArray;
+        for( let c = 0 ; c < 3 ; c ++ ){
+            instanceColorArray[i*3 + c] = colorArray[c];
+        }
 
         //catch the two possible cases for strand ends (no connection or circular)
         if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in linear strand
@@ -516,6 +578,86 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
         
     }
+    intersectsScene.updateMatrixWorld(true);
+    const instanceMaterial = new THREE.MeshLambertMaterial({
+        side: THREE.DoubleSide
+    });
+    instanceMaterial.onBeforeCompile = shader=>{
+
+        shader.vertexShader = `
+    
+        attribute vec4 aInstanceMatrix0;
+        attribute vec4 aInstanceMatrix1;
+        attribute vec4 aInstanceMatrix2;
+        attribute vec4 aInstanceMatrix3;
+    
+    
+        attribute vec3 aInstanceColor;
+        attribute vec3 aInstanceEmissive;
+        ${
+            shader.vertexShader.replace(
+                '#include <begin_vertex>',
+                `
+                mat4 aInstanceMatrix = mat4(
+                    aInstanceMatrix0,
+                    aInstanceMatrix1,
+                    aInstanceMatrix2,
+                    aInstanceMatrix3
+                );
+                vec3 transformed = (aInstanceMatrix * vec4( position , 1. )).xyz;
+                `
+            )
+        }`
+        shader.vertexShader = `
+        varying vec3 vInstanceColor;
+        varying vec3 vInstanceEmissive;
+        ${
+          shader.vertexShader.replace(
+          `#include <color_vertex>`,
+          `#include <color_vertex>
+           vInstanceColor = aInstanceColor;
+           vInstanceEmissive = aInstanceEmissive;
+          `
+        )}
+        `
+    
+        shader.fragmentShader = `
+        varying vec3 vInstanceColor;
+        ${
+          shader.fragmentShader.replace(
+          'vec4 diffuseColor = vec4( diffuse, opacity );',
+          'vec4 diffuseColor = vec4( vInstanceColor, opacity );'
+        )}
+        `
+    
+        shader.fragmentShader = `
+        varying vec3 vInstanceEmissive;
+        ${
+          shader.fragmentShader.replace(
+          'vec3 totalEmissiveRadiance = emissive;',
+          'vec3 totalEmissiveRadiance = vInstanceEmissive;'
+        )}
+        `
+    
+        shader.vertexShader = shader.vertexShader.replace(
+          `#include <beginnormal_vertex>`,
+          `
+          mat4 _aInstanceMatrix = mat4(
+            aInstanceMatrix0,
+            aInstanceMatrix1,
+            aInstanceMatrix2,
+            aInstanceMatrix3
+          );
+          vec3 objectNormal = (_aInstanceMatrix * vec4( normal, 0. ) ).xyz;
+          `
+        )
+        
+    }
+
+    scene.add(new THREE.Mesh(
+        instanced_backbone,
+        instanceMaterial
+    ))
     let dx, dy, dz;
 
     //bring strand in box
@@ -525,7 +667,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint: number = systems[sys_count].strands[i].elements[j].getCOM();
-            cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
+            cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[2].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -556,9 +698,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     elements.forEach(e => e.visual_object.children.forEach(child => child.updateMatrix()));
     sys_count += 1;
     render();
-    for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
-    }
+    //for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
+    //    backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
+    //}
     renderer.domElement.style.cursor = "auto";
     console.log("loadtime was", Date.now() - start)
 }

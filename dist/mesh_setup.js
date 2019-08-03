@@ -1,11 +1,19 @@
 /// <reference path="./three/index.d.ts" />
 // base geometry 
+var intersectsScene = new THREE.Scene();
+var instanced_backbone = new THREE.InstancedBufferGeometry();
+window['instanced_backbone'] = instanced_backbone;
+var instanced_connector = new THREE.InstancedBufferGeometry();
 var backbone_geometry = new THREE.SphereBufferGeometry(.2, 10, 10);
 var nucleoside_geometry = new THREE.SphereBufferGeometry(.3, 10, 10).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
 var connector_geometry = new THREE.CylinderBufferGeometry(.1, .1, 1, 8);
+Object.keys(backbone_geometry.attributes).forEach(attributeName => {
+    instanced_backbone.attributes[attributeName] = backbone_geometry.attributes[attributeName];
+});
+instanced_backbone.index = backbone_geometry.index;
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
-        color: 0xfdd291,
+        color: 0xff00ff,
         side: THREE.DoubleSide,
     }),
     new THREE.MeshLambertMaterial({

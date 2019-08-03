@@ -11,7 +11,6 @@
     "files": [
         "./ts/main.ts",
         "./ts/file_reading.ts",
-        //"./ts/viewerforjonah.ts",
         "./ts/mesh_setup.ts",
         "./ts/scene_setup.ts",
         "./ts/keybindings.ts",
@@ -19,7 +18,6 @@
         "./ts/output_file.ts",
         "./ts/translation.ts",
         "./ts/adhoc_api.ts"
-        //,
         //"./js/cubes.ts",
         //"./js/rotate.ts"
     ]
