@@ -236,6 +236,9 @@ target.addEventListener("drop", function (event) {
                 nuc.local_id = nuc_local_id;
                 neighbor3 = parseInt(l[2]);
                 if (neighbor3 != -1) {
+                    if (elements[nuc_count + neighbor3] == null || elements[nuc_count + neighbor3] == undefined) {
+                        elements[nuc_count + neighbor3] = current_strand.create_basicElement(nuc_count + neighbor3);
+                    }
                     nuc.neighbor3 = elements[nuc_count + neighbor3];
                 }
                 else {
@@ -465,6 +468,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         }
         nuc_local_id += 1;
     }
+    for (let i = 0; i < elements.length; i++) {
+        elements[i].recalcPos(); //add any other sp connectors - used for circular strands
+    }
     let dx, dy, dz;
     //bring strand in box
     for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
@@ -473,7 +479,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint = systems[sys_count].strands[i].elements[j].getCOM();
-            console.log(sys_count);
             cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations

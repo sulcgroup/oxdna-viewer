@@ -35,8 +35,13 @@ class BasicElement {
     ;
     calculatePositions(x, y, z, l) {
     }
+    ;
+    recalcPos() {
+    }
+    ;
     calculateNewConfigPositions(x, y, z, l) {
     }
+    ;
     updateSP(num) {
         return new THREE.Object3D();
     }
@@ -128,6 +133,8 @@ class Nucleotide extends BasicElement {
         group.add(posObj);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
+            console.log(this.global_id);
+            console.log(this.neighbor3);
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
             y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
@@ -140,19 +147,25 @@ class Nucleotide extends BasicElement {
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
                 group.add(sp); //add to visual_object
+                console.log(group);
             }
         }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
+        /*if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
             let x_sp = (x_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
-            y_sp = (y_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.y) / 2, z_sp = (z_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.z) / 2;
+                y_sp = (y_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.y) / 2,
+                z_sp = (z_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.x, 2) + Math.pow(y_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.y, 2) + Math.pow(z_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.z, 2));
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
+            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                new THREE.Quaternion().setFromUnitVectors(
+                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                )
+            );
             let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
             group.add(sp); //add to visual_object
-        }
+        }*/
         //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
         this.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
         this.parent.strand_3objects.add(group); //add group to strand_3objects
@@ -162,6 +175,30 @@ class Nucleotide extends BasicElement {
         z_bb_last = z_bb;
     }
     ;
+    recalcPos() {
+        let bb = this.visual_object.children[this.BACKBONE].position;
+        if (this.neighbor3 != null && this.neighbor3.local_id > this.local_id) { //handles strand end connection
+            let material;
+            if (lutColsVis) {
+                material = new THREE.MeshLambertMaterial({
+                    color: lutCols[i],
+                    side: THREE.DoubleSide
+                });
+            }
+            else {
+                material = this.strand_to_material(this.parent.strand_id);
+            }
+            let x_sp = (bb.x + this.neighbor3.visual_object.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
+            y_sp = (bb.y + this.neighbor3.visual_object.children[this.BACKBONE].position.y) / 2, z_sp = (bb.z + this.neighbor3.visual_object.children[this.BACKBONE].position.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(bb.x - this.neighbor3.visual_object.children[this.BACKBONE].position.x, 2) + Math.pow(bb.y - this.neighbor3.visual_object.children[this.BACKBONE].position.y, 2) + Math.pow(bb.z - this.neighbor3.visual_object.children[this.BACKBONE].position.z, 2));
+            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - bb.x, y_sp - bb.y, z_sp - bb.z).normalize()));
+            let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+            sp.applyMatrix(rotation_sp); //set rotation
+            sp.position.set(x_sp, y_sp, z_sp);
+            this.visual_object.add(sp); //add to visual_object
+        }
+    }
     calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3) {
         return new THREE.Vector3(x, y, z);
     }
@@ -268,7 +305,6 @@ class Nucleotide extends BasicElement {
         let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
         let con_Mesh = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh = this.visual_object.children[this.SP_CON];
-        let sp_Mesh5 = this.visual_object.children[this.SP_CON + 1];
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let tmeshlamb;
@@ -312,14 +348,6 @@ class Nucleotide extends BasicElement {
                     sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
-        if (sp_Mesh5 !== undefined && sp_Mesh5 instanceof THREE.Mesh) {
-            if (sp_Mesh5.material instanceof THREE.MeshLambertMaterial) {
-                if (lutColsVis)
-                    sp_Mesh5.material = tmeshlamb;
-                else
-                    sp_Mesh5.material = this.strand_to_material(this.parent.strand_id);
-            }
-        }
     }
     toggle() {
         // highlight/remove highlight the bases we've clicked 
@@ -330,7 +358,6 @@ class Nucleotide extends BasicElement {
         let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
         let con_Mesh = this.visual_object.children[this.BB_NS_CON];
         let sp_Mesh = this.visual_object.children[this.SP_CON];
-        let sp_Mesh5 = this.visual_object.children[this.SP_CON + 1];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
@@ -352,10 +379,6 @@ class Nucleotide extends BasicElement {
             if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
                 if (sp_Mesh.material instanceof THREE.MeshLambertMaterial)
                     sp_Mesh.material = selection_material;
-            }
-            if (sp_Mesh5 !== undefined && sp_Mesh5 instanceof THREE.Mesh) {
-                if (sp_Mesh5.material instanceof THREE.MeshLambertMaterial)
-                    sp_Mesh5.material = selection_material;
             }
             //selList.push(nucleotideID);
             selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1

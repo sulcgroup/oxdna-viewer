@@ -227,7 +227,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
             //current_nuc.visual_object.add(tempsp); //add new sp
         }
 
-        if (current_nuc.visual_object.children[current_nuc.SP_CON + 1] != null) {
+        /*if (current_nuc.visual_object.children[current_nuc.SP_CON + 1] != null) {
             console.log("5 Exists");
             var temp = new THREE.Vector3();
             //temp = current_nuc.neighbor3.visual_object.children[0].position;
@@ -264,7 +264,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
             //current_nuc.visual_object.remove(current_nuc.visual_object.children[current_nuc.SP_CON + 1]); //remove old sp
             //current_nuc.visual_object.add(tempsp); //add new sp
 
-        }
+        }*/
     }
 
     function onDocumentTouchMove(event) { //if mouse moves
