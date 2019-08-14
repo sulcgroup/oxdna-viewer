@@ -18,7 +18,8 @@
         "./ts/base_selector.ts",
         "./ts/output_file.ts",
         "./ts/translation.ts",
-        "./ts/adhoc_api.ts"
+        "./ts/adhoc_api.ts",
+        "./ts/io.ts"
         //,
         //"./js/cubes.ts",
         //"./js/rotate.ts"

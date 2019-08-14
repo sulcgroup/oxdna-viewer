@@ -165,8 +165,8 @@ class Nucleotide extends BasicElement {
 
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
-            console.log(this.global_id);
-            console.log(this.neighbor3);
+            //console.log(this.global_id);
+            //console.log(this.neighbor3);
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
                 y_sp = (y_bb + y_bb_last) / 2,
                 z_sp = (z_bb + z_bb_last) / 2;
@@ -185,7 +185,7 @@ class Nucleotide extends BasicElement {
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
                 group.add(sp); //add to visual_object
-                console.log(group);
+                //console.log(group);
             }
         }
 
@@ -349,9 +349,9 @@ class Nucleotide extends BasicElement {
             //}
             let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
             geo = connector_geometry;
-            if (geo instanceof THREE.CylinderGeometry) {
-                console.log(geo.parameters);
-            }
+            //if (geo instanceof THREE.CylinderGeometry) {
+            //    console.log(geo.parameters);
+            //}
             sp_Mesh.drawMode = THREE.TrianglesDrawMode;
             sp_Mesh.updateMorphTargets();
 
