@@ -140,146 +140,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
 				 	_selected = intersects[0].object;
 				 }*/
-<<<<<<< HEAD
-                switch (scopeMode) {
-                    case "Nuc": //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
-                        _selected = intersects[0].object.parent; break;
-                    case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
-                        _selected = intersects[0].object.parent.parent; break;
-                    case "System": //if scope mode is "System", set objects to be dragged to the clicked system
-                        _selected = intersects[0].object.parent.parent.parent; break;
-                }
-                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-                    _offset.copy(_intersection).sub(_selected.position);
-                }
-
-                _domElement.style.cursor = 'move';
-
-                scope.dispatchEvent({ type: 'dragstart', object: _selected });
-
-            }
-        }
-
-    }
-
-    function onDocumentMouseCancel(event) { //if mouse is ??
-        if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
-
-            event.preventDefault();
-
-            //calculate new sp connectors - does not work after rotation
-            if (_selected) { //if there is a clicked object
-                if (scopeMode == "Nuc") {
-                    var current_nuc = elements[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
-
-                    if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) { //if neighbor3 exists
-                        calcsp(current_nuc); //calculate sp between current and neighbor3
-                    }
-                    if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined) { //if neighbor5 exists
-                        calcsp(current_nuc.neighbor5); //calculate sp between current and neighbor5
-                    }
-                }
-                scope.dispatchEvent({ type: 'dragend', object: _selected });
-
-                _selected = null; //now nothing is selected for dragging b/c click event is over
-
-            }
-            _domElement.style.cursor = 'auto';
-            render();
-        }
-    }
-
-    function calcsp(current_nuc) { //calculate new sp
-        if (current_nuc.visual_object.children[current_nuc.SP_CON] != null) {
-            console.log("3 Exists");
-            var temp = new THREE.Vector3();
-            //temp = current_nuc.neighbor3.visual_object.children[0].position;
-            current_nuc.neighbor3.visual_object.children[0].getWorldPosition(temp); //get neighbor3's backbone world position
-            var x_bb_last = temp.x,
-                y_bb_last = temp.y,
-                z_bb_last = temp.z;
-            //temp = current_nuc.visual_object.children[0].position;
-            current_nuc.visual_object.children[0].getWorldPosition(temp); //get current_nuc's backbone world position
-            // compute backbone cm
-            let x_bb = temp.x;
-            let y_bb = temp.y;
-            let z_bb = temp.z;
-            //calculate sp location
-            let x_sp = (x_bb + x_bb_last) / 2,
-                y_sp = (y_bb + y_bb_last) / 2,
-                z_sp = (z_bb + z_bb_last) / 2;
-
-            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); //calculate sp length
-            // easy periodic boundary condition fix  
-            var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion( //create sp's rotation - I think this is the source of error for the sp recalculation not working after rotations
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
-                )
-            );
-            //let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
-            //let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
-            let tempsp = current_nuc.updateSP(current_nuc.SP_CON);
-            tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
-            tempsp.applyMatrix(rotation_sp); //set rotation
-            tempsp.position.set(x_sp, y_sp, z_sp); //set position
-            current_nuc.visual_object.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
-            tempsp.position.sub(temp);
-            //current_nuc.visual_object.remove(current_nuc.visual_object.children[current_nuc.SP_CON]); //remove old sp
-            //current_nuc.visual_object.add(tempsp); //add new sp
-        }
-
-        /*if (current_nuc.visual_object.children[current_nuc.SP_CON + 1] != null) {
-            console.log("5 Exists");
-            var temp = new THREE.Vector3();
-            //temp = current_nuc.neighbor3.visual_object.children[0].position;
-            current_nuc.neighbor5.visual_object.children[0].getWorldPosition(temp); //get neighbor3's backbone world position
-            var x_bb_last = temp.x,
-                y_bb_last = temp.y,
-                z_bb_last = temp.z;
-            //temp = current_nuc.visual_object.children[0].position;
-            current_nuc.visual_object.children[0].getWorldPosition(temp); //get current_nuc's backbone world position
-            // compute backbone cm
-            let x_bb = temp.x;
-            let y_bb = temp.y;
-            let z_bb = temp.z;
-            //calculate sp location
-            let x_sp = (x_bb + x_bb_last) / 2,
-                y_sp = (y_bb + y_bb_last) / 2,
-                z_sp = (z_bb + z_bb_last) / 2;
-
-            let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); //calculate sp length
-            // easy periodic boundary condition fix  
-            var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion( //create sp's rotation - I think this is the source of error for the sp recalculation not working after rotations
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
-                )
-            );
-            //let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
-            //let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
-            let tempsp = current_nuc.updateSP(current_nuc.SP_CON + 1);
-            tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
-            tempsp.applyMatrix(rotation_sp); //set rotation
-            tempsp.position.set(x_sp, y_sp, z_sp); //set position
-            current_nuc.visual_object.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
-            tempsp.position.sub(temp);
-            //current_nuc.visual_object.remove(current_nuc.visual_object.children[current_nuc.SP_CON + 1]); //remove old sp
-            //current_nuc.visual_object.add(tempsp); //add new sp
-
-        }*/
-    }
-
-    function onDocumentTouchMove(event) { //if mouse moves
-        if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
-            event.preventDefault(); //prevent default mouse functions
-            event = event.changedTouches[0];
-
-            var rect = _domElement.getBoundingClientRect();
-
-            _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //calculate mouse click position
-            _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            _raycaster.setFromCamera(_mouse, _camera);
-=======
 				switch (scopeMode) {
 					case "Nuc": //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
 						_selected = intersects[0].object.parent; break;
@@ -364,20 +224,17 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
         current_nuc.remove(current_nuc.children[current_nuc.SP_CON]); //remove old sp
 		current_nuc.add(tempsp); //add new sp
 	}
->>>>>>> Shuchi-dev2
 
-            if (_selected && scope.enabled) { //if an object in scene was clicked
+    if (_selected && scope.enabled) { //if an object in scene was clicked
 
-                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-                    _selected.position.copy(_intersection.sub(_offset));
-                }
-
-                scope.dispatchEvent({ type: 'drag', object: _selected });
-
-                return;
-
-            }
+        if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
+            _selected.position.copy(_intersection.sub(_offset));
         }
+
+        scope.dispatchEvent({ type: 'drag', object: _selected });
+
+        return;
+
     }
 
     function onDocumentTouchStart(event) { //on mouse start on document

@@ -31,7 +31,7 @@ document.addEventListener('mousedown', event => {
             nucleotide = intersects[0].object.parent; //elements[nucleotideID];
             sys = nucleotide.parent.parent;
             // note: it is not enough to use the intersects[0].object.visible property %)
-            if (!nucleotide.visual_object.visible)
+            if (!nucleotide.visible)
                 return; // exclude invisible objects  
             switch (scope_mode) {
                 case "System":
