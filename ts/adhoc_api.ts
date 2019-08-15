@@ -197,5 +197,24 @@ module api{
         strand.parent = system;
     }
 
+
+    export function remove_colorbar() {
+        for (let i = 8; i < 20; i++) {
+            scene.remove(scene.children[8]);
+        }
+        render();
+    }
+
+    export function show_colorbar() {
+        scene.add(lut.legend.mesh);
+        let labels =  lut.setLegendLabels({'title':lut.legend.labels.title, 'ticks':lut.legend.labels.ticks}); //don't ask, lut stores the values but doesn't actually save the sprites anywhere...
+        scene.add(labels["title"]);
+        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+            scene.add(labels['ticks'][i]);
+            scene.add(labels['lines'][i]);
+        }
+
+        render();
+    }
     
 }

@@ -173,4 +173,22 @@ var api;
         strand.parent = system;
     }
     api.strand_add_to_system = strand_add_to_system;
+    function remove_colorbar() {
+        for (let i = 8; i < 20; i++) {
+            scene.remove(scene.children[8]);
+        }
+        render();
+    }
+    api.remove_colorbar = remove_colorbar;
+    function show_colorbar() {
+        scene.add(lut.legend.mesh);
+        let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere...
+        scene.add(labels["title"]);
+        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+            scene.add(labels['ticks'][i]);
+            scene.add(labels['lines'][i]);
+        }
+        render();
+    }
+    api.show_colorbar = show_colorbar;
 })(api || (api = {}));

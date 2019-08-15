@@ -456,6 +456,8 @@ function getNewConfig(mode) {
                 break;
             }
             ;
+            console.log("1", current_strand);
+            //console.log(elements);
             let current_nucleotide = current_strand.elements[nuc_local_id];
             //get nucleotide information
             // consume a new line 
@@ -463,15 +465,19 @@ function getNewConfig(mode) {
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
+            console.log("2", current_strand);
             if (current_nucleotide.neighbor5 == null) {
+                console.log("here");
                 system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0; //reset
             }
             else {
+                console.log("there");
                 nuc_local_id += 1;
             }
             ;
+            console.log("3", current_strand);
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
         //box by strand
