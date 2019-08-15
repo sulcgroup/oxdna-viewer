@@ -209,7 +209,7 @@ target.addEventListener("drop", function (event) {
         if (ext === "top") top_file = files[i];
         if (ext === "json") json_file = files[i];
     }
-    let json_alone = false
+    let json_alone = false;
     if (json_file && !top_file) json_alone = true;
     if ((files_len > 3 || files_len < 2) && !json_alone)  {
         alert("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
@@ -286,12 +286,76 @@ target.addEventListener("drop", function (event) {
                 }
             }
 
+            if (json_file) {
+                console.log("HERE");
+                //lutColsVis = true;
+                let check_box = <HTMLInputElement>document.getElementById("lutToggle");
+                let json_reader = new FileReader(); //read .json
+                json_reader.onload = () => {
+                    let file = json_reader.result as string;
+                    let data = JSON.parse(file);
+                    let curr_sys;
+                    curr_sys = sys_count - 1;
+                    for (var key in data) {
+                        if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
+                            if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
+                                let min = Math.min.apply(null, data[key]), //find min and max
+                                    max = Math.max.apply(null, data[key]);
+                                lut = new THREE.Lut("rainbow", 4000);
+                                //lut.setMax(0.23);
+                                //lut.setMin(0.04);
+                                lut.setMax(max);
+                                lut.setMin(min);
+                                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+                                scene.add(legend);
+                                let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
+                                scene.add(labels['title']); //add title
+
+                                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                                    scene.add(labels['ticks'][i]);
+                                    scene.add(labels['lines'][i]);
+                                }
+                                for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                                    lutCols.push(lut.getColor(Number(data[key][i])));
+                                }
+                                lutColsVis = false;
+                                toggleLut(check_box);
+                                check_box.checked = true;                                
+                            }
+                            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
+                                for (let i = 0; i < elements.length; i++) {
+                                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                                    let len = vec.length();
+                                    vec.normalize();
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
+                                    arrowHelper.name = i + "disp";
+                                    scene.add(arrowHelper);
+                                }
+                            }
+                        }
+                        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
+                            for (let entry of data[key]) {
+                                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                                vec.normalize();
+                                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                                scene.add(arrowHelper);
+                            }
+                        }
+                        else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+                            alert(".json and .top files are not compatible.");
+                        }
+                    }
+                };
+                json_reader.readAsText(json_file);
+                renderer.domElement.style.cursor = "auto";
+            }
         }
     }
 
 
 
-    if (json_file) {
+    if (json_file && json_alone) {
         //lutColsVis = true;
         let check_box = <HTMLInputElement>document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
@@ -335,7 +399,7 @@ target.addEventListener("drop", function (event) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].visual_object.children[elements[i].BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -401,19 +465,14 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let x = parseFloat(l[0]),// - fx,
             y = parseFloat(l[1]),// - fy,
             z = parseFloat(l[2]);// - fz;
-        current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
+
+        //current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
 
         //catch the two possible cases for strand ends (no connection or circular)
-        if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in linear strand
-            system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
-            nuc_local_id = -1;
-            if (elements[current_nucleotide.global_id+1] != undefined) {
-                current_strand = elements[current_nucleotide.global_id+1].parent;
-            }
-        }
-        else if (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //if last nucleotide in circular strand
-            system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
+        if ((current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) || (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id)) { //if last nucleotide in straight strand
+            system.add(current_strand); //add strand THREE.Group to system THREE.Group
+            current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
             if (elements[current_nucleotide.global_id+1] != undefined) {
                 current_strand = elements[current_nucleotide.global_id+1].parent;
@@ -437,7 +496,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint: number = systems[sys_count].strands[i].elements[j].getCOM();
-            cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
+            cms.add(systems[sys_count].strands[i].elements[j].children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -449,22 +508,22 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //fix coordinates
         for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
             let current_nucleotide = systems[sys_count].strands[i].elements[j];
-            for (let k = 0; k < systems[sys_count].strands[i].elements[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
-                let pos = systems[sys_count].strands[i].elements[j].visual_object.children[k].position; //get Mesh position
+            for (let k = 0; k < systems[sys_count].strands[i].elements[j].children.length; k++) { //for every Mesh in nucleotide's visual_object
+                let pos = systems[sys_count].strands[i].elements[j].children[k].position; //get Mesh position
                 //update pos by offset <dx, dy, dz>
                 pos.x = pos.x - dx;
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
-                systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                systems[sys_count].strands[i].elements[j].children[k].position.set(pos.x, pos.y, pos.z);
             }
         }
     }
 
-    scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
+    scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
+        backbones.push(elements[i].children[elements[i].BACKBONE]);
     }
     renderer.domElement.style.cursor = "auto";
 }
@@ -517,11 +576,8 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
                 z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
-            console.log("2", current_strand);
-
             if (current_nucleotide.neighbor5 == null) {
-                console.log("here");
-                system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
+                system.add(current_strand); //add strand_3objects to system_3objects
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0; //reset
             }
@@ -529,9 +585,8 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
                 console.log("there");
                 nuc_local_id += 1;
             };
-            console.log("3", current_strand);
-            //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
         }
+
         //box by strand
         let dx, dy, dz;
         for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
@@ -540,7 +595,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             let cms = new THREE.Vector3(0, 0, 0);
             for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
                 let bbint: number = systems[i].strands[j].elements[k].getCOM();
-                cms.add(systems[i].strands[j].elements[k].visual_object.children[bbint].position);
+                cms.add(systems[i].strands[j].elements[k].children[bbint].position);
             }
             //calculate cms
             let mul = 1.0 / n;
@@ -551,13 +606,13 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
 
             //fix coordinates
             for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i].strands[j].elements[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i].strands[j].elements[k].visual_object.children[l].position; //get Mesh position
+                for (let l = 0; l < systems[i].strands[j].elements[k].children.length; l++) { //for each Mesh in nucleotide's visual_object
+                    let pos = systems[i].strands[j].elements[k].children[l].position; //get Mesh position
                     //calculate new positions by offset
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
-                    systems[i].strands[j].elements[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
+                    systems[i].strands[j].elements[k].children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
         }

@@ -27,8 +27,8 @@ document.addEventListener('mousedown', event => {
             // hence we click only on nucleotides 
             // this section retrives info about the clicked object 
             // !!! this may change in the future 
-            nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
-            nucleotide = elements[nucleotideID];
+            //nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
+            nucleotide = intersects[0].object.parent; //elements[nucleotideID];
             sys = nucleotide.parent.parent;
             // note: it is not enough to use the intersects[0].object.visible property %)
             if (!nucleotide.visual_object.visible)

@@ -4,7 +4,11 @@ var api;
 (function (api) {
     function toggle_strand(strand) {
         let nucleotides = strand.elements;
+<<<<<<< HEAD
         nucleotides.map((n) => n.visual_object.visible = !n.visual_object.visible);
+=======
+        nucleotides.map((n) => n.visible = !n.visible);
+>>>>>>> Shuchi-dev2
         render();
         return strand;
     }
@@ -19,7 +23,11 @@ var api;
     api.mark_stand = mark_stand;
     ;
     function get_sequence(strand) {
+<<<<<<< HEAD
         let seq = [];
+=======
+        let seq;
+>>>>>>> Shuchi-dev2
         let nucleotides = strand.elements;
         nucleotides.reverse().map((n) => seq.push(n.type));
         return seq.join("");

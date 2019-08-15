@@ -192,8 +192,91 @@ target.addEventListener("drop", function (event) {
     }
     if (top_file) {
         //read topology file
+<<<<<<< HEAD
         let top_reader = new TopReader(top_file, system, elements);
         top_reader.read();
+=======
+        let top_reader = new FileReader();
+        top_reader.onload = () => {
+            // parse file into lines
+            var file = top_reader.result;
+            var lines = file.split(/[\n]+/g);
+            lines = lines.slice(1); // discard the header
+            let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+            let str_id = parseInt(l0[0]);
+            let current_strand = system.create_Strand(str_id);
+            system.add_strand(current_strand);
+            let nuc_local_id = 0;
+            let last_strand = 1; //strands are 1-indexed in oxDNA .top files
+            let neighbor3;
+            // create empty list of elements with length equal to the topology
+            // Note: this is implemented such that we have the elements for the DAT reader 
+            for (let j = 0; j < lines.length; j++) {
+                let nuc;
+                elements.push(nuc);
+            }
+            //elements[lines.length] =  null;
+            lines.forEach((line, i) => {
+                if (line == "") {
+                    elements.pop();
+                    //system.add_strand(current_strand);
+                    return;
+                }
+                let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+                str_id = parseInt(l[0]);
+                if (str_id != last_strand) { //if new strand id, make new strand                        
+                    current_strand = system.create_Strand(str_id);
+                    system.add_strand(current_strand);
+                    nuc_local_id = 0;
+                }
+                ;
+                //let nuc = new Nucleotide(elements.length, current_strand);
+                if (elements[nuc_count + i] == null || elements[nuc_count + i] == undefined)
+                    elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
+                let nuc = elements[nuc_count + i];
+                nuc.local_id = nuc_local_id;
+                neighbor3 = parseInt(l[2]);
+                if (neighbor3 != -1) {
+                    nuc.neighbor3 = elements[nuc_count + neighbor3];
+                }
+                else {
+                    nuc.neighbor3 = null;
+                }
+                let neighbor5 = parseInt(l[3]);
+                if (neighbor5 != -1) {
+                    if (elements[nuc_count + neighbor5] == null || elements[nuc_count + neighbor5] == undefined) {
+                        elements[nuc_count + neighbor5] = current_strand.create_basicElement(nuc_count + neighbor5);
+                    }
+                    nuc.neighbor5 = elements[nuc_count + neighbor5];
+                }
+                else {
+                    nuc.neighbor5 = null;
+                }
+                let base = l[1]; // get base id
+                nuc.type = base;
+                //if we meet a U, we have an RNA (its dumb, but its all we got)
+                if (base === "U") {
+                    RNA_MODE = true;
+                }
+                //let nuc = new Nucleotide(nuc_count, nuc_local_id, neighbor3_nuc, base, str_id, system.system_id); //create nucleotide
+                current_strand.add_basicElement(nuc); //add nuc into Strand object
+                //elements.push(nuc); //add nuc to global elements array
+                nuc_local_id += 1;
+                last_strand = str_id;
+                if (i == lines.length - 1) {
+                    //system.add_strand(current_strand);
+                    return;
+                }
+                ;
+            });
+            system.setDatFile(dat_file); //store dat_file in current System object
+            systems.push(system); //add system to Systems[]
+            nuc_count = elements.length;
+            conf_len = nuc_count + 3;
+        };
+        top_reader.readAsText(top_file);
+        //test_dat_read(dat_file);
+>>>>>>> Shuchi-dev2
         // asynchronously read the first two chunks of a configuration file
         if (dat_file) {
             renderer.domElement.style.cursor = "wait";
@@ -256,9 +339,72 @@ target.addEventListener("drop", function (event) {
                     next_reader.readAsText(next_chunk_blob);
                 }
             }
+            if (json_file) {
+                console.log("HERE");
+                //lutColsVis = true;
+                let check_box = document.getElementById("lutToggle");
+                let json_reader = new FileReader(); //read .json
+                json_reader.onload = () => {
+                    let file = json_reader.result;
+                    let data = JSON.parse(file);
+                    let curr_sys;
+                    curr_sys = sys_count - 1;
+                    for (var key in data) {
+                        if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
+                            if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
+                                let min = Math.min.apply(null, data[key]), //find min and max
+                                max = Math.max.apply(null, data[key]);
+                                lut = new THREE.Lut("rainbow", 4000);
+                                //lut.setMax(0.23);
+                                //lut.setMin(0.04);
+                                lut.setMax(max);
+                                lut.setMin(min);
+                                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+                                scene.add(legend);
+                                let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
+                                scene.add(labels['title']); //add title
+                                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
+                                    scene.add(labels['ticks'][i]);
+                                    scene.add(labels['lines'][i]);
+                                }
+                                for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                                    lutCols.push(lut.getColor(Number(data[key][i])));
+                                }
+                                lutColsVis = false;
+                                toggleLut(check_box);
+                                check_box.checked = true;
+                            }
+                            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
+                                for (let i = 0; i < elements.length; i++) {
+                                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                                    let len = vec.length();
+                                    vec.normalize();
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
+                                    arrowHelper.name = i + "disp";
+                                    scene.add(arrowHelper);
+                                }
+                            }
+                        }
+                        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
+                            for (let entry of data[key]) {
+                                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                                vec.normalize();
+                                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                                scene.add(arrowHelper);
+                            }
+                        }
+                        else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+                            alert(".json and .top files are not compatible.");
+                        }
+                    }
+                };
+                json_reader.readAsText(json_file);
+                renderer.domElement.style.cursor = "auto";
+            }
         }
     }
-    if (json_file) {
+    if (json_file && json_alone) {
         //lutColsVis = true;
         let check_box = document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
@@ -301,7 +447,7 @@ target.addEventListener("drop", function (event) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].visual_object.children[elements[i].BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -362,18 +508,29 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let x = parseFloat(l[0]), // - fx,
         y = parseFloat(l[1]), // - fy,
         z = parseFloat(l[2]); // - fz;
-        current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
+        //current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
         //catch the two possible cases for strand ends (no connection or circular)
+<<<<<<< HEAD
         if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in linear strand
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
+=======
+        if (current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) { //if last nucleotide in straight strand
+            system.add(current_strand); //add strand THREE.Group to system THREE.Group
+            current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+>>>>>>> Shuchi-dev2
             nuc_local_id = -1;
             if (elements[current_nucleotide.global_id + 1] != undefined) {
                 current_strand = elements[current_nucleotide.global_id + 1].parent;
             }
         }
         else if (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id) { //if last nucleotide in circular strand
+<<<<<<< HEAD
             system.system_3objects.add(current_strand.strand_3objects); //add strand THREE.Group to system THREE.Group
+=======
+            system.add(current_strand); //add strand THREE.Group to system THREE.Group
+            current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+>>>>>>> Shuchi-dev2
             nuc_local_id = -1;
             if (elements[current_nucleotide.global_id + 1] != undefined) {
                 current_strand = elements[current_nucleotide.global_id + 1].parent;
@@ -392,7 +549,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
             let bbint = systems[sys_count].strands[i].elements[j].getCOM();
-            cms.add(systems[sys_count].strands[i].elements[j].visual_object.children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
+            cms.add(systems[sys_count].strands[i].elements[j].children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -403,21 +560,45 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //fix coordinates
         for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
             let current_nucleotide = systems[sys_count].strands[i].elements[j];
+<<<<<<< HEAD
             for (let k = 0; k < systems[sys_count].strands[i].elements[j].visual_object.children.length; k++) { //for every Mesh in nucleotide's visual_object
                 let pos = systems[sys_count].strands[i].elements[j].visual_object.children[k].position; //get Mesh position
+=======
+            for (let k = 0; k < systems[sys_count].strands[i].elements[j].children.length; k++) { //for every Mesh in nucleotide's visual_object
+                let pos = systems[sys_count].strands[i].elements[j].children[k].position; //get Mesh position
+>>>>>>> Shuchi-dev2
                 //update pos by offset <dx, dy, dz>
                 pos.x = pos.x - dx;
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
-                systems[sys_count].strands[i].elements[j].visual_object.children[k].position.set(pos.x, pos.y, pos.z);
+                systems[sys_count].strands[i].elements[j].children[k].position.set(pos.x, pos.y, pos.z);
             }
         }
     }
-    scene.add(systems[sys_count].system_3objects); //add system_3objects with strand_3objects with visual_object with Meshes
+    scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
+<<<<<<< HEAD
+=======
+    //radio button/checkbox selections
+    //if (getActionModes().includes("Drag")) {
+    //    drag();
+    //}
+    /*  let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+     let material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+     let cube = new THREE.Mesh(geometry, material);
+     cube.position.set(0,0,0);
+     scene.add(cube);
+     backbones.push(cube);
+     cube = new THREE.Mesh(geometry, material);
+     cube.position.set(10,10,10);
+     scene.add(cube);
+     backbones.push(cube); */
+    // set camera position based on structure
+    // update the scene
+>>>>>>> Shuchi-dev2
     render();
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i].visual_object.children[elements[i].BACKBONE]);
+        backbones.push(elements[i].children[elements[i].BACKBONE]);
     }
     renderer.domElement.style.cursor = "auto";
 }
@@ -465,10 +646,15 @@ function getNewConfig(mode) {
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
+<<<<<<< HEAD
             console.log("2", current_strand);
             if (current_nucleotide.neighbor5 == null) {
                 console.log("here");
                 system.system_3objects.add(current_strand.strand_3objects); //add strand_3objects to system_3objects
+=======
+            if (current_nucleotide.neighbor5 == null) {
+                system.add(current_strand); //add strand_3objects to system_3objects
+>>>>>>> Shuchi-dev2
                 current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0; //reset
             }
@@ -477,8 +663,11 @@ function getNewConfig(mode) {
                 nuc_local_id += 1;
             }
             ;
+<<<<<<< HEAD
             console.log("3", current_strand);
             //updatePos(i); //currently messes up next configuration - sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+=======
+>>>>>>> Shuchi-dev2
         }
         //box by strand
         let dx, dy, dz;
@@ -488,7 +677,7 @@ function getNewConfig(mode) {
             let cms = new THREE.Vector3(0, 0, 0);
             for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
                 let bbint = systems[i].strands[j].elements[k].getCOM();
-                cms.add(systems[i].strands[j].elements[k].visual_object.children[bbint].position);
+                cms.add(systems[i].strands[j].elements[k].children[bbint].position);
             }
             //calculate cms
             let mul = 1.0 / n;
@@ -498,13 +687,13 @@ function getNewConfig(mode) {
             dz = Math.round(cms.z / box) * box;
             //fix coordinates
             for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i].strands[j].elements[k].visual_object.children.length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i].strands[j].elements[k].visual_object.children[l].position; //get Mesh position
+                for (let l = 0; l < systems[i].strands[j].elements[k].children.length; l++) { //for each Mesh in nucleotide's visual_object
+                    let pos = systems[i].strands[j].elements[k].children[l].position; //get Mesh position
                     //calculate new positions by offset
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
-                    systems[i].strands[j].elements[k].visual_object.children[l].position.set(pos.x, pos.y, pos.z); //set new positions
+                    systems[i].strands[j].elements[k].children[l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
         }

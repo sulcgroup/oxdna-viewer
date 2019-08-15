@@ -2,24 +2,24 @@
 // Usefull bits of code simplifying quering the structure
 
 module api{
-    export function toggle_strand(strand : Strand): Strand{
+    export function toggle_strand(strand: Strand): Strand{
         let nucleotides = strand.elements; 
         nucleotides.map( 
-            (n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
+            (n:Nucleotide) => n.visible = !n.visible);
         render();
         return strand;
     }
 
     // TODO: integrate with the selection mechanism 
-    export function mark_stand(strand: Strand) : Strand{
-        let nucleotides = strand.elements; 
-        nucleotides.map((n: BasicElement) => n.toggle());
+    export function mark_stand(strand: Strand): Strand{
+        let nucleotides = strand.elements;
+        nucleotides.map((n: Nucleotide) => n.toggle());
         render();
         return strand;
     };
 
-    export function get_sequence(strand : NucleicAcidStrand) : string {
-        let seq : string[] = []; 
+    export function get_sequence(strand : Strand) : string {
+        let seq: string[];
         let nucleotides = strand.elements; 
         nucleotides.reverse().map( 
             (n: BasicElement) => seq.push(<string> n.type));
@@ -27,9 +27,9 @@ module api{
     };
 
     // get a dictionary with every strand length : [strand] listed   
-    export function count_strand_length({system = systems[0]} = {}) {
-        let strand_length : { [index: number]: [NucleicAcidStrand] } = {};
-        system.strands.map((strand: NucleicAcidStrand) =>{
+    export function count_stand_length({system = systems[0]} = {}) {
+        let strand_length : { [index: number]: [Strand] } = {};
+        system.strands.map((strand: Strand) => {
             let l = strand.elements.length;
             if( l in strand_length) 
                 strand_length[l].push(strand);
@@ -40,24 +40,23 @@ module api{
     };
 
     export function highlite5ps({system = systems[0]} = {}){
-        system.strands.map((strand)=>{
-            strand.elements[strand.elements.length -1].toggle();
-        });
-        render();
-    };
-
-    export function toggle_all({system = systems[0]} = {}){
-        system.strands.map((strand)=>{
-            let nucleotides = strand.elements; 
-            nucleotides.map((n:BasicElement) => n.visual_object.visible = !n.visual_object.visible);
+        system.strands.map((strand) => {
+            strand.elements[strand.elements.length - 1].toggle();
         });
         render();
     }
 
+    export function toggle_all({system = systems[0]} = {}){
+        system.strands.map((strand)=>{
+            let nucleotides = strand.elements; 
+            nucleotides.map((n:BasicElement) => n.visible = !n.visible);
+        });
+        render();
+    }
     export function toggle_base_colors() {
         elements.map(
             (n: BasicElement) => {
-                let obj = n.visual_object.children[n.NUCLEOSIDE] as any 
+                let obj = n.children[n.NUCLEOSIDE] as any 
                 if (obj.material == grey_material){
                     obj.material = n.elem_to_material(n.type);
                 }
@@ -84,8 +83,8 @@ module api{
         let neighbor =  element.neighbor3;
         element.neighbor3 = null;
         neighbor.neighbor5 = null;
-        element.visual_object.remove(
-            element.visual_object.children[element.SP_CON]
+        element.remove(
+            element.children[element.SP_CON]
         );
 
         let strand = element.parent;
@@ -98,12 +97,10 @@ module api{
         new_nucleotides.forEach(
             (n) => {
                 new_strand.add_basicElement(n);
-                new_strand.strand_3objects.add(n.visual_object);
             }
         );
         //voodoo
         strand.parent.add_strand(new_strand);
-        strand.parent.system_3objects.add(new_strand.strand_3objects);
         render(); 
     }
 
@@ -124,7 +121,7 @@ module api{
         //check that it is not the same strand
         if (strand1 !== strand2){
             //remove strand2 object 
-            strand2.parent.system_3objects.remove(strand2.strand_3objects);
+            strand2.parent.remove(strand2);
             strand2.parent.strands = strand2.parent.strands.filter((ele)=>{
                 return ele != strand2;
             });
@@ -135,7 +132,6 @@ module api{
         bases2.forEach(
             (n) => {
                 strand1.add_basicElement(n);
-                strand1.strand_3objects.add(n.visual_object);
             }
         );
         //interconnect the 2 element objects 
@@ -144,12 +140,12 @@ module api{
         //TODO: CLEAN UP!!!
         //////last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (element1.neighbor3 != null && element1.neighbor3.local_id < element1.local_id) {
-            let p2 = element2.visual_object.children[element2.BACKBONE].position;
+            let p2 = element2.children[element2.BACKBONE].position;
             let x_bb = p2.x,
                 y_bb = p2.y,
                 z_bb = p2.z;
         
-            let p1 = element1.visual_object.children[element1.BACKBONE].position;
+            let p1 = element1.children[element1.BACKBONE].position;
             let x_bb_last = p1.x,
                 y_bb_last = p1.y,
                 z_bb_last = p1.z;
@@ -173,7 +169,7 @@ module api{
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
-                element1.visual_object.add(sp); //add to visual_object
+                element1.add(sp); //add to visual_object
             }
         }
         // Strand id update
