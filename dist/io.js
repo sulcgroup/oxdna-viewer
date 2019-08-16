@@ -35,9 +35,13 @@ class TopReader extends FileReader {
                         this.elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
                     let nuc = this.elements[nuc_count + i];
                     nuc.local_id = this.nuc_local_id;
-                    this.neighbor3 = parseInt(l[2]);
-                    if (this.neighbor3 != -1)
-                        nuc.neighbor3 = this.elements[nuc_count + this.neighbor3];
+                    let neighbor3 = parseInt(l[2]);
+                    if (neighbor3 != -1) {
+                        if (this.elements[nuc_count + neighbor3] == null || this.elements[nuc_count + neighbor3] == undefined) {
+                            this.elements[nuc_count + neighbor3] = current_strand.create_basicElement(nuc_count + neighbor3);
+                        }
+                        nuc.neighbor3 = this.elements[nuc_count + neighbor3];
+                    }
                     else
                         nuc.neighbor3 = null;
                     let neighbor5 = parseInt(l[3]);
