@@ -186,7 +186,33 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 			_domElement.style.cursor = 'auto';
 			render();
 		}
-	}
+    }
+
+    function onDocumentTouchMove(event) { //if mouse moves
+        if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
+            event.preventDefault(); //prevent default mouse functions
+            event = event.changedTouches[0];
+
+            var rect = _domElement.getBoundingClientRect();
+
+            _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //calculate mouse click position
+            _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            _raycaster.setFromCamera(_mouse, _camera);
+
+            if (_selected && scope.enabled) { //if an object in scene was clicked
+
+                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
+                    _selected.position.copy(_intersection.sub(_offset));
+                }
+
+                scope.dispatchEvent({ type: 'drag', object: _selected });
+
+                return;
+
+            }
+        }
+    }
 
 	function calcsp(current_nuc) { //calculate new sp
 		var temp = new THREE.Vector3();
