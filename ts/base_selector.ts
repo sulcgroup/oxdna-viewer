@@ -40,18 +40,18 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			
 			switch(scope_mode){
 				case "System" : 
-					let strand_count = sys.strands.length;
+					let strand_count = sys[strands].length;
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
-						let strand = sys.strands[i];
-						let nuc_count = strand.elements.length;
+						let strand = sys[strands][i];
+						let nuc_count = strand[monomers].length;
                         for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-                            strand.elements[j].toggle();
+                            strand[monomers][j].toggle();
 					}
 				break;
 				case "Strand" :
-					let strand_length = nucleotide.parent.elements.length;
+					let strand_length = nucleotide.parent[monomers].length;
                     for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
-                        nucleotide.parent.elements[i].toggle();
+                        nucleotide.parent[monomers][i].toggle();
 				break;
                 case "Nuc":
                     nucleotide.toggle(); //toggle selected nucleotide
@@ -102,69 +102,6 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 		}
 	}
 });
-
-/*function toggle(nucleotide: BasicElement) { //toggle clicked nucleotide coloring
-	// highlight/remove highlight the bases we've clicked 
-	let selected: boolean = false;
-	let nucleotideID: number = nucleotide.global_id;
-	let sysID: number = nucleotide.parent.parent.system_id;
-
-	let back_Mesh: THREE.Object3D = nucleotide.visual_object.children[BACKBONE]; //get clicked nucleotide's Meshes
-	let nuc_Mesh: THREE.Object3D =  nucleotide.visual_object.children[NUCLEOSIDE];
-	let con_Mesh: THREE.Object3D =  nucleotide.visual_object.children[BB_NS_CON];
-	let sp_Mesh: THREE.Object3D =   nucleotide.visual_object.children[SP_CON];
-
-	if (selected_bases.has(nucleotide)) { //if clicked nucleotide is already selected
-		// figure out what that base was before you painted it black and revert it
-		//recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-		if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-			if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				back_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
-			}
-		}
-		if (nuc_Mesh instanceof THREE.Mesh) {
-            if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                nuc_Mesh.material = systems[sysID].elem_to_material(nucleotide.type);
-			}
-		}
-		if (con_Mesh instanceof THREE.Mesh) {
-			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				con_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
-			}
-		}
-		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-				sp_Mesh.material = systems[sysID].strand_to_material(nucleotide.parent.strand_id);
-			}
-		}
-
-		selected_bases.delete(nucleotide); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
-	}
-	else {
-		//set all materials to selection_material color - currently aqua
-		if (back_Mesh instanceof THREE.Mesh) {
-			if (back_Mesh.material instanceof THREE.MeshLambertMaterial)
-				back_Mesh.material = selection_material;
-		}
-		if (nuc_Mesh instanceof THREE.Mesh) {
-			if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) 
-				nuc_Mesh.material = selection_material;
-		}
-		if (con_Mesh instanceof THREE.Mesh) {
-			if (con_Mesh.material instanceof THREE.MeshLambertMaterial) 
-				con_Mesh.material = selection_material;
-		}
-		if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-			if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) 
-				sp_Mesh.material = selection_material;
-		}
-		//selList.push(nucleotideID);
-		selected_bases.add(nucleotide); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
-	}
-}*/
-
-
-
 
 function makeTextArea(bases: string, id) { //insert "bases" string into text area with ID, id
 	let textArea: HTMLElement | null = document.getElementById(id);

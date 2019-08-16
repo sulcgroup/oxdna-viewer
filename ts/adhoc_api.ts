@@ -3,7 +3,7 @@
 
 module api{
     export function toggle_strand(strand: Strand): Strand{
-        let nucleotides = strand.elements; 
+        let nucleotides = strand[monomers]; 
         nucleotides.map( 
             (n:Nucleotide) => n.visible = !n.visible);
         render();
@@ -12,7 +12,7 @@ module api{
 
     // TODO: integrate with the selection mechanism 
     export function mark_stand(strand: Strand): Strand{
-        let nucleotides = strand.elements;
+        let nucleotides = strand[monomers];
         nucleotides.map((n: Nucleotide) => n.toggle());
         render();
         return strand;
@@ -20,7 +20,7 @@ module api{
 
     export function get_sequence(strand : Strand) : string {
         let seq: string[];
-        let nucleotides = strand.elements; 
+        let nucleotides = strand[monomers]; 
         nucleotides.reverse().map( 
             (n: BasicElement) => seq.push(<string> n.type));
         return seq.join("");
@@ -29,8 +29,8 @@ module api{
     // get a dictionary with every strand length : [strand] listed   
     export function count_stand_length({system = systems[0]} = {}) {
         let strand_length : { [index: number]: [Strand] } = {};
-        system.strands.map((strand: Strand) => {
-            let l = strand.elements.length;
+        system[strands].map((strand: Strand) => {
+            let l = strand[monomers].length;
             if( l in strand_length) 
                 strand_length[l].push(strand);
             else
@@ -40,15 +40,15 @@ module api{
     };
 
     export function highlite5ps({system = systems[0]} = {}){
-        system.strands.map((strand) => {
-            strand.elements[strand.elements.length - 1].toggle();
+        system[strands].map((strand) => {
+            strand[monomers][strand[monomers].length - 1].toggle();
         });
         render();
     }
 
     export function toggle_all({system = systems[0]} = {}){
-        system.strands.map((strand)=>{
-            let nucleotides = strand.elements; 
+        system[strands].map((strand)=>{
+            let nucleotides = strand[monomers]; 
             nucleotides.map((n:BasicElement) => n.visible = !n.visible);
         });
         render();
@@ -56,7 +56,7 @@ module api{
     export function toggle_base_colors() {
         elements.map(
             (n: BasicElement) => {
-                let obj = n.children[n.NUCLEOSIDE] as any 
+                let obj = n[objects][n.NUCLEOSIDE] as any 
                 if (obj.material == grey_material){
                     obj.material = n.elem_to_material(n.type);
                 }
@@ -84,7 +84,7 @@ module api{
         element.neighbor3 = null;
         neighbor.neighbor5 = null;
         element.remove(
-            element.children[element.SP_CON]
+            element[objects][element.SP_CON]
         );
 
         let strand = element.parent;
@@ -93,7 +93,7 @@ module api{
         strand.exclude_Elements(new_nucleotides);
         
         //create fill and deploy new strand 
-        let new_strand = strand.parent.create_Strand(strand.parent.strands.length + 1);
+        let new_strand = strand.parent.create_Strand(strand.parent[strands].length + 1);
         new_nucleotides.forEach(
             (n) => {
                 new_strand.add_basicElement(n);
@@ -115,14 +115,14 @@ module api{
         let strand1 = element1.parent;
         let strand2 = element2.parent;
         // lets orphan strand2 element
-        let bases2 = [...strand2.elements]; // clone the refferences to the elements
-        strand2.exclude_Elements(strand2.elements);
+        let bases2 = [...strand2[monomers]]; // clone the refferences to the elements
+        strand2.exclude_Elements(strand2[monomers]);
         
         //check that it is not the same strand
         if (strand1 !== strand2){
             //remove strand2 object 
             strand2.parent.remove(strand2);
-            strand2.parent.strands = strand2.parent.strands.filter((ele)=>{
+            strand2.parent[strands] = strand2.parent[strands].filter((ele)=>{
                 return ele != strand2;
             });
         }
@@ -140,12 +140,12 @@ module api{
         //TODO: CLEAN UP!!!
         //////last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (element1.neighbor3 != null && element1.neighbor3.local_id < element1.local_id) {
-            let p2 = element2.children[element2.BACKBONE].position;
+            let p2 = element2[objects][element2.BACKBONE].position;
             let x_bb = p2.x,
                 y_bb = p2.y,
                 z_bb = p2.z;
         
-            let p1 = element1.children[element1.BACKBONE].position;
+            let p1 = element1[objects][element1.BACKBONE].position;
             let x_bb_last = p1.x,
                 y_bb_last = p1.y,
                 z_bb_last = p1.z;
@@ -175,35 +175,34 @@ module api{
         // Strand id update
         let str_id = 1; 
         let sys = element1.parent.parent;
-        sys.strands.forEach((strand) =>strand.strand_id = str_id++);
+        sys[strands].forEach((strand) =>strand.strand_id = str_id++);
         render();
     }
     
     export function strand_add_to_system(strand:Strand, system: System){
-        // api.strand_add_to_system(systems[1].strands[1], systems[0])
         // kill strand in its previous system
-        strand.parent.strands = strand.parent.strands.filter((ele)=>{
+        strand.parent[strands] = strand.parent[strands].filter((ele)=>{
             return ele != strand;
         }); 
 
         // add strand to the desired system
-        let str_id = system.strands.length + 1;
-        system.strands.push(strand);
+        let str_id = system[strands].length + 1;
+        system[strands].push(strand);
         strand.strand_id = str_id;
         strand.parent = system;
     }
 
-
+    //there's probably a less blunt way to do this...
     export function remove_colorbar() {
-        for (let i = 8; i < 20; i++) {
-            scene.remove(scene.children[8]);
+        for (let i = 7+sys_count; i < 20; i++) {
+            scene.remove(scene[objects][7+sys_count]);
         }
         render();
     }
 
     export function show_colorbar() {
         scene.add(lut.legend.mesh);
-        let labels =  lut.setLegendLabels({'title':lut.legend.labels.title, 'ticks':lut.legend.labels.ticks}); //don't ask, lut stores the values but doesn't actually save the sprites anywhere...
+        let labels =  lut.setLegendLabels({'title':lut.legend.labels.title, 'ticks':lut.legend.labels.ticks}); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
         scene.add(labels["title"]);
         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
             scene.add(labels['ticks'][i]);

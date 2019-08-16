@@ -84,8 +84,8 @@ function rotate() {
                 break;
             default: alert("Unknown rotation axis: " + axisMode);
         }
-        for (let j = 0; j < elements[i].children.length; j++) {
-            p = (elements[i].children[j].position.clone());
+        for (let j = 0; j < elements[i][objects].length; j++) {
+            p = (elements[i][objects][j].position.clone());
             d = p.sub(c);
             switch (axisMode) {
                 case "X": {
@@ -102,10 +102,10 @@ function rotate() {
                 }
                 default: break;
             }
-            elements[i].children[j].rotateOnWorldAxis(v1, angle);
+            elements[i][objects][j].rotateOnWorldAxis(v1, angle);
             d.applyMatrix3(matrix);
             d.add(c);
-            elements[i].children[j].position.set(d.x, d.y, d.z);
+            elements[i][objects][j].position.set(d.x, d.y, d.z);
             rot = true;
         }
         //setEntry = setEntries.next();

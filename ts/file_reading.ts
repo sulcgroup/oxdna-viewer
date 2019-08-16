@@ -287,7 +287,6 @@ target.addEventListener("drop", function (event) {
             }
 
             if (json_file) {
-                console.log("HERE");
                 //lutColsVis = true;
                 let check_box = <HTMLInputElement>document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
@@ -327,7 +326,7 @@ target.addEventListener("drop", function (event) {
                                     let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                                     let len = vec.length();
                                     vec.normalize();
-                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
                                     arrowHelper.name = i + "disp";
                                     scene.add(arrowHelper);
                                 }
@@ -399,7 +398,7 @@ target.addEventListener("drop", function (event) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].children[elements[i].BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -431,7 +430,7 @@ let x_bb_last,
     z_bb_last;
 function readDat(num_nuc, dat_reader, system, lutColsVis) {
     var nuc_local_id = 0;
-    var current_strand = systems[sys_count].strands[0];
+    var current_strand = systems[sys_count][strands][0];
     // parse file into lines 
     let lines = dat_reader.result.split(/[\n]+/g);
     if (lines.length-3 < num_nuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
@@ -472,7 +471,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //catch the two possible cases for strand ends (no connection or circular)
         if ((current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) || (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id)) { //if last nucleotide in straight strand
             system.add(current_strand); //add strand THREE.Group to system THREE.Group
-            current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+            current_strand = system[strands][current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
             nuc_local_id = -1;
             if (elements[current_nucleotide.global_id+1] != undefined) {
                 current_strand = elements[current_nucleotide.global_id+1].parent;
@@ -490,13 +489,13 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     let dx, dy, dz;
 
     //bring strand in box
-    for (let i = 0; i < systems[sys_count].strands.length; i++) { //for each strand in current system
+    for (let i = 0; i < systems[sys_count][strands].length; i++) { //for each strand in current system
         // compute offset to bring strand in box
-        let n = systems[sys_count].strands[i].elements.length; //strand's elements[] length
+        let n = systems[sys_count][strands][i][monomers].length; //strand's elements[] length
         let cms = new THREE.Vector3(0, 0, 0); //center of mass
         for (let j = 0; j < n; j++) { //for every nuc in strand
-            let bbint: number = systems[sys_count].strands[i].elements[j].getCOM();
-            cms.add(systems[sys_count].strands[i].elements[j].children[bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
+            let bbint: number = systems[sys_count][strands][i][monomers][j].getCOM();
+            cms.add(systems[sys_count][strands][i][monomers][j][objects][bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
         }
         //cms calculations
         let mul = 1.0 / n;
@@ -506,15 +505,15 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         dz = Math.round(cms.z / box) * box;
 
         //fix coordinates
-        for (let j = 0; j < systems[sys_count].strands[i].elements.length; j++) { //for every nucleotide in strand
-            let current_nucleotide = systems[sys_count].strands[i].elements[j];
-            for (let k = 0; k < systems[sys_count].strands[i].elements[j].children.length; k++) { //for every Mesh in nucleotide's visual_object
-                let pos = systems[sys_count].strands[i].elements[j].children[k].position; //get Mesh position
+        for (let j = 0; j < systems[sys_count][strands][i][monomers].length; j++) { //for every nucleotide in strand
+            let current_nucleotide = systems[sys_count][strands][i][monomers][j];
+            for (let k = 0; k < systems[sys_count][strands][i][monomers][j][objects].length; k++) { //for every Mesh in nucleotide's visual_object
+                let pos = systems[sys_count][strands][i][monomers][j][objects][k].position; //get Mesh position
                 //update pos by offset <dx, dy, dz>
                 pos.x = pos.x - dx;
                 pos.y = pos.y - dy;
                 pos.z = pos.z - dz;
-                systems[sys_count].strands[i].elements[j].children[k].position.set(pos.x, pos.y, pos.z);
+                systems[sys_count][strands][i][monomers][j][objects][k].position.set(pos.x, pos.y, pos.z);
             }
         }
     }
@@ -523,7 +522,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     sys_count += 1;
     render();
     for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i].children[elements[i].BACKBONE]);
+        backbones.push(elements[i][objects][elements[i].BACKBONE]);
     }
     renderer.domElement.style.cursor = "auto";
 }
@@ -552,7 +551,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         }
 
         let nuc_local_id = 0;
-        let current_strand = systems[i].strands[0];
+        let current_strand = systems[i][strands][0];
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
@@ -565,9 +564,7 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
                 alert("There's an empty line in the middle of your configuration!")
                 break
             };
-            console.log("1", current_strand);
-            //console.log(elements);
-            let current_nucleotide = current_strand.elements[nuc_local_id];
+            let current_nucleotide = current_strand[monomers][nuc_local_id];
             //get nucleotide information
             // consume a new line 
             let l = lines[line_num].split(" ");
@@ -578,24 +575,23 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
             if (current_nucleotide.neighbor5 == null) {
                 system.add(current_strand); //add strand_3objects to system_3objects
-                current_strand = system.strands[current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
+                current_strand = system[strands][current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
                 nuc_local_id = 0; //reset
             }
             else {
-                console.log("there");
                 nuc_local_id += 1;
             };
         }
 
         //box by strand
         let dx, dy, dz;
-        for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in system
+        for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in system
             // compute offset to bring strand in box
-            let n = systems[i].strands[j].elements.length; //# of elements on strand
+            let n = systems[i][strands][j][monomers].length; //# of elements on strand
             let cms = new THREE.Vector3(0, 0, 0);
             for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
-                let bbint: number = systems[i].strands[j].elements[k].getCOM();
-                cms.add(systems[i].strands[j].elements[k].children[bbint].position);
+                let bbint: number = systems[i][strands][j][monomers][k].getCOM();
+                cms.add(systems[i][strands][j][monomers][k][objects][bbint].position);
             }
             //calculate cms
             let mul = 1.0 / n;
@@ -605,14 +601,14 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             dz = Math.round(cms.z / box) * box;
 
             //fix coordinates
-            for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i].strands[j].elements[k].children.length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i].strands[j].elements[k].children[l].position; //get Mesh position
+            for (let k = 0; k < systems[i][strands][j][monomers].length; k++) { //for each nucleotide in strand
+                for (let l = 0; l < systems[i][strands][j][monomers][k][objects].length; l++) { //for each Mesh in nucleotide's visual_object
+                    let pos = systems[i][strands][j][monomers][k][objects][l].position; //get Mesh position
                     //calculate new positions by offset
                     pos.x = pos.x - dx;
                     pos.y = pos.y - dy;
                     pos.z = pos.z - dz;
-                    systems[i].strands[j].elements[k].children[l].position.set(pos.x, pos.y, pos.z); //set new positions
+                    systems[i][strands][j][monomers][k][objects][l].position.set(pos.x, pos.y, pos.z); //set new positions
                 }
             }
         }
