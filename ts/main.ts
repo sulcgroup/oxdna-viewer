@@ -84,6 +84,12 @@ class BasicElement extends THREE.Group{
     resetColor(nucNec: boolean) {
 
     };
+
+    translate_monomer(amount: THREE.Vector3) {
+        this[objects].forEach((o) => {
+            o.position.add(amount);
+        });  
+    }
 };
 
 class Nucleotide extends BasicElement {
@@ -162,12 +168,10 @@ class Nucleotide extends BasicElement {
         nucleoside.position.set(x_ns, y_ns, z_ns);
         con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
-        console.log(posObj.position);
         this.add(backbone);
         this.add(nucleoside);
         this.add(con);
         this.add(posObj);
-        console.log(this.children[this.COM].position);
 
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
@@ -368,7 +372,6 @@ class Nucleotide extends BasicElement {
             sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
             sp_Mesh.matrixWorldNeedsUpdate = false;
 
-            //sp_Mesh.layers.set(1);
             sp_Mesh.visible = true;
 
             sp_Mesh.castShadow = false;
@@ -569,7 +572,6 @@ class AminoAcid extends BasicElement {
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
-        //let group = new THREE.Group(); //create  group
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
         let backbone: THREE.Mesh;
         // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
@@ -793,9 +795,8 @@ class AminoAcid extends BasicElement {
 class Strand extends THREE.Group {
 
     strand_id: number; //system location
-    pos: THREE.Vector3; //strand position
     parent: System;
-    //strand_3objects: THREE.Group; //contains BasicElement.s
+    pos: THREE.Vector3;
 
     constructor(id: number, parent: System) {
         super();
@@ -841,6 +842,14 @@ class Strand extends THREE.Group {
             com.add(e[objects][e.COM].position)
         });
     return(com.multiplyScalar(1/this[monomers].length))
+    }
+
+    translate_strand(amount: THREE.Vector3) {
+        this[monomers].forEach((m) => {
+            m[objects].forEach((o) => {
+                o.position.add(amount);
+            });
+        });   
     }
 };
 
@@ -919,12 +928,47 @@ class System extends THREE.Group {
         }
     };
 
+    //computes the center of mass of the system
+    get_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            s[monomers].forEach((m) => {
+                com.add(m[objects][m.COM].position);
+                count += 1;
+            });
+        });
+    return(com.multiplyScalar(1/count))
+    }
+
+    //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
+    strand_unweighted_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            com.add(s.get_com())
+            count += 1;
+        });
+    return(com.multiplyScalar(1/count))
+    }
+
     setDatFile(dat_file) { //allows for trajectory function
         this.dat_file = dat_file;
     }
+
+    translate_system(amount: THREE.Vector3) {
+        this[strands].forEach( (s) => {
+            s[monomers].forEach((m) => {
+                m[objects].forEach( (o) => {
+                    o.position.add(amount);
+                });
+            });
+            
+        });
+    }
 };
 
-function updatePos() { //sets positions of system, strands, and visual objects to be located at their cms - messes up rotation sp recalculation and trajectory
+function updatePos() { //sets positions of system, strands, and visual objects to be located at their cms
     for (let h = 0; h < systems.length; h++) { //for current system
         let syscms = new THREE.Vector3(0, 0, 0); //system cms
         let n: number = systems[h].system_length(); //# of BasicElements in system
@@ -959,10 +1003,6 @@ function nextConfig() {
         return;
     }
     getNewConfig(1);
-    let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
-    if (centering_on) {
-        PBC_switchbox();
-    }
 }
 
 function previousConfig() {
@@ -970,10 +1010,6 @@ function previousConfig() {
         return;
     }
     getNewConfig(-1);
-    let centering_on = (<HTMLInputElement>document.getElementById("centering")).checked
-    if (centering_on) {
-        PBC_switchbox();
-    }
 }
 
 document.addEventListener("keydown", function (event) {

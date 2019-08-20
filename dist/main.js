@@ -72,6 +72,11 @@ class BasicElement extends THREE.Group {
     resetColor(nucNec) {
     }
     ;
+    translate_monomer(amount) {
+        this[objects].forEach((o) => {
+            o.position.add(amount);
+        });
+    }
 }
 ;
 class Nucleotide extends BasicElement {
@@ -131,12 +136,10 @@ class Nucleotide extends BasicElement {
         nucleoside.position.set(x_ns, y_ns, z_ns);
         con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
-        console.log(posObj.position);
         this.add(backbone);
         this.add(nucleoside);
         this.add(con);
         this.add(posObj);
-        console.log(this.children[this.COM].position);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
@@ -280,7 +283,6 @@ class Nucleotide extends BasicElement {
             sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
             sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
             sp_Mesh.matrixWorldNeedsUpdate = false;
-            //sp_Mesh.layers.set(1);
             sp_Mesh.visible = true;
             sp_Mesh.castShadow = false;
             sp_Mesh.receiveShadow = false;
@@ -491,7 +493,6 @@ class AminoAcid extends BasicElement {
     ;
     calculatePositions(x, y, z, l) {
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
-        //let group = new THREE.Group(); //create  group
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
         let backbone;
         // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
@@ -683,7 +684,6 @@ class AminoAcid extends BasicElement {
 // strands are made up of elements
 // strands have an ID within the system
 class Strand extends THREE.Group {
-    //strand_3objects: THREE.Group; //contains BasicElement.s
     constructor(id, parent) {
         super();
         this.strand_id = id;
@@ -726,6 +726,13 @@ class Strand extends THREE.Group {
             com.add(e[objects][e.COM].position);
         });
         return (com.multiplyScalar(1 / this[monomers].length));
+    }
+    translate_strand(amount) {
+        this[monomers].forEach((m) => {
+            m[objects].forEach((o) => {
+                o.position.add(amount);
+            });
+        });
     }
 }
 ;
@@ -797,8 +804,39 @@ class System extends THREE.Group {
         }
     }
     ;
+    //computes the center of mass of the system
+    get_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            s[monomers].forEach((m) => {
+                com.add(m[objects][m.COM].position);
+                count += 1;
+            });
+        });
+        return (com.multiplyScalar(1 / count));
+    }
+    //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
+    strand_unweighted_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            com.add(s.get_com());
+            count += 1;
+        });
+        return (com.multiplyScalar(1 / count));
+    }
     setDatFile(dat_file) {
         this.dat_file = dat_file;
+    }
+    translate_system(amount) {
+        this[strands].forEach((s) => {
+            s[monomers].forEach((m) => {
+                m[objects].forEach((o) => {
+                    o.position.add(amount);
+                });
+            });
+        });
     }
 }
 ;
@@ -836,20 +874,12 @@ function nextConfig() {
         return;
     }
     getNewConfig(1);
-    let centering_on = document.getElementById("centering").checked;
-    if (centering_on) {
-        PBC_switchbox();
-    }
 }
 function previousConfig() {
     if (previous_previous_reader.readyState == 1) {
         return;
     }
     getNewConfig(-1);
-    let centering_on = document.getElementById("centering").checked;
-    if (centering_on) {
-        PBC_switchbox();
-    }
 }
 document.addEventListener("keydown", function (event) {
     switch (event.key) {

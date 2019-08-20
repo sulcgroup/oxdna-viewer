@@ -477,22 +477,22 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             }
         }
 
-
-
-
     }
     for (let i = 0; i < elements.length; i++) {
         elements[i].recalcPos(); //add any other sp connectors - used for circular strands
     }
 
-    PBC_switchbox();
+    //bring things in the box based on the PBC/centering menus
+    PBC_switchbox(systems[sys_count]);
+
+    for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
+        backbones.push(elements[i][objects][elements[i].BACKBONE]);
+    }
 
     scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();
-    for (let i = 0; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i][objects][elements[i].BACKBONE]);
-    }
+
 
 
     renderer.domElement.style.cursor = "auto";
@@ -545,35 +545,9 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
         }
 
-        //box by strand
-        let dx, dy, dz;
-        for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in system
-            // compute offset to bring strand in box
-            let n = systems[i][strands][j][monomers].length; //# of elements on strand
-            let cms = new THREE.Vector3(0, 0, 0);
-            for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh
-                let bbint: number = systems[i][strands][j][monomers][k].getCOM();
-                cms.add(systems[i][strands][j][monomers][k][objects][bbint].position);
-            }
-            //calculate cms
-            let mul = 1.0 / n;
-            cms.multiplyScalar(mul);
-            dx = Math.round(cms.x / box) * box;
-            dy = Math.round(cms.y / box) * box;
-            dz = Math.round(cms.z / box) * box;
+        //bring things in box based on the PBC/centering menus
+        PBC_switchbox(system);
 
-            //fix coordinates
-            for (let k = 0; k < systems[i][strands][j][monomers].length; k++) { //for each nucleotide in strand
-                for (let l = 0; l < systems[i][strands][j][monomers][k][objects].length; l++) { //for each Mesh in nucleotide's visual_object
-                    let pos = systems[i][strands][j][monomers][k][objects][l].position; //get Mesh position
-                    //calculate new positions by offset
-                    pos.x = pos.x - dx;
-                    pos.y = pos.y - dy;
-                    pos.z = pos.z - dz;
-                    systems[i][strands][j][monomers][k][objects][l].position.set(pos.x, pos.y, pos.z); //set new positions
-                }
-            }
-        }
         if (getActionModes().includes("Drag")) {
             drag();
         }

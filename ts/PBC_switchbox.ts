@@ -1,135 +1,109 @@
 /// <reference path="./three/index.d.ts" />
 
-function translate(shift) {
-    let box_option = (document.getElementById("inboxing") as HTMLSelectElement).value
-    let center_option = (document.getElementById("centering") as HTMLSelectElement).value
-
-    switch (box_option) {
-        case "Nucleotide":
-            for (let i = 0; i < systems[sys_count][strands].length; i++) {
-                for (let j = 0; j < systems[sys_count][strands][i][monomers].length; j++) {
-                    let n_pos = elements[i][objects][elements[i].COM].position;
-                    n_pos.add(shift);
-                    let diff = new THREE.Vector3;
-                    diff.addVectors(shift, n_pos.multiplyScalar(1 / box).floor().multiplyScalar(box * -1));
-                    if (center_option === "Origin") { diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) }
-                    for (let k = 0; k < systems[sys_count][strands][i][monomers][j][objects].length; k++) {
-                        systems[sys_count][strands][i][monomers][j][objects][k].position.add(diff);
+//translation and centering functions inspired by Cogli
+function translate(system, box_option, center_option) {
+    let wrt = system.strand_unweighted_com(); //this is actually a crude approximation, but needed to handle the fix_diffusion strands
+    let target_com = new THREE.Vector3(box, box, box).multiplyScalar(0.5); //because of the previous line, it will miss the target like Cogli does.
+    let actual_com = new THREE.Vector3(0, 0, 0); //so at the end we're going to correct for this
+    let count = 0;
+    let shift = new THREE.Vector3;
+    shift.addVectors(wrt.multiplyScalar(-1), target_com);
+    let diff = new THREE.Vector3;
+    for (let i = 0; i < system[strands].length; i++) {
+        switch (box_option) { //the cases are exactly the same, but the calculation takes place at a different point in the for loop nest
+            case "Nucleotide":
+                for (let j = 0; j < system[strands][i][monomers].length; j++) {
+                    //calculate how many boxes the inboxed structure needs to be moved over
+                    diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
+                    diff.add(shift);
+                    diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
+                    //add the centering to the boxing
+                    diff.add(shift);
+                    //If you want centering to anywhere other than the box center, it needs to be added here
+                    if (center_option === "Origin") { 
+                        diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) 
                     }
+                    //actually move things.
+                    for (let k = 0; k < system[strands][i][monomers][j][objects].length; k++) {
+                        system[strands][i][monomers][j][objects][k].position.add(diff);
+                        if (k === system[strands][i][monomers][j].COM) {
+                            actual_com.add(system[strands][i][monomers][j][objects][k].position);
+                        }
+                    }
+                    count += 1;
                 }
-            }
-            break;
-        case "Strand":
-            for (let i = 0; i < systems[sys_count][strands].length; i++) {
-                let n_pos = systems[sys_count][strands][i].get_com()
-                n_pos.add(shift);
-                let diff = new THREE.Vector3;
-                diff.addVectors(shift, n_pos.multiplyScalar(1 / box).floor().multiplyScalar(box * -1));
+                break;
+            case "Strand":
+                diff = system[strands][i].get_com()
+                diff.add(shift);
+                diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
+                diff.add(shift);
                 if (center_option === "Origin") { diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) }
-                for (let j = 0; j < systems[sys_count][strands][i][monomers].length; j++) {
-                    for (let k = 0; k < systems[sys_count][strands][i][monomers][j][objects].length; k++)
-                        systems[sys_count][strands][i][monomers][j][objects][k].position.add(diff);
+                for (let j = 0; j < system[strands][i][monomers].length; j++) {
+                    for (let k = 0; k < system[strands][i][monomers][j][objects].length; k++) {
+                        system[strands][i][monomers][j][objects][k].position.add(diff);
+                        if (k === system[strands][i][monomers][j].COM) {
+                            actual_com.add(system[strands][i][monomers][j][objects][k].position);
+                        }
+                    }
+                    count += 1;
                 }
-            }
-            break;
+                break;
+        }
     }
-}
-
-function get_box_parameters() {
-    let wrt = new THREE.Vector3(0, 0, 0);
-    let new_com = new THREE.Vector3(box, box, box).multiplyScalar(0.5);
-    for (let i = 0; i < systems[sys_count][strands].length; i++) {
-        wrt.add(systems[sys_count][strands][i].get_com());
+    //correct the inaccurate centering.
+    actual_com.multiplyScalar(-1/count);
+    if (center_option !== "Origin") { 
+        actual_com.add(target_com);
     }
-    wrt.multiplyScalar(1/systems[sys_count][strands].length);
-    let my_shift = new THREE.Vector3;
-    my_shift.addVectors(wrt.multiplyScalar(-1), new_com);
-    return my_shift
+    system.translate_system(actual_com);
 }
 
 //translates everything equally so that the center of mass is at the origin
-function dumb_centering() {
-    let sum = new THREE.Vector3(0,0,0);
-    elements.forEach( (e) => {
-        sum.add(e[objects][e.COM].position);
-    });
-    sum.multiplyScalar(-1/elements.length);
+function dumb_centering(system, center_option) {
+    let amount = system.get_com();
+    amount.multiplyScalar(-1);
 
     //Are we centering to the origin (default) or to the box center?
-    if ((document.getElementById("centering") as HTMLSelectElement).value === "Box Center") {
-        sum.add(new THREE.Vector3(box * 0.5, box * 0.5, box * 0.5));
+    if (center_option === "Box Center") {
+        amount.add(new THREE.Vector3(box * 0.5, box * 0.5, box * 0.5));
     }
 
-    elements.forEach( (e) => {
-        e[objects].forEach( (o) => {
-            o.position.add(sum);
-        });
-
-    });
+    system.translate_system(amount);
 }
 
-function dumb_boxing(box_option) {
-    let diff;
-    for (let i = 0; i < systems[sys_count][strands].length; i++) { //for each strand in current system
+//Applies PBC at the scale specified.  Will break structures.
+function dumb_boxing(system, box_option) {
+    for (let i = 0; i < system[strands].length; i++) {
+        let diff = new THREE.Vector3;
         if (box_option === "Strand") {
-            let cms = systems[sys_count][strands][i].get_com();
-            diff = cms.multiplyScalar(-1/box).floor().multiplyScalar(box);
+            diff = system[strands][i].get_com();
+            diff.multiplyScalar(1/box);
+            diff.floor()
+            diff.multiplyScalar(box*-1);
         }
-        for (let j = 0; j < systems[sys_count][strands][i][monomers].length; j++) { //for every nucleotide in strand
+        for (let j = 0; j < system[strands][i][monomers].length; j++) {
             if (box_option === "Nucleotide"){
-                let cms = new THREE.Vector3; //vector3s are objects, and everything in JavaScript is a pointer.
-                cms.copy(systems[sys_count][strands][i][monomers][j][objects][systems[sys_count][strands][i][monomers][j].COM].position);
-                diff = cms.multiplyScalar(-1/box).floor().multiplyScalar(box);
+                diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
+                diff.multiplyScalar(1/box).floor().multiplyScalar(box*-1);
             }
-            for (let k = 0; k < systems[sys_count][strands][i][monomers][j][objects].length; k++) { //for every Mesh in nucleotide
-                systems[sys_count][strands][i][monomers][j][objects][k].position.add(diff);
-            }
+            system[strands][i][monomers][j].translate_monomer(diff);
         }
     }
 }
 
-function PBC_switchbox() {
+//Handles every possible combination of applying PBC conditions and centering
+function PBC_switchbox(system: System) {
     let box_option = (document.getElementById("inboxing") as HTMLSelectElement).value
     let center_option = (document.getElementById("centering") as HTMLSelectElement).value
-    let my_shift;
 
-    switch (box_option) {
-        case "Nucleotide":
-            switch (center_option) {
-                case "Origin":
-                    my_shift = get_box_parameters();
-                    translate(my_shift);
-                case "Box Center":
-                    my_shift = get_box_parameters();
-                    translate(my_shift);
-                case "None":
-                    dumb_boxing(box_option);
-            }
-            break;
-        case "Strand":
-            switch (center_option) {
-                case "Origin":
-                    my_shift = get_box_parameters();
-                    translate(my_shift);
-                case "Box Center":
-                    my_shift = get_box_parameters();
-                    translate(my_shift);
-                case "None":
-                    dumb_boxing(box_option);
-                    break;
-            }
-            break;
-        case "None":
-            switch (center_option) {
-                case "Origin":
-                    dumb_centering();
-                    break;
-                case "Box Center":
-                    dumb_centering();
-                    break;
-                case "None":
-                    break;
-            }
-            break;
+    if (box_option !== "None" && center_option !== "None"){
+        translate(system, box_option, center_option);
+    }
+    else if (box_option !== "None" && center_option === "None"){
+        dumb_boxing(system, box_option);
+    }
+    else if (box_option === "None" && center_option !== "None"){
+        dumb_centering(system, center_option);
     }
 }
