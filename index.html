@@ -115,6 +115,8 @@
 				<option>Box Center</option>
 				<option>None</option>
 			</select>
+			<br>
+			<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply PBC/Centering</button>
 			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
 			<br>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
