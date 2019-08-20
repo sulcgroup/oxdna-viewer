@@ -21,10 +21,8 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 		// collect all objects that are in the way
 		intersects = raycaster.intersectObjects(backbones);
 		// make note of what's been clicked
-		let nucleotideID: number;
 		var nucleotide: BasicElement;
 		let sys: System; 
-		let sysID:number, strandID:number;	
 
         let scope_mode: string = scopeMode;
 		if (intersects.length > 0) { //if something has been clicked / is in the intersects array / intersects array's length is above 0

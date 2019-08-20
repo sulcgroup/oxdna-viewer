@@ -18,10 +18,8 @@ document.addEventListener('mousedown', event => {
         // collect all objects that are in the way
         intersects = raycaster.intersectObjects(backbones);
         // make note of what's been clicked
-        let nucleotideID;
         var nucleotide;
         let sys;
-        let sysID, strandID;
         let scope_mode = scopeMode;
         if (intersects.length > 0) { //if something has been clicked / is in the intersects array / intersects array's length is above 0
             // hence we click only on nucleotides 

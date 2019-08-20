@@ -149,7 +149,7 @@ function get_previous_chunk(dat_file, chunk_number) {
 }
 class marker {
 }
-// define the drag and drop behavior of the scene 
+// define the drag and drop behavior of the scene
 var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
@@ -390,15 +390,14 @@ target.addEventListener("drop", function (event) {
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;
 function readDat(num_nuc, dat_reader, system, lutColsVis) {
-    var nuc_local_id = 0;
     var current_strand = systems[sys_count][strands][0];
-    // parse file into lines 
+    // parse file into lines
     let lines = dat_reader.result.split(/[\n]+/g);
     if (lines.length - 3 < num_nuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
         alert(".dat and .top files incompatible");
         return;
     }
-    //get the simulation box size 
+    //get the simulation box size
     box = parseFloat(lines[1].split(" ")[3]);
     let time = parseInt(lines[0].split(" ")[2]);
     conf_num += 1;
@@ -417,10 +416,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         ;
         var current_nucleotide = elements[i + system.global_start_id];
         //get nucleotide information
-        // consume a new line 
+        // consume a new line
         let l = lines[i].split(" ");
-        // shift coordinates such that the 1st base of the  
-        // 1st strand is @ origin 
+        // shift coordinates such that the 1st base of the
+        // 1st strand is @ origin
         let x = parseFloat(l[0]), // - fx,
         y = parseFloat(l[1]), // - fy,
         z = parseFloat(l[2]); // - fz;
@@ -430,45 +429,15 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         if ((current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) || (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id)) { //if last nucleotide in straight strand
             system.add(current_strand); //add strand THREE.Group to system THREE.Group
             current_strand = system[strands][current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
-            nuc_local_id = -1;
             if (elements[current_nucleotide.global_id + 1] != undefined) {
                 current_strand = elements[current_nucleotide.global_id + 1].parent;
             }
         }
-        nuc_local_id += 1;
     }
     for (let i = 0; i < elements.length; i++) {
         elements[i].recalcPos(); //add any other sp connectors - used for circular strands
     }
-    let dx, dy, dz;
-    //bring strand in box
-    for (let i = 0; i < systems[sys_count][strands].length; i++) { //for each strand in current system
-        // compute offset to bring strand in box
-        let n = systems[sys_count][strands][i][monomers].length; //strand's elements[] length
-        let cms = new THREE.Vector3(0, 0, 0); //center of mass
-        for (let j = 0; j < n; j++) { //for every nuc in strand
-            let bbint = systems[sys_count][strands][i][monomers][j].getCOM();
-            cms.add(systems[sys_count][strands][i][monomers][j][objects][bbint].position); //sum center of masses - children[3] = posObj Mesh at cms
-        }
-        //cms calculations
-        let mul = 1.0 / n;
-        cms.multiplyScalar(mul);
-        dx = Math.round(cms.x / box) * box;
-        dy = Math.round(cms.y / box) * box;
-        dz = Math.round(cms.z / box) * box;
-        //fix coordinates
-        for (let j = 0; j < systems[sys_count][strands][i][monomers].length; j++) { //for every nucleotide in strand
-            let current_nucleotide = systems[sys_count][strands][i][monomers][j];
-            for (let k = 0; k < systems[sys_count][strands][i][monomers][j][objects].length; k++) { //for every Mesh in nucleotide's visual_object
-                let pos = systems[sys_count][strands][i][monomers][j][objects][k].position; //get Mesh position
-                //update pos by offset <dx, dy, dz>
-                pos.x = pos.x - dx;
-                pos.y = pos.y - dy;
-                pos.z = pos.z - dz;
-                systems[sys_count][strands][i][monomers][j][objects][k].position.set(pos.x, pos.y, pos.z);
-            }
-        }
-    }
+    PBC_switchbox();
     scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();
@@ -498,8 +467,7 @@ function getNewConfig(mode) {
             alert("No more confs to load!");
             return;
         }
-        let nuc_local_id = 0;
-        let current_strand = systems[i][strands][0];
+        //let nuc_local_id = 0;
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
@@ -512,22 +480,13 @@ function getNewConfig(mode) {
                 break;
             }
             ;
-            let current_nucleotide = current_strand[monomers][nuc_local_id];
+            let current_nucleotide = elements[systems[i].global_start_id + line_num];
             //get nucleotide information
-            // consume a new line 
+            // consume a new line
             let l = lines[line_num].split(" ");
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
             current_nucleotide.calculateNewConfigPositions(x, y, z, l);
-            if (current_nucleotide.neighbor5 == null) {
-                system.add(current_strand); //add strand_3objects to system_3objects
-                current_strand = system[strands][current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
-                nuc_local_id = 0; //reset
-            }
-            else {
-                nuc_local_id += 1;
-            }
-            ;
         }
         //box by strand
         let dx, dy, dz;
@@ -535,7 +494,7 @@ function getNewConfig(mode) {
             // compute offset to bring strand in box
             let n = systems[i][strands][j][monomers].length; //# of elements on strand
             let cms = new THREE.Vector3(0, 0, 0);
-            for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh 
+            for (let k = 0; k < n; k++) { //sum cms of each visual_object in strand; stored in children[3] = posObj Mesh
                 let bbint = systems[i][strands][j][monomers][k].getCOM();
                 cms.add(systems[i][strands][j][monomers][k][objects][bbint].position);
             }

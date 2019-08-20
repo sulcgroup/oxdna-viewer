@@ -131,14 +131,14 @@ class Nucleotide extends BasicElement {
         nucleoside.position.set(x_ns, y_ns, z_ns);
         con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
+        console.log(posObj.position);
         this.add(backbone);
         this.add(nucleoside);
         this.add(con);
         this.add(posObj);
+        console.log(this.children[this.COM].position);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
-            //console.log(this.global_id);
-            //console.log(this.neighbor3);
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
             y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
@@ -151,7 +151,6 @@ class Nucleotide extends BasicElement {
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
                 this.add(sp); //add to visual_object
-                //console.log(group);
             }
         }
         /*if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
@@ -171,8 +170,6 @@ class Nucleotide extends BasicElement {
             group.add(sp); //add to visual_object
         }*/
         //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        //this.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
-        this.parent.add(this); //add group to strand_3objects
         //update last backbone position and last strand
         x_bb_last = x_bb;
         y_bb_last = y_bb;
@@ -237,7 +234,7 @@ class Nucleotide extends BasicElement {
         let locstrandID = this.parent.strand_id;
         group.name = this.global_id + "";
         //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
-        //if you position.set() before applyMatrix() everything explodes and I don't know why
+        //if you position.set() before applyMatrix() everything explodes because its messing with the world matrix.
         group[objects][this.BACKBONE].position.set(x_bb, y_bb, z_bb);
         group[objects][this.NUCLEOSIDE].applyMatrix(base_rotation);
         group[objects][this.NUCLEOSIDE].position.set(x_ns, y_ns, z_ns);
@@ -691,13 +688,11 @@ class Strand extends THREE.Group {
         super();
         this.strand_id = id;
         this.parent = parent;
-        //this.strand_3objects = new THREE.Group;
     }
     ;
     add_basicElement(elem) {
         this[monomers].push(elem);
         elem.parent = this;
-        //this.strand_3objects.add(elem.);
     }
     ;
     create_basicElement(global_id) {
@@ -724,6 +719,13 @@ class Strand extends THREE.Group {
             return !elements.includes(v);
         });
         this[monomers] = filtered;
+    }
+    get_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        this[monomers].forEach((e) => {
+            com.add(e[objects][e.COM].position);
+        });
+        return (com.multiplyScalar(1 / this[monomers].length));
     }
 }
 ;
@@ -836,7 +838,7 @@ function nextConfig() {
     getNewConfig(1);
     let centering_on = document.getElementById("centering").checked;
     if (centering_on) {
-        centerSystems();
+        PBC_switchbox();
     }
 }
 function previousConfig() {
@@ -846,7 +848,7 @@ function previousConfig() {
     getNewConfig(-1);
     let centering_on = document.getElementById("centering").checked;
     if (centering_on) {
-        centerSystems();
+        PBC_switchbox();
     }
 }
 document.addEventListener("keydown", function (event) {
@@ -1073,65 +1075,62 @@ function moveWithinBox(pos, dpos) {
 // Calculate center of mass taking periodic boundary conditions into account:
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
-function centerSystems() {
-    /*
-        //get center of mass for all systems
-        let cms = new THREE.Vector3(0, 0, 0);
-        for (let i = 0; i < elements.length; i++) {
-            let tmp_pos = new THREE.Vector3;
-            tmp_pos.setFromMatrixPosition(elements[i][objects][COM].matrixWorld);
-            cms.add(tmp_pos);
-        }
-        let mul = 1.0 / elements.length;
-        cms.multiplyScalar(mul * -1);
-    */
+/*function centerSystems() { //centers systems based on cms calculated for world (all systems)
+    
     // Create one averaging variable for each dimension, representing that 1D
-    // interval as a unit circle in 2D (with the circumference being the 
+    // interval as a unit circle in 2D (with the circumference being the
     // bounding box side length)
-    let cm_x = new THREE.Vector2(), cm_y = new THREE.Vector2(), cm_z = new THREE.Vector2();
-    for (let i = 0; i < elements.length; i++) {
-        let bbint = elements[i].getCOM();
-        let p = elements[i][objects][bbint].position.clone();
-        // Shift coordinates so that the origin is in the corner of the 
-        // bounding box, instead of the centre.
-        p.add(new THREE.Vector3().addScalar(1.5 * box));
-        p.x %= box;
-        p.y %= box;
-        p.z %= box;
-        // Calculate positions on unit circle for each dimension and that to the
-        // sum.
-        let angle = p.clone().multiplyScalar(2 * Math.PI / box);
-        cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
-        cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
-        cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
-    }
-    // Divide center of mass sums to get the averages
-    cm_x.divideScalar(elements.length);
-    cm_y.divideScalar(elements.length);
-    cm_z.divideScalar(elements.length);
-    // Convert back from unit circle coordinates into x,y,z
-    let cms = new THREE.Vector3(box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI));
-    // Shift back origin to center of the box
-    cms.sub(new THREE.Vector3().addScalar(box / 2));
-    // Change nucleotide positions by the center of mass
-    for (let i = 0; i < elements.length; i++) {
-        for (let j = 0; j < elements[i][objects].length; j++) {
-            /*
-                        elements[i][objects][j].position.add(cms);
-            */
-            let p = elements[i][objects][j].position;
-            // Shift with centre of mass
-            p.add(cms);
-            // Keep positions within bounding box
+    let checkbox = document.getElementById("centering") as HTMLInputElement;
+    if (checkbox.checked) {
+        let cm_x = new THREE.Vector2(),
+            cm_y = new THREE.Vector2(),
+            cm_z = new THREE.Vector2();
+
+        for (let i = 0; i < elements.length; i++) {
+            let bbint: number = elements[i].getCOM();
+            let p = elements[i][objects][bbint].position.clone();
+            // Shift coordinates so that the origin is in the corner of the
+            // bounding box, instead of the centre.
             p.add(new THREE.Vector3().addScalar(1.5 * box));
-            p.x %= box;
-            p.y %= box;
-            p.z %= box;
-            p.sub(new THREE.Vector3().addScalar(0.75 * box));
+            p.x %= box; p.y %= box; p.z %= box;
+
+            // Calculate positions on unit circle for each dimension and that to the
+            // sum.
+            let angle = p.clone().multiplyScalar(2 * Math.PI / box);
+            cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
+            cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
+            cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
+        }
+
+        // Divide center of mass sums to get the averages
+        cm_x.divideScalar(elements.length);
+        cm_y.divideScalar(elements.length);
+        cm_z.divideScalar(elements.length);
+
+        // Convert back from unit circle coordinates into x,y,z
+        let cms = new THREE.Vector3(
+            box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI),
+            box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI),
+            box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI)
+        );
+        // Shift back origin to center of box
+        cms.sub(new THREE.Vector3().addScalar(box / 2));
+
+        // Change nucleotide positions by the center of mass
+        for (let i = 0; i < elements.length; i++) {
+            for (let j = 0; j < elements[i][objects].length; j++) {
+                let p = elements[i][objects][j].position;
+                // Shift with centre of mass
+                p.add(cms);
+                // Keep positions within bounding box
+                p.add(new THREE.Vector3().addScalar(1.5 * box));
+                p.x %= box; p.y %= box; p.z %= box;
+                p.sub(new THREE.Vector3().addScalar(0.75 * box));
+            }
         }
     }
     render();
-}
+}*/
 //changes resolution on the nucleotide visual objects
 function setResolution(resolution) {
     //change mesh_setup with the given resolution
@@ -1159,7 +1158,6 @@ function toggleSideNav(button) {
     let hidden = "show";
     let visible = "hide";
     let tabcontent = document.getElementsByClassName("tabcontent");
-    let allNone = false;
     if (button.innerText == hidden) {
         tabcontent[0].style.display = "block";
         button.innerHTML = visible;

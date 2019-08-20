@@ -102,7 +102,20 @@
 			<button onclick="toggleVideoOptions()" type="button">Create Video</button>
 			<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
+			<caption> PBC: </caption>
+			<select id="inboxing">
+			    <option>Nucleotide</option>
+			    <option>Strand</option>
+			    <option>None</option>
+			</select>
+			<br>
+			<caption>Centering:</caption>
+			<select id="centering">
+				<option>Origin</option>
+				<option>Box Center</option>
+				<option>None</option>
+			</select>
+			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
 			<br>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 			<br>
@@ -170,6 +183,7 @@
 			<script src="./dist/scene_setup.js"></script>
 			<script src="./dist/mesh_setup.js"></script>
 			<script src="./dist/io.js"></script>
+			<script src="./dist/PBC_switchbox.js"></script>
 			<script src="./dist/file_reading.js"></script>
 			<script src="./dist/main.js"></script>
 			<script src="./dist/keybindings.js"></script>
