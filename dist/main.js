@@ -479,6 +479,7 @@ class AminoAcid extends BasicElement {
     constructor(global_id, parent) {
         super(global_id, parent);
         this.SP_CON = 1;
+        this.COM = 0;
         this.element_type = AA;
     }
     ;

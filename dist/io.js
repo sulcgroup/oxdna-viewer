@@ -3,7 +3,6 @@ class TopReader extends FileReader {
     constructor(top_file, system, elements) {
         super();
         this.nuc_local_id = 0;
-        this.last_strand = 1; //strands are 1-indexed in oxDNA .top files
         this.onload = ((f) => {
             return (e) => {
                 let file = this.result;
@@ -11,6 +10,7 @@ class TopReader extends FileReader {
                 lines = lines.slice(1); // discard the header
                 let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
                 let str_id = parseInt(l0[0]);
+                this.last_strand = str_id;
                 let current_strand = this.system.create_Strand(str_id);
                 this.system.add_strand(current_strand);
                 // create empty list of elements with length equal to the topology
