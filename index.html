@@ -96,13 +96,28 @@
 			<!--in "Nucloetides" tab-->
 			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
 			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
-			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File(broken!)</button>
+			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File</button>
 			Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3">
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
 			<button onclick="toggleVideoOptions()" type="button">Create Video</button>
 			<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
 			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<input type="checkbox" id="centering" onchange="centerSystems()">Center Systems
+			<caption> PBC: </caption>
+			<select id="inboxing">
+			    <option>Nucleotide</option>
+			    <option>Strand</option>
+			    <option>None</option>
+			</select>
+			<br>
+			<caption>Centering:</caption>
+			<select id="centering">
+				<option>Origin</option>
+				<option>Box Center</option>
+				<option>None</option>
+			</select>
+			<br>
+			<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply PBC/Centering</button>
+			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
 			<br>
 			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
 			<br>
@@ -169,8 +184,9 @@
 			<script src="./ts/controls/TrackballControls.js"></script>
 			<script src="./dist/scene_setup.js"></script>
 			<script src="./dist/mesh_setup.js"></script>
+			<script src="./dist/io.js"></script>
+			<script src="./dist/PBC_switchbox.js"></script>
 			<script src="./dist/file_reading.js"></script>
-			<!--<script src="./dist/viewerforjonah.js"></script>-->
 			<script src="./dist/main.js"></script>
 			<script src="./dist/keybindings.js"></script>
 			<script src="./dist/base_selector.js"></script>
@@ -178,8 +194,6 @@
 			<script src="./dist/translation.js"></script>
 			<script src="./ts/controls/SceneUtils.js"></script>
 			<script src="./dist/adhoc_api.js"></script>
-			
-			<!--<script src="./dist/cubes.js"></script> //for practice/simple model manipulation: cubes.js class-->
 		</div>
 
 </body>

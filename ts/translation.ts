@@ -82,8 +82,8 @@ function rotate() { //rotate according to given angle given in number input
             case "Z": matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1); break;
             default: alert("Unknown rotation axis: " + axisMode);
         }
-        for (let j: number = 0; j < elements[i].visual_object.children.length; j++) {
-            p = (elements[i].visual_object.children[j].position.clone());
+        for (let j: number = 0; j < elements[i][objects].length; j++) {
+            p = (elements[i][objects][j].position.clone());
             d = p.sub(c);
             switch (axisMode) {
                 case "X": {
@@ -100,11 +100,10 @@ function rotate() { //rotate according to given angle given in number input
                 }
                 default: break;
             }
-            elements[i].visual_object.children[j].rotateOnWorldAxis(v1, angle);
+            elements[i][objects][j].rotateOnWorldAxis(v1, angle);
             d.applyMatrix3(matrix);
             d.add(c);
-            elements[i].visual_object.children[j].position.set(d.x, d.y, d.z);
-            elements[i].visual_object.children[j].updateMatrix();
+            elements[i][objects][j].position.set(d.x, d.y, d.z);
             rot = true;
         }
         //setEntry = setEntries.next();

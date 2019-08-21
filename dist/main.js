@@ -14,15 +14,18 @@ var backbones = [];
 let lut, devs; //need for Lut coloring
 let lutCols = [];
 let lutColsVis = false;
-const DNA = 0;
-const RNA = 1;
-const AA = 2;
+let DNA = 0;
+let RNA = 1;
+let AA = 2;
+var strands = 'children', monomers = 'children', objects = 'children';
 render();
 // elements store the information about position, orientation, ID
 // Eventually there should be a way to pair them
 // Everything is an Object3D, but only elements have anything to render
-class BasicElement {
+class BasicElement extends THREE.Group {
     constructor(global_id, parent) {
+        super();
+        //: THREE.Group; //contains 4 THREE.Mesh
         this.BACKBONE = 0;
         this.NUCLEOSIDE = 1;
         this.BB_NS_CON = 2;
@@ -35,14 +38,25 @@ class BasicElement {
     ;
     calculatePositions(x, y, z, l) {
     }
+    ;
+    recalcPos() {
+    }
+    ;
     calculateNewConfigPositions(x, y, z, l) {
     }
+    ;
+    updateSP(num) {
+        return new THREE.Object3D();
+    }
+    ;
     getCOM() {
         return this.BACKBONE;
     }
+    ;
     //abstract rotate(): void;
     toggle() {
     }
+    ;
     strand_to_material(strandIndex) {
         return backbone_materials[(Math.abs(strandIndex) + this.parent.parent.system_id) % backbone_materials.length];
     }
@@ -58,10 +72,11 @@ class BasicElement {
     resetColor(nucNec) {
     }
     ;
-    calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3) {
-        return new THREE.Vector3(x, y, z);
+    translate_monomer(amount) {
+        this[objects].forEach((o) => {
+            o.position.add(amount);
+        });
     }
-    ;
 }
 ;
 class Nucleotide extends BasicElement {
@@ -93,11 +108,10 @@ class Nucleotide extends BasicElement {
         // correctly display stacking interactions
         let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(//creat nucleoside sphere rotation
         new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
-        // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        let group = new THREE.Group; //create visual_object group
-        group.name = this.global_id + ""; //set name (string) to nucleotide's global id
+        // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
+        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
         let backbone, nucleoside, con;
-        // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
+        // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
         if (lutColsVis) {
@@ -109,23 +123,23 @@ class Nucleotide extends BasicElement {
         else {
             material = this.strand_to_material(this.parent.strand_id);
         }
-        //backbone = ...
+        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, this.elem_to_material(this.type)); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
-        let posObj = new THREE.Mesh; //Mesh (no shape) storing visual_object group center of mass  
+        let posObj = new THREE.Mesh; //Mesh (no shape) storing  group center of mass  
         con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
         // apply rotations
         nucleoside.applyMatrix(base_rotation);
         con.applyMatrix(rotation_con);
-        //set positions and add to object (group - visual_object)
-        //backbone.position.set(x_bb, y_bb, z_bb);
+        //set positions and add to object (group - )
+        backbone.position.set(x_bb, y_bb, z_bb);
         nucleoside.position.set(x_ns, y_ns, z_ns);
         con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
-        //group.add(backbone);
-        group.add(nucleoside);
-        group.add(con);
-        group.add(posObj);
+        this.add(backbone);
+        this.add(nucleoside);
+        this.add(con);
+        this.add(posObj);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
@@ -139,27 +153,58 @@ class Nucleotide extends BasicElement {
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
-                group.add(sp); //add to visual_object
+                this.add(sp); //add to visual_object
             }
         }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
+        /*if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
             let x_sp = (x_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
-            y_sp = (y_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.y) / 2, z_sp = (z_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.z) / 2;
+                y_sp = (y_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.y) / 2,
+                z_sp = (z_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.z) / 2;
             let sp_len = Math.sqrt(Math.pow(x_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.x, 2) + Math.pow(y_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.y, 2) + Math.pow(z_bb - this.neighbor5.visual_object.children[this.BACKBONE].position.z, 2));
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
+            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                new THREE.Quaternion().setFromUnitVectors(
+                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                )
+            );
             let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
             group.add(sp); //add to visual_object
-        }
+        }*/
         //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        this.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
-        this.parent.strand_3objects.add(group); //add group to strand_3objects
         //update last backbone position and last strand
         x_bb_last = x_bb;
         y_bb_last = y_bb;
         z_bb_last = z_bb;
+    }
+    ;
+    recalcPos() {
+        let bb = this.children[this.BACKBONE].position;
+        if (this.neighbor3 != null && this.neighbor3.local_id > this.local_id) { //handles strand end connection
+            let material;
+            if (lutColsVis) {
+                material = new THREE.MeshLambertMaterial({
+                    color: lutCols[i],
+                    side: THREE.DoubleSide
+                });
+            }
+            else {
+                material = this.strand_to_material(this.parent.strand_id);
+            }
+            let x_sp = (bb.x + this.neighbor3.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
+            y_sp = (bb.y + this.neighbor3.children[this.BACKBONE].position.y) / 2, z_sp = (bb.z + this.neighbor3.children[this.BACKBONE].position.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(bb.x - this.neighbor3.children[this.BACKBONE].position.x, 2) + Math.pow(bb.y - this.neighbor3.children[this.BACKBONE].position.y, 2) + Math.pow(bb.z - this.neighbor3.children[this.BACKBONE].position.z, 2));
+            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - bb.x, y_sp - bb.y, z_sp - bb.z).normalize()));
+            let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+            sp.applyMatrix(rotation_sp); //set rotation
+            sp.position.set(x_sp, y_sp, z_sp);
+            this.add(sp); //add to visual_object
+        }
+    }
+    calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3) {
+        return new THREE.Vector3(x, y, z);
     }
     ;
     calculateNewConfigPositions(x, y, z, l) {
@@ -181,42 +226,52 @@ class Nucleotide extends BasicElement {
         let x_con = (x_bb + x_ns) / 2, y_con = (y_bb + y_ns) / 2, z_con = (z_bb + z_ns) / 2;
         //correctly display stacking interactions
         let old_a3 = new THREE.Matrix4();
-        old_a3.extractRotation(this.visual_object.children[this.NUCLEOSIDE].matrix);
+        old_a3.extractRotation(this[objects][this.NUCLEOSIDE].matrix);
         let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(old_a3.elements[4], old_a3.elements[5], old_a3.elements[6]), new THREE.Vector3(x_a3, y_a3, z_a3)));
         // correctly orient connectors
-        let neg_NS_pos = this.visual_object.children[this.NUCLEOSIDE].position.multiplyScalar(-1);
-        let curr_heading = this.visual_object.children[this.BACKBONE].position.add(neg_NS_pos);
+        let neg_NS_pos = this[objects][this.NUCLEOSIDE].position.multiplyScalar(-1);
+        let curr_heading = this[objects][this.BACKBONE].position.add(neg_NS_pos);
         let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(curr_heading.normalize(), new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize()));
         // update position and orientation of the elements
-        let group = this.visual_object;
+        let group = this;
         let locstrandID = this.parent.strand_id;
         group.name = this.global_id + "";
         //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
-        //if you position.set() before applyMatrix() everything explodes and I don't know why
-        group.children[this.BACKBONE].position.set(x_bb, y_bb, z_bb);
-        group.children[this.NUCLEOSIDE].applyMatrix(base_rotation);
-        group.children[this.NUCLEOSIDE].position.set(x_ns, y_ns, z_ns);
+        //if you position.set() before applyMatrix() everything explodes because its messing with the world matrix.
+        group[objects][this.BACKBONE].position.set(x_bb, y_bb, z_bb);
+        group[objects][this.NUCLEOSIDE].applyMatrix(base_rotation);
+        group[objects][this.NUCLEOSIDE].position.set(x_ns, y_ns, z_ns);
         //not going to change the BB_NS_CON length because its the same out to 7 decimal places each time
-        group.children[this.BB_NS_CON].applyMatrix(rotation_con);
-        group.children[this.BB_NS_CON].position.set(x_con, y_con, z_con);
-        group.children[this.COM].position.set(x, y, z);
+        group[objects][this.BB_NS_CON].applyMatrix(rotation_con);
+        group[objects][this.BB_NS_CON].position.set(x_con, y_con, z_con);
+        group[objects][this.COM].position.set(x, y, z);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null) {
-            //remove the current sugar-phosphate bond to make room for the new one
-            //scene.remove(group.children[this.SP_CON]);
             //get current and 3' backbone positions and set length/rotation
-            //let last_pos = new THREE.Vector3();
-            //this.neighbor3.visual_object.children[this.BACKBONE].getWorldPosition(last_pos);
-            let last_pos = this.neighbor3.visual_object.children[this.BACKBONE].position;
-            //let this_pos = new THREE.Vector3
-            //group.children[this.BACKBONE].getWorldPosition(this_pos);
-            let this_pos = group.children[this.BACKBONE].position;
+            let last_pos = new THREE.Vector3();
+            this.neighbor3[objects][this.BACKBONE].getWorldPosition(last_pos);
+            let this_pos = new THREE.Vector3();
+            group[objects][this.BACKBONE].getWorldPosition(this_pos);
             let x_sp = (this_pos.x + last_pos.x) / 2, y_sp = (this_pos.y + last_pos.y) / 2, z_sp = (this_pos.z + last_pos.z) / 2;
             let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()));
-            let sp_Mesh = group.children[this.SP_CON];
-            let bb = group.children[this.BACKBONE];
-            sp_Mesh.material = bb.material;
+            this.updateSP();
+            group[objects][this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
+            group[objects][this.SP_CON].applyMatrix(rotation_sp); //rotate
+            group[objects][this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
+            group[objects][this.SP_CON].parent = this;
+        }
+        ;
+    }
+    ;
+    updateSP() {
+        let sp_Mesh = this[objects][this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo = sp_Mesh.geometry;
+            geo = connector_geometry;
             sp_Mesh.drawMode = THREE.TrianglesDrawMode;
             sp_Mesh.updateMorphTargets();
             sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
@@ -226,70 +281,76 @@ class Nucleotide extends BasicElement {
             sp_Mesh.scale.set(1, 1, 1);
             sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
             sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-            //sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-            //sp_Mesh.matrixWorldNeedsUpdate = false;
-            //sp_Mesh.layers.set(1);
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
             sp_Mesh.visible = true;
-            //sp_Mesh.castShadow = false;
-            //sp_Mesh.receiveShadow = false;
-            //sp_Mesh.frustumCulled = true;
-            //sp_Mesh.renderOrder = 0;
-            //sp_Mesh.userData = {};
-            //group.children[SP_CON] = new THREE.Mesh(connector_geometry, system.strand_to_material(locstrandID));
-            group.children[this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
-            group.children[this.SP_CON].applyMatrix(rotation_sp); //rotate
-            group.children[this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
-            //let a = new THREE.Vector3;
-            //group.children[this.SP_CON].getWorldPosition(a)
-            //console.log(a)
-            //group.children[this.SP_CON].parent = this.visual_object;
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+            sp_Mesh.userData = {};
         }
-        ;
+        return sp_Mesh;
     }
-    ;
     getCOM() {
         return this.COM;
     }
     ;
     resetColor(nucNec) {
-        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
-        let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
-        let con_Mesh = this.visual_object.children[this.BB_NS_CON];
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
+        let nuc_Mesh = this[objects][this.NUCLEOSIDE];
+        let con_Mesh = this[objects][this.BB_NS_CON];
+        let sp_Mesh = this[objects][this.SP_CON];
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+        let tmeshlamb;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
             if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                back_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    back_Mesh.material = tmeshlamb;
+                else
+                    back_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (nucNec) {
             if (nuc_Mesh instanceof THREE.Mesh) {
                 if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    nuc_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        nuc_Mesh.material = tmeshlamb;
+                    else
+                        nuc_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (con_Mesh instanceof THREE.Mesh) {
             if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                con_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    con_Mesh.material = tmeshlamb;
+                else
+                    con_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
         if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     }
     toggle() {
         // highlight/remove highlight the bases we've clicked 
-        let selected = false;
-        let nucleotideID = this.global_id;
-        let sysID = this.parent.parent.system_id;
-        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
-        let nuc_Mesh = this.visual_object.children[this.NUCLEOSIDE];
-        let con_Mesh = this.visual_object.children[this.BB_NS_CON];
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
+        let nuc_Mesh = this[objects][this.NUCLEOSIDE];
+        let con_Mesh = this[objects][this.BB_NS_CON];
+        let sp_Mesh = this[objects][this.SP_CON];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
@@ -313,7 +374,7 @@ class Nucleotide extends BasicElement {
                     sp_Mesh.material = selection_material;
             }
             //selList.push(nucleotideID);
-            selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
+            selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
     }
     ;
@@ -329,15 +390,15 @@ class Nucleotide extends BasicElement {
     getDatFileOutput() {
         let dat = "";
         let tempVec = new THREE.Vector3(0, 0, 0);
-        this.visual_object.children[3].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        this[objects][this.COM].getWorldPosition(tempVec); //nucleotide's center of mass in world
         let x = tempVec.x;
         let y = tempVec.y;
         let z = tempVec.z;
-        this.visual_object.children[0].getWorldPosition(tempVec); //nucleotide's sugar phosphate backbone's world position
+        this[objects][this.BACKBONE].getWorldPosition(tempVec); //nucleotide's backbone's world position
         let x_bb = tempVec.x;
         let y_bb = tempVec.y;
         let z_bb = tempVec.z;
-        this.visual_object.children[1].getWorldPosition(tempVec); //nucleotide's nucleoside's world position
+        this[objects][this.NUCLEOSIDE].getWorldPosition(tempVec); //nucleotide's nucleoside's world position
         let x_ns = tempVec.x;
         let y_ns = tempVec.y;
         let z_ns = tempVec.z;
@@ -431,25 +492,24 @@ class AminoAcid extends BasicElement {
     }
     ;
     calculatePositions(x, y, z, l) {
-        // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        let group = new THREE.Group(); //create visual_object group
-        group.name = this.global_id + ""; //set name (string) to nucleotide's global id
-        //let backbone: THREE.Mesh;
-        // 4 Mesh to display DNA + 1 Mesh to store visual_object group's center of mass as its position
+        // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
+        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
+        let backbone;
+        // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
         if (lutColsVis) {
             material = new THREE.MeshLambertMaterial({
-                color: lutCols[i],
+                color: lutCols[this.global_id],
                 side: THREE.DoubleSide
             });
         }
         else {
             material = this.elem_to_material(this.type);
         }
-        //backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
-        //backbone.position.set(x, y, z);
-        //group.add(backbone);
+        backbone = new THREE.Mesh(backbone_geometry, material);
+        backbone.position.set(x, y, z);
+        this.add(backbone);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             let x_sp = (x + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
@@ -464,24 +524,24 @@ class AminoAcid extends BasicElement {
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
-                sp.name = "sp" + group.id;
-                group.add(sp); //add to visual_object
+                sp.name = "sp" + this.id;
+                this.add(sp); //add to 
             }
         }
         if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
-            let x_sp = (x + this.neighbor5.visual_object.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
-            y_sp = (y + this.neighbor5.visual_object.children[this.BACKBONE].position.y) / 2, z_sp = (z + this.neighbor5.visual_object.children[this.BACKBONE].position.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(x - this.neighbor5.visual_object.children[this.BACKBONE].position.x, 2) + Math.pow(y - this.neighbor5.visual_object.children[this.BACKBONE].position.y, 2) + Math.pow(z - this.neighbor5.visual_object.children[this.BACKBONE].position.z, 2));
+            let x_sp = (x + this.neighbor5[objects][this.BACKBONE].position.x) / 2, //make sugar phosphate connection
+            y_sp = (y + this.neighbor5[objects][this.BACKBONE].position.y) / 2, z_sp = (z + this.neighbor5[objects][this.BACKBONE].position.z) / 2;
+            let sp_len = Math.sqrt(Math.pow(x - this.neighbor5[objects][this.BACKBONE].position.x, 2) + Math.pow(y - this.neighbor5[objects][this.BACKBONE].position.y, 2) + Math.pow(z - this.neighbor5[objects][this.BACKBONE].position.z, 2));
             let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()));
             let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(rotation_sp); //set rotation
             sp.position.set(x_sp, y_sp, z_sp);
-            group.add(sp); //add to visual_object
+            this.add(sp); //add to 
         }
-        //actually add the new items to the scene by adding to visual_object then to strand_3objects then to system_3objects then to scene
-        this.visual_object = group; //set Nucleotide nuc's visual_object attribute to group
-        this.parent.strand_3objects.add(group); //add group to strand_3objects
+        //actually add the new items to the scene by adding to  then to strand_3objects then to system_3objects then to scene
+        //this = group; //set Nucleotide nuc's attribute to group
+        this.parent.add(this); //add group to strand_3objects
         //update last backbone position and last strand
         x_bb_last = x;
         y_bb_last = y;
@@ -489,12 +549,11 @@ class AminoAcid extends BasicElement {
     }
     ;
     calculateNewConfigPositions(x, y, z, l) {
-        let group = this.visual_object;
-        let locstrandID = this.parent.strand_id;
+        let group = this;
         group.name = this.global_id + "";
         //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
         //if you position.set() before applyMatrix() everything explodes and I don't know why
-        group.children[this.BACKBONE].position.set(x, y, z);
+        group[objects][this.BACKBONE].position.set(x, y, z);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             let x_sp = (x + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
@@ -504,12 +563,14 @@ class AminoAcid extends BasicElement {
             // if the bonds are to long just don't add them 
             if (sp_len <= 500) {
                 let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()));
-                let material = this.strand_to_material(this.parent.strand_id);
-                let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                //let material: THREE.MeshLambertMaterial = this.strand_to_material(this.parent.strand_id);
+                //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                let sp = group[objects][this.SP_CON];
+                this.updateSP();
                 sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
                 sp.applyMatrix(rotation_sp); //set rotation
                 sp.position.set(x_sp, y_sp, z_sp);
-                group.children[this.SP_CON] = sp; //add to visual_object
+                group[objects][this.SP_CON].parent = this;
             }
         }
         x_bb_last = x;
@@ -517,36 +578,76 @@ class AminoAcid extends BasicElement {
         z_bb_last = z;
     }
     ;
+    updateSP() {
+        let sp_Mesh = this[objects][this.SP_CON];
+        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
+            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
+                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+            }
+            let geo = sp_Mesh.geometry;
+            geo = connector_geometry;
+            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
+            sp_Mesh.updateMorphTargets();
+            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
+            sp_Mesh.position.set(0, 0, 0);
+            sp_Mesh.rotation.set(0, 0, 0);
+            sp_Mesh.quaternion.set(0, 0, 0, 0);
+            sp_Mesh.scale.set(1, 1, 1);
+            sp_Mesh.matrix.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixWorld.set(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
+            sp_Mesh.matrixWorldNeedsUpdate = false;
+            //sp_Mesh.layers.set(1);
+            sp_Mesh.visible = true;
+            sp_Mesh.castShadow = false;
+            sp_Mesh.receiveShadow = false;
+            sp_Mesh.frustumCulled = true;
+            sp_Mesh.renderOrder = 0;
+            sp_Mesh.userData = {};
+        }
+        return sp_Mesh;
+    }
+    ;
     getCOM() {
         return this.BACKBONE;
     }
     ;
     resetColor(nucNec) {
-        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
+        let sp_Mesh = this[objects][this.SP_CON];
+        let tmeshlamb;
+        if (lutColsVis) {
+            tmeshlamb = new THREE.MeshLambertMaterial({
+                color: lutCols[this.global_id],
+                side: THREE.DoubleSide
+            });
+        }
         // figure out what that base was before you painted it black and revert it
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         if (nucNec) {
             if (back_Mesh != undefined && back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
                 if (back_Mesh.material != undefined && (back_Mesh.material instanceof THREE.MeshBasicMaterial || back_Mesh.material instanceof THREE.MeshLambertMaterial)) {
-                    back_Mesh.material = this.elem_to_material(this.type);
+                    if (lutColsVis)
+                        back_Mesh.material = tmeshlamb;
+                    else
+                        back_Mesh.material = this.elem_to_material(this.type);
                 }
             }
         }
         if (sp_Mesh != undefined && sp_Mesh instanceof THREE.Mesh) {
             if (sp_Mesh.material instanceof THREE.MeshBasicMaterial || sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
+                if (lutColsVis)
+                    sp_Mesh.material = tmeshlamb;
+                else
+                    sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
         }
     }
     ;
     toggle() {
         // highlight/remove highlight the bases we've clicked 
-        let selected = false;
-        let nucleotideID = this.global_id;
-        let sysID = this.parent.parent.system_id;
-        let back_Mesh = this.visual_object.children[this.BACKBONE]; //get clicked nucleotide's Meshes
-        let sp_Mesh = this.visual_object.children[this.SP_CON];
+        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
+        let sp_Mesh = this[objects][this.SP_CON];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor(true);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
@@ -570,7 +671,7 @@ class AminoAcid extends BasicElement {
     getDatFileOutput() {
         let dat = "";
         let tempVec = new THREE.Vector3();
-        this.visual_object.children[this.BACKBONE].getWorldPosition(tempVec); //nucleotide's center of mass in world
+        this[objects][this.BACKBONE].getWorldPosition(tempVec); //nucleotide's center of mass in world
         let x = tempVec.x;
         let y = tempVec.y;
         let z = tempVec.z;
@@ -582,28 +683,26 @@ class AminoAcid extends BasicElement {
 ;
 // strands are made up of elements
 // strands have an ID within the system
-class Strand {
+class Strand extends THREE.Group {
     constructor(id, parent) {
-        this.elements = [];
+        super();
         this.strand_id = id;
         this.parent = parent;
-        this.strand_3objects = new THREE.Group;
     }
     ;
     add_basicElement(elem) {
-        this.elements.push(elem);
+        this[monomers].push(elem);
         elem.parent = this;
-        //this.strand_3objects.add(elem.visual_object);
     }
     ;
     create_basicElement(global_id) {
         return new AminoAcid(global_id, this);
     }
     remove_basicElement(to_remove) {
-        for (let i = 0; i < this.elements.length; i++) {
-            let n = this.elements[i];
+        for (let i = 0; i < this[monomers].length; i++) {
+            let n = this[monomers][i];
             if (n.global_id == to_remove) { //changed from local to global id
-                scene.remove(n.visual_object);
+                scene.remove(n);
                 n = null;
             }
         }
@@ -613,13 +712,27 @@ class Strand {
         // detach from parent
         elements.forEach((e) => {
             e.parent = null;
-            this.strand_3objects.remove(e.visual_object);
+            this.remove(e);
         });
         // create a new list of strand elements  
-        let filtered = this.elements.filter((v, i, arr) => {
+        let filtered = this[monomers].filter((v, i, arr) => {
             return !elements.includes(v);
         });
-        this.elements = filtered;
+        this[monomers] = filtered;
+    }
+    get_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        this[monomers].forEach((e) => {
+            com.add(e[objects][e.COM].position);
+        });
+        return (com.multiplyScalar(1 / this[monomers].length));
+    }
+    translate_strand(amount) {
+        this[monomers].forEach((m) => {
+            m[objects].forEach((o) => {
+                o.position.add(amount);
+            });
+        });
     }
 }
 ;
@@ -647,18 +760,17 @@ class Peptide extends Strand {
 }
 // systems are made of strands
 // systems can CRUD
-class System {
+class System extends THREE.Group {
     constructor(id, start_id) {
-        this.strands = [];
+        super();
         this.system_id = id;
         this.global_start_id = start_id;
-        this.system_3objects = new THREE.Group;
     }
     ;
     system_length() {
         let count = 0;
-        for (let i = 0; i < this.strands.length; i++) {
-            count += this.strands[i].elements.length;
+        for (let i = 0; i < this[strands].length; i++) {
+            count += this[strands][i][monomers].length;
         }
         return count;
     }
@@ -671,23 +783,20 @@ class System {
     }
     ;
     add_strand(strand) {
-        this.strands.push(strand);
+        this[strands].push(strand);
         strand.parent = this;
-        //this.system_3objects.children.push(
-        //    strand.strand_3objects
-        //);
     }
     ;
     remove_strand(to_remove) {
-        for (let i = 0; i < this.strands.length; i++) {
-            let s = this.strands[i];
+        for (let i = 0; i < this[strands].length; i++) {
+            let s = this[strands][i];
             if (s.strand_id == to_remove) {
-                this.system_3objects.remove(s.strand_3objects);
-                for (let j = 0; j < s.elements.length; j++) {
-                    s.strand_3objects.remove(s.elements[j].visual_object);
+                this.remove(s);
+                for (let j = 0; j < s[monomers].length; j++) {
+                    s.remove(s[monomers][j]);
                     s.remove_basicElement(j);
                 }
-                scene.remove(s.strand_3objects);
+                scene.remove(s);
                 s = null;
             }
             ;
@@ -695,8 +804,39 @@ class System {
         }
     }
     ;
+    //computes the center of mass of the system
+    get_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            s[monomers].forEach((m) => {
+                com.add(m[objects][m.COM].position);
+                count += 1;
+            });
+        });
+        return (com.multiplyScalar(1 / count));
+    }
+    //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
+    strand_unweighted_com() {
+        let com = new THREE.Vector3(0, 0, 0);
+        let count = 0;
+        this[strands].forEach((s) => {
+            com.add(s.get_com());
+            count += 1;
+        });
+        return (com.multiplyScalar(1 / count));
+    }
     setDatFile(dat_file) {
         this.dat_file = dat_file;
+    }
+    translate_system(amount) {
+        this[strands].forEach((s) => {
+            s[monomers].forEach((m) => {
+                m[objects].forEach((o) => {
+                    o.position.add(amount);
+                });
+            });
+        });
     }
 }
 ;
@@ -704,25 +844,24 @@ function updatePos() {
     for (let h = 0; h < systems.length; h++) { //for current system
         let syscms = new THREE.Vector3(0, 0, 0); //system cms
         let n = systems[h].system_length(); //# of BasicElements in system
-        for (let i = 0; i < systems[h].strands.length; i++) { //for each strand
-            let n1 = systems[h].strands[i].elements.length; //for strand_3objects in system_3objects
+        for (let i = 0; i < systems[h][strands].length; i++) { //for each strand
+            let n1 = systems[h][strands][i][monomers].length; //for strand_3objects in system_3objects
             let strandcms = new THREE.Vector3(0, 0, 0); //strand cms
-            for (let j = 0; j < n1; j++) { //for each visual_object
-                let nucobj = systems[h].strands[i].elements[j].visual_object; //current nuc's visual_object
+            for (let j = 0; j < n1; j++) { //for each 
+                let nucobj = systems[h][strands][i][monomers][j]; //current nuc's 
                 let objcms = new THREE.Vector3(); //group cms
-                //sum cms of all visual_object in each system, strand, and itself
-                let bbint = systems[h].strands[i].elements[j].getCOM();
-                let tempposition = nucobj.children[bbint].position.clone();
-                objcms = tempposition; // nucobj.children[3].position; //nucobj cms
-                strandcms.add(tempposition); //nucobj.children[3].position); //strand cms
-                syscms.add(tempposition); //nucobj.children[3].position); //system cms
-                systems[h].strands[i].elements[j].pos = objcms.clone(); // set nucleotide object position to objcms
-                //elements[systems[h].strands[i].elements[j].global_id].pos = objcms.clone();
+                //sum cms of all  in each system, strand, and itself
+                let bbint = systems[h][strands][i][monomers][j].getCOM();
+                let tempposition = nucobj[objects][bbint].position.clone();
+                objcms = tempposition; //nucobj cms
+                strandcms.add(tempposition); //strand cms
+                syscms.add(tempposition); //system cms
+                systems[h][strands][i][monomers][j].pos = objcms.clone(); // set nucleotide object position to objcms
             }
             //calculate strand cms
             let mul = 1.0 / n1;
             strandcms.multiplyScalar(mul);
-            systems[h].strands[i].pos = strandcms.clone(); //set strand object position to strand cms
+            systems[h][strands][i].pos = strandcms.clone(); //set strand object position to strand cms
         }
         //calculate system cms
         let mul = 1.0 / n;
@@ -735,20 +874,12 @@ function nextConfig() {
         return;
     }
     getNewConfig(1);
-    let centering_on = document.getElementById("centering").checked;
-    if (centering_on) {
-        centerSystems();
-    }
 }
 function previousConfig() {
     if (previous_previous_reader.readyState == 1) {
         return;
     }
     getNewConfig(-1);
-    let centering_on = document.getElementById("centering").checked;
-    if (centering_on) {
-        centerSystems();
-    }
 }
 document.addEventListener("keydown", function (event) {
     switch (event.key) {
@@ -782,7 +913,8 @@ function colorOptions() {
             }));
             let index = 0;
             for (; index < elements.length; index++) {
-                elements[index].resetColor(false);
+                if (!selected_bases.has(elements[i]))
+                    elements[index].resetColor(false);
             }
             colorOptions();
             render();
@@ -911,10 +1043,11 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 function toggleLut(chkBox) {
     if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
         if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
-                elements[i].resetColor(true);
-            }
             lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
+            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
+                if (!selected_bases.has(elements[i]))
+                    elements[i].resetColor(true);
+            }
         }
         else {
             for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
@@ -922,9 +1055,9 @@ function toggleLut(chkBox) {
                     color: lutCols[i],
                     side: THREE.DoubleSide
                 });
-                for (let j = 0; j < elements[i].visual_object.children.length; j++) { //for each Mesh in each nucleotide's visual_object
+                for (let j = 0; j < elements[i][objects].length; j++) { //for each Mesh in each nucleotide's 
                     if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh = elements[i].visual_object.children[j];
+                        let tmesh = elements[i][objects][j];
                         tmesh.material = tmeshlamb;
                     }
                 }
@@ -972,77 +1105,73 @@ function moveWithinBox(pos, dpos) {
 // Calculate center of mass taking periodic boundary conditions into account:
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
-function centerSystems() {
-    /*
-        //get center of mass for all systems
-        let cms = new THREE.Vector3(0, 0, 0);
-        for (let i = 0; i < elements.length; i++) {
-            let tmp_pos = new THREE.Vector3;
-            tmp_pos.setFromMatrixPosition(elements[i].visual_object.children[COM].matrixWorld);
-            cms.add(tmp_pos);
-        }
-        let mul = 1.0 / elements.length;
-        cms.multiplyScalar(mul * -1);
-    */
+/*function centerSystems() { //centers systems based on cms calculated for world (all systems)
+    
     // Create one averaging variable for each dimension, representing that 1D
-    // interval as a unit circle in 2D (with the circumference being the 
+    // interval as a unit circle in 2D (with the circumference being the
     // bounding box side length)
-    let cm_x = new THREE.Vector2(), cm_y = new THREE.Vector2(), cm_z = new THREE.Vector2();
-    for (let i = 0; i < elements.length; i++) {
-        let bbint = elements[i].getCOM();
-        let p = elements[i].visual_object.children[bbint].position.clone();
-        // Shift coordinates so that the origin is in the corner of the 
-        // bounding box, instead of the centre.
-        p.add(new THREE.Vector3().addScalar(1.5 * box));
-        p.x %= box;
-        p.y %= box;
-        p.z %= box;
-        // Calculate positions on unit circle for each dimension and that to the
-        // sum.
-        let angle = p.clone().multiplyScalar(2 * Math.PI / box);
-        cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
-        cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
-        cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
-    }
-    // Divide center of mass sums to get the averages
-    cm_x.divideScalar(elements.length);
-    cm_y.divideScalar(elements.length);
-    cm_z.divideScalar(elements.length);
-    // Convert back from unit circle coordinates into x,y,z
-    let cms = new THREE.Vector3(box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI), box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI));
-    // Shift back origin to center of the box
-    cms.sub(new THREE.Vector3().addScalar(box / 2));
-    // Change nucleotide positions by the center of mass
-    for (let i = 0; i < elements.length; i++) {
-        for (let j = 0; j < elements[i].visual_object.children.length; j++) {
-            /*
-                        elements[i].visual_object.children[j].position.add(cms);
-            */
-            let p = elements[i].visual_object.children[j].position;
-            // Shift with centre of mass
-            p.add(cms);
-            // Keep positions within bounding box
+    let checkbox = document.getElementById("centering") as HTMLInputElement;
+    if (checkbox.checked) {
+        let cm_x = new THREE.Vector2(),
+            cm_y = new THREE.Vector2(),
+            cm_z = new THREE.Vector2();
+
+        for (let i = 0; i < elements.length; i++) {
+            let bbint: number = elements[i].getCOM();
+            let p = elements[i][objects][bbint].position.clone();
+            // Shift coordinates so that the origin is in the corner of the
+            // bounding box, instead of the centre.
             p.add(new THREE.Vector3().addScalar(1.5 * box));
-            p.x %= box;
-            p.y %= box;
-            p.z %= box;
-            p.sub(new THREE.Vector3().addScalar(0.75 * box));
-            elements[i].visual_object.children[j].updateMatrix();
+            p.x %= box; p.y %= box; p.z %= box;
+
+            // Calculate positions on unit circle for each dimension and that to the
+            // sum.
+            let angle = p.clone().multiplyScalar(2 * Math.PI / box);
+            cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
+            cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
+            cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
+        }
+
+        // Divide center of mass sums to get the averages
+        cm_x.divideScalar(elements.length);
+        cm_y.divideScalar(elements.length);
+        cm_z.divideScalar(elements.length);
+
+        // Convert back from unit circle coordinates into x,y,z
+        let cms = new THREE.Vector3(
+            box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI),
+            box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI),
+            box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI)
+        );
+        // Shift back origin to center of box
+        cms.sub(new THREE.Vector3().addScalar(box / 2));
+
+        // Change nucleotide positions by the center of mass
+        for (let i = 0; i < elements.length; i++) {
+            for (let j = 0; j < elements[i][objects].length; j++) {
+                let p = elements[i][objects][j].position;
+                // Shift with centre of mass
+                p.add(cms);
+                // Keep positions within bounding box
+                p.add(new THREE.Vector3().addScalar(1.5 * box));
+                p.x %= box; p.y %= box; p.z %= box;
+                p.sub(new THREE.Vector3().addScalar(0.75 * box));
+            }
         }
     }
     render();
-}
+}*/
 //changes resolution on the nucleotide visual objects
 function setResolution(resolution) {
     //change mesh_setup with the given resolution
-    //backbone_geometry = new THREE.SphereBufferGeometry(.2, resolution, resolution);
-    nucleoside_geometry = new THREE.SphereBufferGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
-    connector_geometry = new THREE.CylinderBufferGeometry(.1, .1, 1, Math.max(2, resolution));
+    backbone_geometry = new THREE.SphereGeometry(.2, resolution, resolution);
+    nucleoside_geometry = new THREE.SphereGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
+    connector_geometry = new THREE.CylinderGeometry(.1, .1, 1, Math.max(2, resolution));
     //update all elements and hide some meshes if resolution is low enough
     for (let i = 0; i < elements.length; i++) {
-        let nuc_group = elements[i].visual_object.children;
+        let nuc_group = elements[i][objects];
         nuc_group[elements[i].BACKBONE].visible = resolution > 1;
-        //nuc_group[elements[i].BACKBONE].geometry = backbone_geometry;
+        nuc_group[elements[i].BACKBONE].geometry = backbone_geometry;
         nuc_group[elements[i].NUCLEOSIDE].visible = resolution > 1;
         nuc_group[elements[i].NUCLEOSIDE].geometry = nucleoside_geometry;
         if (nuc_group[elements[i].BB_NS_CON]) {
@@ -1059,7 +1188,6 @@ function toggleSideNav(button) {
     let hidden = "show";
     let visible = "hide";
     let tabcontent = document.getElementsByClassName("tabcontent");
-    let allNone = false;
     if (button.innerText == hidden) {
         tabcontent[0].style.display = "block";
         button.innerHTML = visible;

@@ -12,10 +12,10 @@ function makeTopFile(): number {
     let old_system: number
     let current_strand: number = 1;
     for (let i = 0; i < systems.length; i++) { //for each system
-        for (let j = 0; j < systems[i].strands.length; j++) { //for each strand in current system
+        for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in current system
             tot_strands++;
             let strand_len: number = 0; //current strand length
-            for (let k = 0; k < systems[i].strands[j].elements.length; k++) { //for each nucleotide in current strand
+            for (let k = 0; k < systems[i][strands][j][monomers].length; k++) { //for each nucleotide in current strand
                 tot_nuc++;
                 strand_len++;
             }
