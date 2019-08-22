@@ -10,7 +10,7 @@ function translate(system, box_option, center_option) {
     let diff = new THREE.Vector3;
     for (let i = 0; i < system[strands].length; i++) {
         switch (box_option) { //the cases are exactly the same, but the calculation takes place at a different point in the for loop nest
-            case "Nucleotide":
+            case "Monomer":
                 for (let j = 0; j < system[strands][i][monomers].length; j++) {
                     //calculate how many boxes the inboxed structure needs to be moved over
                     diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
@@ -80,7 +80,7 @@ function dumb_boxing(system, box_option) {
             diff.multiplyScalar(box * -1);
         }
         for (let j = 0; j < system[strands][i][monomers].length; j++) {
-            if (box_option === "Nucleotide") {
+            if (box_option === "Monomer") {
                 diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
                 diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
             }

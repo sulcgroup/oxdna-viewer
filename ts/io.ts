@@ -6,7 +6,7 @@ class TopReader extends FileReader{
     elements: BasicElement[];
 
     nuc_local_id: number = 0;
-    last_strand: number = 1; //strands are 1-indexed in oxDNA .top files
+    last_strand: number; //strands are 1-indexed in oxDNA .top files
     neighbor3: number;
 
 
@@ -24,6 +24,7 @@ class TopReader extends FileReader{
             
             let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
             let str_id = parseInt(l0[0]);
+            this.last_strand = str_id;
             let current_strand: Strand = this.system.create_Strand(str_id);
             this.system.add_strand(current_strand);
             

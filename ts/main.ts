@@ -572,6 +572,7 @@ class AminoAcid extends BasicElement {
     constructor(global_id: number, parent: Strand) {
         super(global_id, parent);
         this.SP_CON = 1;
+        this.COM = 0;
         this.element_type = AA;
     };
     elem_to_material(elem: number | string): THREE.MeshLambertMaterial {
