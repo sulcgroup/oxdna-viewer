@@ -1,19 +1,29 @@
 /// <reference path="./three/index.d.ts" />
 
 // base geometry 
-var intersectsScene = new THREE.Scene()
-var instanced_backbone = new THREE.InstancedBufferGeometry()
-window['instanced_backbone'] = instanced_backbone;
-var instanced_connector = new THREE.InstancedBufferGeometry()
-var backbone_geometry = new THREE.SphereBufferGeometry(.2,10,10);
+//var intersectsScene = new THREE.Scene()
+//var instanced_backbone = new THREE.InstancedBufferGeometry()
+//window['instanced_backbone'] = instanced_backbone;
+//var instanced_connector = new THREE.InstancedBufferGeometry()
+//var backbone_geometry = new THREE.SphereBufferGeometry(.2,10,10);
 var nucleoside_geometry = new THREE.SphereBufferGeometry(.3,10,10).applyMatrix(
         new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
 var connector_geometry = new THREE.CylinderBufferGeometry(.1,.1,1, 8);
 
-Object.keys(backbone_geometry.attributes).forEach(attributeName=>{
-    instanced_backbone.attributes[attributeName] = backbone_geometry.attributes[attributeName]
-})
-instanced_backbone.index = backbone_geometry.index;
+//Object.keys(backbone_geometry.attributes).forEach(attributeName=>{
+//    instanced_backbone.attributes[attributeName] = backbone_geometry.attributes[attributeName]
+//})
+//instanced_backbone.index = backbone_geometry.index;
+
+var instanced_backbone = new THREE.InstancedBufferGeometry();
+instanced_backbone.copy(new THREE.SphereBufferGeometry(.2,10,10));
+
+var instance_material = new THREE.MeshLambertMaterial( {
+    vertexColors: THREE.VertexColors
+});
+
+instance_material.defines = instance_material.defines || {};
+instance_material.defines[ 'INSTANCED' ] = "";
 
 var backbone_materials = [
     new THREE.MeshLambertMaterial({
@@ -38,6 +48,8 @@ var backbone_materials = [
         color: 0x517dc7,
         side: THREE.DoubleSide,
     }),];
+
+
 
 // define nucleoside colors: grey OR traditional colors
 var nucleoside_materials = [

@@ -161,7 +161,8 @@ previous_previous_chunk, //Space to store the chunks
 previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad linebreaks caused by splitting the trajectory bitwise
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
 previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
-box; //box size for system
+box, //box size for system
+INSTANCES, bb_offsets, colors, scales;
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -418,11 +419,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         //get nucleotide information
         // consume a new line
         let l = lines[i].split(" ");
-        // shift coordinates such that the 1st base of the
-        // 1st strand is @ origin
-        let x = parseFloat(l[0]), // - fx,
-        y = parseFloat(l[1]), // - fy,
-        z = parseFloat(l[2]); // - fz;
+        let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         //current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
         current_nucleotide.calculatePositions(x, y, z, l);
         //catch the two possible cases for strand ends (no connection or circular)
@@ -434,14 +431,25 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             }
         }
     }
-    for (let i = 0; i < elements.length; i++) {
-        elements[i].recalcPos(); //add any other sp connectors - used for circular strands
+    console.log(bb_offsets);
+    for (i = 0; i < bb_offsets.length; i++) {
+        let p = bb_offsets[i];
+        p = Math.floor(p / box) * box * -1;
+        bb_offsets[i] = bb_offsets[i] + p;
     }
+    instanced_backbone.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
+    instanced_backbone.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(colors, 3));
+    instanced_backbone.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(scales, 1));
+    var backbone = new THREE.Mesh(instanced_backbone, instance_material);
+    scene.add(backbone);
+    //for (let i = 0; i < elements.length; i++) {
+    //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands
+    //}
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
-    for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-        backbones.push(elements[i][objects][elements[i].BACKBONE]);
-    }
+    //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
+    //    backbones.push(elements[i][objects][elements[i].BACKBONE]);
+    //}
     scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();

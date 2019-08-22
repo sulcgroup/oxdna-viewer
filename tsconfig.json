@@ -19,7 +19,8 @@
         "./ts/translation.ts",
         "./ts/adhoc_api.ts",
         "./ts/io.ts",
-        "./ts/PBC_switchbox.ts"
+        "./ts/PBC_switchbox.ts",
+        "./ts/instancing.ts"
         //,
         //"./js/cubes.ts",
         //"./js/rotate.ts"

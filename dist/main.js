@@ -26,11 +26,11 @@ class BasicElement extends THREE.Group {
     constructor(global_id, parent) {
         super();
         //: THREE.Group; //contains 4 THREE.Mesh
-        this.BACKBONE = 0;
-        this.NUCLEOSIDE = 1;
-        this.BB_NS_CON = 2;
-        this.COM = 3;
-        this.SP_CON = 4;
+        //BACKBONE: number = 0;
+        this.NUCLEOSIDE = 0;
+        this.BB_NS_CON = 1;
+        this.COM = 2;
+        //SP_CON: number = 3;
         this.element_type = -1;
         this.global_id = global_id;
         this.parent = parent;
@@ -50,7 +50,7 @@ class BasicElement extends THREE.Group {
     }
     ;
     getCOM() {
-        return this.BACKBONE;
+        return this.COM;
     }
     ;
     //abstract rotate(): void;
@@ -97,6 +97,9 @@ class Nucleotide extends BasicElement {
         x_bb = bbpos.x;
         y_bb = bbpos.y;
         z_bb = bbpos.z;
+        bb_offsets[this.global_id * 3] = x_bb;
+        bb_offsets[this.global_id * 3 + 1] = y_bb;
+        bb_offsets[this.global_id * 3 + 2] = z_bb;
         // compute nucleoside cm
         let x_ns = x + 0.4 * x_a1, y_ns = y + 0.4 * y_a1, z_ns = z + 0.4 * z_a1;
         //compute connector position
@@ -110,7 +113,7 @@ class Nucleotide extends BasicElement {
         new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()));
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
-        let backbone, nucleoside, con;
+        let nucleoside, con;
         // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
@@ -123,7 +126,11 @@ class Nucleotide extends BasicElement {
         else {
             material = this.strand_to_material(this.parent.strand_id);
         }
-        backbone = new THREE.Mesh(backbone_geometry, material); //sphere - sugar phosphate backbone
+        colors[this.global_id * 3] = material.color.r;
+        colors[this.global_id * 3 + 1] = material.color.g;
+        colors[this.global_id * 3 + 2] = material.color.b;
+        scales[this.global_id] = 1;
+        //sphere - sugar phosphate backbone
         nucleoside = new THREE.Mesh(nucleoside_geometry, this.elem_to_material(this.type)); //sphere - nucleotide
         con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing  group center of mass  
@@ -132,11 +139,11 @@ class Nucleotide extends BasicElement {
         nucleoside.applyMatrix(base_rotation);
         con.applyMatrix(rotation_con);
         //set positions and add to object (group - )
-        backbone.position.set(x_bb, y_bb, z_bb);
+        //backbone.position.set(x_bb, y_bb, z_bb);
         nucleoside.position.set(x_ns, y_ns, z_ns);
         con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
-        this.add(backbone);
+        //this.add(backbone);
         this.add(nucleoside);
         this.add(con);
         this.add(posObj);
@@ -1164,9 +1171,9 @@ function moveWithinBox(pos, dpos) {
 //changes resolution on the nucleotide visual objects
 function setResolution(resolution) {
     //change mesh_setup with the given resolution
-    backbone_geometry = new THREE.SphereGeometry(.2, resolution, resolution);
-    nucleoside_geometry = new THREE.SphereGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
-    connector_geometry = new THREE.CylinderGeometry(.1, .1, 1, Math.max(2, resolution));
+    backbone_geometry = new THREE.SphereBufferGeometry(.2, resolution, resolution);
+    nucleoside_geometry = new THREE.SphereBufferGeometry(.3, resolution, resolution).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
+    connector_geometry = new THREE.CylinderBufferGeometry(.1, .1, 1, Math.max(2, resolution));
     //update all elements and hide some meshes if resolution is low enough
     for (let i = 0; i < elements.length; i++) {
         let nuc_group = elements[i][objects];

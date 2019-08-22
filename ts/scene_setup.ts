@@ -53,7 +53,6 @@ declare var CCapture: any;
 
 var canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
 var renderer = new THREE.WebGLRenderer({ //create renderer
-    preserveDrawingBuffer: true,
     alpha: true,
     antialias: true,
     canvas: canvas

@@ -10,7 +10,7 @@ class TopReader extends FileReader{
     neighbor3: number;
 
 
-    constructor(top_file: File, system :System, elements: BasicElement[]){
+    constructor(top_file: File, system: System, elements: BasicElement[]){
         super();
         this.top_file = top_file;
         this.system = system;
@@ -87,6 +87,12 @@ class TopReader extends FileReader{
             systems.push(this.system); //add system to Systems[]
             nuc_count = this.elements.length;
             conf_len = nuc_count + 3;
+
+            //set up instancing data arrays
+            INSTANCES = nuc_count;
+            bb_offsets = new Float32Array(INSTANCES * 3);
+            colors = new Float32Array(INSTANCES*3);
+            scales = new Float32Array( INSTANCES * 1 );
 
         }})(this.top_file);
     
