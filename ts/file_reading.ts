@@ -495,6 +495,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     instanced_backbone.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute( scales, 1 ) );
     
     var backbone = new THREE.Mesh(instanced_backbone, instance_material);
+    backbone.frustumCulled = false;
 
     scene.add(backbone);
 

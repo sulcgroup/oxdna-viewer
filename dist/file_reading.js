@@ -441,6 +441,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     instanced_backbone.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(colors, 3));
     instanced_backbone.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(scales, 1));
     var backbone = new THREE.Mesh(instanced_backbone, instance_material);
+    backbone.frustumCulled = false;
     scene.add(backbone);
     //for (let i = 0; i < elements.length; i++) {
     //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands
