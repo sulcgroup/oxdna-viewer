@@ -191,6 +191,9 @@ var approx_dat_len: number,
     con_offsets: Float32Array,
     con_rotation: Float32Array,
     con_scales: Float32Array,
+    bbcon_offsets: Float32Array,
+    bbcon_rotation: Float32Array,
+    bbcon_scales: Float32Array,
     bb_colors: Float32Array,
     ns_colors: Float32Array,
     scales: Float32Array;
@@ -501,6 +504,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         p = con_offsets[i] as number;
         p =  Math.floor(p/box) * box * -1;
         con_offsets[i] = con_offsets[i] + p;
+
+        p = bbcon_offsets[i] as number;
+        p =  Math.floor(p/box) * box * -1;
+        bbcon_offsets[i] = bbcon_offsets[i] + p;
     }
 
     instanced_backbone.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
@@ -516,7 +523,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     instanced_connector.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(con_offsets, 3));
     instanced_connector.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(con_rotation, 4));  
     instanced_connector.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
-    instanced_connector.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(con_scales, 3));   
+    instanced_connector.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(con_scales, 3));  
+    
+    instanced_bbconnector.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(bbcon_offsets, 3));
+    instanced_bbconnector.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(bbcon_rotation, 4));  
+    instanced_bbconnector.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
+    instanced_bbconnector.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(bbcon_scales, 3));   
 
     var backbone = new THREE.Mesh(instanced_backbone, instance_material);
     backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
@@ -527,16 +539,20 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     var connector = new THREE.Mesh(instanced_connector, instance_material);
     connector.frustumCulled = false;
 
+    var bbconnector = new THREE.Mesh(instanced_bbconnector, instance_material);
+    bbconnector.frustumCulled = false;
+
     scene.add(backbone);
     scene.add(nucleoside);
     scene.add(connector);
+    scene.add(bbconnector);
 
     //for (let i = 0; i < elements.length; i++) {
     //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands
     //}
 
     //bring things in the box based on the PBC/centering menus
-    PBC_switchbox(systems[sys_count]);
+    //PBC_switchbox(systems[sys_count]);
 
     //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
     //    backbones.push(elements[i][objects][elements[i].BACKBONE]);

@@ -72,10 +72,10 @@ lights[1] = new THREE.PointLight(0xffffff, 0.85, 0);
 lights[2] = new THREE.PointLight(0xffffff, 0.85, 0);
 lights[3] = new THREE.PointLight(0xffffff, 0.85, 0);
 
-lights[0].position.set(0, 0, -200);
-lights[1].position.set(94, 163, 67);
-lights[2].position.set(94, -163, 67);
-lights[3].position.set(-189, 0, 67);
+lights[0].position.set(0, 0, 4*-200);
+lights[1].position.set(4*94, 4*163, 4*67);
+lights[2].position.set(4*94, 4*-163, 4*67);
+lights[3].position.set(4*-189, 0, 4*67);
 
 scene.add(lights[0]);
 scene.add(lights[1]);

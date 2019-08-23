@@ -18,6 +18,8 @@ var instanced_nucleoside = new THREE.InstancedBufferGeometry();
 instanced_nucleoside.copy(new THREE.SphereBufferGeometry(.3, 10, 10).applyMatrix(new THREE.Matrix4().makeScale(0.7, 0.3, 0.7)));
 var instanced_connector = new THREE.InstancedBufferGeometry();
 instanced_connector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
+var instanced_bbconnector = new THREE.InstancedBufferGeometry();
+instanced_bbconnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
 var instance_material = new THREE.MeshLambertMaterial({
     vertexColors: THREE.VertexColors
 });

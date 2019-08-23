@@ -185,7 +185,7 @@ class Nucleotide extends BasicElement {
         //this.add(backbone);
         //this.add(nucleoside);
         //this.add(con);
-        this.add(posObj);
+        //this.add(posObj);
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
@@ -194,13 +194,52 @@ class Nucleotide extends BasicElement {
             // easy periodic boundary condition fix  
             // if the bonds are to long just don't add them 
             if (sp_len <= 500) {
-                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()));
-                let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-                sp.applyMatrix(rotation_sp); //set rotation
-                sp.position.set(x_sp, y_sp, z_sp);
-                this.add(sp); //add to visual_object
+                /*let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+                    new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                    )
+                );*/
+                let rotation_sp = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
+                bbcon_offsets[this.global_id * 3] = x_sp;
+                bbcon_offsets[this.global_id * 3 + 1] = y_sp;
+                bbcon_offsets[this.global_id * 3 + 2] = z_sp;
+                bbcon_rotation[this.global_id * 4] = rotation_sp.w;
+                bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
+                bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
+                bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
+                bbcon_scales[this.global_id * 3] = 1;
+                bbcon_scales[this.global_id * 3 + 1] = sp_len;
+                bbcon_scales[this.global_id * 3 + 2] = 1;
+                //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
+                //sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
+                //sp.applyMatrix(rotation_sp); //set rotation
+                //sp.position.set(x_sp, y_sp, z_sp);
+                //this.add(sp); //add to visual_object
             }
+            else { // since it would be bad indexing to not have a 1:1 correlation between matrix size and sp properties
+                bbcon_offsets[this.global_id * 3] = 0;
+                bbcon_offsets[this.global_id * 3 + 1] = 0;
+                bbcon_offsets[this.global_id * 3 + 2] = 0;
+                bbcon_rotation[this.global_id * 4] = 0;
+                bbcon_rotation[this.global_id * 4 + 1] = 0;
+                bbcon_rotation[this.global_id * 4 + 2] = 0;
+                bbcon_rotation[this.global_id * 4 + 3] = 0;
+                bbcon_scales[this.global_id * 3] = 0;
+                bbcon_scales[this.global_id * 3 + 1] = 0;
+                bbcon_scales[this.global_id * 3 + 2] = 0;
+            }
+        }
+        else {
+            bbcon_offsets[this.global_id * 3] = 0;
+            bbcon_offsets[this.global_id * 3 + 1] = 0;
+            bbcon_offsets[this.global_id * 3 + 2] = 0;
+            bbcon_rotation[this.global_id * 4] = 0;
+            bbcon_rotation[this.global_id * 4 + 1] = 0;
+            bbcon_rotation[this.global_id * 4 + 2] = 0;
+            bbcon_rotation[this.global_id * 4 + 3] = 0;
+            bbcon_scales[this.global_id * 3] = 0;
+            bbcon_scales[this.global_id * 3 + 1] = 0;
+            bbcon_scales[this.global_id * 3 + 2] = 0;
         }
         /*if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
             let x_sp = (x_bb + this.neighbor5.visual_object.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
