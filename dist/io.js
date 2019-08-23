@@ -71,21 +71,21 @@ class TopReader extends FileReader {
                 nuc_count = this.elements.length;
                 conf_len = nuc_count + 3;
                 //set up instancing data arrays
-                INSTANCES = nuc_count;
-                bb_offsets = new Float32Array(INSTANCES * 3);
-                bb_rotation = new Float32Array(INSTANCES * 4);
-                ns_offsets = new Float32Array(INSTANCES * 3);
-                ns_rotation = new Float32Array(INSTANCES * 4);
-                con_offsets = new Float32Array(INSTANCES * 3);
-                con_rotation = new Float32Array(INSTANCES * 4);
-                bbcon_offsets = new Float32Array(INSTANCES * 3);
-                bbcon_rotation = new Float32Array(INSTANCES * 4);
-                bbcon_scales = new Float32Array(INSTANCES * 3); //we're going to set this to 0 if the con shouldn't exist. 
-                cm_offsets = new Float32Array(INSTANCES * 3); //is this needed?  It worked without it.
-                bb_colors = new Float32Array(INSTANCES * 3);
-                ns_colors = new Float32Array(INSTANCES * 3);
-                scales = new Float32Array(INSTANCES * 3);
-                con_scales = new Float32Array(INSTANCES * 3);
+                this.system.INSTANCES = nuc_count;
+                this.system.bb_offsets = new Float32Array(this.system.INSTANCES * 3);
+                this.system.bb_rotation = new Float32Array(this.system.INSTANCES * 4);
+                this.system.ns_offsets = new Float32Array(this.system.INSTANCES * 3);
+                this.system.ns_rotation = new Float32Array(this.system.INSTANCES * 4);
+                this.system.con_offsets = new Float32Array(this.system.INSTANCES * 3);
+                this.system.con_rotation = new Float32Array(this.system.INSTANCES * 4);
+                this.system.bbcon_offsets = new Float32Array(this.system.INSTANCES * 3);
+                this.system.bbcon_rotation = new Float32Array(this.system.INSTANCES * 4);
+                this.system.bbcon_scales = new Float32Array(this.system.INSTANCES * 3);
+                this.system.cm_offsets = new Float32Array(this.system.INSTANCES * 3);
+                this.system.bb_colors = new Float32Array(this.system.INSTANCES * 3);
+                this.system.ns_colors = new Float32Array(this.system.INSTANCES * 3);
+                this.system.scales = new Float32Array(this.system.INSTANCES * 3);
+                this.system.con_scales = new Float32Array(this.system.INSTANCES * 3);
             };
         })(this.top_file);
         this.top_file = top_file;

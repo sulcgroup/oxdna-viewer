@@ -173,49 +173,54 @@ class Nucleotide extends BasicElement {
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        //fill backbone positioning array
-        bb_offsets[this.global_id * 3] = x_bb;
-        bb_offsets[this.global_id * 3 + 1] = y_bb;
-        bb_offsets[this.global_id * 3 + 2] = z_bb;
+        // we keep track of cm position, even though we don't draw anything with it.
+        this.parent.parent.cm_offsets[this.global_id * 3] = x;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
 
-        //backbones are spheres and therefore rotationally invariant
-        bb_rotation[this.global_id * 4] = 0;
-        bb_rotation[this.global_id * 4 + 1] = 0;
-        bb_rotation[this.global_id * 4 + 2] = 0;
-        bb_rotation[this.global_id * 4 + 3] = 0;
+        // fill backbone positioning array
+        this.parent.parent.bb_offsets[this.global_id * 3] = x_bb;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y_bb;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z_bb;
+
+        // backbones are spheres and therefore rotationally invariant
+        this.parent.parent.bb_rotation[this.global_id * 4] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 1] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 2] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 3] = 0;
 
         // fill nucleoside positioning array
-        ns_offsets[this.global_id * 3] = x_ns;
-        ns_offsets[this.global_id * 3 + 1] = y_ns;
-        ns_offsets[this.global_id * 3 + 2] = z_ns;
+        this.parent.parent.ns_offsets[this.global_id * 3] = x_ns;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y_ns;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z_ns;
         
         // fill nucleoside rotation quaternion
-        ns_rotation[this.global_id * 4] = base_rotation.w;
-        ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
-        ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
-        ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
+        this.parent.parent.ns_rotation[this.global_id * 4] = base_rotation.w;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
 
         // fill connector positioning array
-        con_offsets[this.global_id * 3] = x_con;
-        con_offsets[this.global_id * 3 + 1] = y_con;
-        con_offsets[this.global_id * 3 + 2] = z_con;
+        this.parent.parent.con_offsets[this.global_id * 3] = x_con;
+        this.parent.parent.con_offsets[this.global_id * 3 + 1] = y_con;
+        this.parent.parent.con_offsets[this.global_id * 3 + 2] = z_con;
         
         // fill connector rotation quaternion
-        con_rotation[this.global_id * 4] = rotation_con.w;
-        con_rotation[this.global_id * 4 + 1] = rotation_con.z;
-        con_rotation[this.global_id * 4 + 2] = rotation_con.y;
-        con_rotation[this.global_id * 4 + 3] = rotation_con.x;
+        this.parent.parent.con_rotation[this.global_id * 4] = rotation_con.w;
+        this.parent.parent.con_rotation[this.global_id * 4 + 1] = rotation_con.z;
+        this.parent.parent.con_rotation[this.global_id * 4 + 2] = rotation_con.y;
+        this.parent.parent.con_rotation[this.global_id * 4 + 3] = rotation_con.x;
 
         // fill sugar-phosphate positioning array
-        bbcon_offsets[this.global_id * 3] = x_sp;
-        bbcon_offsets[this.global_id * 3 + 1] = y_sp;
-        bbcon_offsets[this.global_id * 3 + 2] = z_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
 
         // fill sugar-phosphate rotation quaternion
-        bbcon_rotation[this.global_id * 4] = rotation_sp.w;
-        bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
-        bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
-        bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
+        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
 
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
 
@@ -229,29 +234,29 @@ class Nucleotide extends BasicElement {
         }
 
         //fill color array for backbones and connectors
-        bb_colors[this.global_id * 3] = color.r;
-        bb_colors[this.global_id * 3 + 1] = color.g;
-        bb_colors[this.global_id * 3 + 2] = color.b;
+        this.parent.parent.bb_colors[this.global_id * 3] = color.r;
+        this.parent.parent.bb_colors[this.global_id * 3 + 1] = color.g;
+        this.parent.parent.bb_colors[this.global_id * 3 + 2] = color.b;
 
         // determine the nucleoside color and fill the nucleoside color array
         color = this.elem_to_color(this.type);
-        ns_colors[this.global_id * 3] = color.r;
-        ns_colors[this.global_id * 3 + 1] = color.g;
-        ns_colors[this.global_id * 3 + 2] = color.b;
+        this.parent.parent.ns_colors[this.global_id * 3] = color.r;
+        this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
+        this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
 
         // most things are all the same size
-        scales[ this.global_id * 3] = 1;
-        scales[ this.global_id * 3 + 1] = 1;
-        scales[ this.global_id * 3 + 2] = 1;
+        this.parent.parent.scales[ this.global_id * 3] = 1;
+        this.parent.parent.scales[ this.global_id * 3 + 1] = 1;
+        this.parent.parent.scales[ this.global_id * 3 + 2] = 1;
 
         // except connectors, their Y axis depends on what they're connecting.
-        con_scales[ this.global_id * 3] = 1;
-        con_scales[ this.global_id * 3 + 1] = this.bb_ns_distance;
-        con_scales[ this.global_id * 3 + 2] = 1;
+        this.parent.parent.con_scales[ this.global_id * 3] = 1;
+        this.parent.parent.con_scales[ this.global_id * 3 + 1] = this.bb_ns_distance;
+        this.parent.parent.con_scales[ this.global_id * 3 + 2] = 1;
 
-        bbcon_scales[ this.global_id * 3] = 1;
-        bbcon_scales[ this.global_id * 3 + 1] = sp_len;
-        bbcon_scales[ this.global_id * 3 + 2] = 1;
+        this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
+        this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
+        this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
 
         //let posObj = new THREE.Mesh; //Mesh (no shape) storing  group center of mass  
         
@@ -926,9 +931,25 @@ class System extends THREE.Group {
     system_id: number;
     CoM: THREE.Vector3; //System center of mass
     global_start_id: number; //1st nucleotide's global_id
-    //system_3objects: THREE.Group; //contains strand_3objects
     dat_file;
     pos: THREE.Vector3; //system position
+
+    INSTANCES: number;
+    bb_offsets: Float32Array;
+    bb_rotation: Float32Array;
+    ns_offsets: Float32Array;
+    ns_rotation: Float32Array;
+    con_offsets: Float32Array;
+    con_rotation: Float32Array;
+    bbcon_offsets: Float32Array;
+    bbcon_rotation: Float32Array;
+    bbcon_scales: Float32Array; //we're going to set this to 0 if the con shouldn't exist. 
+    cm_offsets: Float32Array; //how accurately do we want to calculate means and such?  this could just be the backbones.
+    bb_colors: Float32Array;
+    ns_colors: Float32Array;
+    scales: Float32Array;
+    con_scales: Float32Array;
+
     constructor(id, start_id) {
         super();
         this.system_id = id;

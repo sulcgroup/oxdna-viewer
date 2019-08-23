@@ -161,8 +161,7 @@ previous_previous_chunk, //Space to store the chunks
 previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad linebreaks caused by splitting the trajectory bitwise
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
 previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
-box, //box size for system
-INSTANCES, bb_offsets, bb_rotation, ns_offsets, ns_rotation, con_offsets, con_rotation, con_scales, bbcon_offsets, bbcon_rotation, bbcon_scales, cm_offsets, bb_colors, ns_colors, scales;
+box; //box size for system
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -431,51 +430,55 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             }
         }
     }
-    for (i = 0; i < bb_offsets.length; i++) {
-        let p = bb_offsets[i];
+    for (i = 0; i < system.bb_offsets.length; i++) {
+        let p = system.bb_offsets[i];
         p = Math.floor(p / box) * box * -1;
-        bb_offsets[i] = bb_offsets[i] + p;
-        p = ns_offsets[i];
+        system.bb_offsets[i] = system.bb_offsets[i] + p;
+        p = system.ns_offsets[i];
         p = Math.floor(p / box) * box * -1;
-        ns_offsets[i] = ns_offsets[i] + p;
-        p = con_offsets[i];
+        system.ns_offsets[i] = system.ns_offsets[i] + p;
+        p = system.con_offsets[i];
         p = Math.floor(p / box) * box * -1;
-        con_offsets[i] = con_offsets[i] + p;
-        p = bbcon_offsets[i];
+        system.con_offsets[i] = system.con_offsets[i] + p;
+        p = system.bbcon_offsets[i];
         p = Math.floor(p / box) * box * -1;
-        bbcon_offsets[i] = bbcon_offsets[i] + p;
+        system.bbcon_offsets[i] = system.bbcon_offsets[i] + p;
     }
     //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
     //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     //This will force the gpu to check the vectors again when redrawing.
-    instanced_backbone.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
-    instanced_backbone.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(bb_rotation, 4));
-    instanced_backbone.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
-    instanced_backbone.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(scales, 3));
-    instanced_nucleoside.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(ns_offsets, 3));
-    instanced_nucleoside.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(ns_rotation, 4));
-    instanced_nucleoside.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(ns_colors, 3));
-    instanced_nucleoside.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(scales, 3));
-    instanced_connector.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(con_offsets, 3));
-    instanced_connector.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(con_rotation, 4));
-    instanced_connector.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
-    instanced_connector.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(con_scales, 3));
-    instanced_bbconnector.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(bbcon_offsets, 3));
-    instanced_bbconnector.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(bbcon_rotation, 4));
-    instanced_bbconnector.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
-    instanced_bbconnector.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(bbcon_scales, 3));
-    var backbone = new THREE.Mesh(instanced_backbone, instance_material);
-    backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
-    var nucleoside = new THREE.Mesh(instanced_nucleoside, instance_material);
-    nucleoside.frustumCulled = false;
-    var connector = new THREE.Mesh(instanced_connector, instance_material);
-    connector.frustumCulled = false;
-    var bbconnector = new THREE.Mesh(instanced_bbconnector, instance_material);
-    bbconnector.frustumCulled = false;
-    scene.add(backbone);
-    scene.add(nucleoside);
-    scene.add(connector);
-    scene.add(bbconnector);
+    system.backbone_geometry = instanced_backbone.clone();
+    system.nucleoside_geometry = instanced_nucleoside.clone();
+    system.connector_geometry = instanced_connector.clone();
+    system.sp_geometry = instanced_bbconnector.clone();
+    system.backbone_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bb_offsets, 3));
+    system.backbone_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bb_rotation, 4));
+    system.backbone_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
+    system.backbone_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3));
+    system.nucleoside_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.ns_offsets, 3));
+    system.nucleoside_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.ns_rotation, 4));
+    system.nucleoside_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.ns_colors, 3));
+    system.nucleoside_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3));
+    system.connector_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.con_offsets, 3));
+    system.connector_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.con_rotation, 4));
+    system.connector_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
+    system.connector_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.con_scales, 3));
+    system.sp_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bbcon_offsets, 3));
+    system.sp_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bbcon_rotation, 4));
+    system.sp_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
+    system.sp_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));
+    system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
+    system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
+    system.nucleoside = new THREE.Mesh(system.nucleoside_geometry, instance_material);
+    system.nucleoside.frustumCulled = false;
+    system.connector = new THREE.Mesh(system.connector_geometry, instance_material);
+    system.connector.frustumCulled = false;
+    system.bbconnector = new THREE.Mesh(system.sp_geometry, instance_material);
+    system.bbconnector.frustumCulled = false;
+    scene.add(system.backbone);
+    scene.add(system.nucleoside);
+    scene.add(system.connector);
+    scene.add(system.bbconnector);
     //for (let i = 0; i < elements.length; i++) {
     //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands
     //}
