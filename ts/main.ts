@@ -41,9 +41,9 @@ class BasicElement extends THREE.Group{
     parent: Strand;
     //: THREE.Group; //contains 4 THREE.Mesh
     //BACKBONE: number = 0;
-    NUCLEOSIDE: number = 0;
-    BB_NS_CON: number = 1;
-    COM: number = 2;
+    //NUCLEOSIDE: number = 0;
+    //BB_NS_CON: number = 1;
+    COM: number = 0;
     //SP_CON: number = 3;
     element_type: number = -1;
 
@@ -116,9 +116,16 @@ class Nucleotide extends BasicElement {
         y_bb = bbpos.y;
         z_bb = bbpos.z;
 
+        //fill backbone positioning array
         bb_offsets[this.global_id * 3] = x_bb;
         bb_offsets[this.global_id * 3 + 1] = y_bb;
         bb_offsets[this.global_id * 3 + 2] = z_bb;
+
+        //backbones are spheres and therefore rotationally invariant
+        bb_rotation[this.global_id * 4] = 0;
+        bb_rotation[this.global_id * 4 + 1] = 0;
+        bb_rotation[this.global_id * 4 + 2] = 0;
+        bb_rotation[this.global_id * 4 + 3] = 0;
 
 
         // compute nucleoside cm
@@ -131,23 +138,49 @@ class Nucleotide extends BasicElement {
             y_con = (y_bb + y_ns) / 2,
             z_con = (z_bb + z_ns) / 2;
 
-        //compute connector length
+        //compute connector length THIS CAN PROBABLY BE REPLACED WITH A TYPE-SPECIFIC CONSTANT
+        //FOR RNA ITS 0.8246211
         let con_len = Math.sqrt(Math.pow(x_bb - x_ns, 2) + Math.pow(y_bb - y_ns, 2) + Math.pow(z_bb - z_ns, 2));
 
-        let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion( //create base sphere rotation
+        /*let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion( //create base sphere rotation
             new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0),
-                new THREE.Vector3(x_a3, y_a3, z_a3)));
+                new THREE.Vector3(x_a3, y_a3, z_a3)));*/
+        let base_rotation = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(x_a3, y_a3, z_a3));
+
+        ns_offsets[this.global_id * 3] = x_ns;
+        ns_offsets[this.global_id * 3 + 1] = y_ns;
+        ns_offsets[this.global_id * 3 + 2] = z_ns;
+        
+        ns_rotation[this.global_id * 4] = base_rotation.w;
+        ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
+        ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
+        ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
 
         // correctly display stacking interactions
-        let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion( //creat nucleoside sphere rotation
+        /*let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion( //creat nucleoside sphere rotation
             new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize()
             )
-        );
+        );*/
+        let rotation_con = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0), 
+            new THREE.Vector3(x_con - x_ns, y_con - y_ns, z_con - z_ns).normalize());
+        
+        con_offsets[this.global_id * 3] = x_con;
+        con_offsets[this.global_id * 3 + 1] = y_con;
+        con_offsets[this.global_id * 3 + 2] = z_con;
+        
+        con_rotation[this.global_id * 4] = rotation_con.w;
+        con_rotation[this.global_id * 4 + 1] = rotation_con.z;
+        con_rotation[this.global_id * 4 + 2] = rotation_con.y;
+        con_rotation[this.global_id * 4 + 3] = rotation_con.x;
+
         // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
-        let nucleoside, con;
+        //let nucleoside, con;
         // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
         //make material depending on whether there is an alternate color scheme available
         var material;
@@ -160,28 +193,41 @@ class Nucleotide extends BasicElement {
         else {
             material = this.strand_to_material(this.parent.strand_id);
         }
-        colors[this.global_id * 3] = material.color.r;
-        colors[this.global_id * 3 + 1] = material.color.g;
-        colors[this.global_id * 3 + 2] = material.color.b;
+        //fill color array
+        bb_colors[this.global_id * 3] = material.color.r;
+        bb_colors[this.global_id * 3 + 1] = material.color.g;
+        bb_colors[this.global_id * 3 + 2] = material.color.b;
 
-        scales[ this.global_id ] = 1;
+        material = this.elem_to_material(this.type);
+        ns_colors[this.global_id * 3] = material.color.r;
+        ns_colors[this.global_id * 3 + 1] = material.color.g;
+        ns_colors[this.global_id * 3 + 2] = material.color.b;
+
+        //this makes things larger/smaller, but its defined in the shader so needs to be set
+        scales[ this.global_id * 3] = 1;
+        scales[ this.global_id * 3 + 1] = 1;
+        scales[ this.global_id * 3 + 2] = 1;
+
+        con_scales[ this.global_id * 3] = 1;
+        con_scales[ this.global_id * 3 + 1] = con_len;
+        con_scales[ this.global_id * 3 + 2] = 1;
 
          //sphere - sugar phosphate backbone
-        nucleoside = new THREE.Mesh(nucleoside_geometry, this.elem_to_material(this.type)); //sphere - nucleotide
-        con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
+        //nucleoside = new THREE.Mesh(nucleoside_geometry, this.elem_to_material(this.type)); //sphere - nucleotide
+        //con = new THREE.Mesh(connector_geometry, material); //cyclinder - backbone and nucleoside connector
         let posObj = new THREE.Mesh; //Mesh (no shape) storing  group center of mass  
-        con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
+        //con.applyMatrix(new THREE.Matrix4().makeScale(1.0, con_len, 1.0));
         // apply rotations
-        nucleoside.applyMatrix(base_rotation);
-        con.applyMatrix(rotation_con);
+        //nucleoside.applyMatrix(base_rotation);
+        //con.applyMatrix(rotation_con);
         //set positions and add to object (group - )
         //backbone.position.set(x_bb, y_bb, z_bb);
-        nucleoside.position.set(x_ns, y_ns, z_ns);
-        con.position.set(x_con, y_con, z_con);
+        //nucleoside.position.set(x_ns, y_ns, z_ns);
+        //con.position.set(x_con, y_con, z_con);
         posObj.position.set(x, y, z);
         //this.add(backbone);
-        this.add(nucleoside);
-        this.add(con);
+        //this.add(nucleoside);
+        //this.add(con);
         this.add(posObj);
 
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
@@ -359,8 +405,6 @@ class Nucleotide extends BasicElement {
             if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
                 sp_Mesh.material = this.strand_to_material(this.parent.strand_id);
             }
-            let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
-            geo = connector_geometry;
             sp_Mesh.drawMode = THREE.TrianglesDrawMode;
             sp_Mesh.updateMorphTargets();
 

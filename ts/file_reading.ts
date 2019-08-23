@@ -185,7 +185,14 @@ var approx_dat_len: number,
     box: number, //box size for system
     INSTANCES: number, 
     bb_offsets: Float32Array,
-    colors: Float32Array,
+    bb_rotation: Float32Array,
+    ns_offsets: Float32Array,
+    ns_rotation: Float32Array,
+    con_offsets: Float32Array,
+    con_rotation: Float32Array,
+    con_scales: Float32Array,
+    bb_colors: Float32Array,
+    ns_colors: Float32Array,
     scales: Float32Array;
 
 
@@ -482,22 +489,47 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
 
     }
 
-    console.log(bb_offsets);
-
     for (i = 0; i < bb_offsets.length; i++) {
         let p = bb_offsets[i] as number;
         p =  Math.floor(p/box) * box * -1;
         bb_offsets[i] = bb_offsets[i] + p;
+
+        p = ns_offsets[i] as number;
+        p =  Math.floor(p/box) * box * -1;
+        ns_offsets[i] = ns_offsets[i] + p;
+
+        p = con_offsets[i] as number;
+        p =  Math.floor(p/box) * box * -1;
+        con_offsets[i] = con_offsets[i] + p;
     }
 
     instanced_backbone.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
-    instanced_backbone.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(colors, 3));
-    instanced_backbone.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute( scales, 1 ) );
+    instanced_backbone.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(bb_rotation, 4));
+    instanced_backbone.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
+    instanced_backbone.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute( scales, 3 ) );
     
+    instanced_nucleoside.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(ns_offsets, 3));
+    instanced_nucleoside.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(ns_rotation, 4));
+    instanced_nucleoside.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(ns_colors, 3));
+    instanced_nucleoside.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute( scales, 3 ) );
+
+    instanced_connector.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(con_offsets, 3));
+    instanced_connector.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(con_rotation, 4));  
+    instanced_connector.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));
+    instanced_connector.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(con_scales, 3));   
+
     var backbone = new THREE.Mesh(instanced_backbone, instance_material);
-    backbone.frustumCulled = false;
+    backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
+
+    var nucleoside = new THREE.Mesh(instanced_nucleoside, instance_material);
+    nucleoside.frustumCulled = false;
+
+    var connector = new THREE.Mesh(instanced_connector, instance_material);
+    connector.frustumCulled = false;
 
     scene.add(backbone);
+    scene.add(nucleoside);
+    scene.add(connector);
 
     //for (let i = 0; i < elements.length; i++) {
     //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands

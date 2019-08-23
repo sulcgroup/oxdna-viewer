@@ -92,8 +92,15 @@ class TopReader extends FileReader{
             //set up instancing data arrays
             INSTANCES = nuc_count;
             bb_offsets = new Float32Array(INSTANCES * 3);
-            colors = new Float32Array(INSTANCES*3);
-            scales = new Float32Array( INSTANCES * 1 );
+            bb_rotation = new Float32Array(INSTANCES * 4);
+            ns_offsets = new Float32Array(INSTANCES * 3);
+            ns_rotation = new Float32Array(INSTANCES * 4)
+            con_offsets = new Float32Array(INSTANCES * 3);
+            con_rotation = new Float32Array(INSTANCES * 4) 
+            bb_colors = new Float32Array(INSTANCES * 3);
+            ns_colors = new Float32Array(INSTANCES * 3)
+            scales = new Float32Array( INSTANCES * 3 );
+            con_scales = new Float32Array(INSTANCES * 3)
 
         }})(this.top_file);
     

@@ -8,7 +8,11 @@ THREE.ShaderLib.customDepthRGBA = { // this is a cut-and-paste of the depth shad
 		#ifdef INSTANCED
 
 			attribute vec3 instanceOffset;
-			attribute float instanceScale;
+			attribute vec4 instanceRotation;
+			attribute vec3 instanceScale;
+			vec3 rotate_vector( vec4 quat, vec3 vec );
+			vec3 rotate_vector( vec4 quat, vec3 vec )
+			{ return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); }
 
 		#endif
 
@@ -38,8 +42,8 @@ THREE.ShaderLib.customDepthRGBA = { // this is a cut-and-paste of the depth shad
 
 			// instanced
 			#ifdef INSTANCED
-
 				transformed *= instanceScale;
+				transformed = rotate_vector( instanceRotation, transformed);
 				transformed = transformed + instanceOffset;
 
 			#endif
@@ -68,8 +72,12 @@ THREE.ShaderLib.lambert = { // this is a cut-and-paste of the lambert shader -- 
 
 		#ifdef INSTANCED
 			attribute vec3 instanceOffset;
+			attribute vec4 instanceRotation;
 			attribute vec3 instanceColor;
-			attribute float instanceScale;
+			attribute vec3 instanceScale;
+			vec3 rotate_vector( vec4 quat, vec3 vec );
+			vec3 rotate_vector( vec4 quat, vec3 vec )
+			{ return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); }
 		#endif
 
 		varying vec3 vLightFront;
@@ -118,6 +126,7 @@ THREE.ShaderLib.lambert = { // this is a cut-and-paste of the lambert shader -- 
 			// position instanced
 			#ifdef INSTANCED
 				transformed *= instanceScale;
+				transformed = rotate_vector( instanceRotation, transformed);
 				transformed = transformed + instanceOffset;
 			#endif
 

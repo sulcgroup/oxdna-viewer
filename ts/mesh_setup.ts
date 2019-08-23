@@ -6,8 +6,8 @@
 //window['instanced_backbone'] = instanced_backbone;
 //var instanced_connector = new THREE.InstancedBufferGeometry()
 //var backbone_geometry = new THREE.SphereBufferGeometry(.2,10,10);
-var nucleoside_geometry = new THREE.SphereBufferGeometry(.3,10,10).applyMatrix(
-        new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
+//var nucleoside_geometry = new THREE.SphereBufferGeometry(.3,10,10).applyMatrix(
+//        new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 ));
 var connector_geometry = new THREE.CylinderBufferGeometry(.1,.1,1, 8);
 
 //Object.keys(backbone_geometry.attributes).forEach(attributeName=>{
@@ -17,6 +17,13 @@ var connector_geometry = new THREE.CylinderBufferGeometry(.1,.1,1, 8);
 
 var instanced_backbone = new THREE.InstancedBufferGeometry();
 instanced_backbone.copy(new THREE.SphereBufferGeometry(.2,10,10));
+
+var instanced_nucleoside = new THREE.InstancedBufferGeometry();
+instanced_nucleoside.copy(new THREE.SphereBufferGeometry(.3,10,10).applyMatrix(
+    new THREE.Matrix4().makeScale( 0.7, 0.3, 0.7 )));
+
+var instanced_connector = new THREE.InstancedBufferGeometry();
+instanced_connector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8));
 
 var instance_material = new THREE.MeshLambertMaterial( {
     vertexColors: THREE.VertexColors
