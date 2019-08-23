@@ -81,6 +81,7 @@ class TopReader extends FileReader {
                 bbcon_offsets = new Float32Array(INSTANCES * 3);
                 bbcon_rotation = new Float32Array(INSTANCES * 4);
                 bbcon_scales = new Float32Array(INSTANCES * 3); //we're going to set this to 0 if the con shouldn't exist. 
+                cm_offsets = new Float32Array(INSTANCES * 3); //is this needed?  It worked without it.
                 bb_colors = new Float32Array(INSTANCES * 3);
                 ns_colors = new Float32Array(INSTANCES * 3);
                 scales = new Float32Array(INSTANCES * 3);

@@ -194,6 +194,7 @@ var approx_dat_len: number,
     bbcon_offsets: Float32Array,
     bbcon_rotation: Float32Array,
     bbcon_scales: Float32Array,
+    cm_offsets: Float32Array,
     bb_colors: Float32Array,
     ns_colors: Float32Array,
     scales: Float32Array;
@@ -509,6 +510,10 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         p =  Math.floor(p/box) * box * -1;
         bbcon_offsets[i] = bbcon_offsets[i] + p;
     }
+
+    //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
+    //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
+    //This will force the gpu to check the vectors again when redrawing.
 
     instanced_backbone.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
     instanced_backbone.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(bb_rotation, 4));

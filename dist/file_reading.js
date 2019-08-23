@@ -162,7 +162,7 @@ previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad lin
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
 previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
 box, //box size for system
-INSTANCES, bb_offsets, bb_rotation, ns_offsets, ns_rotation, con_offsets, con_rotation, con_scales, bbcon_offsets, bbcon_rotation, bbcon_scales, bb_colors, ns_colors, scales;
+INSTANCES, bb_offsets, bb_rotation, ns_offsets, ns_rotation, con_offsets, con_rotation, con_scales, bbcon_offsets, bbcon_rotation, bbcon_scales, cm_offsets, bb_colors, ns_colors, scales;
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -445,6 +445,9 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
         p = Math.floor(p / box) * box * -1;
         bbcon_offsets[i] = bbcon_offsets[i] + p;
     }
+    //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
+    //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
+    //This will force the gpu to check the vectors again when redrawing.
     instanced_backbone.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(bb_offsets, 3));
     instanced_backbone.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(bb_rotation, 4));
     instanced_backbone.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(bb_colors, 3));

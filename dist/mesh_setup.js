@@ -25,116 +25,53 @@ var instance_material = new THREE.MeshLambertMaterial({
 });
 instance_material.defines = instance_material.defines || {};
 instance_material.defines['INSTANCED'] = "";
-var backbone_materials = [
-    new THREE.MeshLambertMaterial({
-        color: 0xff00ff,
-        side: THREE.DoubleSide,
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xffb322,
-        side: THREE.DoubleSide,
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x437092,
-        side: THREE.DoubleSide,
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x6ea4cc,
-        side: THREE.DoubleSide,
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x517dc7,
-        side: THREE.DoubleSide,
-    }),
+var backbone_colors = [
+    new THREE.Color(0xff00ff),
+    new THREE.Color(0xffb322),
+    new THREE.Color(0x437092),
+    new THREE.Color(0x6ea4cc),
+    new THREE.Color(0x517dc7),
 ];
 // define nucleoside colors: grey OR traditional colors
-var nucleoside_materials = [
-    new THREE.MeshLambertMaterial({
-        color: 0x3333FF,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xFFFF33,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x33FF33,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xFF3333,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xE60A0A,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xFA9600,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x3232AA,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xE60A0A,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x00DCDC,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xE6E600,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xEBEBEB,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xDC9682,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xC8C8C8,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x0F820F,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x0F820F,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x0F820F,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xE6E600,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xFF3333,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0x3232AA,
-        side: THREE.DoubleSide
-    }),
-    new THREE.MeshLambertMaterial({
-        color: 0xB45AB4,
-        side: THREE.DoubleSide
-    })
+var nucleoside_colors = [
+    new THREE.Color(0x3333FF),
+    new THREE.Color(0xFFFF33),
+    //C or K
+    new THREE.Color(0x33FF33),
+    //T/U or D
+    new THREE.Color(0xFF3333),
+    //E
+    new THREE.Color(0xE60A0A),
+    //S
+    new THREE.Color(0xFA9600),
+    //T
+    new THREE.Color(0x3232AA),
+    //N
+    new THREE.Color(0xE60A0A),
+    //Q
+    new THREE.Color(0x00DCDC),
+    //C
+    new THREE.Color(0xE6E600),
+    //G
+    new THREE.Color(0xEBEBEB),
+    //P
+    new THREE.Color(0xDC9682),
+    //A
+    new THREE.Color(0xC8C8C8),
+    //V
+    new THREE.Color(0x0F820F),
+    //I
+    new THREE.Color(0x0F820F),
+    //L
+    new THREE.Color(0x0F820F),
+    //M
+    new THREE.Color(0xE6E600),
+    //F
+    new THREE.Color(0xFF3333),
+    //Y
+    new THREE.Color(0x3232AA),
+    //W
+    new THREE.Color(0xB45AB4),
 ];
-var selection_material = new THREE.MeshLambertMaterial({
-    color: 0x01796F,
-    side: THREE.DoubleSide,
-});
-var grey_material = new THREE.MeshLambertMaterial({
-    color: 0x888888,
-    side: THREE.DoubleSide
-});
+var selection_color = new THREE.Color(0x01796F); //pine green
+var grey_material = new THREE.Color(0x888888);

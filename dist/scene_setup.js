@@ -8,7 +8,6 @@
 //);
 // scene update call definition
 function render() {
-    console.log(renderer.info.render.calls);
     renderer.render(scene, camera);
 }
 // animation cycle and control updates
