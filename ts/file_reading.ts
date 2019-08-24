@@ -546,7 +546,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     //}
 
     //bring things in the box based on the PBC/centering menus
-    //PBC_switchbox(systems[sys_count]);
+    PBC_switchbox(systems[sys_count]);
 
     //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
     //    backbones.push(elements[i][objects][elements[i].BACKBONE]);

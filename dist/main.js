@@ -204,6 +204,24 @@ class Nucleotide extends BasicElement {
         z_bb_last = z_bb;
     }
     ;
+    translate_position(amount) {
+        let s = this.parent.parent;
+        s.bb_offsets[this.global_id * 3] += amount.x;
+        s.bb_offsets[this.global_id * 3 + 1] += amount.y;
+        s.bb_offsets[this.global_id * 3 + 2] += amount.z;
+        s.ns_offsets[this.global_id * 3] += amount.x;
+        s.ns_offsets[this.global_id * 3 + 1] += amount.y;
+        s.ns_offsets[this.global_id * 3 + 2] += amount.z;
+        s.con_offsets[this.global_id * 3] += amount.x;
+        s.con_offsets[this.global_id * 3 + 1] += amount.y;
+        s.con_offsets[this.global_id * 3 + 2] += amount.z;
+        s.bbcon_offsets[this.global_id * 3] += amount.x;
+        s.bbcon_offsets[this.global_id * 3 + 1] += amount.y;
+        s.bbcon_offsets[this.global_id * 3 + 2] += amount.z;
+        s.cm_offsets[this.global_id * 3] += amount.x;
+        s.cm_offsets[this.global_id * 3 + 1] += amount.y;
+        s.cm_offsets[this.global_id * 3 + 2] += amount.z;
+    }
     recalcPos() {
         let bb = this.children[this.BACKBONE].position;
         if (this.neighbor3 != null && this.neighbor3.local_id > this.local_id) { //handles strand end connection
@@ -748,17 +766,12 @@ class Strand extends THREE.Group {
     }
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
-        this[monomers].forEach((e) => {
-            com.add(e[objects][e.COM].position);
-        });
+        for (let i = this.children[0].global_id; i < this.children[this.children.length - 1].global_id; i++) {
+            com.add(new THREE.Vector3(this.parent.cm_offsets[i * 3], this.parent.cm_offsets[i * 3 + 1], this.parent.cm_offsets[i * 3 + 2]));
+        }
         return (com.multiplyScalar(1 / this[monomers].length));
     }
     translate_strand(amount) {
-        this[monomers].forEach((m) => {
-            m[objects].forEach((o) => {
-                o.position.add(amount);
-            });
-        });
     }
 }
 ;
@@ -774,6 +787,26 @@ class NucleicAcidStrand extends Strand {
             return new DNANucleotide(global_id, this);
     }
     ;
+    translate_strand(amount) {
+        for (let i = this.children[0].global_id; i < this.children[this.children.length - 1].global_id; i++) {
+            let s = this.parent;
+            s.bb_offsets[i * 3] += amount.x;
+            s.bb_offsets[i * 3 + 1] += amount.y;
+            s.bb_offsets[i * 3 + 2] += amount.z;
+            s.ns_offsets[i * 3] += amount.x;
+            s.ns_offsets[i * 3 + 1] += amount.y;
+            s.ns_offsets[i * 3 + 2] += amount.z;
+            s.con_offsets[i * 3] += amount.x;
+            s.con_offsets[i * 3 + 1] += amount.y;
+            s.con_offsets[i * 3 + 2] += amount.z;
+            s.bbcon_offsets[i * 3] += amount.x;
+            s.bbcon_offsets[i * 3 + 1] += amount.y;
+            s.bbcon_offsets[i * 3 + 2] += amount.z;
+            s.cm_offsets[i * 3] += amount.x;
+            s.cm_offsets[i * 3 + 1] += amount.y;
+            s.cm_offsets[i * 3 + 2] += amount.z;
+        }
+    }
 }
 class Peptide extends Strand {
     constructor(id, parent) {
@@ -782,6 +815,20 @@ class Peptide extends Strand {
     ;
     create_basicElement(global_id) {
         return new AminoAcid(global_id, this);
+    }
+    translate_strand(amount) {
+        for (let i = this.children[0].global_id; i < this.children[this.children.length - 1].global_id; i++) {
+            let s = this.parent;
+            s.bb_offsets[i * 3] += amount.x;
+            s.bb_offsets[i * 3 + 1] += amount.y;
+            s.bb_offsets[i * 3 + 2] += amount.z;
+            s.bbcon_offsets[i * 3] += amount.x;
+            s.bbcon_offsets[i * 3 + 1] += amount.y;
+            s.bbcon_offsets[i * 3 + 2] += amount.z;
+            s.cm_offsets[i * 3] += amount.x;
+            s.cm_offsets[i * 3 + 1] += amount.y;
+            s.cm_offsets[i * 3 + 2] += amount.z;
+        }
     }
 }
 // systems are made of strands
@@ -833,14 +880,10 @@ class System extends THREE.Group {
     //computes the center of mass of the system
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
-        let count = 0;
-        this[strands].forEach((s) => {
-            s[monomers].forEach((m) => {
-                com.add(m[objects][m.COM].position);
-                count += 1;
-            });
-        });
-        return (com.multiplyScalar(1 / count));
+        for (let i = 0; i < this.INSTANCES; i++) {
+            com.add(new THREE.Vector3(this.cm_offsets[i * 3], this.cm_offsets[i * 3 + 1], this.cm_offsets[i * 3 + 2]));
+        }
+        return (com.multiplyScalar(1 / this.INSTANCES));
     }
     //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
     strand_unweighted_com() {
@@ -855,14 +898,30 @@ class System extends THREE.Group {
     setDatFile(dat_file) {
         this.dat_file = dat_file;
     }
+    //THIS ONLY WORKS FOR NUCLEOTIDES.  NEEDS TO BE FIXED FOR OTHER THINGS
     translate_system(amount) {
-        this[strands].forEach((s) => {
-            s[monomers].forEach((m) => {
-                m[objects].forEach((o) => {
-                    o.position.add(amount);
-                });
-            });
-        });
+        for (let i = 0; i < this.INSTANCES; i++) {
+            this.bb_offsets[i * 3] += amount.x;
+            this.bb_offsets[i * 3 + 1] += amount.y;
+            this.bb_offsets[i * 3 + 2] += amount.z;
+            this.ns_offsets[i * 3] += amount.x;
+            this.ns_offsets[i * 3 + 1] += amount.y;
+            this.ns_offsets[i * 3 + 2] += amount.z;
+            this.con_offsets[i * 3] += amount.x;
+            this.con_offsets[i * 3 + 1] += amount.y;
+            this.con_offsets[i * 3 + 2] += amount.z;
+            this.bbcon_offsets[i * 3] += amount.x;
+            this.bbcon_offsets[i * 3 + 1] += amount.y;
+            this.bbcon_offsets[i * 3 + 2] += amount.z;
+            this.cm_offsets[i * 3] += amount.x;
+            this.cm_offsets[i * 3 + 1] += amount.y;
+            this.cm_offsets[i * 3 + 2] += amount.z;
+        }
+        this.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
+        this.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
+        this.connector.geometry.attributes.instanceOffset.needsUpdate = true;
+        this.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
+        render();
     }
 }
 ;

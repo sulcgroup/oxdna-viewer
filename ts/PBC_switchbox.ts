@@ -14,7 +14,7 @@ function translate(system, box_option, center_option) {
             case "Monomer":
                 for (let j = 0; j < system[strands][i][monomers].length; j++) {
                     //calculate how many boxes the inboxed structure needs to be moved over
-                    diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
+                    diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id]*3, system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]);
                     diff.add(shift);
                     diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
                     //add the centering to the boxing
@@ -23,13 +23,10 @@ function translate(system, box_option, center_option) {
                     if (center_option === "Origin") { 
                         diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) 
                     }
+
                     //actually move things.
-                    for (let k = 0; k < system[strands][i][monomers][j][objects].length; k++) {
-                        system[strands][i][monomers][j][objects][k].position.add(diff);
-                        if (k === system[strands][i][monomers][j].COM) {
-                            actual_com.add(system[strands][i][monomers][j][objects][k].position);
-                        }
-                    }
+                    system[strands][i][monomers][j].translate_position(diff);
+                    actual_com.add(new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id*3], system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]).multiplyScalar(1/system.INSTANCES));
                     count += 1;
                 }
                 break;
@@ -39,20 +36,13 @@ function translate(system, box_option, center_option) {
                 diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
                 diff.add(shift);
                 if (center_option === "Origin") { diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) }
-                for (let j = 0; j < system[strands][i][monomers].length; j++) {
-                    for (let k = 0; k < system[strands][i][monomers][j][objects].length; k++) {
-                        system[strands][i][monomers][j][objects][k].position.add(diff);
-                        if (k === system[strands][i][monomers][j].COM) {
-                            actual_com.add(system[strands][i][monomers][j][objects][k].position);
-                        }
-                    }
-                    count += 1;
-                }
+                system[strands][i].translate_strand(diff);
+                actual_com += system[strands][i].get_com().multiplyScalar(system[strands][i][monomers].length).multiplyScalar(system.INSTANCES);
                 break;
         }
     }
     //correct the inaccurate centering.
-    actual_com.multiplyScalar(-1/count);
+    //actual_com.multiplyScalar(-1/count);
     if (center_option !== "Origin") { 
         actual_com.add(target_com);
     }
@@ -84,10 +74,10 @@ function dumb_boxing(system, box_option) {
         }
         for (let j = 0; j < system[strands][i][monomers].length; j++) {
             if (box_option === "Monomer"){
-                diff.copy(system[strands][i][monomers][j][objects][system[strands][i][monomers][j].COM].position);
+                diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id]*3, system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]);
                 diff.multiplyScalar(1/box).floor().multiplyScalar(box*-1);
             }
-            system[strands][i][monomers][j].translate_monomer(diff);
+            system[strands][i][monomers][j].translate_position(diff);
         }
     }
 }
