@@ -13,7 +13,7 @@ function translate(system, box_option, center_option) {
             case "Monomer":
                 for (let j = 0; j < system[strands][i][monomers].length; j++) {
                     //calculate how many boxes the inboxed structure needs to be moved over
-                    diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id] * 3, system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 1], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 2]);
+                    diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id * 3], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 1], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 2]);
                     diff.add(shift);
                     diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
                     //add the centering to the boxing
@@ -37,16 +37,16 @@ function translate(system, box_option, center_option) {
                     diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5));
                 }
                 system[strands][i].translate_strand(diff);
-                actual_com += system[strands][i].get_com().multiplyScalar(system[strands][i][monomers].length).multiplyScalar(system.INSTANCES);
+                actual_com.add(system[strands][i].get_com().multiplyScalar(system[strands][i][monomers].length).multiplyScalar(1 / system.INSTANCES));
                 break;
         }
     }
     //correct the inaccurate centering.
     //actual_com.multiplyScalar(-1/count);
     if (center_option !== "Origin") {
-        actual_com.add(target_com);
+        actual_com.add(target_com.multiplyScalar(-1));
     }
-    system.translate_system(actual_com);
+    system.translate_system(actual_com.multiplyScalar(-1));
 }
 //translates everything equally so that the center of mass is at the origin
 function dumb_centering(system, center_option) {
@@ -67,13 +67,14 @@ function dumb_boxing(system, box_option) {
             diff.multiplyScalar(1 / box);
             diff.floor();
             diff.multiplyScalar(box * -1);
+            system[strands][i].translate_strand(diff);
         }
         for (let j = 0; j < system[strands][i][monomers].length; j++) {
             if (box_option === "Monomer") {
-                diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id] * 3, system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 1], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 2]);
+                diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id * 3], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 1], system.cm_offsets[system[strands][i][monomers][j].global_id * 3 + 2]);
                 diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
+                system[strands][i][monomers][j].translate_position(diff);
             }
-            system[strands][i][monomers][j].translate_position(diff);
         }
     }
 }

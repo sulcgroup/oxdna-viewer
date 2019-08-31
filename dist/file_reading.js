@@ -430,20 +430,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
             }
         }
     }
-    for (i = 0; i < system.bb_offsets.length; i++) {
-        let p = system.bb_offsets[i];
-        p = Math.floor(p / box) * box * -1;
-        system.bb_offsets[i] = system.bb_offsets[i] + p;
-        p = system.ns_offsets[i];
-        p = Math.floor(p / box) * box * -1;
-        system.ns_offsets[i] = system.ns_offsets[i] + p;
-        p = system.con_offsets[i];
-        p = Math.floor(p / box) * box * -1;
-        system.con_offsets[i] = system.con_offsets[i] + p;
-        p = system.bbcon_offsets[i];
-        p = Math.floor(p / box) * box * -1;
-        system.bbcon_offsets[i] = system.bbcon_offsets[i] + p;
-    }
     //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
     //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     //This will force the gpu to check the vectors again when redrawing.

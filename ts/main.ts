@@ -881,8 +881,8 @@ class Strand extends THREE.Group {
         elem.parent = this;
     };
 
-    create_basicElement(global_id: number): AminoAcid {
-        return new AminoAcid(global_id, this);
+    create_basicElement(global_id: number): BasicElement {
+        return new BasicElement(global_id, this);
     }
 
     remove_basicElement(to_remove: number) {
@@ -910,7 +910,7 @@ class Strand extends THREE.Group {
 
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
-        for (let i = (this.children[0] as BasicElement).global_id; i < (this.children[this.children.length-1] as BasicElement).global_id; i++){
+        for (let i = (this.children[0] as BasicElement).global_id; i <= (this.children[this.children.length-1] as BasicElement).global_id; i++){
             com.add(new THREE.Vector3(this.parent.cm_offsets[i*3], this.parent.cm_offsets[i*3+1], this.parent.cm_offsets[i*3+2]));
         }
         return(com.multiplyScalar(1/this[monomers].length))
@@ -934,7 +934,7 @@ class NucleicAcidStrand extends Strand {
     };
 
     translate_strand(amount: THREE.Vector3) {
-        for (let i = (this.children[0] as Nucleotide).global_id; i < (this.children[this.children.length-1] as Nucleotide).global_id; i++){
+        for (let i = (this.children[0] as Nucleotide).global_id; i <= (this.children[this.children.length-1] as Nucleotide).global_id; i++){
             let s = this.parent;
             s.bb_offsets[i * 3] += amount.x;
             s.bb_offsets[i * 3 + 1] += amount.y;
