@@ -635,78 +635,123 @@ class AminoAcid extends BasicElement {
         this.COM = 0;
         this.element_type = AA;
     };
-    elem_to_color(elem: number | string): THREE.MeshLambertMaterial {
+    elem_to_color(elem: number | string): THREE.Color {
         if (typeof elem == "string") {
             elem = { "R": 0, "H": 1, "K": 2, "D": 3, "E": 3, "S": 4, "T": 5, "N": 6, "Q": 7, "C": 8, "U": 9, "G": 10, "P": 11, "A": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
         }
         else elem = Math.abs(elem);
-        return nucleoside_materials[elem];
+        return nucleoside_colors[elem];
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
-        // adds a new "backbone", new "nucleoside", and new "connector" to the scene by adding to  then to strand_3objects then to system_3objects then to scene
-        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
-        let backbone: THREE.Mesh;
-        // 4 Mesh to display DNA + 1 Mesh to store  group's center of mass as its position
-        //make material depending on whether there is an alternate color scheme available
-        var material: THREE.MeshLambertMaterial;
-        if (lutColsVis) {
-            material = new THREE.MeshLambertMaterial({
-                color: lutCols[this.global_id],
-                side: THREE.DoubleSide
-            })
-        }
-        else {
-            material = this.elem_to_color(this.type);
-        }
-        backbone = new THREE.Mesh(backbone_geometry, material);
-        backbone.position.set(x, y, z);
-        this.add(backbone);
-
-        //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+        // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
+        let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
-            let x_sp = (x + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
+            x_sp = (x + x_bb_last) / 2,
                 y_sp = (y + y_bb_last) / 2,
                 z_sp = (z + z_bb_last) / 2;
 
-            let sp_len = Math.sqrt(Math.pow(x - x_bb_last, 2) + Math.pow(y - y_bb_last, 2) + Math.pow(z - z_bb_last, 2));
-            // easy periodic boundary condition fix  
-            // if the bonds are to long just don't add them 
-            if (sp_len <= 500) {
-                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
-                    )
-                );
-                material = this.strand_to_color(this.parent.strand_id);
-                let sp: THREE.Mesh = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-                sp.applyMatrix(rotation_sp); //set rotation
-                sp.position.set(x_sp, y_sp, z_sp);
-                sp.name = "sp" + this.id
-                this.add(sp); //add to 
-            }
-        }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handles strand end connection
-            let x_sp = (x + this.neighbor5[objects][this.BACKBONE].position.x) / 2, //make sugar phosphate connection
-                y_sp = (y + this.neighbor5[objects][this.BACKBONE].position.y) / 2,
-                z_sp = (z + this.neighbor5[objects][this.BACKBONE].position.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(x - this.neighbor5[objects][this.BACKBONE].position.x, 2) + Math.pow(y - this.neighbor5[objects][this.BACKBONE].position.y, 2) + Math.pow(z - this.neighbor5[objects][this.BACKBONE].position.z, 2));
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
-                )
+            sp_len = Math.sqrt(Math.pow(x - x_bb_last, 2) + Math.pow(y - y_bb_last, 2) + Math.pow(z - z_bb_last, 2));
+
+            rotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
             );
-            let sp: THREE.Mesh = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-            sp.applyMatrix(rotation_sp); //set rotation
-            sp.position.set(x_sp, y_sp, z_sp);
-            this.add(sp); //add to 
+        }
+        else {
+            x_sp = 0,
+                y_sp = 0,
+                z_sp = 0;
+
+            sp_len = 0;
+
+            rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        //actually add the new items to the scene by adding to  then to strand_3objects then to system_3objects then to scene
-        //this = group; //set Nucleotide nuc's attribute to group
-        this.parent.add(this); //add group to strand_3objects
-        //update last backbone position and last strand
+        // we keep track of cm position, even though we don't draw anything with it.
+        this.parent.parent.cm_offsets[this.global_id * 3] = x;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
+
+        // fill backbone positioning array
+        this.parent.parent.bb_offsets[this.global_id * 3] = x;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z;
+
+        // backbones are spheres and therefore rotationally invariant
+        this.parent.parent.bb_rotation[this.global_id * 4] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 1] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 2] = 0;
+        this.parent.parent.bb_rotation[this.global_id * 4 + 3] = 0;
+
+        // amino acids don't have nucleosides
+        this.parent.parent.ns_offsets[this.global_id * 3] = 0;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = 0;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = 0;
+        
+        // amino acids don't have nucleosides
+        this.parent.parent.ns_rotation[this.global_id * 4] = 0;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = 0;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = 0;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = 0;
+
+        // amino acids don't have nucleosides
+        this.parent.parent.con_offsets[this.global_id * 3] = 0;
+        this.parent.parent.con_offsets[this.global_id * 3 + 1] = 0;
+        this.parent.parent.con_offsets[this.global_id * 3 + 2] = 0;
+        
+        // amino acids don't have nucleosides
+        this.parent.parent.con_rotation[this.global_id * 4] = 0;
+        this.parent.parent.con_rotation[this.global_id * 4 + 1] = 0;
+        this.parent.parent.con_rotation[this.global_id * 4 + 2] = 0;
+        this.parent.parent.con_rotation[this.global_id * 4 + 3] = 0;
+
+        // fill backbone connector positioning array
+        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
+
+        // fill backbone connector rotation quaternion
+        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
+
+        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
+
+        // determine the mesh color, either from a supplied colormap json or by the strand ID.
+        var color;
+        if (lutColsVis) {
+            color = lutCols[i]
+        }
+        else {
+            color = this.strand_to_color(this.parent.strand_id);
+        }
+
+        //fill color array for backbones and connectors
+        color = this.elem_to_color(this.type);
+        this.parent.parent.bb_colors[this.global_id * 3] = color.r;
+        this.parent.parent.bb_colors[this.global_id * 3 + 1] = color.g;
+        this.parent.parent.bb_colors[this.global_id * 3 + 2] = color.b;
+
+        // determine the nucleoside color and fill the nucleoside color array
+        this.parent.parent.ns_colors[this.global_id * 3] = color.r;
+        this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
+        this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
+
+        // most things are all the same size
+        this.parent.parent.scales[ this.global_id * 3] = 1;
+        this.parent.parent.scales[ this.global_id * 3 + 1] = 1;
+        this.parent.parent.scales[ this.global_id * 3 + 2] = 1;
+
+        // except connectors, amino acids don't have connectors.
+        this.parent.parent.con_scales[ this.global_id * 3] = 0;
+        this.parent.parent.con_scales[ this.global_id * 3 + 1] = 0;
+        this.parent.parent.con_scales[ this.global_id * 3 + 2] = 0;
+
+        this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
+        this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
+        this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
+
+        // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
@@ -962,7 +1007,7 @@ class Peptide extends Strand {
     constructor(id: number, parent: System) {
         super(id, parent);
     };
-    create_basicElement(global_id: number): AminoAcid {
+    create_basicElement(global_id: number) {
         return new AminoAcid(global_id, this);
     }
 
