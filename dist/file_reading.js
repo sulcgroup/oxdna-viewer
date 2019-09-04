@@ -465,9 +465,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     scene.add(system.nucleoside);
     scene.add(system.connector);
     scene.add(system.bbconnector);
-    //for (let i = 0; i < elements.length; i++) {
-    //    elements[i].recalcPos(); //add any other sp connectors - used for circular strands
-    //}
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
     //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector

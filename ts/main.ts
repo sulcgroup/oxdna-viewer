@@ -57,9 +57,7 @@ class BasicElement extends THREE.Group{
     calculatePositions(x: number, y: number, z: number, l: string) {
 
     };
-    recalcPos() {
-
-    };
+    
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
 
     };
@@ -171,6 +169,34 @@ class Nucleotide extends BasicElement {
             sp_len = 0;
 
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
+        }
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+
+            let tmpx_sp = (x_bb + tmpx_bb_last) / 2, 
+            tmpy_sp = (y_bb + tmpy_bb_last) / 2,
+            tmpz_sp = (z_bb + tmpz_bb_last) / 2;
+
+            let tmpsp_len = Math.sqrt(Math.pow(x_bb - tmpx_bb_last, 2) + Math.pow(y_bb - tmpy_bb_last, 2) + Math.pow(z_bb - tmpz_bb_last, 2));
+
+            let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
+            );
+
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
+            
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
+
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
         }
 
         // we keep track of cm position, even though we don't draw anything with it.
@@ -292,36 +318,6 @@ class Nucleotide extends BasicElement {
         s.cm_offsets[this.global_id * 3 + 2] += amount.z;
     }
 
-    recalcPos() {
-        let bb: THREE.Vector3 = this.children[this.BACKBONE].position;
-        if (this.neighbor3 != null && this.neighbor3.local_id > this.local_id) { //handles strand end connection
-            let material;
-            if (lutColsVis) {
-                material = new THREE.MeshLambertMaterial({
-                    color: lutCols[i],
-                    side: THREE.DoubleSide
-                })
-            }
-            else {
-                material = this.strand_to_color(this.parent.strand_id);
-            }
-
-            let x_sp = (bb.x + this.neighbor3.children[this.BACKBONE].position.x) / 2, //make sugar phosphate connection
-                y_sp = (bb.y + this.neighbor3.children[this.BACKBONE].position.y) / 2,
-                z_sp = (bb.z + this.neighbor3.children[this.BACKBONE].position.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(bb.x - this.neighbor3.children[this.BACKBONE].position.x, 2) + Math.pow(bb.y - this.neighbor3.children[this.BACKBONE].position.y, 2) + Math.pow(bb.z - this.neighbor3.children[this.BACKBONE].position.z, 2));
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - bb.x, y_sp - bb.y, z_sp - bb.z).normalize()
-                )
-            );
-            let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-            sp.applyMatrix(rotation_sp); //set rotation
-            sp.position.set(x_sp, y_sp, z_sp);
-            this.add(sp); //add to visual_object
-        }
-    }
     calcBBPos(x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number, x_a3: number, y_a3: number, z_a3: number): THREE.Vector3 {
         return new THREE.Vector3(x, y, z);
     };
@@ -393,6 +389,35 @@ class Nucleotide extends BasicElement {
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
 
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+
+            let tmpx_sp = (x_bb + tmpx_bb_last) / 2, 
+            tmpy_sp = (y_bb + tmpy_bb_last) / 2,
+            tmpz_sp = (z_bb + tmpz_bb_last) / 2;
+
+            let tmpsp_len = Math.sqrt(Math.pow(x_bb - tmpx_bb_last, 2) + Math.pow(y_bb - tmpy_bb_last, 2) + Math.pow(z_bb - tmpz_bb_last, 2));
+
+            let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
+            );
+
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
+            
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
+
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
+        }
+
 
         // update backbone positioning array
         this.parent.parent.bb_offsets[this.global_id * 3] = x_bb;
@@ -443,71 +468,9 @@ class Nucleotide extends BasicElement {
         x_bb_last = x_bb;
         y_bb_last = y_bb;
         z_bb_last = z_bb;
-        //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        /*if (this.neighbor3 != null) {
-            //get current and 3' backbone positions and set length/rotation
-            let last_pos = new THREE.Vector3();
-            this.neighbor3[objects][this.BACKBONE].getWorldPosition(last_pos);
-            let this_pos = new THREE.Vector3();
-            group[objects][this.BACKBONE].getWorldPosition(this_pos);
-            let x_sp = (this_pos.x + last_pos.x) / 2,
-                y_sp = (this_pos.y + last_pos.y) / 2,
-                z_sp = (this_pos.z + last_pos.z) / 2;
-            let sp_len = Math.sqrt(Math.pow(this_pos.x - last_pos.x, 2) + Math.pow(this_pos.y - last_pos.y, 2) + Math.pow(this_pos.z - last_pos.z, 2));
 
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(this_pos.x - last_pos.x, this_pos.y - last_pos.y, this_pos.z - last_pos.z).normalize()
-                )
-            );
-            this.updateSP();
-            
-            group[objects][this.SP_CON].applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //length
-            group[objects][this.SP_CON].applyMatrix(rotation_sp); //rotate
-            group[objects][this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
-            group[objects][this.SP_CON].parent = this;
-        };*/
     };
-    updateSP(): THREE.Object3D{
-        let sp_Mesh: THREE.Object3D = this[objects][this.SP_CON];
-        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_color(this.parent.strand_id);
-            }
-            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
-            sp_Mesh.updateMorphTargets();
 
-            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
-
-            sp_Mesh.position.set(0, 0, 0);
-            sp_Mesh.rotation.set(0, 0, 0);
-            sp_Mesh.quaternion.set(0, 0, 0, 0);
-            sp_Mesh.scale.set(1, 1, 1);
-
-            sp_Mesh.matrix.set(1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1);
-            sp_Mesh.matrixWorld.set(1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1);
-
-            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-            sp_Mesh.matrixWorldNeedsUpdate = false;
-
-            sp_Mesh.visible = true;
-
-            sp_Mesh.castShadow = false;
-            sp_Mesh.receiveShadow = false;
-
-            sp_Mesh.frustumCulled = true;
-            sp_Mesh.renderOrder = 0;
-
-            sp_Mesh.userData = {};
-        }
-        return sp_Mesh;
-    }
     getCOM(): number {
         return this.COM;
     };
@@ -718,6 +681,34 @@ class AminoAcid extends BasicElement {
             sp_len = 0;
 
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
+        }
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+
+            let tmpx_sp = (x + tmpx_bb_last) / 2, 
+            tmpy_sp = (y + tmpy_bb_last) / 2,
+            tmpz_sp = (z + tmpz_bb_last) / 2;
+
+            let tmpsp_len = Math.sqrt(Math.pow(x - tmpx_bb_last, 2) + Math.pow(y - tmpy_bb_last, 2) + Math.pow(z - tmpz_bb_last, 2));
+
+            let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x, tmpy_sp - y, tmpz_sp - z).normalize()
+            );
+
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
+            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
+            
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
+            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
+
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
+            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
         }
 
         // we keep track of cm position, even though we don't draw anything with it.
