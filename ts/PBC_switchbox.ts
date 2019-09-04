@@ -5,7 +5,6 @@ function translate(system, box_option, center_option) {
     let wrt = system.strand_unweighted_com(); //this is actually a crude approximation, but needed to handle the fix_diffusion strands
     let target_com = new THREE.Vector3(box, box, box).multiplyScalar(0.5); //because of the previous line, it will miss the target like Cogli does.
     let actual_com = new THREE.Vector3(0, 0, 0); //so at the end we're going to correct for this
-    let count = 0;
     let shift = new THREE.Vector3;
     shift.addVectors(wrt.multiplyScalar(-1), target_com);
     let diff = new THREE.Vector3;
@@ -27,7 +26,6 @@ function translate(system, box_option, center_option) {
                     //actually move things.
                     system[strands][i][monomers][j].translate_position(diff);
                     actual_com.add(new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id*3], system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]).multiplyScalar(1/system.INSTANCES));
-                    count += 1;
                 }
                 break;
             case "Strand":
@@ -42,7 +40,6 @@ function translate(system, box_option, center_option) {
         }
     }
     //correct the inaccurate centering.
-    //actual_com.multiplyScalar(-1/count);
     if (center_option !== "Origin") { 
         actual_com.add(target_com.multiplyScalar(-1));
     }

@@ -444,7 +444,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.nucleoside_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.ns_offsets, 3));
     system.nucleoside_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.ns_rotation, 4));
     system.nucleoside_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.ns_colors, 3));
-    system.nucleoside_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3));
+    system.nucleoside_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.ns_scales, 3));
     system.connector_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.con_offsets, 3));
     system.connector_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.con_rotation, 4));
     system.connector_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
@@ -522,6 +522,14 @@ function getNewConfig(mode) {
         }
         //bring things in box based on the PBC/centering menus
         PBC_switchbox(system);
+        system.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry.attributes.instanceRotation.needsUpdate = true;
+        system.connector.geometry.attributes.instanceOffset.needsUpdate = true;
+        system.connector.geometry.attributes.instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
+        system.bbconnector.geometry.attributes.instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry.attributes.instanceScale.needsUpdate = true;
         if (getActionModes().includes("Drag")) {
             drag();
         }

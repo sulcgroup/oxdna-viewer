@@ -244,12 +244,17 @@ class Nucleotide extends BasicElement {
         this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
         this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
 
-        // most things are all the same size
+        // many things are the same size as their original mesh
         this.parent.parent.scales[ this.global_id * 3] = 1;
         this.parent.parent.scales[ this.global_id * 3 + 1] = 1;
         this.parent.parent.scales[ this.global_id * 3 + 2] = 1;
 
-        // except connectors, their Y axis depends on what they're connecting.
+        // except nucleosides, they're flatish disk shapes
+        this.parent.parent.ns_scales[ this.global_id * 3] = 0.7;
+        this.parent.parent.ns_scales[ this.global_id * 3 + 1] = 0.3;
+        this.parent.parent.ns_scales[ this.global_id * 3 + 2] = 0.7;
+
+        // and connectors, their Y axis depends on what they're connecting.
         this.parent.parent.con_scales[ this.global_id * 3] = 1;
         this.parent.parent.con_scales[ this.global_id * 3 + 1] = this.bb_ns_distance;
         this.parent.parent.con_scales[ this.global_id * 3 + 2] = 1;
@@ -257,10 +262,6 @@ class Nucleotide extends BasicElement {
         this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
         this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
         this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
-
-        //let posObj = new THREE.Mesh; //Mesh (no shape) storing  group center of mass  
-        
-        //posObj.position.set(x, y, z);
 
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x_bb;
@@ -355,40 +356,95 @@ class Nucleotide extends BasicElement {
             z_con = (z_bb + z_ns) / 2;
 
         //correctly display stacking interactions
-        let old_a3 = new THREE.Matrix4();
-        old_a3.extractRotation(this[objects][this.NUCLEOSIDE].matrix);
-        let base_rotation = new THREE.Matrix4().makeRotationFromQuaternion(
-            new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(old_a3.elements[4], old_a3.elements[5], old_a3.elements[6]),
-                new THREE.Vector3(x_a3, y_a3, z_a3)));
+        let base_rotation = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0),
+            new THREE.Vector3(x_a3, y_a3, z_a3));
 
-        // correctly orient connectors
-        let neg_NS_pos = this[objects][this.NUCLEOSIDE].position.multiplyScalar(-1);
-        let curr_heading = this[objects][this.BACKBONE].position.add(neg_NS_pos);
+        // compute connector rotation
+        let rotation_con = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0), 
+            new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize());
 
-        let rotation_con = new THREE.Matrix4().makeRotationFromQuaternion(
-            new THREE.Quaternion().setFromUnitVectors(
-                curr_heading.normalize(), new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize()
-            )
-        );
+        // we keep track of cm position, even though we don't draw anything with it.
+        this.parent.parent.cm_offsets[this.global_id * 3] = x;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
+        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
 
-        // update position and orientation of the elements
-        let group = this;
-        let locstrandID = this.parent.strand_id;
-        group.name = this.global_id + "";
+        // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
+        let x_sp, y_sp, z_sp, sp_len, rotation_sp;
+        if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
+            x_sp = (x_bb + x_bb_last) / 2, 
+            y_sp = (y_bb + y_bb_last) / 2,
+            z_sp = (z_bb + z_bb_last) / 2;
 
-        //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
-        //if you position.set() before applyMatrix() everything explodes because its messing with the world matrix.
-        group[objects][this.BACKBONE].position.set(x_bb, y_bb, z_bb);
-        group[objects][this.NUCLEOSIDE].applyMatrix(base_rotation);
-        group[objects][this.NUCLEOSIDE].position.set(x_ns, y_ns, z_ns);
-        //not going to change the BB_NS_CON length because its the same out to 7 decimal places each time
-        group[objects][this.BB_NS_CON].applyMatrix(rotation_con);
-        group[objects][this.BB_NS_CON].position.set(x_con, y_con, z_con);
-        group[objects][this.COM].position.set(x, y, z);
+            sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+        
+            rotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0),
+                new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
+        }
+        else {
+            x_sp = 0,
+            y_sp = 0,
+            z_sp = 0;
 
+            sp_len = 0;
+
+            rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
+        }
+
+
+        // update backbone positioning array
+        this.parent.parent.bb_offsets[this.global_id * 3] = x_bb;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y_bb;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z_bb;
+
+        // update nucleoside positioning array
+        this.parent.parent.ns_offsets[this.global_id * 3] = x_ns;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y_ns;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z_ns;
+
+
+        // update nucleoside rotation quaternion
+        this.parent.parent.ns_rotation[this.global_id * 4] = base_rotation.w;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
+        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
+
+        // update connector positioning array
+        this.parent.parent.con_offsets[this.global_id * 3] = x_con;
+        this.parent.parent.con_offsets[this.global_id * 3 + 1] = y_con;
+        this.parent.parent.con_offsets[this.global_id * 3 + 2] = z_con;
+
+        // update connector rotation quaternion
+        this.parent.parent.con_rotation[this.global_id * 4] = rotation_con.w;
+        this.parent.parent.con_rotation[this.global_id * 4 + 1] = rotation_con.z;
+        this.parent.parent.con_rotation[this.global_id * 4 + 2] = rotation_con.y;
+        this.parent.parent.con_rotation[this.global_id * 4 + 3] = rotation_con.x;
+
+        // update sugar-phosphate positioning array
+        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
+        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
+
+        // update sugar-phosphate rotation quaternion
+        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
+        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
+
+        // update backbone lengths
+        this.parent.parent.bbcon_scales[this.global_id * 3] = 1;
+        this.parent.parent.bbcon_scales[this.global_id * 3 + 1] = sp_len;
+        this.parent.parent.bbcon_scales[this.global_id * 3 + 2] = 1;
+
+
+        // keep track of last backbone for sugar-phosphate positioning
+        x_bb_last = x_bb;
+        y_bb_last = y_bb;
+        z_bb_last = z_bb;
         //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        if (this.neighbor3 != null) {
+        /*if (this.neighbor3 != null) {
             //get current and 3' backbone positions and set length/rotation
             let last_pos = new THREE.Vector3();
             this.neighbor3[objects][this.BACKBONE].getWorldPosition(last_pos);
@@ -410,7 +466,7 @@ class Nucleotide extends BasicElement {
             group[objects][this.SP_CON].applyMatrix(rotation_sp); //rotate
             group[objects][this.SP_CON].position.set(x_sp, y_sp, z_sp); //set position
             group[objects][this.SP_CON].parent = this;
-        };
+        };*/
     };
     updateSP(): THREE.Object3D{
         let sp_Mesh: THREE.Object3D = this[objects][this.SP_CON];
@@ -631,8 +687,6 @@ class RNANucleotide extends Nucleotide {
 class AminoAcid extends BasicElement {
     constructor(global_id: number, parent: Strand) {
         super(global_id, parent);
-        this.SP_CON = 1;
-        this.COM = 0;
         this.element_type = AA;
     };
     elem_to_color(elem: number | string): THREE.Color {
@@ -671,23 +725,23 @@ class AminoAcid extends BasicElement {
         this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
         this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
 
-        // fill backbone positioning array
-        this.parent.parent.bb_offsets[this.global_id * 3] = x;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z;
+        // we're using the nucleoside meshes for the amino acid backbones
+        this.parent.parent.bb_offsets[this.global_id * 3] = 0;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = 0;
+        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = 0;
 
-        // backbones are spheres and therefore rotationally invariant
+        // we're using the nucleoside meshes for the amino acid backbones        
         this.parent.parent.bb_rotation[this.global_id * 4] = 0;
         this.parent.parent.bb_rotation[this.global_id * 4 + 1] = 0;
         this.parent.parent.bb_rotation[this.global_id * 4 + 2] = 0;
         this.parent.parent.bb_rotation[this.global_id * 4 + 3] = 0;
 
-        // amino acids don't have nucleosides
-        this.parent.parent.ns_offsets[this.global_id * 3] = 0;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = 0;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = 0;
+        // set the backbone positions
+        this.parent.parent.ns_offsets[this.global_id * 3] = x;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y;
+        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z;
         
-        // amino acids don't have nucleosides
+        // these are spheres this time, so rotationally invariant
         this.parent.parent.ns_rotation[this.global_id * 4] = 0;
         this.parent.parent.ns_rotation[this.global_id * 4 + 1] = 0;
         this.parent.parent.ns_rotation[this.global_id * 4 + 2] = 0;
@@ -726,27 +780,33 @@ class AminoAcid extends BasicElement {
             color = this.strand_to_color(this.parent.strand_id);
         }
 
-        //fill color array for backbones and connectors
-        color = this.elem_to_color(this.type);
+        // set the backbone colors
         this.parent.parent.bb_colors[this.global_id * 3] = color.r;
         this.parent.parent.bb_colors[this.global_id * 3 + 1] = color.g;
         this.parent.parent.bb_colors[this.global_id * 3 + 2] = color.b;
 
-        // determine the nucleoside color and fill the nucleoside color array
+        // The backbones are nucleosides for proteins
+        color = this.elem_to_color(this.type);
         this.parent.parent.ns_colors[this.global_id * 3] = color.r;
         this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
         this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
 
-        // most things are all the same size
-        this.parent.parent.scales[ this.global_id * 3] = 1;
-        this.parent.parent.scales[ this.global_id * 3 + 1] = 1;
-        this.parent.parent.scales[ this.global_id * 3 + 2] = 1;
+        // backbones are the only things that use this scale, and we're not using them
+        this.parent.parent.scales[ this.global_id * 3] = 0;
+        this.parent.parent.scales[ this.global_id * 3 + 1] = 0;
+        this.parent.parent.scales[ this.global_id * 3 + 2] = 0;
+
+        // so instead the nucleosides get to be spheres this time.
+        this.parent.parent.ns_scales[ this.global_id * 3] = 1;
+        this.parent.parent.ns_scales[ this.global_id * 3 + 1] = 1;
+        this.parent.parent.ns_scales[ this.global_id * 3 + 2] = 1;
 
         // except connectors, amino acids don't have connectors.
         this.parent.parent.con_scales[ this.global_id * 3] = 0;
         this.parent.parent.con_scales[ this.global_id * 3 + 1] = 0;
         this.parent.parent.con_scales[ this.global_id * 3 + 2] = 0;
 
+        // but they do have backbones
         this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
         this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
         this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
@@ -1049,12 +1109,18 @@ class System extends THREE.Group {
     con_rotation: Float32Array;
     bbcon_offsets: Float32Array;
     bbcon_rotation: Float32Array;
-    bbcon_scales: Float32Array; //we're going to set this to 0 if the con shouldn't exist. 
-    cm_offsets: Float32Array; //how accurately do we want to calculate means and such?  this could just be the backbones.
+    bbcon_scales: Float32Array;
+    cm_offsets: Float32Array;
     bb_colors: Float32Array;
     ns_colors: Float32Array;
     scales: Float32Array;
+    ns_scales: Float32Array;
     con_scales: Float32Array;
+
+    backbone: THREE.Mesh;
+    nucleoside: THREE.Mesh;
+    connector: THREE.Mesh;
+    bbconnector: THREE.Mesh;
 
     constructor(id, start_id) {
         super();

@@ -85,6 +85,7 @@ class TopReader extends FileReader {
                 this.system.bb_colors = new Float32Array(this.system.INSTANCES * 3);
                 this.system.ns_colors = new Float32Array(this.system.INSTANCES * 3);
                 this.system.scales = new Float32Array(this.system.INSTANCES * 3);
+                this.system.ns_scales = new Float32Array(this.system.INSTANCES * 3);
                 this.system.con_scales = new Float32Array(this.system.INSTANCES * 3);
             };
         })(this.top_file);
