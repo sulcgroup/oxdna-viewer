@@ -36,6 +36,7 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 camera.position.x = 100;
 var canvas = document.getElementById("threeCanvas");
 var renderer = new THREE.WebGLRenderer({
+    preserveDrawingBuffer: true,
     alpha: true,
     antialias: true,
     canvas: canvas
