@@ -523,6 +523,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     scene.add(system.connector);
     scene.add(system.bbconnector);
 
+    //expose the objects to the picker
+    //pickingScene.add(system.backbone.clone());
+    //pickingScene.add(system.nucleoside.clone());
+    //pickingScene.add(system.connector.clone());
+    //pickingScene.add(system.bbconnector.clone());
+
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
 

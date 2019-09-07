@@ -13,7 +13,7 @@ function translate(system, box_option, center_option) {
             case "Monomer":
                 for (let j = 0; j < system[strands][i][monomers].length; j++) {
                     //calculate how many boxes the inboxed structure needs to be moved over
-                    diff = new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id*3], system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]);
+                    diff = new THREE.Vector3(system.cm_offsets[(system[strands][i][monomers][j].global_id - system.global_start_id) * 3], system.cm_offsets[(system[strands][i][monomers][j].global_id - system.global_start_id) * 3 + 1], system.cm_offsets[(system[strands][i][monomers][j].global_id - system.global_start_id) * 3 + 2]);
                     diff.add(shift);
                     diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
                     //add the centering to the boxing
@@ -25,8 +25,8 @@ function translate(system, box_option, center_option) {
 
                     //actually move things.
                     system[strands][i][monomers][j].translate_position(diff);
-                    actual_com.add(new THREE.Vector3(system.cm_offsets[system[strands][i][monomers][j].global_id*3], system.cm_offsets[system[strands][i][monomers][j].global_id*3+1], system.cm_offsets[system[strands][i][monomers][j].global_id*3+2]).multiplyScalar(1/system.INSTANCES));
-                }
+                    actual_com.add(new THREE.Vector3(system.cm_offsets[(system[strands][i][monomers][j].global_id - system.global_start_id) * 3], system.cm_offsets[(system[strands][i][monomers][j].global_id - system.global_start_id) * 3 + 1], system.cm_offsets[(system[strands][i][monomers][j].global_id  - system.global_start_id) * 3 + 2]).multiplyScalar(1/system.INSTANCES));
+                };
                 break;
             case "Strand":
                 diff = system[strands][i].get_com()

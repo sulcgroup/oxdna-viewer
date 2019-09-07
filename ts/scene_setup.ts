@@ -47,6 +47,7 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 // set camera position 
 camera.position.x = 100;
 
+
 // import canvas capture library
 declare var CCapture: any;
 
@@ -88,18 +89,17 @@ let dir = new THREE.Vector3(1, 0, 0); //direction for x-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
 let Origin = new THREE.Vector3(0, 0, 0);
 var length: number = 10;
-let hex = 0x000080; //arrow colors
-let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex); //create x-axis arrow
+let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x800000); //create x-axis arrow
 arrowHelper.name = "x-axis";
 scene.add(arrowHelper); //add x-axis arrow to scene
 dir = new THREE.Vector3(0, 1, 0); //direction for y-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
-arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x008000);
 arrowHelper.name = "y-axis";
 scene.add(arrowHelper); //add y-axis arrow to scene
 dir = new THREE.Vector3(0, 0, 1); //direction for z-axis
 dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
-arrowHelper = new THREE.ArrowHelper(dir, Origin, length, hex);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
 

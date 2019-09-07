@@ -57,7 +57,7 @@ class BasicElement extends THREE.Group{
     calculatePositions(x: number, y: number, z: number, l: string) {
 
     };
-    
+
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
 
     };
@@ -108,6 +108,10 @@ class Nucleotide extends BasicElement {
         super(global_id, parent);
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
+
+        let sys = this.parent.parent
+        let gid = this.global_id - sys.global_start_id
+
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
             y_a1 = parseFloat(l[4]),
@@ -170,10 +174,11 @@ class Nucleotide extends BasicElement {
 
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
-            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
-            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
-            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+        //handle circular strands
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) {
+            let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];            
 
             let tmpx_sp = (x_bb + tmpx_bb_last) / 2, 
             tmpy_sp = (y_bb + tmpy_bb_last) / 2,
@@ -184,71 +189,10 @@ class Nucleotide extends BasicElement {
             let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
             );
-
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
-            
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
-
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
+            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);            
         }
-
-        // we keep track of cm position, even though we don't draw anything with it.
-        this.parent.parent.cm_offsets[this.global_id * 3] = x;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
-
-        // fill backbone positioning array
-        this.parent.parent.bb_offsets[this.global_id * 3] = x_bb;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y_bb;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z_bb;
-
-        // backbones are spheres and therefore rotationally invariant
-        this.parent.parent.bb_rotation[this.global_id * 4] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 1] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 2] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 3] = 0;
-
-        // fill nucleoside positioning array
-        this.parent.parent.ns_offsets[this.global_id * 3] = x_ns;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y_ns;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z_ns;
-        
-        // fill nucleoside rotation quaternion
-        this.parent.parent.ns_rotation[this.global_id * 4] = base_rotation.w;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
-
-        // fill connector positioning array
-        this.parent.parent.con_offsets[this.global_id * 3] = x_con;
-        this.parent.parent.con_offsets[this.global_id * 3 + 1] = y_con;
-        this.parent.parent.con_offsets[this.global_id * 3 + 2] = z_con;
-        
-        // fill connector rotation quaternion
-        this.parent.parent.con_rotation[this.global_id * 4] = rotation_con.w;
-        this.parent.parent.con_rotation[this.global_id * 4 + 1] = rotation_con.z;
-        this.parent.parent.con_rotation[this.global_id * 4 + 2] = rotation_con.y;
-        this.parent.parent.con_rotation[this.global_id * 4 + 3] = rotation_con.x;
-
-        // fill sugar-phosphate positioning array
-        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
-
-        // fill sugar-phosphate rotation quaternion
-        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
-
-        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         var color;
@@ -258,36 +202,27 @@ class Nucleotide extends BasicElement {
         else {
             color = this.strand_to_color(this.parent.strand_id);
         }
+    
 
-        //fill color array for backbones and connectors
-        this.parent.parent.bb_colors[this.global_id * 3] = color.r;
-        this.parent.parent.bb_colors[this.global_id * 3 + 1] = color.g;
-        this.parent.parent.bb_colors[this.global_id * 3 + 2] = color.b;
+        //fill the instance matrices with data
+        this.name = gid + ""; //set name (string) to nucleotide's global id
+        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, gid, [x_bb, y_bb, z_bb]);
+        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_rotation', 4, gid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
+        sys.fill_vec('con_offsets', 3, gid, [x_con, y_con, z_con]);
+        sys.fill_vec('con_rotation', 4, gid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
+        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('scales', 3, gid, [1, 1, 1]);
+        sys.fill_vec('ns_scales', 3, gid, [0.7, 0.3, 0.7]);
+        sys.fill_vec('con_scales', 3, gid, [1, this.bb_ns_distance, 1]);
+        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);
 
-        // determine the nucleoside color and fill the nucleoside color array
         color = this.elem_to_color(this.type);
-        this.parent.parent.ns_colors[this.global_id * 3] = color.r;
-        this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
-        this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
-
-        // many things are the same size as their original mesh
-        this.parent.parent.scales[ this.global_id * 3] = 1;
-        this.parent.parent.scales[ this.global_id * 3 + 1] = 1;
-        this.parent.parent.scales[ this.global_id * 3 + 2] = 1;
-
-        // except nucleosides, they're flatish disk shapes
-        this.parent.parent.ns_scales[ this.global_id * 3] = 0.7;
-        this.parent.parent.ns_scales[ this.global_id * 3 + 1] = 0.3;
-        this.parent.parent.ns_scales[ this.global_id * 3 + 2] = 0.7;
-
-        // and connectors, their Y axis depends on what they're connecting.
-        this.parent.parent.con_scales[ this.global_id * 3] = 1;
-        this.parent.parent.con_scales[ this.global_id * 3 + 1] = this.bb_ns_distance;
-        this.parent.parent.con_scales[ this.global_id * 3 + 2] = 1;
-
-        this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
-        this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
-        this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
+        sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
 
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x_bb;
@@ -296,32 +231,37 @@ class Nucleotide extends BasicElement {
     };
 
     translate_position(amount: THREE.Vector3) {
-        let s = this.parent.parent;
-        s.bb_offsets[this.global_id * 3] += amount.x;
-        s.bb_offsets[this.global_id * 3 + 1] += amount.y;
-        s.bb_offsets[this.global_id * 3 + 2] += amount.z;
+        let sys = this.parent.parent;
+        let id = (this.global_id - sys.global_start_id)*3;
 
-        s.ns_offsets[this.global_id * 3] += amount.x;
-        s.ns_offsets[this.global_id * 3 + 1] += amount.y;
-        s.ns_offsets[this.global_id * 3 + 2] += amount.z;
+        sys.bb_offsets[id] += amount.x;
+        sys.bb_offsets[id + 1] += amount.y;
+        sys.bb_offsets[id + 2] += amount.z;
 
-        s.con_offsets[this.global_id * 3] += amount.x;
-        s.con_offsets[this.global_id * 3 + 1] += amount.y;
-        s.con_offsets[this.global_id * 3 + 2] += amount.z;
+        sys.ns_offsets[id] += amount.x;
+        sys.ns_offsets[id + 1] += amount.y;
+        sys.ns_offsets[id + 2] += amount.z;
 
-        s.bbcon_offsets[this.global_id * 3] += amount.x;
-        s.bbcon_offsets[this.global_id * 3 + 1] += amount.y;
-        s.bbcon_offsets[this.global_id * 3 + 2] += amount.z;
+        sys.con_offsets[id] += amount.x;
+        sys.con_offsets[id + 1] += amount.y;
+        sys.con_offsets[id + 2] += amount.z;
 
-        s.cm_offsets[this.global_id * 3] += amount.x;
-        s.cm_offsets[this.global_id * 3 + 1] += amount.y;
-        s.cm_offsets[this.global_id * 3 + 2] += amount.z;
+        sys.bbcon_offsets[id] += amount.x;
+        sys.bbcon_offsets[id + 1] += amount.y;
+        sys.bbcon_offsets[id + 2] += amount.z;
+
+        sys.cm_offsets[id] += amount.x;
+        sys.cm_offsets[id + 1] += amount.y;
+        sys.cm_offsets[id + 2] += amount.z;
     }
 
     calcBBPos(x: number, y: number, z: number, x_a1: number, y_a1: number, z_a1: number, x_a2: number, y_a2: number, z_a2: number, x_a3: number, y_a3: number, z_a3: number): THREE.Vector3 {
         return new THREE.Vector3(x, y, z);
     };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
+        let sys = this.parent.parent;
+        let gid = this.global_id;
+
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
             y_a1 = parseFloat(l[4]),
@@ -361,10 +301,7 @@ class Nucleotide extends BasicElement {
             new THREE.Vector3(0, 1, 0), 
             new THREE.Vector3(x_bb - x_ns, y_bb - y_ns, z_bb - z_ns).normalize());
 
-        // we keep track of cm position, even though we don't draw anything with it.
-        this.parent.parent.cm_offsets[this.global_id * 3] = x;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
+
 
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
@@ -390,9 +327,9 @@ class Nucleotide extends BasicElement {
         }
 
         if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
-            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
-            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
-            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+            let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];            
 
             let tmpx_sp = (x_bb + tmpx_bb_last) / 2, 
             tmpy_sp = (y_bb + tmpy_bb_last) / 2,
@@ -404,64 +341,21 @@ class Nucleotide extends BasicElement {
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
             );
 
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
-            
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
-
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
+            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);
         }
 
-
-        // update backbone positioning array
-        this.parent.parent.bb_offsets[this.global_id * 3] = x_bb;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = y_bb;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = z_bb;
-
-        // update nucleoside positioning array
-        this.parent.parent.ns_offsets[this.global_id * 3] = x_ns;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y_ns;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z_ns;
-
-
-        // update nucleoside rotation quaternion
-        this.parent.parent.ns_rotation[this.global_id * 4] = base_rotation.w;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = base_rotation.z;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = base_rotation.y;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = base_rotation.x;
-
-        // update connector positioning array
-        this.parent.parent.con_offsets[this.global_id * 3] = x_con;
-        this.parent.parent.con_offsets[this.global_id * 3 + 1] = y_con;
-        this.parent.parent.con_offsets[this.global_id * 3 + 2] = z_con;
-
-        // update connector rotation quaternion
-        this.parent.parent.con_rotation[this.global_id * 4] = rotation_con.w;
-        this.parent.parent.con_rotation[this.global_id * 4 + 1] = rotation_con.z;
-        this.parent.parent.con_rotation[this.global_id * 4 + 2] = rotation_con.y;
-        this.parent.parent.con_rotation[this.global_id * 4 + 3] = rotation_con.x;
-
-        // update sugar-phosphate positioning array
-        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
-
-        // update sugar-phosphate rotation quaternion
-        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
-
-        // update backbone lengths
-        this.parent.parent.bbcon_scales[this.global_id * 3] = 1;
-        this.parent.parent.bbcon_scales[this.global_id * 3 + 1] = sp_len;
-        this.parent.parent.bbcon_scales[this.global_id * 3 + 2] = 1;
+        //update the relevant instancing matrices
+        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, gid, [x_bb, y_bb, z_bb]);
+        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_rotation', 4, gid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
+        sys.fill_vec('con_offsets', 3, gid, [x_con, y_con, z_con]);
+        sys.fill_vec('con_rotation', 4, gid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
+        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);
 
 
         // keep track of last backbone for sugar-phosphate positioning
@@ -660,6 +554,9 @@ class AminoAcid extends BasicElement {
         return nucleoside_colors[elem];
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
+        let sys = this.parent.parent;
+        let gid = this.global_id - sys.global_start_id;
+
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
@@ -683,9 +580,9 @@ class AminoAcid extends BasicElement {
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
         if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
-            let tmpx_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3],
-            tmpy_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 1],
-            tmpz_bb_last = this.parent.parent.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+            let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];            
 
             let tmpx_sp = (x + tmpx_bb_last) / 2, 
             tmpy_sp = (y + tmpy_bb_last) / 2,
@@ -697,70 +594,10 @@ class AminoAcid extends BasicElement {
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x, tmpy_sp - y, tmpz_sp - z).normalize()
             );
 
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3] = tmpx_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 1] = tmpy_sp;
-            this.parent.parent.bbcon_offsets[this.neighbor5.global_id * 3 + 2] = tmpz_sp;
-            
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4] = tmprotation_sp.w;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 1] = tmprotation_sp.z;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 2] = tmprotation_sp.y;
-            this.parent.parent.bbcon_rotation[this.neighbor5.global_id * 4 + 3] = tmprotation_sp.x;
-
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3] = 1;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 1] = tmpsp_len;
-            this.parent.parent.bbcon_scales[this.neighbor5.global_id * 3 + 2] = 1;
+            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);            
         }
-
-        // we keep track of cm position, even though we don't draw anything with it.
-        this.parent.parent.cm_offsets[this.global_id * 3] = x;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 1] = y;
-        this.parent.parent.cm_offsets[this.global_id * 3 + 2] = z;
-
-        // we're using the nucleoside meshes for the amino acid backbones
-        this.parent.parent.bb_offsets[this.global_id * 3] = 0;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 1] = 0;
-        this.parent.parent.bb_offsets[this.global_id * 3 + 2] = 0;
-
-        // we're using the nucleoside meshes for the amino acid backbones        
-        this.parent.parent.bb_rotation[this.global_id * 4] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 1] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 2] = 0;
-        this.parent.parent.bb_rotation[this.global_id * 4 + 3] = 0;
-
-        // set the backbone positions
-        this.parent.parent.ns_offsets[this.global_id * 3] = x;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 1] = y;
-        this.parent.parent.ns_offsets[this.global_id * 3 + 2] = z;
-        
-        // these are spheres this time, so rotationally invariant
-        this.parent.parent.ns_rotation[this.global_id * 4] = 0;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 1] = 0;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 2] = 0;
-        this.parent.parent.ns_rotation[this.global_id * 4 + 3] = 0;
-
-        // amino acids don't have nucleosides
-        this.parent.parent.con_offsets[this.global_id * 3] = 0;
-        this.parent.parent.con_offsets[this.global_id * 3 + 1] = 0;
-        this.parent.parent.con_offsets[this.global_id * 3 + 2] = 0;
-        
-        // amino acids don't have nucleosides
-        this.parent.parent.con_rotation[this.global_id * 4] = 0;
-        this.parent.parent.con_rotation[this.global_id * 4 + 1] = 0;
-        this.parent.parent.con_rotation[this.global_id * 4 + 2] = 0;
-        this.parent.parent.con_rotation[this.global_id * 4 + 3] = 0;
-
-        // fill backbone connector positioning array
-        this.parent.parent.bbcon_offsets[this.global_id * 3] = x_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 1] = y_sp;
-        this.parent.parent.bbcon_offsets[this.global_id * 3 + 2] = z_sp;
-
-        // fill backbone connector rotation quaternion
-        this.parent.parent.bbcon_rotation[this.global_id * 4] = rotation_sp.w;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 1] = rotation_sp.z;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 2] = rotation_sp.y;
-        this.parent.parent.bbcon_rotation[this.global_id * 4 + 3] = rotation_sp.x;
-
-        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         var color;
@@ -771,75 +608,82 @@ class AminoAcid extends BasicElement {
             color = this.strand_to_color(this.parent.strand_id);
         }
 
-        // set the backbone colors
-        this.parent.parent.bb_colors[this.global_id * 3] = color.r;
-        this.parent.parent.bb_colors[this.global_id * 3 + 1] = color.g;
-        this.parent.parent.bb_colors[this.global_id * 3 + 2] = color.b;
+        // fill in the instancing matrices
+        this.name = gid + ""; //set name (string) to nucleotide's global id
+        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, gid, [0, 0, 0]);
+        sys.fill_vec('bb_rotation', 4, gid, [0, 0, 0, 0]);
+        sys.fill_vec('ns_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('ns_rotation', 4, gid, [0, 0, 0, 0]);
+        sys.fill_vec('con_offsets', 3, gid, [0, 0, 0]);        
+        sys.fill_vec('con_rotation', 4, gid, [0, 0, 0, 0]);
+        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('scales', 3, gid, [0, 0, 0]);     
+        sys.fill_vec('ns_scales', 3, gid, [1, 1, 1]);       
+        sys.fill_vec('con_scales', 3, gid, [0, 0, 0]); 
+        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);      
+        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
 
-        // The backbones are nucleosides for proteins
         color = this.elem_to_color(this.type);
-        this.parent.parent.ns_colors[this.global_id * 3] = color.r;
-        this.parent.parent.ns_colors[this.global_id * 3 + 1] = color.g;
-        this.parent.parent.ns_colors[this.global_id * 3 + 2] = color.b;
-
-        // backbones are the only things that use this scale, and we're not using them
-        this.parent.parent.scales[ this.global_id * 3] = 0;
-        this.parent.parent.scales[ this.global_id * 3 + 1] = 0;
-        this.parent.parent.scales[ this.global_id * 3 + 2] = 0;
-
-        // so instead the nucleosides get to be spheres this time.
-        this.parent.parent.ns_scales[ this.global_id * 3] = 1;
-        this.parent.parent.ns_scales[ this.global_id * 3 + 1] = 1;
-        this.parent.parent.ns_scales[ this.global_id * 3 + 2] = 1;
-
-        // except connectors, amino acids don't have connectors.
-        this.parent.parent.con_scales[ this.global_id * 3] = 0;
-        this.parent.parent.con_scales[ this.global_id * 3 + 1] = 0;
-        this.parent.parent.con_scales[ this.global_id * 3 + 2] = 0;
-
-        // but they do have backbones
-        this.parent.parent.bbcon_scales[ this.global_id * 3] = 1;
-        this.parent.parent.bbcon_scales[ this.global_id * 3 + 1] = sp_len;
-        this.parent.parent.bbcon_scales[ this.global_id * 3 + 2] = 1;
-
+        sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
+        
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
     };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
-        let group: THREE.Group = this;
-        group.name = this.global_id + "";
+        let sys = this.parent.parent;
+        let gid = this.global_id - sys.global_start_id;
 
-        //set new positions/rotations for the meshes.  Don't need to create new meshes since they exist.
-        //if you position.set() before applyMatrix() everything explodes and I don't know why
-        group[objects][this.BACKBONE].position.set(x, y, z);
-
-        //last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
+        let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
-            let x_sp = (x + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
+            x_sp = (x + x_bb_last) / 2,
                 y_sp = (y + y_bb_last) / 2,
                 z_sp = (z + z_bb_last) / 2;
 
-            let sp_len = Math.sqrt(Math.pow(x - x_bb_last, 2) + Math.pow(y - y_bb_last, 2) + Math.pow(z - z_bb_last, 2));
-            // easy periodic boundary condition fix  
-            // if the bonds are to long just don't add them 
-            if (sp_len <= 500) {
-                let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
-                    new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
-                    )
-                );
-                //let material: THREE.MeshLambertMaterial = this.strand_to_color(this.parent.strand_id);
-                //let sp = new THREE.Mesh(connector_geometry, material); //cylinder - sugar phosphate connector
-                let sp = group[objects][this.SP_CON];
-                this.updateSP();
-                sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-                sp.applyMatrix(rotation_sp); //set rotation
-                sp.position.set(x_sp, y_sp, z_sp);
-                group[objects][this.SP_CON].parent = this;
-            }
+            sp_len = Math.sqrt(Math.pow(x - x_bb_last, 2) + Math.pow(y - y_bb_last, 2) + Math.pow(z - z_bb_last, 2));
+
+            rotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x, y_sp - y, z_sp - z).normalize()
+            );
         }
+        else {
+            x_sp = 0,
+                y_sp = 0,
+                z_sp = 0;
+
+            sp_len = 0;
+
+            rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
+        }
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+            let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3],
+            tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1],
+            tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];            
+
+            let tmpx_sp = (x + tmpx_bb_last) / 2, 
+            tmpy_sp = (y + tmpy_bb_last) / 2,
+            tmpz_sp = (z + tmpz_bb_last) / 2;
+
+            let tmpsp_len = Math.sqrt(Math.pow(x - tmpx_bb_last, 2) + Math.pow(y - tmpy_bb_last, 2) + Math.pow(z - tmpz_bb_last, 2));
+
+            let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x, tmpy_sp - y, tmpz_sp - z).normalize()
+            );
+
+            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);   
+        }
+
+        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('ns_offsets', 3, gid, [x, y, z]);
+        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);  
+        
         x_bb_last = x;
         y_bb_last = y;
         z_bb_last = z;
@@ -1006,8 +850,8 @@ class Strand extends THREE.Group {
 
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
-        for (let i = (this.children[0] as BasicElement).global_id; i <= (this.children[this.children.length-1] as BasicElement).global_id; i++){
-            com.add(new THREE.Vector3(this.parent.cm_offsets[i*3], this.parent.cm_offsets[i*3+1], this.parent.cm_offsets[i*3+2]));
+        for (let i = ((this[monomers][0] as BasicElement).global_id - this.parent.global_start_id) * 3; i <= ((this[monomers][this[monomers].length-1] as BasicElement).global_id - this.parent.global_start_id) * 3; i+=3){
+            com.add(new THREE.Vector3(this.parent.cm_offsets[i], this.parent.cm_offsets[i+1], this.parent.cm_offsets[i+2]));
         }
         return(com.multiplyScalar(1/this[monomers].length))
     }
@@ -1030,27 +874,27 @@ class NucleicAcidStrand extends Strand {
     };
 
     translate_strand(amount: THREE.Vector3) {
-        for (let i = (this.children[0] as Nucleotide).global_id; i <= (this.children[this.children.length-1] as Nucleotide).global_id; i++){
+        for (let i = ((this[monomers][0] as Nucleotide).global_id - this.parent.global_start_id) * 3; i <= ((this[monomers][this[monomers].length-1] as Nucleotide).global_id - this.parent.global_start_id) * 3; i+=3){
             let s = this.parent;
-            s.bb_offsets[i * 3] += amount.x;
-            s.bb_offsets[i * 3 + 1] += amount.y;
-            s.bb_offsets[i * 3 + 2] += amount.z;
+            s.bb_offsets[i] += amount.x;
+            s.bb_offsets[i + 1] += amount.y;
+            s.bb_offsets[i + 2] += amount.z;
 
-            s.ns_offsets[i * 3] += amount.x;
-            s.ns_offsets[i * 3 + 1] += amount.y;
-            s.ns_offsets[i * 3 + 2] += amount.z;
+            s.ns_offsets[i] += amount.x;
+            s.ns_offsets[i + 1] += amount.y;
+            s.ns_offsets[i + 2] += amount.z;
 
-            s.con_offsets[i * 3] += amount.x;
-            s.con_offsets[i * 3 + 1] += amount.y;
-            s.con_offsets[i * 3 + 2] += amount.z;
+            s.con_offsets[i] += amount.x;
+            s.con_offsets[i + 1] += amount.y;
+            s.con_offsets[i + 2] += amount.z;
 
-            s.bbcon_offsets[i * 3] += amount.x;
-            s.bbcon_offsets[i * 3 + 1] += amount.y;
-            s.bbcon_offsets[i * 3 + 2] += amount.z;
+            s.bbcon_offsets[i] += amount.x;
+            s.bbcon_offsets[i + 1] += amount.y;
+            s.bbcon_offsets[i + 2] += amount.z;
 
-            s.cm_offsets[i * 3] += amount.x;
-            s.cm_offsets[i * 3 + 1] += amount.y;
-            s.cm_offsets[i * 3 + 2] += amount.z;
+            s.cm_offsets[i] += amount.x;
+            s.cm_offsets[i + 1] += amount.y;
+            s.cm_offsets[i + 2] += amount.z;
         } 
     }
 }
@@ -1063,19 +907,19 @@ class Peptide extends Strand {
     }
 
     translate_strand(amount: THREE.Vector3) {
-        for (let i = (this.children[0] as AminoAcid).global_id; i < (this.children[this.children.length-1] as Nucleotide).global_id; i++){
+        for (let i = ((this.children[0] as AminoAcid).global_id - this.parent.global_start_id) * 3; i < ((this[monomers][this[monomers].length-1] as AminoAcid).global_id - this.parent.global_start_id) * 3; i+=3){
             let s = this.parent;
-            s.bb_offsets[i * 3] += amount.x;
-            s.bb_offsets[i * 3 + 1] += amount.y;
-            s.bb_offsets[i * 3 + 2] += amount.z;
+            s.bb_offsets[i] += amount.x;
+            s.bb_offsets[i + 1] += amount.y;
+            s.bb_offsets[i + 2] += amount.z;
 
-            s.bbcon_offsets[i * 3] += amount.x;
-            s.bbcon_offsets[i * 3 + 1] += amount.y;
-            s.bbcon_offsets[i * 3 + 2] += amount.z;
+            s.bbcon_offsets[i] += amount.x;
+            s.bbcon_offsets[i + 1] += amount.y;
+            s.bbcon_offsets[i + 2] += amount.z;
 
-            s.cm_offsets[i * 3] += amount.x;
-            s.cm_offsets[i * 3 + 1] += amount.y;
-            s.cm_offsets[i * 3 + 2] += amount.z;
+            s.cm_offsets[i] += amount.x;
+            s.cm_offsets[i + 1] += amount.y;
+            s.cm_offsets[i + 2] += amount.z;
         } 
     }
 }
@@ -1159,8 +1003,8 @@ class System extends THREE.Group {
     //computes the center of mass of the system
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
-        for (let i = 0; i < this.INSTANCES; i++){
-            com.add(new THREE.Vector3(this.cm_offsets[i*3], this.cm_offsets[i*3+1], this.cm_offsets[i*3+2]))
+        for (let i = 0; i < this.INSTANCES * 3; i+=3){
+            com.add(new THREE.Vector3(this.cm_offsets[i], this.cm_offsets[i+1], this.cm_offsets[i+2]))
         }
         return(com.multiplyScalar(1/this.INSTANCES))
     }
@@ -1169,7 +1013,7 @@ class System extends THREE.Group {
     strand_unweighted_com() {
         let com = new THREE.Vector3(0, 0, 0);
         let count = 0;
-        this[strands].forEach((s) => {
+        this[strands].forEach((s: Strand) => {
             com.add(s.get_com())
             count += 1;
         });
@@ -1182,26 +1026,26 @@ class System extends THREE.Group {
 
     //THIS ONLY WORKS FOR NUCLEOTIDES.  NEEDS TO BE FIXED FOR OTHER THINGS
     translate_system(amount: THREE.Vector3) {
-        for (let i = 0; i < this.INSTANCES; i++){
-            this.bb_offsets[i * 3] += amount.x;
-            this.bb_offsets[i * 3 + 1] += amount.y;
-            this.bb_offsets[i * 3 + 2] += amount.z;
+        for (let i = 0; i < this.INSTANCES * 3; i+=3){
+            this.bb_offsets[i] += amount.x;
+            this.bb_offsets[i + 1] += amount.y;
+            this.bb_offsets[i + 2] += amount.z;
 
-            this.ns_offsets[i * 3] += amount.x;
-            this.ns_offsets[i * 3 + 1] += amount.y;
-            this.ns_offsets[i * 3 + 2] += amount.z;
+            this.ns_offsets[i] += amount.x;
+            this.ns_offsets[i + 1] += amount.y;
+            this.ns_offsets[i + 2] += amount.z;
 
-            this.con_offsets[i * 3] += amount.x;
-            this.con_offsets[i * 3 + 1] += amount.y;
-            this.con_offsets[i * 3 + 2] += amount.z;
+            this.con_offsets[i] += amount.x;
+            this.con_offsets[i + 1] += amount.y;
+            this.con_offsets[i + 2] += amount.z;
 
-            this.bbcon_offsets[i * 3] += amount.x;
-            this.bbcon_offsets[i * 3 + 1] += amount.y;
-            this.bbcon_offsets[i * 3 + 2] += amount.z;
+            this.bbcon_offsets[i] += amount.x;
+            this.bbcon_offsets[i + 1] += amount.y;
+            this.bbcon_offsets[i + 2] += amount.z;
 
-            this.cm_offsets[i * 3] += amount.x;
-            this.cm_offsets[i * 3 + 1] += amount.y;
-            this.cm_offsets[i * 3 + 2] += amount.z;
+            this.cm_offsets[i] += amount.x;
+            this.cm_offsets[i + 1] += amount.y;
+            this.cm_offsets[i + 2] += amount.z;
         }
         this.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
         this.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
@@ -1209,6 +1053,12 @@ class System extends THREE.Group {
         this.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
 
         render();
+    }
+
+    fill_vec(vec_name, unit_size, pos, vals) {
+        for (i = 0; i < unit_size; i++) {
+            this[vec_name][pos * unit_size + i] = vals[i]
+        }
     }
 };
 
@@ -1492,73 +1342,6 @@ function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Ve
     a3 * b1 - a1 * b3,
     a1 * b2 - a2 * b1];
 }
-/*
-function moveWithinBox(pos, dpos) {
-    a = pos.x + dpos.x;
-    b = (pos.x+1.5*box)%box - box/2 + dpos.x)
-    return Math.abs(a) < Math.abs(b) ? a:b;
-}
-*/
-
-// Calculate center of mass taking periodic boundary conditions into account:
-// https://doi.org/10.1080/2151237X.2008.10129266
-// https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
-/*function centerSystems() { //centers systems based on cms calculated for world (all systems)
-    
-    // Create one averaging variable for each dimension, representing that 1D
-    // interval as a unit circle in 2D (with the circumference being the 
-    // bounding box side length)
-    let checkbox = document.getElementById("centering") as HTMLInputElement;
-    if (checkbox.checked) {
-        let cm_x = new THREE.Vector2(),
-            cm_y = new THREE.Vector2(),
-            cm_z = new THREE.Vector2();
-
-        for (let i = 0; i < elements.length; i++) {
-            let bbint: number = elements[i].getCOM();
-            let p = elements[i][objects][bbint].position.clone();
-            // Shift coordinates so that the origin is in the corner of the 
-            // bounding box, instead of the centre.
-            p.add(new THREE.Vector3().addScalar(1.5 * box));
-            p.x %= box; p.y %= box; p.z %= box;
-
-            // Calculate positions on unit circle for each dimension and that to the
-            // sum.
-            let angle = p.clone().multiplyScalar(2 * Math.PI / box);
-            cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
-            cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
-            cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
-        }
-
-        // Divide center of mass sums to get the averages
-        cm_x.divideScalar(elements.length);
-        cm_y.divideScalar(elements.length);
-        cm_z.divideScalar(elements.length);
-
-        // Convert back from unit circle coordinates into x,y,z
-        let cms = new THREE.Vector3(
-            box / (2 * Math.PI) * (Math.atan2(-cm_x.x, -cm_x.y) + Math.PI),
-            box / (2 * Math.PI) * (Math.atan2(-cm_y.x, -cm_y.y) + Math.PI),
-            box / (2 * Math.PI) * (Math.atan2(-cm_z.x, -cm_z.y) + Math.PI)
-        );
-        // Shift back origin to center of box
-        cms.sub(new THREE.Vector3().addScalar(box / 2));
-
-        // Change nucleotide positions by the center of mass
-        for (let i = 0; i < elements.length; i++) {
-            for (let j = 0; j < elements[i][objects].length; j++) {
-                let p = elements[i][objects][j].position;
-                // Shift with centre of mass
-                p.add(cms);
-                // Keep positions within bounding box
-                p.add(new THREE.Vector3().addScalar(1.5 * box));
-                p.x %= box; p.y %= box; p.z %= box;
-                p.sub(new THREE.Vector3().addScalar(0.75 * box));
-            }
-        }
-    }
-    render();
-}*/
 
 //changes resolution on the nucleotide visual objects
 function setResolution(resolution: number) {

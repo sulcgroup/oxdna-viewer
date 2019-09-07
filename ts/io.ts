@@ -90,7 +90,7 @@ class TopReader extends FileReader{
             conf_len = nuc_count + 3;
 
             //set up instancing data arrays
-            this.system.INSTANCES = nuc_count;
+            this.system.INSTANCES = this.system.system_length();
             this.system.bb_offsets = new Float32Array(this.system.INSTANCES * 3);
             this.system.bb_rotation = new Float32Array(this.system.INSTANCES * 4);
             this.system.ns_offsets = new Float32Array(this.system.INSTANCES * 3);
