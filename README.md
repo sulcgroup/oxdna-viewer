@@ -22,7 +22,7 @@ If you want to use the viewer as-is locally, simply download or clone the reposi
 
 3) "npm install --save @types/three" 
    
-   If it goes wrong, open the package.json file and change "name", may be into "types/three-test" and try again
+   If it goes wrong, open the package.json file and change "name", into "types/three-test" and try again
    
    Refer to https://thisdavej.com/node-newbie-error-npm-refusing-to-install-package-as-a-dependency-of-itself/
 
