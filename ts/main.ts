@@ -94,15 +94,25 @@ class BasicElement extends THREE.Group{
 
     }
 
-    get_instance_position(name: string) {
+    get_instance_parameter3(name: string) {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
 
-        let x: number = sys[name][gid * 3];
-        let y: number = sys[name][gid * 3 + 1];
-        let z: number = sys[name][gid * 3 + 2];
+        let x: number = sys[name][sid * 3];
+        let y: number = sys[name][sid * 3 + 1];
+        let z: number = sys[name][sid * 3 + 2];
 
         return new THREE.Vector3(x, y, z);
+    }
+
+    toggle_visibility() {
+        let sys = this.parent.parent
+        let sid = this.global_id - sys.global_start_id
+
+        let visibility = this.get_instance_parameter3('visibility');
+        visibility.addScalar(-1);
+
+        sys.fill_vec('visibility', 3, sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
     }
 
 };
@@ -114,7 +124,7 @@ class Nucleotide extends BasicElement {
     calculatePositions(x: number, y: number, z: number, l: string) {
 
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
 
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
@@ -193,9 +203,9 @@ class Nucleotide extends BasicElement {
             let tmprotation_sp = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
             );
-            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
-            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
-            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);            
+            sys.fill_vec('bbcon_offsets', 3, sid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, sid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);            
         }
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
@@ -212,26 +222,27 @@ class Nucleotide extends BasicElement {
     
 
         //fill the instance matrices with data
-        this.name = gid + ""; //set name (string) to nucleotide's global id
-        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('bb_offsets', 3, gid, [x_bb, y_bb, z_bb]);
-        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
-        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
-        sys.fill_vec('ns_rotation', 4, gid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
-        sys.fill_vec('con_offsets', 3, gid, [x_con, y_con, z_con]);
-        sys.fill_vec('con_rotation', 4, gid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
-        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
-        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
-        sys.fill_vec('scales', 3, gid, [1, 1, 1]);
-        sys.fill_vec('ns_scales', 3, gid, [0.7, 0.3, 0.7]);
-        sys.fill_vec('con_scales', 3, gid, [1, this.bb_ns_distance, 1]);
-        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);
+        this.name = sid + ""; //set name (string) to nucleotide's global id
+        sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, sid, [x_bb, y_bb, z_bb]);
+        sys.fill_vec('ns_offsets', 3, sid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_offsets', 3, sid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_rotation', 4, sid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
+        sys.fill_vec('con_offsets', 3, sid, [x_con, y_con, z_con]);
+        sys.fill_vec('con_rotation', 4, sid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
+        sys.fill_vec('bbcon_offsets', 3, sid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, sid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
+        sys.fill_vec('scales', 3, sid, [1, 1, 1]);
+        sys.fill_vec('ns_scales', 3, sid, [0.7, 0.3, 0.7]);
+        sys.fill_vec('con_scales', 3, sid, [1, this.bb_ns_distance, 1]);
+        sys.fill_vec('bbcon_scales', 3, sid, [1, sp_len, 1]);
+        sys.fill_vec('visibility', 3, sid, [1,1,1]);
 
         color = this.elem_to_color(this.type);
-        sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
 
-        sys.fill_vec('bb_labels', 3, gid, [idColor.r, idColor.g, idColor.b]);
+        sys.fill_vec('bb_labels', 3, sid, [idColor.r, idColor.g, idColor.b]);
 
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x_bb;
@@ -269,7 +280,7 @@ class Nucleotide extends BasicElement {
     };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
 
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
@@ -350,21 +361,21 @@ class Nucleotide extends BasicElement {
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x_bb, tmpy_sp - y_bb, tmpz_sp - z_bb).normalize()
             );
 
-            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
-            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
-            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);
+            sys.fill_vec('bbcon_offsets', 3, sid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, sid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);
         }
 
         //update the relevant instancing matrices
-        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('bb_offsets', 3, gid, [x_bb, y_bb, z_bb]);
-        sys.fill_vec('ns_offsets', 3, gid, [x_ns, y_ns, z_ns]);
-        sys.fill_vec('ns_rotation', 4, gid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
-        sys.fill_vec('con_offsets', 3, gid, [x_con, y_con, z_con]);
-        sys.fill_vec('con_rotation', 4, gid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
-        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
-        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);
+        sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, sid, [x_bb, y_bb, z_bb]);
+        sys.fill_vec('ns_offsets', 3, sid, [x_ns, y_ns, z_ns]);
+        sys.fill_vec('ns_rotation', 4, sid, [base_rotation.w, base_rotation.z, base_rotation.y, base_rotation.x]);
+        sys.fill_vec('con_offsets', 3, sid, [x_con, y_con, z_con]);
+        sys.fill_vec('con_rotation', 4, sid, [rotation_con.w, rotation_con.z, rotation_con.y, rotation_con.x]);
+        sys.fill_vec('bbcon_offsets', 3, sid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, sid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bbcon_scales', 3, sid, [1, sp_len, 1]);
 
 
         // keep track of last backbone for sugar-phosphate positioning
@@ -376,7 +387,7 @@ class Nucleotide extends BasicElement {
 
     resetColor() {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let color: THREE.Color;
         if (lutColsVis) {
@@ -385,21 +396,20 @@ class Nucleotide extends BasicElement {
         else {
             color = this.strand_to_color(this.parent.strand_id);
         }
-        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
     }
 
 
     toggle() {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
         // highlight/remove highlight the bases we've clicked 
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor();
-            console.log(gid);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
-            sys.fill_vec('bb_colors', 3, gid, [selection_color.r, selection_color.g, selection_color.b]);
+            sys.fill_vec('bb_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
     };
@@ -414,15 +424,15 @@ class Nucleotide extends BasicElement {
 
     getDatFileOutput(): string {
         let dat: string = "";
-        let tempVec = this.get_instance_position("cm_offsets"); //nucleotide's center of mass in world
+        let tempVec = this.get_instance_parameter3("cm_offsets"); //nucleotide's center of mass in world
         let x: number = tempVec.x;
         let y: number = tempVec.y;
         let z: number = tempVec.z;
-        tempVec = this.get_instance_position("bb_offsets");
+        tempVec = this.get_instance_parameter3("bb_offsets");
         let x_bb: number = tempVec.x;
         let y_bb: number = tempVec.y;
         let z_bb: number = tempVec.z;
-        tempVec = this.get_instance_position("ns_offsets"); //nucleotide's nucleoside's world position
+        tempVec = this.get_instance_parameter3("ns_offsets"); //nucleotide's nucleoside's world position
         let x_ns: number = tempVec.x;
         let y_ns: number = tempVec.y;
         let z_ns: number = tempVec.z;
@@ -510,7 +520,7 @@ class AminoAcid extends BasicElement {
     };
     calculatePositions(x: number, y: number, z: number, l: string) {
         let sys = this.parent.parent;
-        let gid = this.global_id - sys.global_start_id;
+        let sid = this.global_id - sys.global_start_id;
 
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
@@ -549,9 +559,9 @@ class AminoAcid extends BasicElement {
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x, tmpy_sp - y, tmpz_sp - z).normalize()
             );
 
-            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
-            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
-            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);            
+            sys.fill_vec('bbcon_offsets', 3, sid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, sid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);            
         }
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
@@ -564,24 +574,24 @@ class AminoAcid extends BasicElement {
         }
 
         // fill in the instancing matrices
-        this.name = gid + ""; //set name (string) to nucleotide's global id
-        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('bb_offsets', 3, gid, [0, 0, 0]);
-        sys.fill_vec('bb_rotation', 4, gid, [0, 0, 0, 0]);
-        sys.fill_vec('ns_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('ns_rotation', 4, gid, [0, 0, 0, 0]);
-        sys.fill_vec('con_offsets', 3, gid, [0, 0, 0]);        
-        sys.fill_vec('con_rotation', 4, gid, [0, 0, 0, 0]);
-        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
-        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        sys.fill_vec('scales', 3, gid, [0, 0, 0]);     
-        sys.fill_vec('ns_scales', 3, gid, [1, 1, 1]);       
-        sys.fill_vec('con_scales', 3, gid, [0, 0, 0]); 
-        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);      
-        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
+        this.name = sid + ""; //set name (string) to nucleotide's global id
+        sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, sid, [0, 0, 0]);
+        sys.fill_vec('bb_rotation', 4, sid, [0, 0, 0, 0]);
+        sys.fill_vec('ns_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('ns_rotation', 4, sid, [0, 0, 0, 0]);
+        sys.fill_vec('con_offsets', 3, sid, [0, 0, 0]);        
+        sys.fill_vec('con_rotation', 4, sid, [0, 0, 0, 0]);
+        sys.fill_vec('bbcon_offsets', 3, sid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, sid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('scales', 3, sid, [0, 0, 0]);     
+        sys.fill_vec('ns_scales', 3, sid, [1, 1, 1]);       
+        sys.fill_vec('con_scales', 3, sid, [0, 0, 0]); 
+        sys.fill_vec('bbcon_scales', 3, sid, [1, sp_len, 1]);      
+        sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
 
         color = this.elem_to_color(this.type);
-        sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
         
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x;
@@ -590,7 +600,7 @@ class AminoAcid extends BasicElement {
     };
     calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
         let sys = this.parent.parent;
-        let gid = this.global_id - sys.global_start_id;
+        let sid = this.global_id - sys.global_start_id;
 
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
@@ -628,16 +638,16 @@ class AminoAcid extends BasicElement {
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(tmpx_sp - x, tmpy_sp - y, tmpz_sp - z).normalize()
             );
 
-            sys.fill_vec('bbcon_offsets', 3, gid, [tmpx_sp, tmpy_sp, tmpz_sp]);
-            sys.fill_vec('bbcon_rotation', 4, gid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
-            sys.fill_vec('bbcon_scales', 3, gid, [1, tmpsp_len, 1]);   
+            sys.fill_vec('bbcon_offsets', 3, sid, [tmpx_sp, tmpy_sp, tmpz_sp]);
+            sys.fill_vec('bbcon_rotation', 4, sid, [tmprotation_sp.w, tmprotation_sp.z, tmprotation_sp.y, tmprotation_sp.x]);
+            sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);   
         }
 
-        sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('ns_offsets', 3, gid, [x, y, z]);
-        sys.fill_vec('bbcon_offsets', 3, gid, [x_sp, y_sp, z_sp]);
-        sys.fill_vec('bbcon_rotation', 4, gid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);  
+        sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('ns_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('bbcon_offsets', 3, sid, [x_sp, y_sp, z_sp]);
+        sys.fill_vec('bbcon_rotation', 4, sid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        sys.fill_vec('bbcon_scales', 3, sid, [1, sp_len, 1]);  
         
         x_bb_last = x;
         y_bb_last = y;
@@ -689,7 +699,7 @@ class AminoAcid extends BasicElement {
 
     resetColor() {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let color: THREE.Color;
         if (lutColsVis) {
@@ -698,20 +708,20 @@ class AminoAcid extends BasicElement {
         else {
             color = this.strand_to_color(this.parent.strand_id);
         }
-        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
-        sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
+        sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
     };
     toggle() {
         let sys = this.parent.parent
-        let gid = this.global_id - sys.global_start_id
+        let sid = this.global_id - sys.global_start_id
 
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
             this.resetColor();
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
-            sys.fill_vec('bb_colors', 3, gid, [selection_color.r, selection_color.g, selection_color.b]);
-            sys.fill_vec('ns_colors', 3, gid, [selection_color.r, selection_color.g, selection_color.b]);
+            sys.fill_vec('bb_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
+            sys.fill_vec('ns_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
             //selList.push(nucleotideID);
@@ -720,7 +730,7 @@ class AminoAcid extends BasicElement {
 
     getDatFileOutput(): string {
         let dat: string = "";
-        let tempVec = this.get_instance_position("cm_offsets");
+        let tempVec = this.get_instance_parameter3("cm_offsets");
         let x: number = tempVec.x;
         let y: number = tempVec.y;
         let z: number = tempVec.z;
@@ -886,6 +896,7 @@ class System extends THREE.Group {
     scales: Float32Array;
     ns_scales: Float32Array;
     con_scales: Float32Array;
+    visibility: Float32Array;
 
     bb_labels: Float32Array;
 
@@ -1059,9 +1070,7 @@ function colorOptions() {
             //deletes color on right click
             c.oncontextmenu = function (event) {
                 event.preventDefault();
-                console.log(backbone_colors);
                 backbone_colors.splice(i, 1);
-                console.log(backbone_colors);
                 colorOptions();
                 return false;
             }

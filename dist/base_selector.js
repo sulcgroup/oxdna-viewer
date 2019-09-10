@@ -73,7 +73,7 @@ document.addEventListener('mousedown', event => {
                 //fish out all the required base info 
                 //one could also sort it if neaded ...
                 for (let i = 0; i < s_bases.length; i++) {
-                    baseInfoLines.push(["gID:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
+                    baseInfoLines.push(["sid:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
                 }
             }
             makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area

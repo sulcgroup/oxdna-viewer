@@ -61,4 +61,4 @@ var nucleoside_colors = [
     new THREE.Color(0xB45AB4),
 ];
 var selection_color = new THREE.Color(0x01796F); //pine green
-var grey_material = new THREE.Color(0x888888);
+var grey = new THREE.Color(0x888888);

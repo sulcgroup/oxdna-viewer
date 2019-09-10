@@ -3,8 +3,14 @@
 var api;
 (function (api) {
     function toggle_strand(strand) {
+        let sys = strand.parent;
         let nucleotides = strand[monomers];
-        nucleotides.map((n) => n.visible = !n.visible);
+        nucleotides.map((n) => n.toggle_visibility());
+        sys.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.dummy_backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         render();
         return strand;
     }
@@ -50,21 +56,37 @@ var api;
     function toggle_all({ system = systems[0] } = {}) {
         system[strands].map((strand) => {
             let nucleotides = strand[monomers];
-            nucleotides.map((n) => n.visible = !n.visible);
+            nucleotides.map((n) => n.toggle_visibility());
         });
+        system.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.dummy_backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         render();
     }
     api.toggle_all = toggle_all;
+    //toggles the nuceloside colors on and off
     function toggle_base_colors() {
         elements.map((n) => {
-            let obj = n[objects][n.NUCLEOSIDE];
-            if (obj.material == grey_material) {
-                obj.material = n.elem_to_material(n.type);
+            let sys = n.parent.parent;
+            let sid = n.global_id - sys.global_start_id;
+            //because the precision of the stored color value (32-bit) and defined color value (64-bit) are different,
+            //you have to do some weird casting to get them to be comparable.
+            let tmp = n.get_instance_parameter3("ns_colors"); //maybe this shouldn't be a vector3...
+            let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
+            let g = [grey.r.toPrecision(6), grey.g.toPrecision(6), grey.b.toPrecision(6)];
+            if (JSON.stringify(c) == JSON.stringify(g)) {
+                let new_c = n.elem_to_color(n.type);
+                sys.fill_vec('ns_colors', 3, sid, [new_c.r, new_c.g, new_c.b]);
             }
             else {
-                obj.material = grey_material;
+                sys.fill_vec('ns_colors', 3, sid, [grey.r, grey.g, grey.b]);
             }
         });
+        for (i = 0; i < systems.length; i++) {
+            systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+        }
         render();
     }
     api.toggle_base_colors = toggle_base_colors;
@@ -173,6 +195,7 @@ var api;
         render();
     }
     api.remove_colorbar = remove_colorbar;
+    //turns out that lut doesn't save the sprites so you have to completley remake it
     function show_colorbar() {
         scene.add(lut.legend.mesh);
         let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...

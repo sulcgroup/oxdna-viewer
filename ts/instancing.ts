@@ -10,6 +10,7 @@ THREE.ShaderLib.customDepthRGBA = { // this is a cut-and-paste of the depth shad
 			attribute vec3 instanceOffset;
 			attribute vec4 instanceRotation;
 			attribute vec3 instanceScale;
+			attribute vec3 instanceVisibility;
 			vec3 rotate_vector( vec4 quat, vec3 vec );
 			vec3 rotate_vector( vec4 quat, vec3 vec ){ 
 				return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
@@ -43,7 +44,7 @@ THREE.ShaderLib.customDepthRGBA = { // this is a cut-and-paste of the depth shad
 
 			// instanced
 			#ifdef INSTANCED
-				transformed *= instanceScale;
+				transformed *= instanceScale * instanceVisibility;
 				transformed = rotate_vector( instanceRotation, transformed);
 				transformed = transformed + instanceOffset;
 
@@ -76,6 +77,7 @@ THREE.ShaderLib.lambert = { // this is a cut-and-paste of the lambert shader -- 
 			attribute vec4 instanceRotation;
 			attribute vec3 instanceColor;
 			attribute vec3 instanceScale;
+			attribute vec3 instanceVisibility;
 			vec3 rotate_vector( vec4 quat, vec3 vec );
 			vec3 rotate_vector( vec4 quat, vec3 vec )
 			{ return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); }
@@ -126,7 +128,7 @@ THREE.ShaderLib.lambert = { // this is a cut-and-paste of the lambert shader -- 
 
 			// position instanced
 			#ifdef INSTANCED
-				transformed *= instanceScale;
+				transformed *= instanceScale * instanceVisibility;
 				transformed = rotate_vector( instanceRotation, transformed);
 				transformed = transformed + instanceOffset;
 			#endif
@@ -158,12 +160,14 @@ pickingTexture.texture.minFilter = THREE.LinearFilter; //voodoo
 //create dummy vertex and fragment shaders 
 var vs3D = `
 attribute vec3 idcolor;
+attribute vec3 instanceVisibility;
 varying vec3 vidcolor;
 attribute vec3 translation;
 
 void main(){
 vidcolor = idcolor;
 vec3 pos = position + translation;
+pos *= instanceVisibility;
 gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0);
 }`;
 

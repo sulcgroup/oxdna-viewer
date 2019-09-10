@@ -444,20 +444,25 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.backbone_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bb_rotation, 4));
     system.backbone_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
     system.backbone_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3));
+    system.backbone_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.nucleoside_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.ns_offsets, 3));
     system.nucleoside_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.ns_rotation, 4));
     system.nucleoside_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.ns_colors, 3));
     system.nucleoside_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.ns_scales, 3));
+    system.nucleoside_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.connector_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.con_offsets, 3));
     system.connector_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.con_rotation, 4));
     system.connector_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
     system.connector_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.con_scales, 3));
+    system.connector_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.sp_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bbcon_offsets, 3));
     system.sp_geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bbcon_rotation, 4));
     system.sp_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
     system.sp_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));
+    system.sp_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.picking_geometry.addAttribute('idcolor', new THREE.InstancedBufferAttribute(system.bb_labels, 3));
     system.picking_geometry.addAttribute('translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3)); //THIS DOESN'T WORK FOR PROTEINS SINCE I USED THE NUCLEOSIDE MESHES FOR BACKBONES
+    system.picking_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
     system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
     system.nucleoside = new THREE.Mesh(system.nucleoside_geometry, instance_material);
@@ -530,6 +535,7 @@ function getNewConfig(mode) {
         system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
         system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
         system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+        system.dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
         if (getActionModes().includes("Drag")) {
             drag();
         }
