@@ -107,6 +107,8 @@ class TopReader extends FileReader{
             this.system.ns_scales = new Float32Array(this.system.INSTANCES * 3);
             this.system.con_scales = new Float32Array(this.system.INSTANCES * 3);
 
+            this.system.bb_labels = new Float32Array(this.system.INSTANCES * 3);
+
 
         }})(this.top_file);
     

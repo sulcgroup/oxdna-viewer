@@ -47,7 +47,6 @@ var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHei
 // set camera position 
 camera.position.x = 100;
 
-
 // import canvas capture library
 declare var CCapture: any;
 

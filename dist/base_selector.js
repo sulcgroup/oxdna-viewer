@@ -10,27 +10,18 @@ let intersects;
 //let gSelectedBases = [];
 document.addEventListener('mousedown', event => {
     if (getActionModes().includes("Select")) {
-        // magic ... 
-        mouse3D = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, //get mouse position
-        0.5);
-        // cast a ray from mose to viewpoint of camera 
-        raycaster.setFromCamera(mouse3D, camera);
-        // collect all objects that are in the way
-        intersects = raycaster.intersectObjects(backbones);
-        // make note of what's been clicked
-        var nucleotide;
-        let sys;
+        //use GPU picking to figure out if anything was clicked
+        renderer.setRenderTarget(pickingTexture);
+        renderer.render(pickingScene, camera);
+        var pixelBuffer = new Uint8Array(4);
+        renderer.readRenderTargetPixels(pickingTexture, event.pageX, pickingTexture.height - event.pageY, 1, 1, pixelBuffer);
+        var id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]) - 1;
+        renderer.setRenderTarget(null);
+        render();
         let scope_mode = scopeMode;
-        if (intersects.length > 0) { //if something has been clicked / is in the intersects array / intersects array's length is above 0
-            // hence we click only on nucleotides 
-            // this section retrives info about the clicked object 
-            // !!! this may change in the future 
-            //nucleotideID = parseInt(intersects[0].object.parent.name); //get selected nucleotide's global id
-            nucleotide = intersects[0].object.parent; //elements[nucleotideID];
-            sys = nucleotide.parent.parent;
-            // note: it is not enough to use the intersects[0].object.visible property %)
-            if (!nucleotide.visible)
-                return; // exclude invisible objects  
+        if (id > -1) {
+            let nucleotide = elements[id];
+            let sys = nucleotide.parent.parent;
             switch (scope_mode) {
                 case "System":
                     let strand_count = sys[strands].length;
@@ -50,6 +41,9 @@ document.addEventListener('mousedown', event => {
                     nucleotide.toggle(); //toggle selected nucleotide
                     break;
             }
+            sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+            sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
+            sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
             render(); //update scene;
             listBases = [];
             let baseInfoStrands = {};

@@ -144,6 +144,8 @@ class Nucleotide extends BasicElement {
         else {
             color = this.strand_to_color(this.parent.strand_id);
         }
+        let idColor = new THREE.Color();
+        idColor.setHex(this.global_id + 1); //has to be +1 or you can't grab nucleotide 0
         //fill the instance matrices with data
         this.name = gid + ""; //set name (string) to nucleotide's global id
         sys.fill_vec('cm_offsets', 3, gid, [x, y, z]);
@@ -162,6 +164,7 @@ class Nucleotide extends BasicElement {
         sys.fill_vec('bbcon_scales', 3, gid, [1, sp_len, 1]);
         color = this.elem_to_color(this.type);
         sys.fill_vec('ns_colors', 3, gid, [color.r, color.g, color.b]);
+        sys.fill_vec('bb_labels', 3, gid, [idColor.r, idColor.g, idColor.b]);
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x_bb;
         y_bb_last = y_bb;
@@ -193,7 +196,7 @@ class Nucleotide extends BasicElement {
     ;
     calculateNewConfigPositions(x, y, z, l) {
         let sys = this.parent.parent;
-        let gid = this.global_id;
+        let gid = this.global_id - sys.global_start_id;
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
         // according to base.py a2 is the cross of a1 and a3
@@ -259,84 +262,30 @@ class Nucleotide extends BasicElement {
         return this.COM;
     }
     ;
-    resetColor(nucNec) {
-        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
-        let nuc_Mesh = this[objects][this.NUCLEOSIDE];
-        let con_Mesh = this[objects][this.BB_NS_CON];
-        let sp_Mesh = this[objects][this.SP_CON];
-        // figure out what that base was before you painted it black and revert it
+    resetColor() {
+        let sys = this.parent.parent;
+        let gid = this.global_id - sys.global_start_id;
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let tmeshlamb;
+        let color;
         if (lutColsVis) {
-            tmeshlamb = new THREE.MeshLambertMaterial({
-                color: lutCols[this.global_id],
-                side: THREE.DoubleSide
-            });
+            color = lutCols[this.global_id];
         }
-        if (back_Mesh instanceof THREE.Mesh) { //necessary for proper typing
-            if (back_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                if (lutColsVis)
-                    back_Mesh.material = tmeshlamb;
-                else
-                    back_Mesh.material = this.strand_to_color(this.parent.strand_id);
-            }
+        else {
+            color = this.strand_to_color(this.parent.strand_id);
         }
-        if (nucNec) {
-            if (nuc_Mesh instanceof THREE.Mesh) {
-                if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                    if (lutColsVis)
-                        nuc_Mesh.material = tmeshlamb;
-                    else
-                        nuc_Mesh.material = this.elem_to_color(this.type);
-                }
-            }
-        }
-        if (con_Mesh instanceof THREE.Mesh) {
-            if (con_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                if (lutColsVis)
-                    con_Mesh.material = tmeshlamb;
-                else
-                    con_Mesh.material = this.strand_to_color(this.parent.strand_id);
-            }
-        }
-        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                if (lutColsVis)
-                    sp_Mesh.material = tmeshlamb;
-                else
-                    sp_Mesh.material = this.strand_to_color(this.parent.strand_id);
-            }
-        }
+        sys.fill_vec('bb_colors', 3, gid, [color.r, color.g, color.b]);
     }
     toggle() {
+        let sys = this.parent.parent;
+        let gid = this.global_id - sys.global_start_id;
         // highlight/remove highlight the bases we've clicked 
-        let back_Mesh = this[objects][this.BACKBONE]; //get clicked nucleotide's Meshes
-        let nuc_Mesh = this[objects][this.NUCLEOSIDE];
-        let con_Mesh = this[objects][this.BB_NS_CON];
-        let sp_Mesh = this[objects][this.SP_CON];
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
-            this.resetColor(true);
+            this.resetColor();
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
-            //set all materials to selection_material color - currently aqua
-            if (back_Mesh instanceof THREE.Mesh) {
-                if (back_Mesh.material instanceof THREE.MeshLambertMaterial)
-                    back_Mesh.material = selection_material;
-            }
-            if (nuc_Mesh instanceof THREE.Mesh) {
-                if (nuc_Mesh.material instanceof THREE.MeshLambertMaterial)
-                    nuc_Mesh.material = selection_material;
-            }
-            if (con_Mesh instanceof THREE.Mesh) {
-                if (con_Mesh.material instanceof THREE.MeshLambertMaterial)
-                    con_Mesh.material = selection_material;
-            }
-            if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-                if (sp_Mesh.material instanceof THREE.MeshLambertMaterial)
-                    sp_Mesh.material = selection_material;
-            }
-            //selList.push(nucleotideID);
+            sys.fill_vec('bb_colors', 3, gid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
     }
@@ -847,10 +796,11 @@ class System extends THREE.Group {
             this.cm_offsets[i + 1] += amount.y;
             this.cm_offsets[i + 2] += amount.z;
         }
-        this.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
-        this.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
-        this.connector.geometry.attributes.instanceOffset.needsUpdate = true;
-        this.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
+        this.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
         render();
     }
     fill_vec(vec_name, unit_size, pos, vals) {

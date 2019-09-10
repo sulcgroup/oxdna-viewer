@@ -485,6 +485,8 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.nucleoside_geometry = instanced_nucleoside.clone();
     system.connector_geometry = instanced_connector.clone();
     system.sp_geometry = instanced_bbconnector.clone();
+    
+    system.picking_geometry = instanced_backbone.clone();
 
     system.backbone_geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bb_offsets, 3));
     system.backbone_geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bb_rotation, 4));
@@ -504,7 +506,11 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.sp_geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbcon_offsets, 3));
     system.sp_geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbcon_rotation, 4));  
     system.sp_geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
-    system.sp_geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));   
+    system.sp_geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));  
+    
+    system.picking_geometry.addAttribute( 'idcolor', new THREE.InstancedBufferAttribute(system.bb_labels, 3));
+    system.picking_geometry.addAttribute( 'translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3));
+
 
     system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
     system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
@@ -518,16 +524,15 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.bbconnector = new THREE.Mesh(system.sp_geometry, instance_material);
     system.bbconnector.frustumCulled = false;
 
+    system.dummy_backbone = new THREE.Mesh(system.picking_geometry, pickingMaterial);
+    system.dummy_backbone.frustumCulled = false;
+
     scene.add(system.backbone);
     scene.add(system.nucleoside);
     scene.add(system.connector);
     scene.add(system.bbconnector);
 
-    //expose the objects to the picker
-    //pickingScene.add(system.backbone.clone());
-    //pickingScene.add(system.nucleoside.clone());
-    //pickingScene.add(system.connector.clone());
-    //pickingScene.add(system.bbconnector.clone());
+    pickingScene.add(system.dummy_backbone);
 
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);

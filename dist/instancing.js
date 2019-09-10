@@ -8,8 +8,9 @@ THREE.ShaderLib.customDepthRGBA = {
 			attribute vec4 instanceRotation;
 			attribute vec3 instanceScale;
 			vec3 rotate_vector( vec4 quat, vec3 vec );
-			vec3 rotate_vector( vec4 quat, vec3 vec )
-			{ return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); }
+			vec3 rotate_vector( vec4 quat, vec3 vec ){ 
+				return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
+			}
 
 		#endif
 
@@ -137,44 +138,29 @@ THREE.ShaderLib.lambert = {
 		`,
     fragmentShader: THREE.ShaderLib.lambert.fragmentShader
 };
-/*var vs3D = `
+//gpu picking allows us to interact with nucleotides without raycasting, which is very CPU-intensive
+var pickingScene = new THREE.Scene();
+var pickingTexture = new THREE.WebGLRenderTarget(renderer.domElement.clientWidth, renderer.domElement.clientHeight);
+pickingTexture.texture.minFilter = THREE.LinearFilter; //voodoo
+//create dummy vertex and fragment shaders 
+var vs3D = `
 attribute vec3 idcolor;
 varying vec3 vidcolor;
+attribute vec3 translation;
+
 void main(){
 vidcolor = idcolor;
-gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0);
+vec3 pos = position + translation;
+gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0);
 }`;
-
 var fs3D = `
 varying vec3 vidcolor;
 void main(void) {
 gl_FragColor = vec4(vidcolor,1.0);
 }`;
-
-var pickingMaterial = new THREE.ShaderMaterial(
-    {
-        vertexShader: vs3D,
-        fragmentShader: fs3D,
-        transparent: false,
-        side: THREE.DoubleSide
-    });
-
-// gpu picking from https://bl.ocks.org/duhaime/1eafa293e7ce16b074a6d55cac67badc
-var w = window.innerWidth;
-var h = window.innerHeight;
-var pickingScene = new THREE.Scene();
-var pickingTexture = new THREE.WebGLRenderTarget(w, h)
-pickingTexture.texture.minFilter = THREE.LinearFilter;
-var mouse = new THREE.Vector2();
-var pickingCanvas = document.querySelector('canvas');
-pickingCanvas.addEventListener('mousemove', function (e) {
-    //renderer.render(scene, camera, pickingTexture);
-    var pixelBuffer = new Uint8Array(4);
-    renderer.readRenderTargetPixels(
-        pickingTexture, e.clientX, pickingTexture.height-e.clientY, 1, 1, pixelBuffer
-    );
-    var id = (pixelBuffer[0]<<16)|(pixelBuffer[1]<<8)|(pixelBuffer[2]);
-    if (id) {
-        console.log(id, pixelBuffer);
-    }
-});*/ 
+var pickingMaterial = new THREE.ShaderMaterial({
+    vertexShader: vs3D,
+    fragmentShader: fs3D,
+    transparent: false,
+    side: THREE.DoubleSide
+});

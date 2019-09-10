@@ -23,8 +23,8 @@ instanced_bbconnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
 var instance_material = new THREE.MeshLambertMaterial({
     vertexColors: THREE.VertexColors
 });
-instance_material.defines = instance_material.defines || {};
-instance_material.defines['INSTANCED'] = "";
+instance_material["defines"] = instance_material["defines"] || {};
+instance_material["defines"]['INSTANCED'] = "";
 var backbone_colors = [
     new THREE.Color(0xff00ff),
     new THREE.Color(0xffb322),
