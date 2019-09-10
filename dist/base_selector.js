@@ -18,6 +18,7 @@ document.addEventListener('mousedown', event => {
         var id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]) - 1;
         renderer.setRenderTarget(null);
         render();
+        //if something was clicked, toggle the coloration of the appropriate things.
         let scope_mode = scopeMode;
         if (id > -1) {
             let nucleotide = elements[id];

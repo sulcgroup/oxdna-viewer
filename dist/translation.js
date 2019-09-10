@@ -45,7 +45,6 @@ let i;
 let originalObjPos;
 function rotate() {
     let rot = false; //rotation success boolean
-    updatePos(); //update class positions
     //let index: number = 0;
     //let setEntries = selected_bases.keys();
     //let setEntry = setEntries.next();

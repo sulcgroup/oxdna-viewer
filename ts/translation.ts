@@ -52,7 +52,6 @@ let originalObjPos: THREE.Vector3;
 
 function rotate() { //rotate according to given angle given in number input
     let rot: boolean = false; //rotation success boolean
-    updatePos(); //update class positions
     //let index: number = 0;
     //let setEntries = selected_bases.keys();
     //let setEntry = setEntries.next();

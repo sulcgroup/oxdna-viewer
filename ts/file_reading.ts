@@ -285,7 +285,7 @@ target.addEventListener("drop", function (event) {
                 }
             }
 
-            if (json_file) {
+            /*if (json_file) {
                 //lutColsVis = true;
                 let check_box = <HTMLInputElement>document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
@@ -347,13 +347,13 @@ target.addEventListener("drop", function (event) {
                 };
                 json_reader.readAsText(json_file);
                 renderer.domElement.style.cursor = "auto";
-            }
+            }*/
         }
     }
 
 
 
-    if (json_file && json_alone) {
+    /*if (json_file && json_alone) {
         //lutColsVis = true;
         let check_box = <HTMLInputElement>document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
@@ -361,7 +361,7 @@ target.addEventListener("drop", function (event) {
             let file = json_reader.result as string;
             let data = JSON.parse(file);
             let curr_sys;
-            /*if (json_alone) */curr_sys = sys_count - 1;
+            curr_sys = sys_count - 1;
             //else curr_sys = sys_count;
             for (var key in data) {
                 if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
@@ -419,7 +419,7 @@ target.addEventListener("drop", function (event) {
         };
         json_reader.readAsText(json_file);
         renderer.domElement.style.cursor = "auto";
-    }
+    }*/
 
     render();
 }, false);
@@ -509,7 +509,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.sp_geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));  
     
     system.picking_geometry.addAttribute( 'idcolor', new THREE.InstancedBufferAttribute(system.bb_labels, 3));
-    system.picking_geometry.addAttribute( 'translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3));
+    system.picking_geometry.addAttribute( 'translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3)); //THIS DOESN'T WORK FOR PROTEINS SINCE I USED THE NUCLEOSIDE MESHES FOR BACKBONES
 
 
     system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
@@ -537,19 +537,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
 
-    //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-    //    backbones.push(elements[i][objects][elements[i].BACKBONE]);
-    //}
-
     scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();
 
-
-
     renderer.domElement.style.cursor = "auto";
 }
-
 
 function getNewConfig(mode) { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
     if (systems.length > 1) {
@@ -573,7 +566,6 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
             return;
         }
 
-        //let nuc_local_id = 0;
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
@@ -587,7 +579,6 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
                 break
             };
             let current_nucleotide = elements[systems[i].global_start_id+line_num];
-            //get nucleotide information
             // consume a new line
             let l = lines[line_num].split(" ");
             let x = parseFloat(l[0]),
@@ -600,14 +591,14 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         //bring things in box based on the PBC/centering menus
         PBC_switchbox(system);
 
-        system.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.connector.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.connector.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceScale.needsUpdate = true;
+        system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 
         if (getActionModes().includes("Drag")) {
             drag();

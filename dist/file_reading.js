@@ -256,12 +256,12 @@ target.addEventListener("drop", function (event) {
                     next_reader.readAsText(next_chunk_blob);
                 }
             }
-            if (json_file) {
+            /*if (json_file) {
                 //lutColsVis = true;
-                let check_box = document.getElementById("lutToggle");
+                let check_box = <HTMLInputElement>document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
                 json_reader.onload = () => {
-                    let file = json_reader.result;
+                    let file = json_reader.result as string;
                     let data = JSON.parse(file);
                     let curr_sys;
                     curr_sys = sys_count - 1;
@@ -269,7 +269,7 @@ target.addEventListener("drop", function (event) {
                         if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                             if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
                                 let min = Math.min.apply(null, data[key]), //find min and max
-                                max = Math.max.apply(null, data[key]);
+                                    max = Math.max.apply(null, data[key]);
                                 lut = new THREE.Lut("rainbow", 4000);
                                 //lut.setMax(0.23);
                                 //lut.setMin(0.04);
@@ -279,6 +279,7 @@ target.addEventListener("drop", function (event) {
                                 scene.add(legend);
                                 let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
                                 scene.add(labels['title']); //add title
+
                                 for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
                                     scene.add(labels['ticks'][i]);
                                     scene.add(labels['lines'][i]);
@@ -317,24 +318,24 @@ target.addEventListener("drop", function (event) {
                 };
                 json_reader.readAsText(json_file);
                 renderer.domElement.style.cursor = "auto";
-            }
+            }*/
         }
     }
-    if (json_file && json_alone) {
+    /*if (json_file && json_alone) {
         //lutColsVis = true;
-        let check_box = document.getElementById("lutToggle");
+        let check_box = <HTMLInputElement>document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
-            let file = json_reader.result;
+            let file = json_reader.result as string;
             let data = JSON.parse(file);
             let curr_sys;
-            /*if (json_alone) */ curr_sys = sys_count - 1;
+            curr_sys = sys_count - 1;
             //else curr_sys = sys_count;
             for (var key in data) {
                 if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                     if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
                         let min = Math.min.apply(null, data[key]), //find min and max
-                        max = Math.max.apply(null, data[key]);
+                            max = Math.max.apply(null, data[key]);
                         lut = new THREE.Lut("rainbow", 4000);
                         //lut.setMax(25.54);
                         //lut.setMin(4.86);
@@ -344,6 +345,7 @@ target.addEventListener("drop", function (event) {
                         scene.add(legend);
                         let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
                         scene.add(labels['title']); //add title
+
                         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
                             scene.add(labels['ticks'][i]);
                             scene.add(labels['lines'][i]);
@@ -385,7 +387,7 @@ target.addEventListener("drop", function (event) {
         };
         json_reader.readAsText(json_file);
         renderer.domElement.style.cursor = "auto";
-    }
+    }*/
     render();
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;
@@ -455,7 +457,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.sp_geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bb_colors, 3));
     system.sp_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));
     system.picking_geometry.addAttribute('idcolor', new THREE.InstancedBufferAttribute(system.bb_labels, 3));
-    system.picking_geometry.addAttribute('translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3));
+    system.picking_geometry.addAttribute('translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3)); //THIS DOESN'T WORK FOR PROTEINS SINCE I USED THE NUCLEOSIDE MESHES FOR BACKBONES
     system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
     system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
     system.nucleoside = new THREE.Mesh(system.nucleoside_geometry, instance_material);
@@ -473,9 +475,6 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     pickingScene.add(system.dummy_backbone);
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
-    //for (let i = systems[sys_count].global_start_id; i < elements.length; i++) { //create array of backbone sphere Meshes for base_selector
-    //    backbones.push(elements[i][objects][elements[i].BACKBONE]);
-    //}
     scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
     sys_count += 1;
     render();
@@ -502,7 +501,6 @@ function getNewConfig(mode) {
             alert("No more confs to load!");
             return;
         }
-        //let nuc_local_id = 0;
         //get the simulation box size
         let box = parseFloat(lines[1].split(" ")[3]);
         let time = parseInt(lines[0].split(" ")[2]);
@@ -516,7 +514,6 @@ function getNewConfig(mode) {
             }
             ;
             let current_nucleotide = elements[systems[i].global_start_id + line_num];
-            //get nucleotide information
             // consume a new line
             let l = lines[line_num].split(" ");
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
@@ -525,14 +522,14 @@ function getNewConfig(mode) {
         }
         //bring things in box based on the PBC/centering menus
         PBC_switchbox(system);
-        system.backbone.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.connector.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.connector.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceOffset.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry.attributes.instanceScale.needsUpdate = true;
+        system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
         if (getActionModes().includes("Drag")) {
             drag();
         }

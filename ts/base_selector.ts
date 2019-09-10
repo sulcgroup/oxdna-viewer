@@ -22,6 +22,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 		renderer.setRenderTarget(null);
 		render();
 
+		//if something was clicked, toggle the coloration of the appropriate things.
         let scope_mode: string = scopeMode;
 		if (id > -1) { 
 			let nucleotide = elements[id];
