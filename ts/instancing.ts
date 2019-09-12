@@ -79,8 +79,9 @@ THREE.ShaderLib.lambert = { // this is a cut-and-paste of the lambert shader -- 
 			attribute vec3 instanceScale;
 			attribute vec3 instanceVisibility;
 			vec3 rotate_vector( vec4 quat, vec3 vec );
-			vec3 rotate_vector( vec4 quat, vec3 vec )
-			{ return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); }
+			vec3 rotate_vector( vec4 quat, vec3 vec ){ 
+				return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
+			}
 		#endif
 
 		varying vec3 vLightFront;

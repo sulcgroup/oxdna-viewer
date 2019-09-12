@@ -104,7 +104,7 @@ module api{
         return elements.reverse();
     }
 
-    export function nick(element: BasicElement){
+    /*export function nick(element: BasicElement){
         // we break connection to the 3' neighbor 
         let neighbor =  element.neighbor3;
         element.neighbor3 = null;
@@ -148,9 +148,9 @@ module api{
         if (strand1 !== strand2){
             //remove strand2 object 
             strand2.parent.remove(strand2);
-            /*strand2.parent[strands] = strand2.parent[strands].filter((ele)=>{
-                return ele != strand2;
-            });*/
+            //strand2.parent[strands] = strand2.parent[strands].filter((ele)=>{
+            //    return ele != strand2;
+            //});
         }
 
         // and add them back into strand1 
@@ -200,7 +200,7 @@ module api{
         let sys = element1.parent.parent;
         sys[strands].forEach((strand) =>strand.strand_id = str_id++);
         render();
-    }
+    }*/
     
     export function strand_add_to_system(strand:Strand, system: System){
         // kill strand in its previous system

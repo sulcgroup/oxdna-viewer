@@ -94,6 +94,8 @@ class BasicElement extends THREE.Group{
 
     }
 
+    //retrieve this element's values in a 3-parameter instance array
+    //positions, scales, colors
     get_instance_parameter3(name: string) {
         let sys = this.parent.parent
         let sid = this.global_id - sys.global_start_id
@@ -103,6 +105,20 @@ class BasicElement extends THREE.Group{
         let z: number = sys[name][sid * 3 + 2];
 
         return new THREE.Vector3(x, y, z);
+    }
+
+    //retrieve this element's values in a 4-parameter instance array
+    //only rotations right now
+    get_instance_parameter4(name: string) {
+        let sys = this.parent.parent
+        let sid = this.global_id - sys.global_start_id
+
+        let x: number = sys[name][sid * 4];
+        let y: number = sys[name][sid * 4 + 1];
+        let z: number = sys[name][sid * 4 + 2];
+        let w: number = sys[name][sid * 4 + 3]
+
+        return new THREE.Vector4(x, y, z, w);
     }
 
     toggle_visibility() {
