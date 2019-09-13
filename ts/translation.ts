@@ -59,47 +59,45 @@ function glsl2three(input: THREE.Vector4) {
 
 function rotate() { //rotate according to given angle given in number input
     let rot: boolean = false; //rotation success boolean
+    switch (axisMode) {
+        case "X": {
+            matrix.set(1, 0, 0, 
+                0, Math.cos(angle), -Math.sin(angle), 
+                0, Math.sin(angle), Math.cos(angle));
+            v1.set(1, 0, 0);
+            break;
+        }
+        case "Y": {
+            matrix.set(Math.cos(angle), 0, Math.sin(angle), 
+            0, 1, 0, 
+            -Math.sin(angle), 0, Math.cos(angle));
+            v1.set(0, 1, 0);
+            break;
+        }
+        case "Z": {
+            matrix.set(Math.cos(angle), -Math.sin(angle), 0, 
+            Math.sin(angle), Math.cos(angle), 0, 
+            0, 0, 1); 
+            v1.set(0, 0, 1);
+            break;
+        }
+        default: alert("Unknown rotation axis: " + axisMode);
+    }
+
+    let q = new THREE.Quaternion;
+    q.setFromAxisAngle(v1, angle);
+
+    //this will be rotating around the center of mass of the selected bases.
+    c = new THREE.Vector3(0, 0, 0);
+    selected_bases.forEach((base) => {
+        c.add(base.get_instance_parameter3("cm_offsets"));
+    });
+    c.multiplyScalar(1/selected_bases.size)
+
     selected_bases.forEach((base) => {
         //rotate around user selected axis with user entered angle
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
-        switch (scopeMode) {
-            case "Nuc": {
-                c = base.get_instance_parameter3("cm_offsets"); 
-                break;
-            }
-            case "Strand": {
-                c = base.parent.get_com();
-                break;
-            }
-            case "System": {
-                c = base.parent.parent.get_com();
-                break;
-            }
-            default: { break; }
-        }
-        switch (axisMode) {
-            case "X": matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle)); break;
-            case "Y": matrix.set(Math.cos(angle), 0, Math.sin(angle), 0, 1, 0, -Math.sin(angle), 0, Math.cos(angle)); break;
-            case "Z": matrix.set(Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle), 0, 0, 0, 1); break;
-            default: alert("Unknown rotation axis: " + axisMode);
-        }
-
-        switch (axisMode) {
-            case "X": {
-                v1.set(1, 0, 0);
-                break;
-            }
-            case "Y": {
-                v1.set(0, 1, 0);
-                break;
-            }
-            case "Z": {
-                v1.set(0, 0, 1);
-                break;
-            }
-            default: break;
-        }
 
         let cm_pos = base.get_instance_parameter3("cm_offsets");
         let bb_pos = base.get_instance_parameter3("bb_offsets");
@@ -126,9 +124,6 @@ function rotate() { //rotate according to given angle given in number input
         let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
         let bbcon_rotation = glsl2three(bbcon_rotationV);
 
-        let q = new THREE.Quaternion;
-        q.setFromAxisAngle(v1, angle);
-
         ns_rotation.multiply(q);
         con_rotation.multiply(q);
         bbcon_rotation.multiply(q);
@@ -142,25 +137,26 @@ function rotate() { //rotate according to given angle given in number input
         sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
         sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
         sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
-        sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
         sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
-        sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
+        sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
+        sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
 
         rot = true;
     });
 
     for (let i = 0; i < systems.length; i++){
-    systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-    systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-    systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-    systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-    systems[i].dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
+        systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
 
-    systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-    systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-    systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+        systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+    }
 
     if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
         alert("Please select an object to rotate.");

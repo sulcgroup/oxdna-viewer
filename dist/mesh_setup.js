@@ -13,7 +13,7 @@ var instance_material = new THREE.MeshLambertMaterial({
 instance_material["defines"] = instance_material["defines"] || {};
 instance_material["defines"]['INSTANCED'] = "";
 var backbone_colors = [
-    new THREE.Color(0xff00ff),
+    new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
     new THREE.Color(0x6ea4cc),
@@ -60,5 +60,5 @@ var nucleoside_colors = [
     //W
     new THREE.Color(0xB45AB4),
 ];
-var selection_color = new THREE.Color(0x01796F); //pine green
+var selection_color = new THREE.Color(0xFF00FF); //PINK!
 var grey = new THREE.Color(0x888888);
