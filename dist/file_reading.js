@@ -461,7 +461,7 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     system.sp_geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.bbcon_scales, 3));
     system.sp_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.picking_geometry.addAttribute('idcolor', new THREE.InstancedBufferAttribute(system.bb_labels, 3));
-    system.picking_geometry.addAttribute('translation', new THREE.InstancedBufferAttribute(system.bb_offsets, 3)); //THIS DOESN'T WORK FOR PROTEINS SINCE I USED THE NUCLEOSIDE MESHES FOR BACKBONES
+    system.picking_geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bb_offsets, 3)); //THIS DOESN'T WORK FOR PROTEINS SINCE I USED THE NUCLEOSIDE MESHES FOR BACKBONES
     system.picking_geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
     system.backbone = new THREE.Mesh(system.backbone_geometry, instance_material);
     system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)

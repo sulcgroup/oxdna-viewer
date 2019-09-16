@@ -150,11 +150,11 @@ var vs3D = `
 attribute vec3 idcolor;
 attribute vec3 instanceVisibility;
 varying vec3 vidcolor;
-attribute vec3 translation;
+attribute vec3 instanceOffset;
 
 void main(){
 vidcolor = idcolor;
-vec3 pos = position + translation;
+vec3 pos = position + instanceOffset;
 pos *= instanceVisibility;
 gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0);
 }`;
@@ -169,3 +169,15 @@ var pickingMaterial = new THREE.ShaderMaterial({
     transparent: false,
     side: THREE.DoubleSide
 });
+//Renders the secret scene containing the picking materials
+//Returns the global id of the particle under the mouse.
+function gpu_picker(event) {
+    renderer.setRenderTarget(pickingTexture);
+    renderer.render(pickingScene, camera);
+    let pixelBuffer = new Uint8Array(4);
+    renderer.readRenderTargetPixels(pickingTexture, event.pageX, pickingTexture.height - event.pageY, 1, 1, pixelBuffer);
+    let id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]) - 1;
+    renderer.setRenderTarget(null);
+    render();
+    return id;
+}

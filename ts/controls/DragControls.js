@@ -20,10 +20,14 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
     var _plane = new THREE.Plane();
     var _raycaster = new THREE.Raycaster();
+    var _ray = new THREE.Ray()
 
     var _mouse = new THREE.Vector2();
-    var _offset = new THREE.Vector3();
-    var _intersection = new THREE.Vector3();
+    var _movePos = new THREE.Vector3();
+    var _mousePos = new THREE.Vector3();
+    var _oldPos = new THREE.Vector3();
+    var _new_pos = new THREE.Vector3
+    var _move = new THREE.Vector3();
 
     var _selected = null, _hovered = null;
     //selected is object selected
@@ -36,9 +40,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
         _domElement.addEventListener('mousedown', onDocumentMouseDown, false);
         _domElement.addEventListener('mouseup', onDocumentMouseCancel, false);
         _domElement.addEventListener('mouseleave', onDocumentMouseCancel, false);
-        _domElement.addEventListener('touchmove', onDocumentTouchMove, false);
-        _domElement.addEventListener('touchstart', onDocumentTouchStart, false);
-        _domElement.addEventListener('touchend', onDocumentTouchEnd, false);
 
     }
 
@@ -48,9 +49,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
         _domElement.removeEventListener('mousedown', onDocumentMouseDown, false);
         _domElement.removeEventListener('mouseup', onDocumentMouseCancel, false);
         _domElement.removeEventListener('mouseleave', onDocumentMouseCancel, false);
-        _domElement.removeEventListener('touchmove', onDocumentTouchMove, false);
-        _domElement.removeEventListener('touchstart', onDocumentTouchStart, false);
-        _domElement.removeEventListener('touchend', onDocumentTouchEnd, false);
 
     }
 
@@ -60,101 +58,72 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
     }
 
-    function onDocumentMouseMove(event) { //when mouse is moved
-        if (getActionModes().includes("Drag")) { //if in drag mode
+    function onDocumentMouseMove(event) { 
+        if (getActionModes().includes("Drag")) {
             render();
-            event.preventDefault(); //prevent default functions such as clicking in text areas, etc
-
+            event.preventDefault(); 
             var rect = _domElement.getBoundingClientRect();
 
             _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //get mouse position
             _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-            _raycaster.setFromCamera(_mouse, _camera); //set raycaster - object that determines click location relative to objects on scene
+            _raycaster.setFromCamera(_mouse, _camera); 
             if (_selected && scope.enabled) {
-                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-                    _selected.position.copy(_intersection.sub(_offset));
+                //use the raycaster to project the mouse position onto the plane
+                switch (scopeMode) {
+                    case "Monomer":
+                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
+                        _move.copy(_new_pos).sub(_oldPos)
+                        _selected.translate_position(_move);
+                        break;
+                    case "Strand":
+                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
+                        _move.copy(_new_pos).sub(_oldPos);
+                        _selected.parent.translate_strand(_move);
+                        break;
+                    case "System":
+                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos))
+                        _move.copy(_new_pos).sub(_oldPos);
+                        _selected.parent.parent.translate_system(_move);
+                        break;
                 }
+                _oldPos.copy(_new_pos);
+                
 
-                scope.dispatchEvent({ type: 'drag', object: _selected });
+                scope.dispatchEvent({ type: 'drag' });
 
-                return;
-
+                _selected.parent.parent.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             }
             render(); //update scene
             _raycaster.setFromCamera(_mouse, _camera);
-
-            var intersects = _raycaster.intersectObjects(_objects, individ); //find all objects in scene intersected by click location into interesects array
-
-            if (intersects.length > 0) { //if something in scene was clicked - i.e. is in intersects array
-                //.includes finds if string is in another string but b/c of radio buttons, scope modes are mutually exclusive so string should = scopeMode
-				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
-				 	var object = intersects[0].object;
-				 }*/
-                switch (scopeMode) {
-                    case "Nuc": //if scope mode is "Nuc", set objects to be dragged to the clicked nucleotide
-                        var object = intersects[0].object.parent; break;
-                    case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
-                        var object = intersects[0].object.parent.parent; break;
-                    case "System": //if scope mode is "System", set objects to be dragged to the clicked system
-                        var object = intersects[0].object.parent.parent.parent; break;
-                }
-                _plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), object.position);
-
-                if (_hovered !== object) {
-
-                    scope.dispatchEvent({ type: 'hoveron', object: object });
-
-                    _domElement.style.cursor = 'pointer';
-                    _hovered = object;
-
-                }
-                render(); //update scene
-
-            } else {
-
-                if (_hovered !== null) {
-
-                    scope.dispatchEvent({ type: 'hoveroff', object: _hovered });
-
-                    _domElement.style.cursor = 'auto';
-                    _hovered = null;
-
-                }
-
-            }
 
         }
 
     }
     function onDocumentMouseDown(event) { //if mouse is moved
-        if (getActionModes().includes("Drag")) { //if getActionModes() includes "Drag"
-            event.preventDefault(); //prevent default mouse functions
+        if (getActionModes().includes("Drag")) {
+            event.preventDefault();
 
-            _raycaster.setFromCamera(_mouse, _camera); //set raycaster - object that determines click location relative to objects on scene
+            //check if there is anything under the mouse
+            let id = gpu_picker(event)
+            if (id > -1) {
 
-            var intersects = _raycaster.intersectObjects(_objects, individ); //find all objects in scene intersected by click location into interesects array
-
-            if (intersects.length > 0) { //if something in scene was clicked - i.e. is in intersects array
-
-				/*if (scopeMode.includes("Drag")) { //if scope mode is "Drag", set objects to be dragged to the clicked Mesh - i.e. backbone, con, nucleoside, or sp
-				 	_selected = intersects[0].object;
-				 }*/
-				switch (scopeMode) {
-					case "Nuc": //if scope mode is "Nuc", set _selected to be dragged to the clicked nucleotide
-						_selected = intersects[0].object.parent; break;
-					case "Strand": //if scope mode is "Strand", set objects to be dragged to the clicked strand
-						_selected = intersects[0].object.parent.parent; break;
-					case "System": //if scope mode is "System", set objects to be dragged to the clicked system
-						_selected = intersects[0].object.parent.parent.parent; break;
-				}
-				if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-					_offset.copy(_intersection).sub(_selected.position);
-				}
+                _selected = elements[id]
+                _movePos.set(0, 0, 0);
+                _objPos = _selected.get_instance_parameter3("bb_offsets");
+                _ray.origin = camera.position
+                _ray.direction.copy(_objPos).sub(camera.position).normalize;
+                _plane.setFromNormalAndCoplanarPoint(_ray.direction, _objPos);
+                _mousePos.copy(_ray.direction).multiplyScalar(_ray.distanceToPlane(_plane)).add(camera.position);
+                _oldPos.copy(_objPos);
 
 				_domElement.style.cursor = 'move';
 
-				scope.dispatchEvent({ type: 'dragstart', object: _selected });
+				scope.dispatchEvent({ type: 'dragstart'});
 
 			}
 		}
@@ -168,17 +137,16 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 			//calculate new sp connectors - does not work after rotation
 			if (_selected) { //if there is a clicked object
-				if (scopeMode == "Nuc") {
-					var current_nuc = elements[parseInt(_selected.name)]; //get selected object's nucleotide global id to get Nucleotide object
+				if (scopeMode == "Monomer") {
 
-					if (current_nuc.neighbor3 !== null && current_nuc.neighbor3 !== undefined) { //if neighbor3 exists
-						calcsp(current_nuc); //calculate sp between current and neighbor3
+					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { //if neighbor3 exists
+						calcsp(_selected); //calculate sp between current and neighbor3
 					}
-					if (current_nuc.neighbor5 !== null && current_nuc.neighbor5 !== undefined) { //if neighbor5 exists
-						calcsp(current_nuc.neighbor5); //calculate sp between current and neighbor5
+					if (_selected.neighbor5 !== null && _selected.neighbor5 !== undefined) { //if neighbor5 exists
+						calcsp(_selected.neighbor5); //calculate sp between current and neighbor5
 					}
 				}
-				scope.dispatchEvent({ type: 'dragend', object: _selected });
+				scope.dispatchEvent({ type: 'dragend' });
 
 				_selected = null; //now nothing is selected for dragging b/c click event is over
 
@@ -188,41 +156,13 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 		}
     }
 
-    function onDocumentTouchMove(event) { //if mouse moves
-        if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
-            event.preventDefault(); //prevent default mouse functions
-            event = event.changedTouches[0];
-
-            var rect = _domElement.getBoundingClientRect();
-
-            _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //calculate mouse click position
-            _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            _raycaster.setFromCamera(_mouse, _camera);
-
-            if (_selected && scope.enabled) { //if an object in scene was clicked
-
-                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-                    _selected.position.copy(_intersection.sub(_offset));
-                }
-
-                scope.dispatchEvent({ type: 'drag', object: _selected });
-
-                return;
-
-            }
-        }
-    }
-
 	function calcsp(current_nuc) { //calculate new sp
-		var temp = new THREE.Vector3();
 		//temp = current_nuc.neighbor3.visual_object.children[0].position;
-		current_nuc.neighbor3.children[0].getWorldPosition(temp); //get neighbor3's backbone world position
+		var temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
 		var x_bb_last = temp.x,
 			y_bb_last = temp.y,
 			z_bb_last = temp.z;
-		//temp = current_nuc.visual_object.children[0].position;
-		current_nuc.children[0].getWorldPosition(temp); //get current_nuc's backbone world position
+		temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
 		// compute backbone cm
 		let x_bb = temp.x;
 		let y_bb = temp.y;
@@ -234,93 +174,16 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); //calculate sp length
 		// easy periodic boundary condition fix  
-		var rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion( //create sp's rotation - I think this is the source of error for the sp recalculation not working after rotations
-			new THREE.Quaternion().setFromUnitVectors(
-				new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_bb - x_sp, y_bb - y_sp, z_bb - z_sp).normalize()
-			)
-        );
-        //let material = current_nuc.parent.parent.strand_to_material(current_nuc.parent.strand_id);
-        //let tempsp = new THREE.Mesh(connector_geometry, material); //create new Mesh w/ proper coloring
-        let tempsp = current_nuc.updateSP();
-		tempsp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length
-		tempsp.applyMatrix(rotation_sp); //set rotation
-		tempsp.position.set(x_sp, y_sp, z_sp); //set position
-		current_nuc.getWorldPosition(temp); //get nucleotide's world position and subtract it from new sp position to accomodate for setting positions based on center of masses
-        tempsp.position.sub(temp);
-        current_nuc.remove(current_nuc.children[current_nuc.SP_CON]); //remove old sp
-		current_nuc.add(tempsp); //add new sp
+		var rotation_sp = new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
+        
+        current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
+        current_nuc.set_instance_parameter('bbcon_rotation', [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+        current_nuc.set_instance_parameter('bbcon_scales', [1, sp_len, 1]);
+        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 	}
-
-    if (_selected && scope.enabled) { //if an object in scene was clicked
-
-        if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-            _selected.position.copy(_intersection.sub(_offset));
-        }
-
-        scope.dispatchEvent({ type: 'drag', object: _selected });
-
-        return;
-
-    }
-
-    function onDocumentTouchStart(event) { //on mouse start on document
-        if (getActionModes().includes("Drag")) { //if getActionModes() includes "Drag"
-
-            event.preventDefault(); //prevent default mouse functions
-            event = event.changedTouches[0];
-
-            var rect = _domElement.getBoundingClientRect();
-
-            _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //get mouse click location
-            _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-            _raycaster.setFromCamera(_mouse, _camera);
-
-            var intersects = _raycaster.intersectObjects(_objects, individ);
-
-            if (intersects.length > 0) { //if something in scene was clicked - i.e. is in intersects array
-                switch (scopeMode) {
-                    case "Nuc": //if "Nuc", set _selected to be dragged to the clicked nucleotide
-                        _selected = intersects[0].object.parent; break;
-                    case "Strand": //if "Strand", set _selected to be dragged to the clicked strand
-                        _selected = intersects[0].object.parent.parent; break;
-                    case "System": //if "System", set _selected to be dragged to the clicked system
-                        _selected = intersects[0].object.parent.parent.parent; break;
-                }
-
-                _plane.setFromNormalAndCoplanarPoint(_camera.getWorldDirection(_plane.normal), _selected.position);
-
-                if (_raycaster.ray.intersectPlane(_plane, _intersection)) {
-
-                    _offset.copy(_intersection).sub(_selected.position);
-
-                }
-
-                _domElement.style.cursor = 'move';
-
-                scope.dispatchEvent({ type: 'dragstart', object: _selected });
-
-            }
-        }
-
-    }
-
-    function onDocumentTouchEnd(event) { //if mouse ??
-        if (getActionModes().includes("Drag")) {
-
-            event.preventDefault(); //prevent default mouse functions
-
-            if (_selected) { //if something was clicked
-
-                scope.dispatchEvent({ type: 'dragend', object: _selected });
-
-                _selected = null; //set clicked object/_selected to null
-
-            }
-
-            _domElement.style.cursor = 'auto';
-        }
-    }
 
     activate();
 

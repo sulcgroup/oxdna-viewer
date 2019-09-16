@@ -1,6 +1,6 @@
 // select and/or drag
 let axisMode = "X";
-let scopeMode = "Nuc";
+let scopeMode = "Monomer";
 let angle = 90 * Math.PI / 180;
 let matrix = new THREE.Matrix3();
 let v1 = new THREE.Vector3();
@@ -20,6 +20,7 @@ function getActionModes() {
 // nucleotides/strand/system
 function setScopeMode() {
     scopeMode = document.querySelector('input[name="scope"]:checked')['value'];
+    console.log(scopeMode);
 }
 // X/Y/Z
 function setAxisMode() {

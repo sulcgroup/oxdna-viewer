@@ -92,6 +92,11 @@ class BasicElement extends THREE.Group {
         let w = sys[name][sid * 4 + 3];
         return new THREE.Vector4(x, y, z, w);
     }
+    set_instance_parameter(name, data) {
+        let sys = this.parent.parent;
+        let sid = this.global_id - sys.global_start_id;
+        sys.fill_vec(name, data.length, sid, data);
+    }
     toggle_visibility() {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
@@ -512,49 +517,6 @@ class AminoAcid extends BasicElement {
         z_bb_last = z;
     }
     ;
-    /*updateSP(): THREE.Object3D {
-        let sp_Mesh: THREE.Object3D = this[objects][this.SP_CON];
-        if (sp_Mesh !== undefined && sp_Mesh instanceof THREE.Mesh) {
-            if (sp_Mesh.material instanceof THREE.MeshLambertMaterial) {
-                sp_Mesh.material = this.strand_to_color(this.parent.strand_id);
-            }
-            let geo: THREE.Geometry | THREE.BufferGeometry = sp_Mesh.geometry;
-            geo = connector_geometry;
-            sp_Mesh.drawMode = THREE.TrianglesDrawMode;
-            sp_Mesh.updateMorphTargets();
-
-            sp_Mesh.up = THREE.Object3D.DefaultUp.clone();
-
-            sp_Mesh.position.set(0, 0, 0);
-            sp_Mesh.rotation.set(0, 0, 0);
-            sp_Mesh.quaternion.set(0, 0, 0, 0);
-            sp_Mesh.scale.set(1, 1, 1);
-
-            sp_Mesh.matrix.set(1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1);
-            sp_Mesh.matrixWorld.set(1, 0, 0, 0,
-                0, 1, 0, 0,
-                0, 0, 1, 0,
-                0, 0, 0, 1);
-
-            sp_Mesh.matrixAutoUpdate = THREE.Object3D.DefaultMatrixAutoUpdate;
-            sp_Mesh.matrixWorldNeedsUpdate = false;
-
-            //sp_Mesh.layers.set(1);
-            sp_Mesh.visible = true;
-
-            sp_Mesh.castShadow = false;
-            sp_Mesh.receiveShadow = false;
-
-            sp_Mesh.frustumCulled = true;
-            sp_Mesh.renderOrder = 0;
-
-            sp_Mesh.userData = {};
-        }
-        return sp_Mesh;
-    };*/
     resetColor() {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
@@ -683,7 +645,7 @@ class NucleicAcidStrand extends Strand {
         s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         s.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
         s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
+        s.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
     }
 }
 class Peptide extends Strand {
@@ -709,7 +671,7 @@ class Peptide extends Strand {
         }
         s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
+        s.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
     }
 }
 // systems are made of strands
@@ -801,7 +763,7 @@ class System extends THREE.Group {
         this.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         this.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
         this.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
+        this.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         render();
     }
     fill_vec(vec_name, unit_size, pos, vals) {

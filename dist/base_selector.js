@@ -10,14 +10,7 @@ let intersects;
 //let gSelectedBases = [];
 document.addEventListener('mousedown', event => {
     if (getActionModes().includes("Select")) {
-        //use GPU picking to figure out if anything was clicked
-        renderer.setRenderTarget(pickingTexture);
-        renderer.render(pickingScene, camera);
-        var pixelBuffer = new Uint8Array(4);
-        renderer.readRenderTargetPixels(pickingTexture, event.pageX, pickingTexture.height - event.pageY, 1, 1, pixelBuffer);
-        var id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]) - 1;
-        renderer.setRenderTarget(null);
-        render();
+        let id = gpu_picker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
         let scope_mode = scopeMode;
         if (id > -1) {
