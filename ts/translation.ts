@@ -21,7 +21,6 @@ function getActionModes(): string[] {
 // nucleotides/strand/system
 function setScopeMode(): void {
     scopeMode = document.querySelector('input[name="scope"]:checked')['value'];
-    console.log(scopeMode);
 }
 
 // X/Y/Z

@@ -2,6 +2,7 @@
  * @author zz85 / https://github.com/zz85
  * @author mrdoob / http://mrdoob.com
  * Running this will allow you to drag three.js objects around the screen.
+ * Heavily rewritten by Erik Poppleton to accomodate instanced objects
  */
 
 /*To include anything such as DragControls.js, TrackballControls.js, etc., do the following:
@@ -111,12 +112,14 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
             //check if there is anything under the mouse
             let id = gpu_picker(event)
             if (id > -1) {
+                let camera_heading = new THREE.Vector3(0, 0, -1);
+                camera_heading.applyQuaternion(camera.quaternion);
 
                 _selected = elements[id]
                 _movePos.set(0, 0, 0);
                 _objPos = _selected.get_instance_parameter3("bb_offsets");
                 _ray.origin = camera.position
-                _ray.direction.copy(_objPos).sub(camera.position).normalize;
+                _ray.direction.copy(camera_heading).normalize;
                 _plane.setFromNormalAndCoplanarPoint(_ray.direction, _objPos);
                 _mousePos.copy(_ray.direction).multiplyScalar(_ray.distanceToPlane(_plane)).add(camera.position);
                 _oldPos.copy(_objPos);
@@ -158,8 +161,8 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 	function calcsp(current_nuc) { //calculate new sp
 		//temp = current_nuc.neighbor3.visual_object.children[0].position;
-		var temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
-		var x_bb_last = temp.x,
+		let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
+		let x_bb_last = temp.x,
 			y_bb_last = temp.y,
 			z_bb_last = temp.z;
 		temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
@@ -174,7 +177,7 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); //calculate sp length
 		// easy periodic boundary condition fix  
-		var rotation_sp = new THREE.Quaternion().setFromUnitVectors(
+		let rotation_sp = new THREE.Quaternion().setFromUnitVectors(
             new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
         
         current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
