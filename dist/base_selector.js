@@ -9,64 +9,92 @@ document.addEventListener('mousedown', event => {
         let id = gpu_picker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
         if (id > -1) {
+            // This runs after the selection is done and the nucleotides are toggled,
+            // but it needs to be defined as a callback since the cluster selection
+            // can take a while to finish.
+            let updateView = function () {
+                //tell the GPU to update the colors in the scene
+                sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+                sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+                sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
+                sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+                render(); //update scene;
+                listBases = [];
+                let baseInfoStrands = {};
+                //sort selection info into respective containers
+                selected_bases.forEach((base) => {
+                    //store global ids for BaseList view
+                    listBases.push(base.global_id);
+                    //assign each of the selected bases to a strand
+                    let strand_id = base.parent.strand_id;
+                    if (strand_id in baseInfoStrands)
+                        baseInfoStrands[strand_id].push(base);
+                    else
+                        baseInfoStrands[strand_id] = [base];
+                });
+                //Display every selected nucleotide id (top txt box)
+                makeTextArea(listBases.join(","), "BaseList");
+                //Brake down info (low txt box)
+                let baseInfoLines = [];
+                for (let strand_id in baseInfoStrands) {
+                    let s_bases = baseInfoStrands[strand_id];
+                    //make a fancy header for each strand
+                    let header = ["Str#:", strand_id, "Sys#:", s_bases[0].parent.parent.system_id];
+                    baseInfoLines.push("----------------------");
+                    baseInfoLines.push(header.join(" "));
+                    baseInfoLines.push("----------------------");
+                    //fish out all the required base info
+                    //one could also sort it if neaded ...
+                    for (let i = 0; i < s_bases.length; i++) {
+                        baseInfoLines.push(["sid:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
+                    }
+                }
+                makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
+            };
             let nucleotide = elements[id];
             let sys = nucleotide.parent.parent;
+            let strand_count = sys[strands].length;
             switch (scopeMode) {
                 case "System":
-                    let strand_count = sys[strands].length;
                     for (let i = 0; i < strand_count; i++) { //for every strand in the System
                         let strand = sys[strands][i];
                         let nuc_count = strand[monomers].length;
                         for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand
                             strand[monomers][j].toggle();
                     }
+                    updateView();
                     break;
                 case "Strand":
                     let strand_length = nucleotide.parent[monomers].length;
                     for (let i = 0; i < strand_length; i++) //for every nucleotide in strand
                         nucleotide.parent[monomers][i].toggle();
+                    updateView();
                     break;
                 case "Monomer":
                     nucleotide.toggle();
+                    updateView();
+                    break;
+                case "Cluster":
+                    // Calculate clusters (if not already calculated) and toggle
+                    // nucletides within callback to make sure that clustering
+                    // is complete.
+                    calculateClusters(function () {
+                        //for every strand in the System
+                        for (let i = 0; i < strand_count; i++) {
+                            let strand = sys[strands][i];
+                            let nuc_count = strand[monomers].length;
+                            // for every nucleotide on the Strand in the System
+                            for (let j = 0; j < nuc_count; j++) {
+                                let n = strand[monomers][j];
+                                if (n.cluster_id == nucleotide.cluster_id) {
+                                    n.toggle();
+                                }
+                            }
+                        }
+                        updateView();
+                    });
                     break;
             }
-            //tell the GPU to update the colors in the scene
-            sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-            sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
-            sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
-            sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
-            render(); //update scene;
-            listBases = [];
-            let baseInfoStrands = {};
-            //sort selection info into respective containers 
-            selected_bases.forEach((base) => {
-                //store global ids for BaseList view 
-                listBases.push(base.global_id);
-                //assign each of the selected bases to a strand 
-                let strand_id = base.parent.strand_id;
-                if (strand_id in baseInfoStrands)
-                    baseInfoStrands[strand_id].push(base);
-                else
-                    baseInfoStrands[strand_id] = [base];
-            });
-            //Display every selected nucleotide id (top txt box)
-            makeTextArea(listBases.join(","), "BaseList");
-            //Brake down info (low txt box)
-            let baseInfoLines = [];
-            for (let strand_id in baseInfoStrands) {
-                let s_bases = baseInfoStrands[strand_id];
-                //make a fancy header for each strand
-                let header = ["Str#:", strand_id, "Sys#:", s_bases[0].parent.parent.system_id];
-                baseInfoLines.push("----------------------");
-                baseInfoLines.push(header.join(" "));
-                baseInfoLines.push("----------------------");
-                //fish out all the required base info 
-                //one could also sort it if neaded ...
-                for (let i = 0; i < s_bases.length; i++) {
-                    baseInfoLines.push(["sid:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
-                }
-            }
-            makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
         }
     }
 });

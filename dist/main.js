@@ -1034,3 +1034,84 @@ function toggleSideNav(button) {
         button.innerHTML = hidden;
     }
 }
+function calculateClusters(callback) {
+    // Check if we have already calculated clusters
+    if (typeof elements[0].cluster_id == 'undefined') {
+        let minPts = 6; // Minimum number of nucleotides in a cluster
+        let epsilon = 1.5; // Max distance between cluster neigbours
+        // Set wait cursor and request an animation frame to make sure
+        // that it gets changed before starting dbscan:
+        renderer.domElement.style.cursor = "wait";
+        requestAnimationFrame(() => requestAnimationFrame(function () {
+            dbscan(minPts, epsilon);
+            renderer.domElement.style.cursor = "auto"; // Change cursor back
+            // It is possible to provide a callback function to run only after
+            // the clustering has finished.
+            if (typeof callback !== 'undefined') {
+                callback();
+            }
+        }));
+        // If clusters has already been calculated, just run the callback.
+    }
+    else if (typeof callback !== 'undefined') {
+        callback();
+    }
+}
+// Algorithm and comments from:
+// https://en.wikipedia.org/wiki/DBSCAN#Algorithm
+function dbscan(minPts, eps) {
+    let c = 0; // Cluster counter
+    let noise = -1; // Label for noise
+    let getPos = (element) => {
+        return element.get_instance_parameter3("cm_offsets");
+    };
+    let findNeigbours = (p, eps) => {
+        let neigbours = [];
+        for (let i = 0; i < elements.length; i++) {
+            let q = elements[i];
+            if (p != q) {
+                let dist = getPos(p).distanceTo(getPos(q));
+                if (dist < eps) {
+                    neigbours.push(q);
+                }
+            }
+        }
+        return neigbours;
+    };
+    for (let i = 0; i < elements.length; i++) {
+        let p = elements[i];
+        if (typeof p.cluster_id !== 'undefined') {
+            continue; // Previously processed in inner loop
+        }
+        // Find neigbours of p:
+        let neigbours = findNeigbours(p, eps);
+        if (neigbours.length < minPts) { // Density check
+            p.cluster_id = noise; // Label as noise
+            continue;
+        }
+        c++; // Next cluster id
+        p.cluster_id = c; // Label initial point
+        for (let j = 0; j < neigbours.length; j++) { // Process every seed point
+            let q = neigbours[j];
+            if ((typeof q.cluster_id !== 'undefined') && // Previously processed
+                (q.cluster_id !== noise) // If noise, change it to border point
+            ) {
+                continue;
+            }
+            q.cluster_id = c; // Label neigbour
+            // Find neigbours of q:
+            let meta_neigbours = findNeigbours(q, eps);
+            if (meta_neigbours.length >= minPts) { // Density check
+                // Add new neigbours to seed set
+                neigbours = neigbours.concat(meta_neigbours);
+            }
+        }
+    }
+}
+//strand delete testcode
+document.addEventListener("keypress", event => {
+    if (event.keyCode === 100) { //if d is pressed, delete first system's first strand
+        systems[0].remove_strand(1);
+        render();
+    }
+});
