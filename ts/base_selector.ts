@@ -14,6 +14,7 @@ let intersects;
 document.addEventListener('mousedown', event => { //if mouse is pressed down
 	if (getActionModes().includes("Select")) {
 		let id = gpu_picker(event)
+		console.log(id);
 
 		//if something was clicked, toggle the coloration of the appropriate things.
         let scope_mode: string = scopeMode;

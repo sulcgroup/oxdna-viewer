@@ -21,7 +21,6 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
     var _plane = new THREE.Plane();
     var _raycaster = new THREE.Raycaster();
-    var _ray = new THREE.Ray()
 
     var _mouse = new THREE.Vector2();
     var _movePos = new THREE.Vector3();
@@ -65,46 +64,52 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
             event.preventDefault(); 
             var rect = _domElement.getBoundingClientRect();
 
+            //change the cursor if you're hovering over something selectable
+            let id = gpu_picker(event)
+            if (id > -1) {
+                _domElement.style.cursor = 'pointer';
+            }
+            else {
+                _domElement.style.cursor = 'auto';
+            }
+
             _mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1; //get mouse position
             _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
-
+            
+            //use the raycaster to project the mouse position onto the plane and move the object to the mouse
             _raycaster.setFromCamera(_mouse, _camera); 
             if (_selected && scope.enabled) {
-                //use the raycaster to project the mouse position onto the plane
+                _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
+                _move.copy(_new_pos).sub(_oldPos)
                 switch (scopeMode) {
                     case "Monomer":
-                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
-                        _move.copy(_new_pos).sub(_oldPos)
                         _selected.translate_position(_move);
                         break;
                     case "Strand":
-                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
-                        _move.copy(_new_pos).sub(_oldPos);
                         _selected.parent.translate_strand(_move);
                         break;
                     case "System":
-                        _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos))
-                        _move.copy(_new_pos).sub(_oldPos);
                         _selected.parent.parent.translate_system(_move);
                         break;
                 }
-                _oldPos.copy(_new_pos);
+                _oldPos.copy(_new_pos); //Need difference from previous position.
                 
 
                 scope.dispatchEvent({ type: 'drag' });
 
+                //Update attributes on the GPU
                 _selected.parent.parent.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             }
-            render(); //update scene
-            _raycaster.setFromCamera(_mouse, _camera);
+            render();
 
         }
 
     }
+
     function onDocumentMouseDown(event) { //if mouse is moved
         if (getActionModes().includes("Drag")) {
             event.preventDefault();
@@ -112,16 +117,16 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
             //check if there is anything under the mouse
             let id = gpu_picker(event)
             if (id > -1) {
+                //The camera points down its own -Z axis
                 let camera_heading = new THREE.Vector3(0, 0, -1);
                 camera_heading.applyQuaternion(camera.quaternion);
 
+                //Create a movement plane perpendicular to the camera heading containing the clicked object
                 _selected = elements[id]
                 _movePos.set(0, 0, 0);
                 _objPos = _selected.get_instance_parameter3("bb_offsets");
-                _ray.origin = camera.position
-                _ray.direction.copy(camera_heading).normalize;
-                _plane.setFromNormalAndCoplanarPoint(_ray.direction, _objPos);
-                _mousePos.copy(_ray.direction).multiplyScalar(_ray.distanceToPlane(_plane)).add(camera.position);
+                _plane.setFromNormalAndCoplanarPoint(camera_heading, _objPos);
+                _mousePos.copy(camera_heading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
                 _oldPos.copy(_objPos);
 
 				_domElement.style.cursor = 'move';
@@ -133,19 +138,19 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 
 	}
 
-	function onDocumentMouseCancel(event) { //if mouse is ??
-		if (getActionModes().includes("Drag")) { //if action mode includes "Drag"
+	function onDocumentMouseCancel(event) { 
+		if (getActionModes().includes("Drag")) { 
 
 			event.preventDefault();
 
-			//calculate new sp connectors - does not work after rotation
-			if (_selected) { //if there is a clicked object
+			//calculate new sp connectors
+			if (_selected) { 
 				if (scopeMode == "Monomer") {
 
-					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { //if neighbor3 exists
+					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { 
 						calcsp(_selected); //calculate sp between current and neighbor3
 					}
-					if (_selected.neighbor5 !== null && _selected.neighbor5 !== undefined) { //if neighbor5 exists
+					if (_selected.neighbor5 !== null && _selected.neighbor5 !== undefined) { 
 						calcsp(_selected.neighbor5); //calculate sp between current and neighbor5
 					}
 				}
@@ -159,24 +164,22 @@ THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass
 		}
     }
 
-	function calcsp(current_nuc) { //calculate new sp
-		//temp = current_nuc.neighbor3.visual_object.children[0].position;
+    //adjust the backbone after the move
+	function calcsp(current_nuc) { 
 		let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
 		let x_bb_last = temp.x,
 			y_bb_last = temp.y,
 			z_bb_last = temp.z;
 		temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
-		// compute backbone cm
 		let x_bb = temp.x;
 		let y_bb = temp.y;
-		let z_bb = temp.z;
-		//calculate sp location
+        let z_bb = temp.z;
+        
+		//calculate sp location, length and orientation
 		let x_sp = (x_bb + x_bb_last) / 2,
 			y_sp = (y_bb + y_bb_last) / 2,
 			z_sp = (z_bb + z_bb_last) / 2;
-
-		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); //calculate sp length
-		// easy periodic boundary condition fix  
+		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); 
 		let rotation_sp = new THREE.Quaternion().setFromUnitVectors(
             new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
         

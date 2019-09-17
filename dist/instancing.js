@@ -165,9 +165,7 @@ gl_FragColor = vec4(vidcolor,1.0);
 }`;
 var pickingMaterial = new THREE.ShaderMaterial({
     vertexShader: vs3D,
-    fragmentShader: fs3D,
-    transparent: false,
-    side: THREE.DoubleSide
+    fragmentShader: fs3D
 });
 //Renders the secret scene containing the picking materials
 //Returns the global id of the particle under the mouse.

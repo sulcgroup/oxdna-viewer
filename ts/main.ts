@@ -597,7 +597,7 @@ class AminoAcid extends BasicElement {
         // fill in the instancing matrices
         this.name = sid + ""; //set name (string) to nucleotide's global id
         sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
-        sys.fill_vec('bb_offsets', 3, sid, [0, 0, 0]);
+        sys.fill_vec('bb_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('bb_rotation', 4, sid, [0, 0, 0, 0]);
         sys.fill_vec('ns_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('ns_rotation', 4, sid, [0, 0, 0, 0]);
@@ -610,6 +610,7 @@ class AminoAcid extends BasicElement {
         sys.fill_vec('con_scales', 3, sid, [0, 0, 0]); 
         sys.fill_vec('bbcon_scales', 3, sid, [1, sp_len, 1]);      
         sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
+        sys.fill_vec('visibility', 3, sid, [1,1,1]);
 
         color = this.elem_to_color(this.type);
         sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
@@ -665,6 +666,7 @@ class AminoAcid extends BasicElement {
         }
 
         sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
+        sys.fill_vec('bb_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('ns_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('bbcon_offsets', 3, sid, [x_sp, y_sp, z_sp]);
         sys.fill_vec('bbcon_rotation', 4, sid, [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
@@ -702,8 +704,6 @@ class AminoAcid extends BasicElement {
             sys.fill_vec('ns_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
-            //selList.push(nucleotideID);
-            selected_bases.add(this); //"select" nucletide by setting value in selected_bases array at nucleotideID to 1
     };
 
     getDatFileOutput(): string {
