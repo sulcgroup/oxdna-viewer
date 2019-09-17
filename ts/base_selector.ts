@@ -14,15 +14,13 @@ let intersects;
 document.addEventListener('mousedown', event => { //if mouse is pressed down
 	if (getActionModes().includes("Select")) {
 		let id = gpu_picker(event)
-		console.log(id);
 
 		//if something was clicked, toggle the coloration of the appropriate things.
-        let scope_mode: string = scopeMode;
 		if (id > -1) { 
 			let nucleotide = elements[id];
 			let sys = nucleotide.parent.parent;
 			
-			switch(scope_mode){
+			switch(scopeMode){
 				case "System" : 
 					let strand_count = sys[strands].length;
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
@@ -37,7 +35,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
                     for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
                         nucleotide.parent[monomers][i].toggle();
 				break;
-                case "Nuc":
+                case "Monomer":
                     nucleotide.toggle(); //toggle selected nucleotide
 				break;
 
