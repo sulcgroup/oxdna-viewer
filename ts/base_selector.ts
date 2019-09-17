@@ -1,14 +1,8 @@
-
-//let listBases: string = ""; //list of bases to download in .txt file
 let listBases: number[] = []; //list of bases to download in .txt file
-//let selList:number[] = [];
 let basesInfo: string = ""; //list of bases' info - location, strand and system ids, etc. - to download in .txt file
-// magic ... 
 let mouse3D;
 let raycaster = new THREE.Raycaster();;
 let intersects;
-
-//let gSelectedBases = [];
 			
 
 document.addEventListener('mousedown', event => { //if mouse is pressed down
@@ -26,20 +20,21 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
 						let strand = sys[strands][i];
 						let nuc_count = strand[monomers].length;
-                        for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
+                        for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand
                             strand[monomers][j].toggle();
 					}
 				break;
 				case "Strand" :
 					let strand_length = nucleotide.parent[monomers].length;
-                    for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
+                    for (let i = 0; i < strand_length; i++)  //for every nucleotide in strand
                         nucleotide.parent[monomers][i].toggle();
 				break;
                 case "Monomer":
-                    nucleotide.toggle(); //toggle selected nucleotide
+                    nucleotide.toggle();
 				break;
 
 			}
+			//tell the GPU to update the colors in the scene
 			sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
 			sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
 			sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
@@ -104,10 +99,9 @@ function writeMutTrapText(base1: number, base2: number): string { //create strin
 		"PBC = 1" + "\n}\n\n";
 }
 
-function makeMutualTrapFile() { //make / allow download of mutual trap file
-	let x: number, count: number = 0;
+function makeMutualTrapFile() { //make download of mutual trap file from selected bases
     let mutTrapText: string = "";
-    for (x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
+    for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
         if (listBases[x+1] !== undefined) { //if there is another nucleotide in the pair
             mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
 		}
@@ -137,7 +131,7 @@ function openTab(evt, tabName) { //open clicked tab - Idk how this works
 	let i: number;
 	let tabcontent;
 	let tablinks;
-	tabcontent = document.getElementsByClassName("tabcontent"); //get tab's content
+	tabcontent = document.getElementsByClassName("tabcontent");
 	for (i = 0; i < tabcontent.length; i++) {
 		tabcontent[i].style.display = "none";
 	}

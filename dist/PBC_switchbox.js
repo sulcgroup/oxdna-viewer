@@ -56,7 +56,7 @@ function dumb_centering(system, center_option) {
     }
     system.translate_system(amount);
 }
-//Applies PBC at the scale specified.  Will break structures.
+//Applies PBC at the scale specified.  Will break structures if they go through the box
 function dumb_boxing(system, box_option) {
     for (let i = 0; i < system[strands].length; i++) {
         let diff = new THREE.Vector3;

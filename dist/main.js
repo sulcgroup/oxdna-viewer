@@ -1,36 +1,30 @@
 /// <reference path="./three/index.d.ts" />
 // store rendering mode RNA  
-let RNA_MODE = false; // By default we do DNA base spacing
+var RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
 var elements = []; //contains references to all BasicElements
 //initialize the space
 var systems = [];
-let sys_count = 0;
-let strand_count = 0;
-let nuc_count = 0;
-//var selected_bases: number[] = [];
+var sys_count = 0;
+var strand_count = 0;
+var nuc_count = 0;
 var selected_bases = new Set();
 var backbones = [];
-let lut, devs; //need for Lut coloring
-let lutCols = [];
-let lutColsVis = false;
-let DNA = 0;
-let RNA = 1;
-let AA = 2;
+var lut, devs; //need for Lut coloring
+var lutCols = [];
+var lutColsVis = false;
+var DNA = 0;
+var RNA = 1;
+var AA = 2;
+//some developers declare a new i in their for loops.  Some don't and reuse this one...is one better than the other?
+var i;
+//makes for cleaner references down the object hierarcy
 var strands = 'children', monomers = 'children', objects = 'children';
 render();
 // elements store the information about position, orientation, ID
-// Eventually there should be a way to pair them
-// Everything is an Object3D, but only elements have anything to render
 class BasicElement extends THREE.Group {
     constructor(global_id, parent) {
         super();
-        //: THREE.Group; //contains 4 THREE.Mesh
-        //BACKBONE: number = 0;
-        //NUCLEOSIDE: number = 0;
-        //BB_NS_CON: number = 1;
-        this.COM = 0;
-        //SP_CON: number = 3;
         this.element_type = -1;
         this.global_id = global_id;
         this.parent = parent;
@@ -46,7 +40,6 @@ class BasicElement extends THREE.Group {
         return new THREE.Object3D();
     }
     ;
-    //abstract rotate(): void;
     toggle() {
     }
     ;
@@ -82,7 +75,7 @@ class BasicElement extends THREE.Group {
         return new THREE.Vector3(x, y, z);
     }
     //retrieve this element's values in a 4-parameter instance array
-    //only rotations right now
+    //only rotations
     get_instance_parameter4(name) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
@@ -92,11 +85,14 @@ class BasicElement extends THREE.Group {
         let w = sys[name][sid * 4 + 3];
         return new THREE.Vector4(x, y, z, w);
     }
+    //set this element's parameters in the system's instance arrays
+    //doing this is slower than sys.fill_vec(), but makes cleaner code sometimes
     set_instance_parameter(name, data) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
         sys.fill_vec(name, data.length, sid, data);
     }
+    //poof
     toggle_visibility() {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
@@ -171,7 +167,7 @@ class Nucleotide extends BasicElement {
         let idColor = new THREE.Color();
         idColor.setHex(this.global_id + 1); //has to be +1 or you can't grab nucleotide 0
         //fill the instance matrices with data
-        this.name = sid + ""; //set name (string) to nucleotide's global id
+        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
         sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('bb_offsets', 3, sid, [x_bb, y_bb, z_bb]);
         sys.fill_vec('ns_offsets', 3, sid, [x_ns, y_ns, z_ns]);
@@ -215,6 +211,7 @@ class Nucleotide extends BasicElement {
         sys.cm_offsets[id + 1] += amount.y;
         sys.cm_offsets[id + 2] += amount.z;
     }
+    //different in DNA and RNA
     calcBBPos(x, y, z, x_a1, y_a1, z_a1, x_a2, y_a2, z_a2, x_a3, y_a3, z_a3) {
         return new THREE.Vector3(x, y, z);
     }
@@ -224,7 +221,7 @@ class Nucleotide extends BasicElement {
         let sid = this.global_id - sys.global_start_id;
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
-        // according to base.py a2 is the cross of a1 and a3
+        // a2 is perpendicular to a1 and a3
         let [x_a2, y_a2, z_a2] = cross(x_a1, y_a1, z_a1, x_a3, y_a3, z_a3);
         // compute backbone cm
         let x_bb = 0;
@@ -258,6 +255,7 @@ class Nucleotide extends BasicElement {
             sp_len = 0;
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
+        //handle circular strands
         if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
             let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3], tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1], tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];
             let tmpx_sp = (x_bb + tmpx_bb_last) / 2, tmpy_sp = (y_bb + tmpy_bb_last) / 2, tmpz_sp = (z_bb + tmpz_bb_last) / 2;
@@ -299,14 +297,14 @@ class Nucleotide extends BasicElement {
     toggle() {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
-        // highlight/remove highlight the bases we've clicked 
-        if (selected_bases.has(this)) { //if clicked nucleotide is already selected
+        // highlight/remove highlight the bases we've clicked from the list and modify color
+        if (selected_bases.has(this)) {
             this.resetColor();
-            selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
+            selected_bases.delete(this);
         }
         else {
             sys.fill_vec('bb_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
-            selected_bases.add(this); //"select" nucletide by adding it to the selected base list
+            selected_bases.add(this);
         }
     }
     ;
@@ -373,10 +371,6 @@ class DNANucleotide extends Nucleotide {
         x_a2 = ((x_bb - x) + (0.34 * x_a1)) / (-0.3408);
         y_a2 = ((y_bb - y) + (0.34 * y_a1)) / (-0.3408);
         z_a2 = ((z_bb - z) + (0.34 * z_a1)) / (-0.3408);
-        let Coeff = [[0, -(z_a1), y_a1], [-(z_a1), 0, x_a1], [-(y_a1), x_a1, 0]];
-        let x_matrix = [[x_a2, -(z_a1), y_a1], [y_a2, 0, x_a1], [z_a2, x_a1, 0]];
-        let y_matrix = [[0, x_a2, y_a1], [-(z_a1), y_a2, x_a1], [-(y_a1), z_a2, 0]];
-        let z_matrix = [[0, -(z_a1), x_a2], [-(z_a1), 0, y_a2], [-(y_a1), x_a1, z_a2]];
         let a3 = divAndNeg(cross(x_a1, y_a1, z_a1, x_a2, y_a2, z_a2), dot(x_a1, y_a1, z_a1, x_a1, y_a1, z_a1));
         let x_a3 = a3[0];
         let y_a3 = a3[1];
@@ -439,7 +433,8 @@ class AminoAcid extends BasicElement {
             sp_len = 0;
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+        //handle circular strands
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) {
             let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3], tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1], tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];
             let tmpx_sp = (x + tmpx_bb_last) / 2, tmpy_sp = (y + tmpy_bb_last) / 2, tmpz_sp = (z + tmpz_bb_last) / 2;
             let tmpsp_len = Math.sqrt(Math.pow(x - tmpx_bb_last, 2) + Math.pow(y - tmpy_bb_last, 2) + Math.pow(z - tmpz_bb_last, 2));
@@ -457,7 +452,7 @@ class AminoAcid extends BasicElement {
             color = this.strand_to_color(this.parent.strand_id);
         }
         // fill in the instancing matrices
-        this.name = sid + ""; //set name (string) to nucleotide's global id
+        this.name = this.global_id + ""; //set name (string) to nucleotide's global id
         sys.fill_vec('cm_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('bb_offsets', 3, sid, [x, y, z]);
         sys.fill_vec('bb_rotation', 4, sid, [0, 0, 0, 0]);
@@ -484,6 +479,7 @@ class AminoAcid extends BasicElement {
     calculateNewConfigPositions(x, y, z, l) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+        //calculate new backbone connector position/rotation
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
             x_sp = (x + x_bb_last) / 2,
@@ -499,7 +495,8 @@ class AminoAcid extends BasicElement {
             sp_len = 0;
             rotation_sp = new THREE.Quaternion(0, 0, 0, 0);
         }
-        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) { //handle circular strands
+        //handle circular strands
+        if (this.neighbor5 != null && this.neighbor5.local_id < this.local_id) {
             let tmpx_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3], tmpy_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 1], tmpz_bb_last = sys.bb_offsets[this.neighbor5.global_id * 3 + 2];
             let tmpx_sp = (x + tmpx_bb_last) / 2, tmpy_sp = (y + tmpy_bb_last) / 2, tmpz_sp = (z + tmpz_bb_last) / 2;
             let tmpsp_len = Math.sqrt(Math.pow(x - tmpx_bb_last, 2) + Math.pow(y - tmpy_bb_last, 2) + Math.pow(z - tmpz_bb_last, 2));
@@ -569,6 +566,9 @@ class Strand extends THREE.Group {
         this.parent = parent;
     }
     ;
+    //POINT OF CONCERN FOR LATER: NEED TO SOMEHOW ADD THIS TO ARRAYS
+    //DO WE JUST MAKE ALL NEW THINGS IN THEIR OWN SYSTEM??
+    //AND THEN HAVE SOME COMPLICATED STUFF TO MAKE THEM BEHAVE?
     add_basicElement(elem) {
         this[monomers].push(elem);
         elem.parent = this;
@@ -599,6 +599,7 @@ class Strand extends THREE.Group {
         });
         this[monomers] = filtered;
     }
+    ;
     get_com() {
         let com = new THREE.Vector3(0, 0, 0);
         for (let i = (this[monomers][0].global_id - this.parent.global_start_id) * 3; i <= (this[monomers][this[monomers].length - 1].global_id - this.parent.global_start_id) * 3; i += 3) {
@@ -606,8 +607,10 @@ class Strand extends THREE.Group {
         }
         return (com.multiplyScalar(1 / this[monomers].length));
     }
+    ;
     translate_strand(amount) {
     }
+    ;
 }
 ;
 class NucleicAcidStrand extends Strand {
@@ -656,6 +659,7 @@ class Peptide extends Strand {
     create_basicElement(global_id) {
         return new AminoAcid(global_id, this);
     }
+    ;
     translate_strand(amount) {
         let s = this.parent;
         for (let i = (this.children[0].global_id - this.parent.global_start_id) * 3; i < (this[monomers][this[monomers].length - 1].global_id - this.parent.global_start_id) * 3; i += 3) {
@@ -673,6 +677,7 @@ class Peptide extends Strand {
         s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
         s.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
     }
+    ;
 }
 // systems are made of strands
 // systems can CRUD
@@ -728,6 +733,7 @@ class System extends THREE.Group {
         }
         return (com.multiplyScalar(1 / this.INSTANCES));
     }
+    ;
     //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
     strand_unweighted_com() {
         let com = new THREE.Vector3(0, 0, 0);
@@ -738,9 +744,11 @@ class System extends THREE.Group {
         });
         return (com.multiplyScalar(1 / count));
     }
+    ;
     setDatFile(dat_file) {
         this.dat_file = dat_file;
     }
+    ;
     translate_system(amount) {
         for (let i = 0; i < this.INSTANCES * 3; i += 3) {
             this.bb_offsets[i] += amount.x;
@@ -766,11 +774,13 @@ class System extends THREE.Group {
         this.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         render();
     }
+    ;
     fill_vec(vec_name, unit_size, pos, vals) {
         for (i = 0; i < unit_size; i++) {
             this[vec_name][pos * unit_size + i] = vals[i];
         }
     }
+    ;
 }
 ;
 function nextConfig() {
@@ -779,31 +789,25 @@ function nextConfig() {
     }
     getNewConfig(1);
 }
+;
 function previousConfig() {
     if (previous_previous_reader.readyState == 1) {
         return;
     }
     getNewConfig(-1);
 }
-document.addEventListener("keydown", function (event) {
-    switch (event.key) {
-        case 'n':
-            nextConfig();
-            break;
-        case 'b':
-            previousConfig();
-            break;
-    }
-}, true);
+;
 function toggleVideoOptions() {
     let opt = document.getElementById("videoOptions");
     opt.hidden = !opt.hidden;
 }
+;
 function toggleColorOptions() {
     let opt = document.getElementById("colorOptions");
     opt.hidden = !opt.hidden;
     colorOptions();
 }
+;
 function colorOptions() {
     let opt = document.getElementById("colorOptions");
     if (!opt.hidden) {
@@ -813,7 +817,6 @@ function colorOptions() {
         // Append new color to the end of the color list and reset colors
         addButton.onclick = function () {
             backbone_colors.push(new THREE.Color(0x156289));
-            let index = 0;
             colorOptions();
         };
         //modifies the backbone_colors array
@@ -850,6 +853,7 @@ function colorOptions() {
         render();
     }
 }
+;
 function createVideo() {
     // Get canvas
     let canvas = document.getElementById("threeCanvas");
@@ -887,6 +891,7 @@ function createVideo() {
         capturer.stop();
     }
 }
+;
 function createTrajectoryVideo(canvas, capturer) {
     // Listen for configuration loaded events
     function _load(e) {
@@ -894,6 +899,7 @@ function createTrajectoryVideo(canvas, capturer) {
         capturer.capture(canvas);
         nextConfig();
     }
+    ;
     // Listen for last configuration event
     function _done(e) {
         document.removeEventListener('nextConfigLoaded', _load);
@@ -904,6 +910,7 @@ function createTrajectoryVideo(canvas, capturer) {
         button.onclick = createVideo;
         return;
     }
+    ;
     // Overload stop button so that we don't forget to remove listeners
     let button = document.getElementById("videoStartStop");
     button.onclick = _done;
@@ -913,6 +920,7 @@ function createTrajectoryVideo(canvas, capturer) {
     capturer.start();
     nextConfig();
 }
+;
 function createLemniscateVideo(canvas, capturer, framerate) {
     // Setup timing
     let duration = 10; //Seconds
@@ -946,17 +954,19 @@ function createLemniscateVideo(canvas, capturer, framerate) {
     };
     animate();
 }
+;
+//toggles display of coloring by json file / structure modeled off of base selector
 function toggleLut(chkBox) {
-    if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
-        if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
-            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
+    if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by dropped JSON file)
+        if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring)
+            lutColsVis = false;
+            for (let i = 0; i < elements.length; i++) {
                 if (!selected_bases.has(elements[i]))
                     elements[i].resetColor();
             }
         }
         else {
-            for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
+            for (let i = 0; i < elements.length; i++) {
                 let tmeshlamb = new THREE.MeshLambertMaterial({
                     color: lutCols[i],
                     side: THREE.DoubleSide
@@ -977,6 +987,7 @@ function toggleLut(chkBox) {
         chkBox.checked = false;
     }
 }
+;
 function toggleBackground() {
     if (scene.background == WHITE) {
         scene.background = BLACK;
@@ -1001,34 +1012,6 @@ function cross(a1, a2, a3, b1, b2, b3) {
         a3 * b1 - a1 * b3,
         a1 * b2 - a2 * b1];
 }
-//changes resolution on the nucleotide visual objects
-/*function setResolution(resolution: number) {
-    //change mesh_setup with the given resolution
-    backbone_geometry = new THREE.SphereBufferGeometry(.2, resolution, resolution);
-    nucleoside_geometry = new THREE.SphereBufferGeometry(.3, resolution, resolution).applyMatrix(
-        new THREE.Matrix4().makeScale(0.7, 0.3, 0.7));
-    connector_geometry = new THREE.CylinderBufferGeometry(.1, .1, 1, Math.max(2, resolution));
-
-    //update all elements and hide some meshes if resolution is low enough
-    for (let i = 0; i < elements.length; i++) {
-        let nuc_group: THREE.Mesh[] = <THREE.Mesh[]>elements[i][objects];
-
-        nuc_group[elements[i].BACKBONE].visible = resolution > 1;
-        nuc_group[elements[i].BACKBONE].geometry = backbone_geometry;
-
-        nuc_group[elements[i].NUCLEOSIDE].visible = resolution > 1;
-        nuc_group[elements[i].NUCLEOSIDE].geometry = nucleoside_geometry;
-
-        if (nuc_group[elements[i].BB_NS_CON]) {
-            nuc_group[elements[i].BB_NS_CON].geometry = connector_geometry;
-            nuc_group[elements[i].BB_NS_CON].visible = resolution > 1;
-        }
-        if (nuc_group[elements[i].SP_CON]) {
-            nuc_group[elements[i].SP_CON].geometry = connector_geometry;
-        }
-    }
-    render();
-}*/
 function toggleSideNav(button) {
     let hidden = "show";
     let visible = "hide";
@@ -1044,10 +1027,3 @@ function toggleSideNav(button) {
         button.innerHTML = hidden;
     }
 }
-//strand delete testcode
-document.addEventListener("keypress", event => {
-    if (event.keyCode === 100) { //if d is pressed, delete first system's first strand
-        systems[0].remove_strand(1);
-        render();
-    }
-});

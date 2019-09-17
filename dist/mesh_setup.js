@@ -17,7 +17,6 @@ var backbone_colors = [
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
     new THREE.Color(0x6ea4cc),
-    new THREE.Color(0x517dc7),
 ];
 // define nucleoside colors: grey OR traditional colors
 var nucleoside_colors = [

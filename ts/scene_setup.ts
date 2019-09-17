@@ -62,10 +62,7 @@ renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer 
 document.body.appendChild(renderer.domElement); //add renderer to document body
 
 // set scene lighting 
-
-//var light = new THREE.AmbientLight(0x404040);
-//light.intensity = 3;
-//scene.add(light);
+// Lights are in a tetrahedron of side length 200 around the origin.
 var lights: THREE.PointLight[] = [];
 lights[0] = new THREE.PointLight(0xffffff, 0.85, 0);
 lights[1] = new THREE.PointLight(0xffffff, 0.85, 0);
@@ -83,27 +80,24 @@ scene.add(lights[2]);
 scene.add(lights[3]);
 
 
-//Add arrows to scene to add reference location for DNA/RNA in scene
-let dir = new THREE.Vector3(1, 0, 0); //direction for x-axis
-dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+//Add coordinate axes to scene
+let dir = new THREE.Vector3(1, 0, 0);
 let Origin = new THREE.Vector3(0, 0, 0);
 var length: number = 10;
 let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x800000); //create x-axis arrow
 arrowHelper.name = "x-axis";
 scene.add(arrowHelper); //add x-axis arrow to scene
-dir = new THREE.Vector3(0, 1, 0); //direction for y-axis
-dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+dir = new THREE.Vector3(0, 1, 0);
 arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x008000);
 arrowHelper.name = "y-axis";
 scene.add(arrowHelper); //add y-axis arrow to scene
-dir = new THREE.Vector3(0, 0, 1); //direction for z-axis
-dir.normalize(); //normalize the direction vector (convert to vector of length 1) - although already length 1
+dir = new THREE.Vector3(0, 0, 1);
 arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
 
 function toggleArrows(chkBox) { //make arrows visible or invisible based on checkbox - functionality added to allow for cleaner images
-    if (chkBox.checked) { //if checked, set all axes to visible
+    if (chkBox.checked) {
         let arrowHelper = scene.getObjectByName("x-axis");
         arrowHelper.visible = true;
         arrowHelper = scene.getObjectByName("y-axis");
@@ -129,8 +123,8 @@ function toggleArrows(chkBox) { //make arrows visible or invisible based on chec
 //orbit.addEventListener('change', render);
 var controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
-controls.zoomSpeed = 1.5;
-controls.panSpeed = 1.0;
+controls.zoomSpeed = 2; //frequently structures are large so turned this up
+controls.panSpeed = 1.5;
 controls.noZoom = false;
 controls.noPan = false;
 controls.staticMoving = true;

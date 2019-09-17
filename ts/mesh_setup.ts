@@ -20,15 +20,13 @@ instance_material["defines"] = instance_material["defines"] || {};
 instance_material["defines"][ 'INSTANCED' ] = "";
 
 var backbone_colors = [
-    new THREE.Color(0xfdd291),
+    new THREE.Color(0xfdd291), //light yellow
     
-    new THREE.Color(0xffb322),
+    new THREE.Color(0xffb322), //goldenrod
 
-    new THREE.Color(0x437092),
+    new THREE.Color(0x437092), //dark blue
 
-    new THREE.Color(0x6ea4cc),
-    
-    new THREE.Color(0x517dc7),
+    new THREE.Color(0x6ea4cc), //light blue
     ];
 
 

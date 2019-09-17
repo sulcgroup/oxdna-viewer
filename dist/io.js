@@ -8,8 +8,8 @@ class TopReader extends FileReader {
                 let file = this.result;
                 let lines = file.split(/[\n]+/g);
                 lines = lines.slice(1); // discard the header
-                let l0 = lines[0].split(" "); //split the file and read each column, format is: "str_id base n3 n5"
-                let str_id = parseInt(l0[0]);
+                let l0 = lines[0].split(" ");
+                let str_id = parseInt(l0[0]); //proteins are negative indexed
                 this.last_strand = str_id;
                 let current_strand = this.system.create_Strand(str_id);
                 this.system.add_strand(current_strand);
@@ -23,7 +23,8 @@ class TopReader extends FileReader {
                         this.elements.pop();
                         return;
                     }
-                    let l = line.split(" "); //split the file and read each column, format is: "str_id base n3 n5"
+                    //split the file and read each column, format is: "str_id base n3 n5"
+                    let l = line.split(" ");
                     str_id = parseInt(l[0]);
                     if (str_id != this.last_strand) { //if new strand id, make new strand                        
                         current_strand = this.system.create_Strand(str_id);
@@ -31,10 +32,12 @@ class TopReader extends FileReader {
                         this.nuc_local_id = 0;
                     }
                     ;
+                    //create a new element
                     if (this.elements[nuc_count + i] == null || this.elements[nuc_count + i] == undefined)
                         this.elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
                     let nuc = this.elements[nuc_count + i];
                     nuc.local_id = this.nuc_local_id;
+                    //create neighbor 3 element if it doesn't exist
                     let neighbor3 = parseInt(l[2]);
                     if (neighbor3 != -1) {
                         if (this.elements[nuc_count + neighbor3] == null || this.elements[nuc_count + neighbor3] == undefined) {
@@ -44,6 +47,7 @@ class TopReader extends FileReader {
                     }
                     else
                         nuc.neighbor3 = null;
+                    //create neighbor 5 element if it doesn't exist
                     let neighbor5 = parseInt(l[3]);
                     if (neighbor5 != -1) {
                         if (this.elements[nuc_count + neighbor5] == null || this.elements[nuc_count + neighbor5] == undefined) {
@@ -56,9 +60,10 @@ class TopReader extends FileReader {
                     let base = l[1]; // get base id
                     nuc.type = base;
                     //if we meet a U, we have an RNA (its dumb, but its all we got)
+                    //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                     if (base === "U")
                         RNA_MODE = true;
-                    current_strand.add_basicElement(nuc); //add nuc into Strand object
+                    current_strand.add_basicElement(nuc);
                     this.nuc_local_id += 1;
                     this.last_strand = str_id;
                     if (i == lines.length - 1) {

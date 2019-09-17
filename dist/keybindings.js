@@ -18,3 +18,14 @@ document.addEventListener("keypress", event => {
         previousConfig();
     }
 });
+//so uh... we've coded this twice
+document.addEventListener("keydown", function (event) {
+    switch (event.key) {
+        case 'n':
+            nextConfig();
+            break;
+        case 'b':
+            previousConfig();
+            break;
+    }
+}, true);

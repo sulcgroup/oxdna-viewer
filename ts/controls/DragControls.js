@@ -11,13 +11,7 @@
 3. Modify as needed
 */
 
-THREE.DragControls = function (_objects, _camera, individ, _domElement) { //pass in objects, camera, etc.
-    if (_objects instanceof THREE.Camera) {
-
-        console.warn('THREE.DragControls: Constructor now expects ( objects, camera, domElement )');
-        var temp = _objects; _objects = _camera; _camera = temp;
-
-    }
+THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera, etc.
 
     var _plane = new THREE.Plane();
     var _raycaster = new THREE.Raycaster();

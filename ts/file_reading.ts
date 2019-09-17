@@ -161,7 +161,7 @@ target.addEventListener("dragover", function (event) {
 }, false);
 
 // the actual code to drop in the config files
-//First, a bunch of global variables everybody loves
+//First, a bunch of global variables relating to files
 var approx_dat_len: number,
     current_chunk_number: number, //this is the chunk containing the end of the current conf
     previous_previous_chunk: String, //Space to store the chunks
@@ -204,9 +204,13 @@ target.addEventListener("drop", function (event) {
         let ext = file_name.split('.').pop();
 
         if (ext === "dat") dat_file = files[i];
-        if (ext === "conf") dat_file = files[i];
-        if (ext === "top") top_file = files[i];
-        if (ext === "json") json_file = files[i];
+        else if (ext === "conf") dat_file = files[i];
+        else if (ext === "top") top_file = files[i];
+        else if (ext === "json") json_file = files[i];
+        else {
+            alert("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
+            return
+        }
     }
     let json_alone = false;
     if (json_file && !top_file) json_alone = true;
@@ -247,7 +251,8 @@ target.addEventListener("drop", function (event) {
                     current_chunk = current_chunk.concat(n_hanging_line);
                 }
                 catch (error) {
-                    alert("File readers got all topsy-turvy, traj reading will not work :( \n Please reload and try again")
+                    console.log("File readers got all topsy-turvy, traj reading may not work :( \n")
+                    console.log(error);
                 }
                 next_chunk = next_chunk.substring(1);
                 conf_end.chunk = current_chunk;
@@ -450,12 +455,12 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     conf_end.chunk = current_chunk;
     conf_end.line_id = num_nuc + 2; //end of current configuration
     // add the bases to the scene
-    for (let i = 0; i < num_nuc; i++) {//from beginning to end of current configuration's list of positions; for each nucleotide in the system
+    for (let i = 0; i < num_nuc; i++) {
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break
         };
         var current_nucleotide: BasicElement = elements[i+system.global_start_id];
-        //get nucleotide information
+
         // consume a new line
         let l: string = lines[i].split(" ");
 

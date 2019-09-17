@@ -35,19 +35,10 @@ function setAngle(): void {
 
 let dragControls: THREE.DragControls; //dragging functionality
 function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
-    var nucleotide_objects = []
-
-    // accounts for lights camera and arrows << i = 7 
-    for (let i = 7; i < scene.children.length; i++) {
-        nucleotide_objects.push(scene.children[i].children);
-    }
-    nucleotide_objects = nucleotide_objects.flat(1);
-    //selected_bases
-    dragControls = new THREE.DragControls(nucleotide_objects, camera, true, renderer.domElement);
+    dragControls = new THREE.DragControls(camera, renderer.domElement);
     dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
     dragControls.addEventListener('dragend', function (event) { controls.enabled = true; })
 }
-let i: number;
 
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order
@@ -162,6 +153,5 @@ function rotate() { //rotate according to given angle given in number input
         alert("Please select an object to rotate.");
     }
     render();
-    //});
 }
 
