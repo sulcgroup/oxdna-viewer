@@ -36,24 +36,43 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			// note: it is not enough to use the intersects[0].object.visible property %)
 			if(!nucleotide.visible) return; // exclude invisible objects  
 			
+			let strand_count = sys[strands].length;
 			switch(scope_mode){
-				case "System" : 
-					let strand_count = sys[strands].length;
+				case "System" :
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
 						let strand = sys[strands][i];
 						let nuc_count = strand[monomers].length;
-                        for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
-                            strand[monomers][j].toggle();
+						for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand in the System
+							strand[monomers][j].toggle();
 					}
-				break;
+					break;
 				case "Strand" :
 					let strand_length = nucleotide.parent[monomers].length;
-                    for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
-                        nucleotide.parent[monomers][i].toggle();
-				break;
-                case "Nuc":
-                    nucleotide.toggle(); //toggle selected nucleotide
-				break;
+					for (let i = 0; i < strand_length; i++)  //for every nucleotide in world
+						nucleotide.parent[monomers][i].toggle();
+					break;
+				case "Nuc":
+					nucleotide.toggle(); //toggle selected nucleotide
+					break;
+				case "Cluster" :
+					// Calculate clusters (if not already calculated) and toggle
+					// nucletides within callback to make sure that clustering
+					// is complete.
+					calculateClusters(function() {
+						//for every strand in the System
+						for (let i = 0; i < strand_count; i++){
+							let strand = sys[strands][i];
+							let nuc_count = strand[monomers].length;
+							// for every nucleotide on the Strand in the System
+							for (let j = 0; j < nuc_count; j++) {
+								let n: BasicElement = strand[monomers][j];
+								if(n.cluster_id == nucleotide.cluster_id) {
+									n.toggle();
+								}
+							}
+						}
+					});
+					break;
 
 			}
 

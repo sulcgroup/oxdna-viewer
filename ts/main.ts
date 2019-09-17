@@ -46,6 +46,7 @@ class BasicElement extends THREE.Group{
     COM: number = 3;
     SP_CON: number = 4;
     element_type: number = -1;
+    cluster_id: number;
 
     constructor(global_id: number, parent: Strand) {
         super();
@@ -1358,6 +1359,81 @@ function toggleSideNav(button: HTMLInputElement) {
             tabcontent[i].style.display = "none";
         }
         button.innerHTML = hidden;
+    }
+}
+
+function calculateClusters(callback?: () => void) {
+    // Check if we have already calculated clusters
+    if (typeof elements[0].cluster_id == 'undefined') {
+        let minPts = 6; // Minimum number of nucleotides in a cluster
+        let epsilon = 1.5; // Max distance between cluster neigbours
+        // Set wait cursor and request an animation frame to make sure
+        // that it gets changed before starting dbscan:
+        renderer.domElement.style.cursor = "wait";
+        requestAnimationFrame(() => requestAnimationFrame(function(){
+            dbscan(minPts, epsilon);
+            renderer.domElement.style.cursor = "auto"; // Change cursor back
+            // It is possible to provide a callback function to run only after
+            // the clustering has finished.
+            if (typeof callback !== 'undefined') {
+                callback();
+            }
+        }))
+    // If clusters has already been calculated, just run the callback.
+    } else if (typeof callback !== 'undefined') {
+        callback();
+    }
+}
+
+// Algorithm and comments from:
+// https://en.wikipedia.org/wiki/DBSCAN#Algorithm
+function dbscan(minPts: number, eps: number) {
+    let c = 0 // Cluster counter
+    let noise = -1; // Label for noise
+    let getPos = (element: BasicElement) => {
+        return element[objects][element.getCOM()].position.clone();
+    }
+    let findNeigbours = (p: BasicElement, eps: number) => {
+        let neigbours: BasicElement[] = [];
+        for (let i=0; i<elements.length; i++) {
+        let q: BasicElement = elements[i];
+            if (p != q) {
+                let dist = getPos(p).distanceTo(getPos(q));
+                if (dist < eps) {
+                   neigbours.push(q);
+                }
+            }
+        }
+        return neigbours;
+    }
+    for (let i=0; i<elements.length; i++) {
+        let p: BasicElement = elements[i];
+        if (typeof p.cluster_id !== 'undefined') {
+            continue; // Previously processed in inner loop
+        }
+        // Find neigbours of p:
+        let neigbours: BasicElement[] = findNeigbours(p, eps);
+        if (neigbours.length < minPts) { // Density check
+            p.cluster_id = noise // Label as noise
+            continue;
+        }
+        c++; // Next cluster id
+        p.cluster_id = c; // Label initial point
+        for (let j=0; j<neigbours.length; j++) { // Process every seed point
+            let q: BasicElement = neigbours[j];
+            if ((typeof q.cluster_id !== 'undefined') && // Previously processed
+                (q.cluster_id !== noise) // If noise, change it to border point
+            ) {
+                continue;
+            }
+            q.cluster_id = c; // Label neigbour
+            // Find neigbours of q:
+            let meta_neigbours: BasicElement[] = findNeigbours(q, eps);
+            if (meta_neigbours.length >= minPts) { // Density check
+                // Add new neigbours to seed set
+                neigbours = neigbours.concat(meta_neigbours);
+            }
+        }
     }
 }
 

@@ -31,9 +31,9 @@ document.addEventListener('mousedown', event => {
             // note: it is not enough to use the intersects[0].object.visible property %)
             if (!nucleotide.visible)
                 return; // exclude invisible objects  
+            let strand_count = sys[strands].length;
             switch (scope_mode) {
                 case "System":
-                    let strand_count = sys[strands].length;
                     for (let i = 0; i < strand_count; i++) { //for every strand in the System
                         let strand = sys[strands][i];
                         let nuc_count = strand[monomers].length;
@@ -48,6 +48,25 @@ document.addEventListener('mousedown', event => {
                     break;
                 case "Nuc":
                     nucleotide.toggle(); //toggle selected nucleotide
+                    break;
+                case "Cluster":
+                    // Calculate clusters (if not already calculated) and toggle
+                    // nucletides within callback to make sure that clustering
+                    // is complete.
+                    calculateClusters(function () {
+                        //for every strand in the System
+                        for (let i = 0; i < strand_count; i++) {
+                            let strand = sys[strands][i];
+                            let nuc_count = strand[monomers].length;
+                            // for every nucleotide on the Strand in the System
+                            for (let j = 0; j < nuc_count; j++) {
+                                let n = strand[monomers][j];
+                                if (n.cluster_id == nucleotide.cluster_id) {
+                                    n.toggle();
+                                }
+                            }
+                        }
+                    });
                     break;
             }
             render(); //update scene;
