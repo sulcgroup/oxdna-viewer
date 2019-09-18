@@ -261,12 +261,12 @@ target.addEventListener("drop", function (event) {
                     next_reader.readAsText(next_chunk_blob);
                 }
             }
-            /*if (json_file) {
+            if (json_file) {
                 //lutColsVis = true;
-                let check_box = <HTMLInputElement>document.getElementById("lutToggle");
+                let check_box = document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
                 json_reader.onload = () => {
-                    let file = json_reader.result as string;
+                    let file = json_reader.result;
                     let data = JSON.parse(file);
                     let curr_sys;
                     curr_sys = sys_count - 1;
@@ -274,7 +274,7 @@ target.addEventListener("drop", function (event) {
                         if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                             if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
                                 let min = Math.min.apply(null, data[key]), //find min and max
-                                    max = Math.max.apply(null, data[key]);
+                                max = Math.max.apply(null, data[key]);
                                 lut = new THREE.Lut("rainbow", 4000);
                                 //lut.setMax(0.23);
                                 //lut.setMin(0.04);
@@ -284,7 +284,6 @@ target.addEventListener("drop", function (event) {
                                 scene.add(legend);
                                 let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
                                 scene.add(labels['title']); //add title
-
                                 for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
                                     scene.add(labels['ticks'][i]);
                                     scene.add(labels['lines'][i]);
@@ -301,7 +300,7 @@ target.addEventListener("drop", function (event) {
                                     let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                                     let len = vec.length();
                                     vec.normalize();
-                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
                                     arrowHelper.name = i + "disp";
                                     scene.add(arrowHelper);
                                 }
@@ -323,15 +322,15 @@ target.addEventListener("drop", function (event) {
                 };
                 json_reader.readAsText(json_file);
                 renderer.domElement.style.cursor = "auto";
-            }*/
+            }
         }
     }
-    /*if (json_file && json_alone) {
+    if (json_file && json_alone) {
         //lutColsVis = true;
-        let check_box = <HTMLInputElement>document.getElementById("lutToggle");
+        let check_box = document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
-            let file = json_reader.result as string;
+            let file = json_reader.result;
             let data = JSON.parse(file);
             let curr_sys;
             curr_sys = sys_count - 1;
@@ -340,7 +339,7 @@ target.addEventListener("drop", function (event) {
                 if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                     if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
                         let min = Math.min.apply(null, data[key]), //find min and max
-                            max = Math.max.apply(null, data[key]);
+                        max = Math.max.apply(null, data[key]);
                         lut = new THREE.Lut("rainbow", 4000);
                         //lut.setMax(25.54);
                         //lut.setMin(4.86);
@@ -350,7 +349,6 @@ target.addEventListener("drop", function (event) {
                         scene.add(legend);
                         let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
                         scene.add(labels['title']); //add title
-
                         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
                             scene.add(labels['ticks'][i]);
                             scene.add(labels['lines'][i]);
@@ -370,7 +368,7 @@ target.addEventListener("drop", function (event) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -392,7 +390,7 @@ target.addEventListener("drop", function (event) {
         };
         json_reader.readAsText(json_file);
         renderer.domElement.style.cursor = "auto";
-    }*/
+    }
     render();
 }, false);
 let x_bb_last, y_bb_last, z_bb_last;

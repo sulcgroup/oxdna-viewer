@@ -981,28 +981,41 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 ;
 //toggles display of coloring by json file / structure modeled off of base selector
 function toggleLut(chkBox) {
-    if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by dropped JSON file)
-        if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring)
-            lutColsVis = false;
-            for (let i = 0; i < elements.length; i++) {
+    if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
+        if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
+            lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
+            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
                 if (!selected_bases.has(elements[i]))
                     elements[i].resetColor();
             }
+            for (let i = 0; i < systems.length; i++) {
+                systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+                systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
+                systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+            }
         }
         else {
-            for (let i = 0; i < elements.length; i++) {
-                let tmeshlamb = new THREE.MeshLambertMaterial({
+            for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
+                /*let tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
                     color: lutCols[i],
                     side: THREE.DoubleSide
                 });
-                for (let j = 0; j < elements[i][objects].length; j++) { //for each Mesh in each nucleotide's 
+                for (let j = 0; j < elements[i][objects].length; j++) { //for each Mesh in each nucleotide's
                     if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh = elements[i][objects][j];
+                        let tmesh: THREE.Mesh = <THREE.Mesh>elements[i][objects][j];
                         tmesh.material = tmeshlamb;
                     }
+                }*/
+                lutColsVis = true; //now flexibility coloring is being displayed and checkbox is selected
+                for (let i = 0; i < elements.length; i++) {
+                    elements[i].resetColor();
+                }
+                for (let i = 0; i < systems.length; i++) {
+                    systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+                    systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
+                    systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
                 }
             }
-            lutColsVis = true; //now flexibility coloring is being displayed and checkbox is selected
         }
         render();
     }
@@ -1022,6 +1035,7 @@ function toggleBackground() {
         render();
     }
 }
+;
 function toggleFog(near, far) {
     if (scene.fog == null) {
         scene.fog = new THREE.Fog(scene.background, near, far);

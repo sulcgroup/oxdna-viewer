@@ -290,7 +290,7 @@ target.addEventListener("drop", function (event) {
                 }
             }
 
-            /*if (json_file) {
+            if (json_file) {
                 //lutColsVis = true;
                 let check_box = <HTMLInputElement>document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
@@ -323,6 +323,7 @@ target.addEventListener("drop", function (event) {
                                 }
                                 lutColsVis = false;
                                 toggleLut(check_box);
+
                                 check_box.checked = true;
                             }
                             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
@@ -330,7 +331,7 @@ target.addEventListener("drop", function (event) {
                                     let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                                     let len = vec.length();
                                     vec.normalize();
-                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
+                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
                                     arrowHelper.name = i + "disp";
                                     scene.add(arrowHelper);
                                 }
@@ -352,13 +353,13 @@ target.addEventListener("drop", function (event) {
                 };
                 json_reader.readAsText(json_file);
                 renderer.domElement.style.cursor = "auto";
-            }*/
+            }
         }
     }
 
 
 
-    /*if (json_file && json_alone) {
+    if (json_file && json_alone) {
         //lutColsVis = true;
         let check_box = <HTMLInputElement>document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
@@ -402,7 +403,7 @@ target.addEventListener("drop", function (event) {
                             let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                             let len = vec.length();
                             vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i][objects][elements[i].BACKBONE].position, len, 0x000000);
+                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
                             arrowHelper.name = i + "disp";
                             scene.add(arrowHelper);
                         }
@@ -424,7 +425,7 @@ target.addEventListener("drop", function (event) {
         };
         json_reader.readAsText(json_file);
         renderer.domElement.style.cursor = "auto";
-    }*/
+    }
 
     render();
 }, false);
