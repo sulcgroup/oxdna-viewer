@@ -32,6 +32,7 @@ document.addEventListener('mousedown', event => {
             }
             //tell the GPU to update the colors in the scene
             sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+            sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
             sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
             sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
             render(); //update scene;

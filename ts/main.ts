@@ -598,6 +598,8 @@ class AminoAcid extends BasicElement {
         else {
             color = this.strand_to_color(this.parent.strand_id);
         }
+        let idColor = new THREE.Color();
+        idColor.setHex(this.global_id+1); //has to be +1 or you can't grab nucleotide 0
 
         // fill in the instancing matrices
         this.name = this.global_id + ""; //set name (string) to nucleotide's global id
@@ -620,6 +622,8 @@ class AminoAcid extends BasicElement {
         color = this.elem_to_color(this.type);
         sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
         
+        sys.fill_vec('bb_labels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+
         // keep track of last backbone for sugar-phosphate positioning
         x_bb_last = x;
         y_bb_last = y;
@@ -685,19 +689,42 @@ class AminoAcid extends BasicElement {
         z_bb_last = z;
     };
 
+    translate_position(amount: THREE.Vector3) {
+        let sys = this.parent.parent;
+        let id = (this.global_id - sys.global_start_id)*3;
+
+        sys.bb_offsets[id] += amount.x;
+        sys.bb_offsets[id + 1] += amount.y;
+        sys.bb_offsets[id + 2] += amount.z;
+
+        sys.ns_offsets[id] += amount.x;
+        sys.ns_offsets[id + 1] += amount.y;
+        sys.ns_offsets[id + 2] += amount.z;
+
+        sys.bbcon_offsets[id] += amount.x;
+        sys.bbcon_offsets[id + 1] += amount.y;
+        sys.bbcon_offsets[id + 2] += amount.z;
+
+        sys.cm_offsets[id] += amount.x;
+        sys.cm_offsets[id + 1] += amount.y;
+        sys.cm_offsets[id + 2] += amount.z;
+    }
+
     resetColor() {
         let sys = this.parent.parent
         let sid = this.global_id - sys.global_start_id
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
-        let color: THREE.Color;
+        let bb_color: THREE.Color;
+        let aa_color: THREE.Color;
         if (lutColsVis) {
-            color = lutCols[this.global_id];
+            bb_color = lutCols[this.global_id];
         }
         else {
-            color = this.strand_to_color(this.parent.strand_id);
+            bb_color = this.strand_to_color(this.parent.strand_id);
         }
-        sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
-        sys.fill_vec('ns_colors', 3, sid, [color.r, color.g, color.b]);
+        aa_color = this.elem_to_color(this.type);
+        sys.fill_vec('bb_colors', 3, sid, [bb_color.r, bb_color.g, bb_color.b]);
+        sys.fill_vec('ns_colors', 3, sid, [aa_color.r, aa_color.g, aa_color.b]);
     };
 
     toggle() {
@@ -841,10 +868,15 @@ class Peptide extends Strand {
 
     translate_strand(amount: THREE.Vector3) {
         let s = this.parent;
-        for (let i = ((this.children[0] as AminoAcid).global_id - this.parent.global_start_id) * 3; i < ((this[monomers][this[monomers].length-1] as AminoAcid).global_id - this.parent.global_start_id) * 3; i+=3){
+        for (let i = ((this.children[0] as AminoAcid).global_id - this.parent.global_start_id) * 3; i <= ((this[monomers][this[monomers].length-1] as AminoAcid).global_id - this.parent.global_start_id) * 3; i+=3){
+
             s.ns_offsets[i] += amount.x;
             s.ns_offsets[i + 1] += amount.y;
             s.ns_offsets[i + 2] += amount.z;
+
+            s.bb_offsets[i] += amount.x;
+            s.bb_offsets[i + 1] += amount.y;
+            s.bb_offsets[i + 2] += amount.z;
 
             s.bbcon_offsets[i] += amount.x;
             s.bbcon_offsets[i + 1] += amount.y;
