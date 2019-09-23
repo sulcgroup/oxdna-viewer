@@ -217,9 +217,15 @@ module api{
 
     //there's probably a less blunt way to do this...
     export function remove_colorbar() {
-        for (let i = 7+sys_count; i < 20; i++) {
-            scene.remove(scene[objects][7+sys_count]);
+        let l = scene.children.length;
+        for (let i = 0; i < l; i++) {
+            if (scene.children[i].type == "Sprite" || scene.children[i].type == "Line") {
+                scene.remove(scene.children[i]);
+                i -= 1;
+                l -= 1;
+            }
         }
+        scene.remove(lut.legend.mesh)
         render();
     }
 

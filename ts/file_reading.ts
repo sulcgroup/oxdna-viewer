@@ -154,6 +154,22 @@ class marker {
     line_id: number;
 }
 
+function makeLut(data, key) {
+    let checkbox = <HTMLInputElement>document.getElementById("lutToggle");
+    let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
+    lut = new THREE.Lut("rainbow", 4000);
+    //lut.setMax(0.23);
+    //lut.setMin(0.04);
+    lut.setMax(max);
+    lut.setMin(min);
+    lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
+    for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+        lutCols.push(lut.getColor(Number(data[key][i])));
+    }
+    checkbox.checked = true;
+}
+
 // define the drag and drop behavior of the scene
 var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
@@ -231,7 +247,7 @@ target.addEventListener("drop", function (event) {
             dat_reader.onload = () => {
                 current_chunk = dat_reader.result as String;
                 current_chunk_number = 0;
-                readDat(system.system_length(), dat_reader, system, lutColsVis);
+                readDat(system.system_length(), dat_reader, system);
                 document.dispatchEvent(new Event('nextConfigLoaded'));
             };
             //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
@@ -291,40 +307,16 @@ target.addEventListener("drop", function (event) {
             }
 
             if (json_file) {
-                //lutColsVis = true;
-                let check_box = <HTMLInputElement>document.getElementById("lutToggle");
                 let json_reader = new FileReader(); //read .json
                 json_reader.onload = () => {
                     let file = json_reader.result as string;
                     let data = JSON.parse(file);
                     let curr_sys;
-                    curr_sys = sys_count - 1;
+                    curr_sys = sys_count;
                     for (var key in data) {
                         if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                             if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
-                                let min = Math.min.apply(null, data[key]), //find min and max
-                                    max = Math.max.apply(null, data[key]);
-                                lut = new THREE.Lut("rainbow", 4000);
-                                //lut.setMax(0.23);
-                                //lut.setMin(0.04);
-                                lut.setMax(max);
-                                lut.setMin(min);
-                                let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
-                                scene.add(legend);
-                                let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
-                                scene.add(labels['title']); //add title
-
-                                for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
-                                    scene.add(labels['ticks'][i]);
-                                    scene.add(labels['lines'][i]);
-                                }
-                                for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                                    lutCols.push(lut.getColor(Number(data[key][i])));
-                                }
-                                lutColsVis = false;
-                                toggleLut(check_box);
-
-                                check_box.checked = true;
+                                makeLut(data, key);
                             }
                             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                                 for (let i = 0; i < elements.length; i++) {
@@ -348,6 +340,7 @@ target.addEventListener("drop", function (event) {
                         }
                         else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
                             alert(".json and .top files are not compatible.");
+                            return;
                         }
                     }
                 };
@@ -357,11 +350,7 @@ target.addEventListener("drop", function (event) {
         }
     }
 
-
-
     if (json_file && json_alone) {
-        //lutColsVis = true;
-        let check_box = <HTMLInputElement>document.getElementById("lutToggle");
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
             let file = json_reader.result as string;
@@ -372,31 +361,8 @@ target.addEventListener("drop", function (event) {
             for (var key in data) {
                 if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
                     if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
-                        let min = Math.min.apply(null, data[key]), //find min and max
-                            max = Math.max.apply(null, data[key]);
-                        lut = new THREE.Lut("rainbow", 4000);
-                        //lut.setMax(25.54);
-                        //lut.setMin(4.86);
-                        lut.setMax(max);
-                        lut.setMin(min);
-                        let legend = lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
-                        scene.add(legend);
-                        let labels = lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
-                        scene.add(labels['title']); //add title
-
-                        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) { //add tick marks
-                            scene.add(labels['ticks'][i]);
-                            scene.add(labels['lines'][i]);
-                        }
-                        for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                            lutCols.push(lut.getColor(Number(data[key][i])));
-                        }
-                        lutColsVis = false;
-                        toggleLut(check_box);
-                        check_box.checked = true;
-                        //if (!json_alone) lutColsVis = true;
-                        //check_box.checked = true;
-                        //if (json_alone) toggleLut(check_box);
+                        makeLut(data, key);
+                        toggleLut(document.getElementById("lutToggle"))
                     }
                     if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                         for (let i = 0; i < elements.length; i++) {
@@ -420,7 +386,9 @@ target.addEventListener("drop", function (event) {
                 }
                 else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
                     alert(".json and .top files are not compatible.");
+                    return;
                 }
+
             }
         };
         json_reader.readAsText(json_file);
@@ -434,7 +402,7 @@ let x_bb_last,
     y_bb_last,
     z_bb_last;
 
-function readDat(num_nuc, dat_reader, system, lutColsVis) {
+function readDat(num_nuc, dat_reader, system) {
     var current_strand = systems[sys_count][strands][0];
     // parse file into lines
     let lines = dat_reader.result.split(/[\n]+/g);
@@ -547,7 +515,11 @@ function readDat(num_nuc, dat_reader, system, lutColsVis) {
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(systems[sys_count]);
 
-    scene.add(systems[sys_count]); //add system_3objects with strand_3objects with visual_object with Meshes
+    let checkbox = <HTMLInputElement>document.getElementById("lutToggle");
+    if(checkbox.checked){
+        toggleLut(checkbox);
+    }
+
     sys_count += 1;
     render();
 

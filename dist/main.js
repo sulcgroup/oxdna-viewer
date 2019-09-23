@@ -12,7 +12,6 @@ var selected_bases = new Set();
 var backbones = [];
 var lut, devs; //need for Lut coloring
 var lutCols = [];
-var lutColsVis = false;
 var DNA = 0;
 var RNA = 1;
 var AA = 2;
@@ -55,7 +54,7 @@ class BasicElement extends THREE.Group {
         return "";
     }
     ;
-    resetColor() {
+    resetColor(overlay) {
     }
     ;
     set_position(new_pos) {
@@ -157,13 +156,8 @@ class Nucleotide extends BasicElement {
             sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);
         }
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
-        var color;
-        if (lutColsVis) {
-            color = lutCols[i];
-        }
-        else {
-            color = this.strand_to_color(this.parent.strand_id);
-        }
+        let color = new THREE.Color;
+        color = this.strand_to_color(this.parent.strand_id);
         let idColor = new THREE.Color();
         idColor.setHex(this.global_id + 1); //has to be +1 or you can't grab nucleotide 0
         //fill the instance matrices with data
@@ -281,12 +275,12 @@ class Nucleotide extends BasicElement {
         z_bb_last = z_bb;
     }
     ;
-    resetColor() {
+    resetColor(overlay) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let color;
-        if (lutColsVis) {
+        if (overlay) {
             color = lutCols[this.global_id];
         }
         else {
@@ -299,7 +293,7 @@ class Nucleotide extends BasicElement {
         let sid = this.global_id - sys.global_start_id;
         // highlight/remove highlight the bases we've clicked from the list and modify color
         if (selected_bases.has(this)) {
-            this.resetColor();
+            this.resetColor(document.getElementById("lutToggle")["checked"]);
             selected_bases.delete(this);
         }
         else {
@@ -444,13 +438,8 @@ class AminoAcid extends BasicElement {
             sys.fill_vec('bbcon_scales', 3, sid, [1, tmpsp_len, 1]);
         }
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
-        var color;
-        if (lutColsVis) {
-            color = lutCols[i];
-        }
-        else {
-            color = this.strand_to_color(this.parent.strand_id);
-        }
+        let color = new THREE.Color();
+        color = this.strand_to_color(this.parent.strand_id);
         let idColor = new THREE.Color();
         idColor.setHex(this.global_id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
@@ -535,13 +524,13 @@ class AminoAcid extends BasicElement {
         sys.cm_offsets[id + 1] += amount.y;
         sys.cm_offsets[id + 2] += amount.z;
     }
-    resetColor() {
+    resetColor(overlay) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let bb_color;
         let aa_color;
-        if (lutColsVis) {
+        if (overlay) {
             bb_color = lutCols[this.global_id];
         }
         else {
@@ -556,7 +545,7 @@ class AminoAcid extends BasicElement {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
-            this.resetColor();
+            this.resetColor(document.getElementById("lutToggle")["checked"]);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
@@ -867,7 +856,7 @@ function colorOptions() {
         //actually update things in the scene
         for (; index < elements.length; index++) {
             if (!selected_bases.has(elements[index]))
-                elements[index].resetColor();
+                elements[index].resetColor(false);
         }
         for (let i = 0; i < systems.length; i++) {
             systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
@@ -981,48 +970,28 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 ;
 //toggles display of coloring by json file / structure modeled off of base selector
 function toggleLut(chkBox) {
-    if (lutCols.length > 0) { //lutCols stores each nucleotide's color (determined by flexibility)
-        if (lutColsVis) { //if "Display Alternate Colors" checkbox selected (currently displaying coloring) - does not actually get checkbox value; at onload of webpage is false and every time checkbox is changed, it switches boolean
-            lutColsVis = false; //now flexibility coloring is not being displayed and checkbox is not selected
-            for (let i = 0; i < elements.length; i++) { //for all elements in all systems - does not work for more than one system
-                if (!selected_bases.has(elements[i]))
-                    elements[i].resetColor();
-            }
-            for (let i = 0; i < systems.length; i++) {
-                systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-                systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-                systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
-            }
-        }
-        else {
-            for (let i = 0; i < elements.length; i++) { //for each nucleotide in all systems - does not work for multiple systems yet
-                /*let tmeshlamb = new THREE.MeshLambertMaterial({ //create new MeshLambertMaterial with appropriate coloring stored in lutCols
-                    color: lutCols[i],
-                    side: THREE.DoubleSide
-                });
-                for (let j = 0; j < elements[i][objects].length; j++) { //for each Mesh in each nucleotide's
-                    if (j != 3) { //for all except cms posObj Mesh
-                        let tmesh: THREE.Mesh = <THREE.Mesh>elements[i][objects][j];
-                        tmesh.material = tmeshlamb;
-                    }
-                }*/
-                lutColsVis = true; //now flexibility coloring is being displayed and checkbox is selected
-                for (let i = 0; i < elements.length; i++) {
-                    elements[i].resetColor();
-                }
-                for (let i = 0; i < systems.length; i++) {
-                    systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-                    systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-                    systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
-                }
-            }
-        }
-        render();
+    if (!chkBox.checked) {
+        api.remove_colorbar();
+    }
+    else if (chkBox.checked && lutCols.length > 0) {
+        api.show_colorbar();
     }
     else {
         alert("Please drag and drop the corresponding .json file.");
         chkBox.checked = false;
+        return;
     }
+    for (let i = 0; i < elements.length; i++) {
+        if (!selected_bases.has(elements[i])) {
+            elements[i].resetColor(chkBox.checked);
+        }
+    }
+    for (let i = 0; i < systems.length; i++) {
+        systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+        systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
+        systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+    }
+    render();
 }
 ;
 function toggleBackground() {
