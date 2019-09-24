@@ -1,29 +1,20 @@
 // <reference path="./three/index.d.ts" />
 
-//Save image on "p" press 
-document.addEventListener("keypress", event =>{
-    if(event.keyCode === 112){
-        renderer.domElement.toBlob(function(blob){
-        var a = document.createElement('a');
-        var url = URL.createObjectURL(blob);
-        a.href = url;
-        a.download = 'canvas.png';
-        a.click();
-        }, 'image/png', 1.0);
-    }
-    //mapping the next conf button to the ' button (can't figure out the arrow keys)
-    if(event.keyCode === 39){
-        nextConfig()
-    }
-    if(event.keyCode === 59){
-        previousConfig()
+document.addEventListener("keydown", event =>{
+    switch (event.key) {
+        //Save image on "p" press
+        case 'p' :
+            renderer.domElement.toBlob(function(blob){
+                var a = document.createElement('a');
+                var url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = 'canvas.png';
+                a.click();
+            }, 'image/png', 1.0);
+            break;
+
+        //mapping the next and prev to the arrow keys
+        case 'ArrowRight': nextConfig(); break;
+        case 'ArrowLeft': previousConfig(); break;
     }
 });
-
-//so uh... we've coded this twice
-document.addEventListener("keydown", function (event) {
-    switch (event.key) {
-        case 'n': nextConfig(); break;
-        case 'b': previousConfig(); break;
-    }
-}, true);
