@@ -117,7 +117,7 @@ function rotate() {
         systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].dummy_backbone.geometry["attributes"].translation.needsUpdate = true;
+        systems[i].dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
