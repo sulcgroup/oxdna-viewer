@@ -1354,11 +1354,3 @@ function dbscan(minPts: number, eps: number) {
         }
     }
 }
-
-//strand delete testcode
-document.addEventListener("keypress", event => {
-    if (event.keyCode === 100) { //if d is pressed, delete first system's first strand
-        systems[0].remove_strand(1);
-        render();
-    }
-});
