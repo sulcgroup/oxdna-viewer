@@ -1,12 +1,4 @@
 // select and/or drag
-let axisMode: string = "X";
-let scopeMode: string = "Monomer";
-let angle: number = 90 * Math.PI / 180;
-let matrix: THREE.Matrix3 = new THREE.Matrix3();
-let v1: THREE.Vector3 = new THREE.Vector3();
-let p: THREE.Vector3 = new THREE.Vector3();
-let c: THREE.Vector3 = new THREE.Vector3();
-let d: THREE.Vector3 = new THREE.Vector3();
 function getActionModes(): string[] {
     let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("action");
     let checked = [];
@@ -19,19 +11,18 @@ function getActionModes(): string[] {
 }
 
 // nucleotides/strand/system
-function setScopeMode(): void {
-    scopeMode = document.querySelector('input[name="scope"]:checked')['value'];
+function getScopeMode(): string {
+    return document.querySelector('input[name="scope"]:checked')['value'];
 }
 
 // X/Y/Z
-function setAxisMode(): void {
-    axisMode = document.querySelector('input[name="rotate"]:checked')['value'];
+function getAxisMode(): string {
+    return document.querySelector('input[name="rotate"]:checked')['value'];
 }
 
-function setAngle(): void {
-    angle = (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
+function getAngle(): number {
+    return (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
 }
-
 
 let dragControls: THREE.DragControls; //dragging functionality
 function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
@@ -49,7 +40,13 @@ function glsl2three(input: THREE.Vector4) {
 }
 
 function rotate() { //rotate according to given angle given in number input
+    let v1: THREE.Vector3 = new THREE.Vector3();
+    //let p: THREE.Vector3 = new THREE.Vector3();
+    //let d: THREE.Vector3 = new THREE.Vector3();
     let rot: boolean = false; //rotation success boolean
+    let angle = getAngle();
+    let axisMode = getAxisMode();
+    let matrix: THREE.Matrix3 = new THREE.Matrix3();
     switch (axisMode) {
         case "X": {
             matrix.set(1, 0, 0, 
@@ -79,7 +76,8 @@ function rotate() { //rotate according to given angle given in number input
     q.setFromAxisAngle(v1, angle);
 
     //this will be rotating around the center of mass of the selected bases.
-    c = new THREE.Vector3(0, 0, 0);
+
+    let c = new THREE.Vector3(0, 0, 0);
     selected_bases.forEach((base) => {
         c.add(base.get_instance_parameter3("cm_offsets"));
     });

@@ -67,7 +67,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			let sys = nucleotide.parent.parent;
 			
 			let strand_count = sys[strands].length;
-			switch(scopeMode){
+			switch(getScopeMode()){
 				case "System" :
 					for (let i = 0; i <  strand_count; i++){  //for every strand in the System
 						let strand = sys[strands][i];

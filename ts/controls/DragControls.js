@@ -75,7 +75,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             if (_selected && scope.enabled) {
                 _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
                 _move.copy(_new_pos).sub(_oldPos)
-                switch (scopeMode) {
+                switch (getScopeMode()) {
                     case "Monomer":
                         _selected.translate_position(_move);
                         break;
@@ -139,7 +139,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 
 			//calculate new sp connectors
 			if (_selected) { 
-				if (scopeMode == "Monomer") {
+				if (getScopeMode() == "Monomer") {
 
 					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { 
 						calcsp(_selected); //calculate sp between current and neighbor3
