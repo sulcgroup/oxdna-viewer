@@ -75,17 +75,8 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             if (_selected && scope.enabled) {
                 _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
                 _move.copy(_new_pos).sub(_oldPos)
-                switch (getScopeMode()) {
-                    case "Monomer":
-                        _selected.translate_position(_move);
-                        break;
-                    case "Strand":
-                        _selected.parent.translate_strand(_move);
-                        break;
-                    case "System":
-                        _selected.parent.parent.translate_system(_move);
-                        break;
-                }
+
+                translateSelected(_move);
                 _oldPos.copy(_new_pos); //Need difference from previous position.
                 
 
