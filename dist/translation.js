@@ -1,12 +1,4 @@
 // select and/or drag
-let axisMode = "X";
-let scopeMode = "Monomer";
-let angle = 90 * Math.PI / 180;
-let matrix = new THREE.Matrix3();
-let v1 = new THREE.Vector3();
-let p = new THREE.Vector3();
-let c = new THREE.Vector3();
-let d = new THREE.Vector3();
 function getActionModes() {
     let modes = document.getElementsByName("action");
     let checked = [];
@@ -18,15 +10,15 @@ function getActionModes() {
     return checked;
 }
 // nucleotides/strand/system
-function setScopeMode() {
-    scopeMode = document.querySelector('input[name="scope"]:checked')['value'];
+function getScopeMode() {
+    return document.querySelector('input[name="scope"]:checked')['value'];
 }
 // X/Y/Z
-function setAxisMode() {
-    axisMode = document.querySelector('input[name="rotate"]:checked')['value'];
+function getAxisMode() {
+    return document.querySelector('input[name="rotate"]:checked')['value'];
 }
-function setAngle() {
-    angle = document.getElementById("rotAngle").valueAsNumber * Math.PI / 180;
+function getAngle() {
+    return document.getElementById("rotAngle").valueAsNumber * Math.PI / 180;
 }
 let dragControls; //dragging functionality
 function drag() {
@@ -42,7 +34,13 @@ function glsl2three(input) {
     return out;
 }
 function rotate() {
+    let v1 = new THREE.Vector3();
+    //let p: THREE.Vector3 = new THREE.Vector3();
+    //let d: THREE.Vector3 = new THREE.Vector3();
     let rot = false; //rotation success boolean
+    let angle = getAngle();
+    let axisMode = getAxisMode();
+    let matrix = new THREE.Matrix3();
     switch (axisMode) {
         case "X": {
             matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
@@ -64,7 +62,7 @@ function rotate() {
     let q = new THREE.Quaternion;
     q.setFromAxisAngle(v1, angle);
     //this will be rotating around the center of mass of the selected bases.
-    c = new THREE.Vector3(0, 0, 0);
+    let c = new THREE.Vector3(0, 0, 0);
     selected_bases.forEach((base) => {
         c.add(base.get_instance_parameter3("cm_offsets"));
     });
