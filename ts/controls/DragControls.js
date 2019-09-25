@@ -158,33 +158,6 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 		}
     }
 
-    //adjust the backbone after the move
-	function calcsp(current_nuc) { 
-		let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
-		let x_bb_last = temp.x,
-			y_bb_last = temp.y,
-			z_bb_last = temp.z;
-		temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
-		let x_bb = temp.x;
-		let y_bb = temp.y;
-        let z_bb = temp.z;
-        
-		//calculate sp location, length and orientation
-		let x_sp = (x_bb + x_bb_last) / 2,
-			y_sp = (y_bb + y_bb_last) / 2,
-			z_sp = (z_bb + z_bb_last) / 2;
-		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); 
-		let rotation_sp = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
-        
-        current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
-        current_nuc.set_instance_parameter('bbcon_rotation', [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        current_nuc.set_instance_parameter('bbcon_scales', [1, sp_len, 1]);
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-	}
-
     activate();
 
     // API
