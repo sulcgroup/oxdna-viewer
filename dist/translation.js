@@ -34,14 +34,20 @@ function glsl2three(input) {
     return out;
 }
 function rotate() {
-    let v1 = new THREE.Vector3();
-    //let p: THREE.Vector3 = new THREE.Vector3();
-    //let d: THREE.Vector3 = new THREE.Vector3();
-    let rot = false; //rotation success boolean
     let angle = getAngle();
-    let axisMode = getAxisMode();
+    let axis = getAxisMode();
+    let c = new THREE.Vector3(0, 0, 0);
+    selected_bases.forEach((base) => {
+        c.add(base.get_instance_parameter3("cm_offsets"));
+    });
+    c.multiplyScalar(1 / selected_bases.size);
+    rotateSelected(axis, angle, c);
+}
+function rotateSelected(axis, angle, about) {
+    let v1 = new THREE.Vector3();
+    let rot = false; //rotation success boolean
     let matrix = new THREE.Matrix3();
-    switch (axisMode) {
+    switch (axis) {
         case "X": {
             matrix.set(1, 0, 0, 0, Math.cos(angle), -Math.sin(angle), 0, Math.sin(angle), Math.cos(angle));
             v1.set(1, 0, 0);
@@ -57,16 +63,11 @@ function rotate() {
             v1.set(0, 0, 1);
             break;
         }
-        default: alert("Unknown rotation axis: " + axisMode);
+        default: alert("Unknown rotation axis: " + axis);
     }
     let q = new THREE.Quaternion;
     q.setFromAxisAngle(v1, angle);
     //this will be rotating around the center of mass of the selected bases.
-    let c = new THREE.Vector3(0, 0, 0);
-    selected_bases.forEach((base) => {
-        c.add(base.get_instance_parameter3("cm_offsets"));
-    });
-    c.multiplyScalar(1 / selected_bases.size);
     selected_bases.forEach((base) => {
         //rotate around user selected axis with user entered angle
         let sys = base.parent.parent;
@@ -76,11 +77,11 @@ function rotate() {
         let ns_pos = base.get_instance_parameter3("ns_offsets");
         let con_pos = base.get_instance_parameter3("con_offsets");
         let bbcon_pos = base.get_instance_parameter3("bbcon_offsets");
-        cm_pos.sub(c);
-        bb_pos.sub(c);
-        ns_pos.sub(c);
-        con_pos.sub(c);
-        bbcon_pos.sub(c);
+        cm_pos.sub(about);
+        bb_pos.sub(about);
+        ns_pos.sub(about);
+        con_pos.sub(about);
+        bbcon_pos.sub(about);
         cm_pos.applyMatrix3(matrix);
         bb_pos.applyMatrix3(matrix);
         ns_pos.applyMatrix3(matrix);
@@ -95,11 +96,11 @@ function rotate() {
         ns_rotation.multiply(q);
         con_rotation.multiply(q);
         bbcon_rotation.multiply(q);
-        cm_pos.add(c);
-        bb_pos.add(c);
-        ns_pos.add(c);
-        con_pos.add(c);
-        bbcon_pos.add(c);
+        cm_pos.add(about);
+        bb_pos.add(about);
+        ns_pos.add(about);
+        con_pos.add(about);
+        bbcon_pos.add(about);
         sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
         sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
         sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
@@ -109,6 +110,17 @@ function rotate() {
         sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
         rot = true;
+    });
+    // Update backbone connections (is there a more clever way to do this than
+    // to loop through all? We only need to update bases with neigbours
+    // outside the selection set)
+    selected_bases.forEach((base) => {
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
+            calcsp(base); //calculate sp between current and neighbor3
+        }
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
+            calcsp(base.neighbor5); //calculate sp between current and neighbor5
+        }
     });
     for (let i = 0; i < systems.length; i++) {
         systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
@@ -122,6 +134,65 @@ function rotate() {
     }
     if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
         alert("Please select an object to rotate.");
+    }
+    render();
+}
+//adjust the backbone after the move. Copied from DragControls
+function calcsp(current_nuc) {
+    let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
+    let x_bb_last = temp.x, y_bb_last = temp.y, z_bb_last = temp.z;
+    temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
+    let x_bb = temp.x;
+    let y_bb = temp.y;
+    let z_bb = temp.z;
+    //calculate sp location, length and orientation
+    let x_sp = (x_bb + x_bb_last) / 2, y_sp = (y_bb + y_bb_last) / 2, z_sp = (z_bb + z_bb_last) / 2;
+    let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+    let rotation_sp = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
+    current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
+    current_nuc.set_instance_parameter('bbcon_rotation', [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
+    current_nuc.set_instance_parameter('bbcon_scales', [1, sp_len, 1]);
+    current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+    current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+    current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+}
+function translateSelected(v) {
+    selected_bases.forEach((base) => {
+        let sys = base.parent.parent;
+        let sid = base.global_id - sys.global_start_id;
+        let cm_pos = base.get_instance_parameter3("cm_offsets");
+        let bb_pos = base.get_instance_parameter3("bb_offsets");
+        let ns_pos = base.get_instance_parameter3("ns_offsets");
+        let con_pos = base.get_instance_parameter3("con_offsets");
+        let bbcon_pos = base.get_instance_parameter3("bbcon_offsets");
+        cm_pos.add(v);
+        bb_pos.add(v);
+        ns_pos.add(v);
+        con_pos.add(v);
+        bbcon_pos.add(v);
+        sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
+        sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
+        sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
+        sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
+        sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
+    });
+    // Update backbone connections (is there a more clever way to do this than
+    // to loop through all? We only need to update bases with neigbours
+    // outside the selection set)
+    selected_bases.forEach((base) => {
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
+            calcsp(base); //calculate sp between current and neighbor3
+        }
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
+            calcsp(base.neighbor5); //calculate sp between current and neighbor5
+        }
+    });
+    for (let i = 0; i < systems.length; i++) {
+        systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
     }
     render();
 }
