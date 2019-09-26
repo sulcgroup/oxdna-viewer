@@ -28,10 +28,10 @@ class BasicElement extends THREE.Group {
         this.parent = parent;
     }
     ;
-    calculatePositions(x, y, z, l) {
+    calculatePositions(l) {
     }
     ;
-    calculateNewConfigPositions(x, y, z, l) {
+    calculateNewConfigPositions(l) {
     }
     ;
     updateSP(num) {
@@ -105,9 +105,11 @@ class Nucleotide extends BasicElement {
         super(global_id, parent);
     }
     ;
-    calculatePositions(x, y, z, l) {
+    calculatePositions(l) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+        //extract position
+        let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
         // according to base.py a2 is the cross of a1 and a3
@@ -209,9 +211,11 @@ class Nucleotide extends BasicElement {
         return new THREE.Vector3(x, y, z);
     }
     ;
-    calculateNewConfigPositions(x, y, z, l) {
+    calculateNewConfigPositions(l) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+        //extract position
+        let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]), y_a1 = parseFloat(l[4]), z_a1 = parseFloat(l[5]), x_a3 = parseFloat(l[6]), y_a3 = parseFloat(l[7]), z_a3 = parseFloat(l[8]);
         // a2 is perpendicular to a1 and a3
@@ -407,9 +411,11 @@ class AminoAcid extends BasicElement {
         return nucleoside_colors[elem];
     }
     ;
-    calculatePositions(x, y, z, l) {
+    calculatePositions(l) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+        //extract position
+        let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {
@@ -467,9 +473,11 @@ class AminoAcid extends BasicElement {
         z_bb_last = z;
     }
     ;
-    calculateNewConfigPositions(x, y, z, l) {
+    calculateNewConfigPositions(l) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+        //extract position
+        let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         //calculate new backbone connector position/rotation
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
         if (this.neighbor3 != null && this.neighbor3.local_id < this.local_id) {

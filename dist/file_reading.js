@@ -330,19 +330,19 @@ function readDat(num_nuc, dat_reader, system) {
     conf_begin.line_id = 0;
     conf_end.chunk = current_chunk;
     conf_end.line_id = num_nuc + 2; //end of current configuration
-    // add the bases to the scene
+    //for each line in the current configuration, read the line and calculate positions
     for (let i = 0; i < num_nuc; i++) {
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
             break;
         }
         ;
+        // get the nucleotide associated with the line
         var current_nucleotide = elements[i + system.global_start_id];
-        // consume a new line
+        // consume a new line from the file
         let l = lines[i].split(" ");
         let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
-        //current_nucleotide.pos = new THREE.Vector3(x, y, z); //set pos; not updated by DragControls
-        current_nucleotide.calculatePositions(x, y, z, l);
-        //catch the two possible cases for strand ends (no connection or circular)
+        current_nucleotide.calculatePositions(l);
+        //when a strand is finished, add it to the system
         if ((current_nucleotide.neighbor5 == undefined || current_nucleotide.neighbor5 == null) || (current_nucleotide.neighbor5.local_id < current_nucleotide.local_id)) { //if last nucleotide in straight strand
             system.add(current_strand); //add strand THREE.Group to system THREE.Group
             current_strand = system[strands][current_strand.strand_id]; //don't ask, its another artifact of strands being 1-indexed
@@ -491,7 +491,7 @@ function getNewConfig(mode) {
             let l = lines[line_num].split(" ");
             let x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
             current_nucleotide.pos = new THREE.Vector3(x, y, z);
-            current_nucleotide.calculateNewConfigPositions(x, y, z, l);
+            current_nucleotide.calculateNewConfigPositions(l);
         }
         //bring things in box based on the PBC/centering menus
         PBC_switchbox(system);

@@ -242,4 +242,32 @@ module api{
         render();
     }
     
+    export function sp_only() {
+        elements.map((n: BasicElement) => {
+            n.set_instance_parameter('scales', [0, 0, 0]);
+            n.set_instance_parameter('ns_scales', [0, 0, 0]);
+            n.set_instance_parameter('con_scales', [0, 0, 0]);
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;
+            systems[i].nucleoside.geometry["attributes"].instanceScale.needsUpdate = true;
+            systems[i].connector.geometry["attributes"].instanceScale.needsUpdate = true; 
+        }
+        render();
+
+    }
+
+    export function show_everything() {
+        elements.map((n: BasicElement) => {
+            n.set_instance_parameter('scales', [1, 1, 1]);
+            n.set_instance_parameter('ns_scales', [0.7, 0.3, 0.7]);
+            n.set_instance_parameter('con_scales', [1, n.bb_ns_distance, 1]);
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;
+            systems[i].nucleoside.geometry["attributes"].instanceScale.needsUpdate = true;
+            systems[i].connector.geometry["attributes"].instanceScale.needsUpdate = true; 
+        }
+        render();
+    }
 }

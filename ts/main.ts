@@ -48,11 +48,11 @@ class BasicElement extends THREE.Group{
         this.parent = parent;
     };
 
-    calculatePositions(x: number, y: number, z: number, l: string) {
+    calculatePositions(l: string) {
 
     };
 
-    calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
+    calculateNewConfigPositions(l: string) {
 
     };
 
@@ -144,10 +144,15 @@ class Nucleotide extends BasicElement {
     constructor(global_id: number, parent: Strand) {
         super(global_id, parent);
     };
-    calculatePositions(x: number, y: number, z: number, l: string) {
+    calculatePositions(l: string) {
 
         let sys = this.parent.parent
         let sid = this.global_id - sys.global_start_id
+
+        //extract position
+        let x = parseFloat(l[0]),
+            y = parseFloat(l[1]),
+            z = parseFloat(l[2]);
 
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
@@ -299,9 +304,14 @@ class Nucleotide extends BasicElement {
         return new THREE.Vector3(x, y, z);
     };
 
-    calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
+    calculateNewConfigPositions(l: string) {
         let sys = this.parent.parent
         let sid = this.global_id - sys.global_start_id
+
+        //extract position
+        let x = parseFloat(l[0]),
+            y = parseFloat(l[1]),
+            z = parseFloat(l[2]);
 
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let x_a1 = parseFloat(l[3]),
@@ -537,9 +547,14 @@ class AminoAcid extends BasicElement {
         return nucleoside_colors[elem];
     };
 
-    calculatePositions(x: number, y: number, z: number, l: string) {
+    calculatePositions(l: string) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+
+        //extract position
+        let x = parseFloat(l[0]),
+            y = parseFloat(l[1]),
+            z = parseFloat(l[2]);
 
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
@@ -619,9 +634,14 @@ class AminoAcid extends BasicElement {
         y_bb_last = y;
         z_bb_last = z;
     };
-    calculateNewConfigPositions(x: number, y: number, z: number, l: string) {
+    calculateNewConfigPositions(l: string) {
         let sys = this.parent.parent;
         let sid = this.global_id - sys.global_start_id;
+
+        //extract position
+        let x = parseFloat(l[0]),
+            y = parseFloat(l[1]),
+            z = parseFloat(l[2]);
 
         //calculate new backbone connector position/rotation
         let x_sp, y_sp, z_sp, sp_len, rotation_sp;
