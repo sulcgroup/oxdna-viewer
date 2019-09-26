@@ -20,6 +20,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var _movePos = new THREE.Vector3();
     var _mousePos = new THREE.Vector3();
     var _oldPos = new THREE.Vector3();
+    var _startPos = new THREE.Vector3();
     var _new_pos = new THREE.Vector3
     var _move = new THREE.Vector3();
 
@@ -74,12 +75,11 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             _raycaster.setFromCamera(_mouse, _camera); 
             if (_selected && scope.enabled) {
                 _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
-                _move.copy(_new_pos).sub(_oldPos)
+                _move.copy(_new_pos).sub(_oldPos);
 
-                translateSelected(_move);
+                translateElements(selected_bases, _move);
                 _oldPos.copy(_new_pos); //Need difference from previous position.
                 
-
                 scope.dispatchEvent({ type: 'drag' });
 
                 //Update attributes on the GPU
@@ -113,6 +113,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 _plane.setFromNormalAndCoplanarPoint(camera_heading, _objPos);
                 _mousePos.copy(camera_heading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
                 _oldPos.copy(_objPos);
+                _startPos.copy(_objPos);
 
 				_domElement.style.cursor = 'move';
 
@@ -130,22 +131,21 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 
 			//calculate new sp connectors
 			if (_selected) { 
-				if (getScopeMode() == "Monomer") {
+                scope.dispatchEvent({ type: 'dragend' });
 
-					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { 
-						calcsp(_selected); //calculate sp between current and neighbor3
-					}
-					if (_selected.neighbor5 !== null && _selected.neighbor5 !== undefined) { 
-						calcsp(_selected.neighbor5); //calculate sp between current and neighbor5
-					}
-				}
-				scope.dispatchEvent({ type: 'dragend' });
-
+                if (selected_bases.has(_selected)) {
+                    // Calculate the total translation and add it to the edit history
+                    var totalMove = _new_pos.clone().sub(_startPos);
+                    editHistory.add(new RevertableTranslation(selected_bases, totalMove));
+                    console.log("Added translation to history: "+ totalMove.length())
+                }
 				_selected = null; //now nothing is selected for dragging b/c click event is over
 
 			}
-			_domElement.style.cursor = 'auto';
-			render();
+            _domElement.style.cursor = 'auto';
+            render();
+
+
 		}
     }
 

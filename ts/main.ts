@@ -26,6 +26,8 @@ var strands = 'children',
     monomers = 'children',
     objects = 'children';
 
+var editHistory = new EditHistory();
+
 render();
 
 // elements store the information about position, orientation, ID

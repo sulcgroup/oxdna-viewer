@@ -39,7 +39,7 @@ function glsl2three(input: THREE.Vector4) {
     return out
 }
 
-function rotate() { //rotate selected according to input controls
+function rotateByInput() { //rotate selected according to input controls
     let angle = getAngle();
     let axis = getAxisMode();
 
@@ -49,10 +49,10 @@ function rotate() { //rotate selected according to input controls
     });
     c.multiplyScalar(1/selected_bases.size)
 
-    rotateSelected(axis, angle, c);
+    editHistory.do(new RevertableRotation(selected_bases, axis, angle, c));
 }
 
-function rotateSelected(axis: string, angle: number, about: THREE.Vector3) {
+function rotateElements(elements: Set<BasicElement>, axis: string, angle: number, about: THREE.Vector3) {
     let v1: THREE.Vector3 = new THREE.Vector3();
     let rot: boolean = false; //rotation success boolean
     let matrix: THREE.Matrix3 = new THREE.Matrix3();
@@ -86,7 +86,7 @@ function rotateSelected(axis: string, angle: number, about: THREE.Vector3) {
 
     //this will be rotating around the center of mass of the selected bases.
 
-    selected_bases.forEach((base) => {
+    elements.forEach((base) => {
         //rotate around user selected axis with user entered angle
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
@@ -141,7 +141,7 @@ function rotateSelected(axis: string, angle: number, about: THREE.Vector3) {
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
-    selected_bases.forEach((base) => {
+    elements.forEach((base) => {
         if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
             calcsp(base); //calculate sp between current and neighbor3
         }
@@ -195,8 +195,8 @@ function calcsp(current_nuc) {
     current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 
-function translateSelected(v: THREE.Vector3) {
-    selected_bases.forEach((base) => {
+function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
+    elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
 
@@ -222,7 +222,7 @@ function translateSelected(v: THREE.Vector3) {
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
-    selected_bases.forEach((base) => {
+    elements.forEach((base) => {
         if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
             calcsp(base); //calculate sp between current and neighbor3
         }
