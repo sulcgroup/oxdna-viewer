@@ -13,7 +13,6 @@ var selected_bases = new Set<BasicElement>();
 
 var backbones: THREE.Object3D[] = [];
 var lut, devs: number[]; //need for Lut coloring
-var lutCols: THREE.Color[] = [];
 
 var DNA: number = 0;
 var RNA: number = 1;
@@ -412,7 +411,7 @@ class Nucleotide extends BasicElement {
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let color: THREE.Color;
         if (overlay) {
-            color = lutCols[this.global_id];
+            color = sys.lutCols[sid];
         }
         else {
             color = this.strand_to_color(this.parent.strand_id);
@@ -708,7 +707,7 @@ class AminoAcid extends BasicElement {
         let bb_color: THREE.Color;
         let aa_color: THREE.Color;
         if (overlay) {
-            bb_color = lutCols[this.global_id];
+            bb_color = sys.lutCols[this.global_id];
         }
         else {
             bb_color = this.strand_to_color(this.parent.strand_id);
@@ -891,6 +890,8 @@ class System extends THREE.Group {
     system_id: number;
     global_start_id: number; //1st nucleotide's global_id
     dat_file;
+    colormap_file;
+    lutCols: THREE.Color[];
 
     //the system contains all the data from a dat file in its instancing arrays
     //the system also owns the actual meshes that get sent to the scene.
@@ -924,6 +925,7 @@ class System extends THREE.Group {
         super();
         this.system_id = id;
         this.global_start_id = start_id;
+        this.lutCols = [];
     };
 
     system_length(): number {
@@ -985,6 +987,10 @@ class System extends THREE.Group {
 
     setDatFile(dat_file) { //allows for trajectory function
         this.dat_file = dat_file;
+    };
+
+    setColorFile(json_file) {
+        this.colormap_file = json_file;
     };
 
     translate_system(amount: THREE.Vector3) {
@@ -1217,7 +1223,7 @@ function toggleLut(chkBox) {
     if (!chkBox.checked) {
         api.remove_colorbar();
     }
-    else if (chkBox.checked && lutCols.length > 0) {
+    else if (chkBox.checked && lut != undefined) {
         api.show_colorbar();
     }
     else {
@@ -1231,6 +1237,7 @@ function toggleLut(chkBox) {
         }
     }
     for (let i = 0; i < systems.length; i++) {
+        console.log(systems[i]);
         systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;

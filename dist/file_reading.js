@@ -152,15 +152,28 @@ class marker {
 function makeLut(data, key) {
     let checkbox = document.getElementById("lutToggle");
     let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
-    lut = new THREE.Lut("rainbow", 4000);
-    //lut.setMax(0.23);
-    //lut.setMin(0.04);
-    lut.setMax(max);
-    lut.setMin(min);
+    if (lut == undefined) {
+        lut = new THREE.Lut("rainbow", 2048);
+        lut.setMax(max);
+        lut.setMin(min);
+    }
+    if (max > lut.maxV) {
+        lut.setMax(max);
+        api.remove_colorbar();
+    }
+    if (min < lut.minV) {
+        lut.setMin(min);
+        api.remove_colorbar();
+    }
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
-    for (let i = 0; i < elements.length; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-        lutCols.push(lut.getColor(Number(data[key][i])));
+    //update every system's color map
+    for (let i = 0; i < systems.length; i++) {
+        let system = systems[i];
+        let end = system.system_length();
+        for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+            system.lutCols[i] = lut.getColor(Number(system.colormap_file[key][i]));
+        }
     }
     checkbox.checked = true;
 }
@@ -176,7 +189,8 @@ previous_previous_chunk, //Space to store the chunks
 previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad linebreaks caused by splitting the trajectory bitwise
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
 previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
-box; //box size for system
+box, //box size for system
+toggleFailure = false;
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -279,40 +293,7 @@ target.addEventListener("drop", function (event) {
             if (json_file) {
                 let json_reader = new FileReader(); //read .json
                 json_reader.onload = () => {
-                    let file = json_reader.result;
-                    let data = JSON.parse(file);
-                    let curr_sys;
-                    curr_sys = sys_count;
-                    for (var key in data) {
-                        if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
-                            if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
-                                makeLut(data, key);
-                            }
-                            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
-                                for (let i = 0; i < elements.length; i++) {
-                                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
-                                    let len = vec.length();
-                                    vec.normalize();
-                                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
-                                    arrowHelper.name = i + "disp";
-                                    scene.add(arrowHelper);
-                                }
-                            }
-                        }
-                        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
-                            for (let entry of data[key]) {
-                                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
-                                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
-                                vec.normalize();
-                                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
-                                scene.add(arrowHelper);
-                            }
-                        }
-                        else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
-                            alert(".json and .top files are not compatible.");
-                            return;
-                        }
-                    }
+                    readJson(system, json_reader);
                 };
                 json_reader.readAsText(json_file);
                 renderer.domElement.style.cursor = "auto";
@@ -322,42 +303,7 @@ target.addEventListener("drop", function (event) {
     if (json_file && json_alone) {
         let json_reader = new FileReader(); //read .json
         json_reader.onload = () => {
-            let file = json_reader.result;
-            let data = JSON.parse(file);
-            let curr_sys;
-            curr_sys = sys_count - 1;
-            //else curr_sys = sys_count;
-            for (var key in data) {
-                if (data[key].length == systems[curr_sys].system_length()) { //if json and dat files match/same length
-                    if (!isNaN(data[key][0])) { //we assume that scalars denote a new color map
-                        makeLut(data, key);
-                        toggleLut(document.getElementById("lutToggle"));
-                    }
-                    if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
-                        for (let i = 0; i < elements.length; i++) {
-                            let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
-                            let len = vec.length();
-                            vec.normalize();
-                            let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
-                            arrowHelper.name = i + "disp";
-                            scene.add(arrowHelper);
-                        }
-                    }
-                }
-                else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
-                    for (let entry of data[key]) {
-                        let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
-                        let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
-                        vec.normalize();
-                        let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
-                        scene.add(arrowHelper);
-                    }
-                }
-                else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
-                    alert(".json and .top files are not compatible.");
-                    return;
-                }
-            }
+            readJson(systems[systems.length - 1], json_reader);
         };
         json_reader.readAsText(json_file);
         renderer.domElement.style.cursor = "auto";
@@ -405,6 +351,51 @@ function readDat(num_nuc, dat_reader, system) {
             }
         }
     }
+    addSystemToScene(system);
+}
+function readJson(system, json_reader) {
+    let file = json_reader.result;
+    let data = JSON.parse(file);
+    for (var key in data) {
+        if (data[key].length == system.system_length()) { //if json and dat files match/same length
+            if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
+                system.setColorFile(data);
+                makeLut(data, key);
+                try { //you need to toggle here for small systems, during the scene add for large systems.
+                    toggleLut(document.getElementById("lutToggle"));
+                }
+                catch {
+                    toggleFailure = true;
+                }
+            }
+            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
+                let end = system.system_length() + system.global_start_id;
+                for (let i = system.global_start_id; i < end; i++) {
+                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                    let len = vec.length();
+                    vec.normalize();
+                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].get_instance_parameter3("bb_offsets"), len, 0x000000);
+                    arrowHelper.name = i + "disp";
+                    scene.add(arrowHelper);
+                }
+            }
+        }
+        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
+            for (let entry of data[key]) {
+                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                vec.normalize();
+                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                scene.add(arrowHelper);
+            }
+        }
+        else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
+            alert(".json and .top files are not compatible.");
+            return;
+        }
+    }
+}
+function addSystemToScene(system) {
     //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
     //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     //This will force the gpu to check the vectors again when redrawing.
@@ -452,9 +443,10 @@ function readDat(num_nuc, dat_reader, system) {
     scene.add(system.bbconnector);
     pickingScene.add(system.dummy_backbone);
     //bring things in the box based on the PBC/centering menus
-    PBC_switchbox(systems[sys_count]);
+    PBC_switchbox(system);
     let checkbox = document.getElementById("lutToggle");
-    if (checkbox.checked) {
+    if (checkbox.checked && toggleFailure) {
+        console.log("toggling");
         toggleLut(checkbox);
     }
     sys_count += 1;

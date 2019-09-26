@@ -11,7 +11,6 @@ var nuc_count = 0;
 var selected_bases = new Set();
 var backbones = [];
 var lut, devs; //need for Lut coloring
-var lutCols = [];
 var DNA = 0;
 var RNA = 1;
 var AA = 2;
@@ -281,7 +280,7 @@ class Nucleotide extends BasicElement {
         //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
         let color;
         if (overlay) {
-            color = lutCols[this.global_id];
+            color = sys.lutCols[sid];
         }
         else {
             color = this.strand_to_color(this.parent.strand_id);
@@ -531,7 +530,7 @@ class AminoAcid extends BasicElement {
         let bb_color;
         let aa_color;
         if (overlay) {
-            bb_color = lutCols[this.global_id];
+            bb_color = sys.lutCols[this.global_id];
         }
         else {
             bb_color = this.strand_to_color(this.parent.strand_id);
@@ -699,6 +698,7 @@ class System extends THREE.Group {
         super();
         this.system_id = id;
         this.global_start_id = start_id;
+        this.lutCols = [];
     }
     ;
     system_length() {
@@ -760,6 +760,10 @@ class System extends THREE.Group {
     ;
     setDatFile(dat_file) {
         this.dat_file = dat_file;
+    }
+    ;
+    setColorFile(json_file) {
+        this.colormap_file = json_file;
     }
     ;
     translate_system(amount) {
@@ -973,7 +977,7 @@ function toggleLut(chkBox) {
     if (!chkBox.checked) {
         api.remove_colorbar();
     }
-    else if (chkBox.checked && lutCols.length > 0) {
+    else if (chkBox.checked && lut != undefined) {
         api.show_colorbar();
     }
     else {
@@ -987,6 +991,7 @@ function toggleLut(chkBox) {
         }
     }
     for (let i = 0; i < systems.length; i++) {
+        console.log(systems[i]);
         systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
