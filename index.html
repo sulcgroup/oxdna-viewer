@@ -131,22 +131,22 @@
 			</fieldset>
 			<fieldset>
 				<legend>Selection mode:</legend>
-				<input type="radio" name="scope" value="Monomer" onclick="setScopeMode()" checked>Monomer<br> <!--default mode is Nucleotide-->
-				<input type="radio" name="scope" value="Strand" onclick="setScopeMode()">Strand<br>
-				<input type="radio" name="scope" value="System" onclick="setScopeMode()">System<br>
-				<input type="radio" name="scope" value="Cluster" onclick="setScopeMode()">Cluster
+				<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
+				<input type="radio" name="scope" value="Strand">Strand<br>
+				<input type="radio" name="scope" value="System">System<br>
+				<input type="radio" name="scope" value="Cluster">Cluster
 			</fieldset>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 			<fieldset>
 				<legend>Rotate:</legend>
-				<input type="radio" name="rotate" value="X" onclick="setAxisMode()" checked>X Axis <!--default checked is x-axis-->
+				<input type="radio" name="rotate" value="X" checked>X Axis <!--default checked is x-axis-->
 				<br>
-				<input type="radio" name="rotate" value="Y" onclick="setAxisMode()">Y Axis
+				<input type="radio" name="rotate" value="Y">Y Axis
 				<br>
-				<input type="radio" name="rotate" value="Z" onclick="setAxisMode()">Z Axis
+				<input type="radio" name="rotate" value="Z">Z Axis
 				<br>
 				Rotation angle:
-				<input type="number" value="-90" id="rotAngle" onchange="setAngle()" width="20">
+				<input type="number" value="-90" id="rotAngle" width="20">
 				<button onclick="rotate()">Rotate</button>
 			</fieldset>
 			<button onclick="previousConfig()"type="button" style="width: 45%; left: 0" title="'b' on the keyboard"> Prev Config</button>
