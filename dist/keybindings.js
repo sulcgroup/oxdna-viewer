@@ -35,5 +35,19 @@ document.addEventListener("keydown", event => {
                 editHistory.redo();
             }
             break;
+        // Select everything not selected:
+        case 'i':
+            if (event.ctrlKey) {
+                event.preventDefault();
+                invertSelection();
+            }
+            break;
+        // Select all elements:
+        case 'a':
+            if (event.ctrlKey) {
+                event.preventDefault();
+                selectAll();
+            }
+            break;
     }
 });
