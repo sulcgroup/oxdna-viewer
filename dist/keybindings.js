@@ -49,5 +49,15 @@ document.addEventListener("keydown", event => {
                 selectAll();
             }
             break;
+        // Toggle selection:
+        case 's':
+            let select = document.getElementById("selectToggle");
+            select.checked = !select.checked;
+            break;
+        // Toggle dragging:
+        case 'd':
+            let drag = document.getElementById("dragToggle");
+            drag.checked = !drag.checked;
+            break;
     }
 });

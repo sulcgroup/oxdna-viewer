@@ -136,8 +136,8 @@
 			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
 			<fieldset>
 				<legend>Action:</legend>
-				<input type="checkbox" name="action" value="Select" checked title="Hold down ctrl for multiple selection"> Select <br>
-				<input type="checkbox" name="action" value="Drag" onchange="drag()"> Drag
+				<input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select <br>
+				<input type="checkbox" name="action" id="dragToggle"value="Drag" onchange="drag()"> Drag
 			</fieldset>
 			<div style="text-align: center;">
 				<i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
