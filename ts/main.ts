@@ -1257,7 +1257,6 @@ function toggleLut(chkBox) {
         }
     }
     for (let i = 0; i < systems.length; i++) {
-        console.log(systems[i]);
         systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;

@@ -446,7 +446,6 @@ function addSystemToScene(system) {
     PBC_switchbox(system);
     let checkbox = document.getElementById("lutToggle");
     if (checkbox.checked && toggleFailure) {
-        console.log("toggling");
         toggleLut(checkbox);
     }
     sys_count += 1;

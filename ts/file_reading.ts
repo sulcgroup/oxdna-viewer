@@ -511,7 +511,6 @@ function addSystemToScene(system) {
 
     let checkbox = <HTMLInputElement>document.getElementById("lutToggle");
     if(checkbox.checked && toggleFailure){
-        console.log("toggling");
         toggleLut(checkbox);
     }
 
