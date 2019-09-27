@@ -49,15 +49,22 @@ document.addEventListener("keydown", event => {
                 selectAll();
             }
             break;
-        // Toggle selection:
         case 's':
-            let select = document.getElementById("selectToggle");
-            select.checked = !select.checked;
+            // Save output
+            if (event.ctrlKey) {
+                event.preventDefault();
+                makeOutputFiles();
+                break;
+            }
+            // Toggle selection:
+            let selectToggle = document.getElementById("selectToggle");
+            selectToggle.checked = !selectToggle.checked;
             break;
         // Toggle dragging:
         case 'd':
-            let drag = document.getElementById("dragToggle");
-            drag.checked = !drag.checked;
+            let dragToggle = document.getElementById("dragToggle");
+            dragToggle.checked = !dragToggle.checked;
+            drag();
             break;
     }
 });
