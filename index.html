@@ -91,10 +91,26 @@
 			cursor: pointer;
 		}
 
+		#dragInstruction {
+			position: fixed;
+			z-index: 1;
+            left: 0;
+            right: 200;
+			padding: 0.5em;
+			background-color: #acc;
+			opacity: 0.8;
+            text-align: center;
+            color: #fff;
+            font-family: Arial, serif;
+            font-size: 3em;
+            font-weight: bold;
+		}
+
 	</style>
     </head>
 
 <body>
+	<div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
 	<div class="sidenav">
 		<!--sidebar-->
 		<div class="tab">
