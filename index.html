@@ -3,6 +3,11 @@
 
 <head>
 	<title>oxDNA three.js viewer</title>
+
+	<!--http://google.github.io/material-design-icons/-->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+	  rel="stylesheet">
+
 	<style>
 		/*CSS*/
 
@@ -81,6 +86,11 @@
 			width: 80px;
 		}
 
+		.material-icons:hover{
+			color: rgb(65, 114, 179);
+			cursor: pointer;
+		}
+
 	</style>
     </head>
 
@@ -126,9 +136,13 @@
 			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
 			<fieldset>
 				<legend>Action:</legend>
-				<input type="checkbox" name="action" value="Select" checked> Select <br>
-				<input type="checkbox" name="action" value="Drag" onchange="drag()"> Drag
+				<input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select <br>
+				<input type="checkbox" name="action" id="dragToggle"value="Drag" onchange="drag()"> Drag
 			</fieldset>
+			<div style="text-align: center;">
+				<i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
+				<i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+			</div>
 			<fieldset>
 				<legend>Selection mode:</legend>
 				<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
@@ -147,10 +161,12 @@
 				<br>
 				Rotation angle:
 				<input type="number" value="-90" id="rotAngle" width="20">
-				<button onclick="rotate()">Rotate</button>
+				<button onclick="rotateByInput()">Rotate</button>
 			</fieldset>
-			<button onclick="previousConfig()"type="button" style="width: 45%; left: 0" title="'b' on the keyboard"> Prev Config</button>
-			<button onclick="nextConfig()" type="button" style="width: 45%; right: 0; float: right" title="'n' on the keyboard">Next Config</button>
+			<div style="text-align: center;">
+				<i class="material-icons" onclick="previousConfig()" style="font-size: 48px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
+				<i class="material-icons" onclick="nextConfig()" style="font-size: 48px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
+			</div>
 			</div>
 			<div id="Strands" class="tabcontent" style="display: none">
 				<button>TEST</button>
@@ -189,6 +205,7 @@
 			<script src="./dist/io.js"></script>
 			<script src="./dist/PBC_switchbox.js"></script>
 			<script src="./dist/file_reading.js"></script>
+			<script src="./dist/doUndo.js"></script>
 			<script src="./dist/main.js"></script>
 			<script src="./dist/keybindings.js"></script>
 			<script src="./dist/base_selector.js"></script>

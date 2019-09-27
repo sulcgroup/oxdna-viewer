@@ -18,6 +18,7 @@ var AA = 2;
 var i;
 //makes for cleaner references down the object hierarcy
 var strands = 'children', monomers = 'children', objects = 'children';
+var editHistory = new EditHistory();
 render();
 // elements store the information about position, orientation, ID
 class BasicElement extends THREE.Group {
