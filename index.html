@@ -154,39 +154,37 @@
 			<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
 		</div>
 		<div id="Nucleotides" class="tabcontent">
-			<!--in "Nucloetides" tab-->
 			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
-			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File</button>
-			<!--Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3">-->
-			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
-			<button onclick="toggleVideoOptions()" type="button">Create Video</button>
+			<button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
+			<button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap File</button>
+			<button onclick="makeOutputFiles()" type="button" title="Download the current scene in oxDNA format">Download Output Files<br>(.dat and .top)</button>
+			<button onclick="toggleVideoOptions()" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
 			<fieldset>
 				<legend>PBC / Centering</legend>
 				<caption> PBC: </caption>
-				<select id="inboxing">
+				<select id="inboxing" title="At what scale to apply periodic boundary conditions">
 					<option>Monomer</option>
 					<option>Strand</option>
 					<option>None</option>
 				</select>
 				<br>
 				<caption>Centering:</caption>
-				<select id="centering">
+				<select id="centering" title="Where to center the structure relative to the simulation box">
 					<option>Origin</option>
 					<option>Box Center</option>
 					<option>None</option>
 				</select>
 				<br>
-				<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply</button>
+				<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button" title="note this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
 			</fieldset>
 			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
 			<fieldset>
 				<legend>View</legend>
-				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows<br>
-				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors<br>
-				<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color<br>
-				<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
-				<button onclick="controls.reset()" type="button">Reset Camera</button>
+				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
+				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)" title="If colormap is applied, return to default coloring">Display Alternate Colors<br>
+				<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
+				<button onclick="toggleColorOptions()" type="button" title="modify the default strand colors">Edit Colors</button>
+				<button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
 			</fieldset>
 			<fieldset>
 				<legend>Edit</legend>
@@ -201,7 +199,7 @@
 					<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
 					<input type="radio" name="scope" value="Strand">Strand<br>
 					<input type="radio" name="scope" value="System">System<br>
-					<input type="radio" name="scope" value="Cluster">Cluster
+					<input type="radio" name="scope" value="Cluster" title="on first click performs DBSCAN to determine clusters">Cluster
 				</fieldset>
 				<fieldset>
 					<legend>Rotate:</legend>
@@ -211,7 +209,7 @@
 					<input type="radio" name="rotate" value="Z">Z<br>
 					Rotation angle:
 					<input type="number" value="-90" id="rotAngle" width="20">
-					<button onclick="rotateByInput()">Rotate</button>
+					<button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
 				</fieldset>
 			</fieldset>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
