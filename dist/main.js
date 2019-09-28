@@ -1037,7 +1037,7 @@ function toggleSideNav(button) {
     let hidden = "show";
     let visible = "hide";
     let tabcontent = document.getElementsByClassName("tabcontent");
-    if (button.innerText == hidden) {
+    if (button.innerText.toLowerCase() == hidden) {
         tabcontent[0].style.display = "block";
         button.innerHTML = visible;
     }

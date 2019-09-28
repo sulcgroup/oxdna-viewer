@@ -23,6 +23,7 @@
 		.opts {
 			width: 200px;
 			position: fixed;
+			bottom: 0px;
 			z-index: 1;
 			background-color: #eee;
 			padding: 2px;
@@ -37,8 +38,8 @@
 			right: 0;
 			text-align: left;
 			overflow-y: scroll;
-			background-color: #eee;
-			opacity: 0.9;
+			background-color: rgba(252, 249, 249, 0.9);
+			opacity: 0.95;
 			padding: 2px;
 		}
 
@@ -62,11 +63,13 @@
 
 		.tab button:hover {
 			background-color: azure;
+			color: #555;
 		}
 
 		.tab button.active {
 			background-color: azure;
 			font-size: 17px;
+			color: #555;
 		}
 
 		textarea {
@@ -79,11 +82,43 @@
 
 		button {
 			width: 100%;
-			margin: 2px 0px;
+			background-color: #acc;
+			border: none;
+			color: #fff;
+			font-size: 1.2em;
+			padding: 10px 30px;
+			margin-top: 1px;
+			margin-bottom: 1px;
+			text-transform: uppercase;
+			font-weight: bold;
+		}
+
+		fieldset {
+			margin: 5px 0px;
+			min-width: 0;
+			background-color: rgba(170, 204, 204, 0.3);
+			border: none;
+			font-size: 1em;
+			font-weight: normal;
+		}
+
+		legend {
+			padding: 2px 20px;
+			margin: 1px;
+			background-color: rgb(222, 233, 233);
+			width: auto;
+			border-radius: 2px;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		button:hover {
+			background-color: rgb(143, 199, 199);
+			cursor: pointer;
 		}
 
 		input[type=number] {
-			width: 80px;
+			width: 4em;
 		}
 
 		.material-icons:hover{
@@ -94,16 +129,16 @@
 		#dragInstruction {
 			position: fixed;
 			z-index: 1;
-            left: 0;
-            right: 200;
+			left: 0;
+			right: 200;
 			padding: 0.5em;
 			background-color: #acc;
 			opacity: 0.8;
-            text-align: center;
-            color: #fff;
-            font-family: Arial, serif;
-            font-size: 3em;
-            font-weight: bold;
+			text-align: center;
+			color: #fff;
+			font-family: Arial, serif;
+			font-size: 3em;
+			font-weight: bold;
 		}
 
 	</style>
@@ -126,59 +161,60 @@
 			<!--Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3">-->
 			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
 			<button onclick="toggleVideoOptions()" type="button">Create Video</button>
-			<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
-			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<caption> PBC: </caption>
-			<select id="inboxing">
-			    <option>Monomer</option>
-			    <option>Strand</option>
-			    <option>None</option>
-			</select>
-			<br>
-			<caption>Centering:</caption>
-			<select id="centering">
-				<option>Origin</option>
-				<option>Box Center</option>
-				<option>None</option>
-			</select>
-			<br>
-			<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply PBC/Centering</button>
-			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
-			<br>
-			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
-			<br>
-			<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
-			<br>
-			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
 			<fieldset>
-				<legend>Action:</legend>
-				<input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select <br>
-				<input type="checkbox" name="action" id="dragToggle"value="Drag" onchange="drag()"> Drag
+				<legend>PBC / Centering</legend>
+				<caption> PBC: </caption>
+				<select id="inboxing">
+					<option>Monomer</option>
+					<option>Strand</option>
+					<option>None</option>
+				</select>
+				<br>
+				<caption>Centering:</caption>
+				<select id="centering">
+					<option>Origin</option>
+					<option>Box Center</option>
+					<option>None</option>
+				</select>
+				<br>
+				<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply</button>
 			</fieldset>
-			<div style="text-align: center;">
-				<i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
-				<i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
-			</div>
+			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
 			<fieldset>
-				<legend>Selection mode:</legend>
-				<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
-				<input type="radio" name="scope" value="Strand">Strand<br>
-				<input type="radio" name="scope" value="System">System<br>
-				<input type="radio" name="scope" value="Cluster">Cluster
+				<legend>View</legend>
+				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows<br>
+				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors<br>
+				<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color<br>
+				<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
+				<button onclick="controls.reset()" type="button">Reset Camera</button>
+			</fieldset>
+			<fieldset>
+				<legend>Edit</legend>
+				<div style="text-align: center;">
+					<i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
+					<i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+				</div>
+				<input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select
+				<input type="checkbox" name="action" id="dragToggle"value="Drag" onchange="drag()"> Drag<br>
+				<fieldset>
+					<legend>Selection mode:</legend>
+					<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
+					<input type="radio" name="scope" value="Strand">Strand<br>
+					<input type="radio" name="scope" value="System">System<br>
+					<input type="radio" name="scope" value="Cluster">Cluster
+				</fieldset>
+				<fieldset>
+					<legend>Rotate:</legend>
+					Axis:
+					<input type="radio" name="rotate" value="X" checked>X <!--default checked is x-axis-->
+					<input type="radio" name="rotate" value="Y">Y
+					<input type="radio" name="rotate" value="Z">Z<br>
+					Rotation angle:
+					<input type="number" value="-90" id="rotAngle" width="20">
+					<button onclick="rotateByInput()">Rotate</button>
+				</fieldset>
 			</fieldset>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-			<fieldset>
-				<legend>Rotate:</legend>
-				<input type="radio" name="rotate" value="X" checked>X Axis <!--default checked is x-axis-->
-				<br>
-				<input type="radio" name="rotate" value="Y">Y Axis
-				<br>
-				<input type="radio" name="rotate" value="Z">Z Axis
-				<br>
-				Rotation angle:
-				<input type="number" value="-90" id="rotAngle" width="20">
-				<button onclick="rotateByInput()">Rotate</button>
-			</fieldset>
 			<div style="text-align: center;">
 				<i class="material-icons" onclick="previousConfig()" style="font-size: 48px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
 				<i class="material-icons" onclick="nextConfig()" style="font-size: 48px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
@@ -187,7 +223,7 @@
 			<div id="Strands" class="tabcontent" style="display: none">
 				<button>TEST</button>
 			</div>
-			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
+			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide</button>
 		</div>
 		<div class="opts" id="videoOptions" hidden="hidden">
 			Video type
