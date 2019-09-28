@@ -182,6 +182,16 @@ var target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
 }, false);
+target.addEventListener("dragenter", function (event) {
+    event.preventDefault();
+    let e = document.getElementById("dragInstruction");
+    e.style.opacity = "0.1";
+}, false);
+target.addEventListener("dragexit", function (event) {
+    event.preventDefault();
+    let e = document.getElementById("dragInstruction");
+    e.style.opacity = "0.8";
+}, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables relating to files
 var approx_dat_len, current_chunk_number, //this is the chunk containing the end of the current conf
@@ -194,6 +204,9 @@ toggleFailure = false;
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
+    // Remove drag instructions
+    let dragInstruction = document.getElementById("dragInstruction");
+    dragInstruction.style.display = "none";
     //make system to store the dropped files in
     var system = new System(sys_count, elements.length);
     var files = event.dataTransfer.files, files_len = files.length;
