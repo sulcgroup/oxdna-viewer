@@ -44,7 +44,6 @@ document.addEventListener("keydown", event =>{
         case 'd':
             let dragToggle = <HTMLInputElement>document.getElementById("dragToggle");
             dragToggle.checked = !dragToggle.checked;
-            drag();
             break;
     }
 });

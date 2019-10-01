@@ -134,6 +134,10 @@ controls.keys = [65, 83, 68];
 // controlls induce change so we update the scene when we move it  
 controls.addEventListener('change', render);
 
+// Set up DragControls - allows dragging of DNA - if action mode includes "drag"
+// Also handles box selection
+let dragControls = new THREE.DragControls(camera, renderer.domElement);
+
 // start animation cycle / actually control update cycle 
 // requestAnimationFrame could be replaced with a 
 // timer event as it is misleading. 

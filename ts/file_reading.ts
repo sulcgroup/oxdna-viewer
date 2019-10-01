@@ -592,10 +592,6 @@ function getNewConfig(mode) { //attempts to display next configuration; same as 
         system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
         system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
         system.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-
-        if (getActionModes().includes("Drag")) {
-            drag();
-        }
     }
     render();
 }

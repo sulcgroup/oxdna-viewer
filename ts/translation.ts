@@ -24,11 +24,6 @@ function getAngle(): number {
     return (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
 }
 
-let dragControls: THREE.DragControls; //dragging functionality
-function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
-    dragControls = new THREE.DragControls(camera, renderer.domElement);
-}
-
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order
 //So when you need to convert between them...
