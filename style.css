@@ -1,0 +1,135 @@
+body {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+canvas {
+    position: absolute;
+    height: 100%;
+}
+.opts {
+    width: 200px;
+    position: fixed;
+    bottom: 0px;
+    z-index: 1;
+    background-color: #eee;
+    padding: 2px;
+}
+
+.sidenav { /*side bar settings*/
+    width: 200px;
+    max-height: 100%;
+    position: fixed;
+    z-index: 1;
+    font-size: 12px;
+    right: 0;
+    text-align: left;
+    overflow-y: scroll;
+    background-color: rgba(252, 249, 249, 0.9);
+    opacity: 0.95;
+    padding: 2px;
+}
+
+.tab { /*tab settings*/
+    overflow: auto;
+    border: 1px thin #ccc;
+    background-color: #acc;
+}
+
+.tab button {
+    margin: 2px;
+    background-color: inherit;
+    border: none;
+    cursor: pointer;
+    padding: 5px; /*on each side of button*/
+    transition: 0.3s;
+    font-size: 1em;
+    float: left;
+    width: auto;
+}
+
+.tab button:hover {
+    background-color: azure;
+    color: #555;
+}
+
+.tab button.active {
+    background-color: azure;
+    font-size: 1.1em;
+    color: #555;
+}
+
+textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    overflow-y: scroll;
+    font-size: 12px;
+}
+
+button {
+    width: 100%;
+    background-color: #acc;
+    border: none;
+    color: #fff;
+    font-size: 1em;
+    padding: 5px 15px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+fieldset {
+    margin: 5px 0px;
+    min-width: 0;
+    background-color: rgba(170, 204, 204, 0.3);
+    border: none;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+legend {
+    padding: 2px 20px;
+    margin: 1px;
+    background-color: rgb(222, 233, 233);
+    width: auto;
+    border-radius: 2px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+button:hover {
+    background-color: rgb(143, 199, 199);
+    cursor: pointer;
+}
+
+input[type=number] {
+    width: 4em;
+}
+
+.material-icons:hover{
+    color: rgb(65, 114, 179);
+    cursor: pointer;
+}
+
+#dragInstruction {
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    right: 200;
+    padding: 0.5em;
+    background-color: #acc;
+    opacity: 0.8;
+    text-align: center;
+    color: #fff;
+    font-family: Arial, serif;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.selectBox {
+    border: 1px solid #55aaff;
+    background-color: rgba(75, 160, 255, 0.15);
+    position: fixed;
+}
