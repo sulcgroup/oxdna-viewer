@@ -1079,7 +1079,7 @@ function toggleColorOptions() {
 };
 
 function colorOptions() {
-    let opt: HTMLElement = document.getElementById("colorOptions");
+    let opt: HTMLElement = document.getElementById("colorOptionContent");
     if (!opt.hidden) {
         opt.innerHTML = "";  //Clear content
         let addButton = document.createElement('button');

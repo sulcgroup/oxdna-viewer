@@ -93,24 +93,34 @@
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide</button>
 		</div>
-		<div class="opts" id="videoOptions" hidden="hidden">
-			Video type
-			<select id="videoType">
-				<option value="trajectory">Trajectory</option>
-				<option value="lemniscate">XY leminiscate</option>
-			</select>
-			<fieldset>
-				<legend>File format:</legend>
-				<input type="radio" name="videoFormat" value="webm" checked>webm<br>
-				<input type="radio" name="videoFormat" value="gif" >gif<br>
-				<input type="radio" name="videoFormat" value="png" >png<br>
-				<input type="radio" name="videoFormat" value="jpg" >jpg<br>
-			</fieldset>
-			<input type="number" value="24" id="videoFramerate" width="20">framerate
-			<button id="videoStartStop" onclick="createVideo()">Start</button>
-		</div>
-		<div title="Click a color to edit, right click to remove" class="opts"
-			id="colorOptions" hidden="hidden" style="background-color: transparent">
+		<div style="position: absolute; bottom: 0px;">
+			<div class="opts" id="videoOptions" hidden="hidden">
+				<div style="text-align: right; background-color: #acc">
+					<i class="material-icons" onclick="toggleVideoOptions()">close</i>
+				</div>
+				<label for="videoType">Video type:</label>
+				<select id="videoType">
+					<option value="trajectory">Trajectory</option>
+					<option value="lemniscate">XY leminiscate</option>
+				</select>
+				<fieldset>
+					<legend>File format:</legend>
+					<input type="radio" name="videoFormat" value="webm" checked>webm<br>
+					<input type="radio" name="videoFormat" value="gif" >gif<br>
+					<input type="radio" name="videoFormat" value="png" >png<br>
+					<input type="radio" name="videoFormat" value="jpg" >jpg<br>
+				</fieldset>
+				<label for="videoFramerate">Framerate:</label>
+				<input type="number" value="24" id="videoFramerate" width="20">
+				<button id="videoStartStop" onclick="createVideo()">Start</button>
+			</div>
+			<div class="opts" id="colorOptions" hidden="hidden" style="background-color: transparent">
+				<div style="text-align: right; background-color: #acc">
+						<i class="material-icons" onclick="toggleColorOptions()">close</i>
+				</div>
+				Click a color to edit, right click to remove:
+				<div id="colorOptionContent"></div>
+			</div>
 		</div>
 		<canvas id="threeCanvas"></canvas>
 		<div class="main"> <!--all files to be loaded onload of html file-->
