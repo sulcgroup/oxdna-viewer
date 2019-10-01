@@ -14,8 +14,8 @@ document.addEventListener("keydown", event =>{
             break;
 
         //mapping the next and prev to the arrow keys
-        case 'ArrowRight': nextConfig(); break;
-        case 'ArrowLeft': previousConfig(); break;
+        case 'arrowright': nextConfig(); break;
+        case 'arrowleft': previousConfig(); break;
 
         // Undo: ctrl-z
         // Redo: ctrl-shift-z or ctrl-y

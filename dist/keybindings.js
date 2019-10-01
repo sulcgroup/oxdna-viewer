@@ -12,10 +12,10 @@ document.addEventListener("keydown", event => {
             }, 'image/png', 1.0);
             break;
         //mapping the next and prev to the arrow keys
-        case 'ArrowRight':
+        case 'arrowright':
             nextConfig();
             break;
-        case 'ArrowLeft':
+        case 'arrowleft':
             previousConfig();
             break;
         // Undo: ctrl-z
