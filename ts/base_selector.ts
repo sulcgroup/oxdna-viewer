@@ -213,3 +213,142 @@ function openTab(evt, tabName) { //open clicked tab - Idk how this works
 	evt.currentTarget.className += " active";
 }
 
+/**
+ * Modified from SelectionBox code by HypnosNova
+ * https://github.com/mrdoob/three.js/blob/master/examples/jsm/interactive
+ * 
+ * Used for box selection functionality in DragControls
+ */
+class BoxSelector {
+    private frustum = new THREE.Frustum();
+	private startPoint = new THREE.Vector3();
+	private endPoint = new THREE.Vector3();
+	private collection = [];
+	private camera: THREE.PerspectiveCamera;
+	private deep: number;
+	private drawnBox: HTMLElement;
+
+	/**
+	 * @param startPoint Start position x,y,z
+	 * @param camera Camera, to calculate frustum
+	 * @param deep Optional depth of frustum
+	 */
+    constructor(startPoint: THREE.Vector3, camera: THREE.PerspectiveCamera, deep?: number) {
+		this.camera = camera;
+		this.deep = deep || Number.MAX_VALUE;
+
+		let pos = this.toScreenSpace(startPoint);
+
+		this.drawnBox = document.createElement('div');
+		this.drawnBox.classList.add('selectBox');
+		this.drawnBox.style.pointerEvents = 'none';
+		this.drawnBox.style.left = pos.x + 'px';
+		this.drawnBox.style.top = pos.y + 'px';
+		this.drawnBox.style.width = '0px';
+		this.drawnBox.style.height = '0px';
+
+		renderer.domElement.parentElement.appendChild(this.drawnBox);
+
+		console.log("We're inside the constructor");
+
+		this.startPoint = startPoint.clone(); //event.clientX; //event.clientY;
+	};
+
+	/**
+	 * @param endPoint (optional) End position x,y,z
+	 * @param startPoint (optional) Start position x,y,z
+	 * @return Selected elements
+	 */
+    public select(endPoint?: THREE.Vector3, startPoint?: THREE.Vector3): BasicElement[] {
+		this.startPoint = startPoint || this.startPoint;
+		this.endPoint = endPoint || this.endPoint;
+
+		// Update drawn box
+		let screenStart = this.toScreenSpace(this.startPoint);
+		let screenEnd = this.toScreenSpace(this.endPoint);
+
+		let pointBottomRight = new THREE.Vector2(
+			Math.max(screenStart.x, screenEnd.x),
+			Math.max(screenStart.y, screenEnd.y)
+		);
+		let pointTopLeft = new THREE.Vector2(
+			Math.min(screenStart.x, screenEnd.x),
+			Math.min(screenStart.y, screenEnd.y)
+		);
+		this.drawnBox.style.left = pointTopLeft.x + 'px';
+		this.drawnBox.style.top =  pointTopLeft.y + 'px';
+		this.drawnBox.style.width = pointBottomRight.x - pointTopLeft.x + 'px';
+		this.drawnBox.style.height = pointBottomRight.y - pointTopLeft.y + 'px';
+
+		// Update selected elements within box
+		this.collection = [];
+
+		this.updateFrustum(this.startPoint, this.endPoint);
+
+		elements.forEach(element => {
+			let cm_pos = element.get_instance_parameter3("cm_offsets");
+			if (this.frustum.containsPoint(cm_pos)) {
+				this.collection.push(element);
+			}
+		});
+
+		return this.collection;
+	};
+
+	public onSelectOver() {
+		this.drawnBox.parentElement.removeChild(this.drawnBox);
+	};
+
+	private toScreenSpace(pos: THREE.Vector3): THREE.Vector2 {
+		var rect = renderer.domElement.getBoundingClientRect();
+		return new THREE.Vector2(
+			rect.left + (rect.width *  pos.x + rect.width)/2,
+			rect.top + (rect.height * -pos.y + rect.height)/2
+		);
+	}
+
+	private updateFrustum(startPoint?: THREE.Vector3, endPoint?: THREE.Vector3) {
+		startPoint = startPoint || this.startPoint;
+		endPoint = endPoint || this.endPoint;
+
+		this.camera.updateProjectionMatrix();
+		this.camera.updateMatrixWorld(false);
+
+		let tmpPoint = startPoint.clone();
+		tmpPoint.x = Math.min(startPoint.x, endPoint.x);
+		tmpPoint.y = Math.max(startPoint.y, endPoint.y);
+		endPoint.x = Math.max(startPoint.x, endPoint.x);
+		endPoint.y = Math.min(startPoint.y, endPoint.y);
+
+		let vecNear = this.camera.position.clone();
+		let vecTopLeft = tmpPoint.clone();
+		let vecTopRight = new THREE.Vector3(endPoint.x, tmpPoint.y, 0);
+		let vecDownRight = endPoint.clone();
+		let vecDownLeft = new THREE.Vector3(tmpPoint.x, endPoint.y, 0);
+
+		vecTopLeft.unproject(this.camera); vecTopRight.unproject(this.camera);
+		vecDownLeft.unproject(this.camera); vecDownRight.unproject(this.camera);
+
+		let vectemp1 = vecTopLeft.clone().sub(vecNear);
+		let vectemp2 = vecTopRight.clone().sub(vecNear);
+		let vectemp3 = vecDownRight.clone().sub(vecNear);
+
+		vectemp1.normalize(); vectemp2.normalize(); vectemp3.normalize();
+
+		vectemp1.multiplyScalar(this.deep);
+		vectemp2.multiplyScalar(this.deep);
+		vectemp3.multiplyScalar(this.deep);
+
+		vectemp1.add(vecNear); vectemp2.add(vecNear); vectemp3.add(vecNear);
+
+		var planes = this.frustum.planes;
+
+		planes[0].setFromCoplanarPoints(vecNear, vecTopLeft, vecTopRight);
+		planes[1].setFromCoplanarPoints(vecNear, vecTopRight, vecDownRight);
+		planes[2].setFromCoplanarPoints(vecDownRight, vecDownLeft, vecNear);
+		planes[3].setFromCoplanarPoints(vecDownLeft, vecTopLeft, vecNear);
+		planes[4].setFromCoplanarPoints(vecTopRight, vecDownRight, vecDownLeft);
+		planes[5].setFromCoplanarPoints(vectemp3, vectemp2, vectemp1);
+		planes[5].normal.multiplyScalar(-1);
+	};
+};

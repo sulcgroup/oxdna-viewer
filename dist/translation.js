@@ -23,8 +23,6 @@ function getAngle() {
 let dragControls; //dragging functionality
 function drag() {
     dragControls = new THREE.DragControls(camera, renderer.domElement);
-    dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
-    dragControls.addEventListener('dragend', function (event) { controls.enabled = true; });
 }
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order

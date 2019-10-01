@@ -141,8 +141,14 @@
 			font-weight: bold;
 		}
 
+		.selectBox {
+			border: 1px solid #55aaff;
+			background-color: rgba(75, 160, 255, 0.3);
+			position: fixed;
+		}
+
 	</style>
-    </head>
+	</head>
 
 <body>
 	<div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
@@ -199,7 +205,8 @@
 					<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
 					<input type="radio" name="scope" value="Strand">Strand<br>
 					<input type="radio" name="scope" value="System">System<br>
-					<input type="radio" name="scope" value="Cluster" title="on first click performs DBSCAN to determine clusters">Cluster
+					<input type="radio" name="scope" value="Cluster" title="Performs DBSCAN to determine clusters on first click">Cluster<br>
+					<input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
 				</fieldset>
 				<fieldset>
 					<legend>Rotate:</legend>

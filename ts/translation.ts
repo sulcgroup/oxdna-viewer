@@ -27,8 +27,6 @@ function getAngle(): number {
 let dragControls: THREE.DragControls; //dragging functionality
 function drag() { //sets up DragControls - allows dragging of DNA - if action mode includes "drag"
     dragControls = new THREE.DragControls(camera, renderer.domElement);
-    dragControls.addEventListener('dragstart', function (event) { controls.enabled = false; }); // prevents rotation of camera
-    dragControls.addEventListener('dragend', function (event) { controls.enabled = true; })
 }
 
 //THREE quaternions are in (x, y, z, w) order

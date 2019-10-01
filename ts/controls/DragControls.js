@@ -21,8 +21,9 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var _mousePos = new THREE.Vector3();
     var _oldPos = new THREE.Vector3();
     var _startPos = new THREE.Vector3();
-    var _new_pos = new THREE.Vector3
+    var _new_pos = new THREE.Vector3();
     var _move = new THREE.Vector3();
+    var _boxSelector;
 
     var _selected = null, _hovered = null;
     //selected is object selected
@@ -80,7 +81,8 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 translateElements(selected_bases, _move);
                 _oldPos.copy(_new_pos); //Need difference from previous position.
                 
-                scope.dispatchEvent({ type: 'drag' });
+                // Disable controls
+                controls.enabled = false;
 
                 //Update attributes on the GPU
                 _selected.parent.parent.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
@@ -90,9 +92,25 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 _selected.parent.parent.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             }
             render();
+        } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            event.preventDefault();
+            let rect = _domElement.getBoundingClientRect();
+            let pos = new THREE.Vector3(
+                ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                - ((event.clientY - rect.top) / rect.height) * 2 + 1,
+                0.5
+            );
+            // Calculate which elements are in the drawn box
+            let boxSelected = _boxSelector.select(pos);
 
+            // Toggle selected elements (unless they are already selected)
+            boxSelected.forEach(element => {
+                if (!selected_bases.has(element)) {
+                    element.toggle();
+                }
+            });
         }
-
     }
 
     function onDocumentMouseDown(event) { //if mouse is moved
@@ -117,21 +135,43 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 
 				_domElement.style.cursor = 'move';
 
-				scope.dispatchEvent({ type: 'dragstart'});
+                controls.enabled = false;
 
 			}
-		}
+		} else if (getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            event.preventDefault();
 
+            // Disable trackball controlls
+            controls.enabled = false;
+
+            // Calculate start coordinates
+            var rect = _domElement.getBoundingClientRect();
+            let pos = new THREE.Vector3(
+                ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                - ((event.clientY - rect.top) / rect.height) * 2 + 1,
+                0.5
+            );
+
+            // Select multiple elements my holding down ctrl
+			if (!event.ctrlKey) {
+				clearSelection();
+			}
+
+            // Create a selection box
+            _boxSelector = new BoxSelector(pos, camera, scene);
+        }
 	}
 
 	function onDocumentMouseCancel(event) { 
 		if (getActionModes().includes("Drag")) { 
-
 			event.preventDefault();
 
 			//calculate new sp connectors
-			if (_selected) { 
-                scope.dispatchEvent({ type: 'dragend' });
+			if (_selected) {
+
+                // Re-enable trackball controlls
+                controls.enabled = true;
 
                 if (selected_bases.has(_selected)) {
                     // Calculate the total translation and add it to the edit history
@@ -144,8 +184,17 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 			}
             _domElement.style.cursor = 'auto';
             render();
+        } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            // Remove selection box and update the view
+            _boxSelector.onSelectOver();
+            _boxSelector = undefined;
+            systems.forEach(sys => {
+                updateView(sys);
+            });
 
-
+            // Re-enable trackball controlls
+            controls.enabled = true;
 		}
     }
 
