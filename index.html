@@ -93,7 +93,7 @@
 			</div>
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide</button>
 		</div>
-		<div style="position: absolute; bottom: 0px;">
+		<div style="position: absolute; bottom: 0px; overflow-y: scroll; max-height: 100%;">
 			<div class="opts" id="videoOptions" hidden="hidden">
 				<div style="text-align: right; background-color: #acc">
 					<i class="material-icons" onclick="toggleVideoOptions()">close</i>
@@ -119,7 +119,7 @@
 						<i class="material-icons" onclick="toggleColorOptions()">close</i>
 				</div>
 				Click a color to edit, right click to remove:
-				<div id="colorOptionContent"></div>
+				<div id="colorOptionContent" style="background-color: inherit"></div>
 			</div>
 		</div>
 		<canvas id="threeCanvas"></canvas>
