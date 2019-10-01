@@ -95,21 +95,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
         } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
             // Box selection
             event.preventDefault();
-            let rect = _domElement.getBoundingClientRect();
-            let pos = new THREE.Vector3(
-                ((event.clientX - rect.left) / rect.width) * 2 - 1,
-                - ((event.clientY - rect.top) / rect.height) * 2 + 1,
-                0.5
-            );
-            // Calculate which elements are in the drawn box
-            let boxSelected = _boxSelector.select(pos);
-
-            // Toggle selected elements (unless they are already selected)
-            boxSelected.forEach(element => {
-                if (!selected_bases.has(element)) {
-                    element.toggle();
-                }
-            });
+            _boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
         }
     }
 
@@ -145,21 +131,16 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             // Disable trackball controlls
             controls.enabled = false;
 
-            // Calculate start coordinates
-            var rect = _domElement.getBoundingClientRect();
-            let pos = new THREE.Vector3(
-                ((event.clientX - rect.left) / rect.width) * 2 - 1,
-                - ((event.clientY - rect.top) / rect.height) * 2 + 1,
-                0.5
-            );
-
             // Select multiple elements my holding down ctrl
 			if (!event.ctrlKey) {
 				clearSelection();
 			}
 
             // Create a selection box
-            _boxSelector = new BoxSelector(pos, camera, scene);
+            _boxSelector = new BoxSelector(
+                new THREE.Vector2(event.clientX, event.clientY),
+                camera, _domElement, scene
+            );
         }
 	}
 
@@ -186,6 +167,20 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             render();
         } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
             // Box selection
+            event.preventDefault();
+
+            // Calculate which elements are in the drawn box
+            let boxSelected = _boxSelector.select(
+                new THREE.Vector2(event.clientX, event.clientY)
+            );
+
+            // Toggle selected elements (unless they are already selected)
+            boxSelected.forEach(element => {
+                if (!selected_bases.has(element)) {
+                    element.toggle();
+                }
+            });
+
             // Remove selection box and update the view
             _boxSelector.onSelectOver();
             _boxSelector = undefined;

@@ -201,24 +201,44 @@ class BoxSelector {
      * @param camera Camera, to calculate frustum
      * @param deep Optional depth of frustum
      */
-    constructor(startPoint, camera, deep) {
+    constructor(screenStart, camera, domElement, deep) {
         this.frustum = new THREE.Frustum();
         this.startPoint = new THREE.Vector3();
         this.endPoint = new THREE.Vector3();
         this.collection = [];
+        this.screenStart = new THREE.Vector2();
+        this.screenEnd = new THREE.Vector2();
         this.camera = camera;
+        this.domElement = domElement;
         this.deep = deep || Number.MAX_VALUE;
-        let pos = this.toScreenSpace(startPoint);
+        this.screenStart = screenStart;
+        // Setup the drawn box
         this.drawnBox = document.createElement('div');
         this.drawnBox.classList.add('selectBox');
         this.drawnBox.style.pointerEvents = 'none';
-        this.drawnBox.style.left = pos.x + 'px';
-        this.drawnBox.style.top = pos.y + 'px';
+        this.drawnBox.style.left = this.screenStart.x + 'px';
+        this.drawnBox.style.top = this.screenStart.y + 'px';
         this.drawnBox.style.width = '0px';
         this.drawnBox.style.height = '0px';
         renderer.domElement.parentElement.appendChild(this.drawnBox);
-        console.log("We're inside the constructor");
-        this.startPoint = startPoint.clone(); //event.clientX; //event.clientY;
+        // Calculate and save start point in scene coords
+        this.startPoint = this.fromScreenSpace(this.screenStart);
+    }
+    ;
+    /**
+     * Redraw the selection box on the screen (call whenever mouse is moved)
+     * @param screenEnd (optional) End position in x,y screen coordinates
+     * @param screenStart (optional) Start position in x,y screen coordinates
+     */
+    redrawBox(screenEnd, screenStart) {
+        this.screenStart = screenStart || this.screenStart;
+        this.screenEnd = screenEnd || this.screenEnd;
+        let pointBottomRight = new THREE.Vector2(Math.max(this.screenStart.x, this.screenEnd.x), Math.max(this.screenStart.y, this.screenEnd.y));
+        let pointTopLeft = new THREE.Vector2(Math.min(this.screenStart.x, this.screenEnd.x), Math.min(this.screenStart.y, this.screenEnd.y));
+        this.drawnBox.style.left = pointTopLeft.x + 'px';
+        this.drawnBox.style.top = pointTopLeft.y + 'px';
+        this.drawnBox.style.width = pointBottomRight.x - pointTopLeft.x + 'px';
+        this.drawnBox.style.height = pointBottomRight.y - pointTopLeft.y + 'px';
     }
     ;
     /**
@@ -226,18 +246,11 @@ class BoxSelector {
      * @param startPoint (optional) Start position x,y,z
      * @return Selected elements
      */
-    select(endPoint, startPoint) {
-        this.startPoint = startPoint || this.startPoint;
-        this.endPoint = endPoint || this.endPoint;
-        // Update drawn box
-        let screenStart = this.toScreenSpace(this.startPoint);
-        let screenEnd = this.toScreenSpace(this.endPoint);
-        let pointBottomRight = new THREE.Vector2(Math.max(screenStart.x, screenEnd.x), Math.max(screenStart.y, screenEnd.y));
-        let pointTopLeft = new THREE.Vector2(Math.min(screenStart.x, screenEnd.x), Math.min(screenStart.y, screenEnd.y));
-        this.drawnBox.style.left = pointTopLeft.x + 'px';
-        this.drawnBox.style.top = pointTopLeft.y + 'px';
-        this.drawnBox.style.width = pointBottomRight.x - pointTopLeft.x + 'px';
-        this.drawnBox.style.height = pointBottomRight.y - pointTopLeft.y + 'px';
+    select(screenEnd, screenStart) {
+        this.screenStart = screenStart || this.screenStart;
+        this.screenEnd = screenEnd || this.screenEnd;
+        this.startPoint = this.fromScreenSpace(this.screenStart);
+        this.endPoint = this.fromScreenSpace(this.screenEnd);
         // Update selected elements within box
         this.collection = [];
         this.updateFrustum(this.startPoint, this.endPoint);
@@ -254,9 +267,9 @@ class BoxSelector {
         this.drawnBox.parentElement.removeChild(this.drawnBox);
     }
     ;
-    toScreenSpace(pos) {
-        var rect = renderer.domElement.getBoundingClientRect();
-        return new THREE.Vector2(rect.left + (rect.width * pos.x + rect.width) / 2, rect.top + (rect.height * -pos.y + rect.height) / 2);
+    fromScreenSpace(pos) {
+        var rect = this.domElement.getBoundingClientRect();
+        return new THREE.Vector3(((pos.x - rect.left) / rect.width) * 2 - 1, -((pos.y - rect.top) / rect.height) * 2 + 1, 0.5);
     }
     updateFrustum(startPoint, endPoint) {
         startPoint = startPoint || this.startPoint;
