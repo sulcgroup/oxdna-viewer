@@ -1047,32 +1047,27 @@ function toggleSideNav(button) {
         button.innerHTML = hidden;
     }
 }
-function calculateClusters(callback) {
-    // Check if we have already calculated clusters
-    if (typeof elements[0].cluster_id == 'undefined') {
-        let minPts = 6; // Minimum number of nucleotides in a cluster
-        let epsilon = 1.5; // Max distance between cluster neigbours
-        // Set wait cursor and request an animation frame to make sure
-        // that it gets changed before starting dbscan:
-        renderer.domElement.style.cursor = "wait";
-        requestAnimationFrame(() => requestAnimationFrame(function () {
-            dbscan(minPts, epsilon);
-            renderer.domElement.style.cursor = "auto"; // Change cursor back
-            // It is possible to provide a callback function to run only after
-            // the clustering has finished.
-            if (typeof callback !== 'undefined') {
-                callback();
-            }
-        }));
-        // If clusters has already been calculated, just run the callback.
-    }
-    else if (typeof callback !== 'undefined') {
-        callback();
-    }
+function toggleClusterOptions() {
+    let opt = document.getElementById("clusterOptions");
+    opt.hidden = !opt.hidden;
+}
+;
+function calculateClusters() {
+    let minPts = parseFloat(document.getElementById("minPts").value);
+    let epsilon = parseFloat(document.getElementById("epsilon").value);
+    document.getElementById("clusterOptions").hidden = true;
+    // Set wait cursor and request an animation frame to make sure
+    // that it gets changed before starting dbscan:
+    renderer.domElement.style.cursor = "wait";
+    requestAnimationFrame(() => requestAnimationFrame(function () {
+        dbscan(minPts, epsilon);
+        renderer.domElement.style.cursor = "auto"; // Change cursor back
+    }));
 }
 // Algorithm and comments from:
 // https://en.wikipedia.org/wiki/DBSCAN#Algorithm
 function dbscan(minPts, eps) {
+    let nElements = elements.length;
     let c = 0; // Cluster counter
     let noise = -1; // Label for noise
     let getPos = (element) => {
@@ -1080,7 +1075,7 @@ function dbscan(minPts, eps) {
     };
     let findNeigbours = (p, eps) => {
         let neigbours = [];
-        for (let i = 0; i < elements.length; i++) {
+        for (let i = 0; i < nElements; i++) {
             let q = elements[i];
             if (p != q) {
                 let dist = getPos(p).distanceTo(getPos(q));
@@ -1091,7 +1086,7 @@ function dbscan(minPts, eps) {
         }
         return neigbours;
     };
-    for (let i = 0; i < elements.length; i++) {
+    for (let i = 0; i < nElements; i++) {
         let p = elements[i];
         if (typeof p.cluster_id !== 'undefined') {
             continue; // Previously processed in inner loop

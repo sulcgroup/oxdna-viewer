@@ -68,7 +68,9 @@
 					<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
 					<input type="radio" name="scope" value="Strand">Strand<br>
 					<input type="radio" name="scope" value="System">System<br>
-					<input type="radio" name="scope" value="Cluster" title="Performs DBSCAN to determine clusters on first click">Cluster<br>
+					<input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN"
+						onchange="if (typeof elements[0].cluster_id == 'undefined') {toggleClusterOptions();}">
+						Cluster <i class="material-icons" onclick="toggleClusterOptions()" title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
 					<input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
 				</fieldset>
 				<fieldset>
@@ -94,7 +96,7 @@
 			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide</button>
 		</div>
 		<div style="position: absolute; bottom: 0px; overflow-y: scroll; max-height: 100%;">
-			<div class="opts" id="videoOptions" hidden="hidden">
+			<div class="opts" id="videoOptions" hidden="true">
 				<div style="text-align: right; background-color: #acc">
 					<i class="material-icons" onclick="toggleVideoOptions()">close</i>
 				</div>
@@ -114,12 +116,22 @@
 				<input type="number" value="24" id="videoFramerate" width="20">
 				<button id="videoStartStop" onclick="createVideo()">Start</button>
 			</div>
-			<div class="opts" id="colorOptions" hidden="hidden" style="background-color: transparent">
+			<div class="opts" id="colorOptions" hidden="true">
 				<div style="text-align: right; background-color: #acc">
 						<i class="material-icons" onclick="toggleColorOptions()">close</i>
 				</div>
 				Click a color to edit, right click to remove:
 				<div id="colorOptionContent" style="background-color: inherit"></div>
+			</div>
+			<div class="opts" id="clusterOptions" hidden="true">
+				<div style="text-align: right; background-color: #acc">
+						<i class="material-icons" onclick="toggleClusterOptions()">close</i>
+				</div>
+				<label for="minPts">Min points: </label>
+				<input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
+				<label for="epsilon">Max dist (ε): </label>
+				<input type="number" value="1.5" id="epsilon" title="Max distance between cluster neigbours" min=0>
+				<button onclick="calculateClusters()">Start clustering</button>
 			</div>
 		</div>
 		<canvas id="threeCanvas"></canvas>

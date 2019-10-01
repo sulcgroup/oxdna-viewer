@@ -45,11 +45,9 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Cluster" :
-					// Calculate clusters (if not already calculated) and toggle
-					// nucletides within callback to make sure that clustering
-					// is complete.
-					calculateClusters(function() {
-						//for every strand in the System
+					if (typeof elements[0].cluster_id == 'undefined') {
+						document.getElementById("clusterOptions").hidden = false;
+					} else {
 						for (let i = 0; i < strand_count; i++){
 							let strand = sys[strands][i];
 							let nuc_count = strand[monomers].length;
@@ -62,7 +60,7 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 							}
 						}
 						updateView(sys);
-					});
+					}
 					break;
 
 			}
