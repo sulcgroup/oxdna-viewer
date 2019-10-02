@@ -83,7 +83,7 @@ class RevertableTranslation extends RevertableEdit {
 }
 
 class RevertableRotation extends RevertableEdit {
-    constructor(rotatedElements: Set<BasicElement>, axis: string, angle: number, about: THREE.Vector3) {
+    constructor(rotatedElements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
         const elements = new Set(rotatedElements);
         const c = about.clone();
         let undo = function() {

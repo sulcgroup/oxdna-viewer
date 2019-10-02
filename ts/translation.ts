@@ -34,7 +34,15 @@ function glsl2three(input: THREE.Vector4) {
 
 function rotateByInput() { //rotate selected according to input controls
     let angle = getAngle();
-    let axis = getAxisMode();
+    let axisString = getAxisMode();
+
+    let axis = new THREE.Vector3();
+    switch (axisString) {
+        case "X": axis.set(1, 0, 0); break;
+        case "Y": axis.set(0, 1, 0); break;
+        case "Z": axis.set(0, 0, 1); break;
+        default: alert("Unknown rotation axis: " + axisString);
+    }
 
     let c = new THREE.Vector3(0, 0, 0);
     selected_bases.forEach((base) => {
@@ -45,40 +53,14 @@ function rotateByInput() { //rotate selected according to input controls
     editHistory.do(new RevertableRotation(selected_bases, axis, angle, c));
 }
 
-function rotateElements(elements: Set<BasicElement>, axis: string, angle: number, about: THREE.Vector3) {
-    let v1: THREE.Vector3 = new THREE.Vector3();
+function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
     let rot: boolean = false; //rotation success boolean
     let matrix: THREE.Matrix3 = new THREE.Matrix3();
-    switch (axis) {
-        case "X": {
-            matrix.set(1, 0, 0, 
-                0, Math.cos(angle), -Math.sin(angle), 
-                0, Math.sin(angle), Math.cos(angle));
-            v1.set(1, 0, 0);
-            break;
-        }
-        case "Y": {
-            matrix.set(Math.cos(angle), 0, Math.sin(angle), 
-            0, 1, 0, 
-            -Math.sin(angle), 0, Math.cos(angle));
-            v1.set(0, 1, 0);
-            break;
-        }
-        case "Z": {
-            matrix.set(Math.cos(angle), -Math.sin(angle), 0, 
-            Math.sin(angle), Math.cos(angle), 0, 
-            0, 0, 1); 
-            v1.set(0, 0, 1);
-            break;
-        }
-        default: alert("Unknown rotation axis: " + axis);
-    }
 
     let q = new THREE.Quaternion;
-    q.setFromAxisAngle(v1, angle);
+    q.setFromAxisAngle(axis, angle);
 
     //this will be rotating around the center of mass of the selected bases.
-
     elements.forEach((base) => {
         //rotate around user selected axis with user entered angle
         let sys = base.parent.parent;
@@ -96,11 +78,11 @@ function rotateElements(elements: Set<BasicElement>, axis: string, angle: number
         con_pos.sub(about);
         bbcon_pos.sub(about);
         
-        cm_pos.applyMatrix3(matrix);
-        bb_pos.applyMatrix3(matrix);
-        ns_pos.applyMatrix3(matrix);
-        con_pos.applyMatrix3(matrix);
-        bbcon_pos.applyMatrix3(matrix);
+        cm_pos.applyQuaternion(q);
+        bb_pos.applyQuaternion(q);
+        ns_pos.applyQuaternion(q);
+        con_pos.applyQuaternion(q);
+        bbcon_pos.applyQuaternion(q);
 
         let ns_rotationV = base.get_instance_parameter4("ns_rotation");
         let ns_rotation = glsl2three(ns_rotationV);
