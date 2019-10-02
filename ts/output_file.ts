@@ -1,9 +1,9 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
-    let strand_len = makeTopFile();
-    makeDatFile(strand_len);	
+    makeTopFile();
+    makeDatFile();	
 }
 
-function makeTopFile(): number {
+function makeTopFile(){
     let top: string[] = []; //string of contents of .top file
     let tot_nuc: number = 0; //total # of elements
     let tot_strands: number = 0; //total # of strands
@@ -46,12 +46,21 @@ function makeTopFile(): number {
         top.push(tl.join(" "));
     }
     makeTextFile("sim.top", top.join("\n")); //make .top file
-    return longest_strand_len;
 }
-function makeDatFile(longest_strand_len: number) {
+function makeDatFile() {
+    // Get largest absolute coordinate:
+    let max_coord = 0;
+    for (let i = 0; i < elements.length; i++) { //for all elements
+        let p = elements[i].get_instance_parameter3("cm_offsets");
+        max_coord = Math.max(max_coord, Math.max(
+            Math.abs(p.x),
+            Math.abs(p.y),
+            Math.abs(p.z)
+        ))
+    }
     let tempVec = new THREE.Vector3(0, 0, 0);
     let dat: string = "";
-    let box: number = 2 * longest_strand_len;
+    let box: number = Math.ceil(2 * max_coord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box
         + "\n" + "E = 0 0 0 " + dat_fileout + "\n";
     for (let i = 0; i < elements.length; i++) { //for all elements

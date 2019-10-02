@@ -1,6 +1,6 @@
 function makeOutputFiles() {
-    let strand_len = makeTopFile();
-    makeDatFile(strand_len);
+    makeTopFile();
+    makeDatFile();
 }
 function makeTopFile() {
     let top = []; //string of contents of .top file
@@ -45,12 +45,17 @@ function makeTopFile() {
         top.push(tl.join(" "));
     }
     makeTextFile("sim.top", top.join("\n")); //make .top file
-    return longest_strand_len;
 }
-function makeDatFile(longest_strand_len) {
+function makeDatFile() {
+    // Get largest absolute coordinate:
+    let max_coord = 0;
+    for (let i = 0; i < elements.length; i++) { //for all elements
+        let p = elements[i].get_instance_parameter3("cm_offsets");
+        max_coord = Math.max(max_coord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
+    }
     let tempVec = new THREE.Vector3(0, 0, 0);
     let dat = "";
-    let box = 2 * longest_strand_len;
+    let box = Math.ceil(2 * max_coord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box
         + "\n" + "E = 0 0 0 " + dat_fileout + "\n";
     for (let i = 0; i < elements.length; i++) { //for all elements
