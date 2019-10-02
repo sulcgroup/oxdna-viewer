@@ -127,11 +127,19 @@
 				<div style="text-align: right; background-color: #acc">
 						<i class="material-icons" onclick="toggleClusterOptions()">close</i>
 				</div>
-				<label for="minPts">Min points: </label>
-				<input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
-				<label for="epsilon">Max dist (ε): </label>
-				<input type="number" value="1.5" id="epsilon" title="Max distance between cluster neigbours" min=0>
-				<button onclick="calculateClusters()">Start clustering</button>
+				<fieldset>
+					<legend>Automatic</legend>
+					<label for="minPts">Min points: </label>
+					<input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
+					<label for="epsilon">Max dist (ε): </label>
+					<input type="number" value="1.5" id="epsilon" title="Max distance between cluster neigbours" min=0>
+					<button onclick="calculateClusters()">Start clustering</button>
+				</fieldset>
+				<fieldset>
+					<legend>Manual</legend>
+					<button onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to cluster</button>
+					<button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
+				</fieldset>
 			</div>
 		</div>
 		<canvas id="threeCanvas"></canvas>

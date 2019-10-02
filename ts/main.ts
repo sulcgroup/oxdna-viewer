@@ -27,6 +27,7 @@ var strands = 'children',
     objects = 'children';
 
 var editHistory = new EditHistory();
+let cluster_counter = 0 // Cluster counter
 
 render();
 
@@ -1313,6 +1314,33 @@ function toggleClusterOptions() {
     opt.hidden = !opt.hidden;
 };
 
+/**
+ * Add all selected elements to a new cluster
+ */
+function selectionToCluster() {
+    if(selected_bases.size > 0) {
+        cluster_counter++;
+        selected_bases.forEach(element => {
+            element.cluster_id = cluster_counter;
+        });
+    } else {
+        alert("First make a selection of elements you want to include in the cluster");
+    }
+}
+
+/**
+ * Clear clusters and reset the cluster counter
+ */
+function clearClusters() {
+    cluster_counter = 0 // Cluster counter
+    elements.forEach(element => {
+        delete element.cluster_id;
+    });
+}
+
+/**
+ * Calculate DBSCAN clusters using parameters from input
+ */
 function calculateClusters() {
     let minPts = parseFloat((<HTMLInputElement>document.getElementById("minPts")).value);
     let epsilon = parseFloat((<HTMLInputElement>document.getElementById("epsilon")).value);
@@ -1328,11 +1356,14 @@ function calculateClusters() {
     }))
 }
 
+/**
+ * Calculate DBSCAN clusters using custom parameters
+ */
 // Algorithm and comments from:
 // https://en.wikipedia.org/wiki/DBSCAN#Algorithm
 function dbscan(minPts: number, eps: number) {
     let nElements = elements.length;
-    let c = 0 // Cluster counter
+    clearClusters(); // Remove any previous clusters and reset counter
     let noise = -1; // Label for noise
     let getPos = (element: BasicElement) => {
         return element.get_instance_parameter3("cm_offsets");
@@ -1361,8 +1392,8 @@ function dbscan(minPts: number, eps: number) {
             p.cluster_id = noise // Label as noise
             continue;
         }
-        c++; // Next cluster id
-        p.cluster_id = c; // Label initial point
+        cluster_counter++; // Next cluster id
+        p.cluster_id = cluster_counter; // Label initial point
         for (let j=0; j<neigbours.length; j++) { // Process every seed point
             let q: BasicElement = neigbours[j];
             if ((typeof q.cluster_id !== 'undefined') && // Previously processed
@@ -1370,7 +1401,7 @@ function dbscan(minPts: number, eps: number) {
             ) {
                 continue;
             }
-            q.cluster_id = c; // Label neigbour
+            q.cluster_id = cluster_counter; // Label neigbour
             // Find neigbours of q:
             let meta_neigbours: BasicElement[] = findNeigbours(q, eps);
             if (meta_neigbours.length >= minPts) { // Density check
