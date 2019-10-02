@@ -54,6 +54,7 @@
 				<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
 				<button onclick="toggleColorOptions()" type="button" title="modify the default strand colors">Edit Colors</button>
 				<button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
+				<button onclick="toggleFogOptions()" type="button" title="View fog options">Fog</button>
 			</fieldset>
 			<fieldset>
 				<legend>Edit</legend>
@@ -140,6 +141,16 @@
 					<button onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to cluster</button>
 					<button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
 				</fieldset>
+			</div>
+			<div class="opts" id="fogOptions" hidden="true">
+				<div style="text-align: right; background-color: #acc">
+						<i class="material-icons" onclick="toggleFogOptions()">close</i>
+				</div>
+				<label for="fogNear">Near: </label>
+				<input type="number" value="1" id="fogNear" title="Minimum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
+				<label for="fogNear">Far: </label>
+				<input type="number" value="200" id="fogFar" title="Maximum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
+				<button onclick="toggleFog()">Toggle fog</button>
 			</div>
 		</div>
 		<canvas id="threeCanvas"></canvas>

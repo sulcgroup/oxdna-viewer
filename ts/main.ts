@@ -1278,9 +1278,21 @@ function toggleBackground() {
     }
 };
 
-function toggleFog(near, far) {
+function toggleFogOptions() {
+    let opt = document.getElementById("fogOptions");
+    opt.hidden = !opt.hidden;
+};
+
+function setFog(near?: number, far?: number) {
+    near = near | parseFloat((<HTMLInputElement>document.getElementById("fogNear")).value);
+    far = near | parseFloat((<HTMLInputElement>document.getElementById("fogFar")).value);
+    scene.fog = new THREE.Fog(scene.background, near, far);
+    render();
+}
+
+function toggleFog(near?: number, far?: number) {
     if (scene.fog == null) {
-        scene.fog = new THREE.Fog(scene.background, near, far);
+        setFog(near, far);
     }
     else {
         scene.fog = null;

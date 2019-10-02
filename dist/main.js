@@ -1019,9 +1019,20 @@ function toggleBackground() {
     }
 }
 ;
+function toggleFogOptions() {
+    let opt = document.getElementById("fogOptions");
+    opt.hidden = !opt.hidden;
+}
+;
+function setFog(near, far) {
+    near = near | parseFloat(document.getElementById("fogNear").value);
+    far = near | parseFloat(document.getElementById("fogFar").value);
+    scene.fog = new THREE.Fog(scene.background, near, far);
+    render();
+}
 function toggleFog(near, far) {
     if (scene.fog == null) {
-        scene.fog = new THREE.Fog(scene.background, near, far);
+        setFog(near, far);
     }
     else {
         scene.fog = null;
