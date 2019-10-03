@@ -1,7 +1,7 @@
 # oxdna-viewer
 oxDNA configuration viewer 
 
-The dev branch contains the newest features and is constantly being updated!  Generally dev is stable and will not crash too frequently.  If you want to try the bleeding edge features, ask the developers which branches are under active development.  For example, the much faster instanced version of the code is currently on erik-dev and live relaxation is on jigglewiggle.
+The dev branch contains the newest features and is constantly being updated!  Generally dev is stable and will not crash too frequently.  If you want to try the bleeding edge features, ask the developers which branches are under active development.  For example, live relaxation is on jigglewiggle.
 
 Github pages can only host the master branch, so to try the dev version out you will need to download it.
 
