@@ -30,6 +30,7 @@ function glsl2three(input) {
 function rotateByInput() {
     let angle = getAngle();
     let axisString = getAxisMode();
+    // Rotate around user selected axis with user entered angle
     let axis = new THREE.Vector3();
     switch (axisString) {
         case "X":
@@ -43,6 +44,7 @@ function rotateByInput() {
             break;
         default: alert("Unknown rotation axis: " + axisString);
     }
+    // This will be rotating around the center of mass of the selected bases.
     let c = new THREE.Vector3(0, 0, 0);
     selected_bases.forEach((base) => {
         c.add(base.get_instance_parameter3("cm_offsets"));
@@ -53,11 +55,11 @@ function rotateByInput() {
 function rotateElements(elements, axis, angle, about) {
     let rot = false; //rotation success boolean
     let matrix = new THREE.Matrix3();
+    // Normalize axis
+    axis = axis.clone().normalize();
     let q = new THREE.Quaternion;
     q.setFromAxisAngle(axis, angle);
-    //this will be rotating around the center of mass of the selected bases.
     elements.forEach((base) => {
-        //rotate around user selected axis with user entered angle
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
         let cm_pos = base.get_instance_parameter3("cm_offsets");
@@ -81,6 +83,8 @@ function rotateElements(elements, axis, angle, about) {
         let con_rotation = glsl2three(con_rotationV);
         let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
         let bbcon_rotation = glsl2three(bbcon_rotationV);
+        // This doesn't seem to work when rotating
+        // around anything but the x,y or z axis...
         ns_rotation.multiply(q);
         con_rotation.multiply(q);
         bbcon_rotation.multiply(q);

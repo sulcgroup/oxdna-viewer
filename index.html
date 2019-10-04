@@ -84,6 +84,7 @@
 					<input type="number" value="-90" id="rotAngle" width="20">
 					<button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
 				</fieldset>
+				<input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
 			</fieldset>
 			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
 			<div style="text-align: center;">
@@ -167,6 +168,7 @@
 			<script src="./dist/PBC_switchbox.js"></script>
 			<script src="./dist/file_reading.js"></script>
 			<script src="./dist/doUndo.js"></script>
+			<script src="./dist/rigid-body_simulation.js"></script>
 			<script src="./dist/main.js"></script>
 			<script src="./dist/keybindings.js"></script>
 			<script src="./dist/base_selector.js"></script>
