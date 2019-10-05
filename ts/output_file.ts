@@ -60,7 +60,7 @@ function makeDatFile() {
     }
     let tempVec = new THREE.Vector3(0, 0, 0);
     let dat: string = "";
-    let box: number = Math.ceil(2 * max_coord);
+    let box: number = Math.ceil(5 * max_coord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box
         + "\n" + "E = 0 0 0 " + dat_fileout + "\n";
     for (let i = 0; i < elements.length; i++) { //for all elements
