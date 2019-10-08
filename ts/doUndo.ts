@@ -98,6 +98,41 @@ class RevertableRotation extends RevertableEdit {
     };
 }
 
+class RevertableClusterSim extends RevertableEdit {
+    constructor(clusters: Cluster[]) {
+        let cs = [];
+        clusters.forEach((c) => {
+            cs.push({
+                "elements": c.getElements(),
+                "translation": c.getTotalTranslation(),
+                "rotation": c.getTotalRotation(),
+                "position": c.getPosition(),
+            });
+        });
+
+        let undo = function() {
+            cs.forEach((c) => {
+                rotateElementsByQuaternion(
+                    c["elements"],
+                    c["rotation"].clone().conjugate(),
+                    c["position"]
+                );
+                translateElements(
+                    c["elements"],
+                    c["translation"].clone().negate()
+                );
+            });
+        };
+        let redo = function() {
+            cs.forEach((c) => {
+                translateElements(c["elements"], c["translation"]);
+                rotateElementsByQuaternion(c["elements"], c["rotation"], c["position"]);
+            });
+        }
+        super(undo, redo);
+    };
+}
+
 // Adapted from https://github.com/worsnupd/ts-data-structures
 class Stack<T> {
     private top: StackElem<T>;
