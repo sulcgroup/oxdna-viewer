@@ -28,11 +28,14 @@ function getAngle(): number {
 //GLSL quaternions are in (w, z, y, x) order
 //So when you need to convert between them...
 function glsl2three(input: THREE.Vector4) {
-    let out = new THREE.Quaternion(input.w, input.z, input.y, input.x)
-    return out
+    let out = new THREE.Quaternion(input.w, input.z, input.y, input.x);
+    return out;
 }
 
 function rotateByInput() { //rotate selected according to input controls
+    if (selected_bases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
+        alert("Please select elements to rotate.");
+    }
     let angle = getAngle();
     let axisString = getAxisMode();
 
@@ -56,14 +59,18 @@ function rotateByInput() { //rotate selected according to input controls
 }
 
 function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
-    let rot: boolean = false; //rotation success boolean
-    let matrix: THREE.Matrix3 = new THREE.Matrix3();
-
     // Normalize axis
     axis = axis.clone().normalize();
 
-    let q = new THREE.Quaternion;
-    q.setFromAxisAngle(axis, angle);
+    let q1 = new THREE.Quaternion;
+    q1.setFromAxisAngle(axis, angle);
+
+    // For some reason, we have to rotate the orientations
+    // around an axis with inverted y-value...
+    let axis2 = axis.clone();
+    axis2.y *= -1;
+    let q2 = new THREE.Quaternion;
+    q2.setFromAxisAngle(axis2, angle);
 
     elements.forEach((base) => {
         let sys = base.parent.parent;
@@ -80,12 +87,12 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         ns_pos.sub(about);
         con_pos.sub(about);
         bbcon_pos.sub(about);
-        
-        cm_pos.applyQuaternion(q);
-        bb_pos.applyQuaternion(q);
-        ns_pos.applyQuaternion(q);
-        con_pos.applyQuaternion(q);
-        bbcon_pos.applyQuaternion(q);
+
+        cm_pos.applyQuaternion(q1);
+        bb_pos.applyQuaternion(q1);
+        ns_pos.applyQuaternion(q1);
+        con_pos.applyQuaternion(q1);
+        bbcon_pos.applyQuaternion(q1);
 
         let ns_rotationV = base.get_instance_parameter4("ns_rotation");
         let ns_rotation = glsl2three(ns_rotationV);
@@ -94,11 +101,9 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
         let bbcon_rotation = glsl2three(bbcon_rotationV);
 
-        // This doesn't seem to work when rotating
-        // around anything but the x,y or z axis...
-        ns_rotation.multiply(q);
-        con_rotation.multiply(q);
-        bbcon_rotation.multiply(q);
+        ns_rotation.multiply(q2);
+        con_rotation.multiply(q2);
+        bbcon_rotation.multiply(q2);
 
         cm_pos.add(about);
         bb_pos.add(about);
@@ -111,21 +116,18 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
         sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
         sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
+
         sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
         sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
-
-        rot = true;
     });
 
-    // Update backbone connections (is there a more clever way to do this than
-    // to loop through all? We only need to update bases with neigbours
-    // outside the selection set)
+    // Update backbone connections for bases with neigbours outside the selection set
     elements.forEach((base) => {
-        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined && !elements.has(base.neighbor3)) {
             calcsp(base); //calculate sp between current and neighbor3
         }
-        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined && !elements.has(base.neighbor5)) {
             calcsp(base.neighbor5); //calculate sp between current and neighbor5
         }
     });
@@ -140,10 +142,6 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-    }
-
-    if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
-        alert("Please select an object to rotate.");
     }
     render();
 }

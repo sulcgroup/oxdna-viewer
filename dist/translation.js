@@ -28,6 +28,9 @@ function glsl2three(input) {
     return out;
 }
 function rotateByInput() {
+    if (selected_bases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
+        alert("Please select elements to rotate.");
+    }
     let angle = getAngle();
     let axisString = getAxisMode();
     // Rotate around user selected axis with user entered angle
@@ -53,12 +56,16 @@ function rotateByInput() {
     editHistory.do(new RevertableRotation(selected_bases, axis, angle, c));
 }
 function rotateElements(elements, axis, angle, about) {
-    let rot = false; //rotation success boolean
-    let matrix = new THREE.Matrix3();
     // Normalize axis
     axis = axis.clone().normalize();
-    let q = new THREE.Quaternion;
-    q.setFromAxisAngle(axis, angle);
+    let q1 = new THREE.Quaternion;
+    q1.setFromAxisAngle(axis, angle);
+    // For some reason, we have to rotate the orientations
+    // around an axis with inverted y-value...
+    let axis2 = axis.clone();
+    axis2.y *= -1;
+    let q2 = new THREE.Quaternion;
+    q2.setFromAxisAngle(axis2, angle);
     elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
@@ -72,22 +79,20 @@ function rotateElements(elements, axis, angle, about) {
         ns_pos.sub(about);
         con_pos.sub(about);
         bbcon_pos.sub(about);
-        cm_pos.applyQuaternion(q);
-        bb_pos.applyQuaternion(q);
-        ns_pos.applyQuaternion(q);
-        con_pos.applyQuaternion(q);
-        bbcon_pos.applyQuaternion(q);
+        cm_pos.applyQuaternion(q1);
+        bb_pos.applyQuaternion(q1);
+        ns_pos.applyQuaternion(q1);
+        con_pos.applyQuaternion(q1);
+        bbcon_pos.applyQuaternion(q1);
         let ns_rotationV = base.get_instance_parameter4("ns_rotation");
         let ns_rotation = glsl2three(ns_rotationV);
         let con_rotationV = base.get_instance_parameter4("con_rotation");
         let con_rotation = glsl2three(con_rotationV);
         let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
         let bbcon_rotation = glsl2three(bbcon_rotationV);
-        // This doesn't seem to work when rotating
-        // around anything but the x,y or z axis...
-        ns_rotation.multiply(q);
-        con_rotation.multiply(q);
-        bbcon_rotation.multiply(q);
+        ns_rotation.multiply(q2);
+        con_rotation.multiply(q2);
+        bbcon_rotation.multiply(q2);
         cm_pos.add(about);
         bb_pos.add(about);
         ns_pos.add(about);
@@ -101,16 +106,13 @@ function rotateElements(elements, axis, angle, about) {
         sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
         sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
-        rot = true;
     });
-    // Update backbone connections (is there a more clever way to do this than
-    // to loop through all? We only need to update bases with neigbours
-    // outside the selection set)
+    // Update backbone connections for bases with neigbours outside the selection set
     elements.forEach((base) => {
-        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined && !elements.has(base.neighbor3)) {
             calcsp(base); //calculate sp between current and neighbor3
         }
-        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined && !elements.has(base.neighbor5)) {
             calcsp(base.neighbor5); //calculate sp between current and neighbor5
         }
     });
@@ -123,9 +125,6 @@ function rotateElements(elements, axis, angle, about) {
         systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-    }
-    if (!rot) { //if no object has been selected, rotation will not occur and error message displayed
-        alert("Please select an object to rotate.");
     }
     render();
 }
