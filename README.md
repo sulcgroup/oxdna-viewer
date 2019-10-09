@@ -1,3 +1,5 @@
+[Try it!](https://sulcgroup.github.io/oxdna-viewer/)
+
 # oxdna-viewer
 oxDNA configuration viewer 
 
