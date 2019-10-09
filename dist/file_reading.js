@@ -150,7 +150,6 @@ function get_previous_chunk(dat_file, chunk_number) {
 class marker {
 }
 function makeLut(data, key) {
-    let checkbox = document.getElementById("lutToggle");
     let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined) {
         lut = new THREE.Lut("rainbow", 2048);
@@ -175,7 +174,6 @@ function makeLut(data, key) {
             system.lutCols[i] = lut.getColor(Number(system.colormap_file[key][i]));
         }
     }
-    checkbox.checked = true;
 }
 // define the drag and drop behavior of the scene
 var target = renderer.domElement;
@@ -375,7 +373,7 @@ function readJson(system, json_reader) {
                 system.setColorFile(data);
                 makeLut(data, key);
                 try { //you need to toggle here for small systems, during the scene add for large systems.
-                    coloringChanged();
+                    setColoringMode("Overlay");
                 }
                 catch {
                     toggleFailure = true;
@@ -457,9 +455,8 @@ function addSystemToScene(system) {
     pickingScene.add(system.dummy_backbone);
     //bring things in the box based on the PBC/centering menus
     PBC_switchbox(system);
-    let checkbox = document.getElementById("lutToggle");
     if (toggleFailure) {
-        coloringChanged();
+        setColoringMode("Overlay");
     }
     sys_count += 1;
     render();
