@@ -240,7 +240,7 @@ class Cluster {
 
         let tempQ = new THREE.Quaternion();
         tempQ.setFromAxisAngle(rotAxis, rotAngle);
-        this.totalRotation.multiply(tempQ);
+        this.totalRotation.premultiply(tempQ);
 
         // Clear forces
         this.force = new THREE.Vector3();

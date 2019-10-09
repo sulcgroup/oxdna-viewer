@@ -89,22 +89,22 @@ class RevertableClusterSim extends RevertableEdit {
         let cs = [];
         clusters.forEach((c) => {
             cs.push({
-                "elements": c.getElements(),
-                "translation": c.getTotalTranslation(),
-                "rotation": c.getTotalRotation(),
-                "position": c.getPosition(),
+                "elems": c.getElements(),
+                "transl": c.getTotalTranslation(),
+                "rot": c.getTotalRotation(),
+                "pos": c.getPosition(),
             });
         });
         let undo = function () {
             cs.forEach((c) => {
-                rotateElementsByQuaternion(c["elements"], c["rotation"].clone().conjugate(), c["position"]);
-                translateElements(c["elements"], c["translation"].clone().negate());
+                rotateElementsByQuaternion(c["elems"], c["rot"].clone().conjugate(), c["pos"]);
+                translateElements(c["elems"], c["transl"].clone().negate());
             });
         };
         let redo = function () {
             cs.forEach((c) => {
-                translateElements(c["elements"], c["translation"]);
-                rotateElementsByQuaternion(c["elements"], c["rotation"], c["position"]);
+                translateElements(c["elems"], c["transl"]);
+                rotateElementsByQuaternion(c["elems"], c["rot"], c["pos"]);
             });
         };
         super(undo, redo);
