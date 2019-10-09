@@ -62,11 +62,11 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     // Normalize axis
     axis = axis.clone().normalize();
 
+    //create quaternion defining the rotation about the axis by the angle
     let q1 = new THREE.Quaternion;
     q1.setFromAxisAngle(axis, angle);
 
-    // For some reason, we have to rotate the orientations
-    // around an axis with inverted y-value...
+    //However for some reason, to actually rotate the meshes you need to invert the axis y-coordinate
     let axis2 = axis.clone();
     axis2.y *= -1;
     let q2 = new THREE.Quaternion;
@@ -76,24 +76,28 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
 
+        //get current positions
         let cm_pos = base.get_instance_parameter3("cm_offsets");
         let bb_pos = base.get_instance_parameter3("bb_offsets");
         let ns_pos = base.get_instance_parameter3("ns_offsets");
         let con_pos = base.get_instance_parameter3("con_offsets");
         let bbcon_pos = base.get_instance_parameter3("bbcon_offsets");
 
+        //the rotation center needs to be (0,0,0)
         cm_pos.sub(about);
         bb_pos.sub(about);
         ns_pos.sub(about);
         con_pos.sub(about);
         bbcon_pos.sub(about);
-
+      
+        //rotate object positions around the rotation point
         cm_pos.applyQuaternion(q1);
         bb_pos.applyQuaternion(q1);
         ns_pos.applyQuaternion(q1);
         con_pos.applyQuaternion(q1);
         bbcon_pos.applyQuaternion(q1);
 
+        //get current rotations and convert to THREE coordinates
         let ns_rotationV = base.get_instance_parameter4("ns_rotation");
         let ns_rotation = glsl2three(ns_rotationV);
         let con_rotationV = base.get_instance_parameter4("con_rotation");
@@ -101,22 +105,25 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
         let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
         let bbcon_rotation = glsl2three(bbcon_rotationV);
 
+        //apply individual object rotation
         ns_rotation.multiply(q2);
         con_rotation.multiply(q2);
         bbcon_rotation.multiply(q2);
 
+        //move the object back to its original position
         cm_pos.add(about);
         bb_pos.add(about);
         ns_pos.add(about);
         con_pos.add(about);
         bbcon_pos.add(about);
 
+        //update the instancing matrices
         sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
         sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
         sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
         sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
         sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
-
+        
         sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
         sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
         sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
