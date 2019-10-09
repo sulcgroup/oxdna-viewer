@@ -5,6 +5,10 @@ let rigidClusterSimulator: RigidClusterSimulator;
  * Start rigid-body simulator if it's not already running
  */
 function toggleClusterSim() {
+    if (!document.getElementById("clusterSim")["checked"]) {
+        rigidClusterSimulator = null;
+        return;
+    }
     if (!rigidClusterSimulator) {
         rigidClusterSimulator = new RigidClusterSimulator();
         if (rigidClusterSimulator.getNumberOfClusters() < 2) {
@@ -91,6 +95,9 @@ class RigidClusterSimulator {
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
+        } else {
+            editHistory.add(new RevertableClusterSim(this.clusters));
+            console.log("Added simulation result to edit history")
         }
         
     };
@@ -115,6 +122,9 @@ class Cluster {
     private linearVelocity = new THREE.Vector3(); // v
     private angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
     private position: THREE.Vector3; // x
+
+    private totalTranslation = new THREE.Vector3();
+    private totalRotation = new THREE.Quaternion();
 
     /**
      * Create a rigid-body cluster from the given set of elements
@@ -170,6 +180,18 @@ class Cluster {
         return this.radius;
     }
 
+    public getTotalTranslation(): THREE.Vector3 {
+        return this.totalTranslation.clone();
+    }
+
+    public getTotalRotation(): THREE.Quaternion {
+        return this.totalRotation.clone();
+    }
+
+    public getElements(): Set<BasicElement> {
+        return this.clusterElements;
+    }
+
     /**
      * Calculate spring forces between inter-cluster backbone bonds
      */
@@ -210,7 +232,15 @@ class Cluster {
 
         // Perform transformations
         translateElements(this.clusterElements, deltaP);
-        rotateElements(this.clusterElements, deltaO, deltaO.length(), this.position);
+        let rotAngle = deltaO.length();
+        let rotAxis = deltaO.normalize();
+        rotateElements(this.clusterElements, rotAxis, rotAngle, this.position);
+
+        this.totalTranslation.add(deltaP);
+
+        let tempQ = new THREE.Quaternion();
+        tempQ.setFromAxisAngle(rotAxis, rotAngle);
+        this.totalRotation.premultiply(tempQ);
 
         // Clear forces
         this.force = new THREE.Vector3();

@@ -56,16 +56,15 @@ function rotateByInput() {
     editHistory.do(new RevertableRotation(selected_bases, axis, angle, c));
 }
 function rotateElements(elements, axis, angle, about) {
-    // Normalize axis
-    axis = axis.clone().normalize();
-    let q1 = new THREE.Quaternion;
-    q1.setFromAxisAngle(axis, angle);
+    let q = new THREE.Quaternion();
+    q.setFromAxisAngle(axis, angle);
+    rotateElementsByQuaternion(elements, q, about);
+}
+function rotateElementsByQuaternion(elements, q, about) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
-    let axis2 = axis.clone();
-    axis2.y *= -1;
-    let q2 = new THREE.Quaternion;
-    q2.setFromAxisAngle(axis2, angle);
+    let q2 = q.clone();
+    q2.y *= -1;
     elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.global_id - sys.global_start_id;
@@ -79,11 +78,11 @@ function rotateElements(elements, axis, angle, about) {
         ns_pos.sub(about);
         con_pos.sub(about);
         bbcon_pos.sub(about);
-        cm_pos.applyQuaternion(q1);
-        bb_pos.applyQuaternion(q1);
-        ns_pos.applyQuaternion(q1);
-        con_pos.applyQuaternion(q1);
-        bbcon_pos.applyQuaternion(q1);
+        cm_pos.applyQuaternion(q);
+        bb_pos.applyQuaternion(q);
+        ns_pos.applyQuaternion(q);
+        con_pos.applyQuaternion(q);
+        bbcon_pos.applyQuaternion(q);
         let ns_rotationV = base.get_instance_parameter4("ns_rotation");
         let ns_rotation = glsl2three(ns_rotationV);
         let con_rotationV = base.get_instance_parameter4("con_rotation");

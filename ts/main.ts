@@ -79,7 +79,7 @@ class BasicElement extends THREE.Group{
         return "";
     };
 
-    resetColor(overlay) {
+    updateColor() {
 
     };
 
@@ -418,34 +418,41 @@ class Nucleotide extends BasicElement {
 
     };
 
-    resetColor(overlay) {
-        let sys = this.parent.parent
-        let sid = this.global_id - sys.global_start_id
-        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+    updateColor() {
+        let sys = this.parent.parent;
+        let sid = this.global_id - sys.global_start_id;
         let color: THREE.Color;
-        if (overlay) {
-            color = sys.lutCols[sid];
-        }
-        else {
-            color = this.strand_to_color(this.parent.strand_id);
+        if (selected_bases.has(this)) {
+            color = selection_color;
+        } else {
+            switch (getColoringMode()) {
+                case "Strand": color = backbone_colors[(Math.abs(this.parent.strand_id) + this.parent.parent.system_id) % backbone_colors.length]; break;
+                case "System": color = backbone_colors[this.parent.parent.system_id % backbone_colors.length]; break;
+                case "Cluster":
+                    if(!this.cluster_id || this.cluster_id < 0) {
+                        color = new THREE.Color(0xE60A0A)
+                    } else {
+                        color = backbone_colors[this.cluster_id % backbone_colors.length];
+                    } break;
+                case "Overlay": color = sys.lutCols[sid]; break;
+            }
         }
         sys.fill_vec('bb_colors', 3, sid, [color.r, color.g, color.b]);
     }
 
 
+    // highlight/remove highlight the bases we've clicked from the list and modify color
     toggle() {
         let sys = this.parent.parent
         let sid = this.global_id - sys.global_start_id
 
-        // highlight/remove highlight the bases we've clicked from the list and modify color
         if (selected_bases.has(this)) {
-            this.resetColor(<HTMLInputElement>document.getElementById("lutToggle")["checked"]);
             selected_bases.delete(this);
         }
         else {
-            sys.fill_vec('bb_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this);
         }
+        this.updateColor();
     };
 
     elem_to_color(elem: number | string): THREE.Color {
@@ -723,36 +730,42 @@ class AminoAcid extends BasicElement {
         sys.cm_offsets[id + 2] += amount.z;
     }
 
-    resetColor(overlay) {
-        let sys = this.parent.parent
-        let sid = this.global_id - sys.global_start_id
-        //recalculate Mesh's proper coloring and set Mesh material on scene to proper material
+    updateColor() {
+        let sys = this.parent.parent;
+        let sid = this.global_id - sys.global_start_id;
         let bb_color: THREE.Color;
         let aa_color: THREE.Color;
-        if (overlay) {
-            bb_color = sys.lutCols[this.global_id];
-        }
-        else {
-            bb_color = this.strand_to_color(this.parent.strand_id);
+        if (selected_bases.has(this)) {
+            bb_color = selection_color;
+        } else {
+            switch (getColoringMode()) {
+                case "Strand": bb_color = backbone_colors[(Math.abs(this.parent.strand_id) + this.parent.parent.system_id) % backbone_colors.length]; break;
+                case "System": bb_color = backbone_colors[this.parent.parent.system_id % backbone_colors.length]; break;
+                case "Cluster":
+                    if(!this.cluster_id || this.cluster_id < 0) {
+                        bb_color = new THREE.Color(0xE60A0A)
+                    } else {
+                        bb_color = backbone_colors[this.cluster_id % backbone_colors.length];
+                    } break;
+                case "Overlay": bb_color = sys.lutCols[sid]; break;
+            }
         }
         aa_color = this.elem_to_color(this.type);
         sys.fill_vec('bb_colors', 3, sid, [bb_color.r, bb_color.g, bb_color.b]);
         sys.fill_vec('ns_colors', 3, sid, [aa_color.r, aa_color.g, aa_color.b]);
-    };
+    }
 
     toggle() {
-        let sys = this.parent.parent
-        let sid = this.global_id - sys.global_start_id
+        let sys = this.parent.parent;
+        let sid = this.global_id - sys.global_start_id;
 
         if (selected_bases.has(this)) { //if clicked nucleotide is already selected
-            this.resetColor(<HTMLInputElement>document.getElementById("lutToggle")["checked"]);
             selected_bases.delete(this); //"unselect" nucletide by setting value in selected_bases array at nucleotideID to 0
         }
         else {
-            sys.fill_vec('bb_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
-            sys.fill_vec('ns_colors', 3, sid, [selection_color.r, selection_color.g, selection_color.b]);
             selected_bases.add(this); //"select" nucletide by adding it to the selected base list
         }
+        this.updateColor();
     };
 
     getDatFileOutput(): string {
@@ -1087,7 +1100,7 @@ function colorOptions() {
         addButton.innerText = "Add Color";
         // Append new color to the end of the color list and reset colors
         addButton.onclick = function () {
-            backbone_colors.push(new THREE.Color(0x156289));
+            backbone_colors.push(new THREE.Color(0x0000ff));
             colorOptions();
         }
 
@@ -1112,12 +1125,11 @@ function colorOptions() {
             opt.appendChild(c);
         }
         opt.appendChild(addButton);
-        let index: number = 0;
 
         //actually update things in the scene
-        for (; index < elements.length; index++) {
-            if (!selected_bases.has(elements[index]))
-                elements[index].resetColor(false);
+        for (let i=0; i<elements.length; i++) {
+            if (!selected_bases.has(elements[i]))
+                elements[i].updateColor();
         }
         for (let i = 0; i < systems.length; i++){
             systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
@@ -1242,22 +1254,21 @@ function createLemniscateVideo(canvas, capturer, framerate) {
 };
 
 //toggles display of coloring by json file / structure modeled off of base selector
-function toggleLut(chkBox) {
-    if (!chkBox.checked) {
+function coloringChanged() {
+    if (getColoringMode() === "Overlay") {
+        if (lut) {
+            api.show_colorbar();
+        } else {
+            alert("Please drag and drop the corresponding .json file.");
+            setColoringMode("Strand");
+            return;
+        }
+    } else if (lut) {
         api.remove_colorbar();
     }
-    else if (chkBox.checked && lut != undefined) {
-        api.show_colorbar();
-    }
-    else {
-        alert("Please drag and drop the corresponding .json file.");
-        chkBox.checked = false;
-        return
-    }
+
     for (let i = 0; i < elements.length; i++) {
-        if (!selected_bases.has(elements[i])) {
-            elements[i].resetColor(chkBox.checked);
-        }
+        elements[i].updateColor();
     }
     for (let i = 0; i < systems.length; i++) {
         systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
@@ -1321,6 +1332,18 @@ function toggleSideNav(button: HTMLInputElement) {
     }
 }
 
+function getColoringMode(): string {
+    return document.querySelector('input[name="coloring"]:checked')['value'];
+};
+
+function setColoringMode(mode: string) {
+    let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("coloring");
+    for (let i = 0; i < modes.length; i++) {
+        modes[i].checked = (modes[i].value === mode);
+    }
+    coloringChanged();
+};
+
 function toggleClusterOptions() {
     let opt = document.getElementById("clusterOptions");
     opt.hidden = !opt.hidden;
@@ -1365,6 +1388,7 @@ function calculateClusters() {
     requestAnimationFrame(() => requestAnimationFrame(function(){
         dbscan(minPts, epsilon);
         renderer.domElement.style.cursor = "auto"; // Change cursor back
+        setColoringMode("Cluster");
     }))
 }
 
