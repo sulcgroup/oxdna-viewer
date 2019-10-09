@@ -50,7 +50,13 @@
 			<fieldset>
 				<legend>View</legend>
 				<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
-				<input type="checkbox" id="lutToggle" onchange="toggleLut(this)" title="If colormap is applied, return to default coloring">Display Alternate Colors<br>
+				<fieldset>
+					<legend>Color by:</legend>
+					<input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
+					<input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
+					<input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
+					<input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
+				</fieldset>
 				<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
 				<button onclick="toggleColorOptions()" type="button" title="modify the default strand colors">Edit Colors</button>
 				<button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>

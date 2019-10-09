@@ -426,7 +426,7 @@ function readJson(system, json_reader) {
                 system.setColorFile(data);
                 makeLut(data, key);
                 try{ //you need to toggle here for small systems, during the scene add for large systems.
-                    toggleLut(document.getElementById("lutToggle"))
+                    coloringChanged();
                 }
                 catch {
                     toggleFailure = true;
@@ -526,8 +526,8 @@ function addSystemToScene(system) {
     PBC_switchbox(system);
 
     let checkbox = <HTMLInputElement>document.getElementById("lutToggle");
-    if(checkbox.checked && toggleFailure){
-        toggleLut(checkbox);
+    if(toggleFailure){
+        coloringChanged();
     }
 
     sys_count += 1;
