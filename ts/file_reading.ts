@@ -173,7 +173,7 @@ function makeLut(data, key) {
     lut.setLegendOn({
         'layout': 'horizontal',
         'position': {'x': 0, 'y': -0.9, 'z': 0},
-        'dimensions': {'height': 1, 'width': 0.02}
+        'dimensions': {'height': 0.5, 'width': 0.04}
     }); //create legend
     lut.setLegendLabels({'title': key, 'ticks': 5, 'um': 5}); //set up legend format
 

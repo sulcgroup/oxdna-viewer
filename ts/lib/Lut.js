@@ -234,10 +234,10 @@ THREE.Lut.prototype = {
                 });
 				var spriteTick = new THREE.Sprite(spriteMaterialTick);
 				spriteTick.scale.set(0.2, 0.1, 0);
-                var position = (this.legend.position.x - (this.legend.dimensions.height * 0.5) + 0.09) + (this.legend.dimensions.height) * ((value - this.minV) / (this.maxV - this.minV) * 0.99);
+                var position = (this.legend.position.x - (this.legend.dimensions.height * 0.5) + 0.08) + (this.legend.dimensions.height) * ((value - this.minV) / (this.maxV - this.minV));
 				spriteTick.position.set(
 					position,
-					this.legend.position.y * 1.075,
+					this.legend.position.y * 1.09,
 					this.legend.position.z);
                 // Draw tick lines:
                 var material = new THREE.LineBasicMaterial({
@@ -245,7 +245,7 @@ THREE.Lut.prototype = {
                     linewidth: 2
                 });
                 var points = [];
-                var linePosition = (this.legend.position.x - (this.legend.dimensions.height * 0.5) + 0.01) + (this.legend.dimensions.height) * ((value - this.minV) / (this.maxV - this.minV) * 0.99);
+                var linePosition = (this.legend.position.x - (this.legend.dimensions.height * 0.5)) + (this.legend.dimensions.height) * ((value - this.minV) / (this.maxV - this.minV));
                 points.push(new THREE.Vector3(linePosition, this.legend.position.y - this.legend.dimensions.width * 0.55, this.legend.position.z));
                 points.push(new THREE.Vector3(linePosition, this.legend.position.y - this.legend.dimensions.width * 0.9, this.legend.position.z));
                 var geometry = new THREE.BufferGeometry().setFromPoints(points);
