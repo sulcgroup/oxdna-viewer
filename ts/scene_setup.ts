@@ -10,7 +10,9 @@
 
 // scene update call definition
 function render() {
+    renderer.clear();
     renderer.render(scene, camera);
+    renderer.render(uiScene, orthoCamera);
 }
 
 // animation cycle and control updates
@@ -34,8 +36,14 @@ function onWindowResize() {
 
 }
 
-//Setup the scene and renderer and camera 
+// Setup an extra scene and camera for UI (that is, the colobar)
+var uiScene = new THREE.Scene();
+var orthoCamera = new THREE.OrthographicCamera(-1, 1, 0, - 1, -1, 1);
+orthoCamera.position.set(0, 0, 0);
+
+// Setup the scene and renderer and camera
 var scene = new THREE.Scene();
+
 // make the background white 
 // default is white
 var BLACK = new THREE.Color(0x000000);
@@ -57,7 +65,7 @@ var renderer = new THREE.WebGLRenderer({ //create renderer
     antialias: true,
     canvas: canvas
 });
-
+renderer.autoClear = false;
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
 

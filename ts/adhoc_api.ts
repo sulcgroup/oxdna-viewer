@@ -217,28 +217,32 @@ module api{
 
     //there's probably a less blunt way to do this...
     export function remove_colorbar() {
-        let l = scene.children.length;
+        let l = uiScene.children.length;
         for (let i = 0; i < l; i++) {
-            if (scene.children[i].type == "Sprite" || scene.children[i].type == "Line") {
-                scene.remove(scene.children[i]);
-                i -= 1;
-                l -= 1;
+            if (uiScene.children[i].type == "Sprite" || uiScene.children[i].type == "Line") {
+                uiScene.remove(uiScene.children[i]);
+                i--;
+                l--;
             }
         }
-        scene.remove(lut.legend.mesh)
+        uiScene.remove(lut.legend.mesh)
         render();
     }
 
     //turns out that lut doesn't save the sprites so you have to completley remake it
     export function show_colorbar() {
-        scene.add(lut.legend.mesh);
-        let labels =  lut.setLegendLabels({'title':lut.legend.labels.title, 'ticks':lut.legend.labels.ticks}); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
-        scene.add(labels["title"]);
+        uiScene.add(lut.legend.mesh);
+        //don't ask, lut stores the values but doesn't actually save the
+        // sprites anywhere so you have to make them again...
+        let labels =  lut.setLegendLabels({
+            'title':lut.legend.labels.title,
+            'ticks':lut.legend.labels.ticks
+        });
+        uiScene.add(labels["title"]);
         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-            scene.add(labels['ticks'][i]);
-            scene.add(labels['lines'][i]);
+            uiScene.add(labels['ticks'][i]);
+            uiScene.add(labels['lines'][i]);
         }
-
         render();
     }
     
