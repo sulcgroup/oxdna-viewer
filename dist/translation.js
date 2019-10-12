@@ -29,7 +29,7 @@ function glsl2three(input) {
 }
 function rotateByInput() {
     if (selected_bases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
-        alert("Please select elements to rotate.");
+        notify("Please select elements to rotate.");
     }
     let angle = getAngle();
     let axisString = getAxisMode();
@@ -45,7 +45,7 @@ function rotateByInput() {
         case "Z":
             axis.set(0, 0, 1);
             break;
-        default: alert("Unknown rotation axis: " + axisString);
+        default: notify("Unknown rotation axis: " + axisString);
     }
     // This will be rotating around the center of mass of the selected bases.
     let c = new THREE.Vector3(0, 0, 0);

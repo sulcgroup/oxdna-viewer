@@ -151,7 +151,7 @@ function makeMutualTrapFile() {
             mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
         }
         else { //if there is no 2nd nucleotide in the pair
-            alert("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
+            notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
         }
     }
     makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
