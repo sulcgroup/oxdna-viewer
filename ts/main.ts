@@ -1082,15 +1082,28 @@ function previousConfig() {
 };
 
 function notify(message: string) {
-    let notification = document.createElement('div');
-    let remove = function() {
-        try {document.body.removeChild(notification);}
-        catch (error) {} // Notification already removed
+    let noticeboard = document.getElementById('noticeboard');
+
+    // Remove any identical notifications from the board
+    for (let notification of noticeboard.children) {
+        if (notification.innerHTML === message) {
+            noticeboard.removeChild(notification);
+        }
     }
-    notification.onmouseover = remove;
+
+    // Create a new notification
+    let notification = document.createElement('div');
     notification.className = "notification";
     notification.innerHTML = message;
-    document.body.appendChild(notification);
+
+    // Add it to the board and remove it on mouseover
+    // or after 5 seconds
+    let remove = function() {
+        try {noticeboard.removeChild(notification);}
+        catch (e) {} // Notification already removed
+    }
+    notification.onmouseover = remove;
+    noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
 }
 
