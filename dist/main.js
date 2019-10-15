@@ -878,6 +878,10 @@ function notify(message) {
     noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
 }
+function toggleKeyboardShortcutModal() {
+    let modal = document.getElementById("keyboardShortcuts");
+    modal.classList.toggle("show-modal");
+}
 function toggleVideoOptions() {
     let opt = document.getElementById("videoOptions");
     opt.hidden = !opt.hidden;

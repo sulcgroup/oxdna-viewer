@@ -10,11 +10,44 @@
 </head>
 
 <body>
+    <div id="keyboardShortcuts" class="modal" onclick="toggleKeyboardShortcutModal()">
+        <div class="modal-content">
+            <table>
+                <tr>
+                    <th>Key</th>
+                    <th>Action</th>
+                </tr>
+				<tr><td>p</td><td>Save image</td></tr>
+				<tr><td>s</td><td>Toggle selection mode</td></tr>
+				<tr><td>d</td><td>Toggle dragging mode</td></tr>
+                <tr><td>Right arrow</td><td>Next configuration</td></tr>
+				<tr><td>Left arrow</td><td>Previous configuration</td></tr>
+				<tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
+				<tr><td>ctrl-z</td><td>Undo edit</td></tr>
+				<tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
+				<tr><td>ctrl-a</td><td>Select all elements</td></tr>
+				<tr><td>ctrl-i</td><td>Invert selection</td></tr>
+				<tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
+				<tr><td>shift-click</td><td>Select intermediate monomers</td></tr>
+				<tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad2</td><td>Rotate camera down</td></tr>
+				<tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad4</td><td>Rotate camera left</td></tr>
+				<tr><td>Numpad5</td><td>Reset camera</td></tr>
+				<tr><td>Numpad6</td><td>Rotate camera right</td></tr>
+				<tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
+                <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
+                <tr><td>F1</td><td>Show this list</td></tr>
+            </table>
+        </div>
+    </div>
+
     <div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
 
     <!--Sidebar-->
     <div id="sidenav">
         <div id="sidenavContent">
+            <button onclick="toggleKeyboardShortcutModal()" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
             <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
             <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
             <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap

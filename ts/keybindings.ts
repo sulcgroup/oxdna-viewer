@@ -45,6 +45,7 @@ document.addEventListener("keydown", event =>{
             let dragToggle = <HTMLInputElement>document.getElementById("dragToggle");
             dragToggle.checked = !dragToggle.checked;
             break;
+        case 'f1': toggleKeyboardShortcutModal(); break;
     }
     // Key is value of the key, e.g. '1', while code is the id of
     // the specific key, e.g. 'Numpad1'.
