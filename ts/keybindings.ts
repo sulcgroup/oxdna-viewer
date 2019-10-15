@@ -46,4 +46,31 @@ document.addEventListener("keydown", event =>{
             dragToggle.checked = !dragToggle.checked;
             break;
     }
+    // Key is value of the key, e.g. '1', while code is the id of
+    // the specific key, e.g. 'Numpad1'.
+    let stepAngle = Math.PI/12;
+    switch (event.code) {
+        case 'Numpad1':
+            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(-1,0,0)); break;}
+            else {controls.setToAxis(new THREE.Vector3(1,0,0)); break;}
+        case 'Numpad2':
+            controls.stepAroundAxis(new THREE.Vector3(-1,0,0), stepAngle); break;
+        case 'Numpad3':
+            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,-1,0)); break;}
+            else {controls.setToAxis(new THREE.Vector3(0,1,0)); break;}
+        case 'Numpad4':
+            controls.stepAroundAxis(new THREE.Vector3(0,1,0), stepAngle); break;
+        case 'Numpad5':
+            controls.reset(); break;
+        case 'Numpad6':
+            controls.stepAroundAxis(new THREE.Vector3(0,-1,0), stepAngle); break;
+        case 'Numpad7':
+            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,0,-1)); break;}
+            else {controls.setToAxis(new THREE.Vector3(0,0,1)); break;}
+        case 'Numpad8':
+            controls.stepAroundAxis(new THREE.Vector3(1,0,0), stepAngle); break;
+        case 'Numpad9':
+            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,0,1)); break;}
+            else {controls.setToAxis(new THREE.Vector3(0,0,-1)); break;}
+    }
 });

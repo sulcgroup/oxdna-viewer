@@ -334,23 +334,51 @@ THREE.TrackballControls = function ( object, domElement ) {
 	};
 
 	this.reset = function () {
-
+		_this.object.position.copy(_this.position0);
 		_state = STATE.NONE;
 		_prevState = STATE.NONE;
-
-		_this.target.copy( _this.target0 );
-		_this.object.position.copy( _this.position0 );
-		_this.object.up.copy( _this.up0 );
-
-		_eye.subVectors( _this.object.position, _this.target );
-
-		_this.object.lookAt( _this.target );
-
-		_this.dispatchEvent( changeEvent );
-
-		lastPosition.copy( _this.object.position );
-
+		this.setToAxis(_this.position0);
+		_this.object.up.copy(_this.up0);
+		_eye.subVectors(_this.object.position, _this.target);
 	};
+
+	this.setToAxis = function(axis, steps) {
+		steps = steps || 10;
+
+		_this.target.copy(_this.target0);
+
+		let l = _this.object.position.length()
+		axis.setLength(l);
+
+		if (steps > 1) {
+			_this.object.position.lerp(axis, 1/steps);
+			_this.object.position.setLength(l);
+		} else {
+			this.object.position.lerp(axis, 0.999);
+		}
+
+		_this.object.lookAt(_this.target);
+		_this.dispatchEvent(changeEvent);
+		lastPosition.copy(_this.object.position);
+
+		if (steps > 1) {
+			requestAnimationFrame(function() {
+				controls.setToAxis(axis, steps-1);
+			});
+		}
+	}
+
+	this.stepAroundAxis = function(axis, stepAngle) {
+		let quaternion = new THREE.Quaternion();
+		axis = _this.object.localToWorld(axis.clone()).sub(_this.object.position).normalize();
+		quaternion.setFromAxisAngle(axis, stepAngle);
+
+		_eye.applyQuaternion(quaternion);
+		_this.object.up.applyQuaternion(quaternion);
+		_this.object.position.applyQuaternion(quaternion);
+		_this.object.lookAt(_this.target);
+		_this.dispatchEvent(changeEvent);
+	}
 
 	// listeners
 
