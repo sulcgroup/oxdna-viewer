@@ -15,7 +15,7 @@ document.addEventListener('mousedown', event => {
             let nucleotide = elements[id];
             let sys = nucleotide.parent.parent;
             // Select multiple elements my holding down ctrl
-            if (!event.ctrlKey && !selected_bases.has(nucleotide)) {
+            if (!event.ctrlKey && !event.shiftKey && !selected_bases.has(nucleotide)) {
                 clearSelection();
             }
             let strand_count = sys[strands].length;
@@ -37,6 +37,9 @@ document.addEventListener('mousedown', event => {
                     break;
                 case "Monomer":
                     nucleotide.toggle();
+                    if (event.shiftKey) {
+                        selectIntermediate();
+                    }
                     updateView(sys);
                     break;
                 case "Cluster":
@@ -129,6 +132,26 @@ function selectAll() {
     systems.forEach(sys => {
         updateView(sys);
     });
+}
+function selectIntermediate() {
+    let n = elements.length;
+    let iMin = 0;
+    let iMax = n;
+    while (iMin++ <= n) {
+        if (selected_bases.has(elements[iMin])) {
+            break;
+        }
+    }
+    while (iMax-- > 0) {
+        if (selected_bases.has(elements[iMax])) {
+            break;
+        }
+    }
+    for (let i = iMin; i < iMax; i++) {
+        if (!selected_bases.has(elements[i])) {
+            elements[i].toggle();
+        }
+    }
 }
 function makeTextArea(bases, id) {
     let textArea = document.getElementById(id);
