@@ -10,7 +10,7 @@
 </head>
 
 <body>
-    <div id="keyboardShortcuts" class="modal" onclick="toggleKeyboardShortcutModal()">
+    <div id="keyboardShortcuts" class="modal" onclick="toggleModal(this.id)">
         <div class="modal-content">
             <table>
                 <tr>
@@ -47,7 +47,7 @@
     <!--Sidebar-->
     <div id="sidenav">
         <div id="sidenavContent">
-            <button onclick="toggleKeyboardShortcutModal()" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
+            <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
             <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
             <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
             <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap

@@ -1107,8 +1107,8 @@ function notify(message: string) {
     setTimeout(remove, 5000);
 }
 
-function toggleKeyboardShortcutModal() {
-    let modal = document.getElementById("keyboardShortcuts");
+function toggleModal(id) {
+    let modal = document.getElementById(id);
     modal.classList.toggle("show-modal");
 }
 

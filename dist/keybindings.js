@@ -66,7 +66,7 @@ document.addEventListener("keydown", event => {
             dragToggle.checked = !dragToggle.checked;
             break;
         case 'f1':
-            toggleKeyboardShortcutModal();
+            toggleModal("keyboardShortcuts");
             break;
     }
     // Key is value of the key, e.g. '1', while code is the id of
