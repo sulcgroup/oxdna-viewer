@@ -15,7 +15,7 @@ document.addEventListener('mousedown', event => {
             let nucleotide = elements[id];
             let sys = nucleotide.parent.parent;
             // Select multiple elements my holding down ctrl
-            if (!event.ctrlKey && !selected_bases.has(nucleotide)) {
+            if (!event.ctrlKey && !event.shiftKey && !selected_bases.has(nucleotide)) {
                 clearSelection();
             }
             let strand_count = sys[strands].length;
@@ -37,6 +37,9 @@ document.addEventListener('mousedown', event => {
                     break;
                 case "Monomer":
                     nucleotide.toggle();
+                    if (event.shiftKey) {
+                        selectIntermediate();
+                    }
                     updateView(sys);
                     break;
                 case "Cluster":
@@ -130,6 +133,26 @@ function selectAll() {
         updateView(sys);
     });
 }
+function selectIntermediate() {
+    let n = elements.length;
+    let iMin = 0;
+    let iMax = n;
+    while (iMin++ <= n) {
+        if (selected_bases.has(elements[iMin])) {
+            break;
+        }
+    }
+    while (iMax-- > 0) {
+        if (selected_bases.has(elements[iMax])) {
+            break;
+        }
+    }
+    for (let i = iMin; i < iMax; i++) {
+        if (!selected_bases.has(elements[i])) {
+            elements[i].toggle();
+        }
+    }
+}
 function makeTextArea(bases, id) {
     let textArea = document.getElementById(id);
     if (textArea !== null) { //as long as text area was retrieved by its ID, id
@@ -151,7 +174,7 @@ function makeMutualTrapFile() {
             mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
         }
         else { //if there is no 2nd nucleotide in the pair
-            alert("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
+            notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
         }
     }
     makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file

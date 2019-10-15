@@ -1081,6 +1081,32 @@ function previousConfig() {
     getNewConfig(-1);
 };
 
+function notify(message: string) {
+    let noticeboard = document.getElementById('noticeboard');
+
+    // Remove any identical notifications from the board
+    for (let notification of noticeboard.children) {
+        if (notification.innerHTML === message) {
+            noticeboard.removeChild(notification);
+        }
+    }
+
+    // Create a new notification
+    let notification = document.createElement('div');
+    notification.className = "notification";
+    notification.innerHTML = message;
+
+    // Add it to the board and remove it on mouseover
+    // or after 5 seconds
+    let remove = function() {
+        try {noticeboard.removeChild(notification);}
+        catch (e) {} // Notification already removed
+    }
+    notification.onmouseover = remove;
+    noticeboard.appendChild(notification);
+    setTimeout(remove, 5000);
+}
+
 function toggleVideoOptions() {
     let opt = document.getElementById("videoOptions");
     opt.hidden = !opt.hidden;
@@ -1175,7 +1201,7 @@ function createVideo() {
                 break;
         }
     } catch (e) {
-        alert("Failed to capture video: \n" + e);
+        notify("Failed to capture video: \n" + e);
         capturer.stop();
     }
 };
@@ -1259,7 +1285,7 @@ function coloringChanged() {
         if (lut) {
             api.show_colorbar();
         } else {
-            alert("Please drag and drop the corresponding .json file.");
+            notify("Please drag and drop the corresponding .json file.");
             setColoringMode("Strand");
             return;
         }
@@ -1359,7 +1385,7 @@ function selectionToCluster() {
             element.cluster_id = cluster_counter;
         });
     } else {
-        alert("First make a selection of elements you want to include in the cluster");
+        notify("First make a selection of elements you want to include in the cluster");
     }
 }
 

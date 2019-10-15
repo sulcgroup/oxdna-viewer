@@ -130,6 +130,21 @@ input[type=number] {
     font-weight: bold;
 }
 
+.notification {
+    position: relative;
+    z-index: 1;
+    bottom: 0;
+    margin-top: 2px;
+    padding: 0.5em;
+    background-color: #d98883;
+    opacity: 0.9;
+    text-align: center;
+    color: #fff;
+    font-family: Arial, serif;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
 .selectBox {
     border: 1px solid #55aaff;
     background-color: rgba(75, 160, 255, 0.15);

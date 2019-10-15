@@ -164,8 +164,13 @@ function makeLut(data, key) {
         lut.setMin(min);
         api.remove_colorbar();
     }
-    lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
-    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
+    lut.setLegendOn({
+        'layout': 'horizontal',
+        'position': { 'x': 0, 'y': -0.9, 'z': 0 },
+        'dimensions': { 'height': 0.5, 'width': 0.04 }
+    }); //create legend
+    lut.setLegendLabels({ 'title': key, 'ticks': 5, 'um': 5 }); //set up legend format
+    lut.legend.Mesh;
     //update every system's color map
     for (let i = 0; i < systems.length; i++) {
         let system = systems[i];
@@ -223,7 +228,7 @@ target.addEventListener("drop", function (event) {
         else if (ext === "json")
             json_file = files[i];
         else {
-            alert("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.");
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.");
             return;
         }
     }
@@ -231,7 +236,7 @@ target.addEventListener("drop", function (event) {
     if (json_file && !top_file)
         json_alone = true;
     if ((files_len > 3 || files_len < 2) && !json_alone) {
-        alert("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
         return;
     }
     if (top_file) {
@@ -327,7 +332,7 @@ function readDat(num_nuc, dat_reader, system) {
     // parse file into lines
     let lines = dat_reader.result.split(/[\n]+/g);
     if (lines.length - 3 < num_nuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-        alert(".dat and .top files incompatible");
+        notify(".dat and .top files incompatible");
         return;
     }
     //get the simulation box size
@@ -401,7 +406,7 @@ function readJson(system, json_reader) {
             }
         }
         else { //if json and dat files do not match, display error message and set files_len to 2 (not necessary)
-            alert(".json and .top files are not compatible.");
+            notify(".json and .top files are not compatible.");
             return;
         }
     }
@@ -464,7 +469,7 @@ function addSystemToScene(system) {
 }
 function getNewConfig(mode) {
     if (systems.length > 1) {
-        alert("Only one file at a time can be read as a trajectory, sorry...");
+        notify("Only one file at a time can be read as a trajectory, sorry...");
         return;
     }
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
@@ -480,7 +485,7 @@ function getNewConfig(mode) {
             conf_num -= 1;
         }
         if (lines == undefined) {
-            alert("No more confs to load!");
+            notify("No more confs to load!");
             return;
         }
         //get the simulation box size
@@ -491,7 +496,7 @@ function getNewConfig(mode) {
         lines = lines.slice(3);
         for (let line_num = 0; line_num < num_nuc; line_num++) {
             if (lines[line_num] == "" || undefined) {
-                alert("There's an empty line in the middle of your configuration!");
+                notify("There's an empty line in the middle of your configuration!");
                 break;
             }
             ;
