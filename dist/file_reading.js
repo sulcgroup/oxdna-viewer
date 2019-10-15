@@ -164,13 +164,8 @@ function makeLut(data, key) {
         lut.setMin(min);
         api.remove_colorbar();
     }
-    lut.setLegendOn({
-        'layout': 'horizontal',
-        'position': { 'x': 0, 'y': -0.9, 'z': 0 },
-        'dimensions': { 'height': 0.5, 'width': 0.04 }
-    }); //create legend
-    lut.setLegendLabels({ 'title': key, 'ticks': 5, 'um': 5 }); //set up legend format
-    lut.legend.Mesh;
+    lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 10, 'z': 0 } }); //create legend
+    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
     //update every system's color map
     for (let i = 0; i < systems.length; i++) {
         let system = systems[i];
