@@ -3,13 +3,14 @@
 
 <head>
     <title>oxDNA three.js viewer</title>
-    <!--Nice icons: http://google.github.io/material-design-icons/-->
+    <!--Nice icons, from http://google.github.io/material-design-icons/-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <!--Link external stylesheet file-->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
+    <!--Keyboard shortcut modal-->
     <div id="keyboardShortcuts" class="modal" onclick="toggleModal(this.id)">
         <div class="modal-content">
             <table>
@@ -42,18 +43,17 @@
         </div>
     </div>
 
+    <!--Initial instructions for drag and drop of files-->
     <div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
 
     <!--Sidebar-->
     <div id="sidenav">
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
-            <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-            <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
-            <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap
-                File</button>
             <button onclick="makeOutputFiles()" type="button" title="Download the current scene in oxDNA format">Download Output Files<br>(.dat and .top)</button>
-            <button onclick="toggleVideoOptions()" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
+            <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
+
+            <!--Centering-->
             <fieldset>
                 <legend>PBC / Centering</legend>
                 <caption> PBC: </caption>
@@ -72,6 +72,8 @@
                 <br>
                 <button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button" title="note this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
             </fieldset>
+
+            <!--View-->
             <fieldset>
                 <legend>View</legend>
                 <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
@@ -83,11 +85,13 @@
                     <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
                 </fieldset>
                 <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
-                <button onclick="toggleColorOptions()" type="button" title="modify the default strand colors">Edit
+                <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
                     Colors</button>
                 <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
-                <button onclick="toggleFogOptions()" type="button" title="View fog options">Fog</button>
+                <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
             </fieldset>
+
+            <!--Edit-->
             <fieldset>
                 <legend>Edit</legend>
                 <div style="text-align: center;">
@@ -99,10 +103,9 @@
                 <fieldset>
                     <legend>Selection mode:</legend>
                     <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
-                    <!--default mode is Nucleotide-->
                     <input type="radio" name="scope" value="Strand">Strand<br>
                     <input type="radio" name="scope" value="System">System<br>
-                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].cluster_id == 'undefined') {toggleClusterOptions();}"> Cluster <i class="material-icons" onclick="toggleClusterOptions()"
+                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].cluster_id == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
                         title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
                     <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
                 </fieldset>
@@ -118,7 +121,16 @@
                 </fieldset>
                 <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
             </fieldset>
-            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
+
+            <!--Selected bases-->
+            <fieldset>
+                <legend>Selected bases</legend>
+                <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
+                <button onclick="toggleOptions('baseInfoWindow')" type="button" title="Show selected base information">Show selected base info</button>
+                <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
+                <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap File</button>
+            </fieldset>
+
             <div style="text-align: center;">
                 <i class="material-icons" onclick="previousConfig()" style="font-size: 48px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
                 <i class="material-icons" onclick="nextConfig()" style="font-size: 48px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
@@ -129,9 +141,10 @@
 
     <!--Extra option windows-->
     <div style="position: absolute; bottom: 0px; overflow-y: scroll; max-height: 100%;">
+        <!--Video-->
         <div class="opts" id="videoOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleVideoOptions()">close</i>
+                <i class="material-icons" onclick="toggleOptions('videoOptions')">close</i>
             </div>
             <label for="videoType">Video type:</label>
             <select id="videoType">
@@ -149,16 +162,20 @@
             <input type="number" value="24" id="videoFramerate" width="20">
             <button id="videoStartStop" onclick="createVideo()">Start</button>
         </div>
+
+        <!--Color-->
         <div class="opts" id="colorOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="togg<!--Sidebar-->leColorOptions()">close</i>
+                <i class="material-icons" onclick="toggleOptions('colorOptions'); colorOptions()">close</i>
             </div>
             Click a color to edit, right click to remove:
             <div id="colorOptionContent" style="background-color: inherit"></div>
         </div>
+
+        <!--Clustering-->
         <div class="opts" id="clusterOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleClusterOptions()">close</i>
+                <i class="material-icons" onclick="toggleOptions('clusterOptions')">close</i>
             </div>
             <fieldset>
                 <legend>Automatic</legend>
@@ -175,9 +192,11 @@
                 <button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
             </fieldset>
         </div>
+
+        <!--Fog-->
         <div class="opts" id="fogOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleFogOptions()">close</i>
+                <i class="material-icons" onclick="toggleOptions('fogOptions')">close</i>
             </div>
             <label for="fogNear">Near: </label>
             <input type="number" value="1" id="fogNear" title="Minimum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
@@ -185,12 +204,22 @@
             <input type="number" value="200" id="fogFar" title="Maximum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
             <button onclick="toggleFog()">Toggle fog</button>
         </div>
+
+        <!--Base info-->
+        <div class="opts" id="baseInfoWindow" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('baseInfoWindow')">close</i>
+            </div>
+            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
+        </div>
     </div>
 
     <!--Notices-->
-    <div id="noticeboard" style="position: absolute; bottom: 0px; overflow-y: scroll; width: 100%; max-height: 100%;">
-    </div>
+    <div id="noticeboard" style="position: absolute; bottom: 0px; overflow-y: scroll; width: 100%; max-height: 100%;"></div>
+
+    <!--Canvas-->
     <canvas id="threeCanvas"></canvas>
+
     <div class="main">
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/CCapture.all.min.js"></script>

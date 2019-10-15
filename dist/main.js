@@ -882,17 +882,10 @@ function toggleModal(id) {
     let modal = document.getElementById(id);
     modal.classList.toggle("show-modal");
 }
-function toggleVideoOptions() {
-    let opt = document.getElementById("videoOptions");
+function toggleOptions(id) {
+    let opt = document.getElementById(id);
     opt.hidden = !opt.hidden;
 }
-;
-function toggleColorOptions() {
-    let opt = document.getElementById("colorOptions");
-    opt.hidden = !opt.hidden;
-    colorOptions();
-}
-;
 function colorOptions() {
     let opt = document.getElementById("colorOptionContent");
     if (!opt.hidden) {
@@ -1076,11 +1069,6 @@ function toggleBackground() {
     }
 }
 ;
-function toggleFogOptions() {
-    let opt = document.getElementById("fogOptions");
-    opt.hidden = !opt.hidden;
-}
-;
 function setFog(near, far) {
     near = near | parseFloat(document.getElementById("fogNear").value);
     far = near | parseFloat(document.getElementById("fogFar").value);
@@ -1124,11 +1112,6 @@ function setColoringMode(mode) {
         modes[i].checked = (modes[i].value === mode);
     }
     coloringChanged();
-}
-;
-function toggleClusterOptions() {
-    let opt = document.getElementById("clusterOptions");
-    opt.hidden = !opt.hidden;
 }
 ;
 /**

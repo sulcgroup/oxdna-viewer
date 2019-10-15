@@ -1112,16 +1112,10 @@ function toggleModal(id) {
     modal.classList.toggle("show-modal");
 }
 
-function toggleVideoOptions() {
-    let opt = document.getElementById("videoOptions");
+function toggleOptions(id) {
+    let opt = document.getElementById(id);
     opt.hidden = !opt.hidden;
-};
-
-function toggleColorOptions() {
-    let opt: HTMLElement = document.getElementById("colorOptions");
-    opt.hidden = !opt.hidden;
-    colorOptions();
-};
+}
 
 function colorOptions() {
     let opt: HTMLElement = document.getElementById("colorOptionContent");
@@ -1320,11 +1314,6 @@ function toggleBackground() {
     }
 };
 
-function toggleFogOptions() {
-    let opt = document.getElementById("fogOptions");
-    opt.hidden = !opt.hidden;
-};
-
 function setFog(near?: number, far?: number) {
     near = near | parseFloat((<HTMLInputElement>document.getElementById("fogNear")).value);
     far = near | parseFloat((<HTMLInputElement>document.getElementById("fogFar")).value);
@@ -1371,11 +1360,6 @@ function setColoringMode(mode: string) {
         modes[i].checked = (modes[i].value === mode);
     }
     coloringChanged();
-};
-
-function toggleClusterOptions() {
-    let opt = document.getElementById("clusterOptions");
-    opt.hidden = !opt.hidden;
 };
 
 /**
