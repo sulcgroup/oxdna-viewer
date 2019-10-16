@@ -114,7 +114,7 @@ THREE.ShaderLib.lambert = {
 			#include <morphnormal_vertex>
 			#include <skinbase_vertex>
 			#include <skinnormal_vertex>
-			#include <defaultnormal_vertex>
+			vec3 transformedNormal = normalMatrix * rotate_vector(instanceRotation, objectNormal);
 
 			#include <begin_vertex>
 

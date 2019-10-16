@@ -44,20 +44,12 @@ var renderer = new THREE.WebGLRenderer({
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
 // set scene lighting 
-// Lights are in a tetrahedron of side length 200 around the origin.
-var lights = [];
-lights[0] = new THREE.PointLight(0xffffff, 0.85, 0);
-lights[1] = new THREE.PointLight(0xffffff, 0.85, 0);
-lights[2] = new THREE.PointLight(0xffffff, 0.85, 0);
-lights[3] = new THREE.PointLight(0xffffff, 0.85, 0);
-lights[0].position.set(0, 0, 4 * -200);
-lights[1].position.set(4 * 94, 4 * 163, 4 * 67);
-lights[2].position.set(4 * 94, 4 * -163, 4 * 67);
-lights[3].position.set(4 * -189, 0, 4 * 67);
-scene.add(lights[0]);
-scene.add(lights[1]);
-scene.add(lights[2]);
-scene.add(lights[3]);
+let hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+scene.add(hemiLight);
+let pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
+pointlight.position.set(0, 10, 0);
+camera.add(pointlight);
+scene.add(camera);
 //Add coordinate axes to scene
 let dir = new THREE.Vector3(1, 0, 0);
 let Origin = new THREE.Vector3(0, 0, 0);
