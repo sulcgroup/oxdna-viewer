@@ -23,10 +23,10 @@ class TopReader extends FileReader{
             lines = lines.slice(1); // discard the header
             
             let l0 = lines[0].split(" "); 
-            let str_id = parseInt(l0[0]); //proteins are negative indexed
-            this.last_strand = str_id;
-            let current_strand: Strand = this.system.create_Strand(str_id);
-            this.system.add_strand(current_strand);
+            let strID = parseInt(l0[0]); //proteins are negative indexed
+            this.last_strand = strID;
+            let current_strand: Strand = this.system.createStrand(strID);
+            this.system.addStrand(current_strand);
             
             // create empty list of elements with length equal to the topology
             // Note: this is implemented such that we have the elements for the DAT reader 
@@ -38,29 +38,29 @@ class TopReader extends FileReader{
                     this.elements.pop();
                     return;
                 }
-                //split the file and read each column, format is: "str_id base n3 n5"
+                //split the file and read each column, format is: "strID base n3 n5"
                 let l = line.split(" "); 
-                str_id = parseInt(l[0]);
+                strID = parseInt(l[0]);
                     
-                if (str_id != this.last_strand) { //if new strand id, make new strand                        
-                    current_strand = this.system.create_Strand(str_id);
-                    this.system.add_strand(current_strand);
+                if (strID != this.last_strand) { //if new strand id, make new strand                        
+                    current_strand = this.system.createStrand(strID);
+                    this.system.addStrand(current_strand);
                     this.nuc_local_id = 0;
                 };
                     
                 //create a new element
-                if (this.elements[nuc_count + i] == null || this.elements[nuc_count + i] == undefined)
-                    this.elements[nuc_count + i] = current_strand.create_basicElement(nuc_count + i);
-                let nuc = this.elements[nuc_count + i];
-                nuc.local_id = this.nuc_local_id;
+                if (this.elements[nucCount + i] == null || this.elements[nucCount + i] == undefined)
+                    this.elements[nucCount + i] = current_strand.createBasicElement(nucCount + i);
+                let nuc = this.elements[nucCount + i];
+                nuc.lid = this.nuc_local_id;
                     
                 //create neighbor 3 element if it doesn't exist
                 let neighbor3 = parseInt(l[2]);
                 if (neighbor3 != -1) {
-                    if (this.elements[nuc_count + neighbor3] == null || this.elements[nuc_count + neighbor3] == undefined) {
-                        this.elements[nuc_count + neighbor3] = current_strand.create_basicElement(nuc_count + neighbor3);
+                    if (this.elements[nucCount + neighbor3] == null || this.elements[nucCount + neighbor3] == undefined) {
+                        this.elements[nucCount + neighbor3] = current_strand.createBasicElement(nucCount + neighbor3);
                     }
-                    nuc.neighbor3 = this.elements[nuc_count + neighbor3];
+                    nuc.neighbor3 = this.elements[nucCount + neighbor3];
                 }
                 else 
                     nuc.neighbor3 = null;
@@ -68,10 +68,10 @@ class TopReader extends FileReader{
                 //create neighbor 5 element if it doesn't exist
                 let neighbor5 = parseInt(l[3]);
                 if (neighbor5 != -1) {
-                    if (this.elements[nuc_count + neighbor5] == null || this.elements[nuc_count + neighbor5] == undefined) {
-                        this.elements[nuc_count + neighbor5] = current_strand.create_basicElement(nuc_count + neighbor5);
+                    if (this.elements[nucCount + neighbor5] == null || this.elements[nucCount + neighbor5] == undefined) {
+                        this.elements[nucCount + neighbor5] = current_strand.createBasicElement(nucCount + neighbor5);
                     }
-                    nuc.neighbor5 = this.elements[nuc_count + neighbor5];
+                    nuc.neighbor5 = this.elements[nucCount + neighbor5];
                 }
                 else nuc.neighbor5 = null;
                     
@@ -81,39 +81,39 @@ class TopReader extends FileReader{
                 //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                 if (base === "U") RNA_MODE = true;
                     
-                current_strand.add_basicElement(nuc);
+                current_strand.addBasicElement(nuc);
                 this.nuc_local_id += 1;
-                this.last_strand = str_id;
+                this.last_strand = strID;
                     
                 if (i == lines.length - 1) {
                     return;
                 }; 
             });
-            this.system.setDatFile(dat_file); //store dat_file in current System object
+            this.system.setDatFile(datFile); //store datFile in current System object
             systems.push(this.system); //add system to Systems[]
-            nuc_count = this.elements.length;
-            conf_len = nuc_count + 3;
+            nucCount = this.elements.length;
+            conf_len = nucCount + 3;
 
             //set up instancing data arrays
-            this.system.INSTANCES = this.system.system_length();
-            this.system.bb_offsets = new Float32Array(this.system.INSTANCES * 3);
-            this.system.bb_rotation = new Float32Array(this.system.INSTANCES * 4);
-            this.system.ns_offsets = new Float32Array(this.system.INSTANCES * 3);
-            this.system.ns_rotation = new Float32Array(this.system.INSTANCES * 4)
-            this.system.con_offsets = new Float32Array(this.system.INSTANCES * 3);
-            this.system.con_rotation = new Float32Array(this.system.INSTANCES * 4);
-            this.system.bbcon_offsets = new Float32Array(this.system.INSTANCES * 3);
-            this.system.bbcon_rotation = new Float32Array(this.system.INSTANCES * 4);
-            this.system.bbcon_scales = new Float32Array(this.system.INSTANCES * 3); 
-            this.system.cm_offsets = new Float32Array(this.system.INSTANCES * 3);
-            this.system.bb_colors = new Float32Array(this.system.INSTANCES * 3);
-            this.system.ns_colors = new Float32Array(this.system.INSTANCES * 3)
+            this.system.INSTANCES = this.system.systemLength();
+            this.system.bbOffsets = new Float32Array(this.system.INSTANCES * 3);
+            this.system.bbRotation = new Float32Array(this.system.INSTANCES * 4);
+            this.system.nsOffsets = new Float32Array(this.system.INSTANCES * 3);
+            this.system.nsRotation = new Float32Array(this.system.INSTANCES * 4)
+            this.system.conOffsets = new Float32Array(this.system.INSTANCES * 3);
+            this.system.conRotation = new Float32Array(this.system.INSTANCES * 4);
+            this.system.bbconOffsets = new Float32Array(this.system.INSTANCES * 3);
+            this.system.bbconRotation = new Float32Array(this.system.INSTANCES * 4);
+            this.system.bbconScales = new Float32Array(this.system.INSTANCES * 3); 
+            this.system.cmOffsets = new Float32Array(this.system.INSTANCES * 3);
+            this.system.bbColors = new Float32Array(this.system.INSTANCES * 3);
+            this.system.nsColors = new Float32Array(this.system.INSTANCES * 3)
             this.system.scales = new Float32Array(this.system.INSTANCES * 3);
-            this.system.ns_scales = new Float32Array(this.system.INSTANCES * 3);
-            this.system.con_scales = new Float32Array(this.system.INSTANCES * 3);
+            this.system.nsScales = new Float32Array(this.system.INSTANCES * 3);
+            this.system.conScales = new Float32Array(this.system.INSTANCES * 3);
             this.system.visibility = new Float32Array(this.system.INSTANCES * 3);
 
-            this.system.bb_labels = new Float32Array(this.system.INSTANCES * 3);
+            this.system.bbLabels = new Float32Array(this.system.INSTANCES * 3);
 
 
         }})(this.top_file);

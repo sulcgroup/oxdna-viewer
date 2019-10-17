@@ -33,7 +33,7 @@ function glsl2three(input: THREE.Vector4) {
 }
 
 function rotateByInput() { //rotate selected according to input controls
-    if (selected_bases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
+    if (selectedBases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
         notify("Please select elements to rotate.");
     }
     let angle = getAngle();
@@ -50,12 +50,12 @@ function rotateByInput() { //rotate selected according to input controls
 
     // This will be rotating around the center of mass of the selected bases.
     let c = new THREE.Vector3(0, 0, 0);
-    selected_bases.forEach((base) => {
-        c.add(base.get_instance_parameter3("cm_offsets"));
+    selectedBases.forEach((base) => {
+        c.add(base.getInstanceParameter3("cmOffsets"));
     });
-    c.multiplyScalar(1/selected_bases.size)
+    c.multiplyScalar(1/selectedBases.size)
 
-    editHistory.do(new RevertableRotation(selected_bases, axis, angle, c));
+    editHistory.do(new RevertableRotation(selectedBases, axis, angle, c));
 }
 
 function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
@@ -72,14 +72,14 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
     elements.forEach((base) => {
         let sys = base.parent.parent;
-        let sid = base.global_id - sys.global_start_id;
+        let sid = base.gid - sys.globalStartId;
 
         //get current positions
-        let cm_pos = base.get_instance_parameter3("cm_offsets");
-        let bb_pos = base.get_instance_parameter3("bb_offsets");
-        let ns_pos = base.get_instance_parameter3("ns_offsets");
-        let con_pos = base.get_instance_parameter3("con_offsets");
-        let bbcon_pos = base.get_instance_parameter3("bbcon_offsets");
+        let cm_pos = base.getInstanceParameter3("cmOffsets");
+        let bb_pos = base.getInstanceParameter3("bbOffsets");
+        let ns_pos = base.getInstanceParameter3("nsOffsets");
+        let con_pos = base.getInstanceParameter3("conOffsets");
+        let bbcon_pos = base.getInstanceParameter3("bbconOffsets");
 
         //the rotation center needs to be (0,0,0)
         cm_pos.sub(about);
@@ -95,17 +95,17 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         bbcon_pos.applyQuaternion(q);
 
         //get current rotations and convert to THREE coordinates
-        let ns_rotationV = base.get_instance_parameter4("ns_rotation");
-        let ns_rotation = glsl2three(ns_rotationV);
-        let con_rotationV = base.get_instance_parameter4("con_rotation");
-        let con_rotation = glsl2three(con_rotationV);
-        let bbcon_rotationV = base.get_instance_parameter4("bbcon_rotation");
-        let bbcon_rotation = glsl2three(bbcon_rotationV);
+        let ns_rotationV = base.getInstanceParameter4("nsRotation");
+        let nsRotation = glsl2three(ns_rotationV);
+        let con_rotationV = base.getInstanceParameter4("conRotation");
+        let conRotation = glsl2three(con_rotationV);
+        let bbcon_rotationV = base.getInstanceParameter4("bbconRotation");
+        let bbconRotation = glsl2three(bbcon_rotationV);
 
         //apply individual object rotation
-        ns_rotation.multiply(q2);
-        con_rotation.multiply(q2);
-        bbcon_rotation.multiply(q2);
+        nsRotation.multiply(q2);
+        conRotation.multiply(q2);
+        bbconRotation.multiply(q2);
 
         //move the object back to its original position
         cm_pos.add(about);
@@ -115,15 +115,15 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         bbcon_pos.add(about);
 
         //update the instancing matrices
-        sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
-        sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
-        sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
-        sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
-        sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
+        sys.fillVec('cmOffsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
+        sys.fillVec('bbOffsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
+        sys.fillVec('nsOffsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
+        sys.fillVec('conOffsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
+        sys.fillVec('bbconOffsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
         
-        sys.fill_vec('ns_rotation', 4, sid, [ns_rotation.w, ns_rotation.z, ns_rotation.y, ns_rotation.x]);
-        sys.fill_vec('con_rotation', 4, sid, [con_rotation.w, con_rotation.z, con_rotation.y, con_rotation.x]);
-        sys.fill_vec('bbcon_rotation', 4, sid, [bbcon_rotation.w, bbcon_rotation.z, bbcon_rotation.y, bbcon_rotation.x]);
+        sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
+        sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
+        sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
     });
 
     // Update backbone connections for bases with neigbours outside the selection set
@@ -141,7 +141,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
 
         systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
@@ -152,26 +152,26 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(current_nuc) {
-    let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
-    let x_bb_last = temp.x,
-        y_bb_last = temp.y,
-        z_bb_last = temp.z;
-    temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
-    let x_bb = temp.x;
-    let y_bb = temp.y;
-    let z_bb = temp.z;
+    let temp = current_nuc.neighbor3.getInstanceParameter3("bbOffsets");
+    let xbbLast = temp.x,
+        ybbLast = temp.y,
+        zbbLast = temp.z;
+    temp = current_nuc.getInstanceParameter3("bbOffsets"); //get current_nuc's backbone world position
+    let xbb = temp.x;
+    let ybb = temp.y;
+    let zbb = temp.z;
 
     //calculate sp location, length and orientation
-    let x_sp = (x_bb + x_bb_last) / 2,
-        y_sp = (y_bb + y_bb_last) / 2,
-        z_sp = (z_bb + z_bb_last) / 2;
-    let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
-    let rotation_sp = new THREE.Quaternion().setFromUnitVectors(
-        new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
+    let xsp = (xbb + xbbLast) / 2,
+        ysp = (ybb + ybbLast) / 2,
+        zsp = (zbb + zbbLast) / 2;
+    let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+    let spRotation = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
 
-    current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
-    current_nuc.set_instance_parameter('bbcon_rotation', [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-    current_nuc.set_instance_parameter('bbcon_scales', [1, sp_len, 1]);
+    current_nuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+    current_nuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+    current_nuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
     current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
     current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
     current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
@@ -180,13 +180,13 @@ function calcsp(current_nuc) {
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     elements.forEach((base) => {
         let sys = base.parent.parent;
-        let sid = base.global_id - sys.global_start_id;
+        let sid = base.gid - sys.globalStartId;
 
-        let cm_pos = base.get_instance_parameter3("cm_offsets");
-        let bb_pos = base.get_instance_parameter3("bb_offsets");
-        let ns_pos = base.get_instance_parameter3("ns_offsets");
-        let con_pos = base.get_instance_parameter3("con_offsets");
-        let bbcon_pos = base.get_instance_parameter3("bbcon_offsets");
+        let cm_pos = base.getInstanceParameter3("cmOffsets");
+        let bb_pos = base.getInstanceParameter3("bbOffsets");
+        let ns_pos = base.getInstanceParameter3("nsOffsets");
+        let con_pos = base.getInstanceParameter3("conOffsets");
+        let bbcon_pos = base.getInstanceParameter3("bbconOffsets");
 
         cm_pos.add(v);
         bb_pos.add(v);
@@ -194,11 +194,11 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         con_pos.add(v);
         bbcon_pos.add(v);
 
-        sys.fill_vec('cm_offsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
-        sys.fill_vec('bb_offsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
-        sys.fill_vec('ns_offsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
-        sys.fill_vec('con_offsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
-        sys.fill_vec('bbcon_offsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
+        sys.fillVec('cmOffsets', 3, sid, [cm_pos.x, cm_pos.y, cm_pos.z]);
+        sys.fillVec('bbOffsets', 3, sid, [bb_pos.x, bb_pos.y, bb_pos.z]);
+        sys.fillVec('nsOffsets', 3, sid, [ns_pos.x, ns_pos.y, ns_pos.z]);
+        sys.fillVec('conOffsets', 3, sid, [con_pos.x, con_pos.y, con_pos.z]);
+        sys.fillVec('bbconOffsets', 3, sid, [bbcon_pos.x, bbcon_pos.y, bbcon_pos.z]);
     });
 
     // Update backbone connections (is there a more clever way to do this than
@@ -218,7 +218,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
     }
     render();
 }

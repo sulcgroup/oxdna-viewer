@@ -78,7 +78,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
                 _move.copy(_new_pos).sub(_oldPos);
 
-                translateElements(selected_bases, _move);
+                translateElements(selectedBases, _move);
                 _oldPos.copy(_new_pos); //Need difference from previous position.
                 
                 // Disable controls
@@ -89,7 +89,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 _selected.parent.parent.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             }
             render();
         } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
@@ -113,7 +113,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 //Create a movement plane perpendicular to the camera heading containing the clicked object
                 _selected = elements[id]
                 _movePos.set(0, 0, 0);
-                _objPos = _selected.get_instance_parameter3("bb_offsets");
+                _objPos = _selected.getInstanceParameter3("bbOffsets");
                 _plane.setFromNormalAndCoplanarPoint(camera_heading, _objPos);
                 _mousePos.copy(camera_heading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
                 _oldPos.copy(_objPos);
@@ -154,10 +154,10 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 // Re-enable trackball controlls
                 controls.enabled = true;
 
-                if (selected_bases.has(_selected)) {
+                if (selectedBases.has(_selected)) {
                     // Calculate the total translation and add it to the edit history
                     var totalMove = _new_pos.clone().sub(_startPos);
-                    editHistory.add(new RevertableTranslation(selected_bases, totalMove));
+                    editHistory.add(new RevertableTranslation(selectedBases, totalMove));
                     console.log("Added translation to history: "+ totalMove.length())
                 }
 				_selected = null; //now nothing is selected for dragging b/c click event is over
@@ -176,7 +176,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 
             // Toggle selected elements (unless they are already selected)
             boxSelected.forEach(element => {
-                if (!selected_bases.has(element)) {
+                if (!selectedBases.has(element)) {
                     element.toggle();
                 }
             });

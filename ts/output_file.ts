@@ -24,13 +24,13 @@ function makeTopFile(){
         }
     }
     top.push(tot_nuc + " " + tot_strands);
-    uncorrected_strand_id = elements[0].parent.strand_id;
-    old_system = elements[0].parent.parent.system_id;
+    uncorrected_strand_id = elements[0].parent.strandID;
+    old_system = elements[0].parent.parent.systemID;
     for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
-        if (elements[i].parent.strand_id != uncorrected_strand_id || elements[i].parent.parent.system_id != old_system) {
+        if (elements[i].parent.strandID != uncorrected_strand_id || elements[i].parent.parent.systemID != old_system) {
             current_strand += 1;
-            uncorrected_strand_id = elements[i].parent.strand_id;
-            old_system = elements[i].parent.parent.system_id;
+            uncorrected_strand_id = elements[i].parent.strandID;
+            old_system = elements[i].parent.parent.systemID;
         }
         let tl = [current_strand , elements[i].type ]; //strand id in global world + base type
         let neighbor3 = elements[i].neighbor3;
@@ -38,11 +38,11 @@ function makeTopFile(){
         if (neighbor3 === null || neighbor3 === undefined) 
             tl.push(-1); // if no neigbor3, neighbor3's global id = -1
         else if (neighbor3 !== null) 
-            tl.push(neighbor3.global_id); //if neighbor3 exists, append neighbor3's global id
+            tl.push(neighbor3.gid); //if neighbor3 exists, append neighbor3's global id
         if (neighbor5 === null || neighbor5 === undefined) 
             tl.push(-1); //if neighbor5 doesn't exist, append neighbor5's position = -1
         else  
-            tl.push(neighbor5.global_id); //if neighbor5 exists, append neighbor5's position
+            tl.push(neighbor5.gid); //if neighbor5 exists, append neighbor5's position
         top.push(tl.join(" "));
     }
     makeTextFile("sim.top", top.join("\n")); //make .top file
@@ -51,7 +51,7 @@ function makeDatFile() {
     // Get largest absolute coordinate:
     let max_coord = 0;
     for (let i = 0; i < elements.length; i++) { //for all elements
-        let p = elements[i].get_instance_parameter3("cm_offsets");
+        let p = elements[i].getInstanceParameter3("cmOffsets");
         max_coord = Math.max(max_coord, Math.max(
             Math.abs(p.x),
             Math.abs(p.y),

@@ -19,7 +19,7 @@ var instance_material = new THREE.MeshLambertMaterial( {
 instance_material["defines"] = instance_material["defines"] || {};
 instance_material["defines"][ 'INSTANCED' ] = "";
 
-var backbone_colors = [
+var backboneColors = [
     new THREE.Color(0xfdd291), //light yellow
     
     new THREE.Color(0xffb322), //goldenrod
@@ -32,7 +32,7 @@ var backbone_colors = [
 
 
 // define nucleoside colors: GREY OR traditional colors
-var nucleoside_colors = [
+var nucleosideColors = [
     new THREE.Color(0x3333FF), //A or R
 
     new THREE.Color(0xFFFF33), //G or H yellow; "gorse"
@@ -93,6 +93,6 @@ var nucleoside_colors = [
 
 ];
 
-var selection_color = new THREE.Color(0xFF00FF); //PINK!
+var selectionColor = new THREE.Color(0xFF00FF); //PINK!
 
 

@@ -19,17 +19,17 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 			let sys = nucleotide.parent.parent;
 
 			// Select multiple elements my holding down ctrl
-			if (!event.ctrlKey && !event.shiftKey && !selected_bases.has(nucleotide)) {
+			if (!event.ctrlKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
 				clearSelection();
 			}
 			
-			let strand_count = sys[strands].length;
+			let strandCount = sys[strands].length;
 			switch(getScopeMode()){
 				case "System" :
-					for (let i = 0; i < strand_count; i++){  //for every strand in the System
+					for (let i = 0; i < strandCount; i++){  //for every strand in the System
 						let strand = sys[strands][i];
-						let nuc_count = strand[monomers].length;
-                        for (let j = 0; j < nuc_count; j++) // for every nucleotide on the Strand
+						let nucCount = strand[monomers].length;
+                        for (let j = 0; j < nucCount; j++) // for every nucleotide on the Strand
                             strand[monomers][j].toggle();
 					}
 					updateView(sys);
@@ -48,16 +48,16 @@ document.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Cluster" :
-					if (typeof elements[0].cluster_id == 'undefined') {
+					if (typeof elements[0].clusterId == 'undefined') {
 						document.getElementById("clusterOptions").hidden = false;
 					} else {
-						for (let i = 0; i < strand_count; i++){
+						for (let i = 0; i < strandCount; i++){
 							let strand = sys[strands][i];
-							let nuc_count = strand[monomers].length;
+							let nucCount = strand[monomers].length;
 							// for every nucleotide on the Strand in the System
-							for (let j = 0; j < nuc_count; j++) {
+							for (let j = 0; j < nucCount; j++) {
 								let n: BasicElement = strand[monomers][j];
-								if(n.cluster_id == nucleotide.cluster_id) {
+								if(n.clusterId == nucleotide.clusterId) {
 									n.toggle();
 								}
 							}
@@ -84,17 +84,17 @@ function updateView(sys) {
 	let baseInfoStrands = {};
 
 	//sort selection info into respective containers
-	selected_bases.forEach(
+	selectedBases.forEach(
 		(base) => {
 			//store global ids for BaseList view
-			listBases.push(base.global_id);
+			listBases.push(base.gid);
 
 			//assign each of the selected bases to a strand
-			let strand_id = base.parent.strand_id;
-			if(strand_id in baseInfoStrands)
-				baseInfoStrands[strand_id].push(base);
+			let strandID = base.parent.strandID;
+			if(strandID in baseInfoStrands)
+				baseInfoStrands[strandID].push(base);
 			else
-				baseInfoStrands[strand_id] = [base];
+				baseInfoStrands[strandID] = [base];
 		}
 	);
 
@@ -103,10 +103,10 @@ function updateView(sys) {
 
 	//Brake down info (low txt box)
 	let baseInfoLines = [];
-	for (let strand_id in baseInfoStrands){
-		let s_bases = baseInfoStrands[strand_id];
+	for (let strandID in baseInfoStrands){
+		let s_bases = baseInfoStrands[strandID];
 		//make a fancy header for each strand
-		let header = ["Str#:", strand_id, "Sys#:", s_bases[0].parent.parent.system_id];
+		let header = ["Str#:", strandID, "Sys#:", s_bases[0].parent.parent.systemID];
 		baseInfoLines.push("----------------------");
 		baseInfoLines.push(header.join(" "));
 		baseInfoLines.push("----------------------");
@@ -114,7 +114,7 @@ function updateView(sys) {
 		//fish out all the required base info
 		//one could also sort it if neaded ...
 		for(let i = 0; i < s_bases.length; i++){
-			baseInfoLines.push(["sid:", s_bases[i].global_id, "|", "lID:", s_bases[i].local_id].join(" "));
+			baseInfoLines.push(["sid:", s_bases[i].gid, "|", "lID:", s_bases[i].lid].join(" "));
 		}
 	}
 	makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
@@ -122,7 +122,7 @@ function updateView(sys) {
 
 function clearSelection() {
 	elements.forEach(element => {
-		if (selected_bases.has(element)) {
+		if (selectedBases.has(element)) {
 			element.toggle();
 		}
 	});
@@ -142,7 +142,7 @@ function invertSelection() {
 
 function selectAll() {
 	elements.forEach(element => {
-		if (!selected_bases.has(element)) {
+		if (!selectedBases.has(element)) {
 			element.toggle();
 		}
 	});
@@ -156,17 +156,17 @@ function selectIntermediate() {
 	let iMin = 0;
 	let iMax = n;
 	while(iMin++ <= n) {
-		if(selected_bases.has(elements[iMin])) {
+		if(selectedBases.has(elements[iMin])) {
 			break;
 		}
 	}
 	while(iMax-- > 0) {
-		if(selected_bases.has(elements[iMax])) {
+		if(selectedBases.has(elements[iMax])) {
 			break;
 		}
 	}
 	for(let i=iMin; i<iMax; i++) {
-		if (!selected_bases.has(elements[i])) {
+		if (!selectedBases.has(elements[i])) {
 			elements[i].toggle();
 		}
 	}
@@ -320,7 +320,7 @@ class BoxSelector {
 		this.updateFrustum(this.startPoint, this.endPoint);
 
 		elements.forEach(element => {
-			let cm_pos = element.get_instance_parameter3("cm_offsets");
+			let cm_pos = element.getInstanceParameter3("cmOffsets");
 			if (this.frustum.containsPoint(cm_pos)) {
 				this.collection.push(element);
 			}

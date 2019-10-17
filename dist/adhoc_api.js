@@ -5,12 +5,12 @@ var api;
     function toggle_strand(strand) {
         let sys = strand.parent;
         let nucleotides = strand[monomers];
-        nucleotides.map((n) => n.toggle_visibility());
+        nucleotides.map((n) => n.toggleVisibility());
         sys.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         sys.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
         sys.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
         sys.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        sys.dummy_backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.dummyBackbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         render();
         return strand;
     }
@@ -56,13 +56,13 @@ var api;
     function toggle_all({ system = systems[0] } = {}) {
         system[strands].map((strand) => {
             let nucleotides = strand[monomers];
-            nucleotides.map((n) => n.toggle_visibility());
+            nucleotides.map((n) => n.toggleVisibility());
         });
         system.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         system.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
         system.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
         system.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        system.dummy_backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.dummyBackbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         render();
     }
     api.toggle_all = toggle_all;
@@ -70,18 +70,18 @@ var api;
     function toggle_base_colors() {
         elements.map((n) => {
             let sys = n.parent.parent;
-            let sid = n.global_id - sys.global_start_id;
+            let sid = n.gid - sys.globalStartId;
             //because the precision of the stored color value (32-bit) and defined color value (64-bit) are different,
             //you have to do some weird casting to get them to be comparable.
-            let tmp = n.get_instance_parameter3("ns_colors"); //maybe this shouldn't be a vector3...
+            let tmp = n.getInstanceParameter3("nsColors"); //maybe this shouldn't be a vector3...
             let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
             let g = [GREY.r.toPrecision(6), GREY.g.toPrecision(6), GREY.b.toPrecision(6)];
             if (JSON.stringify(c) == JSON.stringify(g)) {
-                let new_c = n.elem_to_color(n.type);
-                sys.fill_vec('ns_colors', 3, sid, [new_c.r, new_c.g, new_c.b]);
+                let new_c = n.elemToColor(n.type);
+                sys.fillVec('nsColors', 3, sid, [new_c.r, new_c.g, new_c.b]);
             }
             else {
-                sys.fill_vec('ns_colors', 3, sid, [GREY.r, GREY.g, GREY.b]);
+                sys.fillVec('nsColors', 3, sid, [GREY.r, GREY.g, GREY.b]);
             }
         });
         for (i = 0; i < systems.length; i++) {
@@ -112,17 +112,17 @@ var api;
         let strand = element.parent;
         // nucleotides which are after the nick
         let new_nucleotides : BasicElement[] = trace_53(neighbor);
-        strand.exclude_Elements(new_nucleotides);
+        strand.excludeElements(new_nucleotides);
         
         //create fill and deploy new strand
-        let new_strand = strand.parent.create_Strand(strand.parent[strands].length + 1);
+        let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
         new_nucleotides.forEach(
             (n) => {
-                new_strand.add_basicElement(n);
+                new_strand.addBasicElement(n);
             }
         );
         //voodoo
-        strand.parent.add_strand(new_strand);
+        strand.parent.addStrand(new_strand);
         render();
     }
 
@@ -138,7 +138,7 @@ var api;
         let strand2 = element2.parent;
         // lets orphan strand2 element
         let bases2 = [...strand2[monomers]]; // clone the refferences to the elements
-        strand2.exclude_Elements(strand2[monomers]);
+        strand2.excludeElements(strand2[monomers]);
         
         //check that it is not the same strand
         if (strand1 !== strand2){
@@ -153,7 +153,7 @@ var api;
         //create fill and deploy new strand
         bases2.forEach(
             (n) => {
-                strand1.add_basicElement(n);
+                strand1.addBasicElement(n);
             }
         );
         //interconnect the 2 element objects
@@ -162,55 +162,56 @@ var api;
         //TODO: CLEAN UP!!!
         //////last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
         let p2 = element2[objects][element2.BACKBONE].position;
-        let x_bb = p2.x,
-            y_bb = p2.y,
-            z_bb = p2.z;
+        let xbb = p2.x,
+            ybb = p2.y,
+            zbb = p2.z;
 
         let p1 = element1[objects][element1.BACKBONE].position;
-        let x_bb_last = p1.x,
-            y_bb_last = p1.y,
-            z_bb_last = p1.z;
+        let xbbLast = p1.x,
+            ybbLast = p1.y,
+            zbbLast = p1.z;
 
 
-        let x_sp = (x_bb + x_bb_last) / 2, //sugar phospate position in center of both current and last sugar phosphates
-            y_sp = (y_bb + y_bb_last) / 2,
-            z_sp = (z_bb + z_bb_last) / 2;
+        let xsp = (xbb + xbbLast) / 2, //sugar phospate position in center of both current and last sugar phosphates
+            ysp = (ybb + ybbLast) / 2,
+            zsp = (zbb + zbbLast) / 2;
 
-        let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2));
+        let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
         // easy periodic boundary condition fix
         // if the bonds are to long just don't add them
-        if (sp_len <= 500) {
-            let rotation_sp = new THREE.Matrix4().makeRotationFromQuaternion(
+        if (spLen <= 500) {
+            let spRotation = new THREE.Matrix4().makeRotationFromQuaternion(
                 new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize()
+                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, element1.strand_to_material(strand2.strand_id));
-            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, sp_len, 1.0)); //set length according to distance between current and last sugar phosphate
-            sp.applyMatrix(rotation_sp); //set rotation
-            sp.position.set(x_sp, y_sp, z_sp);
+            let sp = new THREE.Mesh(connector_geometry, element1.strand_to_material(strand2.strandID));
+            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, spLen, 1.0)); //set length according to distance between current and last sugar phosphate
+            sp.applyMatrix(spRotation); //set rotation
+            sp.position.set(xsp, ysp, zsp);
             element1.add(sp); //add to visual_object
         }
         // Strand id update
-        let str_id = 1;
+        let strID = 1;
         let sys = element1.parent.parent;
-        sys[strands].forEach((strand) =>strand.strand_id = str_id++);
+        sys[strands].forEach((strand) =>strand.strandID = strID++);
         render();
-    }*/
-    function strand_add_to_system(strand, system) {
+    }
+    
+    export function strand_add_to_system(strand:Strand, system: System){
         // kill strand in its previous system
-        strand.parent[strands] = strand.parent[strands].filter((ele) => {
+        strand.parent[strands] = strand.parent[strands].filter((ele)=>{
             return ele != strand;
         });
+
         // add strand to the desired system
-        let str_id = system[strands].length + 1;
+        let strID = system[strands].length + 1;
         system[strands].push(strand);
-        strand.strand_id = str_id;
+        strand.strandID = strID;
         strand.parent = system;
-    }
-    api.strand_add_to_system = strand_add_to_system;
+    }*/
     //there's probably a less blunt way to do this...
-    function remove_colorbar() {
+    function removeColorbar() {
         let l = colorbarScene.children.length;
         for (let i = 0; i < l; i++) {
             if (colorbarScene.children[i].type == "Sprite" || colorbarScene.children[i].type == "Line") {
@@ -224,9 +225,9 @@ var api;
         pointlight.intensity = 0.5;
         renderColorbar();
     }
-    api.remove_colorbar = remove_colorbar;
+    api.removeColorbar = removeColorbar;
     //turns out that lut doesn't save the sprites so you have to completley remake it
-    function show_colorbar() {
+    function showColorbar() {
         colorbarScene.add(lut.legend.mesh);
         let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
         colorbarScene.add(labels["title"]);
@@ -238,10 +239,10 @@ var api;
         pointlight.intensity = 1.0;
         renderColorbar();
     }
-    api.show_colorbar = show_colorbar;
+    api.showColorbar = showColorbar;
     function changeColormap(name) {
         if (lut != undefined) {
-            api.remove_colorbar();
+            api.removeColorbar();
             let key = lut.legend.labels.title;
             let min = lut.minV;
             let max = lut.maxV;
@@ -252,9 +253,9 @@ var api;
             lut.setLegendLabels({ 'title': key, 'ticks': 5 });
             for (let i = 0; i < systems.length; i++) {
                 let system = systems[i];
-                let end = system.system_length();
+                let end = system.systemLength();
                 for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                    system.lutCols[i] = lut.getColor(Number(system.colormap_file[key][i]));
+                    system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
                 }
             }
             coloringChanged();
@@ -266,9 +267,9 @@ var api;
     api.changeColormap = changeColormap;
     function sp_only() {
         elements.map((n) => {
-            n.set_instance_parameter('scales', [0, 0, 0]);
-            n.set_instance_parameter('ns_scales', [0, 0, 0]);
-            n.set_instance_parameter('con_scales', [0, 0, 0]);
+            n.setInstanceParameter('scales', [0, 0, 0]);
+            n.setInstanceParameter('nsScales', [0, 0, 0]);
+            n.setInstanceParameter('conScales', [0, 0, 0]);
         });
         for (let i = 0; i < systems.length; i++) {
             systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;
@@ -280,9 +281,9 @@ var api;
     api.sp_only = sp_only;
     function show_everything() {
         elements.map((n) => {
-            n.set_instance_parameter('scales', [1, 1, 1]);
-            n.set_instance_parameter('ns_scales', [0.7, 0.3, 0.7]);
-            n.set_instance_parameter('con_scales', [1, n.bb_ns_distance, 1]);
+            n.setInstanceParameter('scales', [1, 1, 1]);
+            n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
+            n.setInstanceParameter('conScales', [1, n.bbnsDist, 1]);
         });
         for (let i = 0; i < systems.length; i++) {
             systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;

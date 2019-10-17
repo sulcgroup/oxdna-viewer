@@ -12,14 +12,14 @@ var instance_material = new THREE.MeshLambertMaterial({
 });
 instance_material["defines"] = instance_material["defines"] || {};
 instance_material["defines"]['INSTANCED'] = "";
-var backbone_colors = [
+var backboneColors = [
     new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
     new THREE.Color(0x6ea4cc),
 ];
 // define nucleoside colors: GREY OR traditional colors
-var nucleoside_colors = [
+var nucleosideColors = [
     new THREE.Color(0x3333FF),
     new THREE.Color(0xFFFF33),
     //C or K
@@ -59,4 +59,4 @@ var nucleoside_colors = [
     //W
     new THREE.Color(0xB45AB4),
 ];
-var selection_color = new THREE.Color(0xFF00FF); //PINK!
+var selectionColor = new THREE.Color(0xFF00FF); //PINK!

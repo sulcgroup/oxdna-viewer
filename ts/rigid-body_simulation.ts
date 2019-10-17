@@ -39,7 +39,7 @@ class RigidClusterSimulator {
         // Create Cluster objects for each cluster label among the elements
         let m = new Map();
         elements.forEach((e) => {
-            let c = e.cluster_id;
+            let c = e.clusterId;
             if (c < 0) {
                 return // Ignore cluster noise
             }
@@ -138,7 +138,7 @@ class Cluster {
 
         this.radius = 0;
         clusterElements.forEach((e) => {
-            let p = e.get_instance_parameter3("cm_offsets");
+            let p = e.getInstanceParameter3("cmOffsets");
             this.radius = Math.max(this.radius, p.distanceTo(this.position));
         });
 
@@ -148,10 +148,10 @@ class Cluster {
             5 / (2 * this.mass * Math.pow(this.radius, 2)));
 
         clusterElements.forEach((e) => {
-            if (e.neighbor3 && e.neighbor3.cluster_id !== e.cluster_id) {
+            if (e.neighbor3 && e.neighbor3.clusterId !== e.clusterId) {
                 this.conPoints.push(new ClusterConnectionPoint(e, e.neighbor3));
             }
-            if (e.neighbor5 && e.neighbor5.cluster_id !== e.cluster_id) {
+            if (e.neighbor5 && e.neighbor5.clusterId !== e.clusterId) {
                 this.conPoints.push(new ClusterConnectionPoint(e, e.neighbor5));
             }
         });
@@ -167,7 +167,7 @@ class Cluster {
     private calculateCenter() {
         this.position = new THREE.Vector3();
         this.clusterElements.forEach((e) => {
-            this.position.add(e.get_instance_parameter3("cm_offsets"));
+            this.position.add(e.getInstanceParameter3("cmOffsets"));
         });
         this.position.divideScalar(this.clusterElements.size);
     }
@@ -277,11 +277,11 @@ class ClusterConnectionPoint {
     };
 
     public getFromPos(): THREE.Vector3 {
-        return this.from.get_instance_parameter3("cm_offsets").clone();
+        return this.from.getInstanceParameter3("cmOffsets").clone();
     }
 
     public getToPos(): THREE.Vector3 {
-        return this.to.get_instance_parameter3("cm_offsets").clone();
+        return this.to.getInstanceParameter3("cmOffsets").clone();
     }
 
     public getDist(): number {
