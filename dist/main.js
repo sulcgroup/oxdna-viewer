@@ -959,7 +959,8 @@ function createVideo() {
                 createTrajectoryVideo(canvas, capturer);
                 break;
             case "lemniscate":
-                createLemniscateVideo(canvas, capturer, framerate);
+                let duration = document.getElementById("videoDuration").value;
+                createLemniscateVideo(canvas, capturer, framerate, duration);
                 break;
         }
     }
@@ -998,9 +999,8 @@ function createTrajectoryVideo(canvas, capturer) {
     nextConfig();
 }
 ;
-function createLemniscateVideo(canvas, capturer, framerate) {
+function createLemniscateVideo(canvas, capturer, framerate, duration) {
     // Setup timing
-    let duration = 10; //Seconds
     let tMax = 2 * Math.PI;
     let nFrames = duration * framerate;
     let dt = tMax / nFrames;
