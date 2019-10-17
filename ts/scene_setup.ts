@@ -67,7 +67,7 @@ let hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.5 );
 scene.add( hemiLight );
 
 let pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
-pointlight.position.set(0, 10, 0);
+pointlight.position.set(0, 50, 0);
 camera.add(pointlight);
 scene.add(camera);
 
