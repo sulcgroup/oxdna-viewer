@@ -7,7 +7,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time and whole structures or individual components can be dragged around the scene by activating the "Drag" option in the sidebar.  To download a perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
+The viewer can load multiple structures at the same time and whole structures or individual components can be dragged around the scene by activating the "Drag" option in the sidebar. Edits can be undone and redone using ctrl-z/ctrl-y or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download a perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
 
 ---
 
@@ -19,8 +19,8 @@ If you would like to make a video of a trajectory, load a trajectory and click t
 **Lemniscate**: The camera will make a figure-8 around its current focus point, creating a 360° view of the currently loaded configuration.
 
 ### Output Formats
-**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software.  
-**Gif**: *DOES NOT WORK IN CHROME* Larger file size, but highly portable.  
+**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software (note that this will not work in Firefox). 
+**Gif**: Larger file size, but highly portable (note that this will not work in Chrome when running locally).  
 **PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ImageJ.
 
 ---
@@ -46,7 +46,7 @@ Note that many of these require system, strand or nucleotide objects. The viewer
 ---
 
 ## Rigid Body Simulations  
-CaDNAno files exported to oxDNA using [conversion tools](http://tacoxdna.sissa.it/) will be planar and impossible to relax using the usual relaxation methods in oxDNA. This software includes a rigid-body simulator that attempts to automatically rearrange these flat CaDNAno designs to a configuration that can be relaxed using traditional molecular dynamics methods. To use, first click on the "Cluster" button under the "Selection Mode" header in the sidebar. This will bring up a UI for selecting clusters. Either allow the software to automatically choose clusters using a DBSCAN algorithm (works quite well for most CaDNAno designs), or select them yourself. Once clusters are defined, click the "Rigid cluster dynamics" checkbox to initiate simulation.  Click it again to stop.  You can drag clusters around during simulation to help the relaxation along or correct topological inaccuracies by switching to drag mode.
+CaDNAno files exported to oxDNA using [conversion tools](http://tacoxdna.sissa.it/) will be planar and near impossible to relax using the usual relaxation methods in oxDNA. This software includes a rigid-body simulator that attempts to automatically rearrange these flat CaDNAno designs to a configuration that can be relaxed using traditional molecular dynamics methods. To use, first click on the "Cluster" button under the "Selection Mode" header in the sidebar. This will bring up a UI for selecting clusters. Either allow the software to automatically choose clusters using a DBSCAN algorithm (works quite well for most CaDNAno designs), or select them yourself. Once clusters are defined, click the "Rigid cluster dynamics" checkbox to initiate simulation.  Click it again to stop.  You can drag clusters around during simulation to help the relaxation along or correct topological inaccuracies by switching to drag mode.
 
 ---
 
