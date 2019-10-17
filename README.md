@@ -19,7 +19,7 @@ If you would like to make a video of a trajectory, load a trajectory and click t
 **Lemniscate**: The camera will make a figure-8 around its current focus point, creating a 360° view of the currently loaded configuration.
 
 ### Output Formats
-**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. For presentations either save a Gif or convert the Webm to a different format using other software.  
+**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software.  
 **Gif**: *DOES NOT WORK IN CHROME* Larger file size, but highly portable.  
 **PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ImageJ.
 
