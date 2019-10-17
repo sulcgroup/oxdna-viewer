@@ -220,6 +220,8 @@ var api;
             }
         }
         colorbarScene.remove(lut.legend.mesh);
+        //reset light to default
+        pointlight.intensity = 0.5;
         renderColorbar();
     }
     api.remove_colorbar = remove_colorbar;
@@ -232,6 +234,8 @@ var api;
             colorbarScene.add(labels['ticks'][i]);
             colorbarScene.add(labels['lines'][i]);
         }
+        //colormap doesn't look right unless the light is 100%
+        pointlight.intensity = 1.0;
         renderColorbar();
     }
     api.show_colorbar = show_colorbar;

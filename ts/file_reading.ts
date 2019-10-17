@@ -157,7 +157,7 @@ class marker {
 function makeLut(data, key) {
     let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined){
-        lut = new THREE.Lut("cooltowarm", 512);
+        lut = new THREE.Lut("spring", 512);
         lut.setMax(max);
         lut.setMin(min);
     }
