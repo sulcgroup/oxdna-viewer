@@ -75,13 +75,13 @@ var api;
             //you have to do some weird casting to get them to be comparable.
             let tmp = n.get_instance_parameter3("ns_colors"); //maybe this shouldn't be a vector3...
             let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
-            let g = [grey.r.toPrecision(6), grey.g.toPrecision(6), grey.b.toPrecision(6)];
+            let g = [GREY.r.toPrecision(6), GREY.g.toPrecision(6), GREY.b.toPrecision(6)];
             if (JSON.stringify(c) == JSON.stringify(g)) {
                 let new_c = n.elem_to_color(n.type);
                 sys.fill_vec('ns_colors', 3, sid, [new_c.r, new_c.g, new_c.b]);
             }
             else {
-                sys.fill_vec('ns_colors', 3, sid, [grey.r, grey.g, grey.b]);
+                sys.fill_vec('ns_colors', 3, sid, [GREY.r, GREY.g, GREY.b]);
             }
         });
         for (i = 0; i < systems.length; i++) {
@@ -211,28 +211,28 @@ var api;
     api.strand_add_to_system = strand_add_to_system;
     //there's probably a less blunt way to do this...
     function remove_colorbar() {
-        let l = scene.children.length;
+        let l = colorbarScene.children.length;
         for (let i = 0; i < l; i++) {
-            if (scene.children[i].type == "Sprite" || scene.children[i].type == "Line") {
-                scene.remove(scene.children[i]);
+            if (colorbarScene.children[i].type == "Sprite" || colorbarScene.children[i].type == "Line") {
+                colorbarScene.remove(colorbarScene.children[i]);
                 i -= 1;
                 l -= 1;
             }
         }
-        scene.remove(lut.legend.mesh);
-        render();
+        colorbarScene.remove(lut.legend.mesh);
+        renderColorbar();
     }
     api.remove_colorbar = remove_colorbar;
     //turns out that lut doesn't save the sprites so you have to completley remake it
     function show_colorbar() {
-        scene.add(lut.legend.mesh);
+        colorbarScene.add(lut.legend.mesh);
         let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
-        scene.add(labels["title"]);
+        colorbarScene.add(labels["title"]);
         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
-            scene.add(labels['ticks'][i]);
-            scene.add(labels['lines'][i]);
+            colorbarScene.add(labels['ticks'][i]);
+            colorbarScene.add(labels['lines'][i]);
         }
-        render();
+        renderColorbar();
     }
     api.show_colorbar = show_colorbar;
     function sp_only() {

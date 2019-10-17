@@ -12,6 +12,9 @@
 function render() {
     renderer.render(scene, camera);
 }
+function renderColorbar() {
+    colorbarRenderer.render(colorbarScene, colorbarCamera);
+}
 
 // animation cycle and control updates
 function animate() {
@@ -35,11 +38,10 @@ function onWindowResize() {
 }
 
 //Setup the scene and renderer and camera 
-var scene = new THREE.Scene();
-// make the background white 
-// default is white
+var GREY =  new THREE.Color(0x888888);
 var BLACK = new THREE.Color(0x000000);
 var WHITE = new THREE.Color();
+var scene = new THREE.Scene();
 scene.background = WHITE
 
 var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
@@ -60,6 +62,15 @@ var renderer = new THREE.WebGLRenderer({ //create renderer
 
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
+
+const colorbarCanvas = <HTMLCanvasElement> document.getElementById("colorbarCanvas");
+const colorbarRenderer = new THREE.WebGLRenderer({
+    canvas: colorbarCanvas,
+    alpha: true
+});
+colorbarRenderer.setClearColor(0x000000, 0);
+const colorbarCamera = new THREE.OrthographicCamera(-7, 7, 1.8, -2.5, -1, 1);
+const colorbarScene = new THREE.Scene();
 
 // set scene lighting 
 // Lights are in a tetrahedron of side length 200 around the origin.

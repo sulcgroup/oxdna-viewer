@@ -458,7 +458,7 @@ class Nucleotide extends BasicElement {
     elem_to_color(elem: number | string): THREE.Color {
         elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
         if (elem ==undefined){
-            return grey
+            return GREY
         }
         return nucleoside_colors[elem];
     };
@@ -553,7 +553,7 @@ class AminoAcid extends BasicElement {
 
     elem_to_color(elem: number | string): THREE.Color {
         elem = { "R": 0, "H": 1, "K": 2, "D": 3, "E": 3, "S": 4, "T": 5, "N": 6, "Q": 7, "C": 8, "U": 9, "G": 10, "P": 11, "A": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
-        if (elem == undefined) return grey
+        if (elem == undefined) return GREY
         return nucleoside_colors[elem];
     };
 

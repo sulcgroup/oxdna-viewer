@@ -335,7 +335,7 @@ THREE.Lut.prototype = {
 
 		var spriteTitle = new THREE.Sprite( spriteMaterialTitle );
 
-		spriteTitle.scale.set( 2, 1, 1.0 );
+		spriteTitle.scale.set( 8.5, 4, 4.0 );
 
 		if ( this.legend.layout == 'vertical' ) {
 
@@ -345,8 +345,7 @@ THREE.Lut.prototype = {
 
 		if ( this.legend.layout == 'horizontal' ) {
 
-			spriteTitle.position.set( this.legend.position.x * 1.015, this.legend.position.y + ( this.legend.dimensions.height * 0.03 ), this.legend.position.z );
-
+			spriteTitle.position.set( this.legend.position.x - this.legend.dimensions.width * 0.92, this.legend.position.y * 0.3 , this.legend.position.z );
 		}
 
 		if ( this.legend.labels.ticks > 0 ) {
@@ -415,7 +414,7 @@ THREE.Lut.prototype = {
 
 				var spriteTick = new THREE.Sprite( spriteMaterialTick );
 
-				spriteTick.scale.set( 2, 1, 1.0 );
+				spriteTick.scale.set( 8.5, 4, 4.0 );
 
 				if ( this.legend.layout == 'vertical' ) {
 
