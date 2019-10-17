@@ -157,7 +157,7 @@ class marker {
 function makeLut(data, key) {
     let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined){
-        lut = new THREE.Lut("spring", 512);
+        lut = new THREE.Lut(default_colormap, 512);
         lut.setMax(max);
         lut.setMin(min);
     }
@@ -224,7 +224,8 @@ var approx_dat_len: number,
     dat_fileout: string = "",
     dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
     box: number, //box size for system
-    toggleFailure: Boolean = false;
+    toggleFailure: Boolean = false, 
+    default_colormap: string = "cooltowarm";
 
 target.addEventListener("drop", function (event) {
 

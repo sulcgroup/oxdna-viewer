@@ -239,6 +239,31 @@ var api;
         renderColorbar();
     }
     api.show_colorbar = show_colorbar;
+    function changeColormap(name) {
+        if (lut != undefined) {
+            api.remove_colorbar();
+            let key = lut.legend.labels.title;
+            let min = lut.minV;
+            let max = lut.maxV;
+            lut = lut.changeColorMap(name);
+            lut.setMax(max);
+            lut.setMin(min);
+            lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
+            lut.setLegendLabels({ 'title': key, 'ticks': 5 });
+            for (let i = 0; i < systems.length; i++) {
+                let system = systems[i];
+                let end = system.system_length();
+                for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                    system.lutCols[i] = lut.getColor(Number(system.colormap_file[key][i]));
+                }
+            }
+            coloringChanged();
+        }
+        else {
+            default_colormap = name;
+        }
+    }
+    api.changeColormap = changeColormap;
     function sp_only() {
         elements.map((n) => {
             n.set_instance_parameter('scales', [0, 0, 0]);

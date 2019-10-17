@@ -152,7 +152,7 @@ class marker {
 function makeLut(data, key) {
     let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined) {
-        lut = new THREE.Lut("spring", 512);
+        lut = new THREE.Lut(default_colormap, 512);
         lut.setMax(max);
         lut.setMin(min);
     }
@@ -198,7 +198,7 @@ previous_chunk, current_chunk, next_chunk, p_p_hanging_line, //Deal with bad lin
 p_hanging_line, c_hanging_line, n_hanging_line, dat_reader = new FileReader(), next_reader = new FileReader(), previous_reader = new FileReader(), //previous and previous_previous are basicaly the same...
 previous_previous_reader = new FileReader(), conf_begin = new marker, conf_end = new marker, conf_len, conf_num = 0, dat_fileout = "", dat_file, //currently var so only 1 dat_file stored for all systems w/ last uploaded system's dat
 box, //box size for system
-toggleFailure = false;
+toggleFailure = false, default_colormap = "cooltowarm";
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
