@@ -149,9 +149,9 @@
                 <i class="material-icons" onclick="toggleOptions('videoOptions')">close</i>
             </div>
             <label for="videoType">Video type:</label>
-            <select id="videoType">
+            <select id="videoType" onchange="document.getElementById('videoLeminiscateOpts').hidden = this.selectedIndex == 0;">
                 <option value="trajectory">Trajectory</option>
-                <option value="lemniscate">XY leminiscate</option>
+                <option value="lemniscate">XY lemniscate</option>
             </select>
             <fieldset>
                 <legend>File format:</legend>
@@ -161,7 +161,11 @@
                 <input type="radio" name="videoFormat" value="jpg">jpg<br>
             </fieldset>
             <label for="videoFramerate">Framerate:</label>
-            <input type="number" value="24" id="videoFramerate" width="20">
+            <input type="number" value="24" id="videoFramerate" width="20">fps
+            <div id="videoLeminiscateOpts" hidden="true">
+                <label for="videoDuration">Duration:</label>
+                <input type="number" value="20" id="videoDuration" width="20">s
+            </div>
             <button id="videoStartStop" onclick="createVideo()">Start</button>
         </div>
 

@@ -5,7 +5,7 @@ let raycaster = new THREE.Raycaster();;
 let intersects;
 			
 
-document.addEventListener('mousedown', event => { //if mouse is pressed down
+canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 	if (getActionModes().includes("Select")) {
 		let id = gpu_picker(event)
 

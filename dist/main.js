@@ -913,7 +913,8 @@ function createVideo() {
                 createTrajectoryVideo(canvas, capturer);
                 break;
             case "lemniscate":
-                createLemniscateVideo(canvas, capturer, framerate);
+                let duration = document.getElementById("videoDuration").value;
+                createLemniscateVideo(canvas, capturer, framerate, duration);
                 break;
         }
     }
@@ -952,12 +953,11 @@ function createTrajectoryVideo(canvas, capturer) {
     nextConfig();
 }
 ;
-function createLemniscateVideo(canvas, capturer, framerate) {
+function createLemniscateVideo(canvas, capturer, framerate, duration) {
     // Setup timing
-    const duration = 10; //Seconds
     let tMax = 2 * Math.PI;
-    const nFrames = duration * framerate;
-    const dt = tMax / nFrames;
+    let nFrames = duration * framerate;
+    let dt = tMax / nFrames;
     // Preserve camera distance from origin:
     const d = Origin.distanceTo(camera.position);
     capturer.start();

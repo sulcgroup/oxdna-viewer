@@ -4,7 +4,7 @@ let mouse3D;
 let raycaster = new THREE.Raycaster();
 ;
 let intersects;
-document.addEventListener('mousedown', event => {
+canvas.addEventListener('mousedown', event => {
     if (getActionModes().includes("Select")) {
         let id = gpu_picker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
