@@ -2,12 +2,12 @@
 
 # oxdna-viewer
 
-A browser-based visualization tool that uses hardware instancing and the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience.  To use, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file into the browser window. If you have JSON overlay files, they can be dragged on with the topology and configuration, or dragged separately later. 
+A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.6 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged on with the topology and configuration, or dragged separately later. 
 
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time and whole structures or individual components can be dragged around the scene by activating the "Drag" option in the sidebar.  To download a perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates
+The viewer can load multiple structures at the same time and whole structures or individual components can be dragged around the scene by activating the "Drag" option in the sidebar.  To download a perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
 
 ---
 
