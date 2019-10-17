@@ -34,7 +34,7 @@ In addition to the visualization and editing features highlighted in the sidebar
 `hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
 `toggle_all(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
 `toggle_base_colors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
-`trace_53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nuclide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5').  
+`trace_53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5').  
 `remove_colorbar()`: Hide the colorbar if an overlay is loaded.  
 `show_colorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
 `changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
