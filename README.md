@@ -2,7 +2,7 @@
 
 # oxdna-viewer
 
-A browser-based visualization tool that uses hardware instancing to create a smooth, seamless oxDNA configuration viewing experience.  To use, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file into the browser window. If you have JSON overlay files, they can be dragged on with the topology and configuration, or dragged separately later. 
+A browser-based visualization tool that uses hardware instancing and the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience.  To use, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file into the browser window. If you have JSON overlay files, they can be dragged on with the topology and configuration, or dragged separately later. 
 
 ---
 
