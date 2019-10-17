@@ -4,12 +4,12 @@
 
 ![oxdna-viewer interface](img/oxview.jpg)
 
-A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.6 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged on with the topology and configuration, or dragged separately later. 
+A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.6 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later. 
 
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time and whole structures or individual components can be dragged around the scene by activating the "Drag" option in the sidebar. Edits can be undone and redone using ctrl-z/ctrl-y or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download a perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
+The viewer can load multiple structures at the same time. You can then select and drag components around through the "Select" and "Drag" options in the sidebar. Selected components can also be rotated around the x,y and z axis. Edits can be undone and redone using ctrl-z/ctrl-y or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
 
 ---
 
@@ -17,38 +17,40 @@ The viewer can load multiple structures at the same time and whole structures or
 If you would like to make a video of a trajectory, load a trajectory and click the "Create Video" button.  This will open an interactive panel where you can choose video type and output format.  
 
 ### Video types  
-**Trajectory**: Will run through the provided trajectory, saving every configuration as a frame.  Will play back at the provided frame rate.  If you want to stop the capture early, click the "Stop" button and the video will download as-is.  The camera can be manually moved during a trajectory capture and this will appear in the final video.  
-**Lemniscate**: The camera will make a figure-8 around its current focus point, creating a 360° view of the currently loaded configuration.
+**Trajectory**: Will run through the provided trajectory, saving every configuration as a frame.  Will play back at the provided frame rate.  If you want to stop the capture early, click the "Stop" button and the video will download as-is.  If the camera is moved during trajectory capture this will appear in the final video, allowing you to easily show different angles.  
+**Lemniscate**: The camera will make a figure-8 around the structure at the current distance, creating a 360° view of the currently loaded configuration.
 
 ### Output Formats
-**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software (note that this will not work in Firefox). 
-**Gif**: Larger file size, but highly portable (note that this will not work in Chrome when running locally).  
-**PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ImageJ.
+**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software (note that this will not work in Firefox).  
+**Gif**: Larger file size, but highly portable (note that this will not work in Chrome while running locally).  
+**PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ffmpeg or ImageJ.
 
 ---
 
 ## Console Commands
 In addition to the visualization and editing features highlighted in the sidebar, there is a browser console-based text API with the following functions:  
-`toggle_strand(<strand object>)`: Toggles visibility of the given strand.  
-`mark_strand(<strand object>)`: Highlight the given strand.  
-`get_sequence(<strand object>)`: Returns the sequence of the given strand.  
-`count_strand_length(optional(<system object>))`: Returns a dictionary of strand indices with their associated length. If no system is provided, defaults to the first system loaded into the scene.  Very useful for finding the id of the scaffold strand in an origami.  
-`hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
-`toggle_all(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
-`toggle_base_colors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
-`trace_53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5').  
-`remove_colorbar()`: Hide the colorbar if an overlay is loaded.  
-`show_colorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
-`changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
-`sp_only()`: remove all objects from the scene except the backbone cyllinders.  Creates an effect similar to licorice display options in other molecular viewers.  
-`show_verything()`: Resets all visibility parameters to default values.  
+ * `toggle_strand(<strand object>)`: Toggles visibility of the given strand.  
+ * `mark_strand(<strand object>)`: Highlight the given strand.  
+ * `get_sequence(<strand object>)`: Returns the sequence of the given strand.  
+ * `count_strand_length(optional(<system object>))`: Returns a dictionary of strand indices with their associated length. If no system is provided, defaults to the first system loaded into the scene.  Very useful for finding the id of the scaffold strand in an origami.  
+ * `hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
+ * `toggle_all(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
+ * `toggle_base_colors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
+ * `trace_53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5').  
+ * `remove_colorbar()`: Hide the colorbar if an overlay is loaded.  
+ * `show_colorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
+ * `changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
+ * `sp_only()`: remove all objects from the scene except the backbone cyllinders.  Creates an effect similar to licorice display options in other molecular viewers.  
+ * `show_verything()`: Resets all visibility parameters to default values.  
 
-Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements.  Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0][strands][5][monomers][1].  There is also an array of all monomers indexed by global id, so the 1000th monomer can be accessed by elements[999].
+Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0][strands][5][monomers][1].  There is also an array of all monomers indexed by global id, so the 1000th monomer can be accessed by elements[999].
 
 ---
 
 ## Rigid Body Simulations  
-CaDNAno files exported to oxDNA using [conversion tools](http://tacoxdna.sissa.it/) will be planar and near impossible to relax using the usual relaxation methods in oxDNA. This software includes a rigid-body simulator that attempts to automatically rearrange these flat CaDNAno designs to a configuration that can be relaxed using traditional molecular dynamics methods. To use, first click on the "Cluster" button under the "Selection Mode" header in the sidebar. This will bring up a UI for selecting clusters. Either allow the software to automatically choose clusters using a DBSCAN algorithm (works quite well for most CaDNAno designs), or select them yourself. Once clusters are defined, click the "Rigid cluster dynamics" checkbox to initiate simulation.  Click it again to stop.  You can drag clusters around during simulation to help the relaxation along or correct topological inaccuracies by switching to drag mode.
+CaDNAno files exported to oxDNA using [conversion tools](http://tacoxdna.sissa.it/) will be planar and near impossible to relax using the usual relaxation methods in oxDNA. This software includes a rigid-body simulator that attempts to automatically rearrange these flat CaDNAno designs to a configuration that can be relaxed using traditional molecular dynamics methods.
+
+To use, first click on the "Cluster" options button (![clusterOptions](https://fonts.gstatic.com/s/i/materialicons/tune/v1/24px.svg)) under the "Selection Mode" header in the sidebar. This will bring up a UI for selecting clusters. Either allow the software to automatically choose clusters using a DBSCAN algorithm (works quite well for most CaDNAno designs), or select them yourself. Once clusters are defined, click the "Rigid cluster dynamics" checkbox to initiate simulation.  Click it again to stop.  You can drag clusters around during simulation to help the relaxation along or correct topological inaccuracies by switching to drag mode.
 
 ---
 
