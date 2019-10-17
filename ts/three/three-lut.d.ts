@@ -22,3 +22,5 @@ export class Lut {
 	setLegendLabels(parameters, callback?) : {};
 
 }
+
+export const ColorMapKeywords
