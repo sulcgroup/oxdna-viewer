@@ -272,11 +272,7 @@ target.addEventListener("drop", function (event) {
     render();
 }, false);
 
-function readFilesFromURL() {
-    var url = new URL(window.location.href);
-    var topologyPath = url.searchParams.get("topology");
-    var configurationPath = url.searchParams.get("configuration");
-
+function readFilesFromPath(topologyPath:string, configurationPath:string) {
     if(topologyPath && configurationPath) {
         let topReq = new XMLHttpRequest();
         topReq.open("GET", topologyPath);
@@ -294,6 +290,14 @@ function readFilesFromURL() {
         }
         topReq.send();
     }
+}
+
+function readFilesFromURLParams() {
+    var url = new URL(window.location.href);
+    var topologyPath = url.searchParams.get("topology");
+    var configurationPath = url.searchParams.get("configuration");
+
+    readFilesFromPath(topologyPath, configurationPath);
 }
 
 function readFiles(top_file: File, datFile: File, jsonFile?: File) {

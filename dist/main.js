@@ -21,7 +21,7 @@ var strands = 'children', monomers = 'children', objects = 'children';
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //Check if there are files provided in the url (and load them if that is the case)
-readFilesFromURL();
+readFilesFromURLParams();
 render();
 // elements store the information about position, orientation, ID
 class BasicElement extends THREE.Group {
