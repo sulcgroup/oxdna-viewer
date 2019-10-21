@@ -202,11 +202,6 @@ toggleFailure = false, default_colormap = "cooltowarm";
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
-    // Remove drag instructions
-    let dragInstruction = document.getElementById("dragInstruction");
-    dragInstruction.style.display = "none";
-    //make system to store the dropped files in
-    var system = new System(sysCount, elements.length);
     var files = event.dataTransfer.files, files_len = files.length;
     let top_file, jsonFile;
     // assign files to the extentions; all possible combinations of entered files
@@ -234,6 +229,45 @@ target.addEventListener("drop", function (event) {
         notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
         return;
     }
+    readFiles(top_file, datFile, jsonFile);
+    if (jsonFile && json_alone) {
+        let json_reader = new FileReader(); //read .json
+        json_reader.onload = () => {
+            readJson(systems[systems.length - 1], json_reader);
+        };
+        json_reader.readAsText(jsonFile);
+        renderer.domElement.style.cursor = "auto";
+    }
+    render();
+}, false);
+function readFilesFromURL() {
+    var url = new URL(window.location.href);
+    var topologyPath = url.searchParams.get("topology");
+    var configurationPath = url.searchParams.get("configuration");
+    if (topologyPath && configurationPath) {
+        let topReq = new XMLHttpRequest();
+        topReq.open("GET", topologyPath);
+        topReq.responseType = "blob";
+        topReq.onload = () => {
+            const topFile = topReq.response;
+            var datReq = new XMLHttpRequest();
+            datReq.open("GET", configurationPath);
+            datReq.responseType = "blob";
+            datReq.onload = () => {
+                const datFile = datReq.response;
+                readFiles(topFile, datFile);
+            };
+            datReq.send();
+        };
+        topReq.send();
+    }
+}
+function readFiles(top_file, datFile, jsonFile) {
+    // Remove drag instructions
+    let dragInstruction = document.getElementById("dragInstruction");
+    dragInstruction.style.display = "none";
+    //make system to store the dropped files in
+    var system = new System(sysCount, elements.length);
     if (top_file) {
         //read topology file
         let top_reader = new TopReader(top_file, system, elements);
@@ -311,16 +345,7 @@ target.addEventListener("drop", function (event) {
             }
         }
     }
-    if (jsonFile && json_alone) {
-        let json_reader = new FileReader(); //read .json
-        json_reader.onload = () => {
-            readJson(systems[systems.length - 1], json_reader);
-        };
-        json_reader.readAsText(jsonFile);
-        renderer.domElement.style.cursor = "auto";
-    }
-    render();
-}, false);
+}
 let xbbLast, ybbLast, zbbLast;
 function readDat(num_nuc, dat_reader, system) {
     var current_strand = systems[sysCount][strands][0];
