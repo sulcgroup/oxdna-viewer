@@ -9,7 +9,6 @@ class TopReader extends FileReader{
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     neighbor3: number;
 
-
     constructor(topFile: File, system: System, elements: BasicElement[]){
         super();
         this.topFile = topFile;
@@ -17,7 +16,7 @@ class TopReader extends FileReader{
         this.elements = elements;
     }
     onload = ((f) => {
-        return (e) => {
+        return () => {
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header

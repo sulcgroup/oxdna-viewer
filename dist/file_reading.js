@@ -1,16 +1,16 @@
 /// <reference path="./three/index.d.ts" />
 // chunk .dat file so its not trying to read the entire thing at once
 function datChunker(datFile, currentChunk, chunkSize) {
-    let sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
+    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
     return sliced;
 }
 function extractNextConf() {
     let needNextChunk = false;
-    let currentChunkLines = currentChunk.split(/[\n]+/g);
-    let nextChunkLines = nextChunk.split(/[\n]+/g);
-    let currentChunkLength = currentChunkLines.length;
-    let nextConf = [];
-    let start = new marker;
+    const currentChunkLines = currentChunk.split(/[\n]+/g);
+    const nextChunkLines = nextChunk.split(/[\n]+/g);
+    const currentChunkLength = currentChunkLines.length;
+    const nextConf = [];
+    const start = new marker;
     if (confEnd.lineID != currentChunkLength) { //handle very rare edge case where conf ended exactly at end of chunk
         start.chunk = confEnd.chunk;
         start.lineID = confEnd.lineID + 1;
@@ -20,7 +20,7 @@ function extractNextConf() {
         start.lineID = 0;
         needNextChunk = true;
     }
-    let end = new marker;
+    const end = new marker;
     if (start.lineID + confLen <= currentChunkLength) { //is the whole conf in a single chunk?
         end.chunk = start.chunk;
         end.lineID = start.lineID + confLen - 1;
@@ -58,8 +58,8 @@ function extractNextConf() {
 }
 function extractPreviousConf() {
     let needPreviousChunk = false;
-    let previousConf = [];
-    let end = new marker;
+    const previousConf = [];
+    const end = new marker;
     if (confNum == 1) { //can't go backwards from 1
         return undefined;
     }
@@ -75,12 +75,12 @@ function extractPreviousConf() {
         end.lineID = previousChunk.length - 1;
         needPreviousChunk = true;
     }
-    let endChunkLines = end.chunk.split(/[\n]+/g);
-    let start = new marker;
+    const endChunkLines = end.chunk.split(/[\n]+/g);
+    const start = new marker;
     if (end.lineID - confLen >= 0) { //is the whole conf in a single chunk?
         start.chunk = end.chunk;
         start.lineID = end.lineID - confLen + 1;
-        let startChunkLines = start.chunk.split(/[\n]+/g);
+        const startChunkLines = start.chunk.split(/[\n]+/g);
         for (let i = start.lineID; i < end.lineID + 1; i++) {
             if (startChunkLines[i] == "" || startChunkLines == undefined) {
                 return undefined;
@@ -98,7 +98,7 @@ function extractPreviousConf() {
         else {
             start.chunk = previousChunk;
         }
-        let startChunkLines = start.chunk.split(/[\n]+/g);
+        const startChunkLines = start.chunk.split(/[\n]+/g);
         start.lineID = startChunkLines.length - (confLen - (end.lineID + 1));
         for (let i = start.lineID; i < startChunkLines.length; i++) {
             if (startChunkLines[i] == "" || startChunkLines == undefined) {
@@ -127,7 +127,7 @@ function getNextChunk(datFile, chunkNumber) {
     pHangingLine = cHangingLine;
     currentChunk = nextChunk;
     cHangingLine = nHangingLine;
-    let nextChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
+    const nextChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
     nextReader.readAsText(nextChunkBlob);
     currentChunkNumber += 1;
 }
@@ -149,14 +149,14 @@ function getPreviousChunk(datFile, chunkNumber) {
         currentChunkNumber -= 1;
         return;
     }
-    let previousPreviousChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
+    const previousPreviousChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
     previousPreviousReader.readAsText(previousPreviousChunkBlob);
     currentChunkNumber -= 1;
 }
 class marker {
 }
 function makeLut(data, key) {
-    let min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
+    const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined) {
         lut = new THREE.Lut(defaultColormap, 512);
         lut.setMax(max);
@@ -174,47 +174,49 @@ function makeLut(data, key) {
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
     //update every system's color map
     for (let i = 0; i < systems.length; i++) {
-        let system = systems[i];
-        let end = system.systemLength();
+        const system = systems[i];
+        const end = system.systemLength();
         for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
             system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
         }
     }
 }
 // define the drag and drop behavior of the scene
-var target = renderer.domElement;
+const target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
 }, false);
 target.addEventListener("dragenter", function (event) {
     event.preventDefault();
-    let e = document.getElementById("dragInstruction");
+    const e = document.getElementById("dragInstruction");
     e.style.opacity = "0.1";
 }, false);
 target.addEventListener("dragexit", function (event) {
     event.preventDefault();
-    let e = document.getElementById("dragInstruction");
+    const e = document.getElementById("dragInstruction");
     e.style.opacity = "0.8";
 }, false);
 // the actual code to drop in the config files
-//First, a bunch of global variables relating to files
+//First, a bunch of global variables for trajectory reading
+const datReader = new FileReader(), nextReader = new FileReader(), previousReader = new FileReader(), //previous and previousPrevious are basicaly the same...
+previousPreviousReader = new FileReader();
 var approxDatLen, currentChunkNumber, //this is the chunk containing the end of the current conf
 previousPreviousChunk, //Space to store the chunks
 previousChunk, currentChunk, nextChunk, ppHangingLine, //Deal with bad linebreaks caused by splitting the trajectory bitwise
-pHangingLine, cHangingLine, nHangingLine, datReader = new FileReader(), nextReader = new FileReader(), previousReader = new FileReader(), //previous and previousPrevious are basicaly the same...
-previousPreviousReader = new FileReader(), confBegin = new marker, confEnd = new marker, confLen, confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
-box, //box size for system
-toggleFailure = false, defaultColormap = "cooltowarm";
+pHangingLine, cHangingLine, nHangingLine, confBegin = new marker, confEnd = new marker, confLen, confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
+box; //box size for system
+//and a couple relating to overlay files
+var toggleFailure = false, defaultColormap = "cooltowarm";
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
-    var files = event.dataTransfer.files, filesLen = files.length;
+    const files = event.dataTransfer.files, filesLen = files.length;
     let topFile, jsonFile;
     // assign files to the extentions; all possible combinations of entered files
     for (let i = 0; i < filesLen; i++) {
         // get file extension
-        let fileName = files[i].name;
-        let ext = fileName.split('.').pop();
+        const fileName = files[i].name;
+        const ext = fileName.split('.').pop();
         if (ext === "dat")
             datFile = files[i];
         else if (ext === "conf")
@@ -237,7 +239,7 @@ target.addEventListener("drop", function (event) {
     }
     readFiles(topFile, datFile, jsonFile);
     if (jsonFile && jsonAlone) {
-        let jsonReader = new FileReader(); //read .json
+        const jsonReader = new FileReader(); //read .json
         jsonReader.onload = () => {
             readJson(systems[systems.length - 1], jsonReader);
         };
@@ -266,20 +268,20 @@ function readFilesFromPath(topologyPath, configurationPath) {
     }
 }
 function readFilesFromURLParams() {
-    var url = new URL(window.location.href);
-    var topologyPath = url.searchParams.get("topology");
-    var configurationPath = url.searchParams.get("configuration");
+    const url = new URL(window.location.href);
+    const topologyPath = url.searchParams.get("topology");
+    const configurationPath = url.searchParams.get("configuration");
     readFilesFromPath(topologyPath, configurationPath);
 }
 function readFiles(topFile, datFile, jsonFile) {
     // Remove drag instructions
-    let dragInstruction = document.getElementById("dragInstruction");
+    const dragInstruction = document.getElementById("dragInstruction");
     dragInstruction.style.display = "none";
     //make system to store the dropped files in
-    var system = new System(sysCount, elements.length);
+    const system = new System(sysCount, elements.length);
     if (topFile) {
         //read topology file
-        let topReader = new TopReader(topFile, system, elements);
+        const topReader = new TopReader(topFile, system, elements);
         topReader.read();
         // asynchronously read the first two chunks of a configuration file
         if (datFile) {
@@ -336,16 +338,16 @@ function readFiles(topFile, datFile, jsonFile) {
             // read the first chunk
             if (datFile && topFile) {
                 approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-                let firstChunkBlob = datChunker(datFile, 0, approxDatLen);
+                const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
                 datReader.readAsText(firstChunkBlob);
                 //if its a trajectory, read in the second chunk
                 if (datFile.size > approxDatLen) {
-                    let nextChunkBlob = datChunker(datFile, 1, approxDatLen);
+                    const nextChunkBlob = datChunker(datFile, 1, approxDatLen);
                     nextReader.readAsText(nextChunkBlob);
                 }
             }
             if (jsonFile) {
-                let jsonReader = new FileReader(); //read .json
+                const jsonReader = new FileReader(); //read .json
                 jsonReader.onload = () => {
                     readJson(system, jsonReader);
                 };
@@ -357,7 +359,7 @@ function readFiles(topFile, datFile, jsonFile) {
 }
 let xbbLast, ybbLast, zbbLast;
 function readDat(numNuc, datReader, system) {
-    var currentStrand = systems[sysCount][strands][0];
+    let currentStrand = systems[sysCount][strands][0];
     // parse file into lines
     let lines = datReader.result.split(/[\n]+/g);
     if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
@@ -366,7 +368,7 @@ function readDat(numNuc, datReader, system) {
     }
     //get the simulation box size
     box = parseFloat(lines[1].split(" ")[3]);
-    let time = parseInt(lines[0].split(" ")[2]);
+    const time = parseInt(lines[0].split(" ")[2]);
     confNum += 1;
     console.log(confNum, "t =", time);
     // discard the header
@@ -375,6 +377,7 @@ function readDat(numNuc, datReader, system) {
     confBegin.lineID = 0;
     confEnd.chunk = currentChunk;
     confEnd.lineID = numNuc + 2; //end of current configuration
+    let currentNucleotide, l;
     //for each line in the current configuration, read the line and calculate positions
     for (let i = 0; i < numNuc; i++) {
         if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
@@ -382,9 +385,9 @@ function readDat(numNuc, datReader, system) {
         }
         ;
         // get the nucleotide associated with the line
-        var currentNucleotide = elements[i + system.globalStartId];
+        currentNucleotide = elements[i + system.globalStartId];
         // consume a new line from the file
-        let l = lines[i].split(" ");
+        l = lines[i].split(" ");
         currentNucleotide.calculatePositions(l);
         //when a strand is finished, add it to the system
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
@@ -398,8 +401,8 @@ function readDat(numNuc, datReader, system) {
     addSystemToScene(system);
 }
 function readJson(system, jsonReader) {
-    let file = jsonReader.result;
-    let data = JSON.parse(file);
+    const file = jsonReader.result;
+    const data = JSON.parse(file);
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
@@ -413,12 +416,12 @@ function readJson(system, jsonReader) {
                 }
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
-                let end = system.systemLength() + system.globalStartId;
+                const end = system.systemLength() + system.globalStartId;
                 for (let i = system.globalStartId; i < end; i++) {
-                    let vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
-                    let len = vec.length();
+                    const vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                    const len = vec.length();
                     vec.normalize();
-                    let arrowHelper = new THREE.ArrowHelper(vec, elements[i].getInstanceParameter3("bbOffsets"), len, 0x000000);
+                    const arrowHelper = new THREE.ArrowHelper(vec, elements[i].getInstanceParameter3("bbOffsets"), len, 0x000000);
                     arrowHelper.name = i + "disp";
                     scene.add(arrowHelper);
                 }
@@ -426,10 +429,10 @@ function readJson(system, jsonReader) {
         }
         else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
             for (let entry of data[key]) {
-                let pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
-                let vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
                 vec.normalize();
-                let arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
                 scene.add(arrowHelper);
             }
         }
@@ -501,8 +504,8 @@ function getNewConfig(mode) {
         return;
     }
     for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
-        let system = systems[i];
-        let numNuc = system.systemLength(); //gets # of nuc in system
+        const system = systems[i];
+        const numNuc = system.systemLength(); //gets # of nuc in system
         let lines;
         if (mode == 1) {
             lines = extractNextConf();
@@ -518,20 +521,20 @@ function getNewConfig(mode) {
             return;
         }
         //get the simulation box size
-        let box = parseFloat(lines[1].split(" ")[3]);
-        let time = parseInt(lines[0].split(" ")[2]);
+        const time = parseInt(lines[0].split(" ")[2]);
         console.log(confNum, 't =', time);
         // discard the header
         lines = lines.slice(3);
+        let currentNucleotide, l;
         for (let lineNum = 0; lineNum < numNuc; lineNum++) {
             if (lines[lineNum] == "" || undefined) {
                 notify("There's an empty line in the middle of your configuration!");
                 break;
             }
             ;
-            let currentNucleotide = elements[systems[i].globalStartId + lineNum];
+            currentNucleotide = elements[systems[i].globalStartId + lineNum];
             // consume a new line
-            let l = lines[lineNum].split(" ");
+            l = lines[lineNum].split(" ");
             currentNucleotide.calculateNewConfigPositions(l);
         }
         //bring things in box based on the PBC/centering menus

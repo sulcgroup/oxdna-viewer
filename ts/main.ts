@@ -52,11 +52,11 @@ class BasicElement extends THREE.Group{
         this.parent = parent;
     };
 
-    calculatePositions(l: string) {
+    calculatePositions(l: string[]) {
 
     };
 
-    calculateNewConfigPositions(l: string) {
+    calculateNewConfigPositions(l: string[]) {
 
     };
 
@@ -170,7 +170,7 @@ class Nucleotide extends BasicElement {
     constructor(gid: number, parent: Strand) {
         super(gid, parent);
     };
-    calculatePositions(l: string) {
+    calculatePositions(l: string[]) {
 
         const sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
@@ -312,7 +312,7 @@ class Nucleotide extends BasicElement {
         return new THREE.Vector3(x, y, z);
     };
 
-    calculateNewConfigPositions(l: string) {
+    calculateNewConfigPositions(l: string[]) {
         const sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
 
@@ -540,7 +540,7 @@ class AminoAcid extends BasicElement {
         return nucleosideColors[elem];
     };
 
-    calculatePositions(l: string) {
+    calculatePositions(l: string[]) {
         const sys = this.parent.parent,
         sid = this.gid - sys.globalStartId;
 
@@ -608,7 +608,7 @@ class AminoAcid extends BasicElement {
         ybbLast = y;
         zbbLast = z;
     };
-    calculateNewConfigPositions(l: string) {
+    calculateNewConfigPositions(l: string[]) {
         const sys = this.parent.parent,
         sid = this.gid - sys.globalStartId;
 
