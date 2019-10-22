@@ -283,7 +283,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string) {
             datReq.open("GET", configurationPath);
             datReq.responseType = "blob";
             datReq.onload = () => {
-                const datFile = datReq.response;
+                datFile = datReq.response;
                 readFiles(topFile, datFile);
             }
             datReq.send();
