@@ -1046,8 +1046,8 @@ function cross(a1, a2, a3, b1, b2, b3) {
         a1 * b2 - a2 * b1];
 }
 function toggleSideNav(button) {
-    let hidden = "show";
-    let visible = "hide";
+    let hidden = "show toolbar";
+    let visible = "hide toolbar";
     let content = document.getElementById("sidenavContent");
     if (button.innerText.toLowerCase() == hidden) {
         content.style.display = "block";
