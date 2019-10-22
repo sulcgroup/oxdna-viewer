@@ -6,7 +6,7 @@ let raycaster = new THREE.Raycaster();
 let intersects;
 canvas.addEventListener('mousedown', event => {
     if (getActionModes().includes("Select")) {
-        let id = gpu_picker(event);
+        let id = gpuPicker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
         if (id > -1) {
             // This runs after the selection is done and the nucleotides are toggled,
@@ -30,8 +30,8 @@ canvas.addEventListener('mousedown', event => {
                     updateView(sys);
                     break;
                 case "Strand":
-                    let strand_length = nucleotide.parent[monomers].length;
-                    for (let i = 0; i < strand_length; i++) //for every nucleotide in strand
+                    let strandLength = nucleotide.parent[monomers].length;
+                    for (let i = 0; i < strandLength; i++) //for every nucleotide in strand
                         nucleotide.parent[monomers][i].toggle();
                     updateView(sys);
                     break;
@@ -90,16 +90,16 @@ function updateView(sys) {
     //Brake down info (low txt box)
     let baseInfoLines = [];
     for (let strandID in baseInfoStrands) {
-        let s_bases = baseInfoStrands[strandID];
+        let sBases = baseInfoStrands[strandID];
         //make a fancy header for each strand
-        let header = ["Str#:", strandID, "Sys#:", s_bases[0].parent.parent.systemID];
+        let header = ["Str#:", strandID, "Sys#:", sBases[0].parent.parent.systemID];
         baseInfoLines.push("----------------------");
         baseInfoLines.push(header.join(" "));
         baseInfoLines.push("----------------------");
         //fish out all the required base info
         //one could also sort it if neaded ...
-        for (let i = 0; i < s_bases.length; i++) {
-            baseInfoLines.push(["sid:", s_bases[i].gid, "|", "lID:", s_bases[i].lid].join(" "));
+        for (let i = 0; i < sBases.length; i++) {
+            baseInfoLines.push(["sid:", sBases[i].gid, "|", "lID:", sBases[i].lid].join(" "));
         }
     }
     makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
@@ -277,8 +277,8 @@ class BoxSelector {
         this.collection = [];
         this.updateFrustum(this.startPoint, this.endPoint);
         elements.forEach(element => {
-            let cm_pos = element.getInstanceParameter3("cmOffsets");
-            if (this.frustum.containsPoint(cm_pos)) {
+            let cmPos = element.getInstanceParameter3("cmOffsets");
+            if (this.frustum.containsPoint(cmPos)) {
                 this.collection.push(element);
             }
         });

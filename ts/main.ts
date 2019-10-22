@@ -38,7 +38,6 @@ render();
 class BasicElement extends THREE.Group{
     lid: number;
     gid: number; //location in world - all systems
-    pos: THREE.Vector3; //not automatically updated; updated before rotation
     neighbor3: BasicElement | null;
     neighbor5: BasicElement | null;
     pair: number;

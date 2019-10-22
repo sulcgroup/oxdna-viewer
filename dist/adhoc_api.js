@@ -2,7 +2,7 @@
 // Usefull bits of code simplifying quering the structure
 var api;
 (function (api) {
-    function toggle_strand(strand) {
+    function toggleStrand(strand) {
         let sys = strand.parent;
         let nucleotides = strand[monomers];
         nucleotides.map((n) => n.toggleVisibility());
@@ -14,37 +14,37 @@ var api;
         render();
         return strand;
     }
-    api.toggle_strand = toggle_strand;
+    api.toggleStrand = toggleStrand;
     // TODO: integrate with the selection mechanism 
-    function mark_stand(strand) {
+    function markStrand(strand) {
         let nucleotides = strand[monomers];
         nucleotides.map((n) => n.toggle());
         render();
         return strand;
     }
-    api.mark_stand = mark_stand;
+    api.markStrand = markStrand;
     ;
-    function get_sequence(strand) {
+    function getSequence(strand) {
         let seq;
         let nucleotides = strand[monomers];
         nucleotides.reverse().map((n) => seq.push(n.type));
         return seq.join("");
     }
-    api.get_sequence = get_sequence;
+    api.getSequence = getSequence;
     ;
     // get a dictionary with every strand length : [strand] listed   
-    function count_stand_length({ system = systems[0] } = {}) {
-        let strand_length = {};
+    function countStrandLength({ system = systems[0] } = {}) {
+        let strandLength = {};
         system[strands].map((strand) => {
             let l = strand[monomers].length;
-            if (l in strand_length)
-                strand_length[l].push(strand);
+            if (l in strandLength)
+                strandLength[l].push(strand);
             else
-                strand_length[l] = [strand];
+                strandLength[l] = [strand];
         });
-        return strand_length;
+        return strandLength;
     }
-    api.count_stand_length = count_stand_length;
+    api.countStrandLength = countStrandLength;
     ;
     function highlite5ps({ system = systems[0] } = {}) {
         system[strands].map((strand) => {
@@ -53,7 +53,7 @@ var api;
         render();
     }
     api.highlite5ps = highlite5ps;
-    function toggle_all({ system = systems[0] } = {}) {
+    function toggleAll({ system = systems[0] } = {}) {
         system[strands].map((strand) => {
             let nucleotides = strand[monomers];
             nucleotides.map((n) => n.toggleVisibility());
@@ -65,9 +65,9 @@ var api;
         system.dummyBackbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
         render();
     }
-    api.toggle_all = toggle_all;
+    api.toggleAll = toggleAll;
     //toggles the nuceloside colors on and off
-    function toggle_base_colors() {
+    function toggleBaseColors() {
         elements.map((n) => {
             let sys = n.parent.parent;
             let sid = n.gid - sys.globalStartId;
@@ -77,8 +77,8 @@ var api;
             let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
             let g = [GREY.r.toPrecision(6), GREY.g.toPrecision(6), GREY.b.toPrecision(6)];
             if (JSON.stringify(c) == JSON.stringify(g)) {
-                let new_c = n.elemToColor(n.type);
-                sys.fillVec('nsColors', 3, sid, [new_c.r, new_c.g, new_c.b]);
+                let newC = n.elemToColor(n.type);
+                sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b]);
             }
             else {
                 sys.fillVec('nsColors', 3, sid, [GREY.r, GREY.g, GREY.b]);
@@ -89,8 +89,8 @@ var api;
         }
         render();
     }
-    api.toggle_base_colors = toggle_base_colors;
-    function trace_53(element) {
+    api.toggleBaseColors = toggleBaseColors;
+    function trace53(element) {
         let elements = [];
         let c = element;
         while (c) {
@@ -99,7 +99,7 @@ var api;
         }
         return elements.reverse();
     }
-    api.trace_53 = trace_53;
+    api.trace53 = trace53;
     /*export function nick(element: BasicElement){
         // we break connection to the 3' neighbor
         let neighbor =  element.neighbor3;
@@ -111,7 +111,7 @@ var api;
 
         let strand = element.parent;
         // nucleotides which are after the nick
-        let new_nucleotides : BasicElement[] = trace_53(neighbor);
+        let new_nucleotides : BasicElement[] = trace53(neighbor);
         strand.excludeElements(new_nucleotides);
         
         //create fill and deploy new strand
@@ -185,7 +185,7 @@ var api;
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, element1.strand_to_material(strand2.strandID));
+            let sp = new THREE.Mesh(connectorGeometry, element1.strand_toMaterial(strand2.strandID));
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, spLen, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(spRotation); //set rotation
             sp.position.set(xsp, ysp, zsp);
@@ -261,11 +261,11 @@ var api;
             coloringChanged();
         }
         else {
-            default_colormap = name;
+            defaultColormap = name;
         }
     }
     api.changeColormap = changeColormap;
-    function sp_only() {
+    function spOnly() {
         elements.map((n) => {
             n.setInstanceParameter('scales', [0, 0, 0]);
             n.setInstanceParameter('nsScales', [0, 0, 0]);
@@ -278,8 +278,8 @@ var api;
         }
         render();
     }
-    api.sp_only = sp_only;
-    function show_everything() {
+    api.spOnly = spOnly;
+    function showEverything() {
         elements.map((n) => {
             n.setInstanceParameter('scales', [1, 1, 1]);
             n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
@@ -292,5 +292,5 @@ var api;
         }
         render();
     }
-    api.show_everything = show_everything;
+    api.showEverything = showEverything;
 })(api || (api = {}));

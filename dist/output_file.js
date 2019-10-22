@@ -4,34 +4,34 @@ function makeOutputFiles() {
 }
 function makeTopFile() {
     let top = []; //string of contents of .top file
-    let tot_nuc = 0; //total # of elements
-    let tot_strands = 0; //total # of strands
-    let longest_strand_len = 0;
-    let uncorrected_strand_id;
-    let old_system;
-    let current_strand = 1;
+    let totNuc = 0; //total # of elements
+    let totStrands = 0; //total # of strands
+    let longestStrandLen = 0;
+    let uncorrectedStrandID;
+    let oldSystem;
+    let currentStrand = 1;
     for (let i = 0; i < systems.length; i++) { //for each system
         for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in current system
-            tot_strands++;
-            let strand_len = 0; //current strand length
+            totStrands++;
+            let strandLen = 0; //current strand length
             for (let k = 0; k < systems[i][strands][j][monomers].length; k++) { //for each nucleotide in current strand
-                tot_nuc++;
-                strand_len++;
+                totNuc++;
+                strandLen++;
             }
-            if (longest_strand_len < strand_len) //set longest_strand_len to largest strand length
-                longest_strand_len = strand_len;
+            if (longestStrandLen < strandLen) //set longestStrandLen to largest strand length
+                longestStrandLen = strandLen;
         }
     }
-    top.push(tot_nuc + " " + tot_strands);
-    uncorrected_strand_id = elements[0].parent.strandID;
-    old_system = elements[0].parent.parent.systemID;
+    top.push(totNuc + " " + totStrands);
+    uncorrectedStrandID = elements[0].parent.strandID;
+    oldSystem = elements[0].parent.parent.systemID;
     for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
-        if (elements[i].parent.strandID != uncorrected_strand_id || elements[i].parent.parent.systemID != old_system) {
-            current_strand += 1;
-            uncorrected_strand_id = elements[i].parent.strandID;
-            old_system = elements[i].parent.parent.systemID;
+        if (elements[i].parent.strandID != uncorrectedStrandID || elements[i].parent.parent.systemID != oldSystem) {
+            currentStrand += 1;
+            uncorrectedStrandID = elements[i].parent.strandID;
+            oldSystem = elements[i].parent.parent.systemID;
         }
-        let tl = [current_strand, elements[i].type]; //strand id in global world + base type
+        let tl = [currentStrand, elements[i].type]; //strand id in global world + base type
         let neighbor3 = elements[i].neighbor3;
         let neighbor5 = elements[i].neighbor5;
         if (neighbor3 === null || neighbor3 === undefined)
@@ -48,16 +48,16 @@ function makeTopFile() {
 }
 function makeDatFile() {
     // Get largest absolute coordinate:
-    let max_coord = 0;
+    let maxCoord = 0;
     for (let i = 0; i < elements.length; i++) { //for all elements
         let p = elements[i].getInstanceParameter3("cmOffsets");
-        max_coord = Math.max(max_coord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
+        maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     }
     let tempVec = new THREE.Vector3(0, 0, 0);
     let dat = "";
-    let box = Math.ceil(5 * max_coord);
+    let box = Math.ceil(5 * maxCoord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box
-        + "\n" + "E = 0 0 0 " + dat_fileout + "\n";
+        + "\n" + "E = 0 0 0 " + datFileout + "\n";
     for (let i = 0; i < elements.length; i++) { //for all elements
         let nuc = elements[i];
         dat += nuc.getDatFileOutput();

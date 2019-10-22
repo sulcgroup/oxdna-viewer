@@ -169,7 +169,7 @@ var pickingMaterial = new THREE.ShaderMaterial({
 });
 //Renders the secret scene containing the picking materials
 //Returns the global id of the particle under the mouse.
-function gpu_picker(event) {
+function gpuPicker(event) {
     renderer.setRenderTarget(pickingTexture);
     renderer.render(pickingScene, camera);
     let pixelBuffer = new Uint8Array(4);

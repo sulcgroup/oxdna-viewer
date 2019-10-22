@@ -21,7 +21,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var _mousePos = new THREE.Vector3();
     var _oldPos = new THREE.Vector3();
     var _startPos = new THREE.Vector3();
-    var _new_pos = new THREE.Vector3();
+    var _newPos = new THREE.Vector3();
     var _move = new THREE.Vector3();
     var _boxSelector;
 
@@ -61,7 +61,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             var rect = _domElement.getBoundingClientRect();
 
             //change the cursor if you're hovering over something selectable
-            let id = gpu_picker(event)
+            let id = gpuPicker(event)
             if (id > -1) {
                 _domElement.style.cursor = 'pointer';
             }
@@ -75,11 +75,11 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             //use the raycaster to project the mouse position onto the plane and move the object to the mouse
             _raycaster.setFromCamera(_mouse, _camera); 
             if (_selected && scope.enabled) {
-                _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
-                _move.copy(_new_pos).sub(_oldPos);
+                _newPos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
+                _move.copy(_newPos).sub(_oldPos);
 
                 translateElements(selectedBases, _move);
-                _oldPos.copy(_new_pos); //Need difference from previous position.
+                _oldPos.copy(_newPos); //Need difference from previous position.
                 
                 // Disable controls
                 controls.enabled = false;
@@ -104,18 +104,18 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             event.preventDefault();
 
             //check if there is anything under the mouse
-            let id = gpu_picker(event)
+            let id = gpuPicker(event)
             if (id > -1) {
                 //The camera points down its own -Z axis
-                let camera_heading = new THREE.Vector3(0, 0, -1);
-                camera_heading.applyQuaternion(camera.quaternion);
+                let cameraHeading = new THREE.Vector3(0, 0, -1);
+                cameraHeading.applyQuaternion(camera.quaternion);
 
                 //Create a movement plane perpendicular to the camera heading containing the clicked object
                 _selected = elements[id]
                 _movePos.set(0, 0, 0);
                 _objPos = _selected.getInstanceParameter3("bbOffsets");
-                _plane.setFromNormalAndCoplanarPoint(camera_heading, _objPos);
-                _mousePos.copy(camera_heading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
+                _plane.setFromNormalAndCoplanarPoint(cameraHeading, _objPos);
+                _mousePos.copy(cameraHeading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
                 _oldPos.copy(_objPos);
                 _startPos.copy(_objPos);
 
@@ -156,7 +156,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 
                 if (selectedBases.has(_selected)) {
                     // Calculate the total translation and add it to the edit history
-                    var totalMove = _new_pos.clone().sub(_startPos);
+                    var totalMove = _newPos.clone().sub(_startPos);
                     editHistory.add(new RevertableTranslation(selectedBases, totalMove));
                     console.log("Added translation to history: "+ totalMove.length())
                 }

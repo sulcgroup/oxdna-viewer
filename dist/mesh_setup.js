@@ -1,17 +1,17 @@
 /// <reference path="./three/index.d.ts" />
-var instanced_backbone = new THREE.InstancedBufferGeometry();
-instanced_backbone.copy(new THREE.SphereBufferGeometry(.2, 10, 10)); //don't worry about those type conversion, just trying to keep tsc happy
-var instanced_nucleoside = new THREE.InstancedBufferGeometry();
-instanced_nucleoside.copy(new THREE.SphereBufferGeometry(.3, 10, 10));
-var instanced_connector = new THREE.InstancedBufferGeometry();
-instanced_connector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
-var instanced_bbconnector = new THREE.InstancedBufferGeometry();
-instanced_bbconnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
-var instance_material = new THREE.MeshLambertMaterial({
+var instancedBackbone = new THREE.InstancedBufferGeometry();
+instancedBackbone.copy(new THREE.SphereBufferGeometry(.2, 10, 10)); //don't worry about those type conversion, just trying to keep tsc happy
+var instancedNucleoside = new THREE.InstancedBufferGeometry();
+instancedNucleoside.copy(new THREE.SphereBufferGeometry(.3, 10, 10));
+var instancedConnector = new THREE.InstancedBufferGeometry();
+instancedConnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
+var instancedBBconnector = new THREE.InstancedBufferGeometry();
+instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
+var instanceMaterial = new THREE.MeshLambertMaterial({
     vertexColors: THREE.VertexColors
 });
-instance_material["defines"] = instance_material["defines"] || {};
-instance_material["defines"]['INSTANCED'] = "";
+instanceMaterial["defines"] = instanceMaterial["defines"] || {};
+instanceMaterial["defines"]['INSTANCED'] = "";
 var backboneColors = [
     new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),

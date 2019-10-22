@@ -1,23 +1,23 @@
 /// <reference path="./three/index.d.ts" />
 
-var instanced_backbone = new THREE.InstancedBufferGeometry();
-instanced_backbone.copy(new THREE.SphereBufferGeometry(.2,10,10) as unknown as THREE.InstancedBufferGeometry); //don't worry about those type conversion, just trying to keep tsc happy
+var instancedBackbone = new THREE.InstancedBufferGeometry();
+instancedBackbone.copy(new THREE.SphereBufferGeometry(.2,10,10) as unknown as THREE.InstancedBufferGeometry); //don't worry about those type conversion, just trying to keep tsc happy
 
-var instanced_nucleoside = new THREE.InstancedBufferGeometry();
-instanced_nucleoside.copy(new THREE.SphereBufferGeometry(.3,10,10) as unknown as THREE.InstancedBufferGeometry);
+var instancedNucleoside = new THREE.InstancedBufferGeometry();
+instancedNucleoside.copy(new THREE.SphereBufferGeometry(.3,10,10) as unknown as THREE.InstancedBufferGeometry);
 
-var instanced_connector = new THREE.InstancedBufferGeometry();
-instanced_connector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+var instancedConnector = new THREE.InstancedBufferGeometry();
+instancedConnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
-var instanced_bbconnector = new THREE.InstancedBufferGeometry();
-instanced_bbconnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+var instancedBBconnector = new THREE.InstancedBufferGeometry();
+instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
-var instance_material = new THREE.MeshLambertMaterial( {
+var instanceMaterial = new THREE.MeshLambertMaterial( {
     vertexColors: THREE.VertexColors
 });
 
-instance_material["defines"] = instance_material["defines"] || {};
-instance_material["defines"][ 'INSTANCED' ] = "";
+instanceMaterial["defines"] = instanceMaterial["defines"] || {};
+instanceMaterial["defines"][ 'INSTANCED' ] = "";
 
 var backboneColors = [
     new THREE.Color(0xfdd291), //light yellow

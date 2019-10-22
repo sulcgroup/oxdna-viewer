@@ -3,7 +3,7 @@
 // Usefull bits of code simplifying quering the structure
 
 module api{
-    export function toggle_strand(strand: Strand): Strand{
+    export function toggleStrand(strand: Strand): Strand{
         let sys = strand.parent;
         let nucleotides = strand[monomers]; 
         nucleotides.map( 
@@ -20,14 +20,14 @@ module api{
     }
 
     // TODO: integrate with the selection mechanism 
-    export function mark_stand(strand: Strand): Strand{
+    export function markStrand(strand: Strand): Strand{
         let nucleotides = strand[monomers];
         nucleotides.map((n: Nucleotide) => n.toggle());
         render();
         return strand;
     };
 
-    export function get_sequence(strand : Strand) : string {
+    export function getSequence(strand : Strand) : string {
         let seq: string[];
         let nucleotides = strand[monomers]; 
         nucleotides.reverse().map( 
@@ -36,16 +36,16 @@ module api{
     };
 
     // get a dictionary with every strand length : [strand] listed   
-    export function count_stand_length({system = systems[0]} = {}) {
-        let strand_length : { [index: number]: [Strand] } = {};
+    export function countStrandLength({system = systems[0]} = {}) {
+        let strandLength : { [index: number]: [Strand] } = {};
         system[strands].map((strand: Strand) => {
             let l = strand[monomers].length;
-            if( l in strand_length) 
-                strand_length[l].push(strand);
+            if( l in strandLength) 
+                strandLength[l].push(strand);
             else
-                strand_length[l] = [strand];
+                strandLength[l] = [strand];
         });
-        return strand_length;  
+        return strandLength;  
     };
 
     export function highlite5ps({system = systems[0]} = {}){
@@ -55,7 +55,7 @@ module api{
         render();
     }
 
-    export function toggle_all({system = systems[0]} = {}){
+    export function toggleAll({system = systems[0]} = {}){
         system[strands].map((strand)=>{
             let nucleotides = strand[monomers]; 
             nucleotides.map( 
@@ -70,7 +70,7 @@ module api{
     }
 
     //toggles the nuceloside colors on and off
-    export function toggle_base_colors() {
+    export function toggleBaseColors() {
         elements.map(
             (n: BasicElement) => {
                 let sys = n.parent.parent
@@ -81,8 +81,8 @@ module api{
                 let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
                 let g = [GREY.r.toPrecision(6), GREY.g.toPrecision(6), GREY.b.toPrecision(6)];
                 if (JSON.stringify(c)==JSON.stringify(g)){
-                    let new_c = n.elemToColor(n.type);
-                    sys.fillVec('nsColors', 3, sid, [new_c.r, new_c.g, new_c.b])
+                    let newC = n.elemToColor(n.type);
+                    sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b])
                 }
                 else {
                     sys.fillVec('nsColors', 3, sid,[GREY.r, GREY.g, GREY.b]);
@@ -95,7 +95,7 @@ module api{
         render();
     }
     
-    export function trace_53(element: BasicElement): BasicElement[]{
+    export function trace53(element: BasicElement): BasicElement[]{
         let elements : BasicElement[] = [];
         let c : BasicElement = element; 
         while(c){
@@ -116,7 +116,7 @@ module api{
 
         let strand = element.parent;
         // nucleotides which are after the nick
-        let new_nucleotides : BasicElement[] = trace_53(neighbor);
+        let new_nucleotides : BasicElement[] = trace53(neighbor);
         strand.excludeElements(new_nucleotides);
         
         //create fill and deploy new strand 
@@ -190,7 +190,7 @@ module api{
                     new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
                 )
             );
-            let sp = new THREE.Mesh(connector_geometry, element1.strand_to_material(strand2.strandID));
+            let sp = new THREE.Mesh(connectorGeometry, element1.strand_toMaterial(strand2.strandID));
             sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, spLen, 1.0)); //set length according to distance between current and last sugar phosphate
             sp.applyMatrix(spRotation); //set rotation
             sp.position.set(xsp, ysp, zsp);
@@ -268,11 +268,11 @@ module api{
             coloringChanged();
         }
         else {
-            default_colormap = name;
+            defaultColormap = name;
         }
     }
     
-    export function sp_only() {
+    export function spOnly() {
         elements.map((n: BasicElement) => {
             n.setInstanceParameter('scales', [0, 0, 0]);
             n.setInstanceParameter('nsScales', [0, 0, 0]);
@@ -287,7 +287,7 @@ module api{
 
     }
 
-    export function show_everything() {
+    export function showEverything() {
         elements.map((n: BasicElement) => {
             n.setInstanceParameter('scales', [1, 1, 1]);
             n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
