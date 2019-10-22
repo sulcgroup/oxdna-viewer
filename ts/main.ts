@@ -1284,9 +1284,10 @@ function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Ve
     a1 * b2 - a2 * b1];
 }
 
-function toggleSideNav(button: HTMLInputElement) {
+function toggleSideNav() {
     let hidden = "show toolbar";
     let visible = "hide toolbar";
+    let button = document.getElementById("sideNavToggleButton");
     let content = document.getElementById("sidenavContent");
     if (button.innerText.toLowerCase() == hidden) {
         content.style.display = "block";
