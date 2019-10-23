@@ -191,7 +191,7 @@ function gpuPicker(event): number {
 	renderer.render(pickingScene, camera);
 	let pixelBuffer = new Uint8Array(4);
 	renderer.readRenderTargetPixels(pickingTexture, event.pageX, pickingTexture.height - event.pageY, 1, 1, pixelBuffer);
-	let id = (pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2]) - 1; 
+	let id = ((pixelBuffer[0] << 16) | (pixelBuffer[1] << 8) | (pixelBuffer[2])) - 1; 
 	renderer.setRenderTarget(null);
 	render();
 	return id;
