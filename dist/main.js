@@ -796,20 +796,6 @@ class System extends THREE.Group {
     ;
 }
 ;
-function nextConfig() {
-    if (nextReader.readyState == 1) { //0: nothing loaded 1: working 2: done
-        return;
-    }
-    getNewConfig(1);
-}
-;
-function previousConfig() {
-    if (previousPreviousReader.readyState == 1) {
-        return;
-    }
-    getNewConfig(-1);
-}
-;
 function notify(message) {
     const noticeboard = document.getElementById('noticeboard');
     // Remove any identical notifications from the board
@@ -931,7 +917,7 @@ function createTrajectoryVideo(canvas, capturer) {
     function _load(e) {
         e.preventDefault(); // cancel default actions
         capturer.capture(canvas);
-        nextConfig();
+        trajReader.nextConfig();
     }
     ;
     // Listen for last configuration event
@@ -952,7 +938,7 @@ function createTrajectoryVideo(canvas, capturer) {
     document.addEventListener('finalConfig', _done);
     // Start capturing
     capturer.start();
-    nextConfig();
+    trajReader.nextConfig();
 }
 ;
 function createLemniscateVideo(canvas, capturer, framerate, duration) {

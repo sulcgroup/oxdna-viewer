@@ -4,155 +4,6 @@ function datChunker(datFile, currentChunk, chunkSize) {
     const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
     return sliced;
 }
-function extractNextConf() {
-    let needNextChunk = false;
-    const currentChunkLines = currentChunk.split(/[\n]+/g);
-    const nextChunkLines = nextChunk.split(/[\n]+/g);
-    const currentChunkLength = currentChunkLines.length;
-    const nextConf = [];
-    const start = new marker;
-    if (confEnd.lineID != currentChunkLength) { //handle very rare edge case where conf ended exactly at end of chunk
-        start.chunk = confEnd.chunk;
-        start.lineID = confEnd.lineID + 1;
-    }
-    else {
-        start.chunk = nextChunk;
-        start.lineID = 0;
-        needNextChunk = true;
-    }
-    const end = new marker;
-    if (start.lineID + confLen <= currentChunkLength) { //is the whole conf in a single chunk?
-        end.chunk = start.chunk;
-        end.lineID = start.lineID + confLen - 1;
-        for (let i = start.lineID; i < end.lineID + 1; i++) {
-            if (currentChunkLines[i] == "" || currentChunkLines == undefined) {
-                return undefined;
-            }
-            nextConf.push(currentChunkLines[i]);
-        }
-    }
-    else {
-        end.chunk = nextChunk;
-        end.lineID = confLen - (currentChunkLength - start.lineID) - 1;
-        needNextChunk = true;
-        for (let i = start.lineID; i < currentChunkLength; i++) {
-            if (currentChunkLines[i] == "" || currentChunkLines == undefined) {
-                return undefined;
-            }
-            nextConf.push(currentChunkLines[i]);
-        }
-        for (let i = 0; i < end.lineID + 1; i++) {
-            nextConf.push(nextChunkLines[i]);
-        }
-    }
-    confBegin = start;
-    confEnd = end;
-    if (needNextChunk) {
-        getNextChunk(datFile, currentChunkNumber + 2); //current is the old middle, so need two ahead
-    }
-    else {
-        // Signal that config has been loaded
-        document.dispatchEvent(new Event('nextConfigLoaded'));
-    }
-    return (nextConf);
-}
-function extractPreviousConf() {
-    let needPreviousChunk = false;
-    const previousConf = [];
-    const end = new marker;
-    if (confNum == 1) { //can't go backwards from 1
-        return undefined;
-    }
-    else if (confBegin.lineID != 0) { //handle rare edge case where a conf began at the start of a chunk
-        end.chunk = confBegin.chunk;
-        if (end.chunk == previousChunk) {
-            needPreviousChunk = true;
-        }
-        end.lineID = confBegin.lineID - 1;
-    }
-    else {
-        end.chunk = previousChunk;
-        end.lineID = previousChunk.length - 1;
-        needPreviousChunk = true;
-    }
-    const endChunkLines = end.chunk.split(/[\n]+/g);
-    const start = new marker;
-    if (end.lineID - confLen >= 0) { //is the whole conf in a single chunk?
-        start.chunk = end.chunk;
-        start.lineID = end.lineID - confLen + 1;
-        const startChunkLines = start.chunk.split(/[\n]+/g);
-        for (let i = start.lineID; i < end.lineID + 1; i++) {
-            if (startChunkLines[i] == "" || startChunkLines == undefined) {
-                return undefined;
-            }
-            previousConf.push(startChunkLines[i]);
-        }
-    }
-    else {
-        if (end.chunk == currentChunk && confNum != 2) {
-            start.chunk = previousChunk;
-        }
-        else if (end.chunk == previousChunk && confNum != 2) {
-            start.chunk = previousPreviousChunk;
-        }
-        else {
-            start.chunk = previousChunk;
-        }
-        const startChunkLines = start.chunk.split(/[\n]+/g);
-        start.lineID = startChunkLines.length - (confLen - (end.lineID + 1));
-        for (let i = start.lineID; i < startChunkLines.length; i++) {
-            if (startChunkLines[i] == "" || startChunkLines == undefined) {
-                return undefined;
-            }
-            previousConf.push(startChunkLines[i]);
-        }
-        for (let i = 0; i < end.lineID + 1; i++) {
-            if (endChunkLines[i] == "" || endChunkLines == undefined) {
-                return undefined;
-            }
-            previousConf.push(endChunkLines[i]);
-        }
-    }
-    confBegin = start;
-    confEnd = end;
-    if (needPreviousChunk) {
-        getPreviousChunk(datFile, currentChunkNumber - 3);
-    }
-    return (previousConf);
-}
-function getNextChunk(datFile, chunkNumber) {
-    previousPreviousChunk = previousChunk;
-    ppHangingLine = pHangingLine;
-    previousChunk = currentChunk;
-    pHangingLine = cHangingLine;
-    currentChunk = nextChunk;
-    cHangingLine = nHangingLine;
-    const nextChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
-    nextReader.readAsText(nextChunkBlob);
-    currentChunkNumber += 1;
-}
-function getPreviousChunk(datFile, chunkNumber) {
-    nextChunk = currentChunk;
-    nHangingLine = cHangingLine;
-    currentChunk = previousChunk;
-    cHangingLine = pHangingLine;
-    previousChunk = previousPreviousChunk;
-    pHangingLine = ppHangingLine;
-    if (chunkNumber < 0) {
-        console.log("tried to load conf -1");
-        if (previousPreviousChunk == undefined) {
-            previousChunk = undefined;
-        }
-        else {
-            previousPreviousChunk = undefined;
-        }
-        currentChunkNumber -= 1;
-        return;
-    }
-    const previousPreviousChunkBlob = datChunker(datFile, chunkNumber, approxDatLen);
-    previousPreviousReader.readAsText(previousPreviousChunkBlob);
-    currentChunkNumber -= 1;
-}
 class marker {
 }
 function makeLut(data, key) {
@@ -198,12 +49,9 @@ target.addEventListener("dragexit", function (event) {
 }, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
-const datReader = new FileReader(), nextReader = new FileReader(), previousReader = new FileReader(), //previous and previousPrevious are basicaly the same...
-previousPreviousReader = new FileReader();
-var approxDatLen, currentChunkNumber, //this is the chunk containing the end of the current conf
-previousPreviousChunk, //Space to store the chunks
-previousChunk, currentChunk, nextChunk, ppHangingLine, //Deal with bad linebreaks caused by splitting the trajectory bitwise
-pHangingLine, cHangingLine, nHangingLine, confBegin = new marker, confEnd = new marker, confLen, confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
+const datReader = new FileReader();
+var trajReader;
+var confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
 box; //box size for system
 //and a couple relating to overlay files
 var toggleFailure = false, defaultColormap = "cooltowarm";
@@ -288,64 +136,17 @@ function readFiles(topFile, datFile, jsonFile) {
             renderer.domElement.style.cursor = "wait";
             //anonymous functions to handle fileReader outputs
             datReader.onload = () => {
-                currentChunk = datReader.result;
-                currentChunkNumber = 0;
                 readDat(system.systemLength(), datReader, system);
                 document.dispatchEvent(new Event('nextConfigLoaded'));
-            };
-            //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
-            nextReader.onload = () => {
-                nextChunk = nextReader.result;
-                if (nextChunk == "") {
-                    document.dispatchEvent(new Event('finalConfig'));
-                    return;
-                }
-                nHangingLine = "";
-                let c = "";
-                for (c = nextChunk.slice(0, 1); c != '\n'; c = nextChunk.slice(0, 1)) {
-                    nHangingLine += c;
-                    nextChunk = nextChunk.substring(1);
-                }
-                try {
-                    currentChunk = currentChunk.concat(nHangingLine);
-                }
-                catch (error) {
-                    console.log("File readers got all topsy-turvy, traj reading may not work :( \n");
-                    console.log(error);
-                }
-                nextChunk = nextChunk.substring(1);
-                confEnd.chunk = currentChunk;
-                // Signal that config has been loaded
-                document.dispatchEvent(new Event('nextConfigLoaded'));
-            };
-            previousPreviousReader.onload = () => {
-                previousPreviousChunk = previousPreviousReader.result;
-                if (previousPreviousChunk == "") {
-                    return;
-                }
-                ppHangingLine = "";
-                let c = "";
-                for (c = previousPreviousChunk.slice(0, 1); c != '\n'; c = previousPreviousChunk.slice(0, 1)) {
-                    ppHangingLine += c;
-                    previousPreviousChunk = previousPreviousChunk.substring(1);
-                }
-                previousPreviousChunk = previousPreviousChunk.substring(1);
-                previousPreviousChunk = previousPreviousChunk.concat(pHangingLine);
-                confEnd.chunk = currentChunk;
-                // Signal that config has been loaded
-                document.dispatchEvent(new Event('nextConfigLoaded'));
-            };
-            // read the first chunk
-            if (datFile && topFile) {
-                approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-                const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
-                datReader.readAsText(firstChunkBlob);
-                //if its a trajectory, read in the second chunk
+                //if its a trajectory, create the other readers
                 if (datFile.size > approxDatLen) {
-                    const nextChunkBlob = datChunker(datFile, 1, approxDatLen);
-                    nextReader.readAsText(nextChunkBlob);
+                    trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
                 }
-            }
+            };
+            let approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
+            // read the first chunk
+            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
+            datReader.readAsText(firstChunkBlob);
             if (jsonFile) {
                 const jsonReader = new FileReader(); //read .json
                 jsonReader.onload = () => {
@@ -373,10 +174,6 @@ function readDat(numNuc, datReader, system) {
     console.log(confNum, "t =", time);
     // discard the header
     lines = lines.slice(3);
-    confBegin.chunk = currentChunk;
-    confBegin.lineID = 0;
-    confEnd.chunk = currentChunk;
-    confEnd.lineID = numNuc + 2; //end of current configuration
     let currentNucleotide, l;
     //for each line in the current configuration, read the line and calculate positions
     for (let i = 0; i < numNuc; i++) {
@@ -497,57 +294,4 @@ function addSystemToScene(system) {
     sysCount += 1;
     render();
     renderer.domElement.style.cursor = "auto";
-}
-function getNewConfig(mode) {
-    if (systems.length > 1) {
-        notify("Only one file at a time can be read as a trajectory, sorry...");
-        return;
-    }
-    for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
-        const system = systems[i];
-        const numNuc = system.systemLength(); //gets # of nuc in system
-        let lines;
-        if (mode == 1) {
-            lines = extractNextConf();
-            confNum += 1;
-        }
-        if (mode == -1) {
-            lines = extractPreviousConf();
-            confNum -= 1;
-        }
-        if (lines == undefined) {
-            notify("No more confs to load!");
-            confNum -= mode;
-            return;
-        }
-        //get the simulation box size
-        const time = parseInt(lines[0].split(" ")[2]);
-        console.log(confNum, 't =', time);
-        // discard the header
-        lines = lines.slice(3);
-        let currentNucleotide, l;
-        for (let lineNum = 0; lineNum < numNuc; lineNum++) {
-            if (lines[lineNum] == "" || undefined) {
-                notify("There's an empty line in the middle of your configuration!");
-                break;
-            }
-            ;
-            currentNucleotide = elements[systems[i].globalStartId + lineNum];
-            // consume a new line
-            l = lines[lineNum].split(" ");
-            currentNucleotide.calculateNewConfigPositions(l);
-        }
-        //bring things in box based on the PBC/centering menus
-        PBCswitchbox(system);
-        system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-        system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-        system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-    }
-    render();
 }
