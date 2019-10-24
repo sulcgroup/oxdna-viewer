@@ -1,5 +1,7 @@
 /// <reference path="./three/index.d.ts" />
 
+// The initial set up of the instanced objects.
+// Objects can be deformed by parameters sent to the instanceScale parameter of the instance
 var instancedBackbone = new THREE.InstancedBufferGeometry();
 instancedBackbone.copy(new THREE.SphereBufferGeometry(.2,10,10) as unknown as THREE.InstancedBufferGeometry); //don't worry about those type conversion, just trying to keep tsc happy
 
@@ -16,9 +18,11 @@ var instanceMaterial = new THREE.MeshLambertMaterial( {
     vertexColors: THREE.VertexColors
 });
 
+// Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
 instanceMaterial["defines"] = instanceMaterial["defines"] || {};
 instanceMaterial["defines"][ 'INSTANCED' ] = "";
 
+// Default colors for the backbones
 var backboneColors = [
     new THREE.Color(0xfdd291), //light yellow
     
@@ -31,7 +35,7 @@ var backboneColors = [
 
 
 
-// define nucleoside colors: GREY OR traditional colors
+// define nucleoside colors
 var nucleosideColors = [
     new THREE.Color(0x3333FF), //A or R
 

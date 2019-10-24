@@ -283,10 +283,11 @@ function readJson(system, jsonReader) {
 }
 
 function addSystemToScene(system) {
-    //instancing note: if you make any modifications to the drawing matricies here, they will take effect before anything draws
-    //however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
-    //This will force the gpu to check the vectors again when redrawing.
+    // If you make any modifications to the drawing matricies here, they will take effect before anything draws
+    // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
+    // This will force the gpu to check the vectors again when redrawing.
 
+    // Add the geometries to the systems
     system.backboneGeometry = instancedBackbone.clone();
     system.nucleosideGeometry = instancedNucleoside.clone();
     system.connectorGeometry = instancedConnector.clone();
@@ -294,6 +295,7 @@ function addSystemToScene(system) {
     
     system.pickingGeometry = instancedBackbone.clone();
 
+    // Feed data arrays to the geometries
     system.backboneGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
     system.backboneGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbRotation, 4));
     system.backboneGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
@@ -322,6 +324,7 @@ function addSystemToScene(system) {
     system.pickingGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
     system.pickingGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
 
+    // Those were geometries, the mesh is actually what gets drawn
     system.backbone = new THREE.Mesh(system.backboneGeometry, instanceMaterial);
     system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
 
@@ -337,6 +340,7 @@ function addSystemToScene(system) {
     system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
     system.dummyBackbone.frustumCulled = false;
 
+    // Add everything to the scene
     scene.add(system.backbone);
     scene.add(system.nucleoside);
     scene.add(system.connector);
@@ -344,7 +348,7 @@ function addSystemToScene(system) {
 
     pickingScene.add(system.dummyBackbone);
 
-    //bring things in the box based on the PBC/centering menus
+    // Bring things in the box based on the PBC/centering menus
     PBCswitchbox(system);
 
     if(toggleFailure){
@@ -354,5 +358,6 @@ function addSystemToScene(system) {
     sysCount += 1;
     render();
 
+    // Reset the cursor from the loading spinny
     renderer.domElement.style.cursor = "auto";
 }

@@ -38,31 +38,32 @@ function onWindowResize() {
 }
 
 //Setup the scene and renderer and camera 
-var GREY =  new THREE.Color(0x888888);
-var BLACK = new THREE.Color(0x000000);
-var WHITE = new THREE.Color();
-var scene = new THREE.Scene();
+const GREY =  new THREE.Color(0x888888);
+const BLACK = new THREE.Color(0x000000);
+const WHITE = new THREE.Color();
+const scene = new THREE.Scene();
 scene.background = WHITE
 
-var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
 
 // set camera position 
 camera.position.x = 100;
 
-// import canvas capture library
+// import canvas capture library - used in video creation
 declare var CCapture: any;
 
-var canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
-var renderer = new THREE.WebGLRenderer({ //create renderer
+// Create canvas and renderer
+const canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
+const renderer = new THREE.WebGLRenderer({ //create renderer
     preserveDrawingBuffer: true,
     alpha: true,
     antialias: true,
     canvas: canvas
 });
-
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(renderer.domElement); //add renderer to document body
 
+// Colorbars are rendered on a second canvas
 const colorbarCanvas = <HTMLCanvasElement> document.getElementById("colorbarCanvas");
 const colorbarRenderer = new THREE.WebGLRenderer({
     canvas: colorbarCanvas,
@@ -73,30 +74,32 @@ const colorbarCamera = new THREE.OrthographicCamera(-7, 7, 1.8, -2.5, -1, 1);
 const colorbarScene = new THREE.Scene();
 
 // set scene lighting 
-let hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.5 );
+// The point light follows the camera so lighting is always uniform.
+const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.5 );
 scene.add( hemiLight );
-
-let pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
+const pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
 pointlight.position.set(0, 50, 0);
 camera.add(pointlight);
+
 scene.add(camera);
 
-//Add coordinate axes to scene
+// Add coordinate axes to scene
 let dir = new THREE.Vector3(1, 0, 0);
-let Origin = new THREE.Vector3(0, 0, 0);
-var length: number = 10;
-let arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x800000); //create x-axis arrow
+const Origin = new THREE.Vector3(0, 0, 0);
+const len: number = 10;
+let arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x800000); //create x-axis arrow
 arrowHelper.name = "x-axis";
 scene.add(arrowHelper); //add x-axis arrow to scene
 dir = new THREE.Vector3(0, 1, 0);
-arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x008000);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x008000);
 arrowHelper.name = "y-axis";
 scene.add(arrowHelper); //add y-axis arrow to scene
 dir = new THREE.Vector3(0, 0, 1);
-arrowHelper = new THREE.ArrowHelper(dir, Origin, length, 0x000080);
+arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
 
+// Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
 function toggleArrows(chkBox) { //make arrows visible or invisible based on checkbox - functionality added to allow for cleaner images
     if (chkBox.checked) {
         let arrowHelper = scene.getObjectByName("x-axis");
@@ -118,11 +121,8 @@ function toggleArrows(chkBox) { //make arrows visible or invisible based on chec
     render(); //update scene
 }
 
-// snippet borrowed from three.js examples 
 // adding mouse control to the scene 
-//var orbit = new THREE.OrbitControls( camera, renderer.domElement );
-//orbit.addEventListener('change', render);
-var controls = new THREE.TrackballControls(camera, canvas);
+const controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
 controls.zoomSpeed = 2; //frequently structures are large so turned this up
 controls.panSpeed = 1.5;
@@ -131,13 +131,14 @@ controls.noPan = false;
 controls.staticMoving = true;
 controls.dynamicDampingFactor = 0.2;
 controls.keys = [65, 83, 68];
+
 // following the logic of updating the scene only when the scene changes 
 // controlls induce change so we update the scene when we move it  
 controls.addEventListener('change', render);
 
 // Set up DragControls - allows dragging of DNA - if action mode includes "drag"
 // Also handles box selection
-let dragControls = new THREE.DragControls(camera, renderer.domElement);
+const dragControls = new THREE.DragControls(camera, renderer.domElement);
 
 // start animation cycle / actually control update cycle 
 // requestAnimationFrame could be replaced with a 
