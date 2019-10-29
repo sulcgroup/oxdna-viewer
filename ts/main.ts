@@ -716,7 +716,7 @@ class AminoAcid extends BasicElement {
         const x: number = tempVec.x;
         const y: number = tempVec.y;
         const z: number = tempVec.z;
-        dat = x + " " + y + " " + z + "1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
+        dat = x + " " + y + " " + z + " 1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
         return dat;
     };
 };

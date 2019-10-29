@@ -247,7 +247,7 @@ function readJson(system, jsonReader) {
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
                 makeLut(data, key);
-                try{ //you need to toggle here for small systems, during the scene add for large systems.
+                try{ //you need to toggle here for small systems, during the scene add for large systems because asynchronous reading.
                     setColoringMode("Overlay");
                 }
                 catch {
@@ -351,6 +351,7 @@ function addSystemToScene(system) {
     // Bring things in the box based on the PBC/centering menus
     PBCswitchbox(system);
 
+    // Catch an error caused by asynchronous readers and different file sizes
     if(toggleFailure){
         setColoringMode("Overlay");
     }
