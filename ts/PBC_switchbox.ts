@@ -3,7 +3,7 @@
 //translation and centering functions inspired by Cogli
 function translate(system, boxOption, centerOption) {
     let wrt = system.strandUnweightedCom(); //this is actually a crude approximation, but needed to handle the fix_diffusion strands
-    let targetCoM = new THREE.Vector3(box, box, box).multiplyScalar(0.5); //because of the previous line, it will miss the target like Cogli does.
+    let targetCoM = box.clone().multiplyScalar(0.5); //because of the previous line, it will miss the target like Cogli does.
     let actualCoM = new THREE.Vector3(0, 0, 0); //so at the end we're going to correct for this
     let shift = new THREE.Vector3;
     shift.addVectors(wrt.multiplyScalar(-1), targetCoM);
@@ -15,12 +15,12 @@ function translate(system, boxOption, centerOption) {
                     //calculate how many boxes the inboxed structure needs to be moved over
                     diff = new THREE.Vector3(system.cmOffsets[(system[strands][i][monomers][j].gid - system.globalStartId) * 3], system.cmOffsets[(system[strands][i][monomers][j].gid - system.globalStartId) * 3 + 1], system.cmOffsets[(system[strands][i][monomers][j].gid - system.globalStartId) * 3 + 2]);
                     diff.add(shift);
-                    diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
+                    diff.divide(box).floor().multiply(box).multiplyScalar(-1);
                     //add the centering to the boxing
                     diff.add(shift);
                     //If you want centering to anywhere other than the box center, it needs to be added here
                     if (centerOption === "Origin") { 
-                        diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) 
+                        diff.add(box.clone().multiplyScalar(-0.5))
                     }
 
                     //actually move things.
@@ -31,9 +31,11 @@ function translate(system, boxOption, centerOption) {
             case "Strand":
                 diff = system[strands][i].getCom()
                 diff.add(shift);
-                diff.multiplyScalar(1 / box).floor().multiplyScalar(box * -1);
+                diff.divide(box).floor().multiply(box).multiplyScalar(-1);
                 diff.add(shift);
-                if (centerOption === "Origin") { diff.add(new THREE.Vector3(box * -0.5, box * -0.5, box * -0.5)) }
+                if (centerOption === "Origin") {
+                    diff.add(box.clone().multiplyScalar(-0.5))
+                }
                 system[strands][i].translateStrand(diff);
                 actualCoM.add(system[strands][i].getCom().multiplyScalar(system[strands][i][monomers].length).multiplyScalar(1/system.INSTANCES));
                 break;
@@ -53,7 +55,7 @@ function dumbCentering(system, centerOption) {
 
     //Are we centering to the origin (default) or to the box center?
     if (centerOption === "Box Center") {
-        amount.add(new THREE.Vector3(box * 0.5, box * 0.5, box * 0.5));
+        amount.add(box.clone().divideScalar(2));
     }
 
     system.translateSystem(amount);
@@ -65,15 +67,15 @@ function dumbBoxing(system, boxOption) {
         let diff = new THREE.Vector3;
         if (boxOption === "Strand") {
             diff = system[strands][i].getCom();
-            diff.multiplyScalar(1/box);
+            diff.divide(box);
             diff.floor()
-            diff.multiplyScalar(box*-1);
+            diff.multiply(box).multiplyScalar(-1);
             system[strands][i].translateStrand(diff);
         }
         for (let j = 0; j < system[strands][i][monomers].length; j++) {
             if (boxOption === "Monomer"){
                 diff = new THREE.Vector3(system.cmOffsets[system[strands][i][monomers][j].gid*3], system.cmOffsets[system[strands][i][monomers][j].gid*3+1], system.cmOffsets[system[strands][i][monomers][j].gid*3+2]);
-                diff.multiplyScalar(1/box).floor().multiplyScalar(box*-1);
+                diff.divide(box).floor().multiply(box).multiplyScalar(-1);
                 system[strands][i][monomers][j].translatePosition(diff);
             }
         }
