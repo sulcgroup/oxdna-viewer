@@ -90,10 +90,11 @@ target.addEventListener("drop", function (event) {
 
         if (ext === "dat") datFile = files[i];
         else if (ext === "conf") datFile = files[i];
+        else if (ext === "oxdna") datFile = files[i];
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
             return
         }
     }
