@@ -271,6 +271,23 @@ module api{
             defaultColormap = name;
         }
     }
+
+    export function setColorBounds(min: number, max: number) {
+        let key = lut.legend.labels.title;
+        lut.setMax(max);
+        lut.setMin(min);
+        api.removeColorbar();
+        lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
+        lut.setLegendLabels({ 'title': key, 'ticks': 5 });
+        for (let i = 0; i < systems.length; i++){
+            let system = systems[i];
+            let end = system.systemLength()
+            for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
+            }
+        }
+        coloringChanged();
+    }
     
     export function spOnly() {
         elements.map((n: BasicElement) => {
