@@ -64,10 +64,10 @@ target.addEventListener("dragexit", function (event) {
 const datReader = new FileReader();
 var trajReader: TrajectoryReader;
 
-var confNum: number = 0,
+let confNum: number = 0,
     datFileout: string = "",
     datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
-    box: number; //box size for system
+    box = new THREE.Vector3(); //box size for system
 
 //and a couple relating to overlay files
 var toggleFailure: Boolean = false, 
@@ -90,10 +90,11 @@ target.addEventListener("drop", function (event) {
 
         if (ext === "dat") datFile = files[i];
         else if (ext === "conf") datFile = files[i];
+        else if (ext === "oxdna") datFile = files[i];
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
             return
         }
     }
@@ -203,7 +204,9 @@ function readDat(numNuc, datReader, system) {
         return
     }
     //get the simulation box size
-    box = parseFloat(lines[1].split(" ")[3]);
+    box.x = parseFloat(lines[1].split(" ")[2]);
+    box.y = parseFloat(lines[1].split(" ")[3]);
+    box.z = parseFloat(lines[1].split(" ")[4]);
     const time = parseInt(lines[0].split(" ")[2]);
     confNum += 1
     console.log(confNum, "t =", time);
