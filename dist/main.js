@@ -172,7 +172,12 @@ class Nucleotide extends BasicElement {
         sys.fillVec('scales', 3, sid, [1, 1, 1]);
         sys.fillVec('nsScales', 3, sid, [0.7, 0.3, 0.7]);
         sys.fillVec('conScales', 3, sid, [1, this.bbnsDist, 1]);
-        sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        if (spLen == 0) {
+            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        }
+        else {
+            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        }
         sys.fillVec('visibility', 3, sid, [1, 1, 1]);
         color = this.elemToColor(this.type);
         sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
@@ -256,7 +261,12 @@ class Nucleotide extends BasicElement {
         sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
         sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-        sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        if (spLen == 0) {
+            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        }
+        else {
+            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        }
         // keep track of last backbone for sugar-phosphate positioning
         xbbLast = xbb;
         ybbLast = ybb;
@@ -449,7 +459,12 @@ class AminoAcid extends BasicElement {
         sys.fillVec('scales', 3, sid, [0, 0, 0]);
         sys.fillVec('nsScales', 3, sid, [1, 1, 1]);
         sys.fillVec('conScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        if (spLen == 0) {
+            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        }
+        else {
+            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        }
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('visibility', 3, sid, [1, 1, 1]);
         color = this.elemToColor(this.type);
@@ -487,7 +502,12 @@ class AminoAcid extends BasicElement {
         sys.fillVec('nsOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-        sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        if (spLen == 0) {
+            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        }
+        else {
+            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+        }
         xbbLast = x;
         ybbLast = y;
         zbbLast = z;
