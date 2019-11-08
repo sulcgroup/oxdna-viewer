@@ -136,18 +136,6 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         }
     });
 
-    // Update backbone connections (is there a more clever way to do this than
-    // to loop through all? We only need to update bases with neigbours
-    // outside the selection set)
-    selectedBases.forEach((base) => {
-        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
-            calcsp(base); //calculate sp between current and neighbor3
-        }
-        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
-            calcsp(base.neighbor5); //calculate sp between current and neighbor5
-        }
-    });
-
     for (let i = 0; i < systems.length; i++){
         systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
