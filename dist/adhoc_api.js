@@ -84,7 +84,7 @@ var api;
                 sys.fillVec('nsColors', 3, sid, [GREY.r, GREY.g, GREY.b]);
             }
         });
-        for (i = 0; i < systems.length; i++) {
+        for (let i = 0; i < systems.length; i++) {
             systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
         }
         render();

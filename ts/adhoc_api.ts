@@ -89,7 +89,7 @@ module api{
                 }
             }
         )
-        for (i = 0; i < systems.length; i++) {
+        for (let i = 0; i < systems.length; i++) {
             systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
         }
         render();

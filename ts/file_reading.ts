@@ -6,11 +6,13 @@ function datChunker(datFile: Blob, currentChunk: number, chunkSize: number) {
     return sliced;
 }
 
+//markers are used by the trajectory reader to keep track of configuration start/ends
 class marker {
     chunk: String;
     lineID: number;
 }
 
+// Creates color overlays
 function makeLut(data, key) {
     const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
     if (lut == undefined){
@@ -73,6 +75,7 @@ let confNum: number = 0,
 var toggleFailure: Boolean = false, 
     defaultColormap: string = "cooltowarm";
 
+// What to do if a file is dropped
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
@@ -82,7 +85,7 @@ target.addEventListener("drop", function (event) {
 
     let topFile, jsonFile;
 
-    // assign files to the extentions; all possible combinations of entered files
+    // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
         const fileName = files[i].name;
@@ -94,7 +97,7 @@ target.addEventListener("drop", function (event) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, and .json\nPlease drop one .dat/.conf and one .top file.  .json data overlay is optional and can be added later.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, and .json\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later.")
             return
         }
     }
@@ -119,6 +122,7 @@ target.addEventListener("drop", function (event) {
     render();
 }, false);
 
+// Files can also be retrieved from a path
 function readFilesFromPath(topologyPath:string, configurationPath:string) {
     if(topologyPath && configurationPath) {
         let topReq = new XMLHttpRequest();
@@ -139,6 +143,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string) {
     }
 }
 
+// And from the URL
 function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     const topologyPath = url.searchParams.get("topology");
@@ -147,6 +152,7 @@ function readFilesFromURLParams() {
     readFilesFromPath(topologyPath, configurationPath);
 }
 
+// Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     // Remove drag instructions
     const dragInstruction = document.getElementById("dragInstruction");

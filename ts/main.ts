@@ -18,9 +18,6 @@ const DNA: number = 0;
 const RNA: number = 1;
 const AA: number = 2;
 
-//some developers declare a new i in their for loops.  Some don't and reuse this one...is one better than the other?
-var i: number;
-
 //makes for cleaner references down the object hierarcy
 var strands = 'children',
     monomers = 'children',
@@ -1019,7 +1016,7 @@ class System extends THREE.Group {
     };
 
     fillVec(vecName, unitSize, pos, vals) {
-        for (i = 0; i < unitSize; i++) {
+        for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i]
         }
     };

@@ -14,8 +14,6 @@ var lut, devs; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;
 const AA = 2;
-//some developers declare a new i in their for loops.  Some don't and reuse this one...is one better than the other?
-var i;
 //makes for cleaner references down the object hierarcy
 var strands = 'children', monomers = 'children', objects = 'children';
 const editHistory = new EditHistory();
@@ -809,7 +807,7 @@ class System extends THREE.Group {
     }
     ;
     fillVec(vecName, unitSize, pos, vals) {
-        for (i = 0; i < unitSize; i++) {
+        for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i];
         }
     }
