@@ -2,202 +2,257 @@
 <html>
 
 <head>
-	<title>oxDNA three.js viewer</title>
-	<style>
-		/*CSS*/
-
-		body {
-			padding: 0;
-			margin: 0;
-			overflow: hidden;
-		}
-		canvas {
-			position: absolute;
-			height: 100%;
-		}
-		.opts {
-			width: 200px;
-			position: fixed;
-			z-index: 1;
-			background-color: #eee;
-			padding: 2px;
-		}
-
-		.sidenav { /*side bar settings*/
-			width: 200px;
-			max-height: 100%;
-			position: fixed;
-			z-index: 1;
-			font-size: 12px;
-			right: 0;
-			text-align: left;
-			overflow-y: scroll;
-			background-color: #eee;
-			opacity: 0.9;
-			padding: 2px;
-		}
-
-		.tab { /*tab settings*/
-			overflow: auto;
-			border: 1px thin #ccc;
-			background-color: #acc;
-		}
-
-		.tab button {
-			margin: 2px;
-			background-color: inherit;
-			border: none;
-			cursor: pointer;
-			padding: 5px; /*on each side of button*/
-			transition: 0.3s;
-			font-size: 17px;
-			float: left;
-			width: auto;
-		}
-
-		.tab button:hover {
-			background-color: azure;
-		}
-
-		.tab button.active {
-			background-color: azure;
-			font-size: 17px;
-		}
-
-		textarea {
-			width: 100%;
-			max-width: 100%;
-			min-width: 100%;
-			overflow-y: scroll;
-			font-size: 12px;
-		}
-
-		button {
-			width: 100%;
-			margin: 2px 0px;
-		}
-
-		input[type=number] {
-			width: 80px;
-		}
-
-	</style>
-    </head>
+    <title>oxDNA three.js viewer</title>
+    <!--Nice icons, from http://google.github.io/material-design-icons/-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Link external stylesheet file-->
+    <link rel="stylesheet" href="style.css">
+    <!--Set favicon-->
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+</head>
 
 <body>
-	<div class="sidenav">
-		<!--sidebar-->
-		<div class="tab">
-			<!--2 tabs: Nucleotides. Strands(not used)-->
-			<button class="tablinks active" onclick="openTab(event, 'Nucleotides')">Bases</button>
-			<button class="tablinks" onclick="openTab(event, 'Strands')">Strands</button>
-		</div>
-		<div id="Nucleotides" class="tabcontent">
-			<!--in "Nucloetides" tab-->
-			<textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-			<button onclick="makeSelectedBasesFile()" type="button">Download Selected Base List</button>
-			<button onclick="makeMutualTrapFile()" type="button">Make Mutual Trap File</button>
-			<!--Resolution: <input id="resolution" onchange="setResolution(this.value)" type="number" min="1" value="10" width="3">-->
-			<button onclick="makeOutputFiles()" type="button">Download Output Files<br>(.dat and .top)</button>
-			<button onclick="toggleVideoOptions()" type="button">Create Video</button>
-			<button onclick="toggleColorOptions()" type="button">Edit Colors</button>
-			<button onclick="controls.reset()" type="button">Reset Camera</button>
-			<caption> PBC: </caption>
-			<select id="inboxing">
-			    <option>Monomer</option>
-			    <option>Strand</option>
-			    <option>None</option>
-			</select>
-			<br>
-			<caption>Centering:</caption>
-			<select id="centering">
-				<option>Origin</option>
-				<option>Box Center</option>
-				<option>None</option>
-			</select>
-			<br>
-			<button onclick="systems.forEach( (s) => { PBC_switchbox(s)}); render()" type="button">Apply PBC/Centering</button>
-			<!--<input type="checkbox" id="centering" onchange="centerSystems()" checked>Center Systems-->
-			<br>
-			<input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" checked>Display Arrows
-			<br>
-			<input type="checkbox" id="lutToggle" onchange="toggleLut(this)">Display Alternate Colors
-			<br>
-			<input type="checkbox" id="backgroundToggle" onchange="toggleBackground()">Toggle Background Color
-			<fieldset>
-				<legend>Action:</legend>
-				<input type="checkbox" name="action" value="Select" checked> Select <br>
-				<input type="checkbox" name="action" value="Drag" onchange="drag()"> Drag
-			</fieldset>
-			<fieldset>
-				<legend>Selection mode:</legend>
-				<input type="radio" name="scope" value="Monomer"  checked>Monomer<br> <!--default mode is Nucleotide-->
-				<input type="radio" name="scope" value="Strand">Strand<br>
-				<input type="radio" name="scope" value="System">System<br>
-				<input type="radio" name="scope" value="Cluster">Cluster
-			</fieldset>
-			<textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly> Selected Base Information </textarea>
-			<fieldset>
-				<legend>Rotate:</legend>
-				<input type="radio" name="rotate" value="X" checked>X Axis <!--default checked is x-axis-->
-				<br>
-				<input type="radio" name="rotate" value="Y">Y Axis
-				<br>
-				<input type="radio" name="rotate" value="Z">Z Axis
-				<br>
-				Rotation angle:
-				<input type="number" value="-90" id="rotAngle" width="20">
-				<button onclick="rotate()">Rotate</button>
-			</fieldset>
-			<button onclick="previousConfig()"type="button" style="width: 45%; left: 0" title="'b' on the keyboard"> Prev Config</button>
-			<button onclick="nextConfig()" type="button" style="width: 45%; right: 0; float: right" title="'n' on the keyboard">Next Config</button>
-			</div>
-			<div id="Strands" class="tabcontent" style="display: none">
-				<button>TEST</button>
-			</div>
-			<button onclick="toggleSideNav(this)"type="button" style="background-color: #acc; border: 0px;">hide</button>
-		</div>
-		<div class="opts" id="videoOptions" hidden="hidden">
-			Video type
-			<select id="videoType">
-				<option value="trajectory">Trajectory</option>
-				<option value="lemniscate">XY leminiscate</option>
-			</select>
-			<fieldset>
-				<legend>File format:</legend>
-				<input type="radio" name="videoFormat" value="webm" checked>webm<br>
-				<input type="radio" name="videoFormat" value="gif" >gif<br>
-				<input type="radio" name="videoFormat" value="png" >png<br>
-				<input type="radio" name="videoFormat" value="jpg" >jpg<br>
-			</fieldset>
-			<input type="number" value="24" id="videoFramerate" width="20">framerate
-			<button id="videoStartStop" onclick="createVideo()">Start</button>
-		</div>
-		<div title="Click a color to edit, right click to remove" class="opts"
-			id="colorOptions" hidden="hidden" style="background-color: transparent">
-		</div>
-		<canvas id="threeCanvas"></canvas>
-		<div class="main"> <!--all files to be loaded onload of html file-->
-			<script src="./ts/lib/CCapture.all.min.js"></script>
-			<script src="./ts/lib/three.js"></script>
-			<script src="./ts/lib/Lut.js"></script>
-			<script src="./ts/controls/DragControls.js"></script>
-			<script src="./ts/controls/TrackballControls.js"></script>
-			<script src="./dist/scene_setup.js"></script>
-			<script src="./dist/instancing.js"></script>
-			<script src="./dist/mesh_setup.js"></script>
-			<script src="./dist/io.js"></script>
-			<script src="./dist/PBC_switchbox.js"></script>
-			<script src="./dist/file_reading.js"></script>
-			<script src="./dist/main.js"></script>
-			<script src="./dist/keybindings.js"></script>
-			<script src="./dist/base_selector.js"></script>
-			<script src="./dist/output_file.js"></script>
-			<script src="./dist/translation.js"></script>
-			<script src="./ts/controls/SceneUtils.js"></script>
-			<script src="./dist/adhoc_api.js"></script>
-		</div>
+    <!--Keyboard shortcut modal-->
+    <div id="keyboardShortcuts" class="modal" onclick="toggleModal(this.id)">
+        <div class="modal-content">
+            <table>
+                <tr>
+                    <th>Key</th>
+                    <th>Action</th>
+                </tr>
+				<tr><td>p</td><td>Save image</td></tr>
+				<tr><td>s</td><td>Toggle selection mode</td></tr>
+				<tr><td>d</td><td>Toggle dragging mode</td></tr>
+                <tr><td>Right arrow</td><td>Next configuration</td></tr>
+				<tr><td>Left arrow</td><td>Previous configuration</td></tr>
+				<tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
+				<tr><td>ctrl-z</td><td>Undo edit</td></tr>
+				<tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
+				<tr><td>ctrl-a</td><td>Select all elements</td></tr>
+				<tr><td>ctrl-i</td><td>Invert selection</td></tr>
+				<tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
+				<tr><td>shift-click</td><td>Select intermediate monomers</td></tr>
+				<tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad2</td><td>Rotate camera down</td></tr>
+				<tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad4</td><td>Rotate camera left</td></tr>
+				<tr><td>Numpad5</td><td>Reset camera</td></tr>
+				<tr><td>Numpad6</td><td>Rotate camera right</td></tr>
+				<tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
+                <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
+                <tr><td>F1</td><td>Show this list</td></tr>
+            </table>
+        </div>
+    </div>
 
+    <!--Initial instructions for drag and drop of files-->
+    <div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
+
+    <!--Sidebar-->
+    <div id="sidenav">
+        <div id="sidenavContent">
+            <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
+            <button onclick="makeOutputFiles()" type="button" title="Download the current scene in oxDNA format">Download Output Files<br>(.dat and .top)</button>
+            <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
+
+            <!--Centering-->
+            <fieldset>
+                <legend>PBC / Centering</legend>
+                <caption> PBC: </caption>
+                <select id="inboxing" title="At what scale to apply periodic boundary conditions">
+                    <option>Monomer</option>
+                    <option>Strand</option>
+                    <option>None</option>
+                </select>
+                <br>
+                <caption>Centering:</caption>
+                <select id="centering" title="Where to center the structure relative to the simulation box">
+                    <option>Origin</option>
+                    <option>Box Center</option>
+                    <option>None</option>
+                </select>
+                <br>
+                <button onclick="systems.forEach( (s) => { PBCswitchbox(s)}); render()" type="button" title="note this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
+            </fieldset>
+
+            <!--View-->
+            <fieldset>
+                <legend>View</legend>
+                <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
+                <fieldset>
+                    <legend>Color by:</legend>
+                    <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
+                    <input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
+                    <input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
+                    <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
+                </fieldset>
+                <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
+                <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
+                    Colors</button>
+                <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
+                <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
+            </fieldset>
+
+            <!--Edit-->
+            <fieldset>
+                <legend>Edit</legend>
+                <div style="text-align: center;">
+                    <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
+                    <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+                </div>
+                <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select
+                <input type="checkbox" name="action" id="dragToggle" value="Drag"> Drag<br>
+                <fieldset>
+                    <legend>Selection mode:</legend>
+                    <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
+                    <input type="radio" name="scope" value="Strand">Strand<br>
+                    <input type="radio" name="scope" value="System">System<br>
+                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
+                        title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
+                    <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
+                </fieldset>
+                <fieldset>
+                    <legend>Rotate:</legend>
+                    Axis:
+                    <input type="radio" name="rotate" value="X" checked><span style="color: rgb(206, 54, 27)">X</span>
+                    <!--default checked is x-axis-->
+                    <input type="radio" name="rotate" value="Y"><span style="color: rgb(19, 102, 2)">Y</span>
+                    <input type="radio" name="rotate" value="Z"><span style="color: rgb(30, 96, 196)">Z</span><br> Rotation angle:
+                    <input type="number" value="-90" id="rotAngle" width="20">
+                    <button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
+                </fieldset>
+                <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
+            </fieldset>
+
+            <!--Selected bases-->
+            <fieldset>
+                <legend>Selected bases</legend>
+                <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
+                <button onclick="toggleOptions('baseInfoWindow')" type="button" title="Show selected base information">Show selected base info</button>
+                <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
+                <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap File</button>
+            </fieldset>
+
+            <div style="text-align: center;">
+                <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 48px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
+                <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 48px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
+            </div>
+        </div>
+        <button id="sideNavToggleButton" onclick="toggleSideNav()" type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide toolbar</button>
+    </div>
+
+    <!--Extra option windows-->
+    <div style="position: absolute; bottom: 0px; overflow-y: scroll; max-height: 100%;">
+        <!--Video-->
+        <div class="opts" id="videoOptions" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('videoOptions')">close</i>
+            </div>
+            <label for="videoType">Video type:</label>
+            <select id="videoType" onchange="document.getElementById('videoLeminiscateOpts').hidden = this.selectedIndex == 0;">
+                <option value="trajectory">Trajectory</option>
+                <option value="lemniscate">XY lemniscate</option>
+            </select>
+            <fieldset>
+                <legend>File format:</legend>
+                <input type="radio" name="videoFormat" value="webm" checked>webm<br>
+                <input type="radio" name="videoFormat" value="gif">gif<br>
+                <input type="radio" name="videoFormat" value="png">png<br>
+                <input type="radio" name="videoFormat" value="jpg">jpg<br>
+            </fieldset>
+            <label for="videoFramerate">Framerate:</label>
+            <input type="number" value="24" id="videoFramerate" width="20">fps
+            <div id="videoLeminiscateOpts" hidden="true">
+                <label for="videoDuration">Duration:</label>
+                <input type="number" value="20" id="videoDuration" width="20">s
+            </div>
+            <button id="videoStartStop" onclick="createVideo()">Start</button>
+        </div>
+
+        <!--Color-->
+        <div class="opts" id="colorOptions" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('colorOptions'); colorOptions()">close</i>
+            </div>
+            Click a color to edit, right click to remove:
+            <div id="colorOptionContent" style="background-color: inherit"></div>
+        </div>
+
+        <!--Clustering-->
+        <div class="opts" id="clusterOptions" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('clusterOptions')">close</i>
+            </div>
+            <fieldset>
+                <legend>Automatic</legend>
+                <label for="minPts">Min points: </label>
+                <input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
+                <label for="epsilon">Max dist (ε): </label>
+                <input type="number" value="1.5" id="epsilon" title="Max distance between cluster neigbours" min=0>
+                <button onclick="calculateClusters()">Start clustering</button>
+            </fieldset>
+            <fieldset>
+                <legend>Manual</legend>
+                <button onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to
+                    cluster</button>
+                <button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
+            </fieldset>
+        </div>
+
+        <!--Fog-->
+        <div class="opts" id="fogOptions" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('fogOptions')">close</i>
+            </div>
+            <label for="fogNear">Near: </label>
+            <input type="number" value="1" id="fogNear" title="Minimum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
+            <label for="fogNear">Far: </label>
+            <input type="number" value="200" id="fogFar" title="Maximum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
+            <button onclick="toggleFog()">Toggle fog</button>
+        </div>
+
+        <!--Base info-->
+        <div class="opts" id="baseInfoWindow" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('baseInfoWindow')">close</i>
+            </div>
+            Selected Base Info:
+            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly></textarea>
+        </div>
+    </div>
+
+    <!--Notices-->
+    <div id="noticeboard" style="position: absolute; bottom: 0px; overflow-y: scroll; width: 100%; max-height: 100%;"></div>
+
+    <!--Canvas-->
+    <div id="container">
+        <div><canvas id="colorbarCanvas"></canvas></div>
+    </div>
+    <canvas id="threeCanvas"></canvas>
+
+    <div class="main">
+        <!--all files to be loaded onload of html file-->
+        <script src="./ts/lib/CCapture.all.min.js"></script>
+        <script src="./ts/lib/three.js"></script>
+        <script src="./ts/lib/Lut.js"></script>
+        <script src="./ts/controls/DragControls.js"></script>
+        <script src="./ts/controls/TrackballControls.js"></script>
+        <script src="./dist/scene_setup.js"></script>
+        <script src="./dist/instancing.js"></script>
+        <script src="./dist/mesh_setup.js"></script>
+        <script src="./dist/io.js"></script>
+        <script src="./dist/PBC_switchbox.js"></script>
+        <script src="./dist/file_reading.js"></script>
+        <script src="./dist/doUndo.js"></script>
+        <script src="./dist/rigid-body_simulation.js"></script>
+        <script src="./dist/main.js"></script>
+        <script src="./dist/keybindings.js"></script>
+        <script src="./dist/base_selector.js"></script>
+        <script src="./dist/output_file.js"></script>
+        <script src="./dist/translation.js"></script>
+        <script src="./ts/controls/SceneUtils.js"></script>
+        <script src="./dist/adhoc_api.js"></script>
+    </div>
 </body>
 
 </html>

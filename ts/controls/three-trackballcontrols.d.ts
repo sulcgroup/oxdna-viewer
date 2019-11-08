@@ -31,6 +31,10 @@ export class TrackballControls extends EventDispatcher {
 
     reset(): void;
 
+    setToAxis(axis: Vector3): void;
+
+    stepAroundAxis(axis: Vector3, stepAngle: number): void;
+
     dispose(): void;
 
     checkDistances(): void;

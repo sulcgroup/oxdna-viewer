@@ -20,8 +20,10 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var _movePos = new THREE.Vector3();
     var _mousePos = new THREE.Vector3();
     var _oldPos = new THREE.Vector3();
-    var _new_pos = new THREE.Vector3
+    var _startPos = new THREE.Vector3();
+    var _newPos = new THREE.Vector3();
     var _move = new THREE.Vector3();
+    var _boxSelector;
 
     var _selected = null, _hovered = null;
     //selected is object selected
@@ -59,7 +61,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             var rect = _domElement.getBoundingClientRect();
 
             //change the cursor if you're hovering over something selectable
-            let id = gpu_picker(event)
+            let id = gpuPicker(event)
             if (id > -1) {
                 _domElement.style.cursor = 'pointer';
             }
@@ -73,35 +75,28 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             //use the raycaster to project the mouse position onto the plane and move the object to the mouse
             _raycaster.setFromCamera(_mouse, _camera); 
             if (_selected && scope.enabled) {
-                _new_pos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
-                _move.copy(_new_pos).sub(_oldPos)
-                switch (getScopeMode()) {
-                    case "Monomer":
-                        _selected.translate_position(_move);
-                        break;
-                    case "Strand":
-                        _selected.parent.translate_strand(_move);
-                        break;
-                    case "System":
-                        _selected.parent.parent.translate_system(_move);
-                        break;
-                }
-                _oldPos.copy(_new_pos); //Need difference from previous position.
-                
+                _newPos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
+                _move.copy(_newPos).sub(_oldPos);
 
-                scope.dispatchEvent({ type: 'drag' });
+                translateElements(selectedBases, _move);
+                _oldPos.copy(_newPos); //Need difference from previous position.
+                
+                // Disable controls
+                controls.enabled = false;
 
                 //Update attributes on the GPU
                 _selected.parent.parent.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
                 _selected.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.dummy_backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             }
             render();
-
+        } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            event.preventDefault();
+            _boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
         }
-
     }
 
     function onDocumentMouseDown(event) { //if mouse is moved
@@ -109,81 +104,94 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             event.preventDefault();
 
             //check if there is anything under the mouse
-            let id = gpu_picker(event)
+            let id = gpuPicker(event)
             if (id > -1) {
                 //The camera points down its own -Z axis
-                let camera_heading = new THREE.Vector3(0, 0, -1);
-                camera_heading.applyQuaternion(camera.quaternion);
+                let cameraHeading = new THREE.Vector3(0, 0, -1);
+                cameraHeading.applyQuaternion(camera.quaternion);
 
                 //Create a movement plane perpendicular to the camera heading containing the clicked object
                 _selected = elements[id]
                 _movePos.set(0, 0, 0);
-                _objPos = _selected.get_instance_parameter3("bb_offsets");
-                _plane.setFromNormalAndCoplanarPoint(camera_heading, _objPos);
-                _mousePos.copy(camera_heading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
+                _objPos = _selected.getInstanceParameter3("bbOffsets");
+                _plane.setFromNormalAndCoplanarPoint(cameraHeading, _objPos);
+                _mousePos.copy(cameraHeading).multiplyScalar(_plane.distanceToPoint(camera.position)).add(camera.position);
                 _oldPos.copy(_objPos);
+                _startPos.copy(_objPos);
 
 				_domElement.style.cursor = 'move';
 
-				scope.dispatchEvent({ type: 'dragstart'});
+                controls.enabled = false;
 
 			}
-		}
+		} else if (getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            event.preventDefault();
 
+            // Disable trackball controlls
+            controls.enabled = false;
+
+            // Select multiple elements my holding down ctrl
+			if (!event.ctrlKey) {
+				clearSelection();
+			}
+
+            // Create a selection box
+            _boxSelector = new BoxSelector(
+                new THREE.Vector2(event.clientX, event.clientY),
+                camera, _domElement, scene
+            );
+        }
 	}
 
 	function onDocumentMouseCancel(event) { 
 		if (getActionModes().includes("Drag")) { 
-
 			event.preventDefault();
 
 			//calculate new sp connectors
-			if (_selected) { 
-				if (getScopeMode() == "Monomer") {
+			if (_selected) {
 
-					if (_selected.neighbor3 !== null && _selected.neighbor3 !== undefined) { 
-						calcsp(_selected); //calculate sp between current and neighbor3
-					}
-					if (_selected.neighbor5 !== null && _selected.neighbor5 !== undefined) { 
-						calcsp(_selected.neighbor5); //calculate sp between current and neighbor5
-					}
-				}
-				scope.dispatchEvent({ type: 'dragend' });
+                // Re-enable trackball controlls
+                controls.enabled = true;
 
+                if (selectedBases.has(_selected)) {
+                    // Calculate the total translation and add it to the edit history
+                    var totalMove = _newPos.clone().sub(_startPos);
+                    editHistory.add(new RevertableTranslation(selectedBases, totalMove));
+                    console.log("Added translation to history: "+ totalMove.length())
+                }
 				_selected = null; //now nothing is selected for dragging b/c click event is over
 
 			}
-			_domElement.style.cursor = 'auto';
-			render();
+            _domElement.style.cursor = 'auto';
+            render();
+        } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+            // Box selection
+            event.preventDefault();
+
+            // Calculate which elements are in the drawn box
+            let boxSelected = _boxSelector.select(
+                new THREE.Vector2(event.clientX, event.clientY)
+            );
+
+            // Toggle selected elements (unless they are already selected)
+            boxSelected.forEach(element => {
+                if (!selectedBases.has(element)) {
+                    element.toggle();
+                }
+            });
+
+            // Remove selection box and update the view
+            _boxSelector.onSelectOver();
+            _boxSelector = undefined;
+            systems.forEach(sys => {
+                updateView(sys);
+            });
+
+            // Re-enable trackball controlls
+            controls.enabled = true;
 		}
     }
-
-    //adjust the backbone after the move
-	function calcsp(current_nuc) { 
-		let temp = current_nuc.neighbor3.get_instance_parameter3("bb_offsets");
-		let x_bb_last = temp.x,
-			y_bb_last = temp.y,
-			z_bb_last = temp.z;
-		temp = current_nuc.get_instance_parameter3("bb_offsets"); //get current_nuc's backbone world position
-		let x_bb = temp.x;
-		let y_bb = temp.y;
-        let z_bb = temp.z;
-        
-		//calculate sp location, length and orientation
-		let x_sp = (x_bb + x_bb_last) / 2,
-			y_sp = (y_bb + y_bb_last) / 2,
-			z_sp = (z_bb + z_bb_last) / 2;
-		let sp_len = Math.sqrt(Math.pow(x_bb - x_bb_last, 2) + Math.pow(y_bb - y_bb_last, 2) + Math.pow(z_bb - z_bb_last, 2)); 
-		let rotation_sp = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), new THREE.Vector3(x_sp - x_bb, y_sp - y_bb, z_sp - z_bb).normalize());
-        
-        current_nuc.set_instance_parameter('bbcon_offsets', [x_sp, y_sp, z_sp]);
-        current_nuc.set_instance_parameter('bbcon_rotation', [rotation_sp.w, rotation_sp.z, rotation_sp.y, rotation_sp.x]);
-        current_nuc.set_instance_parameter('bbcon_scales', [1, sp_len, 1]);
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        current_nuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-	}
 
     activate();
 

@@ -1,25 +1,29 @@
 /// <reference path="./three/index.d.ts" />
 
-var instanced_backbone = new THREE.InstancedBufferGeometry();
-instanced_backbone.copy(new THREE.SphereBufferGeometry(.2,10,10) as unknown as THREE.InstancedBufferGeometry); //don't worry about those type conversion, just trying to keep tsc happy
+// The initial set up of the instanced objects.
+// Objects can be deformed by parameters sent to the instanceScale parameter of the instance
+var instancedBackbone = new THREE.InstancedBufferGeometry();
+instancedBackbone.copy(new THREE.SphereBufferGeometry(.2,10,10) as unknown as THREE.InstancedBufferGeometry); //don't worry about those type conversion, just trying to keep tsc happy
 
-var instanced_nucleoside = new THREE.InstancedBufferGeometry();
-instanced_nucleoside.copy(new THREE.SphereBufferGeometry(.3,10,10) as unknown as THREE.InstancedBufferGeometry);
+var instancedNucleoside = new THREE.InstancedBufferGeometry();
+instancedNucleoside.copy(new THREE.SphereBufferGeometry(.3,10,10) as unknown as THREE.InstancedBufferGeometry);
 
-var instanced_connector = new THREE.InstancedBufferGeometry();
-instanced_connector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+var instancedConnector = new THREE.InstancedBufferGeometry();
+instancedConnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
-var instanced_bbconnector = new THREE.InstancedBufferGeometry();
-instanced_bbconnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+var instancedBBconnector = new THREE.InstancedBufferGeometry();
+instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
-var instance_material = new THREE.MeshLambertMaterial( {
+var instanceMaterial = new THREE.MeshLambertMaterial( {
     vertexColors: THREE.VertexColors
 });
 
-instance_material["defines"] = instance_material["defines"] || {};
-instance_material["defines"][ 'INSTANCED' ] = "";
+// Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
+instanceMaterial["defines"] = instanceMaterial["defines"] || {};
+instanceMaterial["defines"][ 'INSTANCED' ] = "";
 
-var backbone_colors = [
+// Default colors for the backbones
+var backboneColors = [
     new THREE.Color(0xfdd291), //light yellow
     
     new THREE.Color(0xffb322), //goldenrod
@@ -31,8 +35,8 @@ var backbone_colors = [
 
 
 
-// define nucleoside colors: grey OR traditional colors
-var nucleoside_colors = [
+// define nucleoside colors
+var nucleosideColors = [
     new THREE.Color(0x3333FF), //A or R
 
     new THREE.Color(0xFFFF33), //G or H yellow; "gorse"
@@ -62,13 +66,13 @@ var nucleoside_colors = [
         new THREE.Color(0xE6E600), //yellow
 
      //G
-        new THREE.Color(0xEBEBEB), // light grey
+        new THREE.Color(0xEBEBEB), // light GREY
 
      //P
         new THREE.Color(0xDC9682), //peach
 
      //A
-        new THREE.Color(0xC8C8C8), //dark grey
+        new THREE.Color(0xC8C8C8), //dark GREY
 
      //V
         new THREE.Color(0x0F820F), //green
@@ -93,9 +97,6 @@ var nucleoside_colors = [
 
 ];
 
-var selection_color = new THREE.Color(0xFF00FF); //PINK!
-
-
-var grey =  new THREE.Color(0x888888);
+var selectionColor = new THREE.Color(0xFF00FF); //PINK!
 
 

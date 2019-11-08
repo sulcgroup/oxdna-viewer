@@ -20,7 +20,9 @@
         "./ts/adhoc_api.ts",
         "./ts/io.ts",
         "./ts/PBC_switchbox.ts",
-        "./ts/instancing.ts"
+        "./ts/instancing.ts",
+        "./ts/doUndo.ts",
+        "./ts/rigid-body_simulation.ts"
         //,
         //"./js/cubes.ts",
         //"./js/rotate.ts"
