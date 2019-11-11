@@ -7,32 +7,18 @@ function makeTopFile(){
     let top: string[] = []; //string of contents of .top file
     let totNuc: number = 0; //total # of elements
     let totStrands: number = 0; //total # of strands
-    let longestStrandLen: number = 0;
-    let uncorrectedStrandID: number;
-    let oldSystem: number
-    let currentStrand: number = 1;
+
     for (let i = 0; i < systems.length; i++) { //for each system
+        totStrands += systems[i][strands].length;
         for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in current system
-            totStrands++;
-            let strandLen: number = 0; //current strand length
-            for (let k = 0; k < systems[i][strands][j][monomers].length; k++) { //for each nucleotide in current strand
-                totNuc++;
-                strandLen++;
-            }
-            if (longestStrandLen < strandLen) //set longestStrandLen to largest strand length
-                longestStrandLen = strandLen;
+            totNuc += systems[i][strands][j][monomers].length;
         }
     }
+
     top.push(totNuc + " " + totStrands);
-    uncorrectedStrandID = elements[0].parent.strandID;
-    oldSystem = elements[0].parent.parent.systemID;
+
     for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
-        if (elements[i].parent.strandID != uncorrectedStrandID || elements[i].parent.parent.systemID != oldSystem) {
-            currentStrand += 1;
-            uncorrectedStrandID = elements[i].parent.strandID;
-            oldSystem = elements[i].parent.parent.systemID;
-        }
-        let tl = [currentStrand , elements[i].type ]; //strand id in global world + base type
+        let tl = [elements[i].parent.strandID , elements[i].type ]; //strand id in global world + base type
         let neighbor3 = elements[i].neighbor3;
         let neighbor5 = elements[i].neighbor5;
         if (neighbor3 === null || neighbor3 === undefined) 

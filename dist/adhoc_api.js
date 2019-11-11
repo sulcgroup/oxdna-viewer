@@ -114,87 +114,94 @@ var api;
         strand.excludeElements(new_nucleotides);
         //create fill and deploy new strand 
         let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
+        strand.parent.addStrand(new_strand);
         new_nucleotides.forEach((n) => {
             new_strand.addBasicElement(n);
+            n.updateColor();
         });
-        //voodoo
-        strand.parent.addStrand(new_strand);
+        //update local ids in the remnant strand
+        let i = 0;
+        strand[monomers].forEach((n) => {
+            n.lid = i++;
+        });
+        sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
         render();
     }
     api.nick = nick;
-    /*export function ligate(element1 :BasicElement, element2: BasicElement){
-        console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
-        if(element1.parent.parent !== element2.parent.parent){
+    function ligate(element1, element2) {
+        if (element1.parent.parent !== element2.parent.parent) {
+            console.log("cannot currently ligate strands between systems!");
             return;
         }
-        // assume for now that element1 is 5' and element2 is 3'
-        // get the reference to the strands
-        // strand2 will be merged into strand1
-        let strand1 = element1.parent;
-        let strand2 = element2.parent;
+        let end5, end3;
+        //find out which is the 5' end and which is 3'
+        if (element1.neighbor5 == null && element2.neighbor3 == null) {
+            end5 = element1;
+            end3 = element2;
+        }
+        else if (element1.neighbor3 == null && element2.neighbor5 == null) {
+            end5 = element2;
+            end3 = element1;
+        }
+        else {
+            console.log("please select one nucleotide with an available 3' connection and one with an available 5'");
+            return;
+        }
+        let sys5 = end5.parent.parent, sys3 = end3.parent.parent, sid5 = end5.gid - sys5.globalStartId, sid3 = end3.gid - sys3.globalStartId;
+        // strand1 will have an open 5' and strand2 will have an open 3' end
+        // get the reference to the strands 
+        // strand2 will be merged into strand1 
+        let strand1 = end5.parent;
+        let strand2 = end3.parent;
         // lets orphan strand2 element
-        let bases2 = [...strand2[monomers]]; // clone the refferences to the elements
+        let bases2 = [...strand2[monomers]]; // clone the references to the elements
         strand2.excludeElements(strand2[monomers]);
-        
         //check that it is not the same strand
-        if (strand1 !== strand2){
-            //remove strand2 object
+        if (strand1 !== strand2) {
+            //remove strand2 object 
             strand2.parent.remove(strand2);
-            //strand2.parent[strands] = strand2.parent[strands].filter((ele)=>{
-            //    return ele != strand2;
-            //});
         }
-
-        // and add them back into strand1
-        //create fill and deploy new strand
-        bases2.forEach(
-            (n) => {
-                strand1.addBasicElement(n);
-            }
-        );
-        //interconnect the 2 element objects
-        element1.neighbor5 = element2;
-        element2.neighbor3 = element1;
-        //TODO: CLEAN UP!!!
-        //////last, add the sugar-phosphate bond since its not done for the first nucleotide in each strand
-        let p2 = element2[objects][element2.BACKBONE].position;
-        let xbb = p2.x,
-            ybb = p2.y,
-            zbb = p2.z;
-
-        let p1 = element1[objects][element1.BACKBONE].position;
-        let xbbLast = p1.x,
-            ybbLast = p1.y,
-            zbbLast = p1.z;
-
-
+        // and add them back into strand1 
+        //create fill and deploy new strand 
+        let i = 0;
+        bases2.forEach((n) => {
+            strand1.addBasicElement(n);
+            n.updateColor();
+            n.lid = 0;
+        });
+        //connect the 2 element objects 
+        end5.neighbor5 = end3;
+        end3.neighbor3 = end5;
+        //last, add the sugar-phosphate bond
+        let p2 = end3.getInstanceParameter3("bbOffsets");
+        let xbb = p2.x, ybb = p2.y, zbb = p2.z;
+        let p1 = end5.getInstanceParameter3("bbOffsets");
+        let xbbLast = p1.x, ybbLast = p1.y, zbbLast = p1.z;
         let xsp = (xbb + xbbLast) / 2, //sugar phospate position in center of both current and last sugar phosphates
-            ysp = (ybb + ybbLast) / 2,
-            zsp = (zbb + zbbLast) / 2;
-
+        ysp = (ybb + ybbLast) / 2, zsp = (zbb + zbbLast) / 2;
         let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
-        // easy periodic boundary condition fix
-        // if the bonds are to long just don't add them
-        if (spLen <= 500) {
-            let spRotation = new THREE.Matrix4().makeRotationFromQuaternion(
-                new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
-                )
-            );
-            let sp = new THREE.Mesh(connectorGeometry, element1.strand_toMaterial(strand2.strandID));
-            sp.applyMatrix(new THREE.Matrix4().makeScale(1.0, spLen, 1.0)); //set length according to distance between current and last sugar phosphate
-            sp.applyMatrix(spRotation); //set rotation
-            sp.position.set(xsp, ysp, zsp);
-            element1.add(sp); //add to visual_object
-        }
+        let spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
+        sys3.fillVec('bbconOffsets', 3, sid3, [xsp, ysp, zsp]);
+        sys3.fillVec('bbconRotation', 4, sid3, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+        sys3.fillVec('bbconScales', 3, sid3, [1, spLen, 1]);
+        sys3.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+        sys3.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        sys3.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        sys3.connector.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys3.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys3.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
         // Strand id update
         let strID = 1;
-        let sys = element1.parent.parent;
-        sys[strands].forEach((strand) =>strand.strandID = strID++);
+        sys3[strands].forEach((strand) => strand.strandID = strID++);
+        if (sys3 !== sys5) {
+            sys5[strands].forEach((strand) => strand.strandID = strID++);
+        }
         render();
     }
-    
-    export function strand_add_to_system(strand:Strand, system: System){
+    api.ligate = ligate;
+    /*export function strand_add_to_system(strand:Strand, system: System){
         // kill strand in its previous system
         strand.parent[strands] = strand.parent[strands].filter((ele)=>{
             return ele != strand;

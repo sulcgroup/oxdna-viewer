@@ -31,7 +31,6 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var scope = this;
 
     function activate() {
-        console.log("activated");
 
         _domElement.addEventListener('mousemove', onDocumentMouseMove, false);
         _domElement.addEventListener('mousedown', onDocumentMouseDown, false);
@@ -40,7 +39,6 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     }
 
     function deactivate() {
-        console.log("deactivated")
 
         _domElement.removeEventListener('mousemove', onDocumentMouseMove, false);
         _domElement.removeEventListener('mousedown', onDocumentMouseDown, false);
