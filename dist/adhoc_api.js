@@ -100,33 +100,29 @@ var api;
         return elements.reverse();
     }
     api.trace53 = trace53;
-    /*export function nick(element: BasicElement){
-        // we break connection to the 3' neighbor
-        let neighbor =  element.neighbor3;
+    function nick(element) {
+        let sys = element.parent.parent, sid = element.gid - sys.globalStartId;
+        // we break connection to the 3' neighbor 
+        let neighbor = element.neighbor3;
         element.neighbor3 = null;
         neighbor.neighbor5 = null;
-        element.remove(
-            element[objects][element.SP_CON]
-        );
-
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
         let strand = element.parent;
         // nucleotides which are after the nick
-        let new_nucleotides : BasicElement[] = trace53(neighbor);
+        let new_nucleotides = trace53(neighbor);
         strand.excludeElements(new_nucleotides);
-        
-        //create fill and deploy new strand
+        //create fill and deploy new strand 
         let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
-        new_nucleotides.forEach(
-            (n) => {
-                new_strand.addBasicElement(n);
-            }
-        );
+        new_nucleotides.forEach((n) => {
+            new_strand.addBasicElement(n);
+        });
         //voodoo
         strand.parent.addStrand(new_strand);
         render();
     }
-
-    export function ligate(element1 :BasicElement, element2: BasicElement){
+    api.nick = nick;
+    /*export function ligate(element1 :BasicElement, element2: BasicElement){
         console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
         if(element1.parent.parent !== element2.parent.parent){
             return;

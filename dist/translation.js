@@ -192,3 +192,5 @@ function translateElements(elements, v) {
     }
     render();
 }
+dragControls.activate();
+dragControls.enabled = true;

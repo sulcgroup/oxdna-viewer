@@ -105,14 +105,15 @@ module api{
         return elements.reverse();
     }
 
-    /*export function nick(element: BasicElement){
+    export function nick(element: BasicElement){
+        let sys = element.parent.parent,
+            sid = element.gid - sys.globalStartId;
         // we break connection to the 3' neighbor 
         let neighbor =  element.neighbor3;
         element.neighbor3 = null;
         neighbor.neighbor5 = null;
-        element.remove(
-            element[objects][element.SP_CON]
-        );
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 
         let strand = element.parent;
         // nucleotides which are after the nick
@@ -131,7 +132,7 @@ module api{
         render(); 
     }
 
-    export function ligate(element1 :BasicElement, element2: BasicElement){
+    /*export function ligate(element1 :BasicElement, element2: BasicElement){
         console.log("Experimental, does not update strand indices yet and will break with Shuchi's update!");
         if(element1.parent.parent !== element2.parent.parent){
             return;

@@ -2,7 +2,7 @@
  * @author zz85 / https://github.com/zz85
  * @author mrdoob / http://mrdoob.com
  * Running this will allow you to drag three.js objects around the screen.
- * Heavily rewritten by Erik Poppleton to accomodate instanced objects
+ * Heavily rewritten by ErikPoppleton to accomodate instanced objects
  */
 
 /*To include anything such as DragControls.js, TrackballControls.js, etc., do the following:
@@ -31,21 +31,21 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
     var scope = this;
 
     function activate() {
+        console.log("activated");
 
         _domElement.addEventListener('mousemove', onDocumentMouseMove, false);
         _domElement.addEventListener('mousedown', onDocumentMouseDown, false);
         _domElement.addEventListener('mouseup', onDocumentMouseCancel, false);
         _domElement.addEventListener('mouseleave', onDocumentMouseCancel, false);
-
     }
 
     function deactivate() {
+        console.log("deactivated")
 
         _domElement.removeEventListener('mousemove', onDocumentMouseMove, false);
         _domElement.removeEventListener('mousedown', onDocumentMouseDown, false);
         _domElement.removeEventListener('mouseup', onDocumentMouseCancel, false);
         _domElement.removeEventListener('mouseleave', onDocumentMouseCancel, false);
-
     }
 
     function dispose() {
@@ -144,7 +144,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
         }
 	}
 
-	function onDocumentMouseCancel(event) { 
+	function onDocumentMouseCancel(event) {
 		if (getActionModes().includes("Drag")) { 
 			event.preventDefault();
 
@@ -193,7 +193,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
 		}
     }
 
-    activate();
+    //activate();
 
     // API
 

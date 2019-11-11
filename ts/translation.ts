@@ -221,3 +221,6 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     }
     render();
 }
+
+dragControls.activate();
+dragControls.enabled = true;
