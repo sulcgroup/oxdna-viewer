@@ -291,7 +291,7 @@ function readJson(system, jsonReader) {
     }
 }
 
-function addSystemToScene(system) {
+function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     // This will force the gpu to check the vectors again when redrawing.

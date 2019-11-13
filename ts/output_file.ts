@@ -44,7 +44,6 @@ function makeDatFile() {
             Math.abs(p.z)
         ))
     }
-    let tempVec = new THREE.Vector3(0, 0, 0);
     let dat: string = "";
     let box: number = Math.ceil(5 * maxCoord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box

@@ -36,7 +36,6 @@ function makeDatFile() {
         let p = elements[i].getInstanceParameter3("cmOffsets");
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     }
-    let tempVec = new THREE.Vector3(0, 0, 0);
     let dat = "";
     let box = Math.ceil(5 * maxCoord);
     dat = "t = 0\n" + "b = " + box + " " + box + " " + box

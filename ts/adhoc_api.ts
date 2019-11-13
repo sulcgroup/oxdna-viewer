@@ -36,7 +36,7 @@ module api{
     };
 
     // get a dictionary with every strand length : [strand] listed   
-    export function countStrandLength({system = systems[0]} = {}) {
+    export function countStrandLength(system = systems[0]) {
         let strandLength : { [index: number]: [Strand] } = {};
         system[strands].map((strand: Strand) => {
             let l = strand[monomers].length;
@@ -48,14 +48,14 @@ module api{
         return strandLength;  
     };
 
-    export function highlite5ps({system = systems[0]} = {}){
+    export function highlite5ps(system = systems[0]){
         system[strands].map((strand) => {
             strand[monomers][strand[monomers].length - 1].toggle();
         });
         render();
     }
 
-    export function toggleAll({system = systems[0]} = {}){
+    export function toggleAll(system = systems[0]){
         system[strands].map((strand)=>{
             let nucleotides = strand[monomers]; 
             nucleotides.map( 
@@ -237,6 +237,122 @@ module api{
             sys5[strands].forEach((strand) =>strand.strandID = strID++);
         }
             render();
+    }
+
+    function copyInstances(source:BasicElement, id:number, destination:System) {
+        destination.fillVec('cmOffsets', 3, id, source.getInstanceParameter3('cmOffsets').toArray());
+        destination.fillVec('bbOffsets', 3, id, source.getInstanceParameter3('bbOffsets').toArray()); 
+        destination.fillVec('nsOffsets', 3, id, source.getInstanceParameter3('nsOffsets').toArray()); 
+        destination.fillVec('nsOffsets', 3, id, source.getInstanceParameter3('nsOffsets').toArray()); 
+        destination.fillVec('nsRotation', 4, id, source.getInstanceParameter4('nsRotation').toArray()); 
+        destination.fillVec('conOffsets', 3, id, source.getInstanceParameter3('conOffsets').toArray()); 
+        destination.fillVec('conRotation', 4, id, source.getInstanceParameter4('conRotation').toArray()); 
+        destination.fillVec('bbconOffsets', 3, id, source.getInstanceParameter3('bbconOffsets').toArray()); 
+        destination.fillVec('bbconRotation', 4, id, source.getInstanceParameter4('bbconRotation').toArray()); 
+        destination.fillVec('bbColors', 3, id, source.getInstanceParameter3('bbColors').toArray()); 
+        destination.fillVec('scales', 3, id, source.getInstanceParameter3('scales').toArray()); 
+        destination.fillVec('nsScales', 3, id, source.getInstanceParameter3('nsScales').toArray()); 
+        destination.fillVec('conScales', 3, id, source.getInstanceParameter3('conScales').toArray()); 
+        destination.fillVec('bbconScales', 3, id, source.getInstanceParameter3('bbconScales').toArray()); 
+        destination.fillVec('visibility', 3, id, source.getInstanceParameter3('visibility').toArray()); 
+        destination.fillVec('nsColors', 3, id, source.getInstanceParameter3('nsColors').toArray()); 
+        destination.fillVec('bbLabels', 3, id, source.getInstanceParameter3('bbLabels').toArray()); 
+    }
+
+    //rebuild systems from the ground-up to correct for weird stuff that happens during editing
+    export function cleanOrder() {
+        //nuke the elements array
+        const elements: BasicElement[] = [];
+        let gidCounter = 0,
+            systemCounter = 0;
+        systems.forEach((sys) => {
+            //find longest strand
+            const d = countStrandLength(sys)
+            const lens = Object.keys(d).map(Number)
+            lens.sort(function(a, b){return b-a})
+
+            //Copy everything from current to a new system in sorted order
+            let newSys = new System(systemCounter, elements.length), 
+                sidCounter = 0,
+                strandCounter = 0;
+
+            //create the instancing arrays for newSys
+            //systemLength counts the number of particles, does not use the instancing array
+            newSys.INSTANCES = sys.systemLength();
+            newSys.bbOffsets = new Float32Array(newSys.INSTANCES * 3);
+            newSys.bbRotation = new Float32Array(newSys.INSTANCES * 4);
+            newSys.nsOffsets = new Float32Array(newSys.INSTANCES * 3);
+            newSys.nsRotation = new Float32Array(newSys.INSTANCES * 4)
+            newSys.conOffsets = new Float32Array(newSys.INSTANCES * 3);
+            newSys.conRotation = new Float32Array(newSys.INSTANCES * 4);
+            newSys.bbconOffsets = new Float32Array(newSys.INSTANCES * 3);
+            newSys.bbconRotation = new Float32Array(newSys.INSTANCES * 4);
+            newSys.bbconScales = new Float32Array(newSys.INSTANCES * 3);
+            newSys.cmOffsets = new Float32Array(newSys.INSTANCES * 3);
+            newSys.bbColors = new Float32Array(newSys.INSTANCES * 3);
+            newSys.nsColors = new Float32Array(newSys.INSTANCES * 3)
+            newSys.scales = new Float32Array(newSys.INSTANCES * 3);
+            newSys.nsScales = new Float32Array(newSys.INSTANCES * 3);
+            newSys.conScales = new Float32Array(newSys.INSTANCES * 3);
+            newSys.visibility = new Float32Array(newSys.INSTANCES * 3);
+
+            newSys.bbLabels = new Float32Array(newSys.INSTANCES * 3);
+            
+            // Sort by strand length
+            lens.forEach((l) => {
+                d[l].forEach((strand) => {
+                    let newStrand = new Strand(strandCounter, newSys);
+                    // Find 3' end of strand and initialize the new strand
+                    if (strand[monomers][0].neighbor3 !== null && strand.circular !== true) {
+                        for (let i = 0, len = strand[monomers].length; i < len; i++) {
+                            const n = strand[monomers][i];
+                            if (n.neighbor3 == null) {
+                                copyInstances(strand[monomers][0], sidCounter, newSys);
+                                newStrand.addBasicElement(n);
+                                break;
+                            }
+                        }
+                    }
+                    if (newStrand[monomers].length == 0) {
+                        copyInstances(strand[monomers][0], sidCounter, newSys);
+                        newStrand.addBasicElement(strand[monomers][0]);
+                    }
+
+                    //trace the 5' connections to the strand end and copy to new strand
+                    let startElem: BasicElement = newStrand[monomers][0],
+                        curr: BasicElement = startElem,
+                        lidCounter = 0;
+                    newStrand[monomers][0].lid = lidCounter;
+                    newStrand[monomers][0].gid = gidCounter;
+                    newStrand[monomers][0].updateColor();
+                    while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
+                        curr = curr.neighbor5;
+                        lidCounter++;
+                        gidCounter++;
+                        sidCounter++;
+                        // copy nucleotide data values
+                        copyInstances(curr, sidCounter, newSys);
+                        //update id numbers and add to storage
+                        curr.lid = lidCounter;
+                        curr.gid = gidCounter;
+                        newStrand.addBasicElement(curr);
+                        curr.updateColor()
+                        elements.push(curr);
+                    }
+                    gidCounter++;
+                    sidCounter++;
+                    newSys.addStrand(newStrand)
+                    strandCounter++;
+                });
+            });
+            //attempting to free memory
+            scene.remove(...[sys.backbone, sys.nucleoside, sys.connector, sys.bbconnector] as unknown[] as THREE.Object3D[]);
+            sys = {} as unknown as System; //this is a terrible hack, but I'm trying to drop all references
+            systems[newSys.systemID] = newSys;
+            addSystemToScene(newSys);
+            systemCounter++;
+        });
+        
     }
     
     /*export function strand_add_to_system(strand:Strand, system: System){

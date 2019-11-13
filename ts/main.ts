@@ -142,6 +142,7 @@ class BasicElement extends THREE.Group{
 
     handleCircularStrands(sys, sid, xbb, ybb, zbb) {
         if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
+            this.parent.circular = true;
             let xbbLast = sys.bbOffsets[this.neighbor5.gid * 3],
             ybbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 1],
             zbbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 2];            
@@ -741,11 +742,13 @@ class Strand extends THREE.Group {
     strandID: number; //system location
     parent: System;
     pos: THREE.Vector3;
+    circular: boolean;
 
     constructor(id: number, parent: System) {
         super();
         this.strandID = id;
         this.parent = parent;
+        this.circular = false;
     };
 
     //POINT OF CONCERN FOR LATER: NEED TO SOMEHOW ADD THIS TO ARRAYS
@@ -905,6 +908,12 @@ class System extends THREE.Group {
     visibility: Float32Array;
 
     bbLabels: Float32Array;
+
+    backboneGeometry: THREE.InstancedBufferGeometry;
+    nucleosideGeometry: THREE.InstancedBufferGeometry;
+    connectorGeometry: THREE.InstancedBufferGeometry;
+    spGeometry: THREE.InstancedBufferGeometry;
+    pickingGeometry: THREE.InstancedBufferGeometry;
 
     backbone: THREE.Mesh;
     nucleoside: THREE.Mesh;
