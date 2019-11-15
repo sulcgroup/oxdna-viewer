@@ -83,11 +83,10 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 controls.enabled = false;
 
                 //Update attributes on the GPU
-                _selected.parent.parent.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-                _selected.parent.parent.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                _selected.parent.parent.callUpdates(['instanceOffset'])
+                if (_selected.dummySys !== null) {
+                    _selected.dummySys.callUpdates(["instanceOffset"])
+                }
             }
             render();
         } else if (_boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {

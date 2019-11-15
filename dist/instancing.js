@@ -147,21 +147,21 @@ var pickingTexture = new THREE.WebGLRenderTarget(renderer.domElement.clientWidth
 pickingTexture.texture.minFilter = THREE.LinearFilter; //voodoo
 //create dummy vertex and fragment shaders 
 var vs3D = `
-attribute vec3 idcolor;
+attribute vec3 instanceColor;
 attribute vec3 instanceVisibility;
-varying vec3 vidcolor;
+varying vec3 vinstanceColor;
 attribute vec3 instanceOffset;
 
 void main(){
-vidcolor = idcolor;
+vinstanceColor = instanceColor;
 vec3 pos = position + instanceOffset;
 pos *= instanceVisibility;
 gl_Position = projectionMatrix * modelViewMatrix * vec4( pos, 1.0);
 }`;
 var fs3D = `
-varying vec3 vidcolor;
+varying vec3 vinstanceColor;
 void main(void) {
-gl_FragColor = vec4(vidcolor,1.0);
+gl_FragColor = vec4(vinstanceColor,1.0);
 }`;
 var pickingMaterial = new THREE.ShaderMaterial({
     vertexShader: vs3D,

@@ -5,6 +5,7 @@ var RNA_MODE = false; // By default we do DNA base spacing
 const elements = []; //contains references to all BasicElements
 //initialize the space
 const systems = [];
+const tmpSystems = []; //used for editing
 var sysCount = 0;
 var strandCount = 0;
 var nucCount = 0;
@@ -28,6 +29,7 @@ class BasicElement extends THREE.Group {
         this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
         this.gid = gid;
         this.parent = parent;
+        this.dummySys = null;
     }
     ;
     calculatePositions(l) {
@@ -67,26 +69,42 @@ class BasicElement extends THREE.Group {
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         const x = sys[name][sid * 3], y = sys[name][sid * 3 + 1], z = sys[name][sid * 3 + 2];
         return new THREE.Vector3(x, y, z);
     }
     //retrieve this element's values in a 4-parameter instance array
     //only rotations
     getInstanceParameter4(name) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         const x = sys[name][sid * 4], y = sys[name][sid * 4 + 1], z = sys[name][sid * 4 + 2], w = sys[name][sid * 4 + 3];
         return new THREE.Vector4(x, y, z, w);
     }
     //set this element's parameters in the system's instance arrays
     //doing this is slower than sys.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name, data) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         sys.fillVec(name, data.length, sid, data);
     }
     //poof
     toggleVisibility() {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         const visibility = this.getInstanceParameter3('visibility');
         visibility.addScalar(-1);
         sys.fillVec('visibility', 3, sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
@@ -111,7 +129,11 @@ class Nucleotide extends BasicElement {
     }
     ;
     calculatePositions(l) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
@@ -211,7 +233,11 @@ class Nucleotide extends BasicElement {
     }
     ;
     calculateNewConfigPositions(l) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
@@ -273,7 +299,11 @@ class Nucleotide extends BasicElement {
     }
     ;
     updateColor() {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         let color;
         if (selectedBases.has(this)) {
             color = selectionColor;
@@ -528,7 +558,11 @@ class AminoAcid extends BasicElement {
         sys.cmOffsets[id + 2] += amount.z;
     }
     updateColor() {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.lid;
+        }
         let bbColor;
         let aaColor;
         if (selectedBases.has(this)) {
@@ -669,11 +703,12 @@ class NucleicAcidStrand extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         }
-        s.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        s.callUpdates(['instanceOffset']);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset']);
+            });
+        }
     }
 }
 class Peptide extends Strand {
@@ -701,9 +736,12 @@ class Peptide extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         }
-        s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        s.callUpdates(['instanceOffset']);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset']);
+            });
+        }
     }
     ;
 }
@@ -725,6 +763,39 @@ class System extends THREE.Group {
         return count;
     }
     ;
+    initInstances(nInstances) {
+        this.INSTANCES = nInstances;
+        this.bbOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbRotation = new Float32Array(this.INSTANCES * 4);
+        this.nsOffsets = new Float32Array(this.INSTANCES * 3);
+        this.nsRotation = new Float32Array(this.INSTANCES * 4);
+        this.conOffsets = new Float32Array(this.INSTANCES * 3);
+        this.conRotation = new Float32Array(this.INSTANCES * 4);
+        this.bbconOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbconRotation = new Float32Array(this.INSTANCES * 4);
+        this.bbconScales = new Float32Array(this.INSTANCES * 3);
+        this.cmOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbColors = new Float32Array(this.INSTANCES * 3);
+        this.nsColors = new Float32Array(this.INSTANCES * 3);
+        this.scales = new Float32Array(this.INSTANCES * 3);
+        this.nsScales = new Float32Array(this.INSTANCES * 3);
+        this.conScales = new Float32Array(this.INSTANCES * 3);
+        this.visibility = new Float32Array(this.INSTANCES * 3);
+        this.bbLabels = new Float32Array(this.INSTANCES * 3);
+    }
+    callUpdates(names) {
+        names.forEach((name) => {
+            this.backbone.geometry["attributes"][name].needsUpdate = true;
+            this.nucleoside.geometry["attributes"][name].needsUpdate = true;
+            this.connector.geometry["attributes"][name].needsUpdate = true;
+            this.bbconnector.geometry["attributes"][name].needsUpdate = true;
+            if (name == "instanceScale" || name == "instanceRotation") {
+            }
+            else {
+                this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
+            }
+        });
+    }
     createStrand(strID) {
         if (strID < 0)
             return new Peptide(strID, this);
@@ -800,11 +871,12 @@ class System extends THREE.Group {
             this.cmOffsets[i + 1] += amount.y;
             this.cmOffsets[i + 2] += amount.z;
         }
-        this.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.callUpdates(['instanceOffset']);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset']);
+            });
+        }
         render();
     }
     ;
@@ -885,9 +957,12 @@ function colorOptions() {
                 elements[i].updateColor();
         }
         for (let i = 0; i < systems.length; i++) {
-            systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-            systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-            systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+            systems[i].callUpdates(['instanceColor']);
+        }
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceColor']);
+            });
         }
         render();
     }
@@ -1013,9 +1088,12 @@ function coloringChanged() {
         elements[i].updateColor();
     }
     for (let i = 0; i < systems.length; i++) {
-        systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-        systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-        systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+        systems[i].callUpdates(['instanceColor']);
+    }
+    if (tmpSystems.length > 0) {
+        tmpSystems.forEach((s) => {
+            s.callUpdates(['instanceColor']);
+        });
     }
     render();
 }

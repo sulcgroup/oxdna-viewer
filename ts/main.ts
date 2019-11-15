@@ -6,6 +6,7 @@ var RNA_MODE = false; // By default we do DNA base spacing
 const elements: BasicElement[] = []; //contains references to all BasicElements
 //initialize the space
 const systems: System[] = [];
+const tmpSystems: System[] = [] //used for editing
 var sysCount: number = 0;
 var strandCount: number = 0;
 var nucCount: number = 0;
@@ -42,11 +43,13 @@ class BasicElement extends THREE.Group{
     bbnsDist : number;
     elementType: number = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
     clusterId: number;
+    dummySys: System;
 
     constructor(gid: number, parent: Strand) {
         super();
         this.gid = gid;
         this.parent = parent;
+        this.dummySys = null;
     };
 
     calculatePositions(l: string[]) {
@@ -96,8 +99,12 @@ class BasicElement extends THREE.Group{
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name: string) {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
 
         const x: number = sys[name][sid * 3],
             y: number = sys[name][sid * 3 + 1],
@@ -109,8 +116,12 @@ class BasicElement extends THREE.Group{
     //retrieve this element's values in a 4-parameter instance array
     //only rotations
     getInstanceParameter4(name: string) {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
 
         const x: number = sys[name][sid * 4],
             y: number = sys[name][sid * 4 + 1],
@@ -123,16 +134,24 @@ class BasicElement extends THREE.Group{
     //set this element's parameters in the system's instance arrays
     //doing this is slower than sys.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name:string, data) {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
         
         sys.fillVec(name, data.length, sid, data);
     }
 
     //poof
     toggleVisibility() {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
 
         const visibility = this.getInstanceParameter3('visibility');
         visibility.addScalar(-1);
@@ -170,8 +189,12 @@ class Nucleotide extends BasicElement {
     };
     calculatePositions(l: string[]) {
 
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
 
         //extract position
         const x = parseFloat(l[0]),
@@ -315,8 +338,12 @@ class Nucleotide extends BasicElement {
     };
 
     calculateNewConfigPositions(l: string[]) {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
 
         //extract position
         const x = parseFloat(l[0]),
@@ -411,8 +438,12 @@ class Nucleotide extends BasicElement {
     };
 
     updateColor() {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
         let color: THREE.Color;
         if (selectedBases.has(this)) {
             color = selectionColor;
@@ -690,8 +721,12 @@ class AminoAcid extends BasicElement {
     }
 
     updateColor() {
-        const sys = this.parent.parent,
+        let sys = this.parent.parent,
             sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.lid;
+        }
         let bbColor: THREE.Color;
         let aaColor: THREE.Color;
         if (selectedBases.has(this)) {
@@ -834,11 +869,12 @@ class NucleicAcidStrand extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         } 
-        s.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        s.callUpdates(['instanceOffset'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset'])
+            })
+        }
     }
 }
 class Peptide extends Strand {
@@ -870,9 +906,12 @@ class Peptide extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         } 
-        s.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        s.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        s.callUpdates(['instanceOffset'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset'])
+            })
+        }
     };
 }
 
@@ -935,6 +974,41 @@ class System extends THREE.Group {
         }
         return count;
     };
+
+    initInstances(nInstances) {
+        this.INSTANCES = nInstances
+        this.bbOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbRotation = new Float32Array(this.INSTANCES * 4);
+        this.nsOffsets = new Float32Array(this.INSTANCES * 3);
+        this.nsRotation = new Float32Array(this.INSTANCES * 4)
+        this.conOffsets = new Float32Array(this.INSTANCES * 3);
+        this.conRotation = new Float32Array(this.INSTANCES * 4);
+        this.bbconOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbconRotation = new Float32Array(this.INSTANCES * 4);
+        this.bbconScales = new Float32Array(this.INSTANCES * 3);
+        this.cmOffsets = new Float32Array(this.INSTANCES * 3);
+        this.bbColors = new Float32Array(this.INSTANCES * 3);
+        this.nsColors = new Float32Array(this.INSTANCES * 3)
+        this.scales = new Float32Array(this.INSTANCES * 3);
+        this.nsScales = new Float32Array(this.INSTANCES * 3);
+        this.conScales = new Float32Array(this.INSTANCES * 3);
+        this.visibility = new Float32Array(this.INSTANCES * 3);
+        this.bbLabels = new Float32Array(this.INSTANCES * 3);
+    }
+
+    callUpdates(names : string[]) {
+        names.forEach((name) => {
+            this.backbone.geometry["attributes"][name].needsUpdate = true;
+            this.nucleoside.geometry["attributes"][name].needsUpdate = true;
+            this.connector.geometry["attributes"][name].needsUpdate = true;
+            this.bbconnector.geometry["attributes"][name].needsUpdate = true;
+            if (name == "instanceScale" || name == "instanceRotation") {                
+            }
+            else {
+                this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
+            }
+        });
+    }
 
     createStrand(strID: number): Strand {
         if (strID < 0)
@@ -1015,11 +1089,13 @@ class System extends THREE.Group {
             this.cmOffsets[i + 1] += amount.y;
             this.cmOffsets[i + 2] += amount.z;
         }
-        this.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        this.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        this.callUpdates(['instanceOffset']);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset'])
+            })
+        }
+
 
         render();
     };
@@ -1107,9 +1183,12 @@ function colorOptions() {
                 elements[i].updateColor();
         }
         for (let i = 0; i < systems.length; i++){
-            systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-            systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-            systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+            systems[i].callUpdates(['instanceColor'])
+        }
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceColor'])
+            })
         }
         render();
     }
@@ -1250,9 +1329,12 @@ function coloringChanged() {
         elements[i].updateColor();
     }
     for (let i = 0; i < systems.length; i++) {
-        systems[i].backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-        systems[i].connector.geometry["attributes"].instanceColor.needsUpdate = true;
-        systems[i].bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+        systems[i].callUpdates(['instanceColor']);
+    }
+    if (tmpSystems.length > 0) {
+        tmpSystems.forEach((s) => {
+            s.callUpdates(['instanceColor'])
+        })
     }
     render();
 };

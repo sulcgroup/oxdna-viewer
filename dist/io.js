@@ -76,24 +76,7 @@ class TopReader extends FileReader {
                 nucCount = this.elements.length;
                 let confLen = nucCount + 3;
                 //set up instancing data arrays
-                this.system.INSTANCES = this.system.systemLength();
-                this.system.bbOffsets = new Float32Array(this.system.INSTANCES * 3);
-                this.system.bbRotation = new Float32Array(this.system.INSTANCES * 4);
-                this.system.nsOffsets = new Float32Array(this.system.INSTANCES * 3);
-                this.system.nsRotation = new Float32Array(this.system.INSTANCES * 4);
-                this.system.conOffsets = new Float32Array(this.system.INSTANCES * 3);
-                this.system.conRotation = new Float32Array(this.system.INSTANCES * 4);
-                this.system.bbconOffsets = new Float32Array(this.system.INSTANCES * 3);
-                this.system.bbconRotation = new Float32Array(this.system.INSTANCES * 4);
-                this.system.bbconScales = new Float32Array(this.system.INSTANCES * 3);
-                this.system.cmOffsets = new Float32Array(this.system.INSTANCES * 3);
-                this.system.bbColors = new Float32Array(this.system.INSTANCES * 3);
-                this.system.nsColors = new Float32Array(this.system.INSTANCES * 3);
-                this.system.scales = new Float32Array(this.system.INSTANCES * 3);
-                this.system.nsScales = new Float32Array(this.system.INSTANCES * 3);
-                this.system.conScales = new Float32Array(this.system.INSTANCES * 3);
-                this.system.visibility = new Float32Array(this.system.INSTANCES * 3);
-                this.system.bbLabels = new Float32Array(this.system.INSTANCES * 3);
+                this.system.initInstances(this.system.systemLength());
                 return confLen;
             };
         })(this.topFile);

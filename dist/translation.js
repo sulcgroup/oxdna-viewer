@@ -68,6 +68,10 @@ function rotateElementsByQuaternion(elements, q, about) {
     elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.gid - sys.globalStartId;
+        if (base.dummySys !== null) {
+            sys = base.dummySys;
+            sid = base.lid;
+        }
         //get current positions
         let cmPos = base.getInstanceParameter3("cmOffsets");
         let bbPos = base.getInstanceParameter3("bbOffsets");
@@ -122,19 +126,19 @@ function rotateElementsByQuaternion(elements, q, about) {
         }
     });
     for (let i = 0; i < systems.length; i++) {
-        systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-        systems[i].connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        systems[i].bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        systems[i].callUpdates(['instanceOffset', 'instanceRotation']);
+    }
+    for (let i = 0; i < tmpSystems.length; i++) {
+        tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
     }
     render();
 }
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
+    let sys = currentNuc.parent.parent;
+    if (currentNuc.dummySys !== null) {
+        sys = currentNuc.dummySys;
+    }
     let temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
     let xbbLast = temp.x, ybbLast = temp.y, zbbLast = temp.z;
     temp = currentNuc.getInstanceParameter3("bbOffsets"); //get currentNuc's backbone world position
@@ -148,9 +152,9 @@ function calcsp(currentNuc) {
     currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
     currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
     currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
-    currentNuc.parent.parent.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-    currentNuc.parent.parent.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-    currentNuc.parent.parent.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 function translateElements(elements, v) {
     elements.forEach((base) => {
@@ -184,11 +188,10 @@ function translateElements(elements, v) {
         }
     });
     for (let i = 0; i < systems.length; i++) {
-        systems[i].backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        systems[i].dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        systems[i].callUpdates(['instanceOffset']);
+    }
+    for (let i = 0; i < systems.length; i++) {
+        systems[i].callUpdates(['instanceOffset']);
     }
     render();
 }

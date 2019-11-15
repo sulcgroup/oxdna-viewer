@@ -9,11 +9,12 @@ module api{
         nucleotides.map( 
             (n:Nucleotide) => n.toggleVisibility());
 
-        sys.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        sys.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        sys.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        sys.dummyBackbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        sys.callUpdates(['instanceVisibility'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceVisibility'])
+            });
+        }
 
         render();
         return strand;
@@ -61,11 +62,12 @@ module api{
             nucleotides.map( 
                 (n:Nucleotide) => n.toggleVisibility());
         });
-        system.backbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        system.nucleoside.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        system.connector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        system.bbconnector.geometry["attributes"].instanceVisibility.needsUpdate = true;
-        system.dummyBackbone.geometry["attributes"].instanceVisibility.needsUpdate = true;
+        system.callUpdates(['instanceVisibility'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach ((s) => {
+                s.callUpdates(['instanceVisibility'])
+            })
+        }
         render();
     }
 
@@ -75,6 +77,10 @@ module api{
             (n: BasicElement) => {
                 let sys = n.parent.parent
                 let sid = n.gid - sys.globalStartId
+                if (n.dummySys !== null) {
+                    sys = n.dummySys
+                    sid = n.lid;
+                }
                 //because the precision of the stored color value (32-bit) and defined color value (64-bit) are different,
                 //you have to do some weird casting to get them to be comparable.
                 let tmp = n.getInstanceParameter3("nsColors") //maybe this shouldn't be a vector3...
@@ -108,6 +114,10 @@ module api{
     export function nick(element: BasicElement){
         let sys = element.parent.parent,
             sid = element.gid - sys.globalStartId;
+        if (element.dummySys !== null) {
+            sys = element.dummySys
+            sid = element.lid;
+        }
         // we break connection to the 3' neighbor 
         let neighbor =  element.neighbor3;
         element.neighbor3 = null;
@@ -136,18 +146,11 @@ module api{
             n.lid = i++;
         });
 
-        sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
-        sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys.callUpdates(['instanceColor'])
         render(); 
     }
 
-    export function ligate(element1 :BasicElement, element2: BasicElement){
-        
-        if(element1.parent.parent !== element2.parent.parent){
-            console.log("cannot currently ligate strands between systems!")
-            return;
-        }
+    export function ligate(element1 :BasicElement, element2: BasicElement) {
         let end5: BasicElement,
             end3: BasicElement;
         //find out which is the 5' end and which is 3'
@@ -160,19 +163,31 @@ module api{
             end3 = element1;
         }
         else {
-            console.log("please select one nucleotide with an available 3' connection and one with an available 5'")
+            notify("please select one nucleotide with an available 3' connection and one with an available 5'")
             return;
         }
-        let sys5 = end5.parent.parent,
-        sys3 = end3.parent.parent,
-        sid5 = end5.gid - sys5.globalStartId, 
-        sid3 = end3.gid - sys3.globalStartId;
 
         // strand1 will have an open 5' and strand2 will have an open 3' end
-        // get the reference to the strands 
-        // strand2 will be merged into strand1 
-        let strand1 = end5.parent;
-        let strand2 = end3.parent;
+        // strand2 will be merged into strand1
+        let sys5 = end5.parent.parent,
+        sys3 = end3.parent.parent,
+        strand1 = end5.parent,
+        strand2 = end3.parent;
+
+        // handle strand1 and strand2 not being in the same system
+        if (sys5 !== sys3) {
+            let tmpSys = new System(tmpSystems.length, 0);
+            tmpSys.initInstances(strand2[monomers].length);
+
+            for (let i = 0, len = strand2[monomers].length; i < len; i++) {
+                copyInstances(strand2[monomers][i], i, tmpSys)
+                strand2[monomers][i].setInstanceParameter('visibility', [0,0,0])
+                strand2[monomers][i].dummySys = tmpSys;
+            }
+            addSystemToScene(tmpSys);
+            tmpSystems.push(tmpSys);
+        }
+
         // lets orphan strand2 element
         let bases2 = [...strand2[monomers]]; // clone the references to the elements
         strand2.excludeElements(strand2[monomers]);
@@ -190,7 +205,8 @@ module api{
             (n) => {
                 strand1.addBasicElement(n);
                 n.updateColor();
-                n.lid = 0;
+                n.lid = i;
+                i++;
             }
         );
         //connect the 2 element objects 
@@ -199,11 +215,13 @@ module api{
 
         //last, add the sugar-phosphate bond
         let p2 = end3.getInstanceParameter3("bbOffsets");
+        console.log(p2)
         let xbb = p2.x,
             ybb = p2.y,
             zbb = p2.z;
 
         let p1 = end5.getInstanceParameter3("bbOffsets");
+        console.log(p1)
         let xbbLast = p1.x,
             ybbLast = p1.y,
             zbbLast = p1.z;
@@ -213,30 +231,34 @@ module api{
             ysp = (ybb + ybbLast) / 2,
             zsp = (zbb + zbbLast) / 2;
 
+        console.log(xsp, ysp, zsp)
+
         let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
 
         let spRotation = new THREE.Quaternion().setFromUnitVectors(
             new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
         );
 
-        sys3.fillVec('bbconOffsets', 3, sid3, [xsp, ysp, zsp]);
-        sys3.fillVec('bbconRotation', 4, sid3, [spRotation.w, spRotation.z, spRotation.y, spRotation.x])
-        sys3.fillVec('bbconScales', 3, sid3, [1, spLen, 1]);
+        end3.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+        end3.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+        end3.setInstanceParameter('bbconScales', [1, spLen, 1]);
 
-        sys3.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-        sys3.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        sys3.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        sys3.connector.geometry["attributes"].instanceColor.needsUpdate = true;
-        sys3.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-        sys3.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+        sys5.callUpdates(["instanceOffset"]);
+        sys5.callUpdates(["instanceScale"]);
+        sys5.callUpdates(["instanceColor"]);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor'])
+            });
+        }
 
         // Strand id update
         let strID = 1; 
-        sys3[strands].forEach((strand) =>strand.strandID = strID++);
+        sys5[strands].forEach((strand) =>strand.strandID = strID++);
         if (sys3 !== sys5) {
-            sys5[strands].forEach((strand) =>strand.strandID = strID++);
+            sys3[strands].forEach((strand) =>strand.strandID = strID++);
         }
-            render();
+        render();
     }
 
     function copyInstances(source:BasicElement, id:number, destination:System) {
@@ -274,29 +296,11 @@ module api{
             //Copy everything from current to a new system in sorted order
             let newSys = new System(systemCounter, elements.length), 
                 sidCounter = 0,
-                strandCounter = 0;
+                strandCounter = 1;
 
             //create the instancing arrays for newSys
             //systemLength counts the number of particles, does not use the instancing array
-            newSys.INSTANCES = sys.systemLength();
-            newSys.bbOffsets = new Float32Array(newSys.INSTANCES * 3);
-            newSys.bbRotation = new Float32Array(newSys.INSTANCES * 4);
-            newSys.nsOffsets = new Float32Array(newSys.INSTANCES * 3);
-            newSys.nsRotation = new Float32Array(newSys.INSTANCES * 4)
-            newSys.conOffsets = new Float32Array(newSys.INSTANCES * 3);
-            newSys.conRotation = new Float32Array(newSys.INSTANCES * 4);
-            newSys.bbconOffsets = new Float32Array(newSys.INSTANCES * 3);
-            newSys.bbconRotation = new Float32Array(newSys.INSTANCES * 4);
-            newSys.bbconScales = new Float32Array(newSys.INSTANCES * 3);
-            newSys.cmOffsets = new Float32Array(newSys.INSTANCES * 3);
-            newSys.bbColors = new Float32Array(newSys.INSTANCES * 3);
-            newSys.nsColors = new Float32Array(newSys.INSTANCES * 3)
-            newSys.scales = new Float32Array(newSys.INSTANCES * 3);
-            newSys.nsScales = new Float32Array(newSys.INSTANCES * 3);
-            newSys.conScales = new Float32Array(newSys.INSTANCES * 3);
-            newSys.visibility = new Float32Array(newSys.INSTANCES * 3);
-
-            newSys.bbLabels = new Float32Array(newSys.INSTANCES * 3);
+            newSys.initInstances(sys.systemLength());
             
             // Sort by strand length
             lens.forEach((l) => {
@@ -309,6 +313,7 @@ module api{
                             if (n.neighbor3 == null) {
                                 copyInstances(strand[monomers][0], sidCounter, newSys);
                                 newStrand.addBasicElement(n);
+                                n.dummySys = null;
                                 break;
                             }
                         }
@@ -316,6 +321,7 @@ module api{
                     if (newStrand[monomers].length == 0) {
                         copyInstances(strand[monomers][0], sidCounter, newSys);
                         newStrand.addBasicElement(strand[monomers][0]);
+                        strand[monomers][0].dummySys = null;
                     }
 
                     //trace the 5' connections to the strand end and copy to new strand
@@ -336,6 +342,7 @@ module api{
                         curr.lid = lidCounter;
                         curr.gid = gidCounter;
                         newStrand.addBasicElement(curr);
+                        curr.dummySys = null;
                         curr.updateColor()
                         elements.push(curr);
                     }
@@ -349,7 +356,14 @@ module api{
             scene.remove(...[sys.backbone, sys.nucleoside, sys.connector, sys.bbconnector] as unknown[] as THREE.Object3D[]);
             sys = {} as unknown as System; //this is a terrible hack, but I'm trying to drop all references
             systems[newSys.systemID] = newSys;
+            
+            const boxOption = (document.getElementById("inboxing") as HTMLSelectElement).value,
+                centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
+            (document.getElementById("inboxing") as HTMLSelectElement).value = "None";
+            (document.getElementById("centering") as HTMLSelectElement).value = "None"
             addSystemToScene(newSys);
+            (document.getElementById("inboxing") as HTMLSelectElement).value = boxOption;
+            (document.getElementById("centering") as HTMLSelectElement).value = centerOption;
             systemCounter++;
         });
         
@@ -448,9 +462,10 @@ module api{
             n.setInstanceParameter('conScales', [0, 0, 0]);
         });
         for (let i = 0; i < systems.length; i++) {
-            systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;
-            systems[i].nucleoside.geometry["attributes"].instanceScale.needsUpdate = true;
-            systems[i].connector.geometry["attributes"].instanceScale.needsUpdate = true; 
+            systems[i].callUpdates(['instanceScale'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceScale'])
         }
         render();
 
@@ -463,9 +478,10 @@ module api{
             n.setInstanceParameter('conScales', [1, n.bbnsDist, 1]);
         });
         for (let i = 0; i < systems.length; i++) {
-            systems[i].backbone.geometry["attributes"].instanceScale.needsUpdate = true;
-            systems[i].nucleoside.geometry["attributes"].instanceScale.needsUpdate = true;
-            systems[i].connector.geometry["attributes"].instanceScale.needsUpdate = true; 
+            systems[i].callUpdates(['instanceScale'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceScale'])
         }
         render();
     }

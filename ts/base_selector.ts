@@ -67,16 +67,23 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					break;
 
 			}
+			if (tmpSystems.length !== 0) {
+				tmpSystems.forEach((sys) => {
+					sys.callUpdates(["instanceColor"])
+				});
+			}
 		}
 	}
 });
 
-function updateView(sys) {
+function updateView(sys: System) {
 	//tell the GPU to update the colors in the scene
-	sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-	sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
-	sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
-	sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+	sys.callUpdates(["instanceColor"])
+	if (tmpSystems.length !== 0) {
+		tmpSystems.forEach((sys) => {
+			sys.callUpdates(["instanceColor"])
+		});
+	}
 
 	render(); //update scene;
 

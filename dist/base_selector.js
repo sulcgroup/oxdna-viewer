@@ -62,15 +62,22 @@ canvas.addEventListener('mousedown', event => {
                     }
                     break;
             }
+            if (tmpSystems.length !== 0) {
+                tmpSystems.forEach((sys) => {
+                    sys.callUpdates(["instanceColor"]);
+                });
+            }
         }
     }
 });
 function updateView(sys) {
     //tell the GPU to update the colors in the scene
-    sys.backbone.geometry["attributes"].instanceColor.needsUpdate = true;
-    sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
-    sys.connector.geometry["attributes"].instanceColor.needsUpdate = true;
-    sys.bbconnector.geometry["attributes"].instanceColor.needsUpdate = true;
+    sys.callUpdates(["instanceColor"]);
+    if (tmpSystems.length !== 0) {
+        tmpSystems.forEach((sys) => {
+            sys.callUpdates(["instanceColor"]);
+        });
+    }
     render(); //update scene;
     listBases = [];
     let baseInfoStrands = {};
