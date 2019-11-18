@@ -160,6 +160,10 @@ function translateElements(elements, v) {
     elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.gid - sys.globalStartId;
+        if (base.dummySys !== null) {
+            sys = base.dummySys;
+            sid = base.lid;
+        }
         let cmPos = base.getInstanceParameter3("cmOffsets");
         let bbPos = base.getInstanceParameter3("bbOffsets");
         let nsPos = base.getInstanceParameter3("nsOffsets");
@@ -190,8 +194,8 @@ function translateElements(elements, v) {
     for (let i = 0; i < systems.length; i++) {
         systems[i].callUpdates(['instanceOffset']);
     }
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceOffset']);
+    for (let i = 0; i < tmpSystems.length; i++) {
+        tmpSystems[i].callUpdates(['instanceOffset']);
     }
     render();
 }

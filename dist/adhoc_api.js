@@ -130,10 +130,13 @@ var api;
             n.updateColor();
         });
         //update local ids in the remnant strand
-        let i = 0;
-        strand[monomers].forEach((n) => {
-            n.lid = i++;
-        });
+        // if there are dummy systems, you need to rebuild anyway and they need static local IDs
+        if (tmpSystems.length == 0) {
+            let i = 0;
+            strand[monomers].forEach((n) => {
+                n.lid = i++;
+            });
+        }
         sys.callUpdates(['instanceColor']);
         render();
     }
@@ -165,6 +168,7 @@ var api;
                 strand2[monomers][i].setInstanceParameter('visibility', [0, 0, 0]);
                 strand2[monomers][i].dummySys = tmpSys;
             }
+            sys3.callUpdates(['instanceVisibility']);
             addSystemToScene(tmpSys);
             tmpSystems.push(tmpSys);
         }
@@ -190,14 +194,11 @@ var api;
         end3.neighbor3 = end5;
         //last, add the sugar-phosphate bond
         let p2 = end3.getInstanceParameter3("bbOffsets");
-        console.log(p2);
         let xbb = p2.x, ybb = p2.y, zbb = p2.z;
         let p1 = end5.getInstanceParameter3("bbOffsets");
-        console.log(p1);
         let xbbLast = p1.x, ybbLast = p1.y, zbbLast = p1.z;
         let xsp = (xbb + xbbLast) / 2, //sugar phospate position in center of both current and last sugar phosphates
         ysp = (ybb + ybbLast) / 2, zsp = (zbb + zbbLast) / 2;
-        console.log(xsp, ysp, zsp);
         let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
         let spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
         end3.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
@@ -206,6 +207,7 @@ var api;
         sys5.callUpdates(["instanceOffset"]);
         sys5.callUpdates(["instanceScale"]);
         sys5.callUpdates(["instanceColor"]);
+        sys5.callUpdates(["instanceRotation"]);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
                 s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor']);
@@ -220,6 +222,7 @@ var api;
         render();
     }
     api.ligate = ligate;
+    // copies the instancing data from a particle to a new system
     function copyInstances(source, id, destination) {
         destination.fillVec('cmOffsets', 3, id, source.getInstanceParameter3('cmOffsets').toArray());
         destination.fillVec('bbOffsets', 3, id, source.getInstanceParameter3('bbOffsets').toArray());
@@ -241,6 +244,18 @@ var api;
     }
     //rebuild systems from the ground-up to correct for weird stuff that happens during editing
     function cleanOrder() {
+        function insertElement(e, s, gidCounter, lidCounter, sidCounter) {
+            // copy nucleotide data values
+            copyInstances(e, sidCounter, s.parent);
+            //update id numbers and add to storage
+            e.lid = lidCounter;
+            e.gid = gidCounter;
+            s.addBasicElement(e);
+            e.dummySys = null;
+            e.updateColor();
+            e.name = gidCounter + "";
+            elements.push(e);
+        }
         //nuke the elements array
         const elements = [];
         let gidCounter = 0, systemCounter = 0;
@@ -254,57 +269,58 @@ var api;
             //create the instancing arrays for newSys
             //systemLength counts the number of particles, does not use the instancing array
             newSys.initInstances(sys.systemLength());
-            // Sort by strand length
-            lens.forEach((l) => {
+            // Sort by strands length
+            for (let i = 0, len = lens.length; i < len; i++) {
+                let l = lens[i];
+                if (l == 0) {
+                    break;
+                }
                 d[l].forEach((strand) => {
-                    let newStrand = new Strand(strandCounter, newSys);
+                    let newStrand;
+                    if (strand.constructor.name == "NucleicAcidStrand") {
+                        newStrand = new NucleicAcidStrand(strandCounter, newSys);
+                    }
+                    if (strand.constructor.name == "Peptide") {
+                        newStrand = new Peptide(strandCounter, newSys);
+                    }
+                    let lidCounter = 0;
                     // Find 3' end of strand and initialize the new strand
                     if (strand[monomers][0].neighbor3 !== null && strand.circular !== true) {
                         for (let i = 0, len = strand[monomers].length; i < len; i++) {
                             const n = strand[monomers][i];
                             if (n.neighbor3 == null) {
-                                copyInstances(strand[monomers][0], sidCounter, newSys);
-                                newStrand.addBasicElement(n);
-                                n.dummySys = null;
+                                insertElement(n, newStrand, gidCounter, lidCounter, sidCounter);
                                 break;
                             }
                         }
                     }
+                    // If the strand is circular or the first nucleotide is already the 3' end, 
+                    // we're just going use whatever is first in the data structure
                     if (newStrand[monomers].length == 0) {
-                        copyInstances(strand[monomers][0], sidCounter, newSys);
-                        newStrand.addBasicElement(strand[monomers][0]);
-                        strand[monomers][0].dummySys = null;
+                        insertElement(strand[monomers][0], newStrand, gidCounter, lidCounter, sidCounter);
                     }
                     //trace the 5' connections to the strand end and copy to new strand
-                    let startElem = newStrand[monomers][0], curr = startElem, lidCounter = 0;
-                    newStrand[monomers][0].lid = lidCounter;
-                    newStrand[monomers][0].gid = gidCounter;
-                    newStrand[monomers][0].updateColor();
+                    let startElem = newStrand[monomers][0], curr = startElem;
+                    console.log(startElem);
                     while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
                         curr = curr.neighbor5;
                         lidCounter++;
                         gidCounter++;
                         sidCounter++;
-                        // copy nucleotide data values
-                        copyInstances(curr, sidCounter, newSys);
-                        //update id numbers and add to storage
-                        curr.lid = lidCounter;
-                        curr.gid = gidCounter;
-                        newStrand.addBasicElement(curr);
-                        curr.dummySys = null;
-                        curr.updateColor();
-                        elements.push(curr);
+                        insertElement(curr, newStrand, gidCounter, lidCounter, sidCounter);
                     }
                     gidCounter++;
                     sidCounter++;
                     newSys.addStrand(newStrand);
                     strandCounter++;
                 });
-            });
+            }
             //attempting to free memory
             scene.remove(...[sys.backbone, sys.nucleoside, sys.connector, sys.bbconnector]);
+            pickingScene.remove(sys.dummyBackbone);
             sys = {}; //this is a terrible hack, but I'm trying to drop all references
             systems[newSys.systemID] = newSys;
+            // add the new system to the scene
             const boxOption = document.getElementById("inboxing").value, centerOption = document.getElementById("centering").value;
             document.getElementById("inboxing").value = "None";
             document.getElementById("centering").value = "None";
@@ -313,20 +329,15 @@ var api;
             document.getElementById("centering").value = centerOption;
             systemCounter++;
         });
+        // remove the temporary systems
+        tmpSystems.forEach((s) => {
+            scene.remove(...[s.backbone, s.nucleoside, s.connector, s.bbconnector]);
+            pickingScene.remove(s.dummyBackbone);
+            s = {};
+        });
+        tmpSystems = [];
     }
     api.cleanOrder = cleanOrder;
-    /*export function strand_add_to_system(strand:Strand, system: System){
-        // kill strand in its previous system
-        strand.parent[strands] = strand.parent[strands].filter((ele)=>{
-            return ele != strand;
-        });
-
-        // add strand to the desired system
-        let strID = system[strands].length + 1;
-        system[strands].push(strand);
-        strand.strandID = strID;
-        strand.parent = system;
-    }*/
     //there's probably a less blunt way to do this...
     function removeColorbar() {
         let l = colorbarScene.children.length;

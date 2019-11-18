@@ -6,7 +6,7 @@ var RNA_MODE = false; // By default we do DNA base spacing
 const elements: BasicElement[] = []; //contains references to all BasicElements
 //initialize the space
 const systems: System[] = [];
-const tmpSystems: System[] = [] //used for editing
+var tmpSystems: System[] = [] //used for editing
 var sysCount: number = 0;
 var strandCount: number = 0;
 var nucCount: number = 0;

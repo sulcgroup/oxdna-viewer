@@ -184,6 +184,10 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     elements.forEach((base) => {
         let sys = base.parent.parent;
         let sid = base.gid - sys.globalStartId;
+        if (base.dummySys !== null) {
+            sys = base.dummySys
+            sid = base.lid;
+        }
 
         let cmPos = base.getInstanceParameter3("cmOffsets");
         let bbPos = base.getInstanceParameter3("bbOffsets");
@@ -219,8 +223,8 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     for (let i = 0; i < systems.length; i++){
         systems[i].callUpdates(['instanceOffset'])
     }
-    for (let i = 0; i < systems.length; i++){
-        systems[i].callUpdates(['instanceOffset'])
+    for (let i = 0; i < tmpSystems.length; i++){
+        tmpSystems[i].callUpdates(['instanceOffset'])
     }
     render();
 }
