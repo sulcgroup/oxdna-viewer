@@ -52,7 +52,7 @@
     <div id="sidenav">
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
-            <button onclick="makeOutputFiles()" type="button" title="Download the current scene in oxDNA format">Download Output Files<br>(.dat and .top)</button>
+            <button onclick="toggleOptions('fileOptions')" type="button" title="Options for downloading the current scene">Download Output Files</button>
             <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
 
             <!--Centering-->
@@ -176,6 +176,20 @@
             </div>
             Click a color to edit, right click to remove:
             <div id="colorOptionContent" style="background-color: inherit"></div>
+        </div>
+
+        <!--File Output-->
+        <div class="opts" id="fileOptions" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('fileOptions')">close</i>
+            </div>
+            <fieldset>
+                <legend>Options</legend>
+                <input type="checkbox" name="topDownload" value="Topology" title="identies and connections of particles" checked>Topology<br>
+                <input type="checkbox" name="datDownload" value="Configuration" title="the xyz positions and rotations of particles" checked>Configuration<br>
+                <input type="checkbox" name="cleanFirst" value="Organize Strands" title="If checked, will organize the strands by length.  Must be checked if the topology has been edited.">Pre-organize strands<br>
+                <button onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
+            </fieldset>
         </div>
 
         <!--Clustering-->

@@ -1,6 +1,16 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
-    makeTopFile();
-    makeDatFile();	
+    let clean = <NodeListOf<HTMLInputElement>>document.getElementsByName("cleanFirst");
+    if (clean[0].checked == true) {
+        api.cleanOrder();
+    }
+    let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
+    if (top[0].checked == true) {
+        makeTopFile();
+    }
+    let dat = <NodeListOf<HTMLInputElement>>document.getElementsByName("datDownload");
+    if (dat[0].checked == true) {
+        makeDatFile();	
+    }
 }
 
 function makeTopFile(){

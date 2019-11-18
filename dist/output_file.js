@@ -1,6 +1,16 @@
 function makeOutputFiles() {
-    makeTopFile();
-    makeDatFile();
+    let clean = document.getElementsByName("cleanFirst");
+    if (clean[0].checked == true) {
+        api.cleanOrder();
+    }
+    let top = document.getElementsByName("topDownload");
+    if (top[0].checked == true) {
+        makeTopFile();
+    }
+    let dat = document.getElementsByName("datDownload");
+    if (dat[0].checked == true) {
+        makeDatFile();
+    }
 }
 function makeTopFile() {
     let top = []; //string of contents of .top file
