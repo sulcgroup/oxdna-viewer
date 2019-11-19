@@ -121,6 +121,11 @@
                     <input type="number" value="-90" id="rotAngle" width="20">
                     <button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
                 </fieldset>
+                <fieldset>
+                    <legend>Edit Topology</legend>
+                    <button onclick="nickWrapper()" title="break the upstream connection of the last selected particles">Nick</button>
+                    <button onclick="ligateWrapper()" title="ligate the last two selected particles together">Ligate</button>
+                </fieldset>
                 <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
             </fieldset>
 
@@ -185,9 +190,10 @@
             </div>
             <fieldset>
                 <legend>Options</legend>
-                <input type="checkbox" name="topDownload" value="Topology" title="identies and connections of particles" checked>Topology<br>
-                <input type="checkbox" name="datDownload" value="Configuration" title="the xyz positions and rotations of particles" checked>Configuration<br>
-                <input type="checkbox" name="cleanFirst" value="Organize Strands" title="If checked, will organize the strands by length.  Must be checked if the topology has been edited.">Pre-organize strands<br>
+                <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
+                <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
+                <input type="checkbox" name="cleanFirst" title="If checked, will organize the strands by length.  Must be checked if the topology has been edited.">Pre-organize strands<br>
+                <input type="text" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">File prefix<br>
                 <button onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
             </fieldset>
         </div>
@@ -266,6 +272,10 @@
         <script src="./dist/translation.js"></script>
         <script src="./ts/controls/SceneUtils.js"></script>
         <script src="./dist/adhoc_api.js"></script>
+        <script src="./dist/editing.js"></script>
+        <script src="./dist/video.js"></script>
+        <script src="./dist/UI.js"></script>
+        <script src="./dist/clustering.js"></script>
     </div>
 </body>
 

@@ -98,6 +98,32 @@ function toggleArrows(chkBox) {
     }
     render(); //update scene
 }
+function toggleBackground() {
+    if (scene.background == WHITE) {
+        scene.background = BLACK;
+        render();
+    }
+    else {
+        scene.background = WHITE;
+        render();
+    }
+}
+;
+function setFog(near, far) {
+    near = near | parseFloat(document.getElementById("fogNear").value);
+    far = near | parseFloat(document.getElementById("fogFar").value);
+    scene.fog = new THREE.Fog(scene.background, near, far);
+    render();
+}
+function toggleFog(near, far) {
+    if (scene.fog == null) {
+        setFog(near, far);
+    }
+    else {
+        scene.fog = null;
+    }
+    render();
+}
 // adding mouse control to the scene 
 const controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;

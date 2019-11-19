@@ -121,6 +121,34 @@ function toggleArrows(chkBox) { //make arrows visible or invisible based on chec
     render(); //update scene
 }
 
+function toggleBackground() {
+    if (scene.background == WHITE) {
+        scene.background = BLACK;
+        render();
+    }
+    else {
+        scene.background = WHITE;
+        render();
+    }
+};
+
+function setFog(near?: number, far?: number) {
+    near = near | parseFloat((<HTMLInputElement>document.getElementById("fogNear")).value);
+    far = near | parseFloat((<HTMLInputElement>document.getElementById("fogFar")).value);
+    scene.fog = new THREE.Fog(scene.background, near, far);
+    render();
+}
+
+function toggleFog(near?: number, far?: number) {
+    if (scene.fog == null) {
+        setFog(near, far);
+    }
+    else {
+        scene.fog = null;
+    }
+    render();
+}
+
 // adding mouse control to the scene 
 const controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;

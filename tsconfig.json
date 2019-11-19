@@ -22,9 +22,10 @@
         "./ts/PBC_switchbox.ts",
         "./ts/instancing.ts",
         "./ts/doUndo.ts",
-        "./ts/rigid-body_simulation.ts"
-        //,
-        //"./js/cubes.ts",
-        //"./js/rotate.ts"
+        "./ts/rigid-body_simulation.ts",
+        "./ts/editing.ts", 
+        "./ts/video.ts",
+        "./ts/UI.ts",
+        "./ts/clustering.ts"
     ]
 }

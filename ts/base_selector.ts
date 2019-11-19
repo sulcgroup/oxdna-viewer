@@ -186,62 +186,6 @@ function makeTextArea(bases: string, id) { //insert "bases" string into text are
 	}
 }
 
-function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file
-	return "{\n" + "type = mutual_trap\n" +
-		"particle = " + base1 + "\n" +
-		"ref_particle = " + base2 + "\n" +
-		"stiff = 0.09\n" +
-		"r0 = 1.2 \n" + 
-		"PBC = 1" + "\n}\n\n";
-}
-
-function makeMutualTrapFile() { //make download of mutual trap file from selected bases
-    let mutTrapText: string = "";
-    for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
-        if (listBases[x+1] !== undefined) { //if there is another nucleotide in the pair
-            mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
-		}
-		else { //if there is no 2nd nucleotide in the pair
-			notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
-		}
-	}
-	makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
-}
-
-function makeSelectedBasesFile() { //make selected base file by addign listBases to text area
-    makeTextFile("baseListFile", listBases.join(", "));
-}
-
-let textFile: string;
-function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
-	let blob = new Blob([text], {type:'text'});
-	var elem = window.document.createElement('a');
-                elem.href = window.URL.createObjectURL(blob);
-                elem.download = filename;
-                document.body.appendChild(elem);
-                elem.click();
-                document.body.removeChild(elem);
-};
-
-function openTab(evt, tabName) { //open clicked tab - Idk how this works
-	let i: number;
-	let tabcontent;
-	let tablinks;
-	tabcontent = document.getElementsByClassName("tabcontent");
-	for (i = 0; i < tabcontent.length; i++) {
-		tabcontent[i].style.display = "none";
-	}
-	tablinks = document.getElementsByClassName("tablinks");
-	for (i = 0; i < tablinks.length; i++) {
-		tablinks[i].className = tablinks[i].className.replace(" active", "");
-	}
-	let tab: HTMLElement | null = document.getElementById(tabName);
-	if (tab !== null) {
-		tab.style.display = "block";
-	}
-	evt.currentTarget.className += " active";
-}
-
 /**
  * Modified from SelectionBox code by HypnosNova
  * https://github.com/mrdoob/three.js/blob/master/examples/jsm/interactive

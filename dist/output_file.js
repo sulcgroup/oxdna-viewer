@@ -1,18 +1,19 @@
 function makeOutputFiles() {
     let clean = document.getElementsByName("cleanFirst");
+    let name = document.getElementById("outputFilename").value;
     if (clean[0].checked == true) {
         api.cleanOrder();
     }
     let top = document.getElementsByName("topDownload");
     if (top[0].checked == true) {
-        makeTopFile();
+        makeTopFile(name);
     }
     let dat = document.getElementsByName("datDownload");
     if (dat[0].checked == true) {
-        makeDatFile();
+        makeDatFile(name);
     }
 }
-function makeTopFile() {
+function makeTopFile(name) {
     let top = []; //string of contents of .top file
     let totNuc = 0; //total # of elements
     let totStrands = 0; //total # of strands
@@ -37,9 +38,9 @@ function makeTopFile() {
             tl.push(neighbor5.gid); //if neighbor5 exists, append neighbor5's position
         top.push(tl.join(" "));
     }
-    makeTextFile("sim.top", top.join("\n")); //make .top file
+    makeTextFile(name + ".top", top.join("\n")); //make .top file
 }
-function makeDatFile() {
+function makeDatFile(name) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     for (let i = 0; i < elements.length; i++) { //for all elements
@@ -54,15 +55,39 @@ function makeDatFile() {
         let nuc = elements[i];
         dat += nuc.getDatFileOutput();
     }
-    makeTextFile("last_conf.dat", dat); //make .dat file
+    makeTextFile(name + ".dat", dat); //make .dat file
 }
-function det(mat) {
-    return (mat[0][0] * ((mat[1][1] * mat[2][2]) - (mat[1][2] * mat[2][1])) - mat[0][1] * ((mat[1][0] * mat[2][2]) -
-        (mat[2][0] * mat[1][2])) + mat[0][2] * ((mat[1][0] * mat[2][1]) - (mat[2][0] * mat[1][1])));
+function writeMutTrapText(base1, base2) {
+    return "{\n" + "type = mutual_trap\n" +
+        "particle = " + base1 + "\n" +
+        "ref_particle = " + base2 + "\n" +
+        "stiff = 0.09\n" +
+        "r0 = 1.2 \n" +
+        "PBC = 1" + "\n}\n\n";
 }
-function dot(x1, y1, z1, x2, y2, z2) {
-    return x1 * x2 + y1 * y2 + z1 * z2;
+function makeMutualTrapFile() {
+    let mutTrapText = "";
+    for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
+        if (listBases[x + 1] !== undefined) { //if there is another nucleotide in the pair
+            mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
+        }
+        else { //if there is no 2nd nucleotide in the pair
+            notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
+        }
+    }
+    makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
-function divAndNeg(mat, divisor) {
-    return [-mat[0] / divisor, -mat[1] / divisor, -mat[2] / divisor];
+function makeSelectedBasesFile() {
+    makeTextFile("baseListFile", listBases.join(", "));
 }
+let textFile;
+function makeTextFile(filename, text) {
+    let blob = new Blob([text], { type: 'text' });
+    var elem = window.document.createElement('a');
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
+}
+;

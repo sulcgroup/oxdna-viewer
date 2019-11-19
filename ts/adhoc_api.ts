@@ -354,7 +354,6 @@ module api{
                     //trace the 5' connections to the strand end and copy to new strand
                     let startElem: BasicElement = newStrand[monomers][0],
                         curr: BasicElement = startElem;
-                        console.log(startElem);
                         
                     while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
                         curr = curr.neighbor5;
@@ -369,7 +368,7 @@ module api{
                     strandCounter++;
                 });
             }
-            
+
             //attempting to free memory
             scene.remove(...[sys.backbone, sys.nucleoside, sys.connector, sys.bbconnector] as unknown[] as THREE.Object3D[]);
             pickingScene.remove(sys.dummyBackbone);

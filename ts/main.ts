@@ -1107,210 +1107,6 @@ class System extends THREE.Group {
     };
 };
 
-function notify(message: string) {
-    const noticeboard = document.getElementById('noticeboard');
-
-    // Remove any identical notifications from the board
-    for (let notification of noticeboard.children) {
-        if (notification.innerHTML === message) {
-            noticeboard.removeChild(notification);
-        }
-    }
-
-    // Create a new notification
-    const notification = document.createElement('div');
-    notification.className = "notification";
-    notification.innerHTML = message;
-
-    // Add it to the board and remove it on mouseover
-    // or after 5 seconds
-    const remove = function() {
-        try {noticeboard.removeChild(notification);}
-        catch (e) {} // Notification already removed
-    }
-    notification.onmouseover = remove;
-    noticeboard.appendChild(notification);
-    setTimeout(remove, 5000);
-}
-
-function toggleModal(id) {
-    let modal = document.getElementById(id);
-    modal.classList.toggle("show-modal");
-}
-
-function toggleOptions(id) {
-    let opt = document.getElementById(id);
-    opt.hidden = !opt.hidden;
-}
-
-function colorOptions() {
-    const opt: HTMLElement = document.getElementById("colorOptionContent");
-    if (!opt.hidden) {
-        opt.innerHTML = "";  //Clear content
-        const addButton = document.createElement('button');
-        addButton.innerText = "Add Color";
-        // Append new color to the end of the color list and reset colors
-        addButton.onclick = function () {
-            backboneColors.push(new THREE.Color(0x0000ff));
-            colorOptions();
-        }
-
-        //modifies the backboneColors array
-        for (let i = 0; i < backboneColors.length; i++) {
-            let m = backboneColors[i];
-            let c = document.createElement('input');
-            c.type = 'color';
-            c.value = "#" + m.getHexString();
-            c.onchange = function () {
-                backboneColors[i] = new THREE.Color(c.value);
-                colorOptions();
-            }
-            
-            //deletes color on right click
-            c.oncontextmenu = function (event) {
-                event.preventDefault();
-                backboneColors.splice(i, 1);
-                colorOptions();
-                return false;
-            }
-            opt.appendChild(c);
-        }
-        opt.appendChild(addButton);
-
-        //actually update things in the scene
-        for (let i=0; i<elements.length; i++) {
-            if (!selectedBases.has(elements[i]))
-                elements[i].updateColor();
-        }
-        for (let i = 0; i < systems.length; i++){
-            systems[i].callUpdates(['instanceColor'])
-        }
-        if (tmpSystems.length > 0) {
-            tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceColor'])
-            })
-        }
-        render();
-    }
-};
-
-function createVideo() {
-    // Get canvas
-    const canvas = <HTMLCanvasElement>document.getElementById("threeCanvas");
-
-    // Get options:
-    const format = (<HTMLInputElement>document.querySelector('input[name="videoFormat"]:checked')).value;
-    const framerate = (<HTMLInputElement>document.getElementById("videoFramerate")).value;
-    const videoType = <HTMLInputElement>document.getElementById("videoType");
-
-    // Set up movie capturer
-    const capturer = new CCapture({
-        format: format,
-        framerate: framerate,
-        name: videoType.value,
-        verbose: true,
-        display: true,
-        workersPath: 'ts/lib/'
-    });
-
-    const button = <HTMLInputElement>document.getElementById("videoStartStop");
-    button.innerText = "Stop";
-    button.onclick = function () {
-        capturer.stop();
-        capturer.save();
-    }
-    try {
-        switch (videoType.value) {
-            case "trajectory":
-                createTrajectoryVideo(canvas, capturer);
-                break;
-            case "lemniscate":
-                let duration = (<HTMLInputElement>document.getElementById("videoDuration")).value;
-                createLemniscateVideo(
-                    canvas, capturer,
-                    <number><unknown>framerate,
-                    <number><unknown>duration
-                );
-                break;
-        }
-    } catch (e) {
-        notify("Failed to capture video: \n" + e);
-        capturer.stop();
-    }
-};
-
-function createTrajectoryVideo(canvas, capturer) {
-    // Listen for configuration loaded events
-    function _load(e) {
-        e.preventDefault(); // cancel default actions
-        capturer.capture(canvas);
-        trajReader.nextConfig();
-    };
-
-    // Listen for last configuration event
-    function _done(e) {
-        document.removeEventListener('nextConfigLoaded', _load);
-        document.removeEventListener('finalConfig', _done);
-        capturer.stop();
-        capturer.save();
-        button.innerText = "Start";
-        button.onclick = createVideo;
-        return;
-    };
-
-    // Overload stop button so that we don't forget to remove listeners
-    const button = <HTMLInputElement>document.getElementById("videoStartStop");
-    button.onclick = _done;
-
-    document.addEventListener('nextConfigLoaded', _load);
-    document.addEventListener('finalConfig', _done);
-
-    // Start capturing
-    capturer.start();
-    trajReader.nextConfig();
-};
-
-function createLemniscateVideo(canvas, capturer, framerate:number, duration:number) {
-    // Setup timing
-    let tMax = 2 * Math.PI;
-    let nFrames = duration * framerate;
-    let dt = tMax / nFrames;
-
-    // Preserve camera distance from origin:
-    const d = Origin.distanceTo(camera.position);
-
-    capturer.start();
-
-    // Overload stop button so that we don't forget to remove listeners
-    const button = <HTMLInputElement>document.getElementById("videoStartStop");
-    button.onclick = function () { tMax = 0; };
-
-    // Move camera and capture frames
-    // This is not a for-loop since we need to use
-    // requestAnimationFrame recursively.
-    let t = 0;
-    var animate = function () {
-        if (t >= tMax) {
-            capturer.stop();
-            capturer.save();
-            button.innerText = "Start";
-            button.onclick = createVideo;
-            return;
-        }
-        requestAnimationFrame(animate);
-        camera.position.set(
-            d * Math.cos(t),
-            d * Math.sin(t) * Math.cos(t),
-            d * Math.sqrt(Math.pow(Math.sin(t), 4))
-        );
-        camera.lookAt(Origin);
-        t += dt;
-        render();
-        capturer.capture(canvas);
-    }
-    animate();
-};
-
 //toggles display of coloring by json file / structure modeled off of base selector
 function coloringChanged() {
     if (getColoringMode() === "Overlay") {
@@ -1337,59 +1133,11 @@ function coloringChanged() {
         })
     }
     render();
-};
-
-function toggleBackground() {
-    if (scene.background == WHITE) {
-        scene.background = BLACK;
-        render();
-    }
-    else {
-        scene.background = WHITE;
-        render();
-    }
-};
-
-function setFog(near?: number, far?: number) {
-    near = near | parseFloat((<HTMLInputElement>document.getElementById("fogNear")).value);
-    far = near | parseFloat((<HTMLInputElement>document.getElementById("fogFar")).value);
-    scene.fog = new THREE.Fog(scene.background, near, far);
-    render();
-}
-
-function toggleFog(near?: number, far?: number) {
-    if (scene.fog == null) {
-        setFog(near, far);
-    }
-    else {
-        scene.fog = null;
-    }
-    render();
-}
-
-function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
-    return [a2 * b3 - a3 * b2,
-    a3 * b1 - a1 * b3,
-    a1 * b2 - a2 * b1];
-}
-
-function toggleSideNav() {
-    let hidden = "show toolbar";
-    let visible = "hide toolbar";
-    let button = document.getElementById("sideNavToggleButton");
-    let content = document.getElementById("sidenavContent");
-    if (button.innerText.toLowerCase() == hidden) {
-        content.style.display = "block";
-        button.innerHTML = visible;
-    } else {
-        content.style.display = "none";
-        button.innerHTML = hidden;
-    }
 }
 
 function getColoringMode(): string {
     return document.querySelector('input[name="coloring"]:checked')['value'];
-};
+}
 
 function setColoringMode(mode: string) {
     const modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("coloring");
@@ -1399,101 +1147,20 @@ function setColoringMode(mode: string) {
     coloringChanged();
 };
 
-/**
- * Add all selected elements to a new cluster
- */
-function selectionToCluster() {
-    if(selectedBases.size > 0) {
-        clusterCounter++;
-        selectedBases.forEach(element => {
-            element.clusterId = clusterCounter;
-        });
-    } else {
-        notify("First make a selection of elements you want to include in the cluster");
-    }
+function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
+    return [a2 * b3 - a3 * b2,
+    a3 * b1 - a1 * b3,
+    a1 * b2 - a2 * b1];
 }
 
-/**
- * Clear clusters and reset the cluster counter
- */
-function clearClusters() {
-    clusterCounter = 0 // Cluster counter
-    elements.forEach(element => {
-        delete element.clusterId;
-    });
+function det(mat:number[][]){ //calculate and return matrix's determinant
+	return (mat[0][0] * ((mat[1][1]*mat[2][2]) - (mat[1][2]*mat[2][1]))  - mat[0][1] * ((mat[1][0]*mat[2][2]) -
+		(mat[2][0]*mat[1][2])) + mat[0][2] * ((mat[1][0]*mat[2][1]) - (mat[2][0]*mat[1][1])));
 }
 
-/**
- * Calculate DBSCAN clusters using parameters from input
- */
-function calculateClusters() {
-    const minPts = parseFloat((<HTMLInputElement>document.getElementById("minPts")).value);
-    const epsilon = parseFloat((<HTMLInputElement>document.getElementById("epsilon")).value);
-
-    document.getElementById("clusterOptions").hidden = true;
-    // Set wait cursor and request an animation frame to make sure
-    // that it gets changed before starting dbscan:
-    renderer.domElement.style.cursor = "wait";
-
-    requestAnimationFrame(() => requestAnimationFrame(function(){
-        dbscan(minPts, epsilon);
-        renderer.domElement.style.cursor = "auto"; // Change cursor back
-        setColoringMode("Cluster");
-    }))
+function dot(x1:number,y1:number,z1:number,x2:number,y2:number,z2:number){ //calculate and return dot product of matrix given by list of vector positions
+	return x1*x2 + y1*y2 + z1*z2;
 }
-
-/**
- * Calculate DBSCAN clusters using custom parameters
- */
-// Algorithm and comments from:
-// https://en.wikipedia.org/wiki/DBSCAN#Algorithm
-function dbscan(minPts: number, eps: number) {
-    const nElements = elements.length;
-    clearClusters(); // Remove any previous clusters and reset counter
-    const noise = -1; // Label for noise
-    const getPos = (element: BasicElement) => {
-        return element.getInstanceParameter3("cmOffsets");
-    }
-    const findNeigbours = (p: BasicElement, eps: number) => {
-        const neigbours: BasicElement[] = [];
-        for (let i=0; i<nElements; i++) {
-            let q: BasicElement = elements[i];
-            if (p != q) {
-                let dist = getPos(p).distanceTo(getPos(q));
-                if (dist < eps) {
-                   neigbours.push(q);
-                }
-            }
-        }
-        return neigbours;
-    }
-    for (let i=0; i<nElements; i++) {
-        let p: BasicElement = elements[i];
-        if (typeof p.clusterId !== 'undefined') {
-            continue; // Previously processed in inner loop
-        }
-        // Find neigbours of p:
-        let neigbours: BasicElement[] = findNeigbours(p, eps);
-        if (neigbours.length < minPts) { // Density check
-            p.clusterId = noise // Label as noise
-            continue;
-        }
-        clusterCounter++; // Next cluster id
-        p.clusterId = clusterCounter; // Label initial point
-        for (let j=0; j<neigbours.length; j++) { // Process every seed point
-            let q: BasicElement = neigbours[j];
-            if ((typeof q.clusterId !== 'undefined') && // Previously processed
-                (q.clusterId !== noise) // If noise, change it to border point
-            ) {
-                continue;
-            }
-            q.clusterId = clusterCounter; // Label neigbour
-            // Find neigbours of q:
-            let metaNeighbors: BasicElement[] = findNeigbours(q, eps);
-            if (metaNeighbors.length >= minPts) { // Density check
-                // Add new neigbours to seed set
-                neigbours = neigbours.concat(metaNeighbors);
-            }
-        }
-    }
+function divAndNeg(mat:number[],divisor:number){ //divide a matrix by divisor; negate matrix
+	return [-mat[0]/divisor, -mat[1]/divisor, -mat[2]/divisor];
 }

@@ -301,7 +301,6 @@ var api;
                     }
                     //trace the 5' connections to the strand end and copy to new strand
                     let startElem = newStrand[monomers][0], curr = startElem;
-                    console.log(startElem);
                     while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
                         curr = curr.neighbor5;
                         lidCounter++;
