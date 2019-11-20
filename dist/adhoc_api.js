@@ -106,28 +106,27 @@ var api;
         return elements.reverse();
     }
     api.trace53 = trace53;
-    function nick(element) {
-        let sys = element.parent.parent, sid = element.gid - sys.globalStartId;
-        if (element.dummySys !== null) {
-            sys = element.dummySys;
-            sid = element.lid;
+    function trace35(element) {
+        let elements = [];
+        let c = element;
+        while (c) {
+            elements.push(c);
+            c = c.neighbor5;
         }
-        // we break connection to the 3' neighbor 
-        let neighbor = element.neighbor3;
-        element.neighbor3 = null;
-        neighbor.neighbor5 = null;
-        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-        let strand = element.parent;
+        return elements.reverse();
+    }
+    api.trace35 = trace35;
+    function splitStrand(element) {
+        let sys = element.parent.parent, strand = element.parent;
         // nucleotides which are after the nick
-        let new_nucleotides = trace53(neighbor);
-        strand.excludeElements(new_nucleotides);
+        let orphans = trace35(element);
+        strand.excludeElements(orphans);
         //create fill and deploy new strand 
         let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
         strand.parent.addStrand(new_strand);
-        new_nucleotides.forEach((n) => {
-            new_strand.addBasicElement(n);
-            n.updateColor();
+        orphans.forEach((e) => {
+            new_strand.addBasicElement(e);
+            e.updateColor();
         });
         //update local ids in the remnant strand
         // if there are dummy systems, you need to rebuild anyway and they need static local IDs
@@ -138,6 +137,20 @@ var api;
             });
         }
         sys.callUpdates(['instanceColor']);
+    }
+    function nick(element) {
+        let sys = element.parent.parent, sid = element.gid - sys.globalStartId;
+        if (element.dummySys !== null) {
+            sys = element.dummySys;
+            sid = element.lid;
+        }
+        // we break connection to the 3' neighbor 
+        let neighbor = element.neighbor3;
+        element.neighbor3 = null;
+        neighbor.neighbor5 = null;
+        splitStrand(element);
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
         render();
     }
     api.nick = nick;
@@ -223,12 +236,43 @@ var api;
     }
     api.ligate = ligate;
     /**
+     *
+     * @param victims
+     */
+    function del(victims) {
+        let needsUpdateList = new Set;
+        victims.forEach((e) => {
+            let sys;
+            if (e.dummySys !== null) {
+                sys = e.dummySys;
+            }
+            else {
+                sys = e.parent.parent;
+            }
+            if (!needsUpdateList.has(sys)) {
+                needsUpdateList.add(sys);
+            }
+            splitStrand(e);
+            e.neighbor3.neighbor5 = null;
+            e.neighbor5.neighbor3 = null;
+            e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
+            e.neighbor3 = null;
+            e.neighbor5 = null;
+            e.toggleVisibility();
+            e.parent.excludeElements([e]);
+        });
+        needsUpdateList.forEach((s) => {
+            s.callUpdates(['instanceVisibility', 'instanceScale']);
+        });
+        render();
+    }
+    api.del = del;
+    /**
      * Create new monomers extending from the provided one.
      * @param end
      * @param sequence
      */
     function extendStrand(end, sequence) {
-        console.log(end.parent.circular);
         // figure out which way we're going
         let direction;
         let inverse;
@@ -286,7 +330,6 @@ var api;
             calcsp(e);
             e = e[direction];
         }
-        console.log(end.parent.circular);
         render();
     }
     api.extendStrand = extendStrand;
@@ -315,7 +358,6 @@ var api;
         function insertElement(e, s, gidCounter, lidCounter, sidCounter) {
             // copy nucleotide data values
             copyInstances(e, sidCounter, s.parent);
-            console.log(e.gid, e.getInstanceParameter3("bbOffsets"));
             //update id numbers and add to storage
             e.lid = lidCounter;
             e.gid = gidCounter;
@@ -357,14 +399,10 @@ var api;
                     }
                     let lidCounter = 0;
                     // Find 3' end of strand and initialize the new strand
-                    console.log(strand[monomers][0].neighbor3, strand.circular);
                     if (strand[monomers][0].neighbor3 !== null && strand.circular !== true) {
-                        console.log("HERE"); //THIS IS STILL NOT RUNNING
                         for (let i = 0, len = strand[monomers].length; i < len; i++) {
                             const n = strand[monomers][i];
-                            console.log(n.gid, n.neighbor3);
                             if (n.neighbor3 == null) {
-                                console.log(n);
                                 insertElement(n, newStrand, gidCounter, lidCounter, sidCounter);
                                 break;
                             }
@@ -377,7 +415,6 @@ var api;
                     }
                     //trace the 5' connections to the strand end and copy to new strand
                     let startElem = newStrand[monomers][0], curr = startElem;
-                    console.log(startElem);
                     while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
                         curr = curr.neighbor5;
                         lidCounter++;

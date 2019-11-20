@@ -444,7 +444,6 @@ class DNANucleotide extends Nucleotide {
             rb.add(a3.clone().multiplyScalar(rise));
             out.push([rb.x, rb.y, rb.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
-        console.log(out);
         return out;
     }
 }
@@ -713,9 +712,6 @@ class Strand extends THREE.Group {
         this.circular = false;
     }
     ;
-    //POINT OF CONCERN FOR LATER: NEED TO SOMEHOW ADD THIS TO ARRAYS
-    //DO WE JUST MAKE ALL NEW THINGS IN THEIR OWN SYSTEM??
-    //AND THEN HAVE SOME COMPLICATED STUFF TO MAKE THEM BEHAVE?
     addBasicElement(elem) {
         this[monomers].push(elem);
         elem.parent = this;
@@ -724,16 +720,6 @@ class Strand extends THREE.Group {
     createBasicElement(gid) {
         return new BasicElement(gid, this);
     }
-    removeBasicElement(toRemove) {
-        for (let i = 0; i < this[monomers].length; i++) {
-            let n = this[monomers][i];
-            if (n.gid == toRemove) { //changed from local to global id
-                scene.remove(n);
-                n = null;
-            }
-        }
-    }
-    ;
     excludeElements(elements) {
         // detach from parent
         elements.forEach((e) => {
