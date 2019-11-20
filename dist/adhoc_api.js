@@ -253,11 +253,15 @@ var api;
                 needsUpdateList.add(sys);
             }
             splitStrand(e);
-            e.neighbor3.neighbor5 = null;
-            e.neighbor5.neighbor3 = null;
-            e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
-            e.neighbor3 = null;
-            e.neighbor5 = null;
+            if (e.neighbor3 !== null) {
+                e.neighbor3.neighbor5 = null;
+                e.neighbor3 = null;
+            }
+            if (e.neighbor5 !== null) {
+                e.neighbor5.neighbor3 = null;
+                e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
+                e.neighbor5 = null;
+            }
             e.toggleVisibility();
             e.parent.excludeElements([e]);
         });
@@ -364,7 +368,7 @@ var api;
         let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z];
         e.calculatePositions(line);
         e.dummySys = tmpSys;
-        // extends the strand 3'-5' with the sequence 
+        // extends the strand 3'->5' with the rest of the sequence 
         addElements(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1, gidCounter);
     }
     api.createStrand = createStrand;

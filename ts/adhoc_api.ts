@@ -296,11 +296,16 @@ module api{
             }
             splitStrand(e);
 
-            e.neighbor3.neighbor5 = null;
-            e.neighbor5.neighbor3 = null;
-            e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
-            e.neighbor3 = null;
-            e.neighbor5 = null;
+            if (e.neighbor3 !== null){
+                e.neighbor3.neighbor5 = null;
+                e.neighbor3 = null;
+            }
+            if (e.neighbor5 !== null) {
+                e.neighbor5.neighbor3 = null;
+                e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
+                e.neighbor5 = null;
+            }
+
             
             e.toggleVisibility();
             e.parent.excludeElements([e])
