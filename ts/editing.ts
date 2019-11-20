@@ -18,17 +18,26 @@ function ligateWrapper() {
 }
 
 function extendWrapper() {
-    let e: BasicElement = elements[listBases.slice(-1)[0]]
-    let seq: string = (<HTMLInputElement>document.getElementById("extendSeq")).value
+    let e: BasicElement = elements[listBases.slice(-1)[0]];
+    let seq: string = (<HTMLInputElement>document.getElementById("extendSeq")).value;
     if (e == undefined) {
-        notify("Please select a monomer to extend from")
+        notify("Please select a monomer to extend from");
+        return
+    }
+    if (seq == "") {
+        notify("Please type a sequence into the box");
         return
     }
     api.extendStrand(e, seq)
 }
 
 function createWrapper() {
-
+    let seq: string = (<HTMLInputElement>document.getElementById("extendSeq")).value;
+    if (seq == "") {
+        notify("Please type a sequence into the box");
+        return
+    }
+    api.createStrand(seq);
 }
 
 function deleteWrapper() {

@@ -22,9 +22,19 @@ function extendWrapper() {
         notify("Please select a monomer to extend from");
         return;
     }
+    if (seq == "") {
+        notify("Please type a sequence into the box");
+        return;
+    }
     api.extendStrand(e, seq);
 }
 function createWrapper() {
+    let seq = document.getElementById("extendSeq").value;
+    if (seq == "") {
+        notify("Please type a sequence into the box");
+        return;
+    }
+    api.createStrand(seq);
 }
 function deleteWrapper() {
     let e = listBases.map(i => elements[i]);

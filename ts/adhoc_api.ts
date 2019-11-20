@@ -312,37 +312,9 @@ module api{
         render();
     }
 
-    /**
-     * Create new monomers extending from the provided one.
-     * @param end 
-     * @param sequence 
-     */
-    export function extendStrand(end: BasicElement, sequence: string) {
-        // figure out which way we're going
-        let direction: string;
-        let inverse: string;
-        if (end.neighbor3 == null) {
-            direction = "neighbor3";
-            inverse = "neighbor5";
-        }
-        else if (end.neighbor5 == null) {
-            direction = "neighbor5";
-            inverse = "neighbor3";
-        }
-        else {
-            notify("please select a monomer that has an open neighbor")
-            return
-        }
-
-        // initialize a dummy system to put the monomers in
-        const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length);
-        tmpSystems.push(tmpSys);
-
+    function addElements (end, sequence, tmpSys, direction, inverse, lidCounter, gidCounter) {
         // add monomers to the strand
         const strand = end.parent;
-        let gidCounter = elements.length;
-        let lidCounter = 0;
         const lines = end.extendStrand(sequence.length, inverse)
         let last = end
         //create topology
@@ -378,7 +350,76 @@ module api{
             calcsp(e);
             e = e[direction];
         }
+    }
+
+    /**
+     * Create new monomers extending from the provided one.
+     * @param end 
+     * @param sequence 
+     */
+    export function extendStrand(end: BasicElement, sequence: string) {
+        // figure out which way we're going
+        let direction: string;
+        let inverse: string;
+        if (end.neighbor5 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
+        }
+        else if (end.neighbor3 == null) {
+            direction = "neighbor3";
+            inverse = "neighbor5";
+        }
+        else {
+            notify("please select a monomer that has an open neighbor")
+            return
+        }
+
+        // initialize a dummy system to put the monomers in
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(sequence.length);
+        tmpSystems.push(tmpSys);
+
+        addElements (end, sequence, tmpSys, direction, inverse, 0, elements.length);
+
         render();
+    }
+
+    export function createStrand(sequence: string) {
+        //initialize a dummy system to put the monomers in 
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(sequence.length);
+        tmpSystems.push(tmpSys);
+        let gidCounter = elements.length;
+
+        //the strand gets added to the last-added system
+        const realSys = systems.slice(-1)[0]
+
+        // create the first monomer
+        let strand = realSys.createStrand(1);
+        realSys.addStrand(strand);
+        let  e = strand.createBasicElement(gidCounter);
+        gidCounter++;
+        e.dummySys = tmpSys;
+        e.lid = 0;
+        e.type = sequence[0];
+        e.neighbor3 = null;
+        strand.addBasicElement(e);
+        elements.push(e);
+
+        // place the new strand 10 units in front of the camera
+        // with its a1 vector parallel to the camera heading
+        // and a3 the cross product of the a1 vector and the z-axis
+        let cameraHeading = new THREE.Vector3(0, 0, -1);
+        cameraHeading.applyQuaternion(camera.quaternion);
+        let pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20))
+        let a3 = new THREE.Vector3;
+        a3.crossVectors(cameraHeading, new THREE.Vector3(0, 0, 1))
+        let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z] as unknown as string[]
+        e.calculatePositions(line);
+        e.dummySys = tmpSys;
+
+        // extends the strand 3'->5' with the rest of the sequence 
+        addElements(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1, gidCounter);
     }
 
     // copies the instancing data from a particle to a new system
