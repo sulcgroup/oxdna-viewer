@@ -5,6 +5,7 @@ class TopReader extends FileReader {
         this.nucLocalID = 0;
         this.onload = ((f) => {
             return () => {
+                let nucCount = this.elements.length;
                 let file = this.result;
                 let lines = file.split(/[\n]+/g);
                 lines = lines.slice(1); // discard the header

@@ -155,7 +155,14 @@ function calcsp(currentNuc) {
     if (currentNuc.dummySys !== null) {
         sys = currentNuc.dummySys
     }
-    let temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
+    let temp: THREE.Vector3
+    try {
+        temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
+    } catch (error) {
+        notify("Can't calculate backbone connection for particles without upstream connection");
+        return
+    }
+    
     let xbbLast = temp.x,
         ybbLast = temp.y,
         zbbLast = temp.z;

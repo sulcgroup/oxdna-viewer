@@ -15,3 +15,9 @@ function ligateWrapper() {
     }
     api.ligate(e[0], e[1]);
 }
+function extendWrapper() {
+}
+function createWrapper() {
+}
+function deleteWrapper() {
+}

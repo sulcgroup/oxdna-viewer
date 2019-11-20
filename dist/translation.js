@@ -139,7 +139,14 @@ function calcsp(currentNuc) {
     if (currentNuc.dummySys !== null) {
         sys = currentNuc.dummySys;
     }
-    let temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
+    let temp;
+    try {
+        temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
+    }
+    catch (error) {
+        notify("Can't calculate backbone connection for particles without upstream connection");
+        return;
+    }
     let xbbLast = temp.x, ybbLast = temp.y, zbbLast = temp.z;
     temp = currentNuc.getInstanceParameter3("bbOffsets"); //get currentNuc's backbone world position
     let xbb = temp.x;

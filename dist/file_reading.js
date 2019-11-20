@@ -206,6 +206,7 @@ function readDat(numNuc, datReader, system) {
         }
     }
     addSystemToScene(system);
+    sysCount++;
 }
 function readJson(system, jsonReader) {
     const file = jsonReader.result;
@@ -306,7 +307,6 @@ function addSystemToScene(system) {
     if (toggleFailure) {
         setColoringMode("Overlay");
     }
-    sysCount += 1;
     render();
     // Reset the cursor from the loading spinny
     renderer.domElement.style.cursor = "auto";

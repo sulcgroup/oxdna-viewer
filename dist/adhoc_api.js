@@ -210,7 +210,7 @@ var api;
         sys5.callUpdates(["instanceRotation"]);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor']);
+                s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility']);
             });
         }
         // Strand id update
@@ -222,6 +222,74 @@ var api;
         render();
     }
     api.ligate = ligate;
+    /**
+     * Create new monomers extending from the provided one.
+     * @param end
+     * @param sequence
+     */
+    function extendStrand(end, sequence) {
+        console.log(end.parent.circular);
+        // figure out which way we're going
+        let direction;
+        let inverse;
+        if (end.neighbor3 == null) {
+            direction = "neighbor3";
+            inverse = "neighbor5";
+        }
+        else if (end.neighbor5 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
+        }
+        else {
+            notify("please select a monomer that has an open neighbor");
+            return;
+        }
+        // initialize a dummy system to put the monomers in
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(sequence.length);
+        tmpSystems.push(tmpSys);
+        // add monomers to the strand
+        const strand = end.parent;
+        let gidCounter = elements.length;
+        let lidCounter = 0;
+        const lines = end.extendStrand(sequence.length, inverse);
+        let last = end;
+        //create topology
+        for (let i = 0, len = sequence.length; i < len; i++) {
+            let e = strand.createBasicElement(gidCounter);
+            elements[gidCounter] = e;
+            e.lid = lidCounter;
+            e.dummySys = tmpSys;
+            last[direction] = e;
+            e[inverse] = last;
+            e.type = sequence[i];
+            strand.addBasicElement(e);
+            last = e;
+            gidCounter++;
+            lidCounter++;
+        }
+        elements.slice(-1)[0][direction] = null;
+        let e = end[direction];
+        //position new monomers
+        for (let i = 0, len = sequence.length; i < len; i++) {
+            e.calculatePositions(lines[i]);
+            e = e[direction];
+        }
+        strand.circular = false;
+        addSystemToScene(tmpSys);
+        //putting this in one loop would slow down loading systems
+        //would require dereferencing the backbone position of every nucleotide
+        //its not worth slowing down everything to avoid this for loop
+        //which is much more of an edge case anyway.
+        e = end;
+        while (e !== null) {
+            calcsp(e);
+            e = e[direction];
+        }
+        console.log(end.parent.circular);
+        render();
+    }
+    api.extendStrand = extendStrand;
     // copies the instancing data from a particle to a new system
     function copyInstances(source, id, destination) {
         destination.fillVec('cmOffsets', 3, id, source.getInstanceParameter3('cmOffsets').toArray());
@@ -247,17 +315,21 @@ var api;
         function insertElement(e, s, gidCounter, lidCounter, sidCounter) {
             // copy nucleotide data values
             copyInstances(e, sidCounter, s.parent);
+            console.log(e.gid, e.getInstanceParameter3("bbOffsets"));
             //update id numbers and add to storage
             e.lid = lidCounter;
             e.gid = gidCounter;
             s.addBasicElement(e);
             e.dummySys = null;
             e.updateColor();
+            let idCol = new THREE.Color();
+            idCol.setHex(gidCounter + 1);
+            e.setInstanceParameter("bbLabels", idCol.toArray());
             e.name = gidCounter + "";
             elements.push(e);
         }
         //nuke the elements array
-        const elements = [];
+        elements = [];
         let gidCounter = 0, systemCounter = 0;
         systems.forEach((sys) => {
             //find longest strand
@@ -285,10 +357,14 @@ var api;
                     }
                     let lidCounter = 0;
                     // Find 3' end of strand and initialize the new strand
+                    console.log(strand[monomers][0].neighbor3, strand.circular);
                     if (strand[monomers][0].neighbor3 !== null && strand.circular !== true) {
+                        console.log("HERE"); //THIS IS STILL NOT RUNNING
                         for (let i = 0, len = strand[monomers].length; i < len; i++) {
                             const n = strand[monomers][i];
+                            console.log(n.gid, n.neighbor3);
                             if (n.neighbor3 == null) {
+                                console.log(n);
                                 insertElement(n, newStrand, gidCounter, lidCounter, sidCounter);
                                 break;
                             }
@@ -301,6 +377,7 @@ var api;
                     }
                     //trace the 5' connections to the strand end and copy to new strand
                     let startElem = newStrand[monomers][0], curr = startElem;
+                    console.log(startElem);
                     while (curr.neighbor5 !== null && curr.neighbor5 !== startElem) {
                         curr = curr.neighbor5;
                         lidCounter++;
