@@ -9,7 +9,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time. You can then select and drag components around through the "Select" and "Drag" options in the sidebar. Selected components can also be rotated around the x,y and z axis. Edits can be undone and redone using ctrl-z/ctrl-y or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  Editing of topology (breaking strands, creating new nucleotides, joining strands together) is coming.  Watch this space for updates.
+The viewer can load multiple structures at the same time. You can then select and drag components around through the "Select" and "Drag" options in the sidebar. Selected components can also be rotated around the x,y and z axis. Edits can be undone and redone using ctrl-z/ctrl-y or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.  The beta version of topology editing is now available!  Strands can be created, extended, nicked, or ligated.  There are known to be bugs involving off-by-one errors in the selector, especially if multiple edits are done in succession, however most will be solved by rebuilding the system using `api.cleanOutput()` which also must be run before outputting a file from an edited scene.  Please provide feedback if you encounter any bugs or have suggestions for how to make the editing features better as they are still in development.
 
 ---
 
@@ -36,12 +36,19 @@ In addition to the visualization and editing features highlighted in the sidebar
  * `hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
  * `toggleAll(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
  * `toggleBaseColors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
- * `trace53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5').  
+ * `trace53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5'). 
+ * `trace35(<monomer object>)`: Same as trace53, but traces up the strand instead.
+ * `nick(<monomer object>)`: Removes the 3' connection from the provided monomer and creates a new strand containing the selected object and its 5' neighbors.  Hooked up to the "Nick" button on the sidebar.
+ * `ligate(<monomer object> <monomer object>)`: Ligates the two selected monomers together, creating a single strand contining all the monomers in the parent strands of the input particles. Hooked up to the "Ligate" button on the sidebar.
+ * `del(<array of monomer objects>)`: Loops through the array, deleting each object from the scene. Also handles the separation of strand objects. Hooked up to the "Delete" button on the sidebar.
+ * `extendStrand(<monomer object> <string>)`: Extends the parent strand of the provided monomer with the given sequence.  The string must be in ALL CAPS to correspond to particle types. The new monomers will appear in a helix with an axis corresponding to the a3 vector of the provided monomer.  These will most likley need to be relaxed prior to production simulations with edited files. Hooked up to the "Extend" button on the sidebar
+ * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
+ * `cleanOrder() `: Rebuilds the scene from the ground up, ordering the strands from longest to shortest.  This removes any gaps or duplicated numbers in the monomer and strand IDs, which if left in will cause oxDNA to crash.  Always run this command before exporting edited scenes (done automatically if the "Pre-organize strands" option is selected in the Download options box.
  * `remove_colorbar()`: Hide the colorbar if an overlay is loaded.  
  * `show_colorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
  * `changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
  * `spOnly()`: remove all objects from the scene except the backbone cyllinders.  Creates an effect similar to licorice display options in other molecular viewers.  
- * `show_verything()`: Resets all visibility parameters to default values.  
+ * `show_everything()`: Resets all visibility parameters to default values.  
 
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0][strands][5][monomers][1].  There is also an array of all monomers indexed by global id, so the 1000th monomer can be accessed by elements[999].
 
