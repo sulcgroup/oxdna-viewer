@@ -554,8 +554,35 @@ class DNANucleotide extends Nucleotide {
         const xA3 = a3[0]; let yA3 = a3[1]; let zA3 = a3[2];
         return new THREE.Vector3(xA3, yA3, zA3);
     };
-    extendStrand() {
 
+    // Uses method from generators.py.  Needs to be relaxed since this is oxDNA1 helix
+    extendStrand(len: number, direction:string) {
+        let rot = 35.9*Math.PI/180
+        let rise = 0.3897628551303122
+        
+        const start_pos = this.getInstanceParameter3("cmOffsets");
+        const bb_pos = this.getInstanceParameter3("bbOffsets");
+        const ns_pos = this.getInstanceParameter3("nsOffsets");
+        const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z)
+        let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
+        if (direction == "neighbor5") {
+            dir.multiplyScalar(-1);
+        }
+        let R = new THREE.Matrix4;
+        R.makeRotationAxis(dir, rot)
+        let rb = start_pos.clone();
+        let a1 = old_A1.clone()
+        let a3 = dir;
+        let out = [];
+
+        for (let i = 0; i < len; i++) {
+            a1.applyMatrix4(R)
+            rb.add(a3.clone().multiplyScalar(rise))
+            out.push([rb.x, rb.y, rb.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z])
+        }
+
+        console.log(out);
+        return out
     }
 };
 
@@ -580,6 +607,8 @@ class RNANucleotide extends Nucleotide {
         const zA3 = ((zbb - z) + (0.4 * zA1)) / (-0.2);
         return new THREE.Vector3(xA3, yA3, zA3);
     };
+
+    // Uses the method from generate_RNA.py found in the oxDNA UTILS directory
     extendStrand(len: number, direction:string) {
         const inclination = 15.5*Math.PI/180;
         const bp_backbone_distance = 2;
@@ -588,6 +617,8 @@ class RNANucleotide extends Nucleotide {
         const rot = 32.7*Math.PI/180;
         const cord = Math.cos(inclination) * bp_backbone_distance;
         const center_to_cord = Math.sqrt(Math.pow(diameter/2, 2) - Math.pow(cord/2, 2));
+        
+        //We just set the direction the the orientation of the a3 vector
         const start_pos = this.getInstanceParameter3("cmOffsets");
         const bb_pos = this.getInstanceParameter3("bbOffsets");
         const ns_pos = this.getInstanceParameter3("nsOffsets");
@@ -630,7 +661,6 @@ class RNANucleotide extends Nucleotide {
             }
 
         return out;
-
     }
 };
 class AminoAcid extends BasicElement {
