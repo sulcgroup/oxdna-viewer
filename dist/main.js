@@ -435,14 +435,14 @@ class DNANucleotide extends Nucleotide {
         }
         let R = new THREE.Matrix4;
         R.makeRotationAxis(dir, rot);
-        let rb = start_pos.clone();
+        let rb = new THREE.Vector3(0.6, 0, 0);
         let a1 = old_A1.clone();
         let a3 = dir;
         let out = [];
         for (let i = 0; i < len; i++) {
             a1.applyMatrix4(R);
-            rb.add(a3.clone().multiplyScalar(rise));
-            out.push([rb.x, rb.y, rb.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            rb.add(a3.clone().multiplyScalar(rise)).applyMatrix4(R);
+            out.push([rb.x + start_pos.x, rb.y + start_pos.y, rb.z + start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
         return out;
     }
