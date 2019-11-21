@@ -26,7 +26,7 @@ var api;
     api.markStrand = markStrand;
     ;
     function getSequence(strand) {
-        let seq;
+        let seq = [];
         let nucleotides = strand[monomers];
         nucleotides.reverse().map((n) => seq.push(n.type));
         return seq.join("");

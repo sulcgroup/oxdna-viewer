@@ -29,7 +29,7 @@ module api{
     };
 
     export function getSequence(strand : Strand) : string {
-        let seq: string[];
+        let seq = [];
         let nucleotides = strand[monomers]; 
         nucleotides.reverse().map( 
             (n: BasicElement) => seq.push(<string> n.type));
