@@ -4,7 +4,7 @@ function nickWrapper() {
         notify("Please select a monomer to nick at")
         return
     }
-    api.nick(e)
+    editHistory.do(new RevertableNick(e))
 }
 
 function ligateWrapper() {
@@ -14,7 +14,7 @@ function ligateWrapper() {
         notify("Please select two monomers to ligate")
         return
     }
-    api.ligate(e[0], e[1])
+    editHistory.do(new RevertableLigation(e[0], e[1]))
 }
 
 function extendWrapper() {

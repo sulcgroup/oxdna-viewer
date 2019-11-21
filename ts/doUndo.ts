@@ -66,6 +66,23 @@ class RevertableEdit {
     };
 }
 
+class RevertableNick extends RevertableEdit {
+    constructor(element: BasicElement) {
+        const n3 = element.neighbor3;
+        let undo = function() {api.ligate(element, n3)};
+        let redo = function() {api.nick(element);}
+        super(undo, redo);
+    };
+}
+
+class RevertableLigation extends RevertableEdit {
+    constructor(e1 :BasicElement, e2: BasicElement) {
+        let undo = function() {api.nick(e1)};
+        let redo = function() {api.ligate(e1, e2)}
+        super(undo, redo);
+    };
+}
+
 class RevertableTranslation extends RevertableEdit {
     constructor(translatedElements: Set<BasicElement>,translationVector: THREE.Vector3) {
         const elements = new Set(translatedElements);
