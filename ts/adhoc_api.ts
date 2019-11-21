@@ -127,7 +127,7 @@ module api{
         // nucleotides which are after the nick
         let orphans : BasicElement[] = trace35(element);
         strand.excludeElements(orphans);
-        
+
         //create fill and deploy new strand 
         let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
         strand.parent.addStrand(new_strand);

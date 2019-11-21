@@ -38,6 +38,7 @@ function createWrapper() {
 }
 function deleteWrapper() {
     let e = listBases.map(i => elements[i]);
+    clearSelection();
     if (e == []) {
         notify("Please select monomers to delete");
         return;
