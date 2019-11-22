@@ -31,6 +31,10 @@ function onWindowResize() {
         camera.updateProjectionMatrix();
     }
 
+    if (camera instanceof THREE.OrthographicCamera) {
+        
+    }
+
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     controls.handleResize();
