@@ -32,7 +32,7 @@ function onWindowResize() {
     }
 
     if (camera instanceof THREE.OrthographicCamera) {
-        
+
     }
 
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -65,6 +65,7 @@ const scene = new THREE.Scene();
 scene.background = WHITE
 
 camera = createPerspectiveCamera(75, 0.1, 1000, [100, 0, 0]); //create camera
+const refQ = camera.quaternion.clone();
 
 // import canvas capture library - used in video creation
 declare var CCapture: any;

@@ -599,9 +599,20 @@ var api;
             const focus = controls.target;
             const fov = camera.fov * Math.PI / 180; //convert to radians
             const pos = camera.position;
-            const width = 2 * Math.tan(fov / 2) * focus.distanceTo(pos);
-            const height = width / camera.aspect;
+            let width = 2 * Math.tan(fov / 2) * focus.distanceTo(pos);
+            let height = width / camera.aspect;
+            const up = camera.up;
+            let cameraHeading = new THREE.Vector3(0, 0, -1);
+            cameraHeading.applyQuaternion(camera.quaternion);
+            //if (up.dot(new THREE.Vector3(0, 1, 0)) < 0) {
+            //    height *= -1;
+            //}
+            if (camera.quaternion.dot(refQ) < 0) {
+                width *= -1;
+                height *= -1;
+            }
             let newCam = createOrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, near, far, pos.toArray());
+            newCam.up = up;
             newCam.lookAt(focus);
             let light = pointlight;
             scene.remove(camera);
@@ -616,8 +627,13 @@ var api;
             const near = camera.near;
             const focus = controls.target;
             const pos = camera.position;
-            const fov = 2 * Math.atan(((camera.right - camera.left / 2)) / focus.distanceTo(pos)) * 180 / Math.PI;
+            const up = camera.up;
+            let fov = 2 * Math.atan((((camera.right - camera.left) / 2)) / focus.distanceTo(pos)) * 180 / Math.PI;
+            if (camera.left > camera.right) {
+                fov *= -1;
+            }
             let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
+            newCam.up = up;
             newCam.lookAt(focus);
             let light = pointlight;
             scene.remove(camera);
