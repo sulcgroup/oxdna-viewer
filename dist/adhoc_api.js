@@ -592,4 +592,42 @@ var api;
         render();
     }
     api.showEverything = showEverything;
+    function switchCamera() {
+        if (camera instanceof THREE.PerspectiveCamera) {
+            const far = camera.far;
+            const near = camera.near;
+            const focus = controls.target;
+            const fov = camera.fov * Math.PI / 180; //convert to radians
+            const pos = camera.position;
+            const width = 2 * Math.tan(fov / 2) * focus.distanceTo(pos);
+            const height = width / camera.aspect;
+            let newCam = createOrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, near, far, pos.toArray());
+            newCam.lookAt(focus);
+            let light = pointlight;
+            scene.remove(camera);
+            camera = newCam;
+            controls.object = camera;
+            camera.add(light);
+            scene.add(camera);
+            document.getElementById("cameraSwitch").innerHTML = "Perspective";
+        }
+        else if (camera instanceof THREE.OrthographicCamera) {
+            const far = camera.far;
+            const near = camera.near;
+            const focus = controls.target;
+            const pos = camera.position;
+            const fov = 2 * Math.atan(((camera.right - camera.left / 2)) / focus.distanceTo(pos)) * 180 / Math.PI;
+            let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
+            newCam.lookAt(focus);
+            let light = pointlight;
+            scene.remove(camera);
+            camera = newCam;
+            controls.object = camera;
+            camera.add(light);
+            scene.add(camera);
+            document.getElementById("cameraSwitch").innerHTML = "Orthographic";
+        }
+        render();
+    }
+    api.switchCamera = switchCamera;
 })(api || (api = {}));

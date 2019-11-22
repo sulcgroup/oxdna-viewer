@@ -21,11 +21,24 @@ function animate() {
 //Fix Resize problems
 window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
+    if (camera instanceof THREE.PerspectiveCamera) {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+    }
     renderer.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
     render();
+}
+let camera;
+function createPerspectiveCamera(fov, near, far, pos) {
+    const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, near, far);
+    camera.position.set(pos[0], pos[1], pos[2]);
+    return camera;
+}
+function createOrthographicCamera(left, right, top, bottom, near, far, pos) {
+    const camera = new THREE.OrthographicCamera(left, right, top, bottom, near, far);
+    camera.position.set(pos[0], pos[1], pos[2]);
+    return camera;
 }
 //Setup the scene and renderer and camera 
 const GREY = new THREE.Color(0x888888);
@@ -33,9 +46,7 @@ const BLACK = new THREE.Color(0x000000);
 const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE;
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); //create camera
-// set camera position 
-camera.position.x = 100;
+camera = createPerspectiveCamera(75, 0.1, 1000, [100, 0, 0]); //create camera
 // Create canvas and renderer
 const canvas = document.getElementById("threeCanvas");
 const renderer = new THREE.WebGLRenderer({
