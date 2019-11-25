@@ -32,7 +32,13 @@ function onWindowResize() {
     }
 
     if (camera instanceof THREE.OrthographicCamera) {
-
+        let frustumSize = camera.left / aspect * -2;
+        aspect = window.innerWidth / window.innerHeight;
+        camera.left = frustumSize * aspect / - 2;
+        camera.right = frustumSize * aspect / 2;
+        camera.top = frustumSize / 2;
+        camera.bottom = - frustumSize / 2;
+        camera.updateProjectionMatrix();
     }
 
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -44,9 +50,10 @@ function onWindowResize() {
 }
 
 let camera: THREE.Camera
+let aspect: number = window.innerWidth / window.innerHeight;
 
 function createPerspectiveCamera(fov: number, near: number, far:number, pos:number[]) {
-    const camera = new THREE.PerspectiveCamera(fov, window.innerWidth / window.innerHeight, near, far);
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
     camera.position.set(pos[0], pos[1], pos[2]);
     return camera
 }
