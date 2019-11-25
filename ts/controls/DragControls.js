@@ -71,7 +71,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
             _mouse.y = - ((event.clientY - rect.top) / rect.height) * 2 + 1;
             
             //use the raycaster to project the mouse position onto the plane and move the object to the mouse
-            _raycaster.setFromCamera(_mouse, _camera); 
+            _raycaster.setFromCamera(_mouse, camera);
             if (_selected && scope.enabled) {
                 _newPos.copy(_raycaster.ray.intersectPlane(_plane, _mousePos));
                 _move.copy(_newPos).sub(_oldPos);
@@ -85,7 +85,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 //Update attributes on the GPU
                 _selected.parent.parent.callUpdates(['instanceOffset'])
                 if (_selected.dummySys !== null) {
-                    _selected.dummySys.callUpdates(["instanceOffset"])
+                    _selected.dummySys.callUpdates(['instanceOffset'])
                 }
             }
             render();

@@ -671,6 +671,7 @@ module api{
 
     export function switchCamera() {
         if (camera instanceof THREE.PerspectiveCamera) {
+            //get camera parameters
             const far = camera.far;
             const near = camera.near;
             const focus = controls.target;
@@ -679,39 +680,44 @@ module api{
             let width = 2*Math.tan(fov/2)*focus.distanceTo(pos);
             let height = width/camera.aspect;
             const up = camera.up;
+            const quat = camera.quaternion;
             let cameraHeading = new THREE.Vector3(0, 0, -1);
-            cameraHeading.applyQuaternion(camera.quaternion);
-            //if (up.dot(new THREE.Vector3(0, 1, 0)) < 0) {
-            //    height *= -1;
-            //}
-            if (camera.quaternion.dot(refQ) < 0) {
+            cameraHeading.applyQuaternion(quat);
+
+            //if the camera is upside down, you need to flip the corners of the orthographic box
+            if (quat.dot(refQ) < 0 && quat.w > 0) {
                 width *= -1;
                 height *= -1;
             }
     
+            //create a new camera with same properties as old one
             let newCam = createOrthographicCamera(-width/2, width/2, height/2, -height/2, near, far, pos.toArray());
             newCam.up = up
             newCam.lookAt(focus);
             let light = pointlight;
             scene.remove(camera);
             camera = newCam;
-            controls.object = camera
+            controls.object = camera;
             camera.add(light);
             scene.add(camera);
 
             document.getElementById("cameraSwitch").innerHTML = "Perspective";
         }
         else if (camera instanceof THREE.OrthographicCamera) {
+            //get camera parameters
             const far = camera.far;
             const near = camera.near;
             const focus = controls.target;
             const pos = camera.position;
             const up = camera.up;
             let fov = 2*Math.atan((((camera.right-camera.left)/2))/focus.distanceTo(pos))*180/Math.PI;
+            
+            //if the camera is upside down, you need to flip the fov for the perspective camera
             if (camera.left > camera.right) {
                 fov *= -1
             }
 
+            //create a new camera with same properties as old one
             let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
             newCam.up = up;
             newCam.lookAt(focus);
