@@ -73,6 +73,15 @@ class RevertableLigation extends RevertableEdit {
     }
     ;
 }
+class RevertableSequenceEdit extends RevertableEdit {
+    constructor(elems, sequence, setComplementaryBases) {
+        const oldseq = api.getSequence(elems);
+        let undo = function () { api.setSequence(elems, oldseq, setComplementaryBases); };
+        let redo = function () { api.setSequence(elems, sequence, setComplementaryBases); };
+        super(undo, redo);
+    }
+    ;
+}
 class RevertableTranslation extends RevertableEdit {
     constructor(translatedElements, translationVector) {
         const elements = new Set(translatedElements);

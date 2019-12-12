@@ -12,7 +12,7 @@ var instancedConnector = new THREE.InstancedBufferGeometry();
 instancedConnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
 var instancedBBconnector = new THREE.InstancedBufferGeometry();
-instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.05,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
 var instanceMaterial = new THREE.MeshLambertMaterial( {
     vertexColors: THREE.VertexColors

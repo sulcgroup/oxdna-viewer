@@ -37,7 +37,6 @@ class BasicElement extends THREE.Group{
     gid: number; //location in world - all systems
     neighbor3: BasicElement | null;
     neighbor5: BasicElement | null;
-    pair: number;
     parent: Strand;
     bbnsDist : number;
     elementType: number = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
@@ -186,7 +185,10 @@ class BasicElement extends THREE.Group{
     }
 };
 
-class Nucleotide extends BasicElement {
+abstract class Nucleotide extends BasicElement {
+
+    pair: Nucleotide | null;
+
     constructor(gid: number, parent: Strand) {
         super(gid, parent);
     };
@@ -521,6 +523,53 @@ class Nucleotide extends BasicElement {
             " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
         return dat;
     };
+
+    getTypeNumber(): number {
+        let c = this.type;
+        if (c == 'U') {c = 'T';}
+        let i = ['A', 'G', 'C', 'T'].indexOf(c);
+        if (i>=0) {
+            return i;
+        } else {
+            return parseInt(c);
+        }
+    }
+
+    abstract getComplementaryType(): string;
+
+    changeType(type: string) {
+        this.type = type;
+        let sys = this.parent.parent;
+        let newC = this.elemToColor(type);
+        sys.fillVec('nsColors', 3, this.gid - sys.globalStartId, [newC.r, newC.g, newC.b])
+    }
+
+    findPair(): Nucleotide {
+        let bestCandidate = null;
+        let bestDist = 0.6;
+        let thisPos = this.getInstanceParameter3("nsOffsets");
+        let sys = this.parent.parent;
+        let strandCount = sys[strands].length;
+        for (let i = 0; i < strandCount; i++){  //for every strand in the System
+            let strand = sys[strands][i];
+            let nucCount = strand[monomers].length;
+            for (let j = 0; j < nucCount; j++) { // for every nucleotide on the Strand
+                let e = <Nucleotide> strand[monomers][j];
+                if (this.neighbor3 != e && this.neighbor5 != e &&
+                    this.getTypeNumber() != e.getTypeNumber() &&
+                    (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0
+                ) {
+                    let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
+                    if (dist < bestDist) {
+                        bestCandidate = e;
+                        bestDist = dist;
+                    }
+                }
+            }
+        }
+        return bestCandidate;
+    }
+
     getA3(xbb: number, ybb: number, zbb: number, x: number, y: number, z: number, xA1: number, yA1: number, zA1: number): THREE.Vector3 {
         return new THREE.Vector3();
     };
@@ -588,6 +637,11 @@ class DNANucleotide extends Nucleotide {
         }
 
         return out
+    }
+
+    getComplementaryType(): string {
+        var map = {A:'T',G:'C',C:'G', T:'A'}
+        return map[this.type];
     }
 };
 
@@ -666,6 +720,11 @@ class RNANucleotide extends Nucleotide {
             }
 
         return out;
+    }
+
+    getComplementaryType(): string {
+        var map = {A:'U',G:'C',C:'G', U:'A'}
+        return map[this.type];
     }
 };
 class AminoAcid extends BasicElement {
@@ -1239,6 +1298,19 @@ function setColoringMode(mode: string) {
         modes[i].checked = (modes[i].value === mode);
     }
     coloringChanged();
+};
+
+function findBasepairs() {
+    elements.forEach(e => {
+        if (e instanceof Nucleotide) {
+            if(!e.pair) {
+                e.pair = e.findPair();
+                if(e.pair) {
+                    e.pair.pair = e;
+                }
+            }
+        }
+    });
 };
 
 function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
