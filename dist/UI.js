@@ -92,3 +92,26 @@ function notify(message) {
     noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
 }
+function longCalculation(calc, message, callback) {
+    // Create an information modal
+    const modal = document.getElementById('pause');
+    const notification = document.createElement('div');
+    notification.className = "modal-content";
+    notification.innerHTML = message;
+    modal.appendChild(notification);
+    modal.classList.add("show-modal");
+    // Set wait cursor and request an animation frame to make sure
+    // that it gets changed before starting calculation:
+    let dom = document.activeElement;
+    dom['style'].cursor = "wait";
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        calc();
+        // Change cursor back and remove modal
+        dom['style'].cursor = "auto";
+        modal.removeChild(notification);
+        modal.classList.remove("show-modal");
+        if (callback) {
+            callback();
+        }
+    }));
+}

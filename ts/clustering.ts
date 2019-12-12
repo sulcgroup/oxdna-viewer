@@ -15,16 +15,11 @@ function calculateClusters() {
     const minPts = parseFloat((<HTMLInputElement>document.getElementById("minPts")).value);
     const epsilon = parseFloat((<HTMLInputElement>document.getElementById("epsilon")).value);
 
-    document.getElementById("clusterOptions").hidden = true;
-    // Set wait cursor and request an animation frame to make sure
-    // that it gets changed before starting dbscan:
-    renderer.domElement.style.cursor = "wait";
-
-    requestAnimationFrame(() => requestAnimationFrame(function(){
-        dbscan(minPts, epsilon);
-        renderer.domElement.style.cursor = "auto"; // Change cursor back
-        setColoringMode("Cluster");
-    }))
+    longCalculation(
+        ()=>{dbscan(minPts, epsilon)}, // Run this
+        "Calculating clusters, please be patient...", // Tell the user
+        ()=>{setColoringMode("Cluster")} // Then color by cluster
+    );
 }
 
 /**
