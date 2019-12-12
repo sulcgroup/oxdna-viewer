@@ -83,6 +83,15 @@ class RevertableLigation extends RevertableEdit {
     };
 }
 
+class RevertableSequenceEdit extends RevertableEdit {
+    constructor(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
+        const oldseq = api.getSequence(elems);
+        let undo = function() {api.setSequence(elems, oldseq, setComplementaryBases)};
+        let redo = function() {api.setSequence(elems, sequence, setComplementaryBases)}
+        super(undo, redo);
+    };
+}
+
 class RevertableTranslation extends RevertableEdit {
     constructor(translatedElements: Set<BasicElement>,translationVector: THREE.Vector3) {
         const elements = new Set(translatedElements);

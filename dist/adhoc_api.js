@@ -25,14 +25,6 @@ var api;
     }
     api.markStrand = markStrand;
     ;
-    function getSequence(strand) {
-        let seq = [];
-        let nucleotides = strand[monomers];
-        nucleotides.reverse().map((n) => seq.push(n.type));
-        return seq.join("");
-    }
-    api.getSequence = getSequence;
-    ;
     // get a dictionary with every strand length : [strand] listed   
     function countStrandLength(system = systems[0]) {
         let strandLength = {};
@@ -338,6 +330,47 @@ var api;
         render();
     }
     api.extendStrand = extendStrand;
+    function getSequence(elems) {
+        // Sort elements by their id, in 3' to 5' order
+        elems.sort((a, b) => { return a.name > b.name ? 1 : -1; });
+        let seq = "";
+        elems.forEach(e => seq += e.type);
+        return seq;
+    }
+    api.getSequence = getSequence;
+    ;
+    function setSequence(elems, sequence, setComplementaryBases) {
+        setComplementaryBases = setComplementaryBases || false;
+        // Sort elements by their id, in 3' to 5' order
+        elems.sort((a, b) => { return a.name > b.name ? 1 : -1; });
+        // Define a function to satisfy longCalculation callback
+        let set = function () {
+            let len = Math.min(elems.length, sequence.length);
+            for (let i = 0; i < len; i++) {
+                elems[i].changeType(sequence[i]);
+                if (setComplementaryBases) {
+                    let paired = elems[i].pair;
+                    if (paired) {
+                        paired.changeType(elems[i].getComplementaryType());
+                    }
+                }
+            }
+            for (let i = 0; i < systems.length; i++) {
+                systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+            }
+            render();
+        };
+        // If we need to find basepairs, do that first and wait
+        // for the calculation to finish. Otherwise, set the
+        // sequence immediately.
+        if (setComplementaryBases && elems[0].pair == null) {
+            longCalculation(findBasepairs, "Locating basepairs, please be patient...", set);
+        }
+        else {
+            set();
+        }
+    }
+    api.setSequence = setSequence;
     function createStrand(sequence) {
         //initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);

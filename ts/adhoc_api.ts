@@ -28,14 +28,6 @@ module api{
         return strand;
     };
 
-    export function getSequence(strand : Strand) : string {
-        let seq = [];
-        let nucleotides = strand[monomers]; 
-        nucleotides.reverse().map( 
-            (n: BasicElement) => seq.push(<string> n.type));
-        return seq.join("");
-    };
-
     // get a dictionary with every strand length : [strand] listed   
     export function countStrandLength(system = systems[0]) {
         let strandLength : { [index: number]: [Strand] } = {};
@@ -387,6 +379,49 @@ module api{
         addElements (end, sequence, tmpSys, direction, inverse, 0, elements.length);
 
         render();
+    }
+
+    export function getSequence(elems: BasicElement[]) : string {
+        // Sort elements by their id, in 3' to 5' order
+        elems.sort((a,b)=>{return a.name>b.name ? 1:-1});
+
+        let seq = "";
+        elems.forEach(e => seq += e.type);
+        return seq;
+    };
+
+    export function setSequence(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
+        setComplementaryBases = setComplementaryBases || false;
+
+        // Sort elements by their id, in 3' to 5' order
+        elems.sort((a,b)=>{return a.name>b.name ? 1:-1});
+
+        // Define a function to satisfy longCalculation callback
+        let set = function(){
+            let len = Math.min(elems.length, sequence.length);
+            for(let i=0; i<len; i++) {
+                elems[i].changeType(sequence[i]);
+                if (setComplementaryBases) {
+                    let paired = elems[i].pair;
+                    if(paired) {
+                        paired.changeType(elems[i].getComplementaryType());
+                    }
+                }
+            }
+            for (let i = 0; i < systems.length; i++) {
+                systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+            }
+            render();
+        }
+
+        // If we need to find basepairs, do that first and wait
+        // for the calculation to finish. Otherwise, set the
+        // sequence immediately.
+        if (setComplementaryBases && elems[0].pair == null) {
+            longCalculation(findBasepairs, "Locating basepairs, please be patient...", set);
+        } else {
+            set();
+        }
     }
 
     export function createStrand(sequence: string) {

@@ -381,6 +381,49 @@ class Nucleotide extends BasicElement {
         return dat;
     }
     ;
+    getTypeNumber() {
+        let c = this.type;
+        if (c == 'U') {
+            c = 'T';
+        }
+        let i = ['A', 'G', 'C', 'T'].indexOf(c);
+        if (i >= 0) {
+            return i;
+        }
+        else {
+            return parseInt(c);
+        }
+    }
+    changeType(type) {
+        this.type = type;
+        let sys = this.parent.parent;
+        let newC = this.elemToColor(type);
+        sys.fillVec('nsColors', 3, this.gid - sys.globalStartId, [newC.r, newC.g, newC.b]);
+    }
+    findPair() {
+        let bestCandidate = null;
+        let bestDist = 0.6;
+        let thisPos = this.getInstanceParameter3("nsOffsets");
+        let sys = this.parent.parent;
+        let strandCount = sys[strands].length;
+        for (let i = 0; i < strandCount; i++) { //for every strand in the System
+            let strand = sys[strands][i];
+            let nucCount = strand[monomers].length;
+            for (let j = 0; j < nucCount; j++) { // for every nucleotide on the Strand
+                let e = strand[monomers][j];
+                if (this.neighbor3 != e && this.neighbor5 != e &&
+                    this.getTypeNumber() != e.getTypeNumber() &&
+                    (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0) {
+                    let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
+                    if (dist < bestDist) {
+                        bestCandidate = e;
+                        bestDist = dist;
+                    }
+                }
+            }
+        }
+        return bestCandidate;
+    }
     getA3(xbb, ybb, zbb, x, y, z, xA1, yA1, zA1) {
         return new THREE.Vector3();
     }
@@ -445,6 +488,10 @@ class DNANucleotide extends Nucleotide {
             out.push([rb.x + start_pos.x, rb.y + start_pos.y, rb.z + start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
         return out;
+    }
+    getComplementaryType() {
+        var map = { A: 'T', G: 'C', C: 'G', T: 'A' };
+        return map[this.type];
     }
 }
 ;
@@ -517,6 +564,10 @@ class RNANucleotide extends Nucleotide {
             out.push([r1.x + start_pos.x + RNA_fudge.x, r1.y + start_pos.y + RNA_fudge.y, r1.z + start_pos.z + RNA_fudge.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]); //r1 needs to have a fudge factor from the RNA model added
         }
         return out;
+    }
+    getComplementaryType() {
+        var map = { A: 'U', G: 'C', C: 'G', U: 'A' };
+        return map[this.type];
     }
 }
 ;
@@ -999,6 +1050,19 @@ function setColoringMode(mode) {
         modes[i].checked = (modes[i].value === mode);
     }
     coloringChanged();
+}
+;
+function findBasepairs() {
+    elements.forEach(e => {
+        if (e instanceof Nucleotide) {
+            if (!e.pair) {
+                e.pair = e.findPair();
+                if (e.pair) {
+                    e.pair.pair = e;
+                }
+            }
+        }
+    });
 }
 ;
 function cross(a1, a2, a3, b1, b2, b3) {
