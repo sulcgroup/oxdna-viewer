@@ -157,6 +157,11 @@ class Nucleotide extends BasicElement {
         const xCon = (xbb + xns) / 2, yCon = (ybb + yns) / 2, zCon = (zbb + zns) / 2;
         // compute connector rotation
         const rotationCon = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(xCon - xns, yCon - yns, zCon - zns).normalize());
+        // compute connector length
+        let conLen = this.bbnsDist;
+        if ([xA1, yA1, zA1, xA3, yA3, zA3].every(x => x == 0)) {
+            conLen = 0;
+        }
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let xsp, ysp, zsp, spLen, spRotation;
         if (this.neighbor3 != null && (this.neighbor3.lid < this.lid || this.dummySys !== null)) {
@@ -193,7 +198,7 @@ class Nucleotide extends BasicElement {
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('scales', 3, sid, [1, 1, 1]);
         sys.fillVec('nsScales', 3, sid, [0.7, 0.3, 0.7]);
-        sys.fillVec('conScales', 3, sid, [1, this.bbnsDist, 1]);
+        sys.fillVec('conScales', 3, sid, [1, conLen, 1]);
         if (spLen == 0) {
             sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
         }
