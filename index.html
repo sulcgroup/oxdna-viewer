@@ -114,6 +114,7 @@
                     <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
                         title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
                     <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
+                    <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
                 </fieldset>
                 <fieldset>
                     <legend>Rotate:</legend>
@@ -286,6 +287,7 @@
         <script src="./dist/video.js"></script>
         <script src="./dist/UI.js"></script>
         <script src="./dist/clustering.js"></script>
+        <script src="./dist/dijkstra.js"></script>
     </div>
 </body>
 

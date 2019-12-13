@@ -26,24 +26,49 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 			let strandCount = sys[strands].length;
 			switch(getScopeMode()){
 				case "System" :
-					for (let i = 0; i < strandCount; i++){  //for every strand in the System
+					for (let i=0; i<strandCount; i++) {  //for every strand in the System
 						let strand = sys[strands][i];
 						let nucCount = strand[monomers].length;
-                        for (let j = 0; j < nucCount; j++) // for every nucleotide on the Strand
+                        for (let j=0; j<nucCount; j++) // for every nucleotide on the Strand
                             strand[monomers][j].toggle();
 					}
 					updateView(sys);
 					break;
 				case "Strand" :
 					let strandLength = nucleotide.parent[monomers].length;
-					for (let i = 0; i < strandLength; i++)  //for every nucleotide in strand
+					for (let i= 0; i < strandLength; i++) { //for every nucleotide in strand
 						nucleotide.parent[monomers][i].toggle();
+						if(selectPairs()) {
+							if (!nucleotide.isPaired()) {
+								longCalculation(findBasepairs, basepairMessage,
+								()=>{selectPaired(nucleotide.parent[monomers][i]);updateView(sys);});
+							} else {
+								selectPaired(nucleotide.parent[monomers][i]);
+							}
+						}
+					}
 					updateView(sys);
 					break;
 				case "Monomer":
 					nucleotide.toggle();
 					if(event.shiftKey) {
-						selectIntermediate();
+						if(selectPairs()){
+							if(!nucleotide.isPaired()) {
+								longCalculation(findBasepairs, basepairMessage,
+								()=>{fancySelectIntermediate(nucleotide);updateView(sys);});
+							} else {
+								fancySelectIntermediate(nucleotide);
+							}
+						} else {
+							selectIntermediate();
+						}
+					} else if(selectPairs()) {
+						if(!nucleotide.isPaired()) {
+							longCalculation(findBasepairs, basepairMessage,
+							()=>{selectPaired(nucleotide);updateView(sys);});
+						} else {
+							selectPaired(nucleotide);
+						}
 					}
 					updateView(sys);
 					break;
@@ -140,7 +165,7 @@ function clearSelection() {
 
 function invertSelection() {
 	elements.forEach(element => {
-			element.toggle();
+		element.toggle();
 	});
 	systems.forEach(sys => {
 		updateView(sys);
@@ -156,6 +181,40 @@ function selectAll() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
+}
+
+function selectPaired(e: BasicElement) {
+	if (e instanceof Nucleotide) {
+		let pair = (<Nucleotide>e).pair;
+		if (pair) {
+			pair.toggle();
+		}
+	}
+}
+
+function fancySelectIntermediate(e: BasicElement) {
+	let paired = selectPairs();
+	let d = new Dijkstra(elements, paired);
+	let elems;
+	longCalculation(()=>{
+		elems = d.shortestPath(e, Array.from(selectedBases));
+	},"Calculating intermediate elements...",
+	()=>{
+		elems.forEach(e=>{
+			let elem = elements[e];
+			if (!selectedBases.has(elem)) {
+				elem.toggle();
+			}
+			if (paired && elem instanceof Nucleotide){
+				let pair = (<Nucleotide>elem).pair;
+				if(pair && !selectedBases.has(pair)) {
+					pair.toggle();
+				}
+			}
+		});
+		updateView(e.parent.parent);
+	});
+	
 }
 
 function selectIntermediate() {

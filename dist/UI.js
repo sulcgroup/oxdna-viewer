@@ -92,6 +92,7 @@ function notify(message) {
     noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
 }
+let basepairMessage = "Locating basepairs, please be patient...";
 function longCalculation(calc, message, callback) {
     // Create an information modal
     const modal = document.getElementById('pause');
