@@ -893,20 +893,32 @@ class AminoAcid extends BasicElement {
         let aaColor: THREE.Color;
         if (selectedBases.has(this)) {
             bbColor = selectionColor;
+            aaColor = selectionColor;
         } else {
             switch (getColoringMode()) {
-                case "Strand": bbColor = backboneColors[(Math.abs(this.parent.strandID) + this.parent.parent.systemID) % backboneColors.length]; break;
-                case "System": bbColor = backboneColors[this.parent.parent.systemID % backboneColors.length]; break;
+                case "Strand": 
+                    bbColor = backboneColors[(Math.abs(this.parent.strandID) + this.parent.parent.systemID) % backboneColors.length]; 
+                    aaColor = this.elemToColor(this.type);
+                    break;
+                case "System": 
+                    bbColor = backboneColors[this.parent.parent.systemID % backboneColors.length]; 
+                    aaColor = this.elemToColor(this.type);
+                    break;
                 case "Cluster":
                     if(!this.clusterId || this.clusterId < 0) {
-                        bbColor = new THREE.Color(0xE60A0A)
+                        bbColor = new THREE.Color(0xE60A0A);
+                        aaColor = bbColor.clone();
                     } else {
                         bbColor = backboneColors[this.clusterId % backboneColors.length];
-                    } break;
-                case "Overlay": bbColor = sys.lutCols[sid]; break;
+                        aaColor = bbColor.clone();
+                    } 
+                    break;
+                case "Overlay": 
+                    bbColor = sys.lutCols[sid]; 
+                    aaColor = bbColor.clone()
+                    break;
             }
         }
-        aaColor = this.elemToColor(this.type);
         sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
         sys.fillVec('nsColors', 3, sid, [aaColor.r, aaColor.g, aaColor.b]);
     }
