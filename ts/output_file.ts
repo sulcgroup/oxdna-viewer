@@ -92,13 +92,23 @@ function makeSelectedBasesFile() { //make selected base file by addign listBases
     makeTextFile("baseListFile", listBases.join(", "));
 }
 
+function makeSequenceFile() {
+    let seqTxts = [];
+    systems.forEach((sys: System)=>{
+        sys[strands].forEach((strand: BasicElement)=>{
+            seqTxts.push(`seq_${strand.id}, ${api.getSequence(strand[monomers])}`);
+      })
+    });
+    makeTextFile("sequences.csv", seqTxts.join("\n"));
+}
+
 let textFile: string;
 function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
-	let blob = new Blob([text], {type:'text'});
-	var elem = window.document.createElement('a');
-                elem.href = window.URL.createObjectURL(blob);
-                elem.download = filename;
-                document.body.appendChild(elem);
-                elem.click();
-                document.body.removeChild(elem);
+    let blob = new Blob([text], {type:'text'});
+    var elem = window.document.createElement('a');
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
 };

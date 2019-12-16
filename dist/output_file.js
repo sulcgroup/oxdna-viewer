@@ -80,6 +80,15 @@ function makeMutualTrapFile() {
 function makeSelectedBasesFile() {
     makeTextFile("baseListFile", listBases.join(", "));
 }
+function makeSequenceFile() {
+    let seqTxts = [];
+    systems.forEach((sys) => {
+        sys[strands].forEach((strand) => {
+            seqTxts.push(`seq_${strand.id}, ${api.getSequence(strand[monomers])}`);
+        });
+    });
+    makeTextFile("sequences.csv", seqTxts.join("\n"));
+}
 let textFile;
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });
