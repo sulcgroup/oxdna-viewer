@@ -331,8 +331,8 @@ var api;
     }
     api.extendStrand = extendStrand;
     function getSequence(elems) {
-        // Sort elements by their id, in 3' to 5' order
-        elems.sort((a, b) => { return a.name > b.name ? 1 : -1; });
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a, b) => { return a.name < b.name ? 1 : -1; });
         let seq = "";
         elems.forEach(e => seq += e.type);
         return seq;
@@ -341,8 +341,8 @@ var api;
     ;
     function setSequence(elems, sequence, setComplementaryBases) {
         setComplementaryBases = setComplementaryBases || false;
-        // Sort elements by their id, in 3' to 5' order
-        elems.sort((a, b) => { return a.name > b.name ? 1 : -1; });
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a, b) => { return a.name < b.name ? 1 : -1; });
         // Define a function to satisfy longCalculation callback
         let set = function () {
             let len = Math.min(elems.length, sequence.length);

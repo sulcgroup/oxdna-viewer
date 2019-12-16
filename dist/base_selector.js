@@ -133,7 +133,7 @@ function updateView(sys) {
         //fish out all the required base info
         //one could also sort it if neaded ...
         for (let i = 0; i < sBases.length; i++) {
-            baseInfoLines.push(["gid:", sBases[i].gid, "|", "lID:", sBases[i].lid].join(" "));
+            baseInfoLines.push([sBases[i].type, "|", "gid:", sBases[i].gid, "|", "lID:", sBases[i].lid].join(" "));
         }
     }
     makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
