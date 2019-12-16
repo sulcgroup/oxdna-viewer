@@ -56,6 +56,7 @@
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
             <button onclick="toggleOptions('fileOptions')" type="button" title="Options for downloading the current scene">Download Output Files</button>
+            <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
             <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
 
             <!--Centering-->
@@ -114,6 +115,7 @@
                     <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
                         title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
                     <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
+                    <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
                 </fieldset>
                 <fieldset>
                     <legend>Rotate:</legend>
@@ -287,6 +289,7 @@
         <script src="./dist/video.js"></script>
         <script src="./dist/UI.js"></script>
         <script src="./dist/clustering.js"></script>
+        <script src="./dist/dijkstra.js"></script>
         <script src="./dist/vr.js"></script>
     </div>
 </body>

@@ -382,8 +382,8 @@ module api{
     }
 
     export function getSequence(elems: BasicElement[]) : string {
-        // Sort elements by their id, in 3' to 5' order
-        elems.sort((a,b)=>{return a.name>b.name ? 1:-1});
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a,b)=>{return a.name<b.name ? 1:-1});
 
         let seq = "";
         elems.forEach(e => seq += e.type);
@@ -393,8 +393,8 @@ module api{
     export function setSequence(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
         setComplementaryBases = setComplementaryBases || false;
 
-        // Sort elements by their id, in 3' to 5' order
-        elems.sort((a,b)=>{return a.name>b.name ? 1:-1});
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a,b)=>{return a.name<b.name ? 1:-1});
 
         // Define a function to satisfy longCalculation callback
         let set = function(){
@@ -417,8 +417,8 @@ module api{
         // If we need to find basepairs, do that first and wait
         // for the calculation to finish. Otherwise, set the
         // sequence immediately.
-        if (setComplementaryBases && elems[0].pair == null) {
-            longCalculation(findBasepairs, "Locating basepairs, please be patient...", set);
+        if (setComplementaryBases && !elems[0].isPaired) {
+            longCalculation(findBasepairs, basepairMessage, set);
         } else {
             set();
         }

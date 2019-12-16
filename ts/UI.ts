@@ -99,6 +99,7 @@ function notify(message: string) {
     setTimeout(remove, 5000);
 }
 
+let basepairMessage = "Locating basepairs, please be patient...";
 function longCalculation(calc: () => void, message: string, callback?: () => void) {
     // Create an information modal
     const modal = document.getElementById('pause');

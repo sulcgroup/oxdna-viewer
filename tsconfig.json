@@ -26,6 +26,7 @@
         "./ts/editing.ts", 
         "./ts/video.ts",
         "./ts/UI.ts",
-        "./ts/clustering.ts"
+        "./ts/clustering.ts",
+        "./ts/dijkstra.ts"
     ]
 }

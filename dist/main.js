@@ -65,6 +65,9 @@ class BasicElement extends THREE.Group {
     }
     rotate(quat) {
     }
+    isPaired() {
+        return false;
+    }
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name) {
@@ -428,6 +431,9 @@ class Nucleotide extends BasicElement {
             }
         }
         return bestCandidate;
+    }
+    isPaired() {
+        return this.pair ? true : false;
     }
     getA3(xbb, ybb, zbb, x, y, z, xA1, yA1, zA1) {
         return new THREE.Vector3();

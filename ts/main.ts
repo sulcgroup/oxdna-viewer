@@ -94,6 +94,10 @@ class BasicElement extends THREE.Group{
 
     }
 
+    isPaired() {
+        return false;
+    }
+
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name: string) {
@@ -568,6 +572,10 @@ abstract class Nucleotide extends BasicElement {
             }
         }
         return bestCandidate;
+    }
+
+    isPaired() {
+        return this.pair? true : false;
     }
 
     getA3(xbb: number, ybb: number, zbb: number, x: number, y: number, z: number, xA1: number, yA1: number, zA1: number): THREE.Vector3 {

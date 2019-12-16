@@ -24,6 +24,10 @@ function getAngle(): number {
     return (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
 }
 
+function selectPairs(): boolean {
+    return (<HTMLInputElement>document.getElementById("selectPairs")).checked;
+}
+
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order
 //So when you need to convert between them...
