@@ -66,7 +66,8 @@ class RigidClusterSimulator {
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
 
-            // Calculate repulsion between clusters
+            // Calculate simple linear repulsion between clusters
+            // If distance is less than sum of radii, push apart.
             this.clusters.forEach((other) => {
                 if (c !== other) {
                     let f = c.getPosition().sub(other.getPosition());
@@ -88,7 +89,7 @@ class RigidClusterSimulator {
     };
 
     /**
-     * Start simulation and run while checbox is checked
+     * Start simulation and run while checkbox is checked
      */
     public simulate() {
         this.integrate(0.1);
@@ -108,9 +109,8 @@ class Cluster {
     private conPoints: ClusterConnectionPoint[] = [];
     private clusterElements: Set<BasicElement>;
 
-    private elementMass = 0.01;
-    private connectionRelaxedLength = 1;
-    private connectionSpringConst = 5;
+    private connectionRelaxedLength = 3;
+    private connectionSpringConst = 10;
     private friction = 0.25;
     
     private radius: number;
@@ -132,7 +132,7 @@ class Cluster {
      */
     constructor(clusterElements: Set<BasicElement>) {
         this.clusterElements = clusterElements;
-        this.mass = clusterElements.size * this.elementMass;
+        this.mass = 25;
 
         this.calculateCenter();
 

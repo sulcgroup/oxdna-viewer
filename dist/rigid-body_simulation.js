@@ -59,7 +59,8 @@ class RigidClusterSimulator {
         this.clusters.forEach((c) => {
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
-            // Calculate repulsion between clusters
+            // Calculate simple linear repulsion between clusters
+            // If distance is less than sum of radii, push apart.
             this.clusters.forEach((other) => {
                 if (c !== other) {
                     let f = c.getPosition().sub(other.getPosition());
@@ -77,7 +78,7 @@ class RigidClusterSimulator {
     }
     ;
     /**
-     * Start simulation and run while checbox is checked
+     * Start simulation and run while checkbox is checked
      */
     simulate() {
         this.integrate(0.1);
@@ -99,16 +100,15 @@ class Cluster {
      */
     constructor(clusterElements) {
         this.conPoints = [];
-        this.elementMass = 0.01;
-        this.connectionRelaxedLength = 1;
-        this.connectionSpringConst = 5;
+        this.connectionRelaxedLength = 3;
+        this.connectionSpringConst = 10;
         this.friction = 0.25;
         this.linearVelocity = new THREE.Vector3(); // v
         this.angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
         this.totalTranslation = new THREE.Vector3();
         this.totalRotation = new THREE.Quaternion();
         this.clusterElements = clusterElements;
-        this.mass = clusterElements.size * this.elementMass;
+        this.mass = 25;
         this.calculateCenter();
         this.radius = 0;
         clusterElements.forEach((e) => {
