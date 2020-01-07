@@ -95,7 +95,7 @@ var api;
             elements.push(c);
             c = c.neighbor3;
         }
-        return elements.reverse();
+        return elements;
     }
     api.trace53 = trace53;
     function trace35(element) {
@@ -105,7 +105,7 @@ var api;
             elements.push(c);
             c = c.neighbor5;
         }
-        return elements.reverse();
+        return elements;
     }
     api.trace35 = trace35;
     function splitStrand(element) {
@@ -332,7 +332,7 @@ var api;
     api.extendStrand = extendStrand;
     function getSequence(elems) {
         // Sort elements by their id, in 5' to 3' order
-        elems.sort((a, b) => { return a.name < b.name ? 1 : -1; });
+        elems.sort((a, b) => { return a.lid < b.lid ? 1 : -1; });
         let seq = "";
         elems.forEach(e => seq += e.type);
         return seq;

@@ -84,7 +84,7 @@ function makeSequenceFile() {
     let seqTxts = [];
     systems.forEach((sys) => {
         sys[strands].forEach((strand) => {
-            seqTxts.push(`seq_${strand.id}, ${api.getSequence(strand[monomers])}`);
+            seqTxts.push(`seq_${strand.strandID}, ${api.getSequence(strand[monomers])}`);
         });
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));

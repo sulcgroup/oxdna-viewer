@@ -100,7 +100,7 @@ module api{
             elements.push(c);
             c = c.neighbor3;
         }
-        return elements.reverse();
+        return elements;
     }
 
     export function trace35(element: BasicElement): BasicElement[]{
@@ -110,7 +110,7 @@ module api{
             elements.push(c);
             c = c.neighbor5;
         }
-        return elements.reverse();
+        return elements;
     }
 
     function splitStrand(element: BasicElement) {
@@ -383,7 +383,7 @@ module api{
 
     export function getSequence(elems: BasicElement[]) : string {
         // Sort elements by their id, in 5' to 3' order
-        elems.sort((a,b)=>{return a.name<b.name ? 1:-1});
+        elems.sort((a,b)=>{return a.lid<b.lid ? 1:-1});
 
         let seq = "";
         elems.forEach(e => seq += e.type);

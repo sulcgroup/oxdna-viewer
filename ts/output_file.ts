@@ -95,8 +95,8 @@ function makeSelectedBasesFile() { //make selected base file by addign listBases
 function makeSequenceFile() {
     let seqTxts = [];
     systems.forEach((sys: System)=>{
-        sys[strands].forEach((strand: BasicElement)=>{
-            seqTxts.push(`seq_${strand.id}, ${api.getSequence(strand[monomers])}`);
+        sys[strands].forEach((strand: Strand)=>{
+            seqTxts.push(`seq_${strand.strandID}, ${api.getSequence(strand[monomers])}`);
       })
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));
