@@ -164,23 +164,25 @@ class BasicElement extends THREE.Group{
     handleCircularStrands(sys, sid, xbb, ybb, zbb) {
         if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
             this.parent.circular = true;
-            let xbbLast = sys.bbOffsets[this.neighbor5.gid * 3],
+            const xbbLast = sys.bbOffsets[this.neighbor5.gid * 3],
             ybbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 1],
             zbbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 2];
 
-            let xsp = (xbb + xbbLast) / 2, 
+            const xsp = (xbb + xbbLast) / 2, 
             ysp = (ybb + ybbLast) / 2,
             zsp = (zbb + zbbLast) / 2;
 
-            let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+            const spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
 
-            let spRotation = new THREE.Quaternion().setFromUnitVectors(
+            const spRotation = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
             );
 
-            sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
-            sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+            const sid5 = this.neighbor5.gid - sys.globalStartId
+
+            sys.fillVec('bbconOffsets', 3, sid5, [xsp, ysp, zsp]);
+            sys.fillVec('bbconRotation', 4, sid5, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+            sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
     }
 
