@@ -80,3 +80,7 @@ If you want to extend the code for your own purposes, you will also need to inst
    tsc needs to be run every time you make changes to the Typescript.  If you run tsc with the -w flag it will continuously watch for file changes.  
 7) The compiled Javascript will be in the dist/ directory  
 8) Open index.html in any browser (Chrome works best)
+
+## Citation
+If you use oxView or our oxDNA analysis package in your research, please cite:  
+Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Petr Sulc: Tools for visualization, editing, and simulation analysis of large DNA and RNA nanostructures, in preparation.  (pre-print coming soon!)
