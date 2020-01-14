@@ -52,7 +52,7 @@ In addition to the visualization and editing features highlighted in the sidebar
  * `setColorBounds(<min>, <max>)`: Change the upper and lower limits of the colorbar to min/max.  Defaults are the upper and lower bounds of the provided dataset.  
  * `spOnly()`: remove all objects from the scene except the backbone cyllinders.  Creates an effect similar to licorice display options in other molecular viewers.  
  * `showEverything()`: Resets all visibility parameters to default values.  
- * `switchCamera()`: Toggles between perspective and orthographic camera.  Note that orbit controls does not support zooming in orthographic camera mode.
+ * `switchCamera()`: Toggles between perspective and orthographic camera.  Note that orbit controls does not support zooming in orthographic camera mode.  Hooked up to the "Orthographic"/"Perspective" button in the sidebar.
 
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0][strands][5][monomers][1].  There is also an array of all monomers indexed by global id, so the 1000th monomer can be accessed by elements[999].
 
