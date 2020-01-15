@@ -74,7 +74,7 @@ class BasicElement extends THREE.Group {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         const x = sys[name][sid * 3], y = sys[name][sid * 3 + 1], z = sys[name][sid * 3 + 2];
         return new THREE.Vector3(x, y, z);
@@ -85,7 +85,7 @@ class BasicElement extends THREE.Group {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         const x = sys[name][sid * 4], y = sys[name][sid * 4 + 1], z = sys[name][sid * 4 + 2], w = sys[name][sid * 4 + 3];
         return new THREE.Vector4(x, y, z, w);
@@ -96,7 +96,7 @@ class BasicElement extends THREE.Group {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         sys.fillVec(name, data.length, sid, data);
     }
@@ -105,7 +105,7 @@ class BasicElement extends THREE.Group {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         const visibility = this.getInstanceParameter3('visibility');
         visibility.addScalar(-1);
@@ -137,7 +137,7 @@ class Nucleotide extends BasicElement {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
@@ -220,22 +220,26 @@ class Nucleotide extends BasicElement {
     }
     ;
     translatePosition(amount) {
-        const sys = this.parent.parent, id = (this.gid - sys.globalStartId) * 3;
-        sys.bbOffsets[id] += amount.x;
-        sys.bbOffsets[id + 1] += amount.y;
-        sys.bbOffsets[id + 2] += amount.z;
-        sys.nsOffsets[id] += amount.x;
-        sys.nsOffsets[id + 1] += amount.y;
-        sys.nsOffsets[id + 2] += amount.z;
-        sys.conOffsets[id] += amount.x;
-        sys.conOffsets[id + 1] += amount.y;
-        sys.conOffsets[id + 2] += amount.z;
-        sys.bbconOffsets[id] += amount.x;
-        sys.bbconOffsets[id + 1] += amount.y;
-        sys.bbconOffsets[id + 2] += amount.z;
-        sys.cmOffsets[id] += amount.x;
-        sys.cmOffsets[id + 1] += amount.y;
-        sys.cmOffsets[id + 2] += amount.z;
+        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+            sid = this.sid;
+        }
+        sys.bbOffsets[sid * 3] += amount.x;
+        sys.bbOffsets[sid * 3 + 1] += amount.y;
+        sys.bbOffsets[sid * 3 + 2] += amount.z;
+        sys.nsOffsets[sid * 3] += amount.x;
+        sys.nsOffsets[sid * 3 + 1] += amount.y;
+        sys.nsOffsets[sid * 3 + 2] += amount.z;
+        sys.conOffsets[sid * 3] += amount.x;
+        sys.conOffsets[sid * 3 + 1] += amount.y;
+        sys.conOffsets[sid * 3 + 2] += amount.z;
+        sys.bbconOffsets[sid * 3] += amount.x;
+        sys.bbconOffsets[sid * 3 + 1] += amount.y;
+        sys.bbconOffsets[sid * 3 + 2] += amount.z;
+        sys.cmOffsets[sid * 3] += amount.x;
+        sys.cmOffsets[sid * 3 + 1] += amount.y;
+        sys.cmOffsets[sid * 3 + 2] += amount.z;
     }
     //different in DNA and RNA
     calcBBPos(x, y, z, xA1, yA1, zA1, xA2, yA2, zA2, xA3, yA3, zA3) {
@@ -246,7 +250,7 @@ class Nucleotide extends BasicElement {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
@@ -312,7 +316,7 @@ class Nucleotide extends BasicElement {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         let color;
         if (selectedBases.has(this)) {
@@ -709,7 +713,7 @@ class AminoAcid extends BasicElement {
         let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.lid;
+            sid = this.sid;
         }
         let bbColor;
         let aaColor;

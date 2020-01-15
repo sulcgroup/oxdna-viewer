@@ -79,7 +79,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
-            sid = base.lid;
+            sid = base.sid;
         }
 
         //get current positions
@@ -197,7 +197,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
-            sid = base.lid;
+            sid = base.sid;
         }
 
         let cmPos = base.getInstanceParameter3("cmOffsets");

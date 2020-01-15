@@ -35,6 +35,7 @@ render();
 class BasicElement extends THREE.Group{
     lid: number;
     gid: number; //location in world - all systems
+    sid: number; //in-system ID, only used if in a temporary system
     neighbor3: BasicElement | null;
     neighbor5: BasicElement | null;
     parent: Strand;
@@ -105,7 +106,7 @@ class BasicElement extends THREE.Group{
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
 
         const x: number = sys[name][sid * 3],
@@ -122,7 +123,7 @@ class BasicElement extends THREE.Group{
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
 
         const x: number = sys[name][sid * 4],
@@ -140,7 +141,7 @@ class BasicElement extends THREE.Group{
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
         
         sys.fillVec(name, data.length, sid, data);
@@ -152,7 +153,7 @@ class BasicElement extends THREE.Group{
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
 
         const visibility = this.getInstanceParameter3('visibility');
@@ -204,7 +205,7 @@ abstract class Nucleotide extends BasicElement {
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
 
         //extract position
@@ -325,28 +326,32 @@ abstract class Nucleotide extends BasicElement {
     };
 
     translatePosition(amount: THREE.Vector3) {
-        const sys = this.parent.parent,
-            id = (this.gid - sys.globalStartId)*3;
+        let sys = this.parent.parent,
+            sid = this.gid - sys.globalStartId;
+        if (this.dummySys !== null) {
+            sys = this.dummySys
+            sid = this.sid;
+        }
 
-        sys.bbOffsets[id] += amount.x;
-        sys.bbOffsets[id + 1] += amount.y;
-        sys.bbOffsets[id + 2] += amount.z;
+        sys.bbOffsets[sid * 3] += amount.x;
+        sys.bbOffsets[sid * 3 + 1] += amount.y;
+        sys.bbOffsets[sid * 3 + 2] += amount.z;
 
-        sys.nsOffsets[id] += amount.x;
-        sys.nsOffsets[id + 1] += amount.y;
-        sys.nsOffsets[id + 2] += amount.z;
+        sys.nsOffsets[sid * 3] += amount.x;
+        sys.nsOffsets[sid * 3 + 1] += amount.y;
+        sys.nsOffsets[sid * 3 + 2] += amount.z;
 
-        sys.conOffsets[id] += amount.x;
-        sys.conOffsets[id + 1] += amount.y;
-        sys.conOffsets[id + 2] += amount.z;
+        sys.conOffsets[sid * 3] += amount.x;
+        sys.conOffsets[sid * 3 + 1] += amount.y;
+        sys.conOffsets[sid * 3 + 2] += amount.z;
 
-        sys.bbconOffsets[id] += amount.x;
-        sys.bbconOffsets[id + 1] += amount.y;
-        sys.bbconOffsets[id + 2] += amount.z;
+        sys.bbconOffsets[sid * 3] += amount.x;
+        sys.bbconOffsets[sid * 3 + 1] += amount.y;
+        sys.bbconOffsets[sid * 3 + 2] += amount.z;
 
-        sys.cmOffsets[id] += amount.x;
-        sys.cmOffsets[id + 1] += amount.y;
-        sys.cmOffsets[id + 2] += amount.z;
+        sys.cmOffsets[sid * 3] += amount.x;
+        sys.cmOffsets[sid * 3 + 1] += amount.y;
+        sys.cmOffsets[sid * 3 + 2] += amount.z;
     }
 
     //different in DNA and RNA
@@ -359,7 +364,7 @@ abstract class Nucleotide extends BasicElement {
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
 
         //extract position
@@ -459,7 +464,7 @@ abstract class Nucleotide extends BasicElement {
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
         let color: THREE.Color;
         if (selectedBases.has(this)) {
@@ -897,7 +902,7 @@ class AminoAcid extends BasicElement {
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
-            sid = this.lid;
+            sid = this.sid;
         }
         let bbColor: THREE.Color;
         let aaColor: THREE.Color;

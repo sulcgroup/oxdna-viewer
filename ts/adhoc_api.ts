@@ -71,7 +71,7 @@ module api{
                 let sid = n.gid - sys.globalStartId
                 if (n.dummySys !== null) {
                     sys = n.dummySys
-                    sid = n.lid;
+                    sid = n.sid;
                 }
                 //because the precision of the stored color value (32-bit) and defined color value (64-bit) are different,
                 //you have to do some weird casting to get them to be comparable.
@@ -114,18 +114,21 @@ module api{
     }
 
     function splitStrand(element: BasicElement) {
-        let sys = element.parent.parent,
+        const sys = element.parent.parent,
             strand = element.parent;
         // nucleotides which are after the nick
-        let orphans : BasicElement[] = trace35(element);
+        const orphans : BasicElement[] = trace35(element);
         strand.excludeElements(orphans);
 
         //create fill and deploy new strand 
-        let new_strand = strand.parent.createStrand(strand.parent[strands].length + 1);
-        strand.parent.addStrand(new_strand);
+        const newStrand = strand.parent.createStrand(strand.parent[strands].length + 1);
+        strand.parent.addStrand(newStrand);
+        let lidCounter = 0
         orphans.forEach(
             (e) => {
-                new_strand.addBasicElement(e);
+                newStrand.addBasicElement(e);
+                e.lid = lidCounter;
+                lidCounter += 1;
                 e.updateColor();
             }
         );
@@ -147,7 +150,7 @@ module api{
             sid = element.gid - sys.globalStartId;
         if (element.dummySys !== null) {
             sys = element.dummySys
-            sid = element.lid;
+            sid = element.sid;
         }
         // we break connection to the 3' neighbor 
         let neighbor =  element.neighbor3;
@@ -193,6 +196,7 @@ module api{
                 copyInstances(strand2[monomers][i], i, tmpSys)
                 strand2[monomers][i].setInstanceParameter('visibility', [0,0,0])
                 strand2[monomers][i].dummySys = tmpSys;
+                strand2[monomers][i].sid = i;
             }
             sys3.callUpdates(['instanceVisibility'])
             addSystemToScene(tmpSys);
@@ -208,18 +212,31 @@ module api{
             //remove strand2 object 
             strand2.parent.remove(strand2);
         }
+        else{
+            strand1.circular = true;
+        }
+
+        // Strand id update
+        let strID = 1; 
+        sys5[strands].forEach((strand) =>strand.strandID = strID++);
+        if (sys3 !== sys5) {
+            sys3[strands].forEach((strand) =>strand.strandID = strID++);
+        }
 
         // and add them back into strand1 
         //create fill and deploy new strand 
-        let i = 0;
+        let i = end5.lid+1;
         bases2.forEach(
             (n) => {
                 strand1.addBasicElement(n);
-                n.updateColor();
                 n.lid = i;
                 i++;
             }
         );
+
+        //since strand IDs were updated, we also need to update the coloring
+        coloringChanged();
+
         //connect the 2 element objects 
         end5.neighbor5 = end3;
         end3.neighbor3 = end5;
@@ -236,7 +253,7 @@ module api{
             zbbLast = p1.z;
 
 
-        let xsp = (xbb + xbbLast) / 2, //sugar phospate position in center of both current and last sugar phosphates
+        let xsp = (xbb + xbbLast) / 2,
             ysp = (ybb + ybbLast) / 2,
             zsp = (zbb + zbbLast) / 2;
 
@@ -250,21 +267,13 @@ module api{
         end3.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         end3.setInstanceParameter('bbconScales', [1, spLen, 1]);
 
-        sys5.callUpdates(["instanceOffset"]);
-        sys5.callUpdates(["instanceScale"]);
-        sys5.callUpdates(["instanceColor"]);
-        sys5.callUpdates(["instanceRotation"]);
+        sys5.callUpdates(["instanceOffset", "instanceScale", "instanceColor", "instanceRotation", "instanceVisibility"]);
+        sys3.callUpdates(["instanceOffset", "instanceScale", "instanceColor", "instanceRotation", "instanceVisibility"]);
+
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
                 s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility'])
             });
-        }
-
-        // Strand id update
-        let strID = 1; 
-        sys5[strands].forEach((strand) =>strand.strandID = strID++);
-        if (sys3 !== sys5) {
-            sys3[strands].forEach((strand) =>strand.strandID = strID++);
         }
         render();
     }
@@ -319,6 +328,7 @@ module api{
             let e = strand.createBasicElement(gidCounter);
             elements[gidCounter] = e;
             e.lid = lidCounter;
+            e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
             last[direction] = e;
             e[inverse] = last;
@@ -441,6 +451,7 @@ module api{
         gidCounter++;
         e.dummySys = tmpSys;
         e.lid = 0;
+        e.sid = 0;
         e.type = sequence[0];
         e.neighbor3 = null;
         strand.addBasicElement(e);
