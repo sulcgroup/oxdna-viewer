@@ -58,8 +58,10 @@ function colorOptions() {
 
         //actually update things in the scene
         for (let i=0; i<elements.length; i++) {
-            if (!selectedBases.has(elements[i]))
-                elements[i].updateColor();
+            if (elements[i].parent != null) { //deleted particles are not removed from the element list until api.cleanOrder() is called.
+                if (!selectedBases.has(elements[i]))
+                  elements[i].updateColor();
+            }
         }
         for (let i = 0; i < systems.length; i++){
             systems[i].callUpdates(['instanceColor'])

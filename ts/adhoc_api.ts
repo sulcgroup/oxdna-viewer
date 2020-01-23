@@ -67,6 +67,7 @@ module api{
     export function toggleBaseColors() {
         elements.map(
             (n: BasicElement) => {
+                if (n.parent == null) return
                 let sys = n.parent.parent
                 let sid = n.gid - sys.globalStartId
                 if (n.dummySys !== null) {
@@ -89,6 +90,11 @@ module api{
         )
         for (let i = 0; i < systems.length; i++) {
             systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+        }
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach ((s) => {
+                s.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+            })
         }
         render();
     }
@@ -402,6 +408,9 @@ module api{
 
     export function setSequence(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
         setComplementaryBases = setComplementaryBases || false;
+        if (elems.length != sequence.length) {
+            notify(`You have ${elems.length} particles selected and ${sequence.length} letters in the sequence...doing my best`)
+        }
 
         // Sort elements by their id, in 5' to 3' order
         elems.sort((a,b)=>{return a.name<b.name ? 1:-1});
@@ -435,6 +444,14 @@ module api{
     }
 
     export function createStrand(sequence: string) {
+
+        //assume the input sequence is 5' -> 3'
+        //but oxDNA is 3' -> 5'
+        //so we reverse it.
+        let tmp:string[] = sequence.split(""); 
+        tmp = tmp.reverse(); 
+        sequence = tmp.join("");
+
         //initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);

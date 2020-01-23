@@ -1302,7 +1302,8 @@ function coloringChanged() {
     }
 
     for (let i = 0; i < elements.length; i++) {
-        elements[i].updateColor();
+        if (elements[i].parent !== null) {
+            elements[i].updateColor();}
     }
     for (let i = 0; i < systems.length; i++) {
         systems[i].callUpdates(['instanceColor']);

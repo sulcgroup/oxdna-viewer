@@ -25,7 +25,15 @@ function makeTopFile(name) {
     }
     top.push(totNuc + " " + totStrands);
     for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
-        let tl = [elements[i].parent.strandID, elements[i].type]; //strand id in global world + base type
+        let tl;
+        try {
+            //deleted particles are not removed from the element list until api.cleanOrder() is called.
+            tl = [elements[i].parent.strandID, elements[i].type]; //strand id in global world + base type
+        }
+        catch (err) {
+            notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
+            return;
+        }
         let neighbor3 = elements[i].neighbor3;
         let neighbor5 = elements[i].neighbor5;
         if (neighbor3 === null || neighbor3 === undefined)
@@ -44,7 +52,15 @@ function makeDatFile(name) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     for (let i = 0; i < elements.length; i++) { //for all elements
-        let p = elements[i].getInstanceParameter3("cmOffsets");
+        let p;
+        try {
+            //deleted particles are not removed from the element list until api.cleanOrder() is called.
+            p = elements[i].getInstanceParameter3("cmOffsets");
+        }
+        catch (err) {
+            notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
+            return;
+        }
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     }
     let dat = "";
