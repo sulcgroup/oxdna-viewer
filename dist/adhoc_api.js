@@ -62,7 +62,7 @@ var api;
     api.toggleAll = toggleAll;
     //toggles the nuceloside colors on and off
     function toggleBaseColors() {
-        elements.map((n) => {
+        elements.forEach((n) => {
             if (n.parent == null)
                 return;
             let sys = n.parent.parent;
@@ -268,6 +268,8 @@ var api;
             }
             e.toggleVisibility();
             e.parent.excludeElements([e]);
+            elements.delete(e.gid);
+            selectedBases.delete(e);
         });
         needsUpdateList.forEach((s) => {
             s.callUpdates(['instanceVisibility', 'instanceScale']);
@@ -283,7 +285,7 @@ var api;
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
             let e = strand.createBasicElement(gidCounter);
-            elements[gidCounter] = e;
+            elements.set(e.gid, e);
             e.lid = lidCounter;
             e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
@@ -295,7 +297,8 @@ var api;
             gidCounter++;
             lidCounter++;
         }
-        elements.slice(-1)[0][direction] = null;
+        // Make last element end of strand
+        last[direction] = null;
         let e = end[direction];
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
@@ -309,7 +312,7 @@ var api;
         //its not worth slowing down everything to avoid this for loop
         //which is much more of an edge case anyway.
         e = end;
-        while (e !== null) {
+        while (e && e[direction]) {
             calcsp(e);
             e = e[direction];
         }
@@ -339,7 +342,7 @@ var api;
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
-        addElements(end, sequence, tmpSys, direction, inverse, 0, elements.length);
+        addElements(end, sequence, tmpSys, direction, inverse, 0, elements.size);
         render();
     }
     api.extendStrand = extendStrand;
@@ -398,7 +401,7 @@ var api;
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
-        let gidCounter = elements.length;
+        let gidCounter = elements.size;
         //the strand gets added to the last-added system
         const realSys = systems.slice(-1)[0];
         // create the first monomer
@@ -412,7 +415,7 @@ var api;
         e.type = sequence[0];
         e.neighbor3 = null;
         strand.addBasicElement(e);
-        elements.push(e);
+        elements.set(e.gid, e);
         // place the new strand 10 units in front of the camera
         // with its a1 vector parallel to the camera heading
         // and a3 the cross product of the a1 vector and the z-axis
@@ -463,10 +466,10 @@ var api;
             idCol.setHex(gidCounter + 1);
             e.setInstanceParameter("bbLabels", idCol.toArray());
             e.name = gidCounter + "";
-            elements.push(e);
+            elements.set(e.gid, e);
         }
         //nuke the elements array
-        elements = [];
+        elements.clear();
         let gidCounter = 0, systemCounter = 0;
         systems.forEach((sys) => {
             //find longest strand
@@ -474,7 +477,7 @@ var api;
             const lens = Object.keys(d).map(Number);
             lens.sort(function (a, b) { return b - a; });
             //Copy everything from current to a new system in sorted order
-            let newSys = new System(systemCounter, elements.length), sidCounter = 0, strandCounter = 1;
+            let newSys = new System(systemCounter, elements.size), sidCounter = 0, strandCounter = 1;
             //create the instancing arrays for newSys
             //systemLength counts the number of particles, does not use the instancing array
             newSys.initInstances(sys.systemLength());
@@ -619,7 +622,7 @@ var api;
     }
     api.setColorBounds = setColorBounds;
     function spOnly() {
-        elements.map((n) => {
+        elements.forEach((n) => {
             n.setInstanceParameter('scales', [0, 0, 0]);
             n.setInstanceParameter('nsScales', [0, 0, 0]);
             n.setInstanceParameter('conScales', [0, 0, 0]);
@@ -634,7 +637,7 @@ var api;
     }
     api.spOnly = spOnly;
     function showEverything() {
-        elements.map((n) => {
+        elements.forEach((n) => {
             n.setInstanceParameter('scales', [1, 1, 1]);
             n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
             n.setInstanceParameter('conScales', [1, n.bbnsDist, 1]);

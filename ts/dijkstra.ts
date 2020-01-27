@@ -56,7 +56,7 @@ class PriorityQueue {
 class Dijkstra{
 
 	infinity = 1/0;
-	vertices: BasicElement[];
+	vertices: IterableIterator<BasicElement>;
 	crossPairs: boolean;
 
 	/**
@@ -68,7 +68,7 @@ class Dijkstra{
 //		this.vertices[name] = edges;
 //	}
 
-	constructor(vertices: BasicElement[], crossPairs: boolean) {
+	constructor(vertices: IterableIterator<BasicElement>, crossPairs: boolean) {
 		this.vertices = vertices;
 		this.crossPairs = crossPairs;
 	};

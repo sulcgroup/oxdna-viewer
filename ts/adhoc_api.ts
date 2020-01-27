@@ -49,7 +49,7 @@ module api{
     }
 
     export function toggleAll(system = systems[0]){
-        system[strands].map((strand)=>{
+        system[strands].map((strand: Strand)=>{
             let nucleotides = strand[monomers]; 
             nucleotides.map( 
                 (n:Nucleotide) => n.toggleVisibility());
@@ -65,7 +65,7 @@ module api{
 
     //toggles the nuceloside colors on and off
     export function toggleBaseColors() {
-        elements.map(
+        elements.forEach(
             (n: BasicElement) => {
                 if (n.parent == null) return
                 let sys = n.parent.parent
@@ -316,6 +316,8 @@ module api{
             
             e.toggleVisibility();
             e.parent.excludeElements([e])
+            elements.delete(e.gid);
+            selectedBases.delete(e);
         });
 
         needsUpdateList.forEach((s:System) => {
@@ -332,7 +334,7 @@ module api{
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
             let e = strand.createBasicElement(gidCounter);
-            elements[gidCounter] = e;
+            elements.set(e.gid, e);
             e.lid = lidCounter;
             e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
@@ -344,7 +346,8 @@ module api{
             gidCounter++;
             lidCounter++;
         }
-        elements.slice(-1)[0][direction] = null;
+        // Make last element end of strand
+        last[direction] = null;
         let e: BasicElement = end[direction];
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
@@ -359,7 +362,7 @@ module api{
         //its not worth slowing down everything to avoid this for loop
         //which is much more of an edge case anyway.
         e = end;
-        while (e !== null) {
+        while (e && e[direction]) {
             calcsp(e);
             e = e[direction];
         }
@@ -392,7 +395,7 @@ module api{
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
 
-        addElements (end, sequence, tmpSys, direction, inverse, 0, elements.length);
+        addElements (end, sequence, tmpSys, direction, inverse, 0, elements.size);
 
         render();
     }
@@ -456,7 +459,7 @@ module api{
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
-        let gidCounter = elements.length;
+        let gidCounter = elements.size;
 
         //the strand gets added to the last-added system
         const realSys = systems.slice(-1)[0]
@@ -472,7 +475,7 @@ module api{
         e.type = sequence[0];
         e.neighbor3 = null;
         strand.addBasicElement(e);
-        elements.push(e);
+        elements.set(e.gid, e);
 
         // place the new strand 10 units in front of the camera
         // with its a1 vector parallel to the camera heading
@@ -528,11 +531,11 @@ module api{
             idCol.setHex(gidCounter+1);
             e.setInstanceParameter("bbLabels", idCol.toArray());
             e.name = gidCounter + "";
-            elements.push(e);
+            elements.set(e.gid, e);
         }
 
         //nuke the elements array
-        elements = [];
+        elements.clear()
         let gidCounter = 0,
             systemCounter = 0;
         systems.forEach((sys) => {
@@ -542,7 +545,7 @@ module api{
             lens.sort(function(a, b){return b-a})
 
             //Copy everything from current to a new system in sorted order
-            let newSys = new System(systemCounter, elements.length), 
+            let newSys = new System(systemCounter, elements.size), 
                 sidCounter = 0,
                 strandCounter = 1;
 
@@ -702,7 +705,7 @@ module api{
     }
     
     export function spOnly() {
-        elements.map((n: BasicElement) => {
+        elements.forEach((n: BasicElement) => {
             n.setInstanceParameter('scales', [0, 0, 0]);
             n.setInstanceParameter('nsScales', [0, 0, 0]);
             n.setInstanceParameter('conScales', [0, 0, 0]);
@@ -718,7 +721,7 @@ module api{
     }
 
     export function showEverything() {
-        elements.map((n: BasicElement) => {
+        elements.forEach((n: BasicElement) => {
             n.setInstanceParameter('scales', [1, 1, 1]);
             n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
             n.setInstanceParameter('conScales', [1, n.bbnsDist, 1]);

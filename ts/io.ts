@@ -3,13 +3,13 @@
 class TopReader extends FileReader{
     topFile: File;
     system: System;
-    elements: BasicElement[];
+    elements: Map<number, BasicElement>;
 
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     neighbor3: number;
 
-    constructor(topFile: File, system: System, elements: BasicElement[]){
+    constructor(topFile: File, system: System, elements: Map<number, BasicElement>){
         super();
         this.topFile = topFile;
         this.system = system;
@@ -17,7 +17,7 @@ class TopReader extends FileReader{
     }
     onload = ((f) => {
         return () => {
-            let nucCount = this.elements.length;
+            let nucCount = this.elements.size;
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header
@@ -31,11 +31,11 @@ class TopReader extends FileReader{
             // create empty list of elements with length equal to the topology
             // Note: this is implemented such that we have the elements for the DAT reader 
             let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid;
-            for (let j = 0; j < lines.length; j++)  this.elements.push(nuc);
+            for (let j = 0; j < lines.length; j++)  this.elements.set(j, nuc);
             
             lines.forEach((line, i) => {
                 if (line == "") {
-                    this.elements.pop();
+                    this.elements.delete(i);
                     return;
                 }
                 //split the file and read each column, format is: "strID base n3 n5"
@@ -49,18 +49,26 @@ class TopReader extends FileReader{
                 };
                     
                 //create a new element
-                if (this.elements[nucCount + i] == null || this.elements[nucCount + i] == undefined)
-                    this.elements[nucCount + i] = currentStrand.createBasicElement(nucCount + i);
-                let nuc = this.elements[nucCount + i];
+                if (!this.elements.has(nucCount + i) || !this.elements.get(nucCount + i)) {
+                    this.elements.set(
+                        nucCount + i,
+                        currentStrand.createBasicElement(nucCount + i));
+                }
+                let nuc = this.elements.get(nucCount + i);
                 nuc.lid = this.nucLocalID;
                     
                 //create neighbor 3 element if it doesn't exist
                 let neighbor3 = parseInt(l[2]);
                 if (neighbor3 != -1) {
-                    if (this.elements[nucCount + neighbor3] == null || this.elements[nucCount + neighbor3] == undefined) {
-                        this.elements[nucCount + neighbor3] = currentStrand.createBasicElement(nucCount + neighbor3);
+                    if (!this.elements.has(nucCount + neighbor3) ||
+                        !this.elements.get(nucCount + neighbor3))
+                    {
+                        this.elements.set(
+                            nucCount + neighbor3,
+                            currentStrand.createBasicElement(nucCount + neighbor3)
+                        );
                     }
-                    nuc.neighbor3 = this.elements[nucCount + neighbor3];
+                    nuc.neighbor3 = this.elements.get(nucCount + neighbor3);
                 }
                 else 
                     nuc.neighbor3 = null;
@@ -68,10 +76,15 @@ class TopReader extends FileReader{
                 //create neighbor 5 element if it doesn't exist
                 let neighbor5 = parseInt(l[3]);
                 if (neighbor5 != -1) {
-                    if (this.elements[nucCount + neighbor5] == null || this.elements[nucCount + neighbor5] == undefined) {
-                        this.elements[nucCount + neighbor5] = currentStrand.createBasicElement(nucCount + neighbor5);
+                    if (!this.elements.has(nucCount + neighbor5) ||
+                        !this.elements.get(nucCount + neighbor5))
+                    {
+                        this.elements.set(
+                            nucCount + neighbor5,
+                            currentStrand.createBasicElement(nucCount + neighbor5)
+                        );
                     }
-                    nuc.neighbor5 = this.elements[nucCount + neighbor5];
+                    nuc.neighbor5 = this.elements.get(nucCount + neighbor5);
                 }
                 else nuc.neighbor5 = null;
                     
@@ -91,7 +104,7 @@ class TopReader extends FileReader{
             });
             this.system.setDatFile(datFile); //store datFile in current System object
             systems.push(this.system); //add system to Systems[]
-            nucCount = this.elements.length;
+            nucCount = this.elements.size;
             let confLen = nucCount + 3;
 
             //set up instancing data arrays
@@ -381,7 +394,7 @@ class TrajectoryReader {
                     notify("There's an empty line in the middle of your configuration!")
                     break
                 };
-                currentNucleotide = elements[systems[i].globalStartId+lineNum];
+                currentNucleotide = elements.get(systems[i].globalStartId+lineNum);
                 // consume a new line
                 l = lines[lineNum].split(" ");
                 currentNucleotide.calculateNewConfigPositions(l);

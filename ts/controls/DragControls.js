@@ -108,7 +108,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 cameraHeading.applyQuaternion(camera.quaternion);
 
                 //Create a movement plane perpendicular to the camera heading containing the clicked object
-                _selected = elements[id]
+                _selected = elements.get(id);
                 _movePos.set(0, 0, 0);
                 _objPos = _selected.getInstanceParameter3("bbOffsets");
                 _plane.setFromNormalAndCoplanarPoint(cameraHeading, _objPos);

@@ -52,20 +52,17 @@ function colorOptions() {
         }
         opt.appendChild(addButton);
         //actually update things in the scene
-        for (let i = 0; i < elements.length; i++) {
-            if (elements[i].parent != null) { //deleted particles are not removed from the element list until api.cleanOrder() is called.
-                if (!selectedBases.has(elements[i]))
-                    elements[i].updateColor();
+        elements.forEach(e => {
+            if (!selectedBases.has(e)) {
+                e.updateColor();
             }
-        }
-        for (let i = 0; i < systems.length; i++) {
-            systems[i].callUpdates(['instanceColor']);
-        }
-        if (tmpSystems.length > 0) {
-            tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceColor']);
-            });
-        }
+        });
+        systems.forEach(s => {
+            s.callUpdates(['instanceColor']);
+        });
+        tmpSystems.forEach(s => {
+            s.callUpdates(['instanceColor']);
+        });
         render();
     }
 }

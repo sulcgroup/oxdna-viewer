@@ -2,7 +2,7 @@
 // store rendering mode RNA  
 var RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
-let elements = []; //contains references to all BasicElements
+let elements = new Map(); //contains references to all BasicElements
 //initialize the space
 const systems = [];
 var tmpSystems = []; //used for editing
@@ -794,13 +794,13 @@ class Strand extends THREE.Group {
     }
     excludeElements(elements) {
         // detach from parent
-        elements.forEach((e) => {
+        elements.forEach(e => {
             e.parent = null;
             this.remove(e);
         });
         // create a new list of strand elements  
-        let filtered = this[monomers].filter((v, i, arr) => {
-            return !elements.includes(v);
+        let filtered = this[monomers].filter(e => {
+            return !elements.includes(e);
         });
         this[monomers] = filtered;
     }
@@ -1049,14 +1049,14 @@ function coloringChanged() {
     else if (lut) {
         api.removeColorbar();
     }
-    for (let i = 0; i < elements.length; i++) {
-        if (elements[i].parent !== null) {
-            elements[i].updateColor();
+    elements.forEach(e => {
+        if (e.parent !== null) {
+            e.updateColor();
         }
-    }
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceColor']);
-    }
+    });
+    systems.forEach(s => {
+        s.callUpdates(['instanceColor']);
+    });
     if (tmpSystems.length > 0) {
         tmpSystems.forEach((s) => {
             s.callUpdates(['instanceColor']);

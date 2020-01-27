@@ -159,11 +159,11 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     dragInstruction.style.display = "none";
 
     //make system to store the dropped files in
-    const system = new System(sysCount, elements.length);
+    const system = new System(sysCount, elements.size);
 
     if (topFile) {
         //read topology file
-        const topReader = new TopReader(topFile,system,elements);
+        const topReader = new TopReader(topFile, system, elements);
         topReader.read();
 
         // asynchronously read the first two chunks of a configuration file
@@ -228,7 +228,7 @@ function readDat(numNuc, datReader, system) {
             break
         };
         // get the nucleotide associated with the line
-        currentNucleotide = elements[i+system.globalStartId];
+        currentNucleotide = elements.get(i+system.globalStartId);
 
         // consume a new line from the file
         l = lines[i].split(" ");
@@ -239,8 +239,8 @@ function readDat(numNuc, datReader, system) {
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
             system.add(currentStrand); //add strand THREE.Group to system THREE.Group
             currentStrand = system[strands][currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements[currentNucleotide.gid+1] != undefined) {
-                currentStrand = elements[currentNucleotide.gid+1].parent;
+            if (elements.has(currentNucleotide.gid+1)) {
+                currentStrand = elements.get(currentNucleotide.gid+1).parent;
             }
         }
 
@@ -270,7 +270,7 @@ function readJson(system, jsonReader) {
                     const vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                     const len = vec.length();
                     vec.normalize();
-                    const arrowHelper = new THREE.ArrowHelper(vec, elements[i].getInstanceParameter3("bbOffsets"), len/5, 0x000000);
+                    const arrowHelper = new THREE.ArrowHelper(vec, elements.get(i).getInstanceParameter3("bbOffsets"), len/5, 0x000000);
                     arrowHelper.name = i + "disp";
                     scene.add(arrowHelper);
                 }

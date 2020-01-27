@@ -1,5 +1,5 @@
 function nickWrapper() {
-    let e: BasicElement = elements[listBases.slice(-1)[0]]
+    let e: BasicElement = elements.get(listBases.slice(-1)[0])
     if (e == undefined) {
         notify("Please select a monomer to nick at")
         return
@@ -9,7 +9,7 @@ function nickWrapper() {
 
 function ligateWrapper() {
     let ids = listBases.slice(-2);
-    let e: BasicElement[] = [elements[ids[0]], elements[ids[1]]]
+    let e: BasicElement[] = [elements.get(ids[0]), elements.get(ids[1])]
     if (e[0] == undefined || e[1] == undefined) {
         notify("Please select two monomers to ligate")
         return
@@ -18,7 +18,7 @@ function ligateWrapper() {
 }
 
 function extendWrapper() {
-    let e: BasicElement = elements[listBases.slice(-1)[0]];
+    let e: BasicElement = elements.get(listBases.slice(-1)[0]);
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
     if (e == undefined) {
         notify("Please select a monomer to extend from");
@@ -38,7 +38,7 @@ function setSeqWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    let e: BasicElement[] = listBases.map(i => elements[i]);
+    let e: BasicElement[] = listBases.map(i => elements.get(i));
     let n: Nucleotide[] = [];
     e.forEach(elem => {
         if (elem instanceof Nucleotide) {
@@ -66,7 +66,7 @@ function createWrapper() {
 }
 
 function deleteWrapper() {
-    let e: BasicElement[] = listBases.map(i => elements[i])
+    let e: BasicElement[] = listBases.map(i => elements.get(i))
     clearSelection();
     if (e == []) {
         notify("Please select monomers to delete");

@@ -15,7 +15,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 			// but it needs to be defined as a callback since the cluster selection
 			// can take a while to finish.
 
-			let nucleotide = elements[id];
+			let nucleotide = elements.get(id);
 			let sys = nucleotide.parent.parent;
 
 			// Select multiple elements my holding down ctrl
@@ -73,7 +73,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Cluster" :
-					if (typeof elements[0].clusterId == 'undefined') {
+					if (typeof elements.get(0).clusterId == 'undefined') {
 						document.getElementById("clusterOptions").hidden = false;
 					} else {
 						for (let i = 0; i < strandCount; i++){
@@ -194,19 +194,18 @@ function selectPaired(e: BasicElement) {
 
 function fancySelectIntermediate(e: BasicElement) {
 	let paired = selectPairs();
-	let d = new Dijkstra(elements, paired);
+	let d = new Dijkstra(elements.values(), paired);
 	let elems;
 	longCalculation(()=>{
 		elems = d.shortestPath(e, Array.from(selectedBases));
 	},"Calculating intermediate elements...",
 	()=>{
 		elems.forEach(e=>{
-			let elem = elements[e];
-			if (!selectedBases.has(elem)) {
-				elem.toggle();
+			if (!selectedBases.has(e)) {
+				e.toggle();
 			}
-			if (paired && elem instanceof Nucleotide){
-				let pair = (<Nucleotide>elem).pair;
+			if (paired && e instanceof Nucleotide){
+				let pair = (<Nucleotide>e).pair;
 				if(pair && !selectedBases.has(pair)) {
 					pair.toggle();
 				}
@@ -218,22 +217,22 @@ function fancySelectIntermediate(e: BasicElement) {
 }
 
 function selectIntermediate() {
-	let n = elements.length;
+	let n = elements.size;
 	let iMin = 0;
 	let iMax = n;
 	while(iMin++ <= n) {
-		if(selectedBases.has(elements[iMin])) {
+		if(selectedBases.has(elements.get(iMin))) {
 			break;
 		}
 	}
 	while(iMax-- > 0) {
-		if(selectedBases.has(elements[iMax])) {
+		if(selectedBases.has(elements.get(iMax))) {
 			break;
 		}
 	}
 	for(let i=iMin; i<iMax; i++) {
-		if (!selectedBases.has(elements[i])) {
-			elements[i].toggle();
+		if (!selectedBases.has(elements.get(i))) {
+			elements.get(i).toggle();
 		}
 	}
 }

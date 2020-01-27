@@ -1,5 +1,5 @@
 function nickWrapper() {
-    let e = elements[listBases.slice(-1)[0]];
+    let e = elements.get(listBases.slice(-1)[0]);
     if (e == undefined) {
         notify("Please select a monomer to nick at");
         return;
@@ -8,7 +8,7 @@ function nickWrapper() {
 }
 function ligateWrapper() {
     let ids = listBases.slice(-2);
-    let e = [elements[ids[0]], elements[ids[1]]];
+    let e = [elements.get(ids[0]), elements.get(ids[1])];
     if (e[0] == undefined || e[1] == undefined) {
         notify("Please select two monomers to ligate");
         return;
@@ -16,7 +16,7 @@ function ligateWrapper() {
     editHistory.do(new RevertableLigation(e[0], e[1]));
 }
 function extendWrapper() {
-    let e = elements[listBases.slice(-1)[0]];
+    let e = elements.get(listBases.slice(-1)[0]);
     let seq = document.getElementById("sequence").value.toUpperCase();
     if (e == undefined) {
         notify("Please select a monomer to extend from");
@@ -35,7 +35,7 @@ function setSeqWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    let e = listBases.map(i => elements[i]);
+    let e = listBases.map(i => elements.get(i));
     let n = [];
     e.forEach(elem => {
         if (elem instanceof Nucleotide) {
@@ -61,7 +61,7 @@ function createWrapper() {
     api.createStrand(seq);
 }
 function deleteWrapper() {
-    let e = listBases.map(i => elements[i]);
+    let e = listBases.map(i => elements.get(i));
     clearSelection();
     if (e == []) {
         notify("Please select monomers to delete");

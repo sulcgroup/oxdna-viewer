@@ -19,66 +19,89 @@ function makeTopFile(name){
     let totNuc: number = 0; //total # of elements
     let totStrands: number = 0; //total # of strands
 
-    for (let i = 0; i < systems.length; i++) { //for each system
-        totStrands += systems[i][strands].length;
-        for (let j = 0; j < systems[i][strands].length; j++) { //for each strand in current system
-            totNuc += systems[i][strands][j][monomers].length;
-        }
+    let newStrandIds = new Map();
+    let sidCounter = 0;
+
+    let newElementIds = new Map();
+    let gidCounter = 0;
+
+    systems.forEach(system =>{
+        totStrands += system[strands].length; // Count strands
+        system[strands].forEach((strand: Strand) => {
+            newStrandIds.set(strand, sidCounter++); //Assign new strandID
+            totNuc += strand[monomers].length; // Count elements
+            strand[monomers].forEach(e => {
+                newElementIds.set(e, gidCounter++); //Assign new elementID
+            });
+        });
+    });
+
+    if (totNuc != elements.size) {
+        notify(`Length of totNuc (${totNuc}) is not equal to length of elements array (${elements.size})`);
     }
 
     top.push(totNuc + " " + totStrands);
 
-    for (let i = 0; i < elements.length; i++) { //for each nucleotide in the system
-        let tl;
+    newElementIds.forEach((_gid, e) => { //for each nucleotide
+        //let strandID: number, base: string;
+        /*
         try {
-            //deleted particles are not removed from the element list until api.cleanOrder() is called.
-            tl = [elements[i].parent.strandID , elements[i].type ]; //strand id in global world + base type
+            // deleted particles are not removed from the element list until api.cleanOrder() is called.
+            strandID = e.parent.strandID; // strand id in global world
+            base = e.type; // base type
         }
         catch(err) {
            notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
-           return
+           return;
         }
-        let neighbor3 = elements[i].neighbor3;
-        let neighbor5 = elements[i].neighbor5;
-        if (neighbor3 === null || neighbor3 === undefined) 
-            tl.push(-1); // if no neigbor3, neighbor3's global id = -1
-        else if (neighbor3 !== null) 
-            tl.push(neighbor3.gid); //if neighbor3 exists, append neighbor3's global id
-        if (neighbor5 === null || neighbor5 === undefined) 
-            tl.push(-1); //if neighbor5 doesn't exist, append neighbor5's position = -1
-        else  
-            tl.push(neighbor5.gid); //if neighbor5 exists, append neighbor5's position
-        top.push(tl.join(" "));
-    }
+        */
+        // if no neigbor, neighbor's global id = -1
+        let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
+        let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
+
+        top.push([newStrandIds.get(e.parent), e.type, neighbor3, neighbor5].join(' '));
+    });
     makeTextFile(name+".top", top.join("\n")); //make .top file
 }
 function makeDatFile(name) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
-    for (let i = 0; i < elements.length; i++) { //for all elements
-        let p;
+    elements.forEach(e => { //for all elements
+        /*
+        let p: THREE.Vector3;
         try{
             //deleted particles are not removed from the element list until api.cleanOrder() is called.
-            p = elements[i].getInstanceParameter3("cmOffsets");
+            p = e.getInstanceParameter3("cmOffsets");
         }
         catch(err) {
             notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
-            return
-         }
-            maxCoord = Math.max(maxCoord, Math.max(
+            return;
+        }
+        */
+        let p = e.getInstanceParameter3("cmOffsets");
+        maxCoord = Math.max(maxCoord, Math.max(
             Math.abs(p.x),
             Math.abs(p.y),
             Math.abs(p.z)
         ))
-    }
+    });
     let dat: string = "";
     let box: number = Math.ceil(5 * maxCoord);
-    dat = "t = 0\n" + "b = " + box + " " + box + " " + box
-        + "\n" + "E = 0 0 0 " + datFileout + "\n";
-    for (let i = 0; i < elements.length; i++) { //for all elements
-        let nuc: BasicElement = elements[i];
-        dat += nuc.getDatFileOutput();
-    }
+    dat = [
+        `t = 0`,
+        `b = ${box} ${box} ${box}`,
+        `E = 0 0 0\n`
+    ].join('\n');
+
+    // For all elements, in the correct order
+    systems.forEach(system =>{
+        system[strands].forEach((strand: Strand) => {
+            strand[monomers].forEach(e => {
+                dat += e.getDatFileOutput();
+            });
+        });
+    });
+
     makeTextFile(name+".dat", dat); //make .dat file
 }
 
