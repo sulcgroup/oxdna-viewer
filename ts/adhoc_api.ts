@@ -120,35 +120,45 @@ module api{
     }
 
     function splitStrand(element: BasicElement) {
-        const sys = element.parent.parent,
-            strand = element.parent;
-        // nucleotides which are after the nick
-        const orphans : BasicElement[] = trace35(element);
-        strand.excludeElements(orphans);
+        const strand = element.parent,
+              sys = strand.parent;
 
-        //create fill and deploy new strand 
-        const newStrand = strand.parent.createStrand(strand.parent[strands].length + 1);
-        strand.parent.addStrand(newStrand);
-        let lidCounter = 0
-        orphans.forEach(
-            (e) => {
-                newStrand.addBasicElement(e);
-                e.lid = lidCounter;
-                lidCounter += 1;
-                e.updateColor();
+        // Splitting a circular strand doesn't make
+        // more strands, but it will then no longer
+        // be circular.
+        if(strand.circular) {
+            strand.circular = false;
+            return;
+        } else {
+            // Nucleotides which are after the nick
+            const orphans : BasicElement[] = trace35(element);
+            strand.excludeElements(orphans);
+
+            // Create, fill and deploy new strand
+            const newStrand = strand.parent.createStrand(strand.parent[strands].length + 1);
+            strand.parent.addStrand(newStrand);
+            let lidCounter = 0
+            orphans.forEach(
+                (e) => {
+                    newStrand.addBasicElement(e);
+                    e.lid = lidCounter;
+                    lidCounter += 1;
+                    e.updateColor();
+                }
+            );
+
+            // Update local ids in the remnant strand
+            // If there are dummy systems, you need to rebuild
+            // anyway and they need static local IDs
+            if (tmpSystems.length == 0) {
+                let i = 0;
+                strand[monomers].forEach ((n) => {
+                    n.lid = i++;
+                });
             }
-        );
 
-        //update local ids in the remnant strand
-        // if there are dummy systems, you need to rebuild anyway and they need static local IDs
-        if (tmpSystems.length == 0) {
-            let i = 0;
-            strand[monomers].forEach ((n) => {
-                n.lid = i++;
-            });
+            sys.callUpdates(['instanceColor']);
         }
-
-        sys.callUpdates(['instanceColor'])
     }
 
     export function nick(element: BasicElement){
@@ -182,7 +192,7 @@ module api{
             end3 = element1;
         }
         else {
-            notify("please select one nucleotide with an available 3' connection and one with an available 5'")
+            notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
             return;
         }
 
@@ -214,7 +224,7 @@ module api{
         strand2.excludeElements(strand2[monomers]);
         
         //check that it is not the same strand
-        if (strand1 !== strand2){
+        if (strand1 !== strand2) {
             //remove strand2 object 
             strand2.parent.remove(strand2);
         }
@@ -288,7 +298,7 @@ module api{
      * 
      * @param victims 
      */
-    export function del (victims: BasicElement[]) {
+    export function deleteElements (victims: BasicElement[]) {
         let needsUpdateList = new Set
         victims.forEach((e) => {
             let sys: System
@@ -325,16 +335,54 @@ module api{
         });
         render();
     }
+/*
+    export function addElements (newElems: BasicElement[]) {
+        //initialize a dummy system to put the monomers in 
+        const tmpSys = new System(systems.length, 0);
+        tmpSys.initInstances(newElems.length);
+        tmpSystems.push(tmpSys);
+        let gidCounter = elements.size;
 
-    function addElements (end, sequence, tmpSys, direction, inverse, lidCounter, gidCounter) {
+        newElems.forEach(e=>{
+            // Assign new gid if already taken
+            if(elements.has(e.gid)) {
+                e.gid = gidCounter++;
+                //newElemIds.push(e.gid);
+                elements.set(e.gid, e);
+            }
+            // Ignore neighbors if they don't exist, unless they are about to be added
+            if(e.neighbor3 && !elements.has(e.neighbor3.gid) && !newElems.includes(e.neighbor3)){
+                e.neighbor3 = null;
+            }
+            if(e.neighbor5 && !elements.has(e.neighbor5.gid) && !newElems.includes(e.neighbor5)){
+                e.neighbor3 = null;
+            }
+
+            // Overwrite existing neigbhors' neighbors
+            if(e.neighbor3 && e.neighbor3.neighbor5 && e.neighbor3.neighbor5 != e) {
+                e.neighbor3.neighbor5.neighbor3 = null;
+                e.neighbor3.neighbor5 = e;
+            }
+            if(e.neighbor5 && e.neighbor5.neighbor3 && e.neighbor5.neighbor3 != e) {
+                e.neighbor5.neighbor3.neighbor5 = null;
+                e.neighbor5.neighbor3 = e;
+            }
+            e.parent.addBasicElement(e);
+            e.dummySys = tmpSys;
+        });
+    }
+*/
+
+
+    function addElementsBySeq (end, sequence, tmpSys, direction, inverse, lidCounter) {
         // add monomers to the strand
         const strand = end.parent;
         const lines = end.extendStrand(sequence.length, inverse)
         let last = end
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
-            let e = strand.createBasicElement(gidCounter);
-            elements.set(e.gid, e);
+            let e = strand.createBasicElement(undefined);
+            e.gid = elements.push(e); // Add element and assign gid
             e.lid = lidCounter;
             e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
@@ -343,7 +391,6 @@ module api{
             e.type = sequence[i];
             strand.addBasicElement(e);
             last = e;
-            gidCounter++;
             lidCounter++;
         }
         // Make last element end of strand
@@ -386,7 +433,7 @@ module api{
             inverse = "neighbor5";
         }
         else {
-            notify("please select a monomer that has an open neighbor")
+            notify("Please select a monomer that has an open neighbor");
             return
         }
 
@@ -395,7 +442,7 @@ module api{
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
 
-        addElements (end, sequence, tmpSys, direction, inverse, 0, elements.size);
+        addElementsBySeq (end, sequence, tmpSys, direction, inverse, 0);
 
         render();
     }
@@ -412,7 +459,7 @@ module api{
     export function setSequence(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
         setComplementaryBases = setComplementaryBases || false;
         if (elems.length != sequence.length) {
-            notify(`You have ${elems.length} particles selected and ${sequence.length} letters in the sequence...doing my best`)
+            notify(`You have ${elems.length} particles selected and ${sequence.length} letters in the sequence...doing my best`);
         }
 
         // Sort elements by their id, in 5' to 3' order
@@ -459,7 +506,6 @@ module api{
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
-        let gidCounter = elements.size;
 
         //the strand gets added to the last-added system
         const realSys = systems.slice(-1)[0]
@@ -467,15 +513,14 @@ module api{
         // create the first monomer
         let strand = realSys.createStrand(1);
         realSys.addStrand(strand);
-        let  e = strand.createBasicElement(gidCounter);
-        gidCounter++;
+        let e = strand.createBasicElement(undefined);
+        e.gid = elements.push(e);
         e.dummySys = tmpSys;
         e.lid = 0;
         e.sid = 0;
         e.type = sequence[0];
         e.neighbor3 = null;
         strand.addBasicElement(e);
-        elements.set(e.gid, e);
 
         // place the new strand 10 units in front of the camera
         // with its a1 vector parallel to the camera heading
@@ -490,7 +535,7 @@ module api{
         e.dummySys = tmpSys;
 
         // extends the strand 3'->5' with the rest of the sequence 
-        addElements(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1, gidCounter);
+        addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1);
     }
 
     // copies the instancing data from a particle to a new system
@@ -545,7 +590,7 @@ module api{
             lens.sort(function(a, b){return b-a})
 
             //Copy everything from current to a new system in sorted order
-            let newSys = new System(systemCounter, elements.size), 
+            let newSys = new System(systemCounter, elements.getLastId()), 
                 sidCounter = 0,
                 strandCounter = 1;
 

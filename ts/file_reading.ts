@@ -159,7 +159,7 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     dragInstruction.style.display = "none";
 
     //make system to store the dropped files in
-    const system = new System(sysCount, elements.size);
+    const system = new System(sysCount, elements.getLastId());
 
     if (topFile) {
         //read topology file
@@ -175,7 +175,6 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
                 document.dispatchEvent(new Event('nextConfigLoaded'));
                 //if its a trajectory, create the other readers
                 if (datFile.size > approxDatLen) {
-                
                     trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
                 }
             };

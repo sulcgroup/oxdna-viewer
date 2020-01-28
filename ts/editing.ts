@@ -31,6 +31,25 @@ function extendWrapper() {
     api.extendStrand(e, seq)
 }
 
+function createWrapper() {
+    let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
+    if (seq == "") {
+        notify("Please type a sequence into the box");
+        return
+    }
+    api.createStrand(seq);
+}
+
+function deleteWrapper() {
+    let e: BasicElement[] = listBases.map(i => elements.get(i))
+    clearSelection();
+    if (e == []) {
+        notify("Please select monomers to delete");
+        return
+    }
+    api.deleteElements(e);
+}
+
 function setSeqWrapper() {
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
     let setCompl = (<HTMLInputElement>document.getElementById("setCompl")).checked;
@@ -54,23 +73,4 @@ function setSeqWrapper() {
         return;
     }
     editHistory.do(new RevertableSequenceEdit(n, seq, setCompl));
-}
-
-function createWrapper() {
-    let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
-    if (seq == "") {
-        notify("Please type a sequence into the box");
-        return
-    }
-    api.createStrand(seq);
-}
-
-function deleteWrapper() {
-    let e: BasicElement[] = listBases.map(i => elements.get(i))
-    clearSelection();
-    if (e == []) {
-        notify("Please select monomers to delete");
-        return
-    }
-    api.del(e);
 }

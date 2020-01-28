@@ -134,7 +134,7 @@ function readFiles(topFile, datFile, jsonFile) {
     const dragInstruction = document.getElementById("dragInstruction");
     dragInstruction.style.display = "none";
     //make system to store the dropped files in
-    const system = new System(sysCount, elements.size);
+    const system = new System(sysCount, elements.getLastId());
     if (topFile) {
         //read topology file
         const topReader = new TopReader(topFile, system, elements);

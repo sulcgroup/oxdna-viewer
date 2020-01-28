@@ -18,7 +18,7 @@ function makeTopFile(name) {
     let totNuc = 0; //total # of elements
     let totStrands = 0; //total # of strands
     let newStrandIds = new Map();
-    let sidCounter = 0;
+    let sidCounter = 1;
     let newElementIds = new Map();
     let gidCounter = 0;
     systems.forEach(system => {
@@ -36,19 +36,6 @@ function makeTopFile(name) {
     }
     top.push(totNuc + " " + totStrands);
     newElementIds.forEach((_gid, e) => {
-        //let strandID: number, base: string;
-        /*
-        try {
-            // deleted particles are not removed from the element list until api.cleanOrder() is called.
-            strandID = e.parent.strandID; // strand id in global world
-            base = e.type; // base type
-        }
-        catch(err) {
-           notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
-           return;
-        }
-        */
-        // if no neigbor, neighbor's global id = -1
         let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
         top.push([newStrandIds.get(e.parent), e.type, neighbor3, neighbor5].join(' '));
@@ -59,17 +46,6 @@ function makeDatFile(name) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => {
-        /*
-        let p: THREE.Vector3;
-        try{
-            //deleted particles are not removed from the element list until api.cleanOrder() is called.
-            p = e.getInstanceParameter3("cmOffsets");
-        }
-        catch(err) {
-            notify("If you edited the topology of the system you must select the 'Pre-organize strands' option in the file download dialog");
-            return;
-        }
-        */
         let p = e.getInstanceParameter3("cmOffsets");
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     });

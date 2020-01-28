@@ -197,21 +197,21 @@ function fancySelectIntermediate(e) {
     });
 }
 function selectIntermediate() {
-    let n = elements.size;
+    let n = elements.getLastId();
     let iMin = 0;
     let iMax = n;
     while (iMin++ <= n) {
-        if (selectedBases.has(elements.get(iMin))) {
+        if (elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
             break;
         }
     }
     while (iMax-- > 0) {
-        if (selectedBases.has(elements.get(iMax))) {
+        if (elements.has(iMax) && selectedBases.has(elements.get(iMax))) {
             break;
         }
     }
     for (let i = iMin; i < iMax; i++) {
-        if (!selectedBases.has(elements.get(i))) {
+        if (elements.has(i) && !selectedBases.has(elements.get(i))) {
             elements.get(i).toggle();
         }
     }

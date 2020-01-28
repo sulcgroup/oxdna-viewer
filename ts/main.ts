@@ -1,9 +1,43 @@
 /// <reference path="./three/index.d.ts" />
 
+class ElementMap extends Map<number, BasicElement>{
+    gidCounter: number;
+
+    constructor(){
+        super();
+        this.gidCounter = 0;
+    }
+
+    // Avoid using this unless you really need to set
+    // a specific gid.
+    set(gid: number, element: BasicElement): this {
+        if(this.gidCounter < gid){
+            this.gidCounter = gid;
+        }
+        return super.set(gid, element);
+    }
+
+    /**
+     * Add an element to the array, keeping track of
+     * global id
+     * @param element
+     * @returns gid
+     */
+    push(element: BasicElement): number {
+        const gid = this.gidCounter++;
+        super.set(gid, element);
+        return gid;
+    }
+
+    getLastId(): number {
+        return this.gidCounter;
+    }
+}
+
 // store rendering mode RNA  
 var RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
-let elements: Map<number,BasicElement> = new Map(); //contains references to all BasicElements
+let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 //initialize the space
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
