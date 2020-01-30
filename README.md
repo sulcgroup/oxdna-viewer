@@ -6,6 +6,7 @@
 
 A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.2 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later. 
 
+
 ---
 
 ## Editing Features  
@@ -26,6 +27,9 @@ If you would like to make a video of a trajectory, load a trajectory and click t
 **Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software (note that this will not work in Firefox).  
 **Gif**: Larger file size, but highly portable (note that this will not work in Chrome while running locally).  
 **PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ffmpeg or ImageJ.
+
+### Inpout Format
+The topology and trajectory/configuration have to be in oxDNA format. You can convert from other formats (such as PDB, LAMMPS, caDNAno) using TacoxDNA converter: http://tacoxdna.sissa.it/
 
 ---
 
