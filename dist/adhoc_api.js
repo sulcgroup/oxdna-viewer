@@ -96,23 +96,23 @@ var api;
     }
     api.toggleBaseColors = toggleBaseColors;
     function trace53(element) {
-        let elements = [];
+        let elems = [];
         let c = element;
         while (c) {
-            elements.push(c);
+            elems.push(c);
             c = c.neighbor3;
         }
-        return elements;
+        return elems;
     }
     api.trace53 = trace53;
     function trace35(element) {
-        let elements = [];
+        let elems = [];
         let c = element;
         while (c) {
-            elements.push(c);
+            elems.push(c);
             c = c.neighbor5;
         }
-        return elements;
+        return elems;
     }
     api.trace35 = trace35;
     function splitStrand(element) {
@@ -127,6 +127,11 @@ var api;
         else {
             // Nucleotides which are after the nick
             const orphans = trace35(element);
+            // No need to split if one half will be empty
+            if (orphans.length == 0 ||
+                orphans.length == strand[monomers].length) {
+                return;
+            }
             strand.excludeElements(orphans);
             // Create, fill and deploy new strand
             const newStrand = strand.parent.createStrand(strand.parent[strands].length + 1);
@@ -257,11 +262,12 @@ var api;
         let needsUpdateList = new Set;
         victims.forEach((e) => {
             let sys;
+            let strand = e.parent;
             if (e.dummySys !== null) {
                 sys = e.dummySys;
             }
             else {
-                sys = e.parent.parent;
+                sys = strand.parent;
             }
             if (!needsUpdateList.has(sys)) {
                 needsUpdateList.add(sys);
@@ -277,9 +283,13 @@ var api;
                 e.neighbor5 = null;
             }
             e.toggleVisibility();
-            e.parent.excludeElements([e]);
+            strand.excludeElements([e]);
             elements.delete(e.gid);
             selectedBases.delete(e);
+            // Remove strand if it's empty
+            if (strand[monomers].length == 0) {
+                strand.parent.remove(strand);
+            }
         });
         needsUpdateList.forEach((s) => {
             s.callUpdates(['instanceVisibility', 'instanceScale']);
@@ -287,43 +297,167 @@ var api;
         render();
     }
     api.deleteElements = deleteElements;
-    /*
-        export function addElements (newElems: BasicElement[]) {
-            //initialize a dummy system to put the monomers in
-            const tmpSys = new System(systems.length, 0);
-            tmpSys.initInstances(newElems.length);
-            tmpSystems.push(tmpSys);
-            let gidCounter = elements.size;
-    
-            newElems.forEach(e=>{
-                // Assign new gid if already taken
-                if(elements.has(e.gid)) {
-                    e.gid = gidCounter++;
-                    //newElemIds.push(e.gid);
-                    elements.set(e.gid, e);
+    /**
+     * Add elements from saved instance copies, at specified position
+     * @param instCopies Instance copies of elements to add
+     * @param pos Intended position of elements center of mass
+     */
+    function addElementsAt(instCopies, pos) {
+        // Add elems
+        let elems = addElements(instCopies);
+        // Calculate elems center of mass
+        let com = new THREE.Vector3();
+        elems.forEach(e => {
+            let p = e.getInstanceParameter3("cmOffsets");
+            com.add(p);
+        });
+        com.divideScalar(elems.length);
+        // Move elements to position
+        translateElements(new Set(elems), pos.sub(com));
+        return elems;
+    }
+    api.addElementsAt = addElementsAt;
+    /**
+     * Add elements from saved instance copies
+     * @param instCopies Instance copies of elements to add
+     */
+    function addElements(instCopies) {
+        // Initialize a dummy system to put the monomers in
+        const tmpSys = new System(systems.length, 0);
+        tmpSys.initInstances(instCopies.length);
+        tmpSystems.push(tmpSys);
+        let oldgids = instCopies.map(c => { return c.gid; });
+        let elems = instCopies.map((c, sid) => {
+            // Create new element
+            let e = new c.elemType(undefined, undefined);
+            elements.push(e);
+            c.writeToSystem(sid, tmpSys);
+            e.dummySys = tmpSys;
+            e.name = e.gid.toString();
+            e.sid = sid;
+            // Assign a picking color
+            let idColor = new THREE.Color();
+            idColor.setHex(e.gid + 1); //has to be +1 or you can't grab nucleotide 0
+            tmpSys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+            return e;
+        });
+        addSystemToScene(tmpSys);
+        let toLigate = [];
+        // Sort out neighbors
+        elems.forEach((e, sid) => {
+            let c = instCopies[sid];
+            // Add neighbors to new copies in list, or to existing elements
+            // if they don't already have neighbors
+            if (c.n3gid >= 0) { // If we have a 3' neighbor
+                let i3 = oldgids.findIndex(gid => { return gid == c.n3gid; });
+                // If the 3' neighbor is also about to be added, we link to
+                // the new object instead
+                if (i3 >= 0) {
+                    e.neighbor3 = elems[i3];
+                    elems[i3].neighbor5 = e;
+                    // Otherwise, if the indicated neighbor exists and we can link
+                    // the new element to it without overwriting anything
                 }
-                // Ignore neighbors if they don't exist, unless they are about to be added
-                if(e.neighbor3 && !elements.has(e.neighbor3.gid) && !newElems.includes(e.neighbor3)){
+                else if (elements.has(c.n3gid) &&
+                    elements.get(c.n3gid) &&
+                    !elements.get(c.n3gid).neighbor5) {
+                    e.neighbor3 = null;
+                    toLigate.push([e, elements.get(c.n3gid)]);
+                    //e.neighbor3 = elements.get(c.n3gid);
+                    //e.neighbor3.neighbor5 = e;
+                    // If not, we don't set any neighbor
+                }
+                else {
                     e.neighbor3 = null;
                 }
-                if(e.neighbor5 && !elements.has(e.neighbor5.gid) && !newElems.includes(e.neighbor5)){
-                    e.neighbor3 = null;
+            }
+            // Same as above, but for 5'
+            if (c.n5gid >= 0) { // If we have a 5' neighbor
+                let i5 = oldgids.findIndex(gid => { return gid == c.n5gid; });
+                // If the 5' neighbor is also about to be added, we link to
+                // the new object instead
+                if (i5 >= 0) {
+                    e.neighbor5 = elems[i5];
+                    elems[i5].neighbor3 = e;
+                    // Otherwise, if the indicated neighbor exists and we can link
+                    // the new element to it without overwriting anything
                 }
-    
-                // Overwrite existing neigbhors' neighbors
-                if(e.neighbor3 && e.neighbor3.neighbor5 && e.neighbor3.neighbor5 != e) {
-                    e.neighbor3.neighbor5.neighbor3 = null;
-                    e.neighbor3.neighbor5 = e;
+                else if (elements.has(c.n5gid) &&
+                    elements.get(c.n5gid) &&
+                    !elements.get(c.n5gid).neighbor3) {
+                    e.neighbor5 = null;
+                    toLigate.push([e, elements.get(c.n5gid)]);
+                    // If not, we don't set any neighbor
                 }
-                if(e.neighbor5 && e.neighbor5.neighbor3 && e.neighbor5.neighbor3 != e) {
-                    e.neighbor5.neighbor3.neighbor5 = null;
-                    e.neighbor5.neighbor3 = e;
+                else {
+                    e.neighbor5 = null;
                 }
-                e.parent.addBasicElement(e);
-                e.dummySys = tmpSys;
-            });
-        }
-    */
+            }
+        });
+        // Sort out strands
+        elems.forEach((e, sid) => {
+            let c = instCopies[sid];
+            let sys = c.system;
+            // Do we have a strand assigned already?
+            if (!e.parent) {
+                // Does any of our neighbors know what strand this is?
+                let i = e;
+                while (!i.parent) { // Look in 3' dir
+                    if (i.neighbor3)
+                        i = i.neighbor3;
+                    else
+                        break;
+                }
+                if (!i.parent) { // If nothing, look in 5' dir
+                    i = e;
+                    while (!i.parent) {
+                        if (i.neighbor5)
+                            i = i.neighbor5;
+                        else
+                            break;
+                    }
+                }
+                // If we found something
+                if (i.parent) {
+                    // Add us to the strand
+                    i.parent.addBasicElement(e);
+                }
+                else {
+                    // Create a new strand
+                    let strand = sys.createStrand(sys[strands].length);
+                    sys.addStrand(strand);
+                    strand.addBasicElement(e);
+                }
+            }
+        });
+        // Update bonds
+        elems.forEach(e => {
+            // Do we still have a 3' neighbor?
+            if (e.neighbor3) {
+                // Update backbone bond
+                calcsp(e);
+            }
+            else {
+                // Set explicitly to null
+                e.neighbor3 = null;
+                // Remove backbone bond
+                tmpSys.fillVec('bbconScales', 3, e.sid, [0, 0, 0]);
+                tmpSys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+                render();
+            }
+            if (!e.neighbor5) {
+                // Set explicitly to null
+                e.neighbor5 = null;
+            }
+            e.updateColor();
+        });
+        tmpSys.callUpdates(['instanceColor']);
+        toLigate.forEach(p => {
+            ligate(p[0], p[1]);
+        });
+        return elems;
+    }
+    api.addElements = addElements;
     function addElementsBySeq(end, sequence, tmpSys, direction, inverse, lidCounter) {
         // add monomers to the strand
         const strand = end.parent;
@@ -332,7 +466,7 @@ var api;
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
             let e = strand.createBasicElement(undefined);
-            e.gid = elements.push(e); // Add element and assign gid
+            elements.push(e); // Add element and assign gid
             e.lid = lidCounter;
             e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
@@ -436,6 +570,10 @@ var api;
         }
     }
     api.setSequence = setSequence;
+    /**
+     * Creates a new strand with the provided sequence
+     * @param sequence
+     */
     function createStrand(sequence) {
         //assume the input sequence is 5' -> 3'
         //but oxDNA is 3' -> 5'
@@ -453,7 +591,7 @@ var api;
         let strand = realSys.createStrand(1);
         realSys.addStrand(strand);
         let e = strand.createBasicElement(undefined);
-        e.gid = elements.push(e);
+        elements.push(e); // Add element and assign gid
         e.dummySys = tmpSys;
         e.lid = 0;
         e.sid = 0;
@@ -475,11 +613,15 @@ var api;
         addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1);
     }
     api.createStrand = createStrand;
-    // copies the instancing data from a particle to a new system
+    /**
+     * Copies the instancing data from a particle to a new system
+     * @param source Element to copy from
+     * @param id The element's system ID
+     * @param destination Destination system
+     */
     function copyInstances(source, id, destination) {
         destination.fillVec('cmOffsets', 3, id, source.getInstanceParameter3('cmOffsets').toArray());
         destination.fillVec('bbOffsets', 3, id, source.getInstanceParameter3('bbOffsets').toArray());
-        destination.fillVec('nsOffsets', 3, id, source.getInstanceParameter3('nsOffsets').toArray());
         destination.fillVec('nsOffsets', 3, id, source.getInstanceParameter3('nsOffsets').toArray());
         destination.fillVec('nsRotation', 4, id, source.getInstanceParameter4('nsRotation').toArray());
         destination.fillVec('conOffsets', 3, id, source.getInstanceParameter3('conOffsets').toArray());

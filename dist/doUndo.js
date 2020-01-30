@@ -5,7 +5,7 @@ class EditHistory {
     }
     ;
     /**
-     * Performsrevertable edit and add it to the undo history stack
+     * Performs revertable edit and add it to the undo history stack
      * @param edit object describing the revertable edit.
      */
     do(edit) {
@@ -53,6 +53,27 @@ class RevertableEdit {
     constructor(undo, redo) {
         this.undo = undo;
         this.redo = redo;
+    }
+    ;
+}
+class RevertableAddition extends RevertableEdit {
+    constructor(saved, added, pos) {
+        const s = saved;
+        let a = added;
+        const p = pos;
+        let undo = function () { api.deleteElements(a); };
+        let redo = function () { a = api.addElementsAt(s, p); };
+        super(undo, redo);
+    }
+    ;
+}
+class RevertableDeletion extends RevertableEdit {
+    constructor(victims) {
+        const saved = victims.map(e => new InstanceCopy(e));
+        let v = victims;
+        let undo = function () { v = api.addElements(saved); };
+        let redo = function () { api.deleteElements(v); };
+        super(undo, redo);
     }
     ;
 }

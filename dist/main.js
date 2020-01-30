@@ -18,13 +18,43 @@ class ElementMap extends Map {
      * @param element
      * @returns gid
      */
-    push(element) {
-        const gid = this.gidCounter++;
-        super.set(gid, element);
-        return gid;
+    push(e) {
+        e.gid = ++this.gidCounter;
+        super.set(e.gid, e);
+        return e.gid;
     }
     getLastId() {
         return this.gidCounter;
+    }
+}
+class InstanceCopy {
+    constructor(e) {
+        this.instanceParams = new Map([
+            ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+            ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+            ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+            ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+            ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+        ]);
+        this.instanceParams.forEach((size, attr) => {
+            if (size == 3) {
+                this[attr] = e.getInstanceParameter3(attr);
+            }
+            else { // 4
+                this[attr] = e.getInstanceParameter4(attr);
+            }
+        });
+        this.type = e.type;
+        this.gid = e.gid;
+        this.n3gid = e.neighbor3 ? e.neighbor3.gid : -1;
+        this.n5gid = e.neighbor5 ? e.neighbor5.gid : -1;
+        this.elemType = e.constructor;
+        this.system = e.parent.parent;
+    }
+    writeToSystem(sid, sys) {
+        this.instanceParams.forEach((size, attr) => {
+            sys.fillVec(attr, size, sid, this[attr].toArray());
+        });
     }
 }
 // store rendering mode RNA  

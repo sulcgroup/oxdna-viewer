@@ -18,6 +18,19 @@ document.addEventListener("keydown", event => {
         case 'arrowleft':
             trajReader.previousConfig();
             break;
+        case 'c':
+            if (event.ctrlKey) {
+                copyWrapper();
+            }
+            break;
+        case 'v':
+            if (event.ctrlKey) {
+                pasteWrapper();
+            }
+            break;
+        case 'delete':
+            deleteWrapper();
+            break;
         // Undo: ctrl-z
         // Redo: ctrl-shift-z or ctrl-y
         case 'z':

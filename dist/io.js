@@ -17,8 +17,8 @@ class TopReader extends FileReader {
                 // create empty list of elements with length equal to the topology
                 // Note: this is implemented such that we have the elements for the DAT reader 
                 let nuc; //DNANucleotide | RNANucleotide | AminoAcid;
-                for (let j = 0; j < lines.length; j++) {
-                    this.elems.push(nuc);
+                for (let i = 0; i < lines.length; i++) {
+                    this.elems.set(nucCount + i, nuc);
                 }
                 lines.forEach((line, i) => {
                     if (line == "") {

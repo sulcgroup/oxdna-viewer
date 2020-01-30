@@ -23,14 +23,62 @@ class ElementMap extends Map<number, BasicElement>{
      * @param element
      * @returns gid
      */
-    push(element: BasicElement): number {
-        const gid = this.gidCounter++;
-        super.set(gid, element);
-        return gid;
+    push(e: BasicElement): number {
+        e.gid = ++this.gidCounter;
+        super.set(e.gid, e);
+        return e.gid;
     }
 
     getLastId(): number {
         return this.gidCounter;
+    }
+}
+
+class InstanceCopy {
+    type: string;
+    gid: number;
+    n3gid: number;
+    n5gid: number;
+    elemType: any;
+    system: System;
+
+    instanceParams = new Map([
+        ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+        ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+        ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+        ['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+        ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+    ]);
+
+    cmOffsets: THREE.Vector3; bbOffsets: THREE.Vector3;
+    nsOffsets: THREE.Vector3; nsRotation: THREE.Vector4;
+    conOffsets: THREE.Vector3; conRotation: THREE.Vector4;
+    bbconOffsets: THREE.Vector3; bbconRotation: THREE.Vector4;
+    bbColors: THREE.Vector3; scales: THREE.Vector3;
+    nsScales: THREE.Vector3; conScales: THREE.Vector3;
+    bbconScales: THREE.Vector3; visibility: THREE.Vector3;
+    nsColors: THREE.Vector3; bbLabels: THREE.Vector3;
+
+    constructor(e: BasicElement) {
+        this.instanceParams.forEach((size, attr)=>{
+            if (size == 3){
+                this[attr] = e.getInstanceParameter3(attr);
+            } else { // 4
+                this[attr] = e.getInstanceParameter4(attr);
+            }
+        });
+        this.type = e.type;
+        this.gid = e.gid;
+        this.n3gid = e.neighbor3 ? e.neighbor3.gid : -1;
+        this.n5gid = e.neighbor5 ? e.neighbor5.gid : -1;
+        this.elemType = e.constructor;
+        this.system = e.parent.parent;
+    }
+
+    writeToSystem(sid: number, sys: System) {
+        this.instanceParams.forEach((size, attr)=>{
+            sys.fillVec(attr, size, sid, this[attr].toArray());
+        });
     }
 }
 
