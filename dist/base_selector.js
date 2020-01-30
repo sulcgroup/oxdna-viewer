@@ -177,17 +177,18 @@ function selectPaired(e) {
 }
 function fancySelectIntermediate(e) {
     let paired = selectPairs();
-    let d = new Dijkstra(elements.values(), paired);
+    let d = new Dijkstra(Array.from(elements.values()), paired);
     let elems;
     longCalculation(() => {
         elems = d.shortestPath(e, Array.from(selectedBases));
     }, "Calculating intermediate elements...", () => {
-        elems.forEach(e => {
-            if (!selectedBases.has(e)) {
-                e.toggle();
+        elems.forEach(gid => {
+            let elem = elements.get(parseInt(gid));
+            if (!selectedBases.has(elem)) {
+                elem.toggle();
             }
-            if (paired && e instanceof Nucleotide) {
-                let pair = e.pair;
+            if (paired && elem instanceof Nucleotide) {
+                let pair = elem.pair;
                 if (pair && !selectedBases.has(pair)) {
                     pair.toggle();
                 }

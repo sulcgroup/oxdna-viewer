@@ -335,6 +335,7 @@ var api;
             e.dummySys = tmpSys;
             e.name = e.gid.toString();
             e.sid = sid;
+            e.type = c.type;
             // Assign a picking color
             let idColor = new THREE.Color();
             idColor.setHex(e.gid + 1); //has to be +1 or you can't grab nucleotide 0
