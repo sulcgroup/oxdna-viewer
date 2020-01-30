@@ -28,7 +28,7 @@ If you would like to make a video of a trajectory, load a trajectory and click t
 **Gif**: Larger file size, but highly portable (note that this will not work in Chrome while running locally).  
 **PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ffmpeg or ImageJ.
 
-### Inpout Format
+### Input Format
 The topology and trajectory/configuration have to be in oxDNA format. You can convert from other formats (such as PDB, LAMMPS, caDNAno) using TacoxDNA converter: http://tacoxdna.sissa.it/
 
 ---
