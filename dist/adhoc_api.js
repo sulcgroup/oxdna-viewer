@@ -124,36 +124,33 @@ var api;
             strand.circular = false;
             return;
         }
-        else {
-            // Nucleotides which are after the nick
-            const orphans = trace35(element);
-            // No need to split if one half will be empty
-            if (orphans.length == 0 ||
-                orphans.length == strand.monomers.length) {
-                return;
-            }
-            strand.excludeElements(orphans);
-            // Create, fill and deploy new strand
-            const newStrand = strand.system.createStrand(strand.system.strands.length + 1);
-            strand.system.addStrand(newStrand);
-            let lidCounter = 0;
-            orphans.forEach((e) => {
-                newStrand.addBasicElement(e);
-                e.lid = lidCounter;
-                lidCounter += 1;
-                e.updateColor();
-            });
-            // Update local ids in the remnant strand
-            // If there are dummy systems, you need to rebuild
-            // anyway and they need static local IDs
-            if (tmpSystems.length == 0) {
-                let i = 0;
-                strand.monomers.forEach((n) => {
-                    n.lid = i++;
-                });
-            }
-            sys.callUpdates(['instanceColor']);
+        // No need to split if one half will be empty
+        if (!element.neighbor3 || !element.neighbor5) {
+            return;
         }
+        // Nucleotides which are after the nick
+        const orphans = trace35(element);
+        strand.excludeElements(orphans);
+        // Create, fill and deploy new strand
+        const newStrand = strand.system.createStrand(strand.system.strands.length + 1);
+        strand.system.addStrand(newStrand);
+        let lidCounter = 0;
+        orphans.forEach((e) => {
+            newStrand.addBasicElement(e);
+            e.lid = lidCounter;
+            lidCounter += 1;
+            e.updateColor();
+        });
+        // Update local ids in the remnant strand
+        // If there are dummy systems, you need to rebuild
+        // anyway and they need static local IDs
+        if (tmpSystems.length == 0) {
+            let i = 0;
+            strand.monomers.forEach((n) => {
+                n.lid = i++;
+            });
+        }
+        sys.callUpdates(['instanceColor']);
     }
     function nick(element) {
         let sys = element.getSystem(), sid = element.gid - sys.globalStartId;
