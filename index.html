@@ -96,6 +96,7 @@
                 <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
                 <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
                 <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
+                <button onclick="toggleOptions('hierarchy'); hierarchy();" type="button" title="View system hierarchy">System hierarchy</button>
             </fieldset>
 
             <!--Edit-->
@@ -193,6 +194,14 @@
             </div>
             Click a color to edit, right click to remove:
             <div id="colorOptionContent" style="background-color: inherit"></div>
+        </div>
+
+        <!--Hierarchy-->
+        <div class="opts" id="hierarchy" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('hierarchy')">close</i>
+            </div>
+            <div id="hierarchyContent" style="background-color: inherit"></div>
         </div>
 
         <!--File Output-->

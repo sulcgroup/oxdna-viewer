@@ -1,14 +1,55 @@
-function toggleSideNav() {
-    let hidden = "show toolbar";
-    let visible = "hide toolbar";
-    let button = document.getElementById("sideNavToggleButton");
-    let content = document.getElementById("sidenavContent");
-    if (button.innerText.toLowerCase() == hidden) {
-        content.style.display = "block";
-        button.innerHTML = visible;
+function drawLevel(parent: HTMLElement, label: string, onclick: (event)=>void, isBottom?: Boolean): HTMLElement {
+    const level = document.createElement('div');
+    level.style.paddingLeft ="10px";
+    const levelLabel = document.createElement('i');
+    levelLabel.innerHTML = label;
+    levelLabel.onclick = onclick;
+    levelLabel.style.cursor = 'pointer';
+
+    if (isBottom) {
+        level.appendChild(levelLabel);
+        parent.appendChild(level);
+        return;
     } else {
-        content.style.display = "none";
-        button.innerHTML = hidden;
+        const expandButton = document.createElement('i');
+        expandButton.classList.add('material-icons');
+        expandButton.innerHTML = "arrow_right";
+        const childContainer = document.createElement('div');
+        childContainer.hidden = true;
+
+        expandButton.onclick = (event: MouseEvent)=> {
+            if(childContainer.hidden) {
+                expandButton.innerHTML = 'arrow_drop_down';
+            } else {
+                expandButton.innerHTML = 'arrow_right';
+            }
+            childContainer.hidden = !childContainer.hidden;
+        };
+        const editText = document.createElement('i');
+        editText.classList.add('material-icons');
+        editText.innerHTML = 'edit';
+        level.appendChild(expandButton);
+        level.appendChild(levelLabel);
+        level.appendChild(editText);
+        level.appendChild(childContainer);
+        parent.appendChild(level);
+        return childContainer;
+    }
+}
+
+function hierarchy() {
+    const opt: HTMLElement = document.getElementById("hierarchyContent");
+    if (!opt.hidden) {
+        opt.innerHTML = ""; // Clear
+        systems.forEach(system=>{
+            let strands = drawLevel(opt, `System: ${system.systemID}`, (event)=>{system.toggleStrands(); updateView(system)});
+            system.strands.forEach(strand=>{
+                let monomers = drawLevel(strands, `Strand: ${strand.strandID}`, (event)=>{strand.toggleMonomers(); updateView(system)});
+                strand.monomers.forEach(monomer=>{
+                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event)=>{monomer.toggle(); updateView(system)}, true);
+                });
+            });
+        });
     }
 }
 

@@ -91,6 +91,17 @@ class BasicElement {
     }
     ;
     //abstract rotate(quat: THREE.Quaternion): void;
+    // highlight/remove highlight the bases we've clicked from the list and modify color
+    toggle() {
+        if (selectedBases.has(this)) {
+            selectedBases.delete(this);
+        }
+        else {
+            selectedBases.add(this);
+        }
+        this.updateColor();
+    }
+    ;
     updateSP(num) {
         return new THREE.Object3D();
     }
@@ -395,6 +406,14 @@ class Nucleotide extends BasicElement {
         this.updateColor();
     }
     ;
+    select() {
+        selectedBases.add(this);
+        this.updateColor();
+    }
+    deselect() {
+        selectedBases.delete(this);
+        this.updateColor();
+    }
     elemToColor(elem) {
         elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
         if (elem == undefined) {
@@ -842,6 +861,9 @@ class Strand {
         });
     }
     ;
+    toggleMonomers() {
+        this.monomers.forEach(e => e.toggle());
+    }
     isEmpty() {
         return this.monomers.length == 0;
     }
@@ -979,6 +1001,11 @@ class System {
             else {
                 this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
             }
+        });
+    }
+    toggleStrands() {
+        this.strands.forEach(strand => {
+            strand.toggleMonomers();
         });
     }
     createStrand(strID) {

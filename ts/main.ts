@@ -136,13 +136,19 @@ abstract class BasicElement {
 
     abstract calculatePositions(l: string[]): void;
     abstract calculateNewConfigPositions(l: string[]): void;
-    abstract toggle(): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
     abstract getDatFileOutput(): string; 
     abstract extendStrand(len, direction): void;
     abstract translatePosition(amount: THREE.Vector3): void;
     //abstract rotate(quat: THREE.Quaternion): void;
+
+    // highlight/remove highlight the bases we've clicked from the list and modify color
+    toggle() {
+        if (selectedBases.has(this)) { selectedBases.delete(this); }
+        else { selectedBases.add(this); }
+        this.updateColor();
+    };
 
     updateSP(num: number): THREE.Object3D {
         return new THREE.Object3D();
@@ -557,6 +563,16 @@ abstract class Nucleotide extends BasicElement {
         }
         this.updateColor();
     };
+
+    select() {
+        selectedBases.add(this);
+        this.updateColor();
+    }
+
+    deselect() {
+        selectedBases.delete(this);
+        this.updateColor()
+    }
 
     elemToColor(elem: number | string): THREE.Color {
         elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
@@ -1061,6 +1077,10 @@ abstract class Strand {
         });
     };
 
+    toggleMonomers() {
+        this.monomers.forEach(e=>e.toggle());
+    }
+
     isEmpty(): Boolean {
         return this.monomers.length == 0;
     }
@@ -1264,6 +1284,12 @@ class System {
                 this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
             }
         });
+    }
+
+    toggleStrands(){
+        this.strands.forEach(strand=>{
+            strand.toggleMonomers();
+        })
     }
 
     createStrand(strID: number): Strand {
