@@ -79,29 +79,32 @@ class RevertableAddition extends RevertableEdit {
 }
 
 class RevertableDeletion extends RevertableEdit {
+    victims: BasicElement[];
     constructor(victims: BasicElement[]) {
         const saved = victims.map(e=> new InstanceCopy(e));
-        let v = victims;
-
-        let undo = function() {v = api.addElements(saved)};
-        let redo = function() {api.deleteElements(v)};
+        let undo = function() {this.victims = api.addElements(saved)};
+        let redo = function() {api.deleteElements(this.victims)};
         super(undo, redo);
+        this.victims = victims;
     };
 }
 
 class RevertableNick extends RevertableEdit {
     constructor(element: BasicElement) {
-        const n3 = element.neighbor3;
-        let undo = function() {api.ligate(element, n3)};
-        let redo = function() {api.nick(element);}
+        const gid1 = element.gid;
+        const gid2 = element.neighbor3.gid;
+        let undo = function() {api.ligate(elements.get(gid1), elements.get(gid2))};
+        let redo = function() {api.nick(elements.get(gid1));}
         super(undo, redo);
     };
 }
 
 class RevertableLigation extends RevertableEdit {
     constructor(e1 :BasicElement, e2: BasicElement) {
-        let undo = function() {api.nick(e1)};
-        let redo = function() {api.ligate(e1, e2)}
+        const gid1 = e1.gid;
+        const gid2 = e2.gid;
+        let undo = function() {api.nick(elements.get(gid1))};
+        let redo = function() {api.ligate(elements.get(gid1), elements.get(gid2))}
         super(undo, redo);
     };
 }

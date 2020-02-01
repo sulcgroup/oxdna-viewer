@@ -8,6 +8,16 @@ function copyWrapper() {
     clearSelection();
     copied = toCopy.map(i => new InstanceCopy(elements.get(i)));
 }
+function cutWrapper() {
+    if (listBases.length == 0) {
+        notify("Please select monomers to copy");
+        return;
+    }
+    let elems = listBases.map(i => elements.get(i)); // Save so that we can clear the selection
+    clearSelection();
+    copied = elems.map(e => new InstanceCopy(e));
+    editHistory.do(new RevertableDeletion(elems));
+}
 function pasteWrapper() {
     if (copied.length == 0) {
         notify("Nothing is copied, so nothing to paste");

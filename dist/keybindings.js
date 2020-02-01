@@ -23,6 +23,11 @@ document.addEventListener("keydown", event => {
                 copyWrapper();
             }
             break;
+        case 'x':
+            if (event.ctrlKey) {
+                cutWrapper();
+            }
+            break;
         case 'v':
             if (event.ctrlKey) {
                 pasteWrapper();

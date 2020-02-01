@@ -13,32 +13,31 @@ canvas.addEventListener('mousedown', event => {
             // but it needs to be defined as a callback since the cluster selection
             // can take a while to finish.
             let nucleotide = elements.get(id);
-            let sys = nucleotide.parent.parent;
+            let sys = nucleotide.getSystem();
             // Select multiple elements my holding down ctrl
             if (!event.ctrlKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
                 clearSelection();
             }
-            let strandCount = sys[strands].length;
+            let strandCount = sys.strands.length;
             switch (getScopeMode()) {
                 case "System":
-                    for (let i = 0; i < strandCount; i++) { //for every strand in the System
-                        let strand = sys[strands][i];
-                        let nucCount = strand[monomers].length;
-                        for (let j = 0; j < nucCount; j++) // for every nucleotide on the Strand
-                            strand[monomers][j].toggle();
-                    }
+                    sys.strands.forEach(strand => {
+                        strand.monomers.forEach(e => {
+                            e.toggle();
+                        });
+                    });
                     updateView(sys);
                     break;
                 case "Strand":
-                    let strandLength = nucleotide.parent[monomers].length;
+                    let strandLength = nucleotide.strand.monomers.length;
                     for (let i = 0; i < strandLength; i++) { //for every nucleotide in strand
-                        nucleotide.parent[monomers][i].toggle();
+                        nucleotide.strand.monomers[i].toggle();
                         if (selectPairs()) {
                             if (!nucleotide.isPaired()) {
-                                longCalculation(findBasepairs, basepairMessage, () => { selectPaired(nucleotide.parent[monomers][i]); updateView(sys); });
+                                longCalculation(findBasepairs, basepairMessage, () => { selectPaired(nucleotide.strand.monomers[i]); updateView(sys); });
                             }
                             else {
-                                selectPaired(nucleotide.parent[monomers][i]);
+                                selectPaired(nucleotide.strand.monomers[i]);
                             }
                         }
                     }
@@ -75,11 +74,11 @@ canvas.addEventListener('mousedown', event => {
                     }
                     else {
                         for (let i = 0; i < strandCount; i++) {
-                            let strand = sys[strands][i];
-                            let nucCount = strand[monomers].length;
+                            let strand = sys.strands[i];
+                            let nucCount = strand.monomers.length;
                             // for every nucleotide on the Strand in the System
                             for (let j = 0; j < nucCount; j++) {
-                                let n = strand[monomers][j];
+                                let n = strand.monomers[j];
                                 if (n.clusterId == nucleotide.clusterId) {
                                     n.toggle();
                                 }
@@ -113,7 +112,7 @@ function updateView(sys) {
         //store global ids for BaseList view
         listBases.push(base.gid);
         //assign each of the selected bases to a strand
-        let strandID = base.parent.strandID;
+        let strandID = base.strand.strandID;
         if (strandID in baseInfoStrands)
             baseInfoStrands[strandID].push(base);
         else
@@ -126,7 +125,7 @@ function updateView(sys) {
     for (let strandID in baseInfoStrands) {
         let sBases = baseInfoStrands[strandID];
         //make a fancy header for each strand
-        let header = ["Str#:", strandID, "Sys#:", sBases[0].parent.parent.systemID];
+        let header = ["Str#:", strandID, "Sys#:", sBases[0].getSystem().systemID];
         baseInfoLines.push("----------------------");
         baseInfoLines.push(header.join(" "));
         baseInfoLines.push("----------------------");
@@ -194,7 +193,7 @@ function fancySelectIntermediate(e) {
                 }
             }
         });
-        updateView(e.parent.parent);
+        updateView(e.getSystem());
     });
 }
 function selectIntermediate() {

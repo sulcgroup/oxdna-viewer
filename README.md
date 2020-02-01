@@ -45,7 +45,6 @@ In addition to the visualization and editing features highlighted in the sidebar
  * `del(<array of monomer objects>)`: Loops through the array, deleting each object from the scene. Also handles the separation of strand objects. Hooked up to the "Delete" button on the sidebar.
  * `extendStrand(<monomer object> <string>)`: Extends the parent strand of the provided monomer with the given sequence.  The string must be in ALL CAPS to correspond to particle types. The new monomers will appear in a helix with an axis corresponding to the a3 vector of the provided monomer.  These will most likley need to be relaxed prior to production simulations with edited files. Hooked up to the "Extend" button on the sidebar
  * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
- * `cleanOrder() `: Rebuilds the scene from the ground up, ordering the strands from longest to shortest.  This removes any gaps or duplicated numbers in the monomer and strand IDs, which if left in will cause oxDNA to crash.  Always run this command before exporting edited scenes (done automatically if the "Pre-organize strands" option is selected in the Download options box.
  * `removeColorbar()`: Hide the colorbar if an overlay is loaded.  
  * `showColorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
  * `changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
@@ -54,7 +53,7 @@ In addition to the visualization and editing features highlighted in the sidebar
  * `showEverything()`: Resets all visibility parameters to default values.  
  * `switchCamera()`: Toggles between perspective and orthographic camera.  Note that orbit controls does not support zooming in orthographic camera mode.  Hooked up to the "Orthographic"/"Perspective" button in the sidebar.
 
-Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0][strands][5][monomers][1].  There is also an array of all monomers indexed by global id, so the 1000th monomer can be accessed by elements[999].
+Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].monomers[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999).
 
 ---
 

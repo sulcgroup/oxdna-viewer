@@ -135,6 +135,7 @@ function readFiles(topFile, datFile, jsonFile) {
     dragInstruction.style.display = "none";
     //make system to store the dropped files in
     const system = new System(sysCount, elements.getLastId());
+    //systems.push(system); // Add to systems array
     if (topFile) {
         //read topology file
         const topReader = new TopReader(topFile, system, elements);
@@ -168,7 +169,7 @@ function readFiles(topFile, datFile, jsonFile) {
 }
 let xbbLast, ybbLast, zbbLast;
 function readDat(numNuc, datReader, system) {
-    let currentStrand = systems[sysCount][strands][0];
+    let currentStrand = systems[sysCount].strands[0];
     // parse file into lines
     let lines = datReader.result.split(/[\n]+/g);
     if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
@@ -198,10 +199,10 @@ function readDat(numNuc, datReader, system) {
         currentNucleotide.calculatePositions(l);
         //when a strand is finished, add it to the system
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
-            system.add(currentStrand); //add strand THREE.Group to system THREE.Group
-            currentStrand = system[strands][currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
+            system.addStrand(currentStrand); // add strand to system
+            currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
             if (elements.has(currentNucleotide.gid + 1)) {
-                currentStrand = elements.get(currentNucleotide.gid + 1).parent;
+                currentStrand = elements.get(currentNucleotide.gid + 1).strand;
             }
         }
     }

@@ -83,7 +83,7 @@ THREE.DragControls = function (_camera, _domElement) { //pass in objects, camera
                 controls.enabled = false;
 
                 //Update attributes on the GPU
-                _selected.parent.parent.callUpdates(['instanceOffset'])
+                _selected.getSystem().callUpdates(['instanceOffset'])
                 if (_selected.dummySys !== null) {
                     _selected.dummySys.callUpdates(['instanceOffset'])
                 }

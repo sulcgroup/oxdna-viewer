@@ -18,6 +18,7 @@ document.addEventListener("keydown", event =>{
         case 'arrowleft': trajReader.previousConfig(); break;
 
         case 'c': if (event.ctrlKey) {copyWrapper();} break;
+        case 'x': if (event.ctrlKey) {cutWrapper();} break;
         case 'v': if (event.ctrlKey) {pasteWrapper();} break;
 
         case 'delete': deleteWrapper(); break;

@@ -1,9 +1,5 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
-    let clean = <NodeListOf<HTMLInputElement>>document.getElementsByName("cleanFirst");
     let name = (<HTMLInputElement>document.getElementById("outputFilename")).value
-    if (clean[0].checked == true) {
-        api.cleanOrder();
-    }
     let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
     if (top[0].checked == true) {
         makeTopFile(name);
@@ -26,11 +22,11 @@ function makeTopFile(name){
     let gidCounter = 0;
 
     systems.forEach(system =>{
-        totStrands += system[strands].length; // Count strands
-        system[strands].forEach((strand: Strand) => {
+        totStrands += system.strands.length; // Count strands
+        system.strands.forEach((strand: Strand) => {
             newStrandIds.set(strand, sidCounter++); //Assign new strandID
-            totNuc += strand[monomers].length; // Count elements
-            strand[monomers].forEach(e => {
+            totNuc += strand.monomers.length; // Count elements
+            strand.monomers.forEach(e => {
                 newElementIds.set(e, gidCounter++); //Assign new elementID
             });
         });
@@ -46,7 +42,7 @@ function makeTopFile(name){
         let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
 
-        top.push([newStrandIds.get(e.parent), e.type, neighbor3, neighbor5].join(' '));
+        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
     });
     makeTextFile(name+".top", top.join("\n")); //make .top file
 }
@@ -71,8 +67,8 @@ function makeDatFile(name) {
 
     // For all elements, in the correct order
     systems.forEach(system =>{
-        system[strands].forEach((strand: Strand) => {
-            strand[monomers].forEach(e => {
+        system.strands.forEach((strand: Strand) => {
+            strand.monomers.forEach(e => {
                 dat += e.getDatFileOutput();
             });
         });
@@ -110,8 +106,8 @@ function makeSelectedBasesFile() { //make selected base file by addign listBases
 function makeSequenceFile() {
     let seqTxts = [];
     systems.forEach((sys: System)=>{
-        sys[strands].forEach((strand: Strand)=>{
-            seqTxts.push(`seq_${strand.strandID}, ${api.getSequence(strand[monomers])}`);
+        sys.strands.forEach((strand: Strand)=>{
+            seqTxts.push(`seq_${strand.strandID}, ${api.getSequence(strand.monomers)}`);
       })
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));

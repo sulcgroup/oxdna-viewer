@@ -75,7 +75,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
     q2.y *= -1;
 
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
@@ -155,7 +155,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
-    let sys = currentNuc.parent.parent;
+    let sys = currentNuc.getSystem();
     if (currentNuc.dummySys !== null) {
         sys = currentNuc.dummySys
     }
@@ -193,7 +193,7 @@ function calcsp(currentNuc) {
 
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys

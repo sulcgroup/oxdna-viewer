@@ -105,7 +105,12 @@ function longCalculation(calc, message, callback) {
     let dom = document.activeElement;
     dom['style'].cursor = "wait";
     requestAnimationFrame(() => requestAnimationFrame(() => {
-        calc();
+        try {
+            calc();
+        }
+        catch (error) {
+            notify(`Sorry, something went wrong with the calculation: ${error}`);
+        }
         // Change cursor back and remove modal
         dom['style'].cursor = "auto";
         modal.removeChild(notification);
