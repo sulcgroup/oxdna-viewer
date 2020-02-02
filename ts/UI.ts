@@ -1,4 +1,4 @@
-function drawLevel(parent: HTMLElement, label: string, onclick: (event)=>void, isBottom?: Boolean): HTMLElement {
+function drawLevel(parent: HTMLElement, label: string, onclick: (event)=>void, expanded?: Boolean, isBottom?: Boolean): HTMLElement {
     const level = document.createElement('div');
     level.style.paddingLeft ="10px";
     const levelLabel = document.createElement('i');
@@ -15,7 +15,7 @@ function drawLevel(parent: HTMLElement, label: string, onclick: (event)=>void, i
         expandButton.classList.add('material-icons');
         expandButton.innerHTML = "arrow_right";
         const childContainer = document.createElement('div');
-        childContainer.hidden = true;
+        childContainer.hidden = !expanded;
 
         expandButton.onclick = (event: MouseEvent)=> {
             if(childContainer.hidden) {
@@ -42,11 +42,11 @@ function hierarchy() {
     if (!opt.hidden) {
         opt.innerHTML = ""; // Clear
         systems.forEach(system=>{
-            let strands = drawLevel(opt, `System: ${system.systemID}`, (event)=>{system.toggleStrands(); updateView(system)});
+            let strands = drawLevel(opt, `System: ${system.systemID}`, (event)=>{system.toggleStrands(); updateView(system)}, true);
             system.strands.forEach(strand=>{
                 let monomers = drawLevel(strands, `Strand: ${strand.strandID}`, (event)=>{strand.toggleMonomers(); updateView(system)});
                 strand.monomers.forEach(monomer=>{
-                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event)=>{monomer.toggle(); updateView(system)}, true);
+                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event)=>{monomer.toggle(); updateView(system)}, false, true);
                 });
             });
         });

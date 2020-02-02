@@ -1,4 +1,4 @@
-function drawLevel(parent, label, onclick, isBottom) {
+function drawLevel(parent, label, onclick, expanded, isBottom) {
     const level = document.createElement('div');
     level.style.paddingLeft = "10px";
     const levelLabel = document.createElement('i');
@@ -15,7 +15,7 @@ function drawLevel(parent, label, onclick, isBottom) {
         expandButton.classList.add('material-icons');
         expandButton.innerHTML = "arrow_right";
         const childContainer = document.createElement('div');
-        childContainer.hidden = true;
+        childContainer.hidden = !expanded;
         expandButton.onclick = (event) => {
             if (childContainer.hidden) {
                 expandButton.innerHTML = 'arrow_drop_down';
@@ -41,11 +41,11 @@ function hierarchy() {
     if (!opt.hidden) {
         opt.innerHTML = ""; // Clear
         systems.forEach(system => {
-            let strands = drawLevel(opt, `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); });
+            let strands = drawLevel(opt, `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, true);
             system.strands.forEach(strand => {
                 let monomers = drawLevel(strands, `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); });
                 strand.monomers.forEach(monomer => {
-                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event) => { monomer.toggle(); updateView(system); }, true);
+                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event) => { monomer.toggle(); updateView(system); }, false, true);
                 });
             });
         });

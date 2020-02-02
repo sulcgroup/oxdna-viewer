@@ -115,6 +115,11 @@ var api;
         return elems;
     }
     api.trace35 = trace35;
+    /**
+     * Split the elemnt's strand at the element provided
+     * @param element Element to split at
+     * @returns new strand created in split
+     */
     function splitStrand(element) {
         const strand = element.strand, sys = strand.system;
         // Splitting a circular strand doesn't make
@@ -125,7 +130,7 @@ var api;
             return;
         }
         // No need to split if one half will be empty
-        if (!element.neighbor3 || !element.neighbor5) {
+        if (!element.neighbor5) {
             return;
         }
         // Nucleotides which are after the nick
@@ -151,6 +156,7 @@ var api;
             });
         }
         sys.callUpdates(['instanceColor']);
+        return newStrand;
     }
     function nick(element) {
         let sys = element.getSystem(), sid = element.gid - sys.globalStartId;
@@ -264,10 +270,10 @@ var api;
                 sys = e.dummySys;
             }
             else {
-                sys = strand.system;
+                sys = e.getSystem();
             }
             needsUpdateList.add(sys);
-            splitStrand(e);
+            let newStrand = splitStrand(e);
             if (e.neighbor3 !== null) {
                 e.neighbor3.neighbor5 = null;
                 e.neighbor3 = null;
@@ -281,12 +287,15 @@ var api;
                 e.neighbor5 = null;
             }
             e.toggleVisibility();
-            strand.excludeElements([e]);
+            e.strand.excludeElements([e]);
             elements.delete(e.gid);
             selectedBases.delete(e);
-            // Remove strand if it's empty
+            // Remove strand(s) if empty
             if (strand.isEmpty()) {
                 strand.system.removeStrand(strand);
+            }
+            if (newStrand != strand && newStrand && newStrand.isEmpty()) {
+                newStrand.system.removeStrand(newStrand);
             }
         });
         needsUpdateList.forEach((s) => {

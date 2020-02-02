@@ -119,7 +119,12 @@ module api{
         return elems;
     }
 
-    function splitStrand(element: BasicElement) {
+    /**
+     * Split the elemnt's strand at the element provided
+     * @param element Element to split at
+     * @returns new strand created in split
+     */
+    function splitStrand(element: BasicElement): Strand {
         const strand = element.strand,
               sys = strand.system;
 
@@ -132,7 +137,7 @@ module api{
         }
 
         // No need to split if one half will be empty
-        if(!element.neighbor3 || !element.neighbor5) {
+        if(!element.neighbor5) {
             return;
         }
 
@@ -165,6 +170,8 @@ module api{
         }
 
         sys.callUpdates(['instanceColor']);
+
+        return newStrand;
     }
 
     export function nick(element: BasicElement){
@@ -313,10 +320,10 @@ module api{
                 sys = e.dummySys;
             }
             else {
-                sys = strand.system;
+                sys = e.getSystem();
             }
             needsUpdateList.add(sys);
-            splitStrand(e);
+            let newStrand = splitStrand(e);
 
             if (e.neighbor3 !== null){
                 e.neighbor3.neighbor5 = null;
@@ -333,13 +340,16 @@ module api{
             }
 
             e.toggleVisibility();
-            strand.excludeElements([e])
+            e.strand.excludeElements([e])
             elements.delete(e.gid);
             selectedBases.delete(e);
 
-            // Remove strand if it's empty
+            // Remove strand(s) if empty
             if(strand.isEmpty()) {
                 strand.system.removeStrand(strand);
+            }
+            if(newStrand != strand && newStrand && newStrand.isEmpty()) {
+                newStrand.system.removeStrand(newStrand);
             }
         });
 
