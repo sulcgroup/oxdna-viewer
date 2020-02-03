@@ -11,14 +11,14 @@ class ElementMap extends Map<number, BasicElement>{
     // Avoid using this unless you really need to set
     // a specific gid.
     set(gid: number, element: BasicElement): this {
-        if(this.gidCounter < gid){
-            this.gidCounter = gid;
+        if(this.gidCounter < gid+1){
+            this.gidCounter = gid+1;
         }
         return super.set(gid, element);
     }
 
     /**
-     * Add an element to the array, keeping track of
+     * Add an element, keeping track of
      * global id
      * @param element
      * @returns gid
@@ -28,8 +28,19 @@ class ElementMap extends Map<number, BasicElement>{
         super.set(e.gid, e);
         return e.gid;
     }
+    /**
+     * Remove element
+     * @param gid
+     */
+    delete(gid: number): boolean {
+        // If we delete the last added, we can decrease the gid counter.
+        if(this.gidCounter == gid+1){
+            this.gidCounter = gid;
+        }
+        return super.delete(gid);
+    }
 
-    getLastId(): number {
+    getNextId(): number {
         return this.gidCounter;
     }
 }
@@ -1063,7 +1074,7 @@ abstract class Strand {
     };
 
     createBasicElement(gid: number): BasicElement {
-        throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc."
+        throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc.";
     }
 
     excludeElements(elements: BasicElement[]) {
@@ -1250,6 +1261,10 @@ class System {
         }
         return count;
     };
+
+    isEmpty(): Boolean {
+        return this.strands.length == 0;
+    }
 
     initInstances(nInstances: number) {
         this.INSTANCES = nInstances

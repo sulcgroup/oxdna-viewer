@@ -217,7 +217,7 @@ function fancySelectIntermediate(e: BasicElement) {
 }
 
 function selectIntermediate() {
-	let n = elements.getLastId();
+	let n = elements.getNextId();
 	let iMin = 0;
 	let iMax = n;
 	while(iMin++ <= n) {

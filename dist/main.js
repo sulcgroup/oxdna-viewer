@@ -7,13 +7,13 @@ class ElementMap extends Map {
     // Avoid using this unless you really need to set
     // a specific gid.
     set(gid, element) {
-        if (this.gidCounter < gid) {
-            this.gidCounter = gid;
+        if (this.gidCounter < gid + 1) {
+            this.gidCounter = gid + 1;
         }
         return super.set(gid, element);
     }
     /**
-     * Add an element to the array, keeping track of
+     * Add an element, keeping track of
      * global id
      * @param element
      * @returns gid
@@ -23,7 +23,18 @@ class ElementMap extends Map {
         super.set(e.gid, e);
         return e.gid;
     }
-    getLastId() {
+    /**
+     * Remove element
+     * @param gid
+     */
+    delete(gid) {
+        // If we delete the last added, we can decrease the gid counter.
+        if (this.gidCounter == gid + 1) {
+            this.gidCounter = gid;
+        }
+        return super.delete(gid);
+    }
+    getNextId() {
         return this.gidCounter;
     }
 }
@@ -970,6 +981,9 @@ class System {
         return count;
     }
     ;
+    isEmpty() {
+        return this.strands.length == 0;
+    }
     initInstances(nInstances) {
         this.INSTANCES = nInstances;
         this.bbOffsets = new Float32Array(this.INSTANCES * 3);

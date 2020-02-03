@@ -134,8 +134,7 @@ function readFiles(topFile, datFile, jsonFile) {
     const dragInstruction = document.getElementById("dragInstruction");
     dragInstruction.style.display = "none";
     //make system to store the dropped files in
-    const system = new System(sysCount, elements.getLastId());
-    //systems.push(system); // Add to systems array
+    const system = new System(sysCount, elements.getNextId());
     if (topFile) {
         //read topology file
         const topReader = new TopReader(topFile, system, elements);
@@ -201,7 +200,7 @@ function readDat(numNuc, datReader, system) {
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
             system.addStrand(currentStrand); // add strand to system
             currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements.has(currentNucleotide.gid + 1)) {
+            if (elements.get(currentNucleotide.gid + 1) != undefined) {
                 currentStrand = elements.get(currentNucleotide.gid + 1).strand;
             }
         }

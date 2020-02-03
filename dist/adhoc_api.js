@@ -292,10 +292,22 @@ var api;
             selectedBases.delete(e);
             // Remove strand(s) if empty
             if (strand.isEmpty()) {
-                strand.system.removeStrand(strand);
+                let s = strand.system;
+                s.removeStrand(strand);
+                // Remove system if empty
+                if (s.isEmpty()) {
+                    systems.splice(systems.indexOf(s), 1);
+                    sysCount--;
+                }
             }
             if (newStrand != strand && newStrand && newStrand.isEmpty()) {
-                newStrand.system.removeStrand(newStrand);
+                let s = newStrand.system;
+                s.removeStrand(newStrand);
+                // Remove system if empty
+                if (s.isEmpty()) {
+                    systems.splice(systems.indexOf(s), 1);
+                    sysCount--;
+                }
             }
         });
         needsUpdateList.forEach((s) => {
@@ -440,7 +452,7 @@ var api;
                 }
                 else {
                     // Create a new strand
-                    let strand = sys.createStrand(sys.strands.length);
+                    let strand = sys.createStrand(sys.strands.length + 1);
                     sys.addStrand(strand);
                     strand.addBasicElement(e);
                 }
