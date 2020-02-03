@@ -614,7 +614,7 @@ class RNANucleotide extends Nucleotide {
         const ns_pos = this.getInstanceParameter3("nsOffsets");
         const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z);
         let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
-        if (direction == "neighbor3") {
+        if (direction == "neighbor5") {
             dir.multiplyScalar(-1);
         }
         const dir_norm = Math.sqrt(dir.dot(dir));
