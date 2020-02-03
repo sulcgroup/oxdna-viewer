@@ -616,7 +616,14 @@ var api;
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
         // The strand gets added to the last-added system.
-        const realSys = systems.slice(-1)[0];
+        // Or make a new system if you're crazy and trying to build something from scratch
+        let realSys;
+        if (systems.length > 0) {
+            realSys = systems.slice(-1)[0];
+        }
+        else {
+            realSys = new System(0, 0);
+        }
         // Create a new strand
         let strand = realSys.createStrand(1);
         realSys.addStrand(strand);
@@ -633,12 +640,12 @@ var api;
         strand.addBasicElement(e);
         // place the new strand 10 units in front of the camera
         // with its a1 vector parallel to the camera heading
-        // and a3 the cross product of the a1 vector and the z-axis
+        // and a3 the cross product of the a1 vector and the camera's up vector
         let cameraHeading = new THREE.Vector3(0, 0, -1);
         cameraHeading.applyQuaternion(camera.quaternion);
         let pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20));
         let a3 = new THREE.Vector3;
-        a3.crossVectors(cameraHeading, new THREE.Vector3(0, 0, 1));
+        a3.crossVectors(cameraHeading, camera.up);
         let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z];
         e.calculatePositions(line);
         e.dummySys = tmpSys;
