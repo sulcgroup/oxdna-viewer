@@ -56,7 +56,7 @@ const BLACK = new THREE.Color(0x000000);
 const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE;
-camera = createPerspectiveCamera(45, 0.1, 1000, [100, 0, 0]); //create camera
+camera = createPerspectiveCamera(45, 0.1, 10000, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 // Create canvas and renderer
 const canvas = document.getElementById("threeCanvas");
@@ -100,6 +100,15 @@ dir = new THREE.Vector3(0, 0, 1);
 arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
+// Declare bounding box object
+let boxObj;
+function toggleBox(chkBox) {
+    if (!boxObj) {
+        boxObj = drawBox(box, new THREE.Vector3());
+    }
+    boxObj.visible = chkBox.checked;
+    render();
+}
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
 function toggleArrows(chkBox) {
     if (chkBox.checked) {
@@ -145,6 +154,45 @@ function toggleFog(near, far) {
         scene.fog = null;
     }
     render();
+}
+function drawBox(size, position) {
+    let material = new THREE.LineBasicMaterial({ color: GREY });
+    let points = [];
+    let a = position;
+    let b = size.clone().add(a);
+    let f = (xComp, yComp, zComp) => {
+        return new THREE.Vector3(xComp.x, yComp.y, zComp.z);
+    };
+    // I'm sure there's a clever way to do this in a loop...
+    points.push(f(a, a, a));
+    points.push(f(b, a, a));
+    points.push(f(a, a, b));
+    points.push(f(b, a, b));
+    points.push(f(a, b, a));
+    points.push(f(b, b, a));
+    points.push(f(a, b, b));
+    points.push(f(b, b, b));
+    points.push(f(a, a, a));
+    points.push(f(a, b, a));
+    points.push(f(a, a, b));
+    points.push(f(a, b, b));
+    points.push(f(b, a, a));
+    points.push(f(b, b, a));
+    points.push(f(b, a, b));
+    points.push(f(b, b, b));
+    points.push(f(a, a, b));
+    points.push(f(a, a, a));
+    points.push(f(a, b, b));
+    points.push(f(a, b, a));
+    points.push(f(b, a, b));
+    points.push(f(b, a, a));
+    points.push(f(b, b, b));
+    points.push(f(b, b, a));
+    var geometry = new THREE.BufferGeometry().setFromPoints(points);
+    var boxObj = new THREE.LineSegments(geometry, material);
+    scene.add(boxObj);
+    render();
+    return boxObj;
 }
 // adding mouse control to the scene 
 const controls = new THREE.TrackballControls(camera, canvas);

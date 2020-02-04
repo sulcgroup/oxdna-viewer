@@ -71,7 +71,7 @@ const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE
 
-camera = createPerspectiveCamera(45, 0.1, 1000, [100, 0, 0]); //create camera
+camera = createPerspectiveCamera(45, 0.1, 10000, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 
 // import canvas capture library - used in video creation
@@ -124,8 +124,19 @@ arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
 
+// Declare bounding box object
+let boxObj: THREE.LineSegments;
+
+function toggleBox(chkBox: HTMLInputElement) {
+    if(!boxObj) {
+        boxObj = drawBox(box, new THREE.Vector3());
+    }
+    boxObj.visible = chkBox.checked;
+    render();
+}
+
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
-function toggleArrows(chkBox) { //make arrows visible or invisible based on checkbox - functionality added to allow for cleaner images
+function toggleArrows(chkBox: HTMLInputElement) { //make arrows visible or invisible based on checkbox - functionality added to allow for cleaner images
     if (chkBox.checked) {
         let arrowHelper = scene.getObjectByName("x-axis");
         arrowHelper.visible = true;
@@ -172,6 +183,40 @@ function toggleFog(near?: number, far?: number) {
         scene.fog = null;
     }
     render();
+}
+
+function drawBox(size: THREE.Vector3, position: THREE.Vector3): THREE.LineSegments {
+    let material = new THREE.LineBasicMaterial({color: GREY});
+    let points = [];
+
+    let a = position;
+    let b = size.clone().add(a);
+
+    let f = (xComp:THREE.Vector3, yComp:THREE.Vector3, zComp:THREE.Vector3)=>{
+        return new THREE.Vector3(xComp.x, yComp.y, zComp.z);
+    }
+
+    // I'm sure there's a clever way to do this in a loop...
+    points.push(f(a,a,a)); points.push(f(b,a,a));
+    points.push(f(a,a,b)); points.push(f(b,a,b));
+    points.push(f(a,b,a)); points.push(f(b,b,a));
+    points.push(f(a,b,b)); points.push(f(b,b,b));
+
+    points.push(f(a,a,a)); points.push(f(a,b,a));
+    points.push(f(a,a,b)); points.push(f(a,b,b));
+    points.push(f(b,a,a)); points.push(f(b,b,a));
+    points.push(f(b,a,b)); points.push(f(b,b,b));
+
+    points.push(f(a,a,b)); points.push(f(a,a,a));
+    points.push(f(a,b,b)); points.push(f(a,b,a));
+    points.push(f(b,a,b)); points.push(f(b,a,a));
+    points.push(f(b,b,b)); points.push(f(b,b,a));
+
+    var geometry = new THREE.BufferGeometry().setFromPoints(points);
+    var boxObj = new THREE.LineSegments(geometry, material);
+    scene.add(boxObj);
+    render();
+    return boxObj;
 }
 
 // adding mouse control to the scene 
