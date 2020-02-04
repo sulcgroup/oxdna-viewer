@@ -13,6 +13,8 @@ class EditHistory {
         this.undoStack.push(edit);
         // We no longer care about the alternate future:
         this.redoStack = new Stack();
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
     /**
      * Add revertable edit to the undo history stack without performing it.
@@ -20,6 +22,8 @@ class EditHistory {
      */
     add(edit) {
         this.undoStack.push(edit);
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
     undo() {
         let edit;
@@ -31,6 +35,8 @@ class EditHistory {
         }
         edit.undo();
         this.redoStack.push(edit);
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
     redo() {
         let edit;
@@ -42,6 +48,8 @@ class EditHistory {
         }
         edit.redo();
         this.undoStack.push(edit);
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 }
 class RevertableEdit {

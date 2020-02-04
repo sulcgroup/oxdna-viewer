@@ -129,7 +129,7 @@ abstract class BasicElement {
     lid: number;
     gid: number; //location in world - all systems
     sid: number; //in-system ID, only used if in a temporary system
-    name: string;
+    label: string;
     neighbor3: BasicElement | null;
     neighbor5: BasicElement | null;
     strand: Strand;
@@ -1059,6 +1059,7 @@ abstract class Strand {
     pos: THREE.Vector3;
     circular: boolean;
     monomers: BasicElement[] = [];
+    label: string;
 
     constructor(id: number, system: System) {
         this.strandID = id;
@@ -1211,6 +1212,7 @@ class System {
     colormapFile;
     lutCols: THREE.Color[];
     strands: Strand[] = [];
+    label: string;
 
     //the system contains all the data from a dat file in its instancing arrays
     //the system also owns the actual meshes that get sent to the scene.

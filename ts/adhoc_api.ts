@@ -159,6 +159,11 @@ module api{
             }
         );
 
+        if (strand.label) {
+            newStrand.label = `${strand.label}_2`;
+            strand.label = `${strand.label}_1`;
+        }
+
         // Update local ids in the remnant strand
         // If there are dummy systems, you need to rebuild
         // anyway and they need static local IDs

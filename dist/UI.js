@@ -1,13 +1,18 @@
-function drawLevel(parent, label, onclick, expanded, isBottom) {
+function drawLevel(parent, label, onClick, onEdit, expanded, isBottom) {
     const level = document.createElement('div');
     level.style.paddingLeft = "10px";
     const levelLabel = document.createElement('i');
     levelLabel.innerHTML = label;
-    levelLabel.onclick = onclick;
+    levelLabel.onclick = onClick;
     levelLabel.style.cursor = 'pointer';
+    const editText = document.createElement('i');
+    editText.classList.add('material-icons');
+    editText.innerHTML = 'edit';
+    editText.onclick = onEdit;
     if (isBottom) {
         level.appendChild(levelLabel);
         parent.appendChild(level);
+        level.appendChild(editText);
         return;
     }
     else {
@@ -25,9 +30,6 @@ function drawLevel(parent, label, onclick, expanded, isBottom) {
             }
             childContainer.hidden = !childContainer.hidden;
         };
-        const editText = document.createElement('i');
-        editText.classList.add('material-icons');
-        editText.innerHTML = 'edit';
         level.appendChild(expandButton);
         level.appendChild(levelLabel);
         level.appendChild(editText);
@@ -36,16 +38,16 @@ function drawLevel(parent, label, onclick, expanded, isBottom) {
         return childContainer;
     }
 }
-function hierarchy() {
+function drawHierarchy() {
     const opt = document.getElementById("hierarchyContent");
     if (!opt.hidden) {
         opt.innerHTML = ""; // Clear
         systems.forEach(system => {
-            let strands = drawLevel(opt, `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, true);
+            let strands = drawLevel(opt, system.label ? system.label : `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, () => { system.label = prompt("Please enter system label"); drawHierarchy(); }, true);
             system.strands.forEach(strand => {
-                let monomers = drawLevel(strands, `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); });
+                let monomers = drawLevel(strands, strand.label ? strand.label : `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); }, () => { strand.label = prompt("Please enter strand label"); drawHierarchy(); });
                 strand.monomers.forEach(monomer => {
-                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`, (event) => { monomer.toggle(); updateView(system); }, false, true);
+                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`.concat(monomer.label ? ` (${monomer.label})` : ""), (event) => { monomer.toggle(); updateView(system); }, () => { monomer.label = prompt("Please enter monomer label"); drawHierarchy(); }, false, true);
                 });
             });
         });

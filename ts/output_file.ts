@@ -107,7 +107,8 @@ function makeSequenceFile() {
     let seqTxts = [];
     systems.forEach((sys: System)=>{
         sys.strands.forEach((strand: Strand)=>{
-            seqTxts.push(`seq_${strand.strandID}, ${api.getSequence(strand.monomers)}`);
+            let label = strand.label ? strand.label : `strand_${strand.strandID}`;
+            seqTxts.push(`${label}, ${api.getSequence(strand.monomers)}`);
       })
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));

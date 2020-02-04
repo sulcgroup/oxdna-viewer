@@ -18,6 +18,9 @@ class EditHistory {
 
         // We no longer care about the alternate future:
         this.redoStack = new Stack<RevertableEdit>();
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 
     /**
@@ -26,6 +29,9 @@ class EditHistory {
      */
     public add(edit: RevertableEdit) {
         this.undoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 
     public undo() {
@@ -37,6 +43,9 @@ class EditHistory {
         }
         edit.undo();
         this.redoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 
     public redo() {
@@ -48,6 +57,9 @@ class EditHistory {
         }
         edit.redo();
         this.undoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 }
 
