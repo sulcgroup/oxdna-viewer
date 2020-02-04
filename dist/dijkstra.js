@@ -41,7 +41,7 @@ class PriorityQueue {
     }
 }
 /**
- * Computes the shortest path between two node
+ * Computes the shortest path between two nodes
  */
 class Dijkstra {
     /**
@@ -54,53 +54,54 @@ class Dijkstra {
     //	}
     constructor(vertices, crossPairs) {
         this.infinity = 1 / 0;
-        this.vertices = vertices;
+        this.vertices = vertices.map(e => e.gid);
         this.crossPairs = crossPairs;
     }
     ;
-    getNeigbors(e) {
+    getNeigbors(gid) {
+        let e = elements.get(gid);
         let n = [];
         if (e.neighbor3) {
-            n.push(e.neighbor3);
+            n.push(e.neighbor3.gid);
         }
         if (e.neighbor5) {
-            n.push(e.neighbor5);
+            n.push(e.neighbor5.gid);
         }
         if (this.crossPairs && e instanceof Nucleotide) {
             let pair = e.pair;
             if (pair) {
-                n.push(pair);
+                n.push(pair.gid);
             }
         }
         return n;
     }
     /**
      * Computes the shortest path from start to finish
-     * @param {[type]} start  [description]
-     * @param {[type]} finish [description]
+     * @param start
+     * @param goals
      */
     shortestPath(start, goals) {
         let nodes = new PriorityQueue(), distances = {}, previous = {}, path = [], smallest, vertex, neighbors, alt, goalLasts = [];
         goals.forEach(e => {
             goalLasts.push(e.gid);
         });
-        //Init the distances and queues variables
-        for (vertex in this.vertices) {
-            if (vertex === start.name) {
+        // Init the distances and queues variables
+        this.vertices.forEach(vertex => {
+            if (vertex === start.gid) {
                 distances[vertex] = 0;
-                nodes.enqueue(0, parseInt(vertex));
+                nodes.enqueue(0, vertex);
             }
             else {
                 distances[vertex] = this.infinity;
                 nodes.enqueue(this.infinity, vertex);
             }
             previous[vertex] = null;
-        }
-        //continue as long as the queue haven't been emptied.
+        });
+        // Continue as long as the queue hasn't been emptied.
         while (!nodes.empty()) {
             smallest = nodes.dequeue();
             // If we found a goal node, tick it off the list
-            const index = goalLasts.indexOf(parseInt(smallest), 0);
+            const index = goalLasts.indexOf(smallest, 0);
             if (index > -1) {
                 goalLasts.splice(index, 1);
             }
@@ -108,7 +109,7 @@ class Dijkstra {
             if (goalLasts.length == 0) {
                 //Compute the paths
                 goals.forEach(e => {
-                    let curr = e.name;
+                    let curr = e.gid;
                     while (previous[curr]) {
                         path.push(curr);
                         curr = previous[curr];
@@ -116,29 +117,23 @@ class Dijkstra {
                 });
                 break;
             }
-            //No distance known. Skip.
+            // No distance known. Skip.
             if (!smallest || distances[smallest] === this.infinity) {
                 continue;
             }
-            //Compute the distance for each neighbor
+            // Compute the distance for each neighbor
             neighbors = this.getNeigbors(this.vertices[smallest]);
             neighbors.forEach(neighbor => {
-                alt = distances[smallest] + 1; //this.vertices[smallest][neighbor];
-                if (alt < distances[neighbor.name]) {
-                    distances[neighbor.name] = alt;
-                    previous[neighbor.name] = smallest;
-                    nodes.enqueue(alt, neighbor.gid);
+                alt = distances[smallest] + 1;
+                if (alt < distances[neighbor]) {
+                    distances[neighbor] = alt;
+                    previous[neighbor] = smallest;
+                    nodes.enqueue(alt, neighbor);
                 }
             });
         }
-        //the starting point isn't in the solution & 
-        //the solution is from end to start.
-        return path.concat(start.gid).reverse();
+        // The starting point isn't in the solution &
+        // the solution is from end to start.
+        return path.concat(start.gid).reverse().map(i => elements.get(i));
     }
 }
-//let graph:Dijkstra = new Dijkstra(e);
-//graph.addVertex('A', { B: 7, C: 8 });
-//graph.addVertex('C', { A: 8 });
-//graph.addVertex('B', { A: 7, F: 8 });
-//graph.addVertex('F', { B: 8 });
-//console.log(graph.shortestPath('A', 'F'));

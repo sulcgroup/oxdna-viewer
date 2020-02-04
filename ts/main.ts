@@ -371,7 +371,6 @@ abstract class Nucleotide extends BasicElement {
     
 
         //fill the instance matrices with data
-        this.name = this.gid + ""; //set name (string) to nucleotide's global id
         sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbOffsets', 3, sid, [xbb, ybb, zbb]);
         sys.fillVec('nsOffsets', 3, sid, [xns, yns, zns]);
@@ -884,7 +883,6 @@ class AminoAcid extends BasicElement {
         idColor.setHex(this.gid+1); //has to be +1 or you can't grab nucleotide 0
 
         // fill in the instancing matrices
-        this.name = this.gid + ""; //set name (string) to nucleotide's global id
         sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);

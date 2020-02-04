@@ -360,7 +360,6 @@ var api;
             }
             c.writeToSystem(sid, tmpSys);
             e.dummySys = tmpSys;
-            e.name = e.gid.toString();
             e.sid = sid;
             e.type = c.type;
             // Assign a picking color
@@ -569,7 +568,7 @@ var api;
             notify(`You have ${elems.length} particles selected and ${sequence.length} letters in the sequence...doing my best`);
         }
         // Sort elements by their id, in 5' to 3' order
-        elems.sort((a, b) => { return a.name < b.name ? 1 : -1; });
+        elems.sort((a, b) => { return a.lid < b.lid ? 1 : -1; });
         // Define a function to satisfy longCalculation callback
         let set = function () {
             let len = Math.min(elems.length, sequence.length);

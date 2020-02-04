@@ -194,13 +194,12 @@ function selectPaired(e: BasicElement) {
 function fancySelectIntermediate(e: BasicElement) {
 	let paired = selectPairs();
 	let d = new Dijkstra(Array.from(elements.values()), paired);
-	let elems;
+	let elems: BasicElement[];
 	longCalculation(()=>{
 		elems = d.shortestPath(e, Array.from(selectedBases));
 	},"Calculating intermediate elements...",
 	()=>{
-		elems.forEach(gid=>{
-			let elem = elements.get(parseInt(gid));
+		elems.forEach(elem=>{
 			if (!selectedBases.has(elem)) {
 				elem.toggle();
 			}
