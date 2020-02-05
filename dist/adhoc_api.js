@@ -328,15 +328,17 @@ var api;
     function addElementsAt(instCopies, pos) {
         // Add elems
         let elems = addElements(instCopies);
-        // Calculate elems center of mass
-        let com = new THREE.Vector3();
-        elems.forEach(e => {
-            let p = e.getInstanceParameter3("cmOffsets");
-            com.add(p);
-        });
-        com.divideScalar(elems.length);
-        // Move elements to position
-        translateElements(new Set(elems), pos.sub(com));
+        if (pos) {
+            // Calculate elems center of mass
+            let com = new THREE.Vector3();
+            elems.forEach(e => {
+                let p = e.getInstanceParameter3("cmOffsets");
+                com.add(p);
+            });
+            com.divideScalar(elems.length);
+            // Move elements to position
+            translateElements(new Set(elems), pos.sub(com));
+        }
         return elems;
     }
     api.addElementsAt = addElementsAt;

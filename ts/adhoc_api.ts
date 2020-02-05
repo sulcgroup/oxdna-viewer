@@ -381,21 +381,22 @@ module api{
      * @param instCopies Instance copies of elements to add
      * @param pos Intended position of elements center of mass
      */
-    export function addElementsAt(instCopies: InstanceCopy[], pos: THREE.Vector3): BasicElement[] {
+    export function addElementsAt(instCopies: InstanceCopy[], pos?: THREE.Vector3): BasicElement[] {
         // Add elems
         let elems = addElements(instCopies);
 
-        // Calculate elems center of mass
-        let com = new THREE.Vector3();
-        elems.forEach(e=>{
-            let p = e.getInstanceParameter3("cmOffsets");
-            com.add(p);
-        });
-        com.divideScalar(elems.length);
+        if (pos) {
+            // Calculate elems center of mass
+            let com = new THREE.Vector3();
+            elems.forEach(e=>{
+                let p = e.getInstanceParameter3("cmOffsets");
+                com.add(p);
+            });
+            com.divideScalar(elems.length);
 
-        // Move elements to position
-        translateElements(new Set(elems), pos.sub(com));
-
+            // Move elements to position
+            translateElements(new Set(elems), pos.sub(com));
+        }
         return elems;
     }
     /**

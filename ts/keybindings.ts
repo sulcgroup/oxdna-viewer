@@ -1,6 +1,6 @@
 // <reference path="./three/index.d.ts" />
 
-document.addEventListener("keydown", event =>{
+canvas.addEventListener("keydown", event =>{
     switch (event.key.toLowerCase()) {
         //Save image on "p" press
         case 'p' :
@@ -13,14 +13,14 @@ document.addEventListener("keydown", event =>{
             }, 'image/png', 1.0);
             break;
 
-        //mapping the next and prev to the arrow keys
+        // Mapping the next and prev to the arrow keys
         case 'arrowright': trajReader.nextConfig(); break;
         case 'arrowleft': trajReader.previousConfig(); break;
 
+        // Copy, cut, paste and delete. Holding shift pastes with preserved location
         case 'c': if (event.ctrlKey) {copyWrapper();} break;
         case 'x': if (event.ctrlKey) {cutWrapper();} break;
-        case 'v': if (event.ctrlKey) {pasteWrapper();} break;
-
+        case 'v': if (event.ctrlKey) {pasteWrapper(event.shiftKey);} break;
         case 'delete': deleteWrapper(); break;
 
         // Undo: ctrl-z

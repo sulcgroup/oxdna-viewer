@@ -18,15 +18,18 @@ function cutWrapper() {
     copied = elems.map(e => new InstanceCopy(e));
     editHistory.do(new RevertableDeletion(elems));
 }
-function pasteWrapper() {
+function pasteWrapper(keepPos) {
     if (copied.length == 0) {
         notify("Nothing is copied, so nothing to paste");
         return;
     }
-    // Set paste destination to 10 units in front of the camera
-    const cameraHeading = new THREE.Vector3(0, 0, -1);
-    cameraHeading.applyQuaternion(camera.quaternion);
-    const pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20));
+    let pos;
+    if (!keepPos) {
+        // Set paste destination to 10 units in front of the camera
+        const cameraHeading = new THREE.Vector3(0, 0, -1);
+        cameraHeading.applyQuaternion(camera.quaternion);
+        pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20));
+    }
     // Add elements to scene
     let elems = api.addElementsAt(copied, pos);
     // Add to history

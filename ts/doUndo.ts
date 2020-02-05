@@ -79,7 +79,7 @@ class RevertableEdit {
 }
 
 class RevertableAddition extends RevertableEdit {
-    constructor(saved:InstanceCopy[], added: BasicElement[], pos: THREE.Vector3) {
+    constructor(saved:InstanceCopy[], added: BasicElement[], pos?: THREE.Vector3) {
         const s = saved;
         let a = added;
         const p = pos;
