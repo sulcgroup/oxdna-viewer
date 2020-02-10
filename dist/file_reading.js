@@ -308,6 +308,7 @@ function addSystemToScene(system) {
         setColoringMode("Overlay");
     }
     render();
-    // Reset the cursor from the loading spinny
+    // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
+    canvas.focus();
 }

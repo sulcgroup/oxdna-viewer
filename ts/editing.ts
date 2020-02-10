@@ -7,7 +7,7 @@ function copyWrapper() {
     }
     let toCopy = listBases; // Save so that we can clear the selection
     clearSelection();
-    copied = toCopy.map(i => new InstanceCopy(elements.get(i)));  
+    copied = toCopy.map(i => new InstanceCopy(elements.get(i)));
 }
 
 function cutWrapper() {

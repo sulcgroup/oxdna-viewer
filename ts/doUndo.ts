@@ -21,6 +21,9 @@ class EditHistory {
 
         // Update the hierarchy, since we've made changes
         drawHierarchy();
+
+        //Return focus to the canvas so undo can be called immediatley
+        canvas.focus()
     }
 
     /**

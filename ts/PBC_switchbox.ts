@@ -100,10 +100,8 @@ function PBCswitchbox(system: System) {
 
     if (boxOption !== "None" && centerOption !== "None"){
         //This two-step in-boxing process seems to work in all cases I can find
-        let start = new Date().getTime()
         translate(system, boxOption, "None");
         translate(system, boxOption, centerOption);
-        console.log(new Date().getTime() - start)
     }
     else if (boxOption !== "None" && centerOption === "None"){
         dumbBoxing(system, boxOption);

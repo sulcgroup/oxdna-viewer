@@ -15,6 +15,8 @@ class EditHistory {
         this.redoStack = new Stack();
         // Update the hierarchy, since we've made changes
         drawHierarchy();
+        //Return focus to the canvas so undo can be called immediatley
+        canvas.focus();
     }
     /**
      * Add revertable edit to the undo history stack without performing it.
