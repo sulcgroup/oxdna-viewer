@@ -5,6 +5,7 @@ let raycaster = new THREE.Raycaster();
 ;
 let intersects;
 canvas.addEventListener('mousedown', event => {
+    canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
     if (getActionModes().includes("Select")) {
         let id = gpuPicker(event);
         //if something was clicked, toggle the coloration of the appropriate things.

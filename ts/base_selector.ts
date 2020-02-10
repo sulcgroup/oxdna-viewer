@@ -6,6 +6,7 @@ let intersects;
 			
 
 canvas.addEventListener('mousedown', event => { //if mouse is pressed down
+	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
 	if (getActionModes().includes("Select")) {
 		let id = gpuPicker(event)
 
