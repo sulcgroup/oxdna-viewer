@@ -8,12 +8,22 @@ function translate(system, boxOption, centerOption) {
     let shift = new THREE.Vector3;
     shift.addVectors(wrt.multiplyScalar(-1), targetCoM);
     let diff = new THREE.Vector3;
-    for (let i = 0; i < system.strands.length; i++) {
+    //for (let i = 0; i < system.strands.length; i++) {
+        system.strands.forEach(s => {
         switch (boxOption) { //the cases are exactly the same, but the calculation takes place at a different point in the for loop nest
             case "Monomer":
-                for (let j = 0; j < system.strands[i].monomers.length; j++) {
+                //for (let j = 0; j < system.strands[i].monomers.length; j++) {
+                s.monomers.forEach(n => {
+                    
+                    //let n = system.strands[i].monomers[j];
+                    let sys = n.getSystem(),
+                    sid = n.gid - sys.globalStartId;
+                    if (n.dummySys !== null) {
+                        sys = n.dummySys
+                        sid = n.sid;
+                    }
                     //calculate how many boxes the inboxed structure needs to be moved over
-                    diff = new THREE.Vector3(system.cmOffsets[(system.strands[i].monomers[j].gid - system.globalStartId) * 3], system.cmOffsets[(system.strands[i].monomers[j].gid - system.globalStartId) * 3 + 1], system.cmOffsets[(system.strands[i].monomers[j].gid - system.globalStartId) * 3 + 2]);
+                    diff = new THREE.Vector3(system.cmOffsets[sid * 3], system.cmOffsets[sid * 3 + 1], system.cmOffsets[sid * 3 + 2]);
                     diff.add(shift);
                     diff.divide(box).floor().multiply(box).multiplyScalar(-1);
                     //add the centering to the boxing
@@ -24,23 +34,24 @@ function translate(system, boxOption, centerOption) {
                     }
 
                     //actually move things.
-                    system.strands[i].monomers[j].translatePosition(diff);
-                    actualCoM.add(new THREE.Vector3(system.cmOffsets[(system.strands[i].monomers[j].gid - system.globalStartId) * 3], system.cmOffsets[(system.strands[i].monomers[j].gid - system.globalStartId) * 3 + 1], system.cmOffsets[(system.strands[i].monomers[j].gid  - system.globalStartId) * 3 + 2]).multiplyScalar(1/system.INSTANCES));
-                };
+                    n.translatePosition(diff);
+                    
+                    actualCoM.add(new THREE.Vector3(system.cmOffsets[sid * 3], system.cmOffsets[sid * 3 + 1], system.cmOffsets[sid * 3 + 2]).multiplyScalar(1/system.INSTANCES));
+                });
                 break;
             case "Strand":
-                diff = system.strands[i].getCom()
+                diff = s.getCom()
                 diff.add(shift);
                 diff.divide(box).floor().multiply(box).multiplyScalar(-1);
                 diff.add(shift);
                 if (centerOption === "Origin") {
                     diff.add(box.clone().multiplyScalar(-0.5))
                 }
-                system.strands[i].translateStrand(diff);
-                actualCoM.add(system.strands[i].getCom().multiplyScalar(system.strands[i].monomers.length).multiplyScalar(1/system.INSTANCES));
+                s.translateStrand(diff);
+                actualCoM.add(s.getCom().multiplyScalar(s.monomers.length).multiplyScalar(1/system.INSTANCES));
                 break;
         }
-    }
+    });
     //correct the inaccurate centering.
     if (centerOption !== "Origin") { 
         actualCoM.add(targetCoM.multiplyScalar(-1));
@@ -63,23 +74,23 @@ function dumbCentering(system, centerOption) {
 
 //Applies PBC at the scale specified.  Will break structures if they go through the box
 function dumbBoxing(system, boxOption) {
-    for (let i = 0; i < system.strands.length; i++) {
+    system.strands.forEach(s => {
         let diff = new THREE.Vector3;
         if (boxOption === "Strand") {
-            diff = system.strands[i].getCom();
+            diff = s.getCom();
             diff.divide(box);
             diff.floor()
             diff.multiply(box).multiplyScalar(-1);
-            system.strands[i].translateStrand(diff);
+            s.translateStrand(diff);
         }
-        for (let j = 0; j < system.strands[i].monomers.length; j++) {
+        s.monomers.forEach(n => {
             if (boxOption === "Monomer"){
-                diff = new THREE.Vector3(system.cmOffsets[system.strands[i].monomers[j].gid*3], system.cmOffsets[system.strands[i].monomers[j].gid*3+1], system.cmOffsets[system.strands[i].monomers[j].gid*3+2]);
+                diff = new THREE.Vector3(system.cmOffsets[n.gid*3], system.cmOffsets[n.gid*3+1], system.cmOffsets[n.gid*3+2]);
                 diff.divide(box).floor().multiply(box).multiplyScalar(-1);
-                system.strands[i].monomers[j].translatePosition(diff);
+                n.translatePosition(diff);
             }
-        }
-    }
+        });
+    });
 }
 
 //Handles every possible combination of applying PBC conditions and centering
@@ -88,7 +99,11 @@ function PBCswitchbox(system: System) {
     let centerOption = (document.getElementById("centering") as HTMLSelectElement).value
 
     if (boxOption !== "None" && centerOption !== "None"){
+        //This two-step in-boxing process seems to work in all cases I can find
+        let start = new Date().getTime()
+        translate(system, boxOption, "None");
         translate(system, boxOption, centerOption);
+        console.log(new Date().getTime() - start)
     }
     else if (boxOption !== "None" && centerOption === "None"){
         dumbBoxing(system, boxOption);
