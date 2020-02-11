@@ -89,20 +89,33 @@ class RevertableDeletion extends RevertableEdit {
 }
 class RevertableNick extends RevertableEdit {
     constructor(element) {
-        const gid1 = element.gid;
-        const gid2 = element.neighbor3.gid;
-        let undo = function () { api.ligate(elements.get(gid1), elements.get(gid2)); };
-        let redo = function () { api.nick(elements.get(gid1)); };
+        const end3 = element.gid;
+        const end5 = element.neighbor3.gid;
+        let undo = function () { api.ligate(elements.get(end3), elements.get(end5)); };
+        let redo = function () { api.nick(elements.get(end3)); };
         super(undo, redo);
     }
     ;
 }
 class RevertableLigation extends RevertableEdit {
     constructor(e1, e2) {
-        const gid1 = e1.gid;
-        const gid2 = e2.gid;
-        let undo = function () { api.nick(elements.get(gid1)); };
-        let redo = function () { api.ligate(elements.get(gid1), elements.get(gid2)); };
+        let end5, end3;
+        // Find out which is the 5' end and which is 3'
+        if (!e1.neighbor5 && !e2.neighbor3) {
+            end5 = e1.gid;
+            end3 = e2.gid;
+        }
+        else if (!e1.neighbor3 && !e2.neighbor5) {
+            end5 = e2.gid;
+            end3 = e1.gid;
+        }
+        else {
+            notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
+            super(() => { }, () => { });
+            return;
+        }
+        let undo = function () { api.nick(elements.get(end3)); };
+        let redo = function () { api.ligate(elements.get(end5), elements.get(end3)); };
         super(undo, redo);
     }
     ;
