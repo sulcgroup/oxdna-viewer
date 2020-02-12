@@ -277,7 +277,11 @@ var api;
                 sys = e.getSystem();
             }
             needsUpdateList.add(sys);
-            let newStrand = splitStrand(e);
+            let newStrand;
+            // Split strand if we won't also delete further downstream
+            if (e.neighbor3 && !victims.includes(e.neighbor3)) {
+                newStrand = splitStrand(e);
+            }
             if (e.neighbor3 !== null) {
                 e.neighbor3.neighbor5 = null;
                 e.neighbor3 = null;
@@ -304,7 +308,7 @@ var api;
                     sysCount--;
                 }
             }
-            if (newStrand != strand && newStrand && newStrand.isEmpty()) {
+            if (newStrand && newStrand != strand && newStrand && newStrand.isEmpty()) {
                 let s = newStrand.system;
                 s.removeStrand(newStrand);
                 // Remove system if empty
