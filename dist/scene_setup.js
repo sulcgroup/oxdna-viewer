@@ -104,9 +104,22 @@ scene.add(arrowHelper); //add z-axis to scene
 let boxObj;
 function toggleBox(chkBox) {
     if (!boxObj) {
-        boxObj = drawBox(box, new THREE.Vector3());
+        boxObj = drawBox(box, getCenteringGoal());
     }
     boxObj.visible = chkBox.checked;
+    render();
+}
+function redrawBox() {
+    let visible;
+    if (boxObj) {
+        visible = boxObj.visible;
+        scene.remove(boxObj);
+    }
+    else {
+        visible = false;
+    }
+    boxObj = drawBox(box, getCenteringGoal());
+    boxObj.visible = visible;
     render();
 }
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
@@ -156,9 +169,12 @@ function toggleFog(near, far) {
     render();
 }
 function drawBox(size, position) {
+    if (!position) {
+        position = box.clone().divideScalar(2);
+    }
     let material = new THREE.LineBasicMaterial({ color: GREY });
     let points = [];
-    let a = position;
+    let a = position.clone().sub(size.clone().divideScalar(2));
     let b = size.clone().add(a);
     let f = (xComp, yComp, zComp) => {
         return new THREE.Vector3(xComp.x, yComp.y, zComp.z);

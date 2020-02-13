@@ -99,3 +99,12 @@ function PBCswitchbox(system) {
         dumbCentering(system, centerOption);
     }
 }
+function getCenteringGoal() {
+    // Check which point we want as origin
+    let centerOption = document.getElementById("centering").value;
+    switch (centerOption) {
+        case "Box Center": return box.clone().divideScalar(2);
+        case "Origin": return new THREE.Vector3();
+        default: return undefined;
+    }
+}

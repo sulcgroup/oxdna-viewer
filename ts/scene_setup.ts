@@ -129,9 +129,22 @@ let boxObj: THREE.LineSegments;
 
 function toggleBox(chkBox: HTMLInputElement) {
     if(!boxObj) {
-        boxObj = drawBox(box, new THREE.Vector3());
+        boxObj = drawBox(box, getCenteringGoal());
     }
     boxObj.visible = chkBox.checked;
+    render();
+}
+
+function redrawBox() {
+    let visible: boolean;
+    if (boxObj) {
+        visible = boxObj.visible;
+        scene.remove(boxObj);
+    } else {
+        visible = false;
+    }
+    boxObj = drawBox(box, getCenteringGoal());
+    boxObj.visible = visible;
     render();
 }
 
@@ -186,10 +199,14 @@ function toggleFog(near?: number, far?: number) {
 }
 
 function drawBox(size: THREE.Vector3, position: THREE.Vector3): THREE.LineSegments {
+    if (!position) {
+        position = box.clone().divideScalar(2);
+    }
+
     let material = new THREE.LineBasicMaterial({color: GREY});
     let points = [];
 
-    let a = position;
+    let a = position.clone().sub(size.clone().divideScalar(2));
     let b = size.clone().add(a);
 
     let f = (xComp:THREE.Vector3, yComp:THREE.Vector3, zComp:THREE.Vector3)=>{
