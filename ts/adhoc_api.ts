@@ -48,6 +48,21 @@ module api{
         render();
     }
 
+    export function toggleElements(elems: BasicElement[]) {
+        let sys = new Set<System>();
+        let tmpSys = new Set<System>();
+        elems.forEach(e=>{
+            e.toggleVisibility();
+            sys.add(e.getSystem());
+            if (e.dummySys) {
+                tmpSys.add(e.dummySys);
+            }
+        });
+        sys.forEach(s=>s.callUpdates(['instanceVisibility']));
+        tmpSys.forEach(s=>s.callUpdates(['instanceVisibility']));
+        render();
+    }
+
     export function toggleAll(system = systems[0]){
         system.strands.map((strand: Strand)=>{
             let nucleotides = strand.monomers; 

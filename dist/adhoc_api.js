@@ -46,6 +46,21 @@ var api;
         render();
     }
     api.highlite5ps = highlite5ps;
+    function toggleElements(elems) {
+        let sys = new Set();
+        let tmpSys = new Set();
+        elems.forEach(e => {
+            e.toggleVisibility();
+            sys.add(e.getSystem());
+            if (e.dummySys) {
+                tmpSys.add(e.dummySys);
+            }
+        });
+        sys.forEach(s => s.callUpdates(['instanceVisibility']));
+        tmpSys.forEach(s => s.callUpdates(['instanceVisibility']));
+        render();
+    }
+    api.toggleElements = toggleElements;
     function toggleAll(system = systems[0]) {
         system.strands.map((strand) => {
             let nucleotides = strand.monomers;
