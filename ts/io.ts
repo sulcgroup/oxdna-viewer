@@ -391,7 +391,7 @@ class TrajectoryReader {
             }
     
             //bring things in box based on the PBC/centering menus
-            PBCswitchbox(system);
+            //PBCswitchbox(system);
     
             system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
@@ -403,9 +403,9 @@ class TrajectoryReader {
             system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
             system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         }
+        cleverCentering();
         render();
     }
-
     nextConfig() {
         if (this.nextReader.readyState == 1) { //0: nothing loaded 1: working 2: done
             return;
