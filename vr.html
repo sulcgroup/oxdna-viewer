@@ -5,8 +5,9 @@
     <title>oxDNA three.js viewer</title>
     <!--Nice icons, from http://google.github.io/material-design-icons/-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Link external stylesheet file-->
-    <link rel="stylesheet" href="style.css">
+    <!--Link external stylesheet files-->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/justcontext.css">
     <!--Set favicon-->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
 </head>
@@ -70,7 +71,7 @@
                 </select>
                 <br>
                 <caption>Centering:</caption>
-                <select id="centering" title="Where to center the structure relative to the simulation box">
+                <select id="centering" title="Where to center the structure relative to the simulation box" onchange="redrawBox()">
                     <option>Origin</option>
                     <option>Box Center</option>
                     <option>None</option>
@@ -269,7 +270,22 @@
     <div id="container">
         <div><canvas id="colorbarCanvas"></canvas></div>
     </div>
-    <canvas id="threeCanvas" tabindex="1"></canvas>
+    <canvas id="threeCanvas" tabindex="1" class="jctx-host jctx-id-canvas"></canvas>
+
+    <!-- Context menu-->
+    <ul class="jctx jctx-id-canvas jctx-white jctx-white-shadow">
+        <li data-action="undo">Undo (ctrl+Z)</li>
+        <li data-action="redo">Redo (ctrl+Y)</li>
+        <hr>
+        <li data-action="del">Delete (del)</li>
+        <li data-action="cut">Cut (ctrl+X)</li>
+        <li data-action="copy">Copy (ctrl+C)</li>
+        <li data-action="paste">Paste (ctrl+V)</li>
+        <hr>
+        <li data-action="all">Select all (ctrl+A)</li>
+        <li data-action="invert">Invert selection (ctrl+I)</li>
+        <li data-action="clear">Clear selection</li>
+    </ul>
 
     <div class="main">
         <!--all files to be loaded onload of html file-->

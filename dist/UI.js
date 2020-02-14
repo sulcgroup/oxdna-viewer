@@ -53,6 +53,37 @@ function drawHierarchy() {
         });
     }
 }
+function handleMenuAction(event) {
+    switch (event) {
+        case "undo":
+            editHistory.undo();
+            break;
+        case "redo":
+            editHistory.redo();
+            break;
+        case "del":
+            deleteWrapper();
+            break;
+        case "cut":
+            cutWrapper();
+            break;
+        case "copy":
+            copyWrapper();
+            break;
+        case "paste":
+            pasteWrapper(false);
+            break;
+        case "all":
+            selectAll();
+            break;
+        case "invert":
+            invertSelection();
+            break;
+        case "clear":
+            clearSelection();
+            break;
+    }
+}
 function toggleModal(id) {
     let modal = document.getElementById(id);
     modal.classList.toggle("show-modal");
