@@ -11,6 +11,7 @@
 // scene update call definition
 function render() {
     renderer.render(scene, camera);
+    //renderer.render(pickingScene, camera);
 }
 function renderColorbar() {
     colorbarRenderer.render(colorbarScene, colorbarCamera);
@@ -25,7 +26,6 @@ function animate() {
 //Fix Resize problems
 window.addEventListener('resize', onWindowResize, false);
 function onWindowResize() {
-
     if (camera instanceof THREE.PerspectiveCamera){
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -41,12 +41,15 @@ function onWindowResize() {
         camera.updateProjectionMatrix();
     }
 
+    // updates the visible scene
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // updates the picking texture
+    pickingTexture.setSize(window.innerWidth, window.innerHeight);
 
     controls.handleResize();
-
     render();
 
+    
 }
 
 let camera: THREE.Camera

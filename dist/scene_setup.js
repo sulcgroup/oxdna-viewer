@@ -9,6 +9,7 @@
 // scene update call definition
 function render() {
     renderer.render(scene, camera);
+    //renderer.render(pickingScene, camera);
 }
 function renderColorbar() {
     colorbarRenderer.render(colorbarScene, colorbarCamera);
@@ -34,7 +35,10 @@ function onWindowResize() {
         camera.bottom = -frustumSize / 2;
         camera.updateProjectionMatrix();
     }
+    // updates the visible scene
     renderer.setSize(window.innerWidth, window.innerHeight);
+    // updates the picking texture
+    pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
     render();
 }

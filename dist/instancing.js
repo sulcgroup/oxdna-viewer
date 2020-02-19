@@ -143,7 +143,8 @@ THREE.ShaderLib.lambert = {
 };
 //gpu picking allows us to interact with nucleotides without raycasting, which is very CPU-intensive
 var pickingScene = new THREE.Scene();
-var pickingTexture = new THREE.WebGLRenderTarget(renderer.domElement.clientWidth, renderer.domElement.clientHeight);
+//var pickingTexture = new THREE.WebGLRenderTarget(renderer.domElement.clientWidth, renderer.domElement.clientHeight)
+var pickingTexture = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight);
 pickingTexture.texture.minFilter = THREE.LinearFilter; //voodoo
 //create dummy vertex and fragment shaders 
 var vs3D = `
