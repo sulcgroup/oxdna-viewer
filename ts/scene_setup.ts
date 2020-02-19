@@ -40,9 +40,10 @@ function onWindowResize() {
         camera.bottom = - frustumSize / 2;
         camera.updateProjectionMatrix();
     }
-
+    // updates the visible scene 
     renderer.setSize(window.innerWidth, window.innerHeight);
-
+    // updates the picker texture to match the renderer 
+    pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
 
     render();
