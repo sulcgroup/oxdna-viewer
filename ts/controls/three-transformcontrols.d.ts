@@ -1,4 +1,4 @@
-import { Camera, Object3D } from "./three-core";
+import { Camera, Object3D } from "../lib/three-core";
 
 export class TransformControls extends Object3D {
     constructor(object: Camera, domElement?: HTMLElement);
@@ -13,7 +13,7 @@ export class TransformControls extends Object3D {
 
     hide(): void;
 
-    show(): void;
+    hide(): void;
 
     getMode(): string;
 

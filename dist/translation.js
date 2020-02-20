@@ -1,3 +1,17 @@
+function showTransformControl(checkbox) {
+    if (checkbox.checked) {
+        if (selectedBases.size > 0) {
+            transformControls.show();
+        }
+        else {
+            notify("Please select elements to transform");
+            checkbox.checked = false;
+        }
+    }
+    else {
+        transformControls.hide();
+    }
+}
 // select and/or drag
 function getActionModes() {
     let modes = document.getElementsByName("action");
@@ -209,5 +223,5 @@ function translateElements(elements, v) {
     }
     render();
 }
-dragControls.activate();
-dragControls.enabled = true;
+//dragControls.activate();
+//dragControls.enabled = true;

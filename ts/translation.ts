@@ -1,3 +1,16 @@
+function showTransformControl(checkbox: HTMLInputElement) {
+    if (checkbox.checked) {
+        if (selectedBases.size > 0) {
+            transformControls.show();
+        } else {
+            notify("Please select elements to transform");
+            checkbox.checked = false;
+        }
+    } else {
+        transformControls.hide()
+    }
+}
+
 // select and/or drag
 function getActionModes(): string[] {
     let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("action");
@@ -240,5 +253,5 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     render();
 }
 
-dragControls.activate();
-dragControls.enabled = true;
+//dragControls.activate();
+//dragControls.enabled = true;

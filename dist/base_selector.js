@@ -94,6 +94,12 @@ canvas.addEventListener('mousedown', event => {
                     sys.callUpdates(["instanceColor"]);
                 });
             }
+            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+                transformControls.show();
+            }
+            else {
+                transformControls.hide();
+            }
         }
     }
 });
@@ -148,6 +154,7 @@ function clearSelection() {
     systems.forEach(sys => {
         updateView(sys);
     });
+    transformControls.hide();
 }
 function invertSelection() {
     elements.forEach(element => {
@@ -156,6 +163,12 @@ function invertSelection() {
     systems.forEach(sys => {
         updateView(sys);
     });
+    if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+        transformControls.show();
+    }
+    else {
+        transformControls.hide();
+    }
 }
 function selectAll() {
     elements.forEach(element => {
@@ -166,6 +179,9 @@ function selectAll() {
     systems.forEach(sys => {
         updateView(sys);
     });
+    if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+        transformControls.show();
+    }
 }
 function selectPaired(e) {
     if (e instanceof Nucleotide) {
@@ -222,6 +238,58 @@ function makeTextArea(bases, id) {
         textArea.innerHTML = bases; //set innerHTML / content to bases
     }
 }
+let boxSelector;
+canvas.addEventListener('mousemove', event => {
+    if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+        // Box selection
+        event.preventDefault();
+        boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
+    }
+}, false);
+canvas.addEventListener('mousedown', event => {
+    if (getActionModes().includes("Select") && getScopeMode() === "Box") {
+        // Box selection
+        event.preventDefault();
+        // Disable trackball controlls
+        controls.enabled = false;
+        // Select multiple elements my holding down ctrl
+        if (!event.ctrlKey) {
+            clearSelection();
+        }
+        // Create a selection box
+        boxSelector = new BoxSelector(new THREE.Vector2(event.clientX, event.clientY), camera, canvas);
+    }
+}, false);
+let onDocumentMouseCancel = event => {
+    if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+        // Box selection
+        event.preventDefault();
+        // Calculate which elements are in the drawn box
+        let boxSelected = boxSelector.select(new THREE.Vector2(event.clientX, event.clientY));
+        // Toggle selected elements (unless they are already selected)
+        boxSelected.forEach(element => {
+            if (!selectedBases.has(element)) {
+                element.toggle();
+            }
+        });
+        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            transformControls.show();
+        }
+        else {
+            transformControls.hide();
+        }
+        // Remove selection box and update the view
+        boxSelector.onSelectOver();
+        boxSelector = undefined;
+        systems.forEach(sys => {
+            updateView(sys);
+        });
+        // Re-enable trackball controlls
+        controls.enabled = true;
+    }
+};
+canvas.addEventListener('mouseup', onDocumentMouseCancel, false);
+canvas.addEventListener('mouseleave', onDocumentMouseCancel, false);
 /**
  * Modified from SelectionBox code by HypnosNova
  * https://github.com/mrdoob/three.js/blob/master/examples/jsm/interactive

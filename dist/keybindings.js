@@ -68,6 +68,13 @@ canvas.addEventListener("keydown", event => {
                 selectAll();
             }
             break;
+        // Transform controls:
+        case 't':
+            transformControls.setMode('translate');
+            break;
+        case 'r':
+            transformControls.setMode('rotate');
+            break;
         case 's':
             // Save output
             if (event.ctrlKey) {
@@ -83,6 +90,7 @@ canvas.addEventListener("keydown", event => {
         case 'd':
             let dragToggle = document.getElementById("dragToggle");
             dragToggle.checked = !dragToggle.checked;
+            showTransformControl(dragToggle);
             break;
         case 'f1':
             toggleModal("keyboardShortcuts");
@@ -143,5 +151,15 @@ canvas.addEventListener("keydown", event => {
                 controls.setToAxis(new THREE.Vector3(0, 0, -1));
                 break;
             }
+    }
+    if (event.shiftKey) {
+        transformControls.setTranslationSnap(1);
+        transformControls.setRotationSnap(Math.PI / 6);
+    }
+});
+canvas.addEventListener("keyup", event => {
+    if (event.shiftKey) {
+        transformControls.setTranslationSnap(null);
+        transformControls.setRotationSnap(null);
     }
 });

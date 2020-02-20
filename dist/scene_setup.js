@@ -228,7 +228,13 @@ controls.keys = [65, 83, 68];
 controls.addEventListener('change', render);
 // Set up DragControls - allows dragging of DNA - if action mode includes "drag"
 // Also handles box selection
-const dragControls = new THREE.DragControls(camera, renderer.domElement);
+//const dragControls = new THREE.DragControls(camera, renderer.domElement);
+const transformControls = new THREE.TransformControls(camera, renderer.domElement);
+transformControls.addEventListener('change', render);
+scene.add(transformControls);
+transformControls.addEventListener('dragging-changed', function (event) {
+    controls.enabled = !event['value'];
+});
 // start animation cycle / actually control update cycle 
 // requestAnimationFrame could be replaced with a 
 // timer event as it is misleading. 

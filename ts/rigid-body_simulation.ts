@@ -213,7 +213,7 @@ class Cluster {
      */
     public integrate(dt: number) {
         // Position needs to be updated if the cluster is dragged manually
-        if (getActionModes().includes("Drag")) {
+        if (getActionModes().includes("Transform")) {
             this.calculateCenter();
         }
 

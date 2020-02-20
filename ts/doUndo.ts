@@ -176,6 +176,41 @@ class RevertableRotation extends RevertableEdit {
     };
 }
 
+class RevertableTransformation extends RevertableEdit {
+    constructor(
+        transformedElements: Set<BasicElement>,
+        translation: THREE.Vector3,
+        rotation: THREE.Quaternion,
+        about: THREE.Vector3) 
+        {
+        const elements = new Set(transformedElements);
+        const c = about.clone();
+        const t = translation.clone();
+        const r = rotation.clone();
+        let undo = function() {
+            rotateElementsByQuaternion(elements, r.clone().conjugate(), c);
+            translateElements(elements, t.clone().negate());
+            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+                transformControls.show();
+            } else {
+                transformControls.hide();
+            }
+        };
+
+        let redo = function() {
+            translateElements(elements, t);
+            rotateElementsByQuaternion(elements, r, c);
+            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+                transformControls.show();
+            } else {
+                transformControls.hide();
+            }
+        }
+
+        super(undo, redo);
+    };
+}
+
 class RevertableClusterSim extends RevertableEdit {
     constructor(clusters: Cluster[]) {
         let cs = [];

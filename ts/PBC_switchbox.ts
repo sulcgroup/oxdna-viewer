@@ -188,7 +188,7 @@ function calcCOM(elems: BasicElement[]): THREE.Vector3 {
         cm_y = new THREE.Vector2(),
         cm_z = new THREE.Vector2();
 
-        elems.forEach((e: BasicElement)=>{
+    elems.forEach((e: BasicElement)=>{
         let p = e.getInstanceParameter3("cmOffsets");
 
         // Calculate positions on unit circle for each dimension and that to the
