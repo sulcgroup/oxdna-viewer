@@ -70,7 +70,7 @@ canvas.addEventListener('mousedown', event => {
                     updateView(sys);
                     break;
                 case "Cluster":
-                    if (typeof elements.get(0).clusterId == 'undefined') {
+                    if (typeof elements.values().next().value.clusterId == 'undefined') {
                         document.getElementById("clusterOptions").hidden = false;
                     }
                     else {

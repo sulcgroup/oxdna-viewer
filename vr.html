@@ -115,7 +115,7 @@
                     <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
                     <input type="radio" name="scope" value="Strand">Strand<br>
                     <input type="radio" name="scope" value="System">System<br>
-                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements.get(0).clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
+                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements.values().next().value.clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
                         title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
                     <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
                     <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
