@@ -12,7 +12,7 @@ function showTransformControl(checkbox) {
         transformControls.hide();
     }
 }
-// select and/or drag
+// Select and/or transform
 function getActionModes() {
     let modes = document.getElementsByName("action");
     let checked = [];

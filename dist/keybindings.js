@@ -75,6 +75,10 @@ canvas.addEventListener("keydown", event => {
         case 'r':
             transformControls.setMode('rotate');
             break;
+        case 'shift':
+            transformControls.setTranslationSnap(1);
+            transformControls.setRotationSnap(Math.PI / 12);
+            break;
         case 's':
             // Save output
             if (event.ctrlKey) {
@@ -88,9 +92,9 @@ canvas.addEventListener("keydown", event => {
             break;
         // Toggle dragging:
         case 'd':
-            let dragToggle = document.getElementById("dragToggle");
-            dragToggle.checked = !dragToggle.checked;
-            showTransformControl(dragToggle);
+            let transformToggle = document.getElementById("transformToggle");
+            transformToggle.checked = !transformToggle.checked;
+            showTransformControl(transformToggle);
             break;
         case 'f1':
             toggleModal("keyboardShortcuts");
@@ -152,14 +156,12 @@ canvas.addEventListener("keydown", event => {
                 break;
             }
     }
-    if (event.shiftKey) {
-        transformControls.setTranslationSnap(1);
-        transformControls.setRotationSnap(Math.PI / 6);
-    }
 });
 canvas.addEventListener("keyup", event => {
-    if (event.shiftKey) {
-        transformControls.setTranslationSnap(null);
-        transformControls.setRotationSnap(null);
+    switch (event.key.toLowerCase()) {
+        case "shift":
+            transformControls.setTranslationSnap(null);
+            transformControls.setRotationSnap(null);
+            break;
     }
 });

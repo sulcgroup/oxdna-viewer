@@ -11,7 +11,7 @@ function showTransformControl(checkbox: HTMLInputElement) {
     }
 }
 
-// select and/or drag
+// Select and/or transform
 function getActionModes(): string[] {
     let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("action");
     let checked = [];

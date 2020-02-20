@@ -226,9 +226,6 @@ controls.keys = [65, 83, 68];
 // following the logic of updating the scene only when the scene changes 
 // controlls induce change so we update the scene when we move it  
 controls.addEventListener('change', render);
-// Set up DragControls - allows dragging of DNA - if action mode includes "drag"
-// Also handles box selection
-//const dragControls = new THREE.DragControls(camera, renderer.domElement);
 const transformControls = new THREE.TransformControls(camera, renderer.domElement);
 transformControls.addEventListener('change', render);
 scene.add(transformControls);
