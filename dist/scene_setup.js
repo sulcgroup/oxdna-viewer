@@ -59,7 +59,7 @@ const BLACK = new THREE.Color(0x000000);
 const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE;
-camera = createPerspectiveCamera(45, 0.1, 10000, [100, 0, 0]); //create camera
+camera = createPerspectiveCamera(45, 0.1, 999999, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 // Create canvas and renderer
 const canvas = document.getElementById("threeCanvas");
@@ -106,10 +106,13 @@ scene.add(arrowHelper); //add z-axis to scene
 // Declare bounding box object
 let boxObj;
 function toggleBox(chkBox) {
-    if (!boxObj) {
-        boxObj = drawBox(box, getCenteringGoal());
+    if (chkBox.checked) {
+        // Redraw from scratch, in case it has changed size
+        redrawBox();
     }
-    boxObj.visible = chkBox.checked;
+    if (boxObj) {
+        boxObj.visible = chkBox.checked;
+    }
     render();
 }
 function redrawBox() {

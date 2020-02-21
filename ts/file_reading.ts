@@ -245,7 +245,7 @@ function readDat(numNuc, datReader, system) {
 
     }
     addSystemToScene(system);
-    cleverCentering();
+    PBCswitchbox();
     sysCount++;
 }
 
@@ -357,10 +357,6 @@ function addSystemToScene(system: System) {
     scene.add(system.bbconnector);
 
     pickingScene.add(system.dummyBackbone);
-
-    // Bring things in the box based on the PBC/centering menus
-    //PBCswitchbox(system);
-    //cleverCentering();
 
     // Catch an error caused by asynchronous readers and different file sizes
     if(toggleFailure){

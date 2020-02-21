@@ -72,7 +72,7 @@ const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE
 
-camera = createPerspectiveCamera(45, 0.1, 10000, [100, 0, 0]); //create camera
+camera = createPerspectiveCamera(45, 0.1, 999999, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 
 // import canvas capture library - used in video creation
@@ -129,10 +129,13 @@ scene.add(arrowHelper); //add z-axis to scene
 let boxObj: THREE.LineSegments;
 
 function toggleBox(chkBox: HTMLInputElement) {
-    if(!boxObj) {
-        boxObj = drawBox(box, getCenteringGoal());
+    if (chkBox.checked) {
+        // Redraw from scratch, in case it has changed size
+        redrawBox();
     }
-    boxObj.visible = chkBox.checked;
+    if (boxObj) {
+        boxObj.visible = chkBox.checked;
+    }
     render();
 }
 

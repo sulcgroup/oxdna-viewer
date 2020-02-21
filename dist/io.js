@@ -358,7 +358,7 @@ class TrajectoryReader {
             system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
             system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         }
-        cleverCentering();
+        PBCswitchbox();
         render();
     }
     nextConfig() {
