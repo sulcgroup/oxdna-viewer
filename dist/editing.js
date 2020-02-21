@@ -96,8 +96,8 @@ function setSeqWrapper() {
             n.push(elem);
         }
     });
-    if (n == []) {
-        notify("Please select nucleotides to edit");
+    if (n.length == 0) {
+        notify("Please select nucleotides to apply sequence to");
         return;
     }
     if (n.length > seq.length) {
