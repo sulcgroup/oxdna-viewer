@@ -608,7 +608,12 @@ module api{
         //which is much more of an edge case anyway.
         e = end;
         while (e && e[direction]) {
-            calcsp(e);
+            // Backbone must be drawn from 5' end
+            if (direction == "neighbor5") {
+                calcsp(e.neighbor5);
+            } else {
+                calcsp(e);
+            }
             e = e[direction];
         }
     }
@@ -717,7 +722,13 @@ module api{
             realSys = systems.slice(-1)[0];
         }
         else {
-            realSys = new System(0, 0)
+            realSys = new System(sysCount++, elements.getNextId())
+            realSys.initInstances(0);
+            systems.push(realSys);
+            addSystemToScene(realSys);
+            // This is ugly, but if we don't have a box, everything will be
+            //  into the origin when centering.
+            box = new THREE.Vector3(1000,1000,1000);
         }
 
         // Create a new strand
