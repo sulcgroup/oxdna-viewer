@@ -1,6 +1,6 @@
 # Rigid-body relaxation example
 
-![Icosahedron relaxation](../img/icosahedron.gif)
+![](../../img/icosahedron.png)
 
 ## Instructions
 Either:
