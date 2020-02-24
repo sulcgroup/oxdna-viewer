@@ -3,6 +3,17 @@ let basesInfo: string = ""; //list of bases' info - location, strand and system 
 let mouse3D;
 let raycaster = new THREE.Raycaster();;
 let intersects;
+
+canvas.addEventListener('mousemove', event => {
+	// Change the cursor if you're hovering over something selectable
+	let id = gpuPicker(event)
+	if (id > -1) {
+		canvas.style.cursor = 'pointer';
+	}
+	else {
+		canvas.style.cursor = 'auto';
+	}
+});
 			
 
 canvas.addEventListener('mousedown', event => { //if mouse is pressed down
