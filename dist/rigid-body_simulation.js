@@ -75,6 +75,10 @@ class RigidClusterSimulator {
         this.clusters.forEach((c) => {
             c.integrate(dt);
         });
+        // Update transform controls, if neccessary
+        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            transformControls.show();
+        }
     }
     ;
     /**
