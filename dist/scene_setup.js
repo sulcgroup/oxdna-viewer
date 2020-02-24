@@ -35,9 +35,9 @@ function onWindowResize() {
         camera.bottom = -frustumSize / 2;
         camera.updateProjectionMatrix();
     }
-    // updates the visible scene
+    // updates the visible scene 
     renderer.setSize(window.innerWidth, window.innerHeight);
-    // updates the picking texture
+    // updates the picker texture to match the renderer 
     pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
     render();
@@ -60,7 +60,7 @@ const BLACK = new THREE.Color(0x000000);
 const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
 scene.background = WHITE;
-camera = createPerspectiveCamera(45, 0.1, 1000, [100, 0, 0]); //create camera
+camera = createPerspectiveCamera(45, 0.1, 999999, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 // Create canvas and renderer
 const canvas = document.getElementById("threeCanvas");
@@ -104,6 +104,31 @@ dir = new THREE.Vector3(0, 0, 1);
 arrowHelper = new THREE.ArrowHelper(dir, Origin, len, 0x000080);
 arrowHelper.name = "z-axis";
 scene.add(arrowHelper); //add z-axis to scene
+// Declare bounding box object
+let boxObj;
+function toggleBox(chkBox) {
+    if (chkBox.checked) {
+        // Redraw from scratch, in case it has changed size
+        redrawBox();
+    }
+    if (boxObj) {
+        boxObj.visible = chkBox.checked;
+    }
+    render();
+}
+function redrawBox() {
+    let visible;
+    if (boxObj) {
+        visible = boxObj.visible;
+        scene.remove(boxObj);
+    }
+    else {
+        visible = false;
+    }
+    boxObj = drawBox(box, getCenteringGoal());
+    boxObj.visible = visible;
+    render();
+}
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
 function toggleArrows(chkBox) {
     if (chkBox.checked) {
@@ -150,6 +175,48 @@ function toggleFog(near, far) {
     }
     render();
 }
+function drawBox(size, position) {
+    if (!position) {
+        position = box.clone().divideScalar(2);
+    }
+    let material = new THREE.LineBasicMaterial({ color: GREY });
+    let points = [];
+    let a = position.clone().sub(size.clone().divideScalar(2));
+    let b = size.clone().add(a);
+    let f = (xComp, yComp, zComp) => {
+        return new THREE.Vector3(xComp.x, yComp.y, zComp.z);
+    };
+    // I'm sure there's a clever way to do this in a loop...
+    points.push(f(a, a, a));
+    points.push(f(b, a, a));
+    points.push(f(a, a, b));
+    points.push(f(b, a, b));
+    points.push(f(a, b, a));
+    points.push(f(b, b, a));
+    points.push(f(a, b, b));
+    points.push(f(b, b, b));
+    points.push(f(a, a, a));
+    points.push(f(a, b, a));
+    points.push(f(a, a, b));
+    points.push(f(a, b, b));
+    points.push(f(b, a, a));
+    points.push(f(b, b, a));
+    points.push(f(b, a, b));
+    points.push(f(b, b, b));
+    points.push(f(a, a, b));
+    points.push(f(a, a, a));
+    points.push(f(a, b, b));
+    points.push(f(a, b, a));
+    points.push(f(b, a, b));
+    points.push(f(b, a, a));
+    points.push(f(b, b, b));
+    points.push(f(b, b, a));
+    var geometry = new THREE.BufferGeometry().setFromPoints(points);
+    var boxObj = new THREE.LineSegments(geometry, material);
+    scene.add(boxObj);
+    render();
+    return boxObj;
+}
 // adding mouse control to the scene 
 const controls = new THREE.TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
@@ -163,9 +230,12 @@ controls.keys = [65, 83, 68];
 // following the logic of updating the scene only when the scene changes 
 // controlls induce change so we update the scene when we move it  
 controls.addEventListener('change', render);
-// Set up DragControls - allows dragging of DNA - if action mode includes "drag"
-// Also handles box selection
-const dragControls = new THREE.DragControls(camera, renderer.domElement);
+const transformControls = new THREE.TransformControls(camera, renderer.domElement);
+transformControls.addEventListener('change', render);
+scene.add(transformControls);
+transformControls.addEventListener('dragging-changed', function (event) {
+    controls.enabled = !event['value'];
+});
 // start animation cycle / actually control update cycle 
 // requestAnimationFrame could be replaced with a 
 // timer event as it is misleading. 

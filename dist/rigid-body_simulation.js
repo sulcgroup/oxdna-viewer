@@ -175,7 +175,7 @@ class Cluster {
      */
     integrate(dt) {
         // Position needs to be updated if the cluster is dragged manually
-        if (getActionModes().includes("Drag")) {
+        if (getActionModes().includes("Transform")) {
             this.calculateCenter();
         }
         // Calculate translation

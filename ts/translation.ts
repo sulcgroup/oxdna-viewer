@@ -1,4 +1,17 @@
-// select and/or drag
+function showTransformControl(checkbox: HTMLInputElement) {
+    if (checkbox.checked) {
+        if (selectedBases.size > 0) {
+            transformControls.show();
+        } else {
+            notify("Please select elements to transform");
+            checkbox.checked = false;
+        }
+    } else {
+        transformControls.hide()
+    }
+}
+
+// Select and/or transform
 function getActionModes(): string[] {
     let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("action");
     let checked = [];
@@ -75,7 +88,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
     q2.y *= -1;
 
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
@@ -155,7 +168,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
-    let sys = currentNuc.parent.parent;
+    let sys = currentNuc.getSystem();
     if (currentNuc.dummySys !== null) {
         sys = currentNuc.dummySys
     }
@@ -193,7 +206,7 @@ function calcsp(currentNuc) {
 
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
@@ -240,5 +253,5 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     render();
 }
 
-dragControls.activate();
-dragControls.enabled = true;
+//dragControls.activate();
+//dragControls.enabled = true;

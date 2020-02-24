@@ -24,7 +24,8 @@ function calculateClusters() {
 // Algorithm and comments from:
 // https://en.wikipedia.org/wiki/DBSCAN#Algorithm
 function dbscan(minPts, eps) {
-    const nElements = elements.length;
+    const elems = Array.from(elements.values());
+    const nElements = elements.size;
     clearClusters(); // Remove any previous clusters and reset counter
     const noise = -1; // Label for noise
     const getPos = (element) => {
@@ -32,19 +33,18 @@ function dbscan(minPts, eps) {
     };
     const findNeigbours = (p, eps) => {
         const neigbours = [];
-        for (let i = 0; i < nElements; i++) {
-            let q = elements[i];
+        elems.forEach(q => {
             if (p != q) {
                 let dist = getPos(p).distanceTo(getPos(q));
                 if (dist < eps) {
                     neigbours.push(q);
                 }
             }
-        }
+        });
         return neigbours;
     };
     for (let i = 0; i < nElements; i++) {
-        let p = elements[i];
+        let p = elems[i];
         if (typeof p.clusterId !== 'undefined') {
             continue; // Previously processed in inner loop
         }

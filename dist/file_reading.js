@@ -134,7 +134,7 @@ function readFiles(topFile, datFile, jsonFile) {
     const dragInstruction = document.getElementById("dragInstruction");
     dragInstruction.style.display = "none";
     //make system to store the dropped files in
-    const system = new System(sysCount, elements.length);
+    const system = new System(sysCount, elements.getNextId());
     if (topFile) {
         //read topology file
         const topReader = new TopReader(topFile, system, elements);
@@ -168,7 +168,7 @@ function readFiles(topFile, datFile, jsonFile) {
 }
 let xbbLast, ybbLast, zbbLast;
 function readDat(numNuc, datReader, system) {
-    let currentStrand = systems[sysCount][strands][0];
+    let currentStrand = systems[sysCount].strands[0];
     // parse file into lines
     let lines = datReader.result.split(/[\n]+/g);
     if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
@@ -192,20 +192,21 @@ function readDat(numNuc, datReader, system) {
         }
         ;
         // get the nucleotide associated with the line
-        currentNucleotide = elements[i + system.globalStartId];
+        currentNucleotide = elements.get(i + system.globalStartId);
         // consume a new line from the file
         l = lines[i].split(" ");
         currentNucleotide.calculatePositions(l);
         //when a strand is finished, add it to the system
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
-            system.add(currentStrand); //add strand THREE.Group to system THREE.Group
-            currentStrand = system[strands][currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements[currentNucleotide.gid + 1] != undefined) {
-                currentStrand = elements[currentNucleotide.gid + 1].parent;
+            system.addStrand(currentStrand); // add strand to system
+            currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
+            if (elements.get(currentNucleotide.gid + 1) != undefined) {
+                currentStrand = elements.get(currentNucleotide.gid + 1).strand;
             }
         }
     }
     addSystemToScene(system);
+    PBCswitchbox();
     sysCount++;
 }
 function readJson(system, jsonReader) {
@@ -229,7 +230,7 @@ function readJson(system, jsonReader) {
                     const vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                     const len = vec.length();
                     vec.normalize();
-                    const arrowHelper = new THREE.ArrowHelper(vec, elements[i].getInstanceParameter3("bbOffsets"), len / 5, 0x000000);
+                    const arrowHelper = new THREE.ArrowHelper(vec, elements.get(i).getInstanceParameter3("bbOffsets"), len / 5, 0x000000);
                     arrowHelper.name = i + "disp";
                     scene.add(arrowHelper);
                 }
@@ -301,13 +302,12 @@ function addSystemToScene(system) {
     scene.add(system.connector);
     scene.add(system.bbconnector);
     pickingScene.add(system.dummyBackbone);
-    // Bring things in the box based on the PBC/centering menus
-    PBCswitchbox(system);
     // Catch an error caused by asynchronous readers and different file sizes
     if (toggleFailure) {
         setColoringMode("Overlay");
     }
     render();
-    // Reset the cursor from the loading spinny
+    // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
+    canvas.focus();
 }

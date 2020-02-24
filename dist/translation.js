@@ -1,4 +1,18 @@
-// select and/or drag
+function showTransformControl(checkbox) {
+    if (checkbox.checked) {
+        if (selectedBases.size > 0) {
+            transformControls.show();
+        }
+        else {
+            notify("Please select elements to transform");
+            checkbox.checked = false;
+        }
+    }
+    else {
+        transformControls.hide();
+    }
+}
+// Select and/or transform
 function getActionModes() {
     let modes = document.getElementsByName("action");
     let checked = [];
@@ -69,7 +83,7 @@ function rotateElementsByQuaternion(elements, q, about) {
     let q2 = q.clone();
     q2.y *= -1;
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys;
@@ -138,7 +152,7 @@ function rotateElementsByQuaternion(elements, q, about) {
 }
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
-    let sys = currentNuc.parent.parent;
+    let sys = currentNuc.getSystem();
     if (currentNuc.dummySys !== null) {
         sys = currentNuc.dummySys;
     }
@@ -168,7 +182,7 @@ function calcsp(currentNuc) {
 }
 function translateElements(elements, v) {
     elements.forEach((base) => {
-        let sys = base.parent.parent;
+        let sys = base.getSystem();
         let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys;
@@ -209,5 +223,5 @@ function translateElements(elements, v) {
     }
     render();
 }
-dragControls.activate();
-dragControls.enabled = true;
+//dragControls.activate();
+//dragControls.enabled = true;

@@ -1,5 +1,5 @@
 // <reference path="./three/index.d.ts" />
-document.addEventListener("keydown", event => {
+canvas.addEventListener("keydown", event => {
     switch (event.key.toLowerCase()) {
         //Save image on "p" press
         case 'p':
@@ -11,12 +11,31 @@ document.addEventListener("keydown", event => {
                 a.click();
             }, 'image/png', 1.0);
             break;
-        //mapping the next and prev to the arrow keys
+        // Mapping the next and prev to the arrow keys
         case 'arrowright':
             trajReader.nextConfig();
             break;
         case 'arrowleft':
             trajReader.previousConfig();
+            break;
+        // Copy, cut, paste and delete. Holding shift pastes with preserved location
+        case 'c':
+            if (event.ctrlKey) {
+                copyWrapper();
+            }
+            break;
+        case 'x':
+            if (event.ctrlKey) {
+                cutWrapper();
+            }
+            break;
+        case 'v':
+            if (event.ctrlKey) {
+                pasteWrapper(event.shiftKey);
+            }
+            break;
+        case 'delete':
+            deleteWrapper();
             break;
         // Undo: ctrl-z
         // Redo: ctrl-shift-z or ctrl-y
@@ -49,6 +68,17 @@ document.addEventListener("keydown", event => {
                 selectAll();
             }
             break;
+        // Transform controls:
+        case 't':
+            transformControls.setMode('translate');
+            break;
+        case 'r':
+            transformControls.setMode('rotate');
+            break;
+        case 'shift':
+            transformControls.setTranslationSnap(1);
+            transformControls.setRotationSnap(Math.PI / 12);
+            break;
         case 's':
             // Save output
             if (event.ctrlKey) {
@@ -62,8 +92,9 @@ document.addEventListener("keydown", event => {
             break;
         // Toggle dragging:
         case 'd':
-            let dragToggle = document.getElementById("dragToggle");
-            dragToggle.checked = !dragToggle.checked;
+            let transformToggle = document.getElementById("transformToggle");
+            transformToggle.checked = !transformToggle.checked;
+            showTransformControl(transformToggle);
             break;
         case 'f1':
             toggleModal("keyboardShortcuts");
@@ -124,5 +155,13 @@ document.addEventListener("keydown", event => {
                 controls.setToAxis(new THREE.Vector3(0, 0, -1));
                 break;
             }
+    }
+});
+canvas.addEventListener("keyup", event => {
+    switch (event.key.toLowerCase()) {
+        case "shift":
+            transformControls.setTranslationSnap(null);
+            transformControls.setRotationSnap(null);
+            break;
     }
 });

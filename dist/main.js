@@ -1,8 +1,77 @@
 /// <reference path="./three/index.d.ts" />
+class ElementMap extends Map {
+    constructor() {
+        super();
+        this.gidCounter = 0;
+    }
+    // Avoid using this unless you really need to set
+    // a specific gid.
+    set(gid, element) {
+        if (this.gidCounter < gid + 1) {
+            this.gidCounter = gid + 1;
+        }
+        return super.set(gid, element);
+    }
+    /**
+     * Add an element, keeping track of
+     * global id
+     * @param element
+     * @returns gid
+     */
+    push(e) {
+        e.gid = ++this.gidCounter;
+        super.set(e.gid, e);
+        return e.gid;
+    }
+    /**
+     * Remove element
+     * @param gid
+     */
+    delete(gid) {
+        // If we delete the last added, we can decrease the gid counter.
+        if (this.gidCounter == gid + 1) {
+            this.gidCounter = gid;
+        }
+        return super.delete(gid);
+    }
+    getNextId() {
+        return this.gidCounter;
+    }
+}
+class InstanceCopy {
+    constructor(e) {
+        this.instanceParams = new Map([
+            ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+            ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+            ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+            ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+            ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+        ]);
+        this.instanceParams.forEach((size, attr) => {
+            if (size == 3) {
+                this[attr] = e.getInstanceParameter3(attr);
+            }
+            else { // 4
+                this[attr] = e.getInstanceParameter4(attr);
+            }
+        });
+        this.type = e.type;
+        this.gid = e.gid;
+        this.n3gid = e.neighbor3 ? e.neighbor3.gid : -1;
+        this.n5gid = e.neighbor5 ? e.neighbor5.gid : -1;
+        this.elemType = e.constructor;
+        this.system = e.getSystem();
+    }
+    writeToSystem(sid, sys) {
+        this.instanceParams.forEach((size, attr) => {
+            sys.fillVec(attr, size, sid, this[attr].toArray());
+        });
+    }
+}
 // store rendering mode RNA  
 var RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
-let elements = []; //contains references to all BasicElements
+let elements = new ElementMap(); //contains references to all BasicElements
 //initialize the space
 const systems = [];
 var tmpSystems = []; //used for editing
@@ -15,63 +84,57 @@ const DNA = 0;
 const RNA = 1;
 const AA = 2;
 //makes for cleaner references down the object hierarcy
-var strands = 'children', monomers = 'children', objects = 'children';
+//var strands = 'children',
+//   monomers = 'children',
+//objects = 'children';
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 render();
-// elements store the information about position, orientation, ID
-class BasicElement extends THREE.Group {
-    constructor(gid, parent) {
-        super();
+// Elements store the information about monomers
+class BasicElement {
+    constructor(gid, strand) {
         this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
         this.gid = gid;
-        this.parent = parent;
+        this.strand = strand;
         this.dummySys = null;
     }
     ;
-    calculatePositions(l) {
-    }
-    ;
-    calculateNewConfigPositions(l) {
+    //abstract rotate(quat: THREE.Quaternion): void;
+    // highlight/remove highlight the bases we've clicked from the list and modify color
+    toggle() {
+        if (selectedBases.has(this)) {
+            selectedBases.delete(this);
+        }
+        else {
+            selectedBases.add(this);
+        }
+        this.updateColor();
     }
     ;
     updateSP(num) {
         return new THREE.Object3D();
     }
     ;
-    toggle() {
+    getSystem() {
+        return this.strand.system;
     }
-    ;
     strandToColor(strandIndex) {
-        return backboneColors[(Math.abs(strandIndex) + this.parent.parent.systemID) % backboneColors.length];
+        return backboneColors[(Math.abs(strandIndex) + this.getSystem().systemID) % backboneColors.length];
     }
     ;
     elemToColor(type) {
         return new THREE.Color();
     }
     ;
-    getDatFileOutput() {
-        return "";
-    }
-    ;
-    updateColor() {
-    }
-    ;
-    setPosition(newPos) {
-    }
-    translatePosition(amount) {
-    }
-    rotate(quat) {
-    }
     isPaired() {
         return false;
     }
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -82,7 +145,7 @@ class BasicElement extends THREE.Group {
     //retrieve this element's values in a 4-parameter instance array
     //only rotations
     getInstanceParameter4(name) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -93,7 +156,7 @@ class BasicElement extends THREE.Group {
     //set this element's parameters in the system's instance arrays
     //doing this is slower than sys.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name, data) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -102,7 +165,7 @@ class BasicElement extends THREE.Group {
     }
     //poof
     toggleVisibility() {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -113,7 +176,7 @@ class BasicElement extends THREE.Group {
     }
     handleCircularStrands(sys, sid, xbb, ybb, zbb) {
         if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
-            this.parent.circular = true;
+            this.strand.circular = true;
             const xbbLast = sys.bbOffsets[this.neighbor5.gid * 3], ybbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 1], zbbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 2];
             const xsp = (xbb + xbbLast) / 2, ysp = (ybb + ybbLast) / 2, zsp = (zbb + zbbLast) / 2;
             const spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
@@ -124,17 +187,15 @@ class BasicElement extends THREE.Group {
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
     }
-    extendStrand(len, direction) {
-    }
 }
 ;
 class Nucleotide extends BasicElement {
-    constructor(gid, parent) {
-        super(gid, parent);
+    constructor(gid, strand) {
+        super(gid, strand);
     }
     ;
     calculatePositions(l) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -185,11 +246,10 @@ class Nucleotide extends BasicElement {
         this.handleCircularStrands(sys, sid, xbb, ybb, zbb);
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color;
-        color = this.strandToColor(this.parent.strandID);
+        color = this.strandToColor(this.strand.strandID);
         let idColor = new THREE.Color();
         idColor.setHex(this.gid + 1); //has to be +1 or you can't grab nucleotide 0
         //fill the instance matrices with data
-        this.name = this.gid + ""; //set name (string) to nucleotide's global id
         sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbOffsets', 3, sid, [xbb, ybb, zbb]);
         sys.fillVec('nsOffsets', 3, sid, [xns, yns, zns]);
@@ -220,7 +280,7 @@ class Nucleotide extends BasicElement {
     }
     ;
     translatePosition(amount) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -247,7 +307,7 @@ class Nucleotide extends BasicElement {
     }
     ;
     calculateNewConfigPositions(l) {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -313,7 +373,7 @@ class Nucleotide extends BasicElement {
     }
     ;
     updateColor() {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -325,10 +385,10 @@ class Nucleotide extends BasicElement {
         else {
             switch (getColoringMode()) {
                 case "Strand":
-                    color = backboneColors[(Math.abs(this.parent.strandID) + this.parent.parent.systemID) % backboneColors.length];
+                    color = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length];
                     break;
                 case "System":
-                    color = backboneColors[this.parent.parent.systemID % backboneColors.length];
+                    color = backboneColors[this.getSystem().systemID % backboneColors.length];
                     break;
                 case "Cluster":
                     if (!this.clusterId || this.clusterId < 0) {
@@ -356,6 +416,14 @@ class Nucleotide extends BasicElement {
         this.updateColor();
     }
     ;
+    select() {
+        selectedBases.add(this);
+        this.updateColor();
+    }
+    deselect() {
+        selectedBases.delete(this);
+        this.updateColor();
+    }
     elemToColor(elem) {
         elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];
         if (elem == undefined) {
@@ -409,7 +477,7 @@ class Nucleotide extends BasicElement {
     }
     changeType(type) {
         this.type = type;
-        let sys = this.parent.parent;
+        let sys = this.getSystem();
         let newC = this.elemToColor(type);
         sys.fillVec('nsColors', 3, this.gid - sys.globalStartId, [newC.r, newC.g, newC.b]);
     }
@@ -417,13 +485,13 @@ class Nucleotide extends BasicElement {
         let bestCandidate = null;
         let bestDist = 0.6;
         let thisPos = this.getInstanceParameter3("nsOffsets");
-        let sys = this.parent.parent;
-        let strandCount = sys[strands].length;
+        let sys = this.getSystem();
+        let strandCount = sys.strands.length;
         for (let i = 0; i < strandCount; i++) { //for every strand in the System
-            let strand = sys[strands][i];
-            let nucCount = strand[monomers].length;
+            let strand = sys.strands[i];
+            let nucCount = strand.monomers.length;
             for (let j = 0; j < nucCount; j++) { // for every nucleotide on the Strand
-                let e = strand[monomers][j];
+                let e = strand.monomers[j];
                 if (this.neighbor3 != e && this.neighbor5 != e &&
                     this.getTypeNumber() != e.getTypeNumber() &&
                     (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0) {
@@ -455,8 +523,8 @@ class Nucleotide extends BasicElement {
 }
 ;
 class DNANucleotide extends Nucleotide {
-    constructor(gid, parent) {
-        super(gid, parent);
+    constructor(gid, strand) {
+        super(gid, strand);
         this.elementType = DNA;
         this.bbnsDist = 0.8147053;
     }
@@ -512,8 +580,8 @@ class DNANucleotide extends Nucleotide {
 }
 ;
 class RNANucleotide extends Nucleotide {
-    constructor(gid, parent) {
-        super(gid, parent);
+    constructor(gid, strand) {
+        super(gid, strand);
         this.elementType = RNA;
         this.bbnsDist = 0.8246211;
     }
@@ -545,7 +613,7 @@ class RNANucleotide extends Nucleotide {
         const ns_pos = this.getInstanceParameter3("nsOffsets");
         const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z);
         let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
-        if (direction == "neighbor3") {
+        if (direction == "neighbor5") {
             dir.multiplyScalar(-1);
         }
         const dir_norm = Math.sqrt(dir.dot(dir));
@@ -588,8 +656,8 @@ class RNANucleotide extends Nucleotide {
 }
 ;
 class AminoAcid extends BasicElement {
-    constructor(gid, parent) {
-        super(gid, parent);
+    constructor(gid, strand) {
+        super(gid, strand);
         this.elementType = AA;
     }
     ;
@@ -601,7 +669,7 @@ class AminoAcid extends BasicElement {
     }
     ;
     calculatePositions(l) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        const sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
@@ -623,11 +691,10 @@ class AminoAcid extends BasicElement {
         this.handleCircularStrands(sys, sid, x, y, z);
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color();
-        color = this.strandToColor(this.parent.strandID);
+        color = this.strandToColor(this.strand.strandID);
         let idColor = new THREE.Color();
         idColor.setHex(this.gid + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
-        this.name = this.gid + ""; //set name (string) to nucleotide's global id
         sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbOffsets', 3, sid, [x, y, z]);
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
@@ -658,7 +725,7 @@ class AminoAcid extends BasicElement {
     }
     ;
     calculateNewConfigPositions(l) {
-        const sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        const sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         //extract position
         const x = parseFloat(l[0]), y = parseFloat(l[1]), z = parseFloat(l[2]);
         //calculate new backbone connector position/rotation
@@ -695,7 +762,7 @@ class AminoAcid extends BasicElement {
     }
     ;
     translatePosition(amount) {
-        const sys = this.parent.parent, id = (this.gid - sys.globalStartId) * 3;
+        const sys = this.getSystem(), id = (this.gid - sys.globalStartId) * 3;
         sys.bbOffsets[id] += amount.x;
         sys.bbOffsets[id + 1] += amount.y;
         sys.bbOffsets[id + 2] += amount.z;
@@ -710,7 +777,7 @@ class AminoAcid extends BasicElement {
         sys.cmOffsets[id + 2] += amount.z;
     }
     updateColor() {
-        let sys = this.parent.parent, sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
             sid = this.sid;
@@ -724,11 +791,11 @@ class AminoAcid extends BasicElement {
         else {
             switch (getColoringMode()) {
                 case "Strand":
-                    bbColor = backboneColors[(Math.abs(this.parent.strandID) + this.parent.parent.systemID) % backboneColors.length];
+                    bbColor = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length];
                     aaColor = this.elemToColor(this.type);
                     break;
                 case "System":
-                    bbColor = backboneColors[this.parent.parent.systemID % backboneColors.length];
+                    bbColor = backboneColors[this.getSystem().systemID % backboneColors.length];
                     aaColor = this.elemToColor(this.type);
                     break;
                 case "Cluster":
@@ -776,51 +843,54 @@ class AminoAcid extends BasicElement {
 ;
 // strands are made up of elements
 // strands have an ID within the system
-class Strand extends THREE.Group {
-    constructor(id, parent) {
-        super();
+class Strand {
+    constructor(id, system) {
+        this.monomers = [];
         this.strandID = id;
-        this.parent = parent;
+        this.system = system;
         this.circular = false;
     }
     ;
     addBasicElement(elem) {
-        this[monomers].push(elem);
-        elem.parent = this;
+        this.monomers.push(elem);
+        elem.strand = this;
     }
     ;
     createBasicElement(gid) {
-        return new BasicElement(gid, this);
+        throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc.";
     }
     excludeElements(elements) {
-        // detach from parent
-        elements.forEach((e) => {
-            e.parent = null;
-            this.remove(e);
+        // detach from strand
+        elements.forEach(e => {
+            e.strand = null;
         });
         // create a new list of strand elements  
-        let filtered = this[monomers].filter((v, i, arr) => {
-            return !elements.includes(v);
+        this.monomers = this.monomers.filter(e => {
+            return !elements.includes(e);
         });
-        this[monomers] = filtered;
     }
     ;
+    toggleMonomers() {
+        this.monomers.forEach(e => e.toggle());
+    }
+    isEmpty() {
+        return this.monomers.length == 0;
+    }
     getCom() {
         const com = new THREE.Vector3(0, 0, 0);
-        for (let i = (this[monomers][0].gid - this.parent.globalStartId) * 3; i <= (this[monomers][this[monomers].length - 1].gid - this.parent.globalStartId) * 3; i += 3) {
-            com.add(new THREE.Vector3(this.parent.cmOffsets[i], this.parent.cmOffsets[i + 1], this.parent.cmOffsets[i + 2]));
+        const l = this.monomers.length;
+        const cmOffs = this.system.cmOffsets;
+        for (let i = (this.monomers[0].gid - this.system.globalStartId) * 3; i <= (this.monomers[l - 1].gid - this.system.globalStartId) * 3; i += 3) {
+            com.add(new THREE.Vector3(cmOffs[i], cmOffs[i + 1], cmOffs[i + 2]));
         }
-        return (com.multiplyScalar(1 / this[monomers].length));
-    }
-    ;
-    translateStrand(amount) {
+        return (com.multiplyScalar(1 / l));
     }
     ;
 }
 ;
 class NucleicAcidStrand extends Strand {
-    constructor(id, parent) {
-        super(id, parent);
+    constructor(id, system) {
+        super(id, system);
     }
     ;
     createBasicElement(gid) {
@@ -831,8 +901,8 @@ class NucleicAcidStrand extends Strand {
     }
     ;
     translateStrand(amount) {
-        const s = this.parent;
-        for (let i = (this[monomers][0].gid - this.parent.globalStartId) * 3; i <= (this[monomers][this[monomers].length - 1].gid - this.parent.globalStartId) * 3; i += 3) {
+        const s = this.system;
+        for (let i = (this.monomers[0].gid - s.globalStartId) * 3; i <= (this.monomers[this.monomers.length - 1].gid - s.globalStartId) * 3; i += 3) {
             s.bbOffsets[i] += amount.x;
             s.bbOffsets[i + 1] += amount.y;
             s.bbOffsets[i + 2] += amount.z;
@@ -858,8 +928,8 @@ class NucleicAcidStrand extends Strand {
     }
 }
 class Peptide extends Strand {
-    constructor(id, parent) {
-        super(id, parent);
+    constructor(id, system) {
+        super(id, system);
     }
     ;
     createBasicElement(gid) {
@@ -867,8 +937,8 @@ class Peptide extends Strand {
     }
     ;
     translateStrand(amount) {
-        const s = this.parent;
-        for (let i = (this.children[0].gid - this.parent.globalStartId) * 3; i <= (this[monomers][this[monomers].length - 1].gid - this.parent.globalStartId) * 3; i += 3) {
+        const s = this.system;
+        for (let i = (this.monomers[0].gid - s.globalStartId) * 3; i <= (this.monomers[this.monomers.length - 1].gid - s.globalStartId) * 3; i += 3) {
             s.nsOffsets[i] += amount.x;
             s.nsOffsets[i + 1] += amount.y;
             s.nsOffsets[i + 2] += amount.z;
@@ -893,9 +963,9 @@ class Peptide extends Strand {
 }
 // systems are made of strands
 // systems can CRUD
-class System extends THREE.Group {
+class System {
     constructor(id, startID) {
-        super();
+        this.strands = [];
         this.systemID = id;
         this.globalStartId = startID;
         this.lutCols = [];
@@ -903,12 +973,15 @@ class System extends THREE.Group {
     ;
     systemLength() {
         let count = 0;
-        for (let i = 0; i < this[strands].length; i++) {
-            count += this[strands][i][monomers].length;
+        for (let i = 0; i < this.strands.length; i++) {
+            count += this.strands[i].monomers.length;
         }
         return count;
     }
     ;
+    isEmpty() {
+        return this.strands.length == 0;
+    }
     initInstances(nInstances) {
         this.INSTANCES = nInstances;
         this.bbOffsets = new Float32Array(this.INSTANCES * 3);
@@ -942,6 +1015,11 @@ class System extends THREE.Group {
             }
         });
     }
+    toggleStrands() {
+        this.strands.forEach(strand => {
+            strand.toggleMonomers();
+        });
+    }
     createStrand(strID) {
         if (strID < 0)
             return new Peptide(strID, this);
@@ -950,24 +1028,23 @@ class System extends THREE.Group {
     }
     ;
     addStrand(strand) {
-        this[strands].push(strand);
-        strand.parent = this;
+        if (!this.strands.includes(strand)) {
+            this.strands.push(strand);
+        }
+        strand.system = this;
     }
     ;
-    removeStrand(toRemove) {
-        for (let i = 0; i < this[strands].length; i++) {
-            let s = this[strands][i];
-            if (s.strandID == toRemove) {
-                this.remove(s);
-                for (let j = 0; j < s[monomers].length; j++) {
-                    s.remove(s[monomers][j]);
-                    s.removeBasicElement(j);
-                }
-                scene.remove(s);
-                s = null;
-            }
-            ;
-            render();
+    /**
+     * Remove strand from system
+     * @param strand
+     */
+    removeStrand(strand) {
+        let i = this.strands.indexOf(strand);
+        if (i >= 0) {
+            this.strands.splice(i, 1);
+        }
+        if (this == strand.system) {
+            strand.system = null;
         }
     }
     ;
@@ -984,7 +1061,7 @@ class System extends THREE.Group {
     strandUnweightedCom() {
         const com = new THREE.Vector3(0, 0, 0);
         let count = 0;
-        this[strands].forEach((s) => {
+        this.strands.forEach((s) => {
             com.add(s.getCom());
             count += 1;
         });
@@ -1049,18 +1126,10 @@ function coloringChanged() {
     else if (lut) {
         api.removeColorbar();
     }
-    for (let i = 0; i < elements.length; i++) {
-        if (elements[i].parent !== null) {
-            elements[i].updateColor();
-        }
-    }
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceColor']);
-    }
+    elements.forEach(e => e.updateColor());
+    systems.forEach(s => s.callUpdates(['instanceColor']));
     if (tmpSystems.length > 0) {
-        tmpSystems.forEach((s) => {
-            s.callUpdates(['instanceColor']);
-        });
+        tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
     }
     render();
 }

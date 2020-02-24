@@ -5,8 +5,9 @@
     <title>oxDNA three.js viewer</title>
     <!--Nice icons, from http://google.github.io/material-design-icons/-->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Link external stylesheet file-->
-    <link rel="stylesheet" href="style.css">
+    <!--Link external stylesheet files-->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/justcontext.css">
     <!--Set favicon-->
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
 </head>
@@ -70,19 +71,20 @@
                 </select>
                 <br>
                 <caption>Centering:</caption>
-                <select id="centering" title="Where to center the structure relative to the simulation box">
+                <select id="centering" title="Where to center the structure relative to the simulation box" onchange="redrawBox()">
                     <option>Origin</option>
                     <option>Box Center</option>
                     <option>None</option>
                 </select>
                 <br>
-                <button onclick="systems.forEach( (s) => { PBCswitchbox(s)}); render()" type="button" title="note this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
+                <button onclick="PBCswitchbox()" type="button" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
             </fieldset>
 
             <!--View-->
             <fieldset>
                 <legend>View</legend>
                 <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
+                <input type="checkbox" id="boxToggle" onchange="toggleBox(this)" title="Show/hide the bounding box">Display Box<br>
                 <fieldset>
                     <legend>Color by:</legend>
                     <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
@@ -96,6 +98,7 @@
                 <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
                 <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
                 <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
+                <button onclick="toggleOptions('hierarchy'); drawHierarchy();" type="button" title="View system hierarchy">System hierarchy</button>
             </fieldset>
 
             <!--Edit-->
@@ -106,13 +109,13 @@
                     <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
                 </div>
                 <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select
-                <input type="checkbox" name="action" id="dragToggle" value="Drag"> Drag<br>
+                <input type="checkbox" name="action" id="transformToggle" value="Transform" onchange="showTransformControl(this)"> Transform<br>
                 <fieldset>
                     <legend>Selection mode:</legend>
                     <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
                     <input type="radio" name="scope" value="Strand">Strand<br>
                     <input type="radio" name="scope" value="System">System<br>
-                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements[0].clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
+                    <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements.values().next().value.clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
                         title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
                     <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
                     <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
@@ -195,6 +198,14 @@
             <div id="colorOptionContent" style="background-color: inherit"></div>
         </div>
 
+        <!--Hierarchy-->
+        <div class="opts" id="hierarchy" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('hierarchy')">close</i>
+            </div>
+            <div id="hierarchyContent" style="background-color: inherit"></div>
+        </div>
+
         <!--File Output-->
         <div class="opts" id="fileOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
@@ -204,8 +215,7 @@
                 <legend>Options</legend>
                 <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
                 <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
-                <input type="checkbox" name="cleanFirst" title="If checked, will organize the strands by length.  Must be checked if the topology has been edited.">Pre-organize strands<br>
-                <input type="text" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">File prefix<br>
+                <input type="text" id="outputFilename" size="13" value="output" title="The prefix to name the .dat and .top files">File prefix<br>
                 <button onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
             </fieldset>
         </div>
@@ -220,7 +230,7 @@
                 <label for="minPts">Min points: </label>
                 <input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
                 <label for="epsilon">Max dist (ε): </label>
-                <input type="number" value="1.5" id="epsilon" title="Max distance between cluster neigbours" min=0>
+                <input type="number" value="3" id="epsilon" title="Max distance between cluster neigbours" min=0>
                 <button onclick="calculateClusters()">Start clustering</button>
             </fieldset>
             <fieldset>
@@ -260,7 +270,22 @@
     <div id="container">
         <div><canvas id="colorbarCanvas"></canvas></div>
     </div>
-    <canvas id="threeCanvas"></canvas>
+    <canvas id="threeCanvas" tabindex="1" class="jctx-host jctx-id-canvas"></canvas>
+
+    <!-- Context menu-->
+    <ul class="jctx jctx-id-canvas jctx-white jctx-white-shadow">
+        <li data-action="undo">Undo (ctrl+Z)</li>
+        <li data-action="redo">Redo (ctrl+Y)</li>
+        <hr>
+        <li data-action="del">Delete (del)</li>
+        <li data-action="cut">Cut (ctrl+X)</li>
+        <li data-action="copy">Copy (ctrl+C)</li>
+        <li data-action="paste">Paste (ctrl+V)</li>
+        <hr>
+        <li data-action="all">Select all (ctrl+A)</li>
+        <li data-action="invert">Invert selection (ctrl+I)</li>
+        <li data-action="clear">Clear selection</li>
+    </ul>
 
     <div class="main">
         <!--all files to be loaded onload of html file-->

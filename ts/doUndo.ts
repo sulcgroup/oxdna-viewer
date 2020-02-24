@@ -9,7 +9,7 @@ class EditHistory {
     };
 
     /**
-     * Performsrevertable edit and add it to the undo history stack
+     * Performs revertable edit and add it to the undo history stack
      * @param edit object describing the revertable edit.
      */
     public do(edit: RevertableEdit) {
@@ -18,6 +18,12 @@ class EditHistory {
 
         // We no longer care about the alternate future:
         this.redoStack = new Stack<RevertableEdit>();
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
+
+        //Return focus to the canvas so undo can be called immediatley
+        canvas.focus()
     }
 
     /**
@@ -26,6 +32,9 @@ class EditHistory {
      */
     public add(edit: RevertableEdit) {
         this.undoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 
     public undo() {
@@ -37,6 +46,9 @@ class EditHistory {
         }
         edit.undo();
         this.redoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 
     public redo() {
@@ -48,6 +60,9 @@ class EditHistory {
         }
         edit.redo();
         this.undoStack.push(edit);
+
+        // Update the hierarchy, since we've made changes
+        drawHierarchy();
     }
 }
 
@@ -66,19 +81,56 @@ class RevertableEdit {
     };
 }
 
+class RevertableAddition extends RevertableEdit {
+    constructor(saved:InstanceCopy[], added: BasicElement[], pos?: THREE.Vector3) {
+        const s = saved;
+        let a = added;
+        const p = pos;
+
+        let undo = function() {api.deleteElements(a)};
+        let redo = function() {a = api.addElementsAt(s, p)};
+        super(undo, redo);
+    };
+}
+
+class RevertableDeletion extends RevertableEdit {
+    victims: BasicElement[];
+    constructor(victims: BasicElement[]) {
+        const saved = victims.map(e=> new InstanceCopy(e));
+        let undo = function() {this.victims = api.addElements(saved)};
+        let redo = function() {api.deleteElements(this.victims)};
+        super(undo, redo);
+        this.victims = victims;
+    };
+}
+
 class RevertableNick extends RevertableEdit {
     constructor(element: BasicElement) {
-        const n3 = element.neighbor3;
-        let undo = function() {api.ligate(element, n3)};
-        let redo = function() {api.nick(element);}
+        const end3 = element.gid;
+        const end5 = element.neighbor3.gid;
+        let undo = function() {api.ligate(elements.get(end3), elements.get(end5))};
+        let redo = function() {api.nick(elements.get(end3));}
         super(undo, redo);
     };
 }
 
 class RevertableLigation extends RevertableEdit {
     constructor(e1 :BasicElement, e2: BasicElement) {
-        let undo = function() {api.nick(e1)};
-        let redo = function() {api.ligate(e1, e2)}
+        let end5: number, end3: number;
+        // Find out which is the 5' end and which is 3'
+        if (!e1.neighbor5 && !e2.neighbor3) {
+            end5 = e1.gid;
+            end3 = e2.gid;
+        } else if (!e1.neighbor3 && !e2.neighbor5) {
+            end5 = e2.gid;
+            end3 = e1.gid;
+        } else {
+            notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
+            super(()=>{}, ()=>{});
+            return;
+        }
+        let undo = function() {api.nick(elements.get(end3))};
+        let redo = function() {api.ligate(elements.get(end5), elements.get(end3))}
         super(undo, redo);
     };
 }
@@ -118,6 +170,41 @@ class RevertableRotation extends RevertableEdit {
 
         let redo = function() {
             rotateElements(elements, axis, angle, c);
+        }
+
+        super(undo, redo);
+    };
+}
+
+class RevertableTransformation extends RevertableEdit {
+    constructor(
+        transformedElements: Set<BasicElement>,
+        translation: THREE.Vector3,
+        rotation: THREE.Quaternion,
+        about: THREE.Vector3) 
+        {
+        const elements = new Set(transformedElements);
+        const c = about.clone();
+        const t = translation.clone();
+        const r = rotation.clone();
+        let undo = function() {
+            rotateElementsByQuaternion(elements, r.clone().conjugate(), c);
+            translateElements(elements, t.clone().negate());
+            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+                transformControls.show();
+            } else {
+                transformControls.hide();
+            }
+        };
+
+        let redo = function() {
+            translateElements(elements, t);
+            rotateElementsByQuaternion(elements, r, c);
+            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+                transformControls.show();
+            } else {
+                transformControls.hide();
+            }
         }
 
         super(undo, redo);

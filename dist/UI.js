@@ -1,15 +1,87 @@
-function toggleSideNav() {
-    let hidden = "show toolbar";
-    let visible = "hide toolbar";
-    let button = document.getElementById("sideNavToggleButton");
-    let content = document.getElementById("sidenavContent");
-    if (button.innerText.toLowerCase() == hidden) {
-        content.style.display = "block";
-        button.innerHTML = visible;
+function drawLevel(parent, label, onClick, onEdit, expanded, isBottom) {
+    const level = document.createElement('div');
+    level.style.paddingLeft = "10px";
+    const levelLabel = document.createElement('i');
+    levelLabel.innerHTML = label;
+    levelLabel.onclick = onClick;
+    levelLabel.style.cursor = 'pointer';
+    const editText = document.createElement('i');
+    editText.classList.add('material-icons');
+    editText.innerHTML = 'edit';
+    editText.onclick = onEdit;
+    if (isBottom) {
+        level.appendChild(levelLabel);
+        parent.appendChild(level);
+        level.appendChild(editText);
+        return;
     }
     else {
-        content.style.display = "none";
-        button.innerHTML = hidden;
+        const expandButton = document.createElement('i');
+        expandButton.classList.add('material-icons');
+        expandButton.innerHTML = "arrow_right";
+        const childContainer = document.createElement('div');
+        childContainer.hidden = !expanded;
+        expandButton.onclick = (event) => {
+            if (childContainer.hidden) {
+                expandButton.innerHTML = 'arrow_drop_down';
+            }
+            else {
+                expandButton.innerHTML = 'arrow_right';
+            }
+            childContainer.hidden = !childContainer.hidden;
+        };
+        level.appendChild(expandButton);
+        level.appendChild(levelLabel);
+        level.appendChild(editText);
+        level.appendChild(childContainer);
+        parent.appendChild(level);
+        return childContainer;
+    }
+}
+function drawHierarchy() {
+    const opt = document.getElementById("hierarchyContent");
+    if (!opt.hidden) {
+        opt.innerHTML = ""; // Clear
+        systems.forEach(system => {
+            let strands = drawLevel(opt, system.label ? system.label : `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, () => { system.label = prompt("Please enter system label"); drawHierarchy(); }, true);
+            system.strands.forEach(strand => {
+                let monomers = drawLevel(strands, strand.label ? strand.label : `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); }, () => { strand.label = prompt("Please enter strand label"); drawHierarchy(); });
+                strand.monomers.forEach(monomer => {
+                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`.concat(monomer.label ? ` (${monomer.label})` : ""), (event) => { monomer.toggle(); updateView(system); }, () => { monomer.label = prompt("Please enter monomer label"); drawHierarchy(); }, false, true);
+                });
+            });
+        });
+    }
+}
+function handleMenuAction(event) {
+    switch (event) {
+        case "undo":
+            editHistory.undo();
+            break;
+        case "redo":
+            editHistory.redo();
+            break;
+        case "del":
+            deleteWrapper();
+            break;
+        case "cut":
+            cutWrapper();
+            break;
+        case "copy":
+            copyWrapper();
+            break;
+        case "paste":
+            pasteWrapper(false);
+            break;
+        case "all":
+            selectAll();
+            break;
+        case "invert":
+            invertSelection();
+            break;
+        case "clear":
+            clearSelection();
+            break;
     }
 }
 function toggleModal(id) {
@@ -52,20 +124,17 @@ function colorOptions() {
         }
         opt.appendChild(addButton);
         //actually update things in the scene
-        for (let i = 0; i < elements.length; i++) {
-            if (elements[i].parent != null) { //deleted particles are not removed from the element list until api.cleanOrder() is called.
-                if (!selectedBases.has(elements[i]))
-                    elements[i].updateColor();
+        elements.forEach(e => {
+            if (!selectedBases.has(e)) {
+                e.updateColor();
             }
-        }
-        for (let i = 0; i < systems.length; i++) {
-            systems[i].callUpdates(['instanceColor']);
-        }
-        if (tmpSystems.length > 0) {
-            tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceColor']);
-            });
-        }
+        });
+        systems.forEach(s => {
+            s.callUpdates(['instanceColor']);
+        });
+        tmpSystems.forEach(s => {
+            s.callUpdates(['instanceColor']);
+        });
         render();
     }
 }
@@ -108,7 +177,12 @@ function longCalculation(calc, message, callback) {
     let dom = document.activeElement;
     dom['style'].cursor = "wait";
     requestAnimationFrame(() => requestAnimationFrame(() => {
-        calc();
+        try {
+            calc();
+        }
+        catch (error) {
+            notify(`Sorry, something went wrong with the calculation: ${error}`);
+        }
         // Change cursor back and remove modal
         dom['style'].cursor = "auto";
         modal.removeChild(notification);

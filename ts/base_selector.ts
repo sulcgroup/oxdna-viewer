@@ -3,47 +3,59 @@ let basesInfo: string = ""; //list of bases' info - location, strand and system 
 let mouse3D;
 let raycaster = new THREE.Raycaster();;
 let intersects;
+
+canvas.addEventListener('mousemove', event => {
+	// Change the cursor if you're hovering over something selectable
+	let id = gpuPicker(event)
+	if (id > -1) {
+		canvas.style.cursor = 'pointer';
+	}
+	else {
+		canvas.style.cursor = 'auto';
+	}
+});
 			
 
 canvas.addEventListener('mousedown', event => { //if mouse is pressed down
+	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
 	if (getActionModes().includes("Select")) {
 		let id = gpuPicker(event)
 
 		//if something was clicked, toggle the coloration of the appropriate things.
 		if (id > -1) {
+
 			// This runs after the selection is done and the nucleotides are toggled,
 			// but it needs to be defined as a callback since the cluster selection
 			// can take a while to finish.
 
-			let nucleotide = elements[id];
-			let sys = nucleotide.parent.parent;
+			let nucleotide = elements.get(id);
+			let sys = nucleotide.getSystem();
 
 			// Select multiple elements my holding down ctrl
 			if (!event.ctrlKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
 				clearSelection();
 			}
 			
-			let strandCount = sys[strands].length;
+			let strandCount = sys.strands.length;
 			switch(getScopeMode()){
 				case "System" :
-					for (let i=0; i<strandCount; i++) {  //for every strand in the System
-						let strand = sys[strands][i];
-						let nucCount = strand[monomers].length;
-                        for (let j=0; j<nucCount; j++) // for every nucleotide on the Strand
-                            strand[monomers][j].toggle();
-					}
+					sys.strands.forEach(strand=>{
+						strand.monomers.forEach(e=>{
+                            e.toggle();
+						});
+					});
 					updateView(sys);
 					break;
 				case "Strand" :
-					let strandLength = nucleotide.parent[monomers].length;
+					let strandLength = nucleotide.strand.monomers.length;
 					for (let i= 0; i < strandLength; i++) { //for every nucleotide in strand
-						nucleotide.parent[monomers][i].toggle();
+						nucleotide.strand.monomers[i].toggle();
 						if(selectPairs()) {
 							if (!nucleotide.isPaired()) {
 								longCalculation(findBasepairs, basepairMessage,
-								()=>{selectPaired(nucleotide.parent[monomers][i]);updateView(sys);});
+								()=>{selectPaired(nucleotide.strand.monomers[i]);updateView(sys);});
 							} else {
-								selectPaired(nucleotide.parent[monomers][i]);
+								selectPaired(nucleotide.strand.monomers[i]);
 							}
 						}
 					}
@@ -73,15 +85,15 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Cluster" :
-					if (typeof elements[0].clusterId == 'undefined') {
+					if (typeof elements.values().next().value.clusterId == 'undefined') {
 						document.getElementById("clusterOptions").hidden = false;
 					} else {
 						for (let i = 0; i < strandCount; i++){
-							let strand = sys[strands][i];
-							let nucCount = strand[monomers].length;
+							let strand = sys.strands[i];
+							let nucCount = strand.monomers.length;
 							// for every nucleotide on the Strand in the System
 							for (let j = 0; j < nucCount; j++) {
-								let n: BasicElement = strand[monomers][j];
+								let n: BasicElement = strand.monomers[j];
 								if(n.clusterId == nucleotide.clusterId) {
 									n.toggle();
 								}
@@ -96,6 +108,12 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 				tmpSystems.forEach((sys) => {
 					sys.callUpdates(["instanceColor"])
 				});
+			}
+
+			if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+				transformControls.show();
+			} else {
+				transformControls.hide();
 			}
 		}
 	}
@@ -122,7 +140,7 @@ function updateView(sys: System) {
 			listBases.push(base.gid);
 
 			//assign each of the selected bases to a strand
-			let strandID = base.parent.strandID;
+			let strandID = base.strand.strandID;
 			if(strandID in baseInfoStrands)
 				baseInfoStrands[strandID].push(base);
 			else
@@ -138,7 +156,7 @@ function updateView(sys: System) {
 	for (let strandID in baseInfoStrands){
 		let sBases = baseInfoStrands[strandID];
 		//make a fancy header for each strand
-		let header = ["Str#:", strandID, "Sys#:", sBases[0].parent.parent.systemID];
+		let header = ["Str#:", strandID, "Sys#:", sBases[0].getSystem().systemID];
 		baseInfoLines.push("----------------------");
 		baseInfoLines.push(header.join(" "));
 		baseInfoLines.push("----------------------");
@@ -161,6 +179,7 @@ function clearSelection() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
+	transformControls.hide();
 }
 
 function invertSelection() {
@@ -170,6 +189,11 @@ function invertSelection() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
+	if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+		transformControls.show();
+	} else {
+		transformControls.hide();
+	}
 }
 
 function selectAll() {
@@ -181,6 +205,9 @@ function selectAll() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
+	if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+		transformControls.show();
+	}
 }
 
 function selectPaired(e: BasicElement) {
@@ -194,14 +221,13 @@ function selectPaired(e: BasicElement) {
 
 function fancySelectIntermediate(e: BasicElement) {
 	let paired = selectPairs();
-	let d = new Dijkstra(elements, paired);
-	let elems;
+	let d = new Dijkstra(Array.from(elements.values()), paired);
+	let elems: BasicElement[];
 	longCalculation(()=>{
 		elems = d.shortestPath(e, Array.from(selectedBases));
 	},"Calculating intermediate elements...",
 	()=>{
-		elems.forEach(e=>{
-			let elem = elements[e];
+		elems.forEach(elem=>{
 			if (!selectedBases.has(elem)) {
 				elem.toggle();
 			}
@@ -212,28 +238,28 @@ function fancySelectIntermediate(e: BasicElement) {
 				}
 			}
 		});
-		updateView(e.parent.parent);
+		updateView(e.getSystem());
 	});
 	
 }
 
 function selectIntermediate() {
-	let n = elements.length;
+	let n = elements.getNextId();
 	let iMin = 0;
 	let iMax = n;
 	while(iMin++ <= n) {
-		if(selectedBases.has(elements[iMin])) {
+		if(elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
 			break;
 		}
 	}
 	while(iMax-- > 0) {
-		if(selectedBases.has(elements[iMax])) {
+		if(elements.has(iMax) && selectedBases.has(elements.get(iMax))) {
 			break;
 		}
 	}
 	for(let i=iMin; i<iMax; i++) {
-		if (!selectedBases.has(elements[i])) {
-			elements[i].toggle();
+		if (elements.has(i) && !selectedBases.has(elements.get(i))) {
+			elements.get(i).toggle();
 		}
 	}
 }
@@ -244,6 +270,75 @@ function makeTextArea(bases: string, id) { //insert "bases" string into text are
 		textArea.innerHTML =  bases; //set innerHTML / content to bases
 	}
 }
+
+let boxSelector;
+canvas.addEventListener('mousemove', event => {
+	if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+		// Box selection
+		event.preventDefault();
+		boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
+	}
+}, false);
+
+
+canvas.addEventListener('mousedown', event => {
+	if (getActionModes().includes("Select") && getScopeMode() === "Box") {
+		// Box selection
+		event.preventDefault();
+
+		// Disable trackball controlls
+		controls.enabled = false;
+
+		// Select multiple elements my holding down ctrl
+		if (!event.ctrlKey) {
+			clearSelection();
+		}
+
+		// Create a selection box
+		boxSelector = new BoxSelector(
+			new THREE.Vector2(event.clientX, event.clientY),
+			(camera as THREE.PerspectiveCamera), canvas
+		);
+	}
+}, false);
+
+let onDocumentMouseCancel = event => {
+	if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+		// Box selection
+		event.preventDefault();
+
+		// Calculate which elements are in the drawn box
+		let boxSelected = boxSelector.select(
+			new THREE.Vector2(event.clientX, event.clientY)
+		);
+
+		// Toggle selected elements (unless they are already selected)
+		boxSelected.forEach(element => {
+			if (!selectedBases.has(element)) {
+				element.toggle();
+			}
+		});
+
+		if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+			transformControls.show();
+		} else {
+			transformControls.hide();
+		}
+
+		// Remove selection box and update the view
+		boxSelector.onSelectOver();
+		boxSelector = undefined;
+		systems.forEach(sys => {
+			updateView(sys);
+		});
+
+		// Re-enable trackball controlls
+		controls.enabled = true;
+	}
+};
+
+canvas.addEventListener('mouseup', onDocumentMouseCancel, false);
+canvas.addEventListener('mouseleave', onDocumentMouseCancel, false);
 
 /**
  * Modified from SelectionBox code by HypnosNova
