@@ -4,13 +4,17 @@
 
 ![oxdna-viewer interface](img/editing.gif)
 
-A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.2 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later. 
+A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.2 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later.
 
+---
+
+## Examples
+You can find a set of example structures and tutorials in the [example directory](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples), including structures used in our [paper](https://doi.org/10.1101/2020.01.24.917419).
 
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time. You can then select (`S`) and transform (`D`) components using the "Select" and "Transform" options in the sidebar. Press `R` on your keyboard to toggle rotation and `T` to toggle translation. Selected components can also be rotated around the x,y and z axis through the sidebar. Selections can be copied and pasted using `ctrl+C` and `ctrl+V`, `ctrl+shift+V` pastes in-place. Strands can be created, extended, nicked, or ligated. Edits can be undone and redone using `ctrl+Z`/`ctrl+Y` or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.
+The viewer can load multiple structures at the same time. You can then select (`S`) and transform (`D`) components using the "Select" and "Transform" options in the sidebar. Press `R` on your keyboard to toggle rotation and `T` to toggle translation. Hold down the `shift` key to snap to grid. Selected components can also be rotated around the x,y and z axis through the sidebar. Selections can be copied and pasted using `ctrl+C` and `ctrl+V`, `ctrl+shift+V` pastes in-place. Strands can be created, extended, nicked, or ligated. Edits can be undone and redone using `ctrl+Z`/`ctrl+Y` or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.
 
 Please provide feedback if you encounter any bugs or have suggestions for how to make the editing features better.
 
