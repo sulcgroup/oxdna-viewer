@@ -1,0 +1,322 @@
+/**
+ * Bits of code to facilitate querying structures from the browser console
+ */
+module api{
+    export function toggleStrand(strand: Strand): Strand{
+        let sys = strand.system;
+        let nucleotides = strand.monomers; 
+        nucleotides.map( 
+            (n:Nucleotide) => n.toggleVisibility());
+
+        sys.callUpdates(['instanceVisibility'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceVisibility'])
+            });
+        }
+
+        render();
+        return strand;
+    }
+
+    // TODO: integrate with the selection mechanism 
+    export function markStrand(strand: Strand): Strand{
+        let nucleotides = strand.monomers;
+        nucleotides.map((n: Nucleotide) => n.toggle());
+        render();
+        return strand;
+    };
+
+    // get a dictionary with every strand length : [strand] listed   
+    export function countStrandLength(system = systems[0]) {
+        let strandLength : { [index: number]: [Strand] } = {};
+        system.strands.map((strand: Strand) => {
+            let l = strand.monomers.length;
+            if( l in strandLength) 
+                strandLength[l].push(strand);
+            else
+                strandLength[l] = [strand];
+        });
+        return strandLength;  
+    };
+
+    export function highlite5ps(system = systems[0]){
+        system.strands.map((strand) => {
+            strand.monomers[strand.monomers.length - 1].toggle();
+        });
+        render();
+    }
+
+    export function toggleElements(elems: BasicElement[]) {
+        let sys = new Set<System>();
+        let tmpSys = new Set<System>();
+        elems.forEach(e=>{
+            e.toggleVisibility();
+            sys.add(e.getSystem());
+            if (e.dummySys) {
+                tmpSys.add(e.dummySys);
+            }
+        });
+        sys.forEach(s=>s.callUpdates(['instanceVisibility']));
+        tmpSys.forEach(s=>s.callUpdates(['instanceVisibility']));
+        render();
+    }
+
+    export function toggleAll(system = systems[0]){
+        system.strands.map((strand: Strand)=>{
+            let nucleotides = strand.monomers; 
+            nucleotides.map( 
+                (n:Nucleotide) => n.toggleVisibility());
+        });
+        system.callUpdates(['instanceVisibility'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach ((s) => {
+                s.callUpdates(['instanceVisibility'])
+            })
+        }
+        render();
+    }
+
+    //toggles the nuceloside colors on and off
+    export function toggleBaseColors() {
+        elements.forEach(
+            (e: BasicElement) => {
+                if (e.strand == null) return
+                let sys = e.getSystem();
+                let sid = e.gid - sys.globalStartId
+                if (e.dummySys !== null) {
+                    sys = e.dummySys
+                    sid = e.sid;
+                }
+                //because the precision of the stored color value (32-bit) and defined color value (64-bit) are different,
+                //you have to do some weird casting to get them to be comparable.
+                let tmp = e.getInstanceParameter3("nsColors") //maybe this shouldn't be a vector3...
+                let c = [tmp.x.toPrecision(6), tmp.y.toPrecision(6), tmp.z.toPrecision(6)];
+                let g = [GREY.r.toPrecision(6), GREY.g.toPrecision(6), GREY.b.toPrecision(6)];
+                if (JSON.stringify(c)==JSON.stringify(g)){
+                    let newC = e.elemToColor(e.type);
+                    sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b])
+                }
+                else {
+                    sys.fillVec('nsColors', 3, sid,[GREY.r, GREY.g, GREY.b]);
+                }
+            }
+        )
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+        }
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach ((s) => {
+                s.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+            })
+        }
+        render();
+    }
+    
+    export function trace53(element: BasicElement): BasicElement[]{
+        let elems : BasicElement[] = [];
+        let c : BasicElement = element; 
+        while(c){
+            elems.push(c);
+            c = c.neighbor3;
+        }
+        return elems;
+    }
+
+    export function trace35(element: BasicElement): BasicElement[]{
+        let elems : BasicElement[] = [];
+        let c : BasicElement = element; 
+        while(c){
+            elems.push(c);
+            c = c.neighbor5;
+        }
+        return elems;
+    }
+
+    export function getElements(targets: number[]): BasicElement[] {
+        let out = [];
+        targets.forEach((n) => {
+            out.push(elements.get(n));
+        });
+        return(out);
+    }
+
+    
+
+    export function getSequence(elems: BasicElement[]) : string {
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a,b)=>{return a.lid<b.lid ? 1:-1});
+
+        let seq = "";
+        elems.forEach(e => seq += e.type);
+        return seq;
+    };
+    
+    //there's probably a less blunt way to do this...
+    export function removeColorbar() {
+        let l = colorbarScene.children.length;
+        for (let i = 0; i < l; i++) {
+            if (colorbarScene.children[i].type == "Sprite" || colorbarScene.children[i].type == "Line") {
+                colorbarScene.remove(colorbarScene.children[i]);
+                i -= 1;
+                l -= 1;
+            }
+        }
+        colorbarScene.remove(lut.legend.mesh)
+        //reset light to default
+        pointlight.intensity = 0.5;
+        renderColorbar();
+    }
+
+    //turns out that lut doesn't save the sprites so you have to completley remake it
+    export function showColorbar() {
+        colorbarScene.add(lut.legend.mesh);
+        let labels =  lut.setLegendLabels({'title':lut.legend.labels.title, 'ticks':lut.legend.labels.ticks}); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
+        colorbarScene.add(labels["title"]);
+        for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
+            colorbarScene.add(labels['ticks'][i]);
+            colorbarScene.add(labels['lines'][i]);
+        }
+        //colormap doesn't look right unless the light is 100%
+        pointlight.intensity = 1.0; 
+
+        renderColorbar();
+    }
+
+    export function changeColormap(name: string) {
+        if (lut != undefined) {
+            api.removeColorbar();
+            let key = lut.legend.labels.title;
+            let min = lut.minV;
+            let max = lut.maxV;
+            lut = lut.changeColorMap(name);
+            lut.setMax(max);
+            lut.setMin(min);
+            lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
+            lut.setLegendLabels({ 'title': key, 'ticks': 5 });
+            for (let i = 0; i < systems.length; i++){
+                let system = systems[i];
+                let end = system.systemLength()
+                for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                    system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
+                }
+            }
+            coloringChanged();
+        }
+        else {
+            defaultColormap = name;
+        }
+    }
+
+    export function setColorBounds(min: number, max: number) {
+        let key = lut.legend.labels.title;
+        lut.setMax(max);
+        lut.setMin(min);
+        api.removeColorbar();
+        lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
+        lut.setLegendLabels({ 'title': key, 'ticks': 5 });
+        for (let i = 0; i < systems.length; i++){
+            let system = systems[i];
+            let end = system.systemLength()
+            for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
+            }
+        }
+        coloringChanged();
+    }
+    
+    export function spOnly() {
+        elements.forEach((n: BasicElement) => {
+            n.setInstanceParameter('scales', [0, 0, 0]);
+            n.setInstanceParameter('nsScales', [0, 0, 0]);
+            n.setInstanceParameter('conScales', [0, 0, 0]);
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].callUpdates(['instanceScale'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceScale'])
+        }
+        render();
+
+    }
+
+    export function showEverything() {
+        elements.forEach((n: BasicElement) => {
+            n.setInstanceParameter('scales', [1, 1, 1]);
+            n.setInstanceParameter('nsScales', [0.7, 0.3, 0.7]);
+            n.setInstanceParameter('conScales', [1, n.bbnsDist, 1]);
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].callUpdates(['instanceScale'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceScale'])
+        }
+        render();
+    }
+
+    export function switchCamera() {
+        if (camera instanceof THREE.PerspectiveCamera) {
+            //get camera parameters
+            const far = camera.far;
+            const near = camera.near;
+            const focus = controls.target;
+            const fov = camera.fov*Math.PI/180; //convert to radians
+            const pos = camera.position;
+            let width = 2*Math.tan(fov/2)*focus.distanceTo(pos);
+            let height = width/camera.aspect;
+            const up = camera.up;
+            const quat = camera.quaternion;
+            let cameraHeading = new THREE.Vector3(0, 0, -1);
+            cameraHeading.applyQuaternion(quat);
+
+            //if the camera is upside down, you need to flip the corners of the orthographic box
+            if (quat.dot(refQ) < 0 && quat.w > 0) {
+                width *= -1;
+                height *= -1;
+            }
+    
+            //create a new camera with same properties as old one
+            let newCam = createOrthographicCamera(-width/2, width/2, height/2, -height/2, near, far, pos.toArray());
+            newCam.up = up
+            newCam.lookAt(focus);
+            let light = pointlight;
+            scene.remove(camera);
+            camera = newCam;
+            controls.object = camera;
+            camera.add(light);
+            scene.add(camera);
+
+            document.getElementById("cameraSwitch").innerHTML = "Perspective";
+        }
+        else if (camera instanceof THREE.OrthographicCamera) {
+            //get camera parameters
+            const far = camera.far;
+            const near = camera.near;
+            const focus = controls.target;
+            const pos = camera.position;
+            const up = camera.up;
+            let fov = 2*Math.atan((((camera.right-camera.left)/2))/focus.distanceTo(pos))*180/Math.PI;
+            
+            //if the camera is upside down, you need to flip the fov for the perspective camera
+            if (camera.left > camera.right) {
+                fov *= -1
+            }
+
+            //create a new camera with same properties as old one
+            let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
+            newCam.up = up;
+            newCam.lookAt(focus);
+            let light = pointlight;
+            scene.remove(camera);
+            camera = newCam;
+            controls.object = camera;
+            camera.add(light);
+            scene.add(camera);
+
+            document.getElementById("cameraSwitch").innerHTML = "Orthographic";
+        }
+        render();
+    }
+}

@@ -15,7 +15,6 @@ onDOMReady(function(){
 	Array.from(document.querySelectorAll(".jctx-host")).forEach((z,i)=>{
 		addListener(z,"contextmenu",function(event){
 			//if (event.movementX + event.movementY < 0) {
-				console.log(`Panning: ${controls.isPanning}`);
 				Array.from(document.querySelectorAll(".jctx")).forEach((k,i)=>{k.style.display='none'});
 				event.preventDefault();
 				var mID='';
