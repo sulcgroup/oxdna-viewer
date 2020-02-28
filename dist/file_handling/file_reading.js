@@ -144,10 +144,10 @@ function readFiles(topFile, datFile, jsonFile) {
             renderer.domElement.style.cursor = "wait";
             //anonymous functions to handle fileReader outputs
             datReader.onload = () => {
-                readDat(system.systemLength(), datReader, system);
+                let isTraj = readDat(system.systemLength(), datReader, system);
                 document.dispatchEvent(new Event('nextConfigLoaded'));
                 //if its a trajectory, create the other readers
-                if (datFile.size > approxDatLen) {
+                if (isTraj) {
                     trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
                 }
             };
@@ -208,6 +208,10 @@ function readDat(numNuc, datReader, system) {
     addSystemToScene(system);
     PBCswitchbox();
     sysCount++;
+    //if there's another time line after the first configuration is loaded, its a trajectory
+    if (lines[numNuc].slice(0, 1) == 't')
+        return true;
+    return false;
 }
 function readJson(system, jsonReader) {
     const file = jsonReader.result;

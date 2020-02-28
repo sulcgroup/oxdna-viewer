@@ -319,4 +319,8 @@ module api{
         }
         render();
     }
+
+    //export function flipConnectors() {
+    //    instancedBBconnector.
+    //}
 }

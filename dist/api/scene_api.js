@@ -308,4 +308,7 @@ var api;
         render();
     }
     api.switchCamera = switchCamera;
+    //export function flipConnectors() {
+    //    instancedBBconnector.
+    //}
 })(api || (api = {}));

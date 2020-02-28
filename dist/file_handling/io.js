@@ -165,6 +165,9 @@ class TrajectoryReader {
         const currentChunkLength = currentChunkLines.length;
         const nextConf = [];
         const start = new marker;
+        if (nextChunkLines[0] == "") {
+            return undefined;
+        }
         if (this.confEnd.lineID != currentChunkLength) { //handle very rare edge case where conf ended exactly at end of chunk
             start.chunk = this.confEnd.chunk;
             start.lineID = this.confEnd.lineID + 1;
@@ -312,7 +315,7 @@ class TrajectoryReader {
             notify("Only one file at a time can be read as a trajectory, sorry...");
             return;
         }
-        for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems
+        for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems...but maybe one day
             const system = this.system;
             const numNuc = system.systemLength(); //gets # of nuc in system
             let lines;
@@ -324,7 +327,7 @@ class TrajectoryReader {
                 lines = this.extractPreviousConf();
                 confNum -= 1;
             }
-            if (lines == undefined) {
+            if (lines == undefined || lines[0] == "" || lines[0] == undefined) {
                 notify("No more confs to load!");
                 confNum -= mode;
                 return;
@@ -336,7 +339,7 @@ class TrajectoryReader {
             lines = lines.slice(3);
             let currentNucleotide, l;
             for (let lineNum = 0; lineNum < numNuc; lineNum++) {
-                if (lines[lineNum] == "" || undefined) {
+                if (lines[lineNum] == "") {
                     notify("There's an empty line in the middle of your configuration!");
                     break;
                 }
