@@ -40,21 +40,21 @@ The topology and trajectory/configuration have to be in oxDNA format. You can co
 ---
 
 ## Console Commands
-In addition to the visualization and editing features highlighted in the sidebar, there is a browser console-based text API with the following functions:  
+In addition to the visualization and editing features highlighted in the sidebar, oxView is scriptable through the browser console.  To facilitate use, there are two APIs containing useful functions for changing visuals and for editing.
+
+### Scene API  
+The scene API can be accessed by typing `api.<command>(<arguments>)` in the browser console.  The following functions are currently available:  
  * `toggleStrand(<strand object>)`: Toggles visibility of the given strand.  
- * `markStrand(<strand object>)`: Highlight the given strand.  
- * `getSequence(<strand object>)`: Returns the sequence of the given strand.  
+ * `markStrand(<strand object>)`: Highlight the given strand in the selection color.    
  * `countStrandLength(optional(<system object>))`: Returns a dictionary of strand indices with their associated length. If no system is provided, defaults to the first system loaded into the scene.  Very useful for finding the id of the scaffold strand in an origami.  
  * `hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
+ * `toggleElements(<array of elements>)`: Toggles visibility of the listed monomers.
  * `toggleAll(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
  * `toggleBaseColors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
  * `trace53(<monomer object>)`: Returns an array of nucleotides beginning with the provided nucleotide and proceeding 5'-3' down the strand. (Remember that oxDNA files are 3'-5'). 
- * `trace35(<monomer object>)`: Same as trace53, but traces up the strand instead.
- * `nick(<monomer object>)`: Removes the 3' connection from the provided monomer and creates a new strand containing the selected object and its 5' neighbors.  Hooked up to the "Nick" button on the sidebar.
- * `ligate(<monomer object> <monomer object>)`: Ligates the two selected monomers together, creating a single strand contining all the monomers in the parent strands of the input particles. Hooked up to the "Ligate" button on the sidebar.
- * `del(<array of monomer objects>)`: Loops through the array, deleting each object from the scene. Also handles the separation of strand objects. Hooked up to the "Delete" button on the sidebar.
- * `extendStrand(<monomer object> <string>)`: Extends the parent strand of the provided monomer with the given sequence.  The string must be in ALL CAPS to correspond to particle types. The new monomers will appear in a helix with an axis corresponding to the a3 vector of the provided monomer.  These will most likley need to be relaxed prior to production simulations with edited files. Hooked up to the "Extend" button on the sidebar
- * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
+ * `trace35(<monomer object>)`: Same as trace53, but traces up the strand instead.  
+ * `getElements(<array of integers>)`: Returns an array of elements with global IDs corresponding to the provided integer list.  
+ * `getSequence(<strand object>)`: Returns the sequence of the given strand.
  * `removeColorbar()`: Hide the colorbar if an overlay is loaded.  
  * `showColorbar()`: Show the colorbar if an overlay is loaded and the colorbar was previously hidden.  
  * `changeColormap(<map name>)`: Change the color map used for data overlays. All full-sized [Matplotlib colormaps](https://matplotlib.org/3.1.1/gallery/color/colormap_reference.html) are available in addition to the Three.js defaults ('rainbow', 'cooltowarm', 'blackbody', and 'grayscale').  Default is cooltowarm.  
@@ -62,6 +62,14 @@ In addition to the visualization and editing features highlighted in the sidebar
  * `spOnly()`: remove all objects from the scene except the backbone cyllinders.  Creates an effect similar to licorice display options in other molecular viewers.  
  * `showEverything()`: Resets all visibility parameters to default values.  
  * `switchCamera()`: Toggles between perspective and orthographic camera.  Note that orbit controls does not support zooming in orthographic camera mode.  Hooked up to the "Orthographic"/"Perspective" button in the sidebar.
+   
+### Edit API
+The edit API can be accessed by typing `edit.<command>(<arguments>)` in the browser console.  The following functions are currently available:
+ * `nick(<monomer object>)`: Removes the 3' connection from the provided monomer and creates a new strand containing the selected object and its 5' neighbors.  Hooked up to the "Nick" button on the sidebar.
+ * `ligate(<monomer object> <monomer object>)`: Ligates the two selected monomers together, creating a single strand contining all the monomers in the parent strands of the input particles. Hooked up to the "Ligate" button on the sidebar.
+ * `del(<array of monomer objects>)`: Loops through the array, deleting each object from the scene. Also handles the separation of strand objects. Hooked up to the "Delete" button on the sidebar.
+ * `extendStrand(<monomer object> <string>)`: Extends the parent strand of the provided monomer with the given sequence.  The string must be in ALL CAPS to correspond to particle types. The new monomers will appear in a helix with an axis corresponding to the a3 vector of the provided monomer.  These will most likley need to be relaxed prior to production simulations with edited files. Hooked up to the "Extend" button on the sidebar
+ * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
 
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].monomers[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999).
 
