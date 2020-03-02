@@ -83,7 +83,7 @@ function makeMutualTrapFile() {
     makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
 function makeSelectedBasesFile() {
-    makeTextFile("baseListFile", listBases.join(", "));
+    makeTextFile("baseListFile", listBases.join(" "));
 }
 function makeSequenceFile() {
     let seqTxts = [];

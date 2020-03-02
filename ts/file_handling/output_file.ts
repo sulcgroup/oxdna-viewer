@@ -100,7 +100,7 @@ function makeMutualTrapFile() { //make download of mutual trap file from selecte
 }
 
 function makeSelectedBasesFile() { //make selected base file by addign listBases to text area
-    makeTextFile("baseListFile", listBases.join(", "));
+    makeTextFile("baseListFile", listBases.join(" "));
 }
 
 function makeSequenceFile() {
