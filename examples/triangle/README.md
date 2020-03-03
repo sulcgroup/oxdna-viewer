@@ -15,3 +15,5 @@ Then:
   4. When you are happy with the relaxation, uncheck the  "Rigid Cluster Dynamics" checkbox to stop the dynamics.
 
 Note: unless you have moved the clusters manually while the dynamics were activated, you can undo/redo the changes back to the original configuration.
+
+Click [here](https://sulcgroup.github.io/oxdna-viewer/?configuration=examples%2Ftriangle%2Ftri_post_dynamics.dat&topology=examples%2Ftriangle%2Ftri.top) to load the expected end result.
