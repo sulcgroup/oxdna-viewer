@@ -12,7 +12,7 @@ Either:
 1. Click [here](https://sulcgroup.github.io/oxdna-viewer/?configuration=examples%2Ficosahedron%2F7_icosahedron.json.oxdna&topology=examples%2Ficosahedron%2F7_icosahedron.json.top) to load the non-relaxed configuration.
 
 Or:
-1. Use [tacoxDNA](http://tacoxdna.sissa.it/cadnano_oxDNA "tacoxDNA") to convert the caDNAno file `7_icosahedron.json` into the oxDNA file format (or simply use the converted files provided. 
+1. Use [tacoxDNA](http://tacoxdna.sissa.it/cadnano_oxDNA "tacoxDNA") to convert the caDNAno file `7_icosahedron.json` into the oxDNA file format (or simply use the converted files provided). 
 2. Drag and drop the files `7_icosahedron.json.oxdna` and `7_icosahedron.json.top` together into the oxView window.
 
 3.  Click on the "Cluster" options button (![clusterOptions](https://fonts.gstatic.com/s/i/materialicons/tune/v1/24px.svg)) under the "Selection Mode" header in the sidebar.  Click "Start Clustering" to cluster with the default values.
