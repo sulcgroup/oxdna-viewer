@@ -229,7 +229,7 @@ var edit;
             });
             com.divideScalar(elems.length);
             // Move elements to position
-            translateElements(new Set(elems), pos.sub(com));
+            translateElements(new Set(elems), pos.clone().sub(com));
         }
         return elems;
     }
@@ -388,6 +388,7 @@ var edit;
         const strand = end.strand;
         const lines = end.extendStrand(sequence.length, inverse);
         let last = end;
+        let addedElems = [];
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
             let e = strand.createBasicElement(undefined);
@@ -401,6 +402,7 @@ var edit;
             strand.addBasicElement(e);
             last = e;
             lidCounter++;
+            addedElems.push(e);
         }
         // Make last element end of strand
         last[direction] = null;
@@ -427,6 +429,7 @@ var edit;
             }
             e = e[direction];
         }
+        return addedElems;
     }
     /**
      * Create new monomers extending from the provided one.
@@ -453,8 +456,9 @@ var edit;
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
-        addElementsBySeq(end, sequence, tmpSys, direction, inverse, 0);
+        let addedElems = addElementsBySeq(end, sequence, tmpSys, direction, inverse, 0);
         render();
+        return addedElems;
     }
     edit.extendStrand = extendStrand;
     function setSequence(elems, sequence, setComplementaryBases) {
@@ -521,7 +525,7 @@ var edit;
             systems.push(realSys);
             addSystemToScene(realSys);
             // This is ugly, but if we don't have a box, everything will be
-            //  into the origin when centering.
+            // squashed into the origin when centering.
             box = new THREE.Vector3(1000, 1000, 1000);
         }
         // Create a new strand
@@ -531,6 +535,7 @@ var edit;
         let e = isRNA ?
             new RNANucleotide(undefined, strand) :
             new DNANucleotide(undefined, strand);
+        let addedElems = [];
         elements.push(e); // Add element and assign gid
         e.dummySys = tmpSys;
         e.lid = 0;
@@ -538,7 +543,8 @@ var edit;
         e.type = sequence[0];
         e.neighbor3 = null;
         strand.addBasicElement(e);
-        // place the new strand 10 units in front of the camera
+        addedElems.push(e);
+        // Place the new strand 10 units in front of the camera
         // with its a1 vector parallel to the camera heading
         // and a3 the cross product of the a1 vector and the camera's up vector
         let cameraHeading = new THREE.Vector3(0, 0, -1);
@@ -549,8 +555,9 @@ var edit;
         let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z];
         e.calculatePositions(line);
         e.dummySys = tmpSys;
-        // extends the strand 3'->5' with the rest of the sequence 
-        addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1);
+        // Extends the strand 3'->5' with the rest of the sequence
+        // and return all added elements.
+        return addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1));
     }
     edit.createStrand = createStrand;
     /**
