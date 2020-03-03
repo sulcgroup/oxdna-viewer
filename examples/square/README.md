@@ -6,7 +6,7 @@ Either:
 
 or:
   1. Use [tacoxDNA](http://tacoxdna.sissa.it/cadnano_oxDNA "tacoxDNA") to convert the caDNAno file `square.json` (hexagonal lattice) into the oxDNA file format (or simply use the converted files provided). 
-  2. Drag and drop the files `square.json.dat` and `square.json.top` together into the oxView window.
+  2. Drag and drop the files `square.json.oxdna` and `square.json.top` together into the oxView window.
 
 Then:
   1.  Click on the "Cluster" options button (![clusterOptions](https://fonts.gstatic.com/s/i/materialicons/tune/v1/24px.svg)) under the "Selection Mode" header in the sidebar. Click "Start Clustering" to cluster with the default values. Alternatively, you could select the clusters manually using the box selection tool.
