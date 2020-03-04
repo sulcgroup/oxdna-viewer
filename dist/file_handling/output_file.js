@@ -82,6 +82,32 @@ function makeMutualTrapFile() {
     }
     makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
+function makePairTrapFile() {
+    let write = () => {
+        let mutTrapText = "";
+        elements.forEach(e => {
+            // If element is paired, add a trap
+            if (e.isPaired()) {
+                mutTrapText += writeMutTrapText(e.gid, e.pair.gid);
+            }
+        });
+        makeTextFile("pairTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
+    };
+    // Find out if we have calculated pairs already
+    let pairsCalculated = false;
+    for (let element of elements) {
+        if (element[1].isPaired()) {
+            pairsCalculated = true;
+            break;
+        }
+    }
+    if (!pairsCalculated) {
+        longCalculation(findBasepairs, basepairMessage, write);
+    }
+    else {
+        write();
+    }
+}
 function makeSelectedBasesFile() {
     makeTextFile("baseListFile", listBases.join(" "));
 }

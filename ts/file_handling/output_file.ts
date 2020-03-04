@@ -99,6 +99,34 @@ function makeMutualTrapFile() { //make download of mutual trap file from selecte
 	makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
 
+function makePairTrapFile() {
+    let write = () => {
+        let mutTrapText: string = "";
+        elements.forEach(e=>{
+            // If element is paired, add a trap
+            if (e.isPaired()) {
+                mutTrapText += writeMutTrapText(
+                    e.gid, (e as Nucleotide).pair.gid
+                );
+            }
+        });
+        makeTextFile("pairTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
+    }
+    // Find out if we have calculated pairs already
+    let pairsCalculated = false;
+    for (let element of elements) {
+        if (element[1].isPaired()) {
+            pairsCalculated = true;
+            break;
+        }
+    }
+    if (!pairsCalculated) {
+        longCalculation(findBasepairs, basepairMessage, write);
+    } else {
+        write();
+    }
+}
+
 function makeSelectedBasesFile() { //make selected base file by addign listBases to text area
     makeTextFile("baseListFile", listBases.join(" "));
 }
