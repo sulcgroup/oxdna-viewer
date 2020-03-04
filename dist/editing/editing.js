@@ -93,7 +93,13 @@ function extendWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    edit.extendStrand(e, seq);
+    let elems = edit.extendStrand(e, seq);
+    let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
+    let pos = new THREE.Vector3();
+    elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));
+    pos.divideScalar(elems.length);
+    // Add to history
+    editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
 }
 function createWrapper() {
     let seq = document.getElementById("sequence").value.toUpperCase();
@@ -101,7 +107,13 @@ function createWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    edit.createStrand(seq);
+    let elems = edit.createStrand(seq);
+    let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
+    let pos = new THREE.Vector3();
+    elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));
+    pos.divideScalar(elems.length);
+    // Add to history
+    editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
 }
 function deleteWrapper() {
     let e = listBases.map(i => elements.get(i));
