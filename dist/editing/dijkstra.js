@@ -122,7 +122,7 @@ class Dijkstra {
                 continue;
             }
             // Compute the distance for each neighbor
-            neighbors = this.getNeigbors(this.vertices[smallest]);
+            neighbors = this.getNeigbors(smallest);
             neighbors.forEach(neighbor => {
                 alt = distances[smallest] + 1;
                 if (alt < distances[neighbor]) {

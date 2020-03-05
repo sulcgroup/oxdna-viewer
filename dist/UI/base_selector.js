@@ -205,7 +205,7 @@ function selectPaired(e) {
 function fancySelectIntermediate(e) {
     let paired = selectPairs();
     let d = new Dijkstra(Array.from(elements.values()), paired);
-    let elems;
+    let elems = [];
     longCalculation(() => {
         elems = d.shortestPath(e, Array.from(selectedBases));
     }, "Calculating intermediate elements...", () => {
