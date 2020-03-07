@@ -179,6 +179,7 @@ class TrajectoryReader {
             this.confEnd.chunk = this.currentChunk;
         
             // Signal that config has been loaded
+            // block the nextConfig loaded to prevent the video loader from continuing after the chunk
             document.dispatchEvent(new Event('nextConfigLoaded'));
         };
 
@@ -245,10 +246,6 @@ class TrajectoryReader {
         this.confEnd = end;
         if (needNextChunk) {
             this.getNextChunk(this.currentChunkNumber + 2); //current is the old middle, so need two ahead
-        }
-        else {
-            // Signal that config has been loaded
-            document.dispatchEvent(new Event('nextConfigLoaded'));
         }
         return (nextConf);
     }
@@ -351,7 +348,7 @@ class TrajectoryReader {
         this.currentChunkNumber -= 1
     }
 
-    getNewConfig(mode) { //attempts to display next configuration; same as readDat() except does not make new sphere Meshes, etc. - maximize efficiency
+    getNewConfig(mode) { //attempts to display next configuration
         if (systems.length > 1) {
             notify("Only one file at a time can be read as a trajectory, sorry...");
             return;
@@ -405,6 +402,7 @@ class TrajectoryReader {
         }
         PBCswitchbox();
         render();
+        document.dispatchEvent(new Event('nextConfigLoaded'));
     }
     nextConfig() {
         if (this.nextReader.readyState == 1) { //0: nothing loaded 1: working 2: done
