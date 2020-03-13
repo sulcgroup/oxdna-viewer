@@ -21,6 +21,7 @@
         "./ts/file_handling/io.ts",
         "./ts/file_handling/output_file.ts",
         "./ts/file_handling/video.ts",
+        "./ts/file_handling/stl_exporter.ts",
         "./ts/model/aminoAcid.ts",
         "./ts/model/basicElement.ts",
         "./ts/model/DNA.ts",

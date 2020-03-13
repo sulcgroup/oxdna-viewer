@@ -9,6 +9,16 @@ function makeOutputFiles() {
         makeDatFile(name);
     }
 }
+function makeSTLOutput() {
+    const name = document.getElementById("outputSTLFilename").value;
+    const include_backbone = document.getElementsByName("includeBackbone")[0].checked;
+    const include_nucleoside = document.getElementsByName("includeNucleoside")[0].checked;
+    const include_connector = document.getElementsByName("includeConnector")[0].checked;
+    const include_bbconnector = document.getElementsByName("includeBBconnector")[0].checked;
+    const faces_mul = parseFloat(document.getElementById("facesMul").value);
+    const stl_scale = parseFloat(document.getElementById("stlScale").value);
+    saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+}
 function makeTopFile(name) {
     let top = []; //string of contents of .top file
     let totNuc = 0; //total # of elements

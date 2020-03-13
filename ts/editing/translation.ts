@@ -117,7 +117,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
         //get current rotations and convert to THREE coordinates
         let nsRotationV = base.getInstanceParameter4("nsRotation");
-        let nsRotation = glsl2three(nsRotationV);
+        let nsRotation =  glsl2three(nsRotationV);
         let conRotationV = base.getInstanceParameter4("conRotation");
         let conRotation = glsl2three(conRotationV);
         let bbconRotationV = base.getInstanceParameter4("bbconRotation");

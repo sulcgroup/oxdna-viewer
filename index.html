@@ -57,6 +57,7 @@
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
             <button onclick="toggleOptions('fileOptions')" type="button" title="Options for downloading the current scene">Download Output Files</button>
+            <button onclick="toggleOptions('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>
             <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
             <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
             <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
@@ -221,6 +222,33 @@
             </fieldset>
         </div>
 
+        <!--Stl Export options-->
+        <div class="opts" id="stlExportOptions" hidden="false">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('stlExportOptions')">close</i>
+            </div>
+            <fieldset>
+                <legend>Options</legend>
+                <!-- STLExporter(elements, , , , include_bbconnector, scale,faces_mul ); -->
+                <input type="checkbox" name="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
+                <input type="checkbox" name="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
+                <input type="checkbox" name="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
+                <input type="checkbox" name="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
+
+                <label for="stlScale">scale: </label>
+                <input type="number" value="1" id="stlScale" title="rescale the model" min=1 max = 10>
+            </br>
+
+                <label for="facesMul">faces multiplier: </label>
+                <input type="number" value="1" id="facesMul" title="increases model smoothenes" min=1 max = 5>
+                
+
+                <input type="text" id="outputSTLFilename" size="13" value="output" title="STL file name">File name<br>
+                <button onclick="makeSTLOutput()" title="Download the specified files">Download Files</button>
+            </fieldset>
+        </div>
+        
+
         <!--Clustering-->
         <div class="opts" id="clusterOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
@@ -293,7 +321,7 @@
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
-	    <script src="./ts/lib/justcontext.js"></script>
+        <script src="./ts/lib/justcontext.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
         <script src="./ts/controls/TrackballControls.js"></script>
         <script src="./dist/scene/scene_setup.js"></script>
@@ -324,6 +352,7 @@
         <script src="./dist/api/scene_api.js"></script>
         <script src="./dist/api/editing_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
+        <script src="./dist/file_handling/stl_exporter.js"></script>
     </div>
 </body>
 

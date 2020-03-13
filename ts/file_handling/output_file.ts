@@ -1,5 +1,5 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
-    let name = (<HTMLInputElement>document.getElementById("outputFilename")).value
+    let name = (<HTMLInputElement>document.getElementById("outputFilename")).value;
     let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
     if (top[0].checked == true) {
         makeTopFile(name);
@@ -9,6 +9,24 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
         makeDatFile(name);	
     }
 }
+
+
+
+function makeSTLOutput(){ //makes stl export from the scene 
+    const name = (<HTMLInputElement>document.getElementById("outputSTLFilename")).value;
+    
+    const include_backbone = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeBackbone"))[0].checked;
+    const include_nucleoside = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeNucleoside"))[0].checked;
+    const include_connector = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeConnector"))[0].checked;
+    const include_bbconnector = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeBBconnector"))[0].checked;
+    
+    const faces_mul = parseFloat((<HTMLInputElement>document.getElementById("facesMul")).value);
+    const stl_scale = parseFloat((<HTMLInputElement>document.getElementById("stlScale")).value);
+
+    
+    saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);   
+}
+
 
 function makeTopFile(name){
     let top: string[] = []; //string of contents of .top file
