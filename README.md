@@ -82,6 +82,19 @@ To use, first click on the "Cluster" options button (![clusterOptions](https://f
 
 ---
 
+## 3D Printing Export 
+The viewer supports scene export in the common 3D printing STL format.
+The smoothness of the model is controlled via the `faces multiplier` setting. 
+Note that additional smoothness results in very large STL files which not every browser can handle. 
+
+For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file,
+choosing from:
+* `Backbone mesh` 
+* `Nucleoside mesh`
+* `Connector mesh`
+* `Backbone connector mesh`
+---
+
 ## Updates and writing your own extensions
 This software is still in active development, so features remain in high flux.  If you would like to make a feature request or to report a bug, please let us know in the Issues tab!  Remember to pull often if you're running the viewer locally to get the newest features.
 
