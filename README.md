@@ -90,6 +90,7 @@ choosing from:
 * `Nucleoside mesh`
 * `Connector mesh`
 * `Backbone connector mesh`
+
 The smoothness of the exported model is controlled via the `faces multiplier` setting. Note that additional smoothness results in very large STL files which not every browser can handle. 
 By increasing the `scaling` of the model objects can be made to overlap, which is benefitial for sturdy printed models.  
 To 3D print the exported STL, the file has to be imported in a processing program such as Autodesk NetFab.
