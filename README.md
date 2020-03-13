@@ -83,16 +83,18 @@ To use, first click on the "Cluster" options button (![clusterOptions](https://f
 ---
 
 ## 3D Printing Export 
-The viewer supports scene export in the common 3D printing STL format.
-The smoothness of the model is controlled via the `faces multiplier` setting. 
-Note that additional smoothness results in very large STL files which not every browser can handle. 
-
+The viewer supports scene export in the common 3D printing STL format. To use click on the "STL EXPORT" button. 
 For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file,
 choosing from:
 * `Backbone mesh` 
 * `Nucleoside mesh`
 * `Connector mesh`
 * `Backbone connector mesh`
+The smoothness of the exported model is controlled via the `faces multiplier` setting. Note that additional smoothness results in very large STL files which not every browser can handle. 
+By increasing the `scaling` of the model objects can be made to overlap, which is benefitial for sturdy printed models.  
+To 3D print the exported STL, the file has to be imported in a processing program such as Autodesk NetFab.
+The resulting STL can than be imported into the 3D printer software. 
+
 ---
 
 ## Updates and writing your own extensions
