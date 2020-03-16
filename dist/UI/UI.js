@@ -53,6 +53,14 @@ function drawHierarchy() {
         });
     }
 }
+function toggleFieldSet(elem) {
+    let elems = elem.parentElement.children;
+    for (let i = 0; i < elems.length; i++) {
+        if (elems[i] !== elem) {
+            elems[i]['hidden'] = !elems[i]['hidden'];
+        }
+    }
+}
 function handleMenuAction(event) {
     switch (event) {
         case "undo":

@@ -73,6 +73,7 @@ legend {
     border-radius: 2px;
     margin-left: auto;
     margin-right: auto;
+    cursor: pointer;
 }
 
 button:hover {

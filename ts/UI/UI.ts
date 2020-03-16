@@ -80,6 +80,15 @@ function drawHierarchy() {
     }
 }
 
+function toggleFieldSet(elem: HTMLLegendElement) {
+    let elems = elem.parentElement.children;
+    for (let i=0; i<elems.length; i++) {
+        if (elems[i] !== elem) {
+            elems[i]['hidden'] = !elems[i]['hidden'];
+        }
+    }
+}
+
 function handleMenuAction(event: String) {
     switch (event) {
         case "undo": editHistory.undo(); break;
