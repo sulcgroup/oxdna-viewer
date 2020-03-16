@@ -74,7 +74,11 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 								fancySelectIntermediate(nucleotide);
 							}
 						} else {
-							selectIntermediate();
+							if (event.altKey) {
+								fancySelectIntermediate(nucleotide);
+							} else {
+								selectIntermediate();
+							}
 						}
 					} else if(selectPairs()) {
 						if(!nucleotide.isPaired()) {
@@ -249,15 +253,17 @@ function selectIntermediate() {
 	let n = elements.getNextId();
 	let iMin = 0;
 	let iMax = n;
-	while(iMin++ <= n) {
+	while(iMin <= n) {
 		if(elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
 			break;
 		}
+		iMin++;
 	}
-	while(iMax-- > 0) {
+	while(iMax > 0) {
 		if(elements.has(iMax) && selectedBases.has(elements.get(iMax))) {
 			break;
 		}
+		iMax--;
 	}
 	for(let i=iMin; i<iMax; i++) {
 		if (elements.has(i) && !selectedBases.has(elements.get(i))) {
