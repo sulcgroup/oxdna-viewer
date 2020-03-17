@@ -127,6 +127,7 @@ class TrajectoryReader {
     confBegin: marker;
     confEnd: marker;
     confLen: number;
+    time: number;
 
     // Create the readers and read the second chunk
     constructor(datFile, system, approxDatLen, currentChunk){
@@ -372,10 +373,10 @@ class TrajectoryReader {
             }
     
             //get the simulation box size
-            const time = parseInt(lines[0].split(" ")[2]);
-            console.log(confNum, 't =', time);
+            this.time = parseInt(lines[0].split(" ")[2]);
+            console.log(confNum, 't =', this.time);
             let timedisp = document.getElementById("trajTimestep");
-            timedisp.innerHTML = `t = ${time}`;
+            timedisp.innerHTML = `t = ${this.time}`;
             timedisp.hidden= false;
             // discard the header
             lines = lines.slice(3);
@@ -420,4 +421,45 @@ class TrajectoryReader {
         }
         this.getNewConfig(-1);
     };
+
+    /**
+     * Step through trajectory until a specified timestep
+     * is found
+     * @param timeLim Timestep to stop at
+     * @param backwards Step backwards
+     */
+    stepUntil(timeLim: number, backwards: boolean) {
+        let icon = document.getElementById(
+            backwards ? 'trajPrevUntilBtn' : 'trajNextUntilBtn'
+        );
+        if (icon.innerHTML == 'pause') {
+            // If we're already running, abort!
+            icon.innerHTML = backwards ? 'fast_rewind' : 'fast_forward';
+            return;
+        }
+        // Set icon to enable pausing
+        icon.innerHTML = 'pause';
+
+        // Define loop, for requestAnimationFrame
+        let loop = () => {
+            if (icon.innerHTML == 'pause' && ( // If user has clicked pause
+               !this.time || // Or we don't know the current timestep
+               // Or if we have stepped to far:
+               backwards && this.previousChunk && (this.time > timeLim) ||
+               !backwards && this.nextChunk && ((timeLim < 0) || this.time < timeLim)))
+            {
+                // Take one step
+                if (backwards) {
+                    this.previousConfig();
+                } else {
+                    this.nextConfig();
+                }
+                requestAnimationFrame(loop);
+            } else {
+                // When finished, change icon back from pause
+                icon.innerHTML = backwards ? 'fast_rewind' : 'fast_forward';
+            }
+        }
+        loop(); // Actually call the function
+    }
 }

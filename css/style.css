@@ -21,6 +21,11 @@ canvas {
     margin: 10px;
 }
 
+.inline-icon {
+   vertical-align: bottom;
+   font-size: 18px !important;
+}
+
 #sidenav {
     width: 200px;
     max-height: 100%;

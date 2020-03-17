@@ -219,12 +219,22 @@
             <!--Trajectory-->
             <fieldset>
                 <legend onclick="toggleFieldSet(this)">Trajectory</legend>
-                <div style="text-align: center;" hidden="true">
-                    <p id="trajTimestep" hidden="true">t = </p>
-                </div>
-                <div hidden="true" style="text-align: center;">
-                    <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 32px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
-                    <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 32px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
+                <div hidden=true>
+                    <div style="text-align: center;">
+                    </div>
+                    <div style="text-align: center;">
+                        <p id="trajTimestep" hidden="true"></p>
+                        <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 32px;" title="Previous config (left keyboard arrow)">skip_previous</i>
+                        <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 32px;" title="Next config (right keyboard arrow)">skip_next</i>
+                    </div>
+                    <p>
+                        <i id="trajPrevUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajPrevLim').value), true)" title="Click to rewind">fast_rewind</i> until t &le;
+                        <input type="number" id="trajPrevLim" style="width: 6em;" value="0" min="0" title="Input trajectory step at which to stop rewinding.">
+                    </p>
+                    <p>
+                        <i id="trajNextUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajNextLim').value), false)" title="Click to play">fast_forward</i> until t &ge;
+                        <input type="number" id="trajNextLim" style="width: 6em;" value="-1" title="Input trajectory step at which to stop playback. Input a negative number to play until the end.">
+                    </p>
                 </div>
             </fieldset>
         </div>
@@ -275,9 +285,6 @@
             </div>
             <div id="hierarchyContent" style="background-color: inherit"></div>
         </div>
-
-
-        
 
         <!--Clustering-->
         <div class="opts" id="clusterOptions" hidden="true">
