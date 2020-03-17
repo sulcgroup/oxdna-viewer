@@ -127,7 +127,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 
 function updateView(sys: System) {
 	//tell the GPU to update the colors in the scene
-	sys.callUpdates(["instanceColor"])
+	sys.callUpdates(["instanceColor"]);
 	if (tmpSystems.length !== 0) {
 		tmpSystems.forEach((sys) => {
 			sys.callUpdates(["instanceColor"])

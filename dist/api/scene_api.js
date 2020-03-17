@@ -44,6 +44,7 @@ var api;
         system.strands.map((strand) => {
             strand.monomers[strand.monomers.length - 1].toggle();
         });
+        updateView(system);
         render();
     }
     api.highlite5ps = highlite5ps;
