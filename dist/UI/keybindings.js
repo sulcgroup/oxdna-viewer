@@ -71,10 +71,10 @@ canvas.addEventListener("keydown", event => {
             break;
         // Transform controls:
         case 't':
-            transformControls.setMode('translate');
+            showTransformControl('translate');
             break;
         case 'r':
-            transformControls.setMode('rotate');
+            showTransformControl('rotate');
             break;
         case 'shift':
             transformControls.setTranslationSnap(1);
@@ -93,9 +93,12 @@ canvas.addEventListener("keydown", event => {
             break;
         // Toggle dragging:
         case 'd':
-            let transformToggle = document.getElementById("transformToggle");
-            transformToggle.checked = !transformToggle.checked;
-            showTransformControl(transformToggle);
+            if (transformControls.visible) {
+                showTransformControl("none");
+            }
+            else {
+                showTransformControl("translate");
+            }
             break;
         case 'f1':
             toggleModal("keyboardShortcuts");

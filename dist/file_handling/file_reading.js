@@ -182,6 +182,9 @@ function readDat(numNuc, datReader, system) {
     const time = parseInt(lines[0].split(" ")[2]);
     confNum += 1;
     console.log(confNum, "t =", time);
+    let timedisp = document.getElementById("trajTimestep");
+    timedisp.innerHTML = `t = ${time}`;
+    timedisp.hidden = false;
     // discard the header
     lines = lines.slice(3);
     let currentNucleotide, l;
