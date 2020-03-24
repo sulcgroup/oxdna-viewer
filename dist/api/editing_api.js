@@ -488,7 +488,7 @@ var edit;
         // If we need to find basepairs, do that first and wait
         // for the calculation to finish. Otherwise, set the
         // sequence immediately.
-        if (setComplementaryBases && !elems[0].isPaired) {
+        if (setComplementaryBases && !elems[0].isPaired()) {
             longCalculation(findBasepairs, basepairMessage, set);
         }
         else {
