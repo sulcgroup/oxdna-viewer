@@ -106,6 +106,17 @@ class System {
         })
     }
 
+    /**
+     * Return a list of all monomers in the system
+     */
+    getMonomers() {
+        return [].concat.apply([],
+            this.strands.map(s=>{
+                return s.monomers;
+            })
+        );
+    }
+
     createStrand(strID: number): Strand {
         if (strID < 0)
             return new Peptide(strID, this);

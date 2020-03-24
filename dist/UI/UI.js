@@ -1,4 +1,4 @@
-function drawLevel(parent, label, onClick, onEdit, expanded, isBottom) {
+function drawHierarchyLevel(parent, label, onClick, onEdit, onToggle, expanded, isBottom) {
     const level = document.createElement('div');
     level.style.paddingLeft = "10px";
     const levelLabel = document.createElement('i');
@@ -9,10 +9,19 @@ function drawLevel(parent, label, onClick, onEdit, expanded, isBottom) {
     editText.classList.add('material-icons');
     editText.innerHTML = 'edit';
     editText.onclick = onEdit;
+    const toggleText = document.createElement('i');
+    toggleText.classList.add('material-icons');
+    toggleText.innerHTML = 'visibility';
+    toggleText.onclick = () => {
+        let visible = toggleText.innerHTML == 'visibility';
+        toggleText.innerHTML = visible ? 'visibility_off' : 'visibility';
+        onToggle(visible);
+    };
     if (isBottom) {
         level.appendChild(levelLabel);
         parent.appendChild(level);
         level.appendChild(editText);
+        level.appendChild(toggleText);
         return;
     }
     else {
@@ -33,6 +42,7 @@ function drawLevel(parent, label, onClick, onEdit, expanded, isBottom) {
         level.appendChild(expandButton);
         level.appendChild(levelLabel);
         level.appendChild(editText);
+        level.appendChild(toggleText);
         level.appendChild(childContainer);
         parent.appendChild(level);
         return childContainer;
@@ -43,11 +53,11 @@ function drawHierarchy() {
     if (!opt.hidden) {
         opt.innerHTML = ""; // Clear
         systems.forEach(system => {
-            let strands = drawLevel(opt, system.label ? system.label : `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, () => { system.label = prompt("Please enter system label"); drawHierarchy(); }, true);
+            let strands = drawHierarchyLevel(opt, system.label ? system.label : `System: ${system.systemID}`, (event) => { system.toggleStrands(); updateView(system); }, () => { system.label = prompt("Please enter system label"); drawHierarchy(); }, (visible) => api.toggleElements(system.getMonomers()), true);
             system.strands.forEach(strand => {
-                let monomers = drawLevel(strands, strand.label ? strand.label : `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); }, () => { strand.label = prompt("Please enter strand label"); drawHierarchy(); });
+                let monomers = drawHierarchyLevel(strands, strand.label ? strand.label : `Strand: ${strand.strandID}`, (event) => { strand.toggleMonomers(); updateView(system); }, () => { strand.label = prompt("Please enter strand label"); drawHierarchy(); }, (visible) => api.toggleStrand(strand));
                 strand.monomers.forEach(monomer => {
-                    drawLevel(monomers, `${monomer.gid}: ${monomer.type}`.concat(monomer.label ? ` (${monomer.label})` : ""), (event) => { monomer.toggle(); updateView(system); }, () => { monomer.label = prompt("Please enter monomer label"); drawHierarchy(); }, false, true);
+                    drawHierarchyLevel(monomers, `${monomer.gid}: ${monomer.type}`.concat(monomer.label ? ` (${monomer.label})` : ""), (event) => { monomer.toggle(); updateView(system); }, () => { monomer.label = prompt("Please enter monomer label"); drawHierarchy(); }, () => api.toggleElements([monomer]), false, true);
                 });
             });
         });
