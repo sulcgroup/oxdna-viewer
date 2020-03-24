@@ -98,5 +98,32 @@ class BasicElement {
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
     }
+    toJSON() {
+        // Specify required attributes
+        let json = {
+            id: this.gid,
+            type: this.type,
+            class: 'monomer'
+        };
+        // Specify optional attributes
+        if (this.neighbor3)
+            json['n3'] = this.neighbor3.gid;
+        if (this.neighbor5)
+            json['n5'] = this.neighbor5.gid;
+        if (this.label)
+            json['label'] = this.label;
+        if (this.clusterId)
+            json['cluster'] = this.clusterId;
+        json['conf'] = {};
+        instanceParams.forEach((size, attr) => {
+            if (size == 3) {
+                json['conf'][attr] = this.getInstanceParameter3(attr).toArray();
+            }
+            else { // 4
+                json['conf'][attr] = this.getInstanceParameter4(attr).toArray();
+            }
+        });
+        return json;
+    }
 }
 ;

@@ -1,13 +1,13 @@
+const instanceParams = new Map([
+    ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+    ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+    ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+    ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+    ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+]);
 class InstanceCopy {
     constructor(e) {
-        this.instanceParams = new Map([
-            ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-            ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
-            ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-            ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
-            ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
-        ]);
-        this.instanceParams.forEach((size, attr) => {
+        instanceParams.forEach((size, attr) => {
             if (size == 3) {
                 this[attr] = e.getInstanceParameter3(attr);
             }
@@ -23,7 +23,7 @@ class InstanceCopy {
         this.system = e.getSystem();
     }
     writeToSystem(sid, sys) {
-        this.instanceParams.forEach((size, attr) => {
+        instanceParams.forEach((size, attr) => {
             sys.fillVec(attr, size, sid, this[attr].toArray());
         });
     }

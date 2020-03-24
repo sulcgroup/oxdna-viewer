@@ -60,4 +60,12 @@ class DNANucleotide extends Nucleotide {
         var map = {A:'T',G:'C',C:'G', T:'A'}
         return map[this.type];
     }
+
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+
+        json['class'] = 'DNA';
+        return json;
+    }
 };

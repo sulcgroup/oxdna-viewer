@@ -157,5 +157,18 @@ class System {
         }
     }
     ;
+    toJSON() {
+        // Specify required attributes
+        let json = {
+            id: this.systemID,
+        };
+        // Specify optional attributes
+        if (this.label)
+            json['label'] = this.label;
+        // Add strands last
+        json['strands'] = this.strands;
+        return json;
+    }
+    ;
 }
 ;

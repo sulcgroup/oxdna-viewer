@@ -333,5 +333,13 @@ class Nucleotide extends BasicElement {
     }
     extendStrand(len, direction) {
     }
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        if (this.isPaired())
+            json['bp'] = this['pair'].gid;
+        json['class'] = 'nucleotide';
+        return json;
+    }
 }
 ;

@@ -1,3 +1,11 @@
+const instanceParams = new Map([
+    ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+    ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+    ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+    ['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+    ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+]);
+
 class InstanceCopy {
     type: string;
     gid: number;
@@ -6,13 +14,6 @@ class InstanceCopy {
     elemType: any;
     system: System;
 
-    instanceParams = new Map([
-        ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-        ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
-        ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-        ['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
-        ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
-    ]);
 
     cmOffsets: THREE.Vector3; bbOffsets: THREE.Vector3;
     nsOffsets: THREE.Vector3; nsRotation: THREE.Vector4;
@@ -24,7 +25,7 @@ class InstanceCopy {
     nsColors: THREE.Vector3; bbLabels: THREE.Vector3;
 
     constructor(e: BasicElement) {
-        this.instanceParams.forEach((size, attr)=>{
+        instanceParams.forEach((size, attr)=>{
             if (size == 3){
                 this[attr] = e.getInstanceParameter3(attr);
             } else { // 4
@@ -40,7 +41,7 @@ class InstanceCopy {
     }
 
     writeToSystem(sid: number, sys: System) {
-        this.instanceParams.forEach((size, attr)=>{
+        instanceParams.forEach((size, attr)=>{
             sys.fillVec(attr, size, sid, this[attr].toArray());
         });
     }

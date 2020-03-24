@@ -83,4 +83,12 @@ class RNANucleotide extends Nucleotide {
         var map = {A:'U',G:'C',C:'G', U:'A'}
         return map[this.type];
     }
+
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+
+        json['class'] = 'RNA';
+        return json;
+    }
 };

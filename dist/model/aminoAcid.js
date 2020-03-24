@@ -186,5 +186,11 @@ class AminoAcid extends BasicElement {
     ;
     extendStrand(len, direction) {
     }
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        json['class'] = 'aminoAcid';
+        return json;
+    }
 }
 ;

@@ -131,6 +131,12 @@ function makeSequenceFile() {
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
+function makeOxViewJsonFile(space) {
+    makeTextFile("dump.oxView", JSON.stringify({
+        date: new Date(),
+        systems: systems
+    }, null, space));
+}
 let textFile;
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });

@@ -47,6 +47,18 @@ class Strand {
         return (com.multiplyScalar(1 / l));
     }
     ;
+    toJSON() {
+        // Specify required attributes
+        let json = {
+            id: this.strandID,
+            monomers: this.monomers
+        };
+        // Specify optional attributes
+        if (this.label)
+            json['label'] = this.label;
+        return json;
+    }
+    ;
 }
 ;
 class NucleicAcidStrand extends Strand {

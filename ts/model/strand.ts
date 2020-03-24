@@ -63,6 +63,18 @@ abstract class Strand {
     };
 
     abstract translateStrand(amount: THREE.Vector3): void;
+
+    toJSON() {
+        // Specify required attributes
+        let json = {
+            id: this.strandID,
+            monomers: this.monomers
+        };
+        // Specify optional attributes
+        if (this.label) json['label'] = this.label;
+
+        return json;
+    };
 };
 
 class NucleicAcidStrand extends Strand {

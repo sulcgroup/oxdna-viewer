@@ -160,6 +160,13 @@ function makeSequenceFile() {
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
 
+function makeOxViewJsonFile(space?: string | number) {
+    makeTextFile("dump.oxView", JSON.stringify({
+        date: new Date(),
+        systems: systems
+    }, null, space));
+}
+
 let textFile: string;
 function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
     let blob = new Blob([text], {type:'text'});
