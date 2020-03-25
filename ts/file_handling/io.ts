@@ -87,20 +87,32 @@ class TopReader extends FileReader{
                 currentStrand.addBasicElement(nuc);
                 this.nucLocalID += 1;
                 this.lastStrand = strID;
-                    
-                if (i == lines.length - 1) {
-                    return;
-                }; 
             });
+
             this.system.setDatFile(datFile); //store datFile in current System object
             systems.push(this.system); //add system to Systems[]
             nucCount = this.elems.getNextId();
-            let confLen = nucCount + 3;
+
+            //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+
+            //anonymous functions to handle fileReader outputs
+            datReader.onload = () => {
+                // Find out if what you're reading is a single configuration or a trajectory
+                let isTraj = readDat(datReader, this.system);
+                document.dispatchEvent(new Event('nextConfigLoaded'));
+                //if its a trajectory, create the other readers
+                if (isTraj) {
+                    trajReader = new TrajectoryReader(datFile, this.system, approxDatLen, datReader.result);
+                }
+            };
+
+            let approxDatLen = this.topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
+            // read the first chunk
+            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
+            datReader.readAsText(firstChunkBlob);
 
             //set up instancing data arrays
             this.system.initInstances(this.system.systemLength());
-
-            return confLen;
 
         }})(this.topFile);
     

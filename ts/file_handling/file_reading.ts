@@ -108,8 +108,12 @@ target.addEventListener("drop", function (event) {
         return
     }
 
-    readFiles(topFile, datFile, jsonFile);
+    //read a topology/configuration pair and maybe a json file
+    if (!jsonAlone) {
+        readFiles(topFile, datFile, jsonFile);
+    }
 
+    //read just a json file to generate an overlay on an existing scene
     if (jsonFile && jsonAlone) {
         const jsonReader = new FileReader(); //read .json
         jsonReader.onload = () => {
@@ -158,41 +162,27 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     const dragInstruction = document.getElementById("dragInstruction");
     dragInstruction.style.display = "none";
 
-    //make system to store the dropped files in
-    const system = new System(sysCount, elements.getNextId());
+    if (topFile && datFile) {
+        renderer.domElement.style.cursor = "wait";
 
-    if (topFile) {
-        //read topology file
+        //make system to store the dropped files in
+        const system = new System(sysCount, elements.getNextId());
+
+        //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements);
         topReader.read();
 
-        // asynchronously read the first two chunks of a configuration file
-        if (datFile) {
-            renderer.domElement.style.cursor = "wait";
-            //anonymous functions to handle fileReader outputs
-            datReader.onload = () => {
-                let isTraj = readDat(system.systemLength(), datReader, system);
-                document.dispatchEvent(new Event('nextConfigLoaded'));
-                //if its a trajectory, create the other readers
-                if (isTraj) {
-                    trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
-                }
+        if (jsonFile) {
+            const jsonReader = new FileReader(); //read .json
+            jsonReader.onload = () => {
+                readJson(system, jsonReader)
             };
-            
-            let approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-            // read the first chunk
-            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
-            datReader.readAsText(firstChunkBlob);
-
-            if (jsonFile) {
-                const jsonReader = new FileReader(); //read .json
-                jsonReader.onload = () => {
-                    readJson(system, jsonReader)
-                };
-                jsonReader.readAsText(jsonFile);
-                renderer.domElement.style.cursor = "auto";
-            }
+            jsonReader.readAsText(jsonFile);
+            renderer.domElement.style.cursor = "auto";
         }
+    }
+    else {
+        notify("Please drop one topology and one configuration/trajectory file");
     }
 }
 
@@ -200,8 +190,9 @@ let xbbLast,
     ybbLast,
     zbbLast;
 
-function readDat(numNuc, datReader, system) {
-    let currentStrand = systems[sysCount].strands[0];
+function readDat(datReader, system) {
+    let currentStrand = system.strands[0];
+    let numNuc = system.systemLength();
     // parse file into lines
     let lines = datReader.result.split(/[\n]+/g);
     if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
@@ -234,7 +225,6 @@ function readDat(numNuc, datReader, system) {
 
         // consume a new line from the file
         l = lines[i].split(" ");
-
         currentNucleotide.calculatePositions(l);
 
         //when a strand is finished, add it to the system
