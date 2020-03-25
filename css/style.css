@@ -117,7 +117,7 @@ input[type=number] {
     position: fixed;
     pointer-events: none;
     z-index: 2;
-    width: 350px;
+    width: 450px;
     height: 150px;
     bottom: 0;
     right: 200px;

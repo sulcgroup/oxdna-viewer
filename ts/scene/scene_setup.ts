@@ -87,7 +87,7 @@ const renderer = new THREE.WebGLRenderer({ //create renderer
     canvas: canvas
 });
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
-document.body.appendChild(renderer.domElement); //add renderer to document body
+document.body.appendChild(canvas); //add renderer to document body
 
 // Colorbars are rendered on a second canvas
 const colorbarCanvas = <HTMLCanvasElement> document.getElementById("colorbarCanvas");
