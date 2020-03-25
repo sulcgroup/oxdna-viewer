@@ -14,7 +14,7 @@ class EditHistory {
         // We no longer care about the alternate future:
         this.redoStack = new Stack();
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
         //Return focus to the canvas so undo can be called immediatley
         canvas.focus();
     }
@@ -25,7 +25,7 @@ class EditHistory {
     add(edit) {
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
     undo() {
         let edit;
@@ -38,7 +38,7 @@ class EditHistory {
         edit.undo();
         this.redoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
     redo() {
         let edit;
@@ -51,7 +51,7 @@ class EditHistory {
         edit.redo();
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
 }
 class RevertableEdit {

@@ -20,7 +20,7 @@ class EditHistory {
         this.redoStack = new Stack<RevertableEdit>();
 
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
 
         //Return focus to the canvas so undo can be called immediatley
         canvas.focus()
@@ -34,7 +34,7 @@ class EditHistory {
         this.undoStack.push(edit);
 
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
 
     public undo() {
@@ -48,7 +48,7 @@ class EditHistory {
         this.redoStack.push(edit);
 
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
 
     public redo() {
@@ -62,7 +62,7 @@ class EditHistory {
         this.undoStack.push(edit);
 
         // Update the hierarchy, since we've made changes
-        drawHierarchy();
+        drawSystemHierarchy();
     }
 }
 
