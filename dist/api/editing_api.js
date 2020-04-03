@@ -25,7 +25,13 @@ var edit;
         const orphans = api.trace35(element);
         strand.excludeElements(orphans);
         // Create, fill and deploy new strand
-        const newStrand = strand.system.createStrand(strand.system.strands.length + 1);
+        let newStrand;
+        if (strand.getType() == "Peptide") {
+            newStrand = strand.system.createStrand(-strand.system.strands.length - 1);
+        }
+        else {
+            newStrand = strand.system.createStrand(strand.system.strands.length + 1);
+        }
         strand.system.addStrand(newStrand);
         let lidCounter = 0;
         orphans.forEach((e) => {
