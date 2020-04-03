@@ -461,13 +461,13 @@ function readOxViewJsonFile(file: File) {
                     strandData.monomers.forEach(elementData => {
                         let element = elementData.createdElement;
                         // Set references to any connected elements
-                        if (elementData.n5) {
+                        if ('n5' in elementData) {
                             element.neighbor5 = elements.get(newElementIds.get(elementData.n5));
                         }
-                        if (elementData.n3) {
+                        if ('n3' in elementData) {
                             element.neighbor3 = elements.get(newElementIds.get(elementData.n3));
                         }
-                        if (elementData.bp) {
+                        if ('bp' in elementData) {
                             element.pair = elements.get(newElementIds.get(elementData.bp));
                         }
                         // Populate instances
