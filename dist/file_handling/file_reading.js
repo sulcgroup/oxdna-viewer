@@ -68,11 +68,11 @@ target.addEventListener("drop", function (event) {
         // get file extension
         const fileName = files[i].name;
         const ext = fileName.split('.').pop();
-        if (ext === "dat")
-            datFile = files[i];
-        else if (ext === "conf")
-            datFile = files[i];
-        else if (ext === "oxdna")
+        if (ext === "oxview") {
+            readOxViewJsonFile(files[i]);
+            return;
+        }
+        else if (["dat", "conf", "oxdna"].includes(ext))
             datFile = files[i];
         else if (ext === "top")
             topFile = files[i];
@@ -309,4 +309,126 @@ function addSystemToScene(system) {
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
     canvas.focus();
+}
+function readOxViewJsonFile(file) {
+    let reader = new FileReader();
+    reader.onload = () => {
+        let sysStartId = sysCount;
+        const newElementIds = new Map();
+        // Parse json string
+        const data = JSON.parse(reader.result);
+        // Set box data, if provided
+        if (data.box) {
+            box = new THREE.Vector3().fromArray(data.box);
+        }
+        // Add systems, if provided (really should be)
+        if (data.systems) {
+            // Go through and add each system
+            data.systems.forEach(sysData => {
+                let sys = new System(sysStartId + sysData.id, elements.getNextId());
+                sys.label = sysData.label;
+                let sidCounter = 0;
+                // Go through and add each strand
+                sysData.strands.forEach(strandData => {
+                    let strand;
+                    // Create strand of correct class
+                    let constr;
+                    switch (strandData.class) {
+                        case 'NucleicAcidStrand':
+                            constr = NucleicAcidStrand;
+                            break;
+                        case 'Peptide':
+                            constr = Peptide;
+                            break;
+                        default:
+                            let error = `Unrecognised type of strand:  ${strandData.class}`;
+                            notify(error);
+                            throw error;
+                    }
+                    strand = new constr(strandData.id, sys);
+                    // Add strand to system
+                    sys.addStrand(strand);
+                    // Go through and add each monomer element
+                    strandData.monomers.forEach(elementData => {
+                        // Create element of correct class
+                        let element;
+                        let constr;
+                        switch (elementData.class) {
+                            case 'DNA':
+                                constr = DNANucleotide;
+                                break;
+                            case 'RNA':
+                                constr = RNANucleotide;
+                                break;
+                            case 'AA':
+                                constr = AminoAcid;
+                                break;
+                            default:
+                                let error = `Unrecognised type of element:  ${elementData.class}`;
+                                notify(error);
+                                throw error;
+                        }
+                        element = new constr(undefined, strand);
+                        // Preserve ID when possible, keep track of new IDs if not
+                        if (elements.has(elementData.id)) {
+                            elements.push(element);
+                        }
+                        else {
+                            elements.set(elementData.id, element);
+                        }
+                        newElementIds.set(elementData.id, element.gid);
+                        // Set misc attributes
+                        element.label = elementData.label;
+                        element.type = elementData.type;
+                        element.clusterId = elementData.cluster;
+                        element.sid = sidCounter++;
+                        // Add monomer element to strand
+                        strand.addMonomer(element);
+                        elementData.createdElement = element;
+                    });
+                });
+                sysData.createdSystem = sys;
+                sys.initInstances(sidCounter);
+                systems.push(sys);
+                sysCount++;
+            });
+            // Let's do this one more time...
+            // Since we now have instances initialised and updated IDs
+            // Go through each system
+            data.systems.forEach(sysData => {
+                let sys = sysData.createdSystem;
+                // Go through each strand
+                sysData.strands.forEach(strandData => {
+                    // Go through each monomer element
+                    strandData.monomers.forEach(elementData => {
+                        let element = elementData.createdElement;
+                        // Set references to any connected elements
+                        if (elementData.n5) {
+                            element.neighbor5 = elements.get(newElementIds.get(elementData.n5));
+                        }
+                        if (elementData.n3) {
+                            element.neighbor3 = elements.get(newElementIds.get(elementData.n3));
+                        }
+                        if (elementData.bp) {
+                            element.pair = elements.get(newElementIds.get(elementData.bp));
+                        }
+                        // Populate instances
+                        for (let attr in elementData.conf) {
+                            let v = elementData.conf[attr];
+                            sys.fillVec(attr, v.length, element.sid, v);
+                        }
+                        // Re-assign a picking color if ID has changed
+                        if (elementData.id !== element.gid) {
+                            let idColor = new THREE.Color();
+                            idColor.setHex(element.gid + 1); //has to be +1 or you can't grab nucleotide 0
+                            sys.fillVec('bbLabels', 3, element.sid, [idColor.r, idColor.g, idColor.b]);
+                        }
+                    });
+                });
+                // Finally, we can add the system to the scene
+                addSystemToScene(sys);
+            });
+        }
+    };
+    reader.readAsText(file);
 }

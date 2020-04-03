@@ -228,7 +228,7 @@ class AminoAcid extends BasicElement {
         // Get superclass attributes
         let json = super.toJSON();
 
-        json['class'] = 'aminoAcid';
+        json['class'] = 'AA';
         return json;
     }
 };

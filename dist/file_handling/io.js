@@ -77,7 +77,7 @@ class TopReader extends FileReader {
                     //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                     if (base === "U")
                         RNA_MODE = true;
-                    currentStrand.addBasicElement(nuc);
+                    currentStrand.addMonomer(nuc);
                     this.nucLocalID += 1;
                     this.lastStrand = strID;
                 });
