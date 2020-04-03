@@ -59,6 +59,10 @@ class Strand {
         return json;
     }
     ;
+    //this is so dirty...
+    getType() {
+        return this.__proto__.constructor.name;
+    }
 }
 ;
 class NucleicAcidStrand extends Strand {

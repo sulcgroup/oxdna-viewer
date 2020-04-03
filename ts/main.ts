@@ -47,7 +47,7 @@ class ElementMap extends Map<number, BasicElement>{
      * @returns gid
      */
     push(e: BasicElement): number {
-        e.gid = ++this.gidCounter;
+        e.gid = this.gidCounter++;
         super.set(e.gid, e);
         return e.gid;
     }
@@ -90,6 +90,9 @@ const AA: number = 2;
 
 const editHistory = new EditHistory();
 let clusterCounter = 0 // Cluster counter
+
+//to keep track of if the topology was edited at any point.
+var topologyEdited: Boolean = false;
 
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();

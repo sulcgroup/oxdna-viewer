@@ -68,6 +68,7 @@ function cutWrapper() {
     clearSelection();
     copied = elems.map(e => new InstanceCopy(e));  
     editHistory.do(new RevertableDeletion(elems));
+    topologyEdited = true;
 }
 
 function pasteWrapper(keepPos?: Boolean) {
@@ -89,6 +90,7 @@ function pasteWrapper(keepPos?: Boolean) {
 
     // Add to history
     editHistory.add(new RevertableAddition(copied, elems, pos));
+    topologyEdited = true;
 }
 
 function nickWrapper() {
@@ -98,6 +100,7 @@ function nickWrapper() {
         return;
     }
     editHistory.do(new RevertableNick(e))
+    topologyEdited = true;
 }
 
 function ligateWrapper() {
@@ -108,6 +111,7 @@ function ligateWrapper() {
         return;
     }
     editHistory.do(new RevertableLigation(e[0], e[1]))
+    topologyEdited = true;
 }
 
 function extendWrapper() {
@@ -129,6 +133,7 @@ function extendWrapper() {
 
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
+    topologyEdited = true;
 }
 
 function createWrapper() {
@@ -146,6 +151,7 @@ function createWrapper() {
 
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
+    topologyEdited = true;
 }
 
 function deleteWrapper() {
@@ -156,6 +162,7 @@ function deleteWrapper() {
         return;
     }
     editHistory.do(new RevertableDeletion(e));
+    topologyEdited = true;
 }
 
 function setSeqWrapper() {
@@ -181,4 +188,5 @@ function setSeqWrapper() {
         return;
     }
     editHistory.do(new RevertableSequenceEdit(n, seq, setCompl));
+    topologyEdited = true;
 }

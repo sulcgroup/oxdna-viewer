@@ -75,6 +75,11 @@ abstract class Strand {
 
         return json;
     };
+
+    //this is so dirty...
+    getType() {
+        return (this as any).__proto__.constructor.name
+    }
 };
 
 class NucleicAcidStrand extends Strand {

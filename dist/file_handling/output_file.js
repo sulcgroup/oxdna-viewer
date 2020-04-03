@@ -1,12 +1,17 @@
 function makeOutputFiles() {
     let name = document.getElementById("outputFilename").value;
     let top = document.getElementsByName("topDownload");
+    let reorganized;
     if (top[0].checked == true) {
-        makeTopFile(name);
+        reorganized = makeTopFile(name);
+    }
+    else if (systems.length > 1 || topologyEdited) {
+        notify("You have edited the topology of the scene, a new topology file must be generated");
+        return;
     }
     let dat = document.getElementsByName("datDownload");
     if (dat[0].checked == true) {
-        makeDatFile(name);
+        makeDatFile(name, reorganized);
     }
 }
 function makeSTLOutput() {
@@ -20,35 +25,90 @@ function makeSTLOutput() {
     saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
 }
 function makeTopFile(name) {
-    let top = []; //string of contents of .top file
-    let totNuc = 0; //total # of elements
-    let totStrands = 0; //total # of strands
-    let newStrandIds = new Map();
-    let sidCounter = 1;
-    let newElementIds = new Map();
-    let gidCounter = 0;
+    const top = []; //string of contents of .top file
+    let proteinMode = false;
+    let peptides = [];
+    let nas = [];
+    //figure out if there are any proteins in the system
     systems.forEach(system => {
-        totStrands += system.strands.length; // Count strands
-        system.strands.forEach((strand) => {
-            newStrandIds.set(strand, sidCounter++); //Assign new strandID
-            totNuc += strand.monomers.length; // Count elements
-            strand.monomers.forEach(e => {
-                newElementIds.set(e, gidCounter++); //Assign new elementID
-            });
+        system.strands.forEach(strand => {
+            if (strand.getType() == Peptide.name) {
+                proteinMode = true;
+                peptides.push(strand);
+            }
+            else {
+                nas.push(strand);
+            }
         });
     });
-    if (totNuc != elements.size) {
-        notify(`Length of totNuc (${totNuc}) is not equal to length of elements array (${elements.size})`);
+    const newStrandIds = new Map();
+    const newElementIds = new Map();
+    let totParticles = 0;
+    let totStrands = 0;
+    //remove any gaps in the particle numbering
+    if (!proteinMode) {
+        peptides = undefined;
+        nas = undefined;
+        let totNuc = 0; //total # of elements
+        let totNucleic = 0; //total # of strands
+        let sidCounter = 1;
+        let gidCounter = 0;
+        systems.forEach(system => {
+            totNucleic += system.strands.length; // Count strands
+            system.strands.forEach((strand) => {
+                newStrandIds.set(strand, sidCounter++); //Assign new strandID
+                totNuc += strand.monomers.length; // Count elements
+                strand.monomers.forEach(e => {
+                    newElementIds.set(e, gidCounter++); //Assign new elementID
+                });
+            });
+        });
+        totParticles = totNuc;
+        totStrands = totNucleic;
+        top.push(totParticles + " " + totStrands);
     }
-    top.push(totNuc + " " + totStrands);
+    else { //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
+        let totNuc = 0;
+        let totAA = 0;
+        let totNucleic = 0;
+        let totPeptide = 0;
+        let sidCounter = -1;
+        let gidCounter = 0;
+        peptides.forEach(strand => {
+            newStrandIds.set(strand, sidCounter--);
+            totPeptide += 1;
+            totParticles += strand.monomers.length;
+            totAA += strand.monomers.length;
+            strand.monomers.forEach(e => {
+                newElementIds.set(e, gidCounter++);
+            });
+        });
+        sidCounter = 1;
+        nas.forEach(strand => {
+            newStrandIds.set(strand, sidCounter++);
+            totNucleic += 1;
+            totParticles += strand.monomers.length;
+            totNuc += strand.monomers.length;
+            strand.monomers.forEach(e => {
+                newElementIds.set(e, gidCounter++);
+            });
+        });
+        totParticles = totNuc + totAA;
+        totStrands = totPeptide + totNucleic;
+        top.push(totParticles + " " + totStrands + " " + totNuc + " " + totAA + " " + totNucleic + " " + totPeptide);
+    }
+    if (totParticles != elements.size) {
+        notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
+    }
     newElementIds.forEach((_gid, e) => {
         let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
-        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
+        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5, ...e.connections].join(' '));
     });
-    makeTextFile(name + ".top", top.join("\n")); //make .top file
+    makeTextFile(name + ".top", top.join("\n")); //make .top 
+    return newElementIds;
 }
-function makeDatFile(name) {
+function makeDatFile(name, altNumbering = undefined) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => {
@@ -56,20 +116,27 @@ function makeDatFile(name) {
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     });
     let dat = "";
-    let box = Math.ceil(5 * maxCoord);
+    let box = Math.ceil(3 * maxCoord);
     dat = [
         `t = 0`,
         `b = ${box} ${box} ${box}`,
         `E = 0 0 0\n`
     ].join('\n');
-    // For all elements, in the correct order
-    systems.forEach(system => {
-        system.strands.forEach((strand) => {
-            strand.monomers.forEach(e => {
-                dat += e.getDatFileOutput();
+    // get coordinates for all elements, in the correct order
+    if (altNumbering) {
+        altNumbering.forEach((_gid, e) => {
+            dat += e.getDatFileOutput();
+        });
+    }
+    else {
+        systems.forEach(system => {
+            system.strands.forEach((strand) => {
+                strand.monomers.forEach(e => {
+                    dat += e.getDatFileOutput();
+                });
             });
         });
-    });
+    }
     makeTextFile(name + ".dat", dat); //make .dat file
 }
 function writeMutTrapText(base1, base2) {

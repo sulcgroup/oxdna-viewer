@@ -1,5 +1,3 @@
-/// <reference path="../three/index.d.ts"/>
-
 /**
  * @author daron1337 / http://daron1337.github.io/
  */

@@ -7,6 +7,7 @@ class AminoAcid extends BasicElement {
     constructor(gid: number, strand: Strand) {
         super(gid, strand);
         this.elementType = AA;
+        
     };
 
     elemToColor(elem: number | string): THREE.Color {
@@ -86,6 +87,7 @@ class AminoAcid extends BasicElement {
         ybbLast = y;
         zbbLast = z;
     };
+
     calculateNewConfigPositions(l: string[]) {
         const sys = this.getSystem(),
         sid = this.gid - sys.globalStartId;

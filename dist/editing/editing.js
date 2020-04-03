@@ -47,6 +47,7 @@ function cutWrapper() {
     clearSelection();
     copied = elems.map(e => new InstanceCopy(e));
     editHistory.do(new RevertableDeletion(elems));
+    topologyEdited = true;
 }
 function pasteWrapper(keepPos) {
     if (copied.length == 0) {
@@ -64,6 +65,7 @@ function pasteWrapper(keepPos) {
     let elems = edit.addElementsAt(copied, pos);
     // Add to history
     editHistory.add(new RevertableAddition(copied, elems, pos));
+    topologyEdited = true;
 }
 function nickWrapper() {
     let e = elements.get(listBases.slice(-1)[0]);
@@ -72,6 +74,7 @@ function nickWrapper() {
         return;
     }
     editHistory.do(new RevertableNick(e));
+    topologyEdited = true;
 }
 function ligateWrapper() {
     let ids = listBases.slice(-2);
@@ -81,6 +84,7 @@ function ligateWrapper() {
         return;
     }
     editHistory.do(new RevertableLigation(e[0], e[1]));
+    topologyEdited = true;
 }
 function extendWrapper() {
     let e = elements.get(listBases.slice(-1)[0]);
@@ -100,6 +104,7 @@ function extendWrapper() {
     pos.divideScalar(elems.length);
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
+    topologyEdited = true;
 }
 function createWrapper() {
     let seq = document.getElementById("sequence").value.toUpperCase();
@@ -114,6 +119,7 @@ function createWrapper() {
     pos.divideScalar(elems.length);
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
+    topologyEdited = true;
 }
 function deleteWrapper() {
     let e = listBases.map(i => elements.get(i));
@@ -123,6 +129,7 @@ function deleteWrapper() {
         return;
     }
     editHistory.do(new RevertableDeletion(e));
+    topologyEdited = true;
 }
 function setSeqWrapper() {
     let seq = document.getElementById("sequence").value.toUpperCase();
@@ -147,4 +154,5 @@ function setSeqWrapper() {
         return;
     }
     editHistory.do(new RevertableSequenceEdit(n, seq, setCompl));
+    topologyEdited = true;
 }

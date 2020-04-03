@@ -12,6 +12,7 @@ abstract class BasicElement {
     label: string;
     neighbor3: BasicElement | null;
     neighbor5: BasicElement | null;
+    connections = [];
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string

@@ -6,6 +6,7 @@
  */
 class BasicElement {
     constructor(gid, strand) {
+        this.connections = [];
         this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
         this.gid = gid;
         this.strand = strand;
