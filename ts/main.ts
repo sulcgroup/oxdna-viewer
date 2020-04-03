@@ -37,6 +37,11 @@ class ElementMap extends Map<number, BasicElement>{
         if(this.gidCounter < gid+1){
             this.gidCounter = gid+1;
         }
+        // Reading oxDNA files we set elements as undefined for
+        // concurrency issues
+        if (element) {
+            element.gid = gid;
+        }
         return super.set(gid, element);
     }
 

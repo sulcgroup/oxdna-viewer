@@ -41,7 +41,7 @@ module edit{
         let lidCounter = 0
         orphans.forEach(
             (e) => {
-                newStrand.addBasicElement(e);
+                newStrand.addMonomer(e);
                 e.lid = lidCounter;
                 lidCounter += 1;
                 e.updateColor();
@@ -151,7 +151,7 @@ module edit{
         let i = end5.lid+1;
         bases2.forEach(
             (n) => {
-                strand1.addBasicElement(n);
+                strand1.addMonomer(n);
                 n.lid = i;
                 i++;
             }
@@ -311,7 +311,6 @@ module edit{
             // otherwise, create a new one
             if(!elements.has(c.gid)) {
                 elements.set(c.gid, e);
-                e.gid = c.gid;
             } else {
                 elements.push(e);
             }
@@ -406,12 +405,12 @@ module edit{
                 // If we found something
                 if (i.strand) {
                     // Add us to the strand
-                    i.strand.addBasicElement(e);
+                    i.strand.addMonomer(e);
                 } else {
                     // Create a new strand
                     let strand = sys.createStrand(sys.strands.length + 1);
                     sys.addStrand(strand);
-                    strand.addBasicElement(e);
+                    strand.addMonomer(e);
                 }
             }
         });
@@ -448,7 +447,7 @@ module edit{
 
     function addElementsBySeq (end, sequence, tmpSys, direction, inverse, lidCounter): BasicElement[] {
         // add monomers to the strand
-        const strand = end.strand;
+        const strand: Strand = end.strand;
         const lines = end.extendStrand(sequence.length, inverse);
         let last = end;
 
@@ -463,7 +462,7 @@ module edit{
             last[direction] = e;
             e[inverse] = last;
             e.type = sequence[i];
-            strand.addBasicElement(e);
+            strand.addMonomer(e);
             last = e;
             lidCounter++;
             addedElems.push(e);
@@ -619,7 +618,7 @@ module edit{
         e.sid = 0;
         e.type = sequence[0];
         e.neighbor3 = null;
-        strand.addBasicElement(e);
+        strand.addMonomer(e);
         addedElems.push(e);
 
         // Place the new strand 10 units in front of the camera

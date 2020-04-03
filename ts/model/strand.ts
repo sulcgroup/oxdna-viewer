@@ -20,7 +20,7 @@ abstract class Strand {
         this.circular = false;
     };
 
-    addBasicElement(elem: BasicElement) {
+    addMonomer(elem: BasicElement) {
         this.monomers.push(elem);
         elem.strand = this;
     };
@@ -128,6 +128,12 @@ class NucleicAcidStrand extends Strand {
             })
         }
     }
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        json['class'] = 'NucleicAcidStrand';
+        return json;
+    };
 }
 class Peptide extends Strand {
     constructor(id: number, system: System) {
@@ -168,5 +174,11 @@ class Peptide extends Strand {
                 s.callUpdates(['instanceOffset'])
             })
         }
+    };
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        json['class'] = 'Peptide';
+        return json;
     };
 }

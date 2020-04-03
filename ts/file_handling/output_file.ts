@@ -240,8 +240,9 @@ function makeSequenceFile() {
 }
 
 function makeOxViewJsonFile(space?: string | number) {
-    makeTextFile("dump.oxView", JSON.stringify({
+    makeTextFile("output.oxview", JSON.stringify({
         date: new Date(),
+        box: box.toArray(),
         systems: systems
     }, null, space));
 }
