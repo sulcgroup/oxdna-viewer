@@ -46,6 +46,41 @@
         </div>
     </div>
 
+    <!--File Output-->
+    <div class="modal" id="fileOptions">
+        <div class="modal-content">
+            <p>Save the current stucture to oxDNA configuration and/or topology files</p>
+            <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
+            <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
+            <label for="outputFilename">File name: </label>
+            <input type="text" id="outputFilename" size="13" value="output" title="The prefix to name the .dat and .top files"><br>
+            <button style="width: 49%" onclick="toggleModal('fileOptions')" title="Cancel">Cancel</button>
+            <button style="width: 49%" onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
+        </div>
+    </div>
+
+    <!--Stl Export options-->
+    <div class="modal" id="stlExportOptions">
+        <div class="modal-content">
+            <!-- STLExporter(elements, , , , include_bbconnector, scale,faces_mul ); -->
+            <p>The viewer supports scene export in the common 3D printing STL format. For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file, choosing from:</p>
+            <input type="checkbox" name="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
+            <input type="checkbox" name="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
+            <input type="checkbox" name="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
+            <input type="checkbox" name="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
+            <p>By increasing the scaling of the model objects can be made to overlap, which is benefitial for sturdy printed models.</p>
+            <label for="stlScale">scale: </label>
+            <input type="number" value="1" id="stlScale" title="rescale the model" min=1 max = 10></br>
+            <p>The smoothness of the exported model is controlled via the faces multiplier setting. Note that additional smoothness results in very large STL files which not every browser can handle.</p>
+            <label for="facesMul">faces multiplier: </label>
+            <input type="number" value="1" id="facesMul" title="increases model smoothness" min=1 max=5><br>
+            <label for="outputSTLFilename">File name: </label>
+            <input type="text" id="outputSTLFilename" size="13" value="output" title="STL file name"><br><br>
+            <button style="width: 49%" onclick="toggleModal('stlExportOptions')" title="Cancel">Cancel</button>
+            <button style="width: 49%" onclick="makeSTLOutput()" title="Download the specified files">Download Files</button>
+        </div>
+    </div>
+
     <!--Pause notices-->
     <div id="pause" class="modal"></div>
 
@@ -56,58 +91,105 @@
     <div id="sidenav">
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
-            <button onclick="toggleOptions('fileOptions')" type="button" title="Options for downloading the current scene">Download Output Files</button>
-            <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
-            <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
-            <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
-
-            <!--Centering-->
+            <!--File-->
             <fieldset>
-                <legend>PBC / Centering</legend>
-                <caption> PBC: </caption>
-                <select id="inboxing" title="At what scale to apply periodic boundary conditions">
-                    <option>Monomer</option>
-                    <option>Strand</option>
-                    <option>None</option>
-                </select>
-                <br>
-                <caption>Centering:</caption>
-                <select id="centering" title="Where to center the structure relative to the simulation box" onchange="redrawBox()">
-                    <option>Origin</option>
-                    <option>Box Center</option>
-                    <option>None</option>
-                </select>
-                <br>
-                <button onclick="PBCswitchbox()" type="button" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
+                <legend onclick="toggleFieldSet(this)">File</legend>
+                <div hidden="true">
+                    <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
+                    <button onclick="toggleModal('fileOptions')" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
+                    <button onclick="toggleModal('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>
+                    <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
+                    <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
+                    <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
+                </div>
             </fieldset>
 
-            <!--View-->
+            <!--Select-->
             <fieldset>
-                <legend>View</legend>
-                <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
-                <input type="checkbox" id="boxToggle" onchange="toggleBox(this)" title="Show/hide the bounding box">Display Box<br>
-                <fieldset>
-                    <legend>Color by:</legend>
-                    <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
-                    <input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
-                    <input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
-                    <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
-                </fieldset>
-                <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
-                <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
-                    Colors</button>
-                <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
-                <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
-                <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
-                <button onclick="toggleOptions('hierarchy'); drawSystemHierarchy();" type="button" title="View system hierarchy">System hierarchy</button>
+                <legend onclick="toggleFieldSet(this)">Select</legend>
+                <div hidden="true">
+                    <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Enable selection
+                    <fieldset>
+                        <legend onclick="toggleFieldSet(this)">Selection mode:</legend>
+                        <div>
+                            <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
+                            <input type="radio" name="scope" value="Strand">Strand<br>
+                            <input type="radio" name="scope" value="System">System<br>
+                            <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements.values().next().value.clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
+                                title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
+                            <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
+                            <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
+                        </div>
+                    </fieldset>
+                    <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
+                    <button onclick="toggleOptions('baseInfoWindow')" type="button" title="Show selected base information">Show selected base info</button>
+                    <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download selected base list</button>
+                    <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Download selected base trap file</button>
+                </div>
             </fieldset>
 
             <!--Edit-->
             <fieldset>
-                <legend>Edit</legend>
-                <div style="text-align: center;">
-                    <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
-                    <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+                <legend onclick="toggleFieldSet(this)">Edit</legend>
+                <div hidden="true">
+                    <div style="text-align: center;">
+                        <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
+                        <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+                    </div>
+                    <fieldset>
+                        <legend onclick="toggleFieldSet(this)">Mouse transformation</legend>
+                        <div>
+                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="none" checked>None<br>
+                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="translate">Translate<br>
+                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="rotate">Rotate<br>
+                        </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend onclick="toggleFieldSet(this)">Rotate</legend>
+                        <div>
+                            Axis:
+                            <input type="radio" name="rotate" value="X" checked><span style="color: rgb(206, 54, 27)">X</span>
+                            <!--default checked is x-axis-->
+                            <input type="radio" name="rotate" value="Y"><span style="color: rgb(19, 102, 2)">Y</span>
+                            <input type="radio" name="rotate" value="Z"><span style="color: rgb(30, 96, 196)">Z</span><br> Rotation angle:
+                            <input type="number" value="-90" id="rotAngle" width="20">
+                            <button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
+                        </div>
+                    </fieldset>
+                    <fieldset>
+                        <legend onclick="toggleFieldSet(this)">Edit Topology</legend>
+                        <div>
+                            <button onclick="nickWrapper()" title="break the upstream connection of the last selected particles">Nick</button>
+                            <button onclick="deleteWrapper()" title="delete the selected monomers">Delete</button>
+                            <button onclick="ligateWrapper()" title="ligate the last two selected particles together">Ligate</button><br>
+                            Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;">
+                            <button onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">Set sequence</button>
+                            <input type="checkbox" id="setCompl" title="Set also complementary bases" checked> Set compl<br>
+                            <button onclick="extendWrapper()" title="Extend strand from the selected monomer with the given sequence">Extend</button>
+                            <button onclick="createWrapper()" title="Create a new strand with the provided sequences">Create</button>
+                        </div>
+                    </fieldset>
+                    <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
+                    <fieldset>
+                        <legend onclick="toggleFieldSet(this)">PBC / Centering</legend>
+                        <div>
+                            <caption> PBC: </caption>
+                            <select id="inboxing" title="At what scale to apply periodic boundary conditions">
+                                <option>Monomer</option>
+                                <option>Strand</option>
+                                <option>None</option>
+                            </select>
+                            <br>
+                            <caption>Centering:</caption>
+                            <select id="centering" title="Where to center the structure relative to the simulation box" onchange="redrawBox()">
+                                <option>Origin</option>
+                                <option>Box Center</option>
+                                <option>None</option>
+                            </select>
+                            <br>
+                            <button onclick="PBCswitchbox()" type="button" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
+                        </div>
+                    </fieldset>
                 </div>
                 <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select
                 <input type="checkbox" name="action" id="transformToggle" value="Transform" onchange="showTransformControl(this)"> Transform<br>
@@ -145,19 +227,51 @@
                 <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
             </fieldset>
 
-            <!--Selected bases-->
+            <!--View-->
             <fieldset>
-                <legend>Selected bases</legend>
-                <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-                <button onclick="toggleOptions('baseInfoWindow')" type="button" title="Show selected base information">Show selected base info</button>
-                <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download Selected Base List</button>
-                <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Make Mutual Trap File</button>
+                <legend onclick="toggleFieldSet(this)">View</legend>
+                <div hidden="true">
+                    <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
+                    <input type="checkbox" id="boxToggle" onchange="toggleBox(this)" title="Show/hide the bounding box">Display Box<br>
+                    <fieldset>
+                        <legend>Color by:</legend>
+                        <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
+                        <input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
+                        <input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
+                        <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
+                    </fieldset>
+                    <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
+                    <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
+                        Colors</button>
+                    <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
+                    <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
+                    <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
+                    <button onclick="toggleOptions('hierarchy'); drawSystemHierarchy();" type="button" title="View system hierarchy">System hierarchy</button>
+                </div>
             </fieldset>
 
-            <div style="text-align: center;">
-                <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 48px;" title="Previous config (left keyboard arrow)">keyboard_arrow_left</i>
-                <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 48px;" title="Next config (right keyboard arrow)">keyboard_arrow_right</i>
-            </div>
+
+            <!--Trajectory-->
+            <fieldset>
+                <legend onclick="toggleFieldSet(this)">Trajectory</legend>
+                <div hidden=true>
+                    <div style="text-align: center;">
+                    </div>
+                    <div style="text-align: center;">
+                        <p id="trajTimestep" hidden="true"></p>
+                        <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 32px;" title="Previous config (left keyboard arrow)">skip_previous</i>
+                        <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 32px;" title="Next config (right keyboard arrow)">skip_next</i>
+                    </div>
+                    <p>
+                        <i id="trajPrevUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajPrevLim').value), true)" title="Click to rewind">fast_rewind</i> until t &le;
+                        <input type="number" id="trajPrevLim" style="width: 6em;" value="0" min="0" title="Input trajectory step at which to stop rewinding.">
+                    </p>
+                    <p>
+                        <i id="trajNextUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajNextLim').value), false)" title="Click to play">fast_forward</i> until t &ge;
+                        <input type="number" id="trajNextLim" style="width: 6em;" value="-1" title="Input trajectory step at which to stop playback. Input a negative number to play until the end.">
+                    </p>
+                </div>
+            </fieldset>
         </div>
         <button id="sideNavToggleButton" onclick="toggleSideNav()" type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide toolbar</button>
     </div>
@@ -175,8 +289,8 @@
                 <option value="lemniscate">XY lemniscate</option>
             </select>
             <fieldset>
-                <legend>File format:</legend>
-                <input type="radio" name="videoFormat" value="webm" checked>webm<br>
+                <legend onclick="toggleFieldSet(this)">File format:</legend>
+                <input type="radio" name="videoFormat" value="webm" checked>webm (Chrome only!)<br>
                 <input type="radio" name="videoFormat" value="gif">gif<br>
                 <input type="radio" name="videoFormat" value="png">png<br>
                 <input type="radio" name="videoFormat" value="jpg">jpg<br>
@@ -207,27 +321,13 @@
             <div id="hierarchyContent" style="background-color: inherit"></div>
         </div>
 
-        <!--File Output-->
-        <div class="opts" id="fileOptions" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('fileOptions')">close</i>
-            </div>
-            <fieldset>
-                <legend>Options</legend>
-                <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
-                <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
-                <input type="text" id="outputFilename" size="13" value="output" title="The prefix to name the .dat and .top files">File prefix<br>
-                <button onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
-            </fieldset>
-        </div>
-
         <!--Clustering-->
         <div class="opts" id="clusterOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
                 <i class="material-icons" onclick="toggleOptions('clusterOptions')">close</i>
             </div>
             <fieldset>
-                <legend>Automatic</legend>
+                <legend onclick="toggleFieldSet(this)">Automatic</legend>
                 <label for="minPts">Min points: </label>
                 <input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
                 <label for="epsilon">Max dist (ε): </label>
@@ -235,7 +335,7 @@
                 <button onclick="calculateClusters()">Start clustering</button>
             </fieldset>
             <fieldset>
-                <legend>Manual</legend>
+                <legend onclick="toggleFieldSet(this)">Manual</legend>
                 <button onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to
                     cluster</button>
                 <button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
@@ -293,8 +393,8 @@
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
-        <script src="./ts/lib/VRButton.js"></script>
-	    <script src="./ts/lib/justcontext.js"></script>
+	<script src="./ts/lib/VRButton.js"></script>
+        <script src="./ts/lib/justcontext.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
         <script src="./ts/controls/TrackballControls.js"></script>
         <script src="./dist/scene/scene_setup.js"></script>
@@ -325,6 +425,7 @@
         <script src="./dist/api/scene_api.js"></script>
         <script src="./dist/api/editing_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
+	<script src="./dist/file_handling/stl_exporter.js"></script>
         <script src="./dist/vr.js"></script>
     </div>
 </body>
