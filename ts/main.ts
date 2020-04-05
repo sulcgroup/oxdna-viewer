@@ -108,7 +108,9 @@ render();
 function coloringChanged() {
     if (getColoringMode() === "Overlay") {
         if (lut) {
-            api.showColorbar();
+            if (systems.some(system => system.colormapFile)) {
+                api.showColorbar();
+            }
         } else {
             notify("Please drag and drop the corresponding .json file.");
             setColoringMode("Strand");

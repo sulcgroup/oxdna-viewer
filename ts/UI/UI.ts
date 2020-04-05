@@ -201,6 +201,56 @@ function colorOptions() {
     }
 };
 
+function colorSelection() {
+    const opt: HTMLElement = document.getElementById("colorSelectionContent");
+    if(!opt.hidden) {
+        opt.innerHTML = ""; // clear content
+        const setButton = document.createElement('button');
+        setButton.innerText = "Set Color";
+
+        // create color map with selected color
+        setButton.onclick = () => {
+            const colorSelect = new THREE.Color(colorInput.value);
+
+            if (lut == undefined) {
+                lut = new THREE.Lut(defaultColormap, 512);
+                // legend is necessary to set 'color by' to Overlay, gets removed later
+                lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } });
+                lut.setLegendLabels({ 'title': "hide me please", 'ticks': 1 });
+            }
+
+            // initialize lutCols to existing colors
+            for (let i = 0; i < systems.length; i++){
+                const system = systems[i];
+                const end = system.bbColors.length;
+                for (let j = 0; j < end; j += 3) {
+                    const r = system.bbColors[j];
+                    const g = system.bbColors[j+1];
+                    const b = system.bbColors[j+2];
+                    
+                    system.lutCols[j/3] = new THREE.Color(r,g,b);
+                }
+            }
+
+            // set lutCols to selected color
+            selectedBases.forEach(e => {
+                let sid = e["gid"] - e.getSystem().globalStartId;
+                e.getSystem().lutCols[sid] = colorSelect;
+            });
+            
+            setColoringMode("Overlay");
+            if (!systems.some(system => system.colormapFile)) {
+                api.removeColorbar();
+            }
+        }
+        
+        let colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        opt.appendChild(colorInput);
+        opt.appendChild(setButton);
+    }
+};
+
 function notify(message: string) {
     const noticeboard = document.getElementById('noticeboard');
 
