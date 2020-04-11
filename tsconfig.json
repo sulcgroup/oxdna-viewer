@@ -29,6 +29,7 @@
         "./ts/model/RNA.ts",
         "./ts/model/strand.ts",
         "./ts/model/system.ts",
+        "./ts/model/anm.ts",
         "./ts/scene/instancing.ts",
         "./ts/scene/mesh_setup.ts",
         "./ts/scene/PBC_switchbox.ts",

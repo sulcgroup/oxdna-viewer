@@ -82,6 +82,7 @@ let elements: ElementMap = new ElementMap(); //contains references to all BasicE
 //initialize the space
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
+const ANMs: ANM[] = [];
 var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();

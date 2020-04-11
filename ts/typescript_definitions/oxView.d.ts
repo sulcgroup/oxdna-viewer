@@ -6,6 +6,7 @@
 /// <reference path="../model/RNA.ts" />
 /// <reference path="../model/strand.ts" />
 /// <reference path="../model/system.ts" />
+/// <reference path="../model/anm.ts" />
 /// <reference path="../file_handling/file_reading.ts" />
 /// <reference path="../file_handling/output_file.ts" />
 /// <reference path="../file_handling/io.ts" />

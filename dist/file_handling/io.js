@@ -60,17 +60,6 @@ class TopReader extends FileReader {
                     }
                     else
                         nuc.neighbor5 = null;
-                    //proteins also have the anm connections which need to be kept.for file output
-                    let j = 4;
-                    let connection = parseInt(l[j]);
-                    if (connection != undefined) {
-                        const n = nuc; //the compiler complains if it doesn't know that we're working with AAs.
-                        while (connection) {
-                            n.connections.push(connection + this.system.globalStartId);
-                            j += 1;
-                            connection = parseInt(l[j]);
-                        }
-                    }
                     let base = l[1]; // get base id
                     nuc.type = base;
                     //if we meet a U, we have an RNA (its dumb, but its all we got)

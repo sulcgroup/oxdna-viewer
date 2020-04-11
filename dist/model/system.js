@@ -105,17 +105,6 @@ class System {
         return (com.multiplyScalar(1 / this.INSTANCES));
     }
     ;
-    //This is needed to handle strands that have experienced fix_diffusion.  Don't use it.
-    strandUnweightedCom() {
-        const com = new THREE.Vector3(0, 0, 0);
-        let count = 0;
-        this.strands.forEach((s) => {
-            com.add(s.getCom());
-            count += 1;
-        });
-        return (com.multiplyScalar(1 / count));
-    }
-    ;
     setDatFile(datFile) {
         this.datFile = datFile;
     }

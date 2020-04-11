@@ -126,11 +126,12 @@ function makeTopFile(name){
         notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
     }
 
+    //needs to be updated to dereference anm connections
     newElementIds.forEach((_gid, e) => { //for each nucleotide
         let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
 
-        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5, ...e.connections].join(' '));
+        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
     });
     makeTextFile(name+".top", top.join("\n")); //make .top 
 
