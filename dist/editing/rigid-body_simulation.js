@@ -31,6 +31,9 @@ class RigidClusterSimulator {
     constructor() {
         this.clusters = [];
         this.clusterRepulsionConst = 1000;
+        this.connectionRelaxedLength = 3;
+        this.connectionSpringConst = 10;
+        this.friction = 0.25;
         // Create Cluster objects for each cluster label among the elements
         let m = new Map();
         elements.forEach((e) => {
@@ -44,7 +47,7 @@ class RigidClusterSimulator {
             m.get(c).add(e);
         });
         m.forEach((clusterElements) => {
-            this.clusters.push(new Cluster(clusterElements));
+            this.clusters.push(new Cluster(clusterElements, this));
         });
     }
     ;
@@ -102,16 +105,14 @@ class Cluster {
      * Create a rigid-body cluster from the given set of elements
      * @param clusterElements Set of BasicElements making up the cluster
      */
-    constructor(clusterElements) {
+    constructor(clusterElements, simulator) {
         this.conPoints = [];
-        this.connectionRelaxedLength = 3;
-        this.connectionSpringConst = 10;
-        this.friction = 0.25;
         this.linearVelocity = new THREE.Vector3(); // v
         this.angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
         this.totalTranslation = new THREE.Vector3();
         this.totalRotation = new THREE.Quaternion();
         this.clusterElements = clusterElements;
+        this.sim = simulator;
         this.mass = 25;
         this.calculateCenter();
         this.radius = 0;
@@ -165,7 +166,7 @@ class Cluster {
      */
     computeConnectionForces() {
         this.conPoints.forEach((p) => {
-            let scalar = this.connectionSpringConst * (p.getDist() - this.connectionRelaxedLength);
+            let scalar = this.sim.connectionSpringConst * (p.getDist() - this.sim.connectionRelaxedLength);
             let f = p.getToPos().clone().sub(p.getFromPos());
             f.setLength(scalar);
             this.addForce(f, p.getFromPos());
@@ -185,13 +186,13 @@ class Cluster {
         // Calculate translation
         let linearMomentum = this.force.clone().divideScalar(this.mass);
         this.linearVelocity.add(linearMomentum.clone().multiplyScalar(dt));
-        this.linearVelocity.multiplyScalar(1 - this.friction);
+        this.linearVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaP = this.linearVelocity.clone().multiplyScalar(dt);
         this.position.add(deltaP);
         // Calculate rotation
         let angularMomentum = this.torque.clone().applyMatrix3(this.momentOfInertia_inv);
         this.angularVelocity.add(angularMomentum.clone().multiplyScalar(dt));
-        this.angularVelocity.multiplyScalar(1 - this.friction);
+        this.angularVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaO = this.angularVelocity.clone().multiplyScalar(dt);
         // Perform transformations
         translateElements(this.clusterElements, deltaP);
