@@ -251,6 +251,27 @@ function colorSelection() {
     }
 };
 
+function toggleVisArbitrary() {
+    // arbitrary visibility toggling
+    // toggle hidden monomers
+    if (selectedBases.size == 0) {
+        systems.forEach(system=>{
+            system.strands.forEach(strand=>{
+                strand.monomers.forEach(monomer=>{
+                    if(monomer.getInstanceParameter3("visibility").x == 0)
+                        monomer.toggleVisibility();
+                });
+            });
+        });
+    }
+    // toggle selected monomers
+    else {
+        selectedBases.forEach(e => e.toggleVisibility());
+    }
+    
+    systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
+}
+
 function notify(message: string) {
     const noticeboard = document.getElementById('noticeboard');
 
