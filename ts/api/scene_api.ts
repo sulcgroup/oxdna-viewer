@@ -39,8 +39,8 @@ module api{
         });
         return strandLength;  
     };
-
-    export function highlite5ps(system = systems[0]){
+    //highlight
+    export function highlight5ps(system = systems[0]){
         system.strands.map((strand) => {
             strand.monomers[strand.monomers.length - 1].toggle();
         });
