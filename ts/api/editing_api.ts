@@ -31,7 +31,7 @@ module edit{
 
         // Create, fill and deploy new strand
         let newStrand: Strand;
-        if (strand.getType() =="Peptide") {
+        if (strand.getType() == "Peptide") {
             newStrand = strand.system.createStrand(-strand.system.strands.length - 1)
         }
         else {

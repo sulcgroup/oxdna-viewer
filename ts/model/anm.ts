@@ -17,6 +17,7 @@ class ANM {
         this.system = sys;
         this.id = id;
         this.initInstances(size);
+        this.children = [];
     }
 
     initInstances(nInstances: number) {
@@ -37,6 +38,13 @@ class ANM {
             this[vecName][pos * unitSize + i] = vals[i]
         }
     };
+
+    createConnection(p1: BasicElement, p2: BasicElement, eqDist: number, type: string, strength: number): ANMConnection {
+        const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength)
+        con.init();
+        this.children.push(con);
+        return con
+    }
 
 }
 
@@ -60,6 +68,7 @@ class ANMConnection {
     }
 
     init() {
+        //calculate the center of the connection
         const end1 = this.p1.getInstanceParameter3('bbOffsets');
         const x1 = end1.x,
             y1 = end1.y,
@@ -74,14 +83,18 @@ class ANMConnection {
             y = (y1 + y2) / 2,
             z = (z1 + z2) / 2;
 
+        //calculate the length of the connection
         const len = end1.distanceTo(end2);
 
+        //calculate the orientation of the connection
         const rot = new THREE.Quaternion().setFromUnitVectors(
             new THREE.Vector3(0, 1, 0), new THREE.Vector3(x1 - x2, y1 - y2, z1 - z2).normalize()
         );
 
+        //Assign a color from the backboneColors array
         const col = backboneColors[this.parent.id % backboneColors.length];
 
+        //Fill in the instancing arrays
         this.parent.fillVec('offsets', 3, this.id, [x, y, z]);
         this.parent.fillVec('rotations', 4, this.id,[rot.w, rot.z, rot.y, rot.x]);
         this.parent.fillVec('colors', 3, this.id, [col.r, col.g, col.b]);

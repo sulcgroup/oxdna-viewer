@@ -391,17 +391,20 @@ function readParFile(file) {
         for (let i = 0; i < size - 1; i++) {
             let l = lines[i].split(" ");
             //extract values
-            const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[3]), type = l[4], strength = parseFloat(l[5]);
+            const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[2]), type = l[3], strength = parseFloat(l[4]);
             //dereference p and q into particle positions from the system
             const particle1 = elements.get(system.globalStartId + p), particle2 = elements.get(system.globalStartId + q);
             if (particle1 == undefined)
                 console.log(i);
-            const connection = new ANMConnection(anm, i, particle1, particle2, eqDist, type, strength);
-            connection.init();
+            const connection = anm.createConnection(particle1, particle2, eqDist, type, strength);
         }
         ;
         addANMToScene(anm);
-        api.toggleAll(system);
+        system.strands.forEach((s) => {
+            if (s.getType() == "Peptide") {
+                api.toggleStrand(s);
+            }
+        });
         ANMs.push(anm);
     };
     reader.readAsText(file);

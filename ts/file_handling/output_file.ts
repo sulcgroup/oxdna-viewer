@@ -1,9 +1,11 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
     let name = (<HTMLInputElement>document.getElementById("outputFilename")).value;
     let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
-    let reorganized
+    let reorganized, counts
     if (top[0].checked == true) {
-        reorganized = makeTopFile(name);
+        let {a, b} = makeTopFile(name);
+        reorganized = a;
+        counts = b;
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated");
@@ -12,6 +14,11 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
     let dat = <NodeListOf<HTMLInputElement>>document.getElementsByName("datDownload");
     if (dat[0].checked == true) {
         makeDatFile(name, reorganized);	
+    }
+
+    console.log(ANMs.length);
+    if (ANMs.length > 0) {
+        makeParFile(name, reorganized, counts);
     }
 }
 
@@ -58,6 +65,7 @@ function makeTopFile(name){
 
     let totParticles = 0;
     let totStrands = 0;
+    let firstLine;
 
     //remove any gaps in the particle numbering
     if (!proteinMode) {
@@ -82,8 +90,8 @@ function makeTopFile(name){
         });
         totParticles = totNuc;
         totStrands = totNucleic;
+        firstLine = [totParticles, totStrands]
 
-        top.push(totParticles + " " + totStrands);
     }
     else { //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
         let totNuc = 0;
@@ -117,10 +125,10 @@ function makeTopFile(name){
 
         totParticles = totNuc + totAA;
         totStrands = totPeptide + totNucleic;
-
-        top.push(totParticles + " " + totStrands + " " + totNuc + " " + totAA + " " + totNucleic + " " + totPeptide)
-
+        firstLine = [totParticles, totStrands, totNuc, totAA, totNucleic]
     }
+
+    top.push(firstLine.join(" "))
 
     if (totParticles != elements.size) {
         notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
@@ -135,7 +143,8 @@ function makeTopFile(name){
     });
     makeTextFile(name+".top", top.join("\n")); //make .top 
 
-    return newElementIds;
+    //this is absolute abuse of ES6 and I feel a little bad about it
+    return {a: newElementIds, b: firstLine};
 }
 function makeDatFile(name, altNumbering=undefined) {
     // Get largest absolute coordinate:
@@ -173,6 +182,27 @@ function makeDatFile(name, altNumbering=undefined) {
     }
 
     makeTextFile(name+".dat", dat); //make .dat file
+}
+
+function makeParFile(name: string, altNumbering, counts) {
+    const par: string[] = [];
+    par.push(counts[3]);
+
+    ANMs.forEach ((anm: ANM) => {
+        //ANMs can be huge so we need to use a traditional for loop here
+        const l = anm.children.length
+        console.log(anm.children[0]);
+        for (let i = 0; i < l; i++) {
+            const curCon = anm.children[i]
+            const p1ID: number = altNumbering.get(curCon.p1);
+            const p2ID: number = altNumbering.get(curCon.p2);
+
+            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength];
+            par.push(line.join(" "));
+        } 
+    });
+
+    makeTextFile(name+".par", par.join('\n'));
 }
 
 function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file
