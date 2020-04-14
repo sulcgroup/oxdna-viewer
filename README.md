@@ -47,7 +47,7 @@ The scene API can be accessed by typing `api.<command>(<arguments>)` in the brow
  * `toggleStrand(<strand object>)`: Toggles visibility of the given strand.  
  * `markStrand(<strand object>)`: Highlight the given strand in the selection color.    
  * `countStrandLength(optional(<system object>))`: Returns a dictionary of strand indices with their associated length. If no system is provided, defaults to the first system loaded into the scene.  Very useful for finding the id of the scaffold strand in an origami.  
- * `hilight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
+ * `highlight5ps(optional(<system object>))`: Highlights the 5' ends of every strand in the given system. If no system is provided, defaults to the first system loaded into the scene.  
  * `toggleElements(<array of elements>)`: Toggles visibility of the listed monomers.
  * `toggleAll(optional(<system object>))`: Toggles visibility of the given system. If no system is provided, defaults to the first system loaded into the scene.  
  * `toggleBaseColors()`: Toggles the bases between type-defined colors (A = blue, T/U = red, G = yellow, C = green) and grey.  
