@@ -205,10 +205,12 @@ function readDat(datReader, system) {
         notify(".dat and .top files incompatible")
         return
     }
-    //get the simulation box size
-    box.x = parseFloat(lines[1].split(" ")[2]);
-    box.y = parseFloat(lines[1].split(" ")[3]);
-    box.z = parseFloat(lines[1].split(" ")[4]);
+    // Increase the simulation box size if larger than current
+    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
+    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
+    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
+    redrawBox();
+
     const time = parseInt(lines[0].split(" ")[2]);
     confNum += 1
     console.log(confNum, "t =", time);
