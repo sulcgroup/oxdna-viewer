@@ -40,14 +40,15 @@ var api;
     }
     api.countStrandLength = countStrandLength;
     ;
-    function highlite5ps(system = systems[0]) {
+    //highlight
+    function highlight5ps(system = systems[0]) {
         system.strands.map((strand) => {
             strand.monomers[strand.monomers.length - 1].toggle();
         });
         updateView(system);
         render();
     }
-    api.highlite5ps = highlite5ps;
+    api.highlight5ps = highlight5ps;
     function toggleElements(elems) {
         let sys = new Set();
         let tmpSys = new Set();
