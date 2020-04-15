@@ -1,8 +1,16 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-//Handles every possible combination of applying PBC conditions and centering
-function PBCswitchbox() {
-    cleverCentering();
-    cleverBoxing();
+/**
+ * Center given elements (or all, if none is given) and apply
+ * periodic boundary conditions to all elements to bring
+ * everything within the simulation box.
+ * @param elems A list of elements to centre
+ */
+function centerAndPBC(elems) {
+    if (!elems) {
+        elems = Array.from(elements.values());
+    }
+    centerElements(elems);
+    bringInBox(getInboxingMode());
     // Update instances
     elements.forEach(e => { if (e.neighbor3)
         calcsp(e); });
@@ -10,6 +18,9 @@ function PBCswitchbox() {
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
     render();
 }
+/**
+ * Returns a vector of the position to center on, according to the GUI
+ */
 function getCenteringGoal() {
     // Check which point we want as origin
     let centerOption = document.getElementById("centering").value;
@@ -19,13 +30,26 @@ function getCenteringGoal() {
         default: return undefined;
     }
 }
-// Not sure if much more clever...
-function cleverBoxing() {
+/**
+ * Returns a string of the mode to apply Periodic Boundary Conditions, according to the GUI.
+ * Either "Monomer" or "Strand"
+ */
+function getInboxingMode() {
+    return document.getElementById("inboxing").value;
+}
+/**
+ * Bring all elements (or strands) inside the simulation box
+ */
+function bringInBox(boxOption) {
+    // We need actual modulus
     let realMod = (n, m) => ((n % m) + m) % m;
+    // Find out which center we use, or just use box center
     let center = getCenteringGoal();
     if (!center) {
         center = box.clone().divideScalar(2);
     }
+    // Define function to calculate a coordinates position
+    // withing periodic boundaries
     let coordInBox = (coord) => {
         let p = coord.clone();
         let shift = box.clone().divideScalar(2).sub(center);
@@ -36,7 +60,7 @@ function cleverBoxing() {
         p.sub(shift);
         return p;
     };
-    let boxOption = document.getElementById("inboxing").value;
+    // Apply to either monomers, or whole strands
     if (boxOption == "Monomer") {
         elements.forEach(e => {
             let pOld = e.getInstanceParameter3("cmOffsets");
@@ -54,16 +78,26 @@ function cleverBoxing() {
             });
         });
     }
+    else {
+        notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`);
+    }
 }
-function cleverCentering() {
-    let origin = getCenteringGoal();
+/**
+ * Center a list of elements around a specified point.
+ * @param elems List of elements to center
+ * @param origin Optional point to center to, will be read from GUI options if not provided
+ */
+function centerElements(elems, origin) {
     if (!origin) {
-        return; // Nothing to center to
+        origin = getCenteringGoal();
+        if (!origin) {
+            return; // Nothing to center to
+        }
     }
     // Calculate Centre of mass, taking periodic boundary conditions into account
-    let com = calcCOM(Array.from(elements.values()));
+    let com = calcCOM(elems);
     // Move COM to desired origin point
-    translateElements(new Set(elements.values()), origin.clone().sub(com));
+    translateElements(new Set(elems), origin.clone().sub(com));
 }
 // Calculate center of mass taking periodic boundary conditions into account:
 // https://doi.org/10.1080/2151237X.2008.10129266

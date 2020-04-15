@@ -225,6 +225,8 @@ function notify(message: string) {
     notification.onmouseover = remove;
     noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
+
+    console.info(`Notification: ${message}`);
 }
 
 let basepairMessage = "Locating basepairs, please be patient...";

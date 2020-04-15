@@ -206,7 +206,7 @@ function readDat(datReader, system) {
         }
     }
     addSystemToScene(system);
-    PBCswitchbox();
+    centerAndPBC(system.getMonomers());
     sysCount++;
     //if there's another time line after the first configuration is loaded, its a trajectory
     if (lines[numNuc].slice(0, 1) == 't')

@@ -201,6 +201,7 @@ function notify(message) {
     notification.onmouseover = remove;
     noticeboard.appendChild(notification);
     setTimeout(remove, 5000);
+    console.info(`Notification: ${message}`);
 }
 let basepairMessage = "Locating basepairs, please be patient...";
 function longCalculation(calc, message, callback) {
