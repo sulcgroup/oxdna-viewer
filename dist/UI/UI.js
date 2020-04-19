@@ -240,6 +240,7 @@ function toggleVisArbitrary() {
         selectedBases.forEach(e => e.toggleVisibility());
     }
     systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
+    clearSelection();
 }
 function notify(message) {
     const noticeboard = document.getElementById('noticeboard');

@@ -271,6 +271,7 @@ function toggleVisArbitrary() {
     }
     
     systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
+    clearSelection();
 }
 
 function notify(message: string) {
