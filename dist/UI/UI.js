@@ -183,16 +183,22 @@ function colorSelection() {
     if (!opt.hidden) {
         opt.innerHTML = ""; // clear content
         const setButton = document.createElement('button');
+        const resetButton = document.createElement('button');
         setButton.innerText = "Set Color";
+        resetButton.innerText = "Reset Colors";
+        let coloringChanged = false;
         // create color map with selected color
         setButton.onclick = () => {
-            setColoringMode("Overlay");
             const colorSelect = new THREE.Color(colorInput.value);
+            // ensures colors won't be lost when switching 'color by' options
+            if (coloringChanged) {
+                setColoringMode("Overlay");
+            }
             if (lut == undefined) {
                 lut = new THREE.Lut(defaultColormap, 512);
                 // legend is necessary to set 'color by' to Overlay, gets removed later
-                lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } });
-                lut.setLegendLabels({ 'title': "hide me please", 'ticks': 1 });
+                lut.setLegendOn( /*{ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }*/);
+                lut.setLegendLabels( /*{ 'title': "", 'ticks': 1 }*/);
             }
             // initialize lutCols to existing colors
             for (let i = 0; i < systems.length; i++) {
@@ -214,11 +220,29 @@ function colorSelection() {
             if (!systems.some(system => system.colormapFile)) {
                 api.removeColorbar();
             }
+            coloringChanged = true;
+            clearSelection();
+        };
+        // reset color overlay
+        resetButton.onclick = () => {
+            setColoringMode("Strand");
+            for (let i = 0; i < systems.length; i++) {
+                const system = systems[i];
+                const end = system.bbColors.length;
+                for (let j = 0; j < end; j += 3) {
+                    const r = system.bbColors[j];
+                    const g = system.bbColors[j + 1];
+                    const b = system.bbColors[j + 2];
+                    system.lutCols[j / 3] = new THREE.Color(r, g, b);
+                }
+            }
+            clearSelection();
         };
         let colorInput = document.createElement('input');
         colorInput.type = 'color';
         opt.appendChild(colorInput);
         opt.appendChild(setButton);
+        opt.appendChild(resetButton);
     }
 }
 ;
