@@ -210,6 +210,7 @@ function colorSelection() {
 
         // create color map with selected color
         setButton.onclick = () => {
+            setColoringMode("Overlay");
             const colorSelect = new THREE.Color(colorInput.value);
 
             if (lut == undefined) {
