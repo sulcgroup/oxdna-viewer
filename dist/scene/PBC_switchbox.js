@@ -30,7 +30,6 @@ function getCenteringGoal() {
     // Check which point we want as origin
     let centerOption;
     if (window.sessionStorage.centerOption) {
-        console.log(window.sessionStorage.centerOption);
         centerOption = window.sessionStorage.centerOption;
     }
     else {
@@ -49,7 +48,6 @@ function getCenteringGoal() {
  */
 function getInboxingMode() {
     if (window.sessionStorage.inboxingOption) {
-        console.log(window.sessionStorage.inboxingOption);
         return window.sessionStorage.inboxingOption;
     }
     return document.getElementById("inboxing").value;

@@ -37,7 +37,6 @@ function getCenteringGoal(): THREE.Vector3 {
     // Check which point we want as origin
     let centerOption: string; 
     if(window.sessionStorage.centerOption){
-        console.log(window.sessionStorage.centerOption);
         centerOption = window.sessionStorage.centerOption;
     } 
     else{
@@ -57,7 +56,6 @@ function getCenteringGoal(): THREE.Vector3 {
  */
 function getInboxingMode(): string {
     if(window.sessionStorage.inboxingOption){
-        console.log(window.sessionStorage.inboxingOption)
         return window.sessionStorage.inboxingOption;
     }
     return (document.getElementById("inboxing") as HTMLSelectElement).value;
