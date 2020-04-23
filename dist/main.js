@@ -148,3 +148,9 @@ function dot(x1, y1, z1, x2, y2, z2) {
 function divAndNeg(mat, divisor) {
     return [-mat[0] / divisor, -mat[1] / divisor, -mat[2] / divisor];
 }
+//Temporary solution to adding configuration storage
+//This section sets interface values from the storage 
+if (window.sessionStorage.centerOption)
+    document.getElementById("centering").value = window.sessionStorage.centerOption;
+if (window.sessionStorage.inboxingOption)
+    document.getElementById("inboxing").value = window.sessionStorage.inboxingOption;

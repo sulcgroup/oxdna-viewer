@@ -6,6 +6,16 @@
  * everything within the simulation box.
  * @param elems A list of elements to centre
  */
+
+function centerAndPBCBtnClick(elems?: BasicElement[]){
+    window.sessionStorage.centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
+    window.sessionStorage.inboxingOption = (document.getElementById("inboxing") as HTMLSelectElement).value;
+
+    centerAndPBC(elems);
+
+}
+
+
 function centerAndPBC(elems?: BasicElement[]) {
     if (!elems) {
         elems = Array.from(elements.values());
@@ -25,7 +35,15 @@ function centerAndPBC(elems?: BasicElement[]) {
  */
 function getCenteringGoal(): THREE.Vector3 {
     // Check which point we want as origin
-    let centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
+    let centerOption: string; 
+    if(window.sessionStorage.centerOption){
+        console.log(window.sessionStorage.centerOption);
+        centerOption = window.sessionStorage.centerOption;
+    } 
+    else{
+        centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
+    }
+    //let centerOption = 
     switch (centerOption) {
         case "Box Center": return box.clone().divideScalar(2);
         case "Origin": return new THREE.Vector3();
@@ -38,6 +56,10 @@ function getCenteringGoal(): THREE.Vector3 {
  * Either "Monomer" or "Strand"
  */
 function getInboxingMode(): string {
+    if(window.sessionStorage.inboxingOption){
+        console.log(window.sessionStorage.inboxingOption)
+        return window.sessionStorage.inboxingOption;
+    }
     return (document.getElementById("inboxing") as HTMLSelectElement).value;
 }
 

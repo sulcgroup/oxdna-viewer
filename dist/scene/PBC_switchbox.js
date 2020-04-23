@@ -5,6 +5,11 @@
  * everything within the simulation box.
  * @param elems A list of elements to centre
  */
+function centerAndPBCBtnClick(elems) {
+    window.sessionStorage.centerOption = document.getElementById("centering").value;
+    window.sessionStorage.inboxingOption = document.getElementById("inboxing").value;
+    centerAndPBC(elems);
+}
 function centerAndPBC(elems) {
     if (!elems) {
         elems = Array.from(elements.values());
@@ -23,7 +28,15 @@ function centerAndPBC(elems) {
  */
 function getCenteringGoal() {
     // Check which point we want as origin
-    let centerOption = document.getElementById("centering").value;
+    let centerOption;
+    if (window.sessionStorage.centerOption) {
+        console.log(window.sessionStorage.centerOption);
+        centerOption = window.sessionStorage.centerOption;
+    }
+    else {
+        centerOption = document.getElementById("centering").value;
+    }
+    //let centerOption = 
     switch (centerOption) {
         case "Box Center": return box.clone().divideScalar(2);
         case "Origin": return new THREE.Vector3();
@@ -35,6 +48,10 @@ function getCenteringGoal() {
  * Either "Monomer" or "Strand"
  */
 function getInboxingMode() {
+    if (window.sessionStorage.inboxingOption) {
+        console.log(window.sessionStorage.inboxingOption);
+        return window.sessionStorage.inboxingOption;
+    }
     return document.getElementById("inboxing").value;
 }
 /**
@@ -77,9 +94,6 @@ function bringInBox(boxOption) {
                 strand.translateStrand(pNew.sub(pOld));
             });
         });
-    }
-    else if (boxOption =="None") {
-        return
     }
     else {
         notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`);
