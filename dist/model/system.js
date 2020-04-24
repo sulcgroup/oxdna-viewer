@@ -55,6 +55,9 @@ class System {
             }
         });
     }
+    getElementBySID(sid) {
+        return elements.get(this.globalStartId + sid);
+    }
     toggleStrands() {
         this.strands.forEach(strand => {
             strand.toggleMonomers();

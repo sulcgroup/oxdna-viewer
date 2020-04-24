@@ -100,6 +100,10 @@ class System {
         });
     }
 
+    getElementBySID(sid:number){
+        return elements.get(this.globalStartId + sid);
+    }
+
     toggleStrands(){
         this.strands.forEach(strand=>{
             strand.toggleMonomers();

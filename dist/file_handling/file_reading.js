@@ -62,7 +62,7 @@ target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
     const files = event.dataTransfer.files, filesLen = files.length;
-    let topFile, jsonFile;
+    let topFile, jsonFile, trapFile;
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -82,33 +82,118 @@ target.addEventListener("drop", function (event) {
             topFile = files[i];
         else if (ext === "json")
             jsonFile = files[i];
+        else if (ext === "txt" && fileName.includes("trap"))
+            trapFile = files[i];
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, and .json\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.");
             return;
         }
     }
     let jsonAlone = false;
-    if (jsonFile && !topFile)
-        jsonAlone = true;
-    if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
-        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-        return;
+    if (!trapFile) {
+        if (jsonFile && !topFile)
+            jsonAlone = true;
+        if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
+            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+            return;
+        }
+        //read a topology/configuration pair and maybe a json file
+        if (!jsonAlone) {
+            readFiles(topFile, datFile, jsonFile);
+        }
+        //read just a json file to generate an overlay on an existing scene
+        if (jsonFile && jsonAlone) {
+            const jsonReader = new FileReader(); //read .json
+            jsonReader.onload = () => {
+                readJson(systems[systems.length - 1], jsonReader);
+            };
+            jsonReader.readAsText(jsonFile);
+            renderer.domElement.style.cursor = "auto";
+        }
     }
-    //read a topology/configuration pair and maybe a json file
-    if (!jsonAlone) {
-        readFiles(topFile, datFile, jsonFile);
-    }
-    //read just a json file to generate an overlay on an existing scene
-    if (jsonFile && jsonAlone) {
-        const jsonReader = new FileReader(); //read .json
-        jsonReader.onload = () => {
-            readJson(systems[systems.length - 1], jsonReader);
+    else {
+        const trapReader = new FileReader(); //read .trap file
+        trapReader.onload = () => {
+            readTrap(systems[systems.length - 1], trapReader);
         };
-        jsonReader.readAsText(jsonFile);
+        trapReader.readAsText(trapFile);
         renderer.domElement.style.cursor = "auto";
     }
     render();
 }, false);
+//parse a trap file
+function readTrap(system, trapReader) {
+    let file = trapReader.result;
+    //{ can be replaced with \n to make sure no parameter is lost 
+    while (file.indexOf("{") >= 0)
+        file = file.replace("{", "\n");
+    // traps can be split by } because everything between {} is one trap 
+    let traps = file.split("}");
+    let trap_objs = [];
+    traps.forEach((trap) => {
+        let lines = trap.split('\n');
+        //empty lines and empty traps need not be processed as well as comments  
+        lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
+        if (lines.length == 0)
+            return;
+        let trap_obj = {};
+        lines.forEach((line) => {
+            let com_pos = line.indexOf("#");
+            if (com_pos >= 0)
+                line = line.slice(0, com_pos).trim();
+            //another chance an empty line can be encountered 
+            if (line.length == 0 || line == " ")
+                return;
+            //split into option name and value
+            let options = line.split("=");
+            let lft = options[0].trim();
+            let rght = options[1].trim();
+            trap_obj[lft] = rght;
+        });
+        if (Object.keys(trap_obj).length > 0)
+            trap_objs.push(trap_obj);
+    });
+    //handle the different traps 
+    trap_objs.forEach((trap) => {
+        switch (trap.type) {
+            //case "trap":
+            //    //notify(`${trap["type"]} type `);
+            //    
+            //    break;
+            //case "repulsion_plane":
+            //    //notify(`${trap["type"]} type `);
+            //    
+            //    break;
+            case "mutual_trap":
+                const particle = system.getElementBySID(parseInt(trap.particle)).getInstanceParameter3("bbOffsets"); // the particle on which to exert the force.
+                const ref_particle = system.getElementBySID(parseInt(trap.ref_particle)).getInstanceParameter3("bbOffsets"); // particle to pull towards. 
+                // Please note that this particle will not feel any force (the name mutual trap is thus misleading).
+                const stiff = parseFloat(trap.stiff); // stiffness of the trap.
+                const r0 = parseFloat(trap.r0); // equilibrium distance of the trap.
+                let dir = ref_particle.clone().sub(particle);
+                dir.normalize();
+                //draw equilibrium distance 
+                let equilibrium_distance = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
+                    particle, particle.clone().add(dir.clone().multiplyScalar(r0))
+                ]), new THREE.LineBasicMaterial({
+                    color: 0x0000ff //, //linewidth: stiff
+                }));
+                equilibrium_distance.name = `mutual_trap_distance ${trap.particle}->${trap.ref_particle}`;
+                scene.add(equilibrium_distance);
+                //draw force 
+                dir = ref_particle.clone().sub(particle);
+                let force_v = dir.clone().normalize().multiplyScalar((dir.length() - r0) * stiff);
+                dir.normalize();
+                let force = new THREE.ArrowHelper(dir, particle, force_v.length(), 0xC0C0C0, .3);
+                force.name = `mutual_trap_force ${trap.particle}->${trap.ref_particle}`;
+                scene.add(force);
+                break;
+            default:
+                notify(`trap ${trap["type"]}  type not supported yet, feel free to implement in file_reading.ts`);
+                break;
+        }
+    });
+}
 // Files can also be retrieved from a path
 function readFilesFromPath(topologyPath, configurationPath) {
     if (topologyPath && configurationPath) {
@@ -394,7 +479,7 @@ function readParFile(file) {
             //extract values
             const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[2]), type = l[3], strength = parseFloat(l[4]);
             //dereference p and q into particle positions from the system
-            const particle1 = elements.get(system.globalStartId + p), particle2 = elements.get(system.globalStartId + q);
+            const particle1 = system.getElementBySID(p), particle2 = system.getElementBySID(q);
             if (particle1 == undefined)
                 console.log(i);
             const connection = anm.createConnection(particle1, particle2, eqDist, type, strength);
