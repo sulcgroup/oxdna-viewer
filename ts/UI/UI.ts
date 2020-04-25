@@ -222,8 +222,8 @@ function colorSelection() {
             if (lut == undefined) {
                 lut = new THREE.Lut(defaultColormap, 512);
                 // legend is necessary to set 'color by' to Overlay, gets removed later
-                lut.setLegendOn(/*{ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }*/);
-                lut.setLegendLabels(/*{ 'title': "", 'ticks': 1 }*/);
+                lut.setLegendOn();
+                lut.setLegendLabels();
             }
 
             // initialize lutCols to existing colors
@@ -297,6 +297,7 @@ function toggleVisArbitrary() {
     }
     
     systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
+    tmpSystems.forEach(tempSys => tempSys.callUpdates(['instanceVisibility']));
     clearSelection();
 }
 
