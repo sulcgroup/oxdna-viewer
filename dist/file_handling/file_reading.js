@@ -66,7 +66,7 @@ target.addEventListener("drop", function (event) {
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
-        const fileName = files[i].name;
+        const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
