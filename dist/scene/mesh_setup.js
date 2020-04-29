@@ -24,43 +24,43 @@ var backboneColors = [
 ];
 // define nucleoside colors
 var nucleosideColors = [
-    new THREE.Color(0x3333FF),
+    new THREE.Color(0x4747B8),
     new THREE.Color(0xFFFF33),
-    //C or K
-    new THREE.Color(0x33FF33),
-    //T/U or D
+    //C or A
+    new THREE.Color(0x8CFF8C),
+    //T/U or T
     new THREE.Color(0xFF3333),
     //E
-    new THREE.Color(0xE60A0A),
+    new THREE.Color(0x660000),
     //S
-    new THREE.Color(0xFA9600),
-    //T
-    new THREE.Color(0x3232AA),
+    new THREE.Color(0xFF7042),
+    //D
+    new THREE.Color(0xA00042),
     //N
-    new THREE.Color(0xE60A0A),
+    new THREE.Color(0xFF7C70),
     //Q
-    new THREE.Color(0x00DCDC),
-    //C
-    new THREE.Color(0xE6E600),
+    new THREE.Color(0xFF4C4C),
+    //H
+    new THREE.Color(0x7070FF),
     //G
     new THREE.Color(0xEBEBEB),
     //P
-    new THREE.Color(0xDC9682),
-    //A
-    new THREE.Color(0xC8C8C8),
+    new THREE.Color(0x525252),
+    //R
+    new THREE.Color(0x00007C),
     //V
-    new THREE.Color(0x0F820F),
+    new THREE.Color(0x5E005E),
     //I
-    new THREE.Color(0x0F820F),
+    new THREE.Color(0x004C00),
     //L
-    new THREE.Color(0x0F820F),
+    new THREE.Color(0x455E45),
     //M
-    new THREE.Color(0xE6E600),
+    new THREE.Color(0xB8A042),
     //F
-    new THREE.Color(0xFF3333),
+    new THREE.Color(0x534C42),
     //Y
-    new THREE.Color(0x3232AA),
+    new THREE.Color(0x8C704C),
     //W
-    new THREE.Color(0xB45AB4),
+    new THREE.Color(0x4F4600),
 ];
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!

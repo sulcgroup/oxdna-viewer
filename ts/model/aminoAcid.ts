@@ -11,7 +11,7 @@ class AminoAcid extends BasicElement {
     };
 
     elemToColor(elem: number | string): THREE.Color {
-        elem = { "R": 0, "H": 1, "K": 2, "D": 3, "E": 3, "S": 4, "T": 5, "N": 6, "Q": 7, "C": 8, "U": 9, "G": 10, "P": 11, "A": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
+        elem = { "K": 0, "C": 1, "A": 2, "T": 3, "E": 3, "S": 4, "D": 5, "N": 6, "Q": 7, "H": 8, "G": 10, "P": 11, "R": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
         if (elem == undefined) return GREY
         return nucleosideColors[elem];
     };
