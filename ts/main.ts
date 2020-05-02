@@ -178,3 +178,65 @@ if (window.sessionStorage.centerOption)
 (document.getElementById("centering") as HTMLSelectElement).value = window.sessionStorage.centerOption;
 if (window.sessionStorage.inboxingOption)    
 (document.getElementById("inboxing") as HTMLSelectElement).value = window.sessionStorage.inboxingOption ;
+
+
+var ws = new WebSocket('ws://localhost:8888');
+ws.onopen = (response) => {
+    console.log('connection to server established');
+    ws.onmessage = (response) => {
+        let message = JSON.parse(response.data);
+        if ("dat_file" in message) {
+            let lines = message["dat_file"].split("\n");
+            lines =  lines.slice(3) // discard the header
+            const system = systems[systems.length-1];
+            const numNuc: number = system.systemLength(); //gets # of nuc in system
+            let currentNucleotide: BasicElement,
+            l: string[];
+            for (let lineNum = 0; lineNum < numNuc; lineNum++) {
+                if (lines[lineNum] == "") {
+                    notify("There's an empty line in the middle of your configuration!")
+                    break
+                };
+                currentNucleotide = elements.get(systems[systems.length-1].globalStartId+lineNum);
+                // consume a new line
+                l = lines[lineNum].split(" ");
+                currentNucleotide.calculateNewConfigPositions(l);
+            }
+    
+        system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+        system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        
+        centerAndPBC();
+        render();
+        }
+    };
+
+}
+let send_configuration = () => {
+    let reorganized, counts, conf = {};
+    {
+        let {a, b, file_name, file} = makeTopFile(name);
+        reorganized = a;
+        counts = b;
+        conf["top_file"] = file;
+    }
+    {
+        let {file_name, file} = makeDatFile(name, reorganized);
+        conf["dat_file"] = file;	
+    }
+    if (ANMs.length > 0) {
+        let {file_name, file} = makeParFile(name, reorganized, counts);
+        conf["par_file"] = file;
+    }
+    ws.send(
+        JSON.stringify(conf)
+    );
+}
+

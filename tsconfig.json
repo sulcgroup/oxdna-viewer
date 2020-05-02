@@ -36,6 +36,7 @@
         "./ts/scene/scene_setup.ts",
         "./ts/UI/keybindings.ts",
         "./ts/UI/base_selector.ts",
-        "./ts/UI/UI.ts"
+        "./ts/UI/UI.ts",
+        "./ts/ox-serve.ts"
     ]
 }

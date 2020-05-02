@@ -1,11 +1,12 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
     let name = (<HTMLInputElement>document.getElementById("outputFilename")).value;
     let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
-    let reorganized, counts
+    let reorganized, counts;
     if (top[0].checked == true) {
-        let {a, b} = makeTopFile(name);
+        let {a, b, file_name, file} = makeTopFile(name);
         reorganized = a;
         counts = b;
+        makeTextFile(file_name,file);
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated");
@@ -13,12 +14,14 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
     }
     let dat = <NodeListOf<HTMLInputElement>>document.getElementsByName("datDownload");
     if (dat[0].checked == true) {
-        makeDatFile(name, reorganized);	
+        let {file_name, file} = makeDatFile(name, reorganized);
+        makeTextFile(file_name, file);	
     }
 
     console.log(ANMs.length);
     if (ANMs.length > 0) {
-        makeParFile(name, reorganized, counts);
+        let {file_name, file} = makeParFile(name, reorganized, counts);
+        makeTextFile(file_name, file);
     }
 }
 
@@ -141,10 +144,10 @@ function makeTopFile(name){
 
         top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
     });
-    makeTextFile(name+".top", top.join("\n")); //make .top 
+    //makeTextFile(name+".top", top.join("\n")); //make .top 
 
     //this is absolute abuse of ES6 and I feel a little bad about it
-    return {a: newElementIds, b: firstLine};
+    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n")};
 }
 function makeDatFile(name, altNumbering=undefined) {
     // Get largest absolute coordinate:
@@ -180,8 +183,7 @@ function makeDatFile(name, altNumbering=undefined) {
             });
         });
     }
-
-    makeTextFile(name+".dat", dat); //make .dat file
+    return {file_name: name + ".dat", file: dat};//make .dat file
 }
 
 function makeParFile(name: string, altNumbering, counts) {
@@ -201,8 +203,7 @@ function makeParFile(name: string, altNumbering, counts) {
             par.push(line.join(" "));
         } 
     });
-
-    makeTextFile(name+".par", par.join('\n'));
+    return {file_name :name+".par", file : par.join('\n') };
 }
 
 function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file
