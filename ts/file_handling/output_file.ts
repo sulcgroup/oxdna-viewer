@@ -16,7 +16,6 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
         makeDatFile(name, reorganized);	
     }
 
-    console.log(ANMs.length);
     if (ANMs.length > 0) {
         makeParFile(name, reorganized, counts);
     }
@@ -158,7 +157,7 @@ function makeDatFile(name, altNumbering=undefined) {
         ))
     });
     let dat: string = "";
-    let box: number = Math.ceil(3 * maxCoord);
+    let box: number = Math.ceil(6 * maxCoord);
     dat = [
         `t = 0`,
         `b = ${box} ${box} ${box}`,
@@ -278,7 +277,7 @@ function makeOxViewJsonFile(space?: string | number) {
     }, null, space));
 }
 
-let textFile: string;
+//let textFile: string;
 function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
     let blob = new Blob([text], {type:'text'});
     var elem = window.document.createElement('a');

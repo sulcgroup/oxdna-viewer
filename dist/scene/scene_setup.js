@@ -64,7 +64,7 @@ camera = createPerspectiveCamera(45, 0.1, 999999, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 // Create canvas and renderer
 const canvas = document.getElementById("threeCanvas");
-const renderer = new THREE.WebGLRenderer({
+var renderer = new THREE.WebGLRenderer({
     preserveDrawingBuffer: true,
     alpha: true,
     antialias: true,

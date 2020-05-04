@@ -80,7 +80,7 @@ declare var CCapture: any;
 
 // Create canvas and renderer
 const canvas = <HTMLCanvasElement> document.getElementById("threeCanvas");
-const renderer = new THREE.WebGLRenderer({ //create renderer
+var renderer = new THREE.WebGLRenderer({ //create renderer  //needs to be var to have it exposed for the oxdna.org webserver interface
     preserveDrawingBuffer: true,
     alpha: true,
     antialias: true,

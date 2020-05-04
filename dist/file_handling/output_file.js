@@ -15,7 +15,6 @@ function makeOutputFiles() {
     if (dat[0].checked == true) {
         makeDatFile(name, reorganized);
     }
-    console.log(ANMs.length);
     if (ANMs.length > 0) {
         makeParFile(name, reorganized, counts);
     }
@@ -232,7 +231,7 @@ function makeOxViewJsonFile(space) {
         systems: systems
     }, null, space));
 }
-let textFile;
+//let textFile: string;
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });
     var elem = window.document.createElement('a');
