@@ -195,7 +195,7 @@ function readTrap(system, trapReader) {
     });
 }
 // Files can also be retrieved from a path
-function readFilesFromPath(topologyPath, configurationPath) {
+function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefined) {
     if (topologyPath && configurationPath) {
         let topReq = new XMLHttpRequest();
         topReq.open("GET", topologyPath);
@@ -205,9 +205,19 @@ function readFilesFromPath(topologyPath, configurationPath) {
             var datReq = new XMLHttpRequest();
             datReq.open("GET", configurationPath);
             datReq.responseType = "blob";
+            if (overlayPath != undefined) {
+                var overlayReq = new XMLHttpRequest();
+                overlayReq.open("GET", overlayPath);
+            }
             datReq.onload = () => {
                 datFile = datReq.response;
-                readFiles(topFile, datFile);
+                if (overlayPath != undefined) {
+                    const overlayFile = overlayReq.response;
+                    readFiles(topFile, datFile, overlayFile);
+                }
+                else {
+                    readFiles(topFile, datFile);
+                }
             };
             datReq.send();
         };
@@ -219,7 +229,8 @@ function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     const topologyPath = url.searchParams.get("topology");
     const configurationPath = url.searchParams.get("configuration");
-    readFilesFromPath(topologyPath, configurationPath);
+    const overlayPath = url.searchParams.get("overlay");
+    readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, jsonFile) {
