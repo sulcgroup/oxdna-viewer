@@ -125,7 +125,7 @@ function makeDatFile(name, altNumbering = undefined) {
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     });
     let dat = "";
-    let box = Math.ceil(3 * maxCoord);
+    let box = Math.ceil(6 * maxCoord);
     dat = [
         `t = 0`,
         `b = ${box} ${box} ${box}`,
