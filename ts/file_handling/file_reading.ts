@@ -255,7 +255,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             datReq.responseType = "blob";
             datReq.onload = () => {
                 datFile = datReq.response;
-                readFiles(topFile, datFile);
+                readFiles(topFile, datFile, overlayFile);
             }
             datReq.send();
         }

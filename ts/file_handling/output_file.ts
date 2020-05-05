@@ -280,10 +280,11 @@ function makeOxViewJsonFile(space?: string | number) {
 //let textFile: string;
 function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
     let blob = new Blob([text], {type:'text'});
-    var elem = window.document.createElement('a');
-    elem.href = window.URL.createObjectURL(blob);
-    elem.download = filename;
-    document.body.appendChild(elem);
-    elem.click();
-    document.body.removeChild(elem);
+    var elem = window.document.createElement('a'); //
+    elem.href = window.URL.createObjectURL(blob); //
+    elem.download = filename; //
+    document.body.appendChild(elem); //
+    elem.click(); //
+    document.body.removeChild(elem); //
+    //window.parent.FakeDataDownload(blob, filename);
 };
