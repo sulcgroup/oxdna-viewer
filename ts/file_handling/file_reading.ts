@@ -238,22 +238,24 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
         topReq.responseType = "blob";
         topReq.onload = () => {
             const topFile = topReq.response;
-            var datReq = new XMLHttpRequest();
-            datReq.open("GET", configurationPath);
-            datReq.responseType = "blob";
+
+            let overlayFile = undefined;
             if (overlayPath != undefined) {
                 var overlayReq = new XMLHttpRequest();
                 overlayReq.open("GET", overlayPath);
+                overlayReq.responseType = "blob";
+                overlayReq.onload = () => {
+                    overlayFile = overlayReq.response;
+                }
+                overlayReq.send()
             }
+
+            var datReq = new XMLHttpRequest();
+            datReq.open("GET", configurationPath);
+            datReq.responseType = "blob";
             datReq.onload = () => {
                 datFile = datReq.response;
-                if (overlayPath != undefined) {
-                    const overlayFile = overlayReq.response;
-                    readFiles(topFile, datFile, overlayFile);
-                }
-                else {
-                    readFiles(topFile, datFile);
-                }
+                readFiles(topFile, datFile);
             }
             datReq.send();
         }
