@@ -37,6 +37,6 @@
         "./ts/UI/keybindings.ts",
         "./ts/UI/base_selector.ts",
         "./ts/UI/UI.ts",
-        "./ts/ox-serve.ts"
+        "./ts/api/live_relax.ts"
     ]
 }

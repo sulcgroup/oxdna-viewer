@@ -81,6 +81,25 @@
         </div>
     </div>
 
+    <div class="modal" id="socketConnections">
+        <div class="modal-content">
+            <p>The viewer supports live relaxation using ox-serve nodes.</p>
+            <p>List of available servers:</p>
+            <div id="serverList" style="display: inline-block;">
+            </div><br>
+            <div>
+                <label for="newHostText">New Host: </label>
+                <input type="text" id="newHostText" size="13" value="ws://some_host" title="ox-serve url address">
+                <button style="width: 50px; height:30px;" onclick="addOXServeURL()" title="Add ox-serve url address.">+</button>
+                <br><br>
+            </div>
+            <button  onclick="toggleModal('socketConnections')" title="Cancel">Cancel</button>            
+        </div>
+    </div>
+    
+
+
+
     <!--Pause notices-->
     <div id="pause" class="modal"></div>
 
@@ -95,9 +114,10 @@
             <fieldset>
                 <legend onclick="toggleFieldSet(this)">File</legend>
                 <div hidden="true">
+                    <button id="btnConnect" onclick="openConnections()" type="button" title="Live interactions.">Connect to oxServe</button>
                     <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
                     <button onclick="toggleModal('fileOptions')" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
-                    <button onclick="toggleModal('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>
+                    <button onclick="toggleModal('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>                    
                     <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
                     <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
                     <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
@@ -392,6 +412,7 @@
         <script src="./dist/api/editing_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
         <script src="./dist/file_handling/stl_exporter.js"></script>
+        <script src="./dist/api/live_relax.js"></script>
     </div>
 </body>
 
