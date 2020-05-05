@@ -23,7 +23,9 @@ Edited strands can also be exported for ordering purposes in CSV format by click
 ---
 
 ## Video Options  
-If you would like to make a video of a trajectory, load a trajectory and click the "Create Video" button.  This will open an interactive panel where you can choose video type and output format.  
+If you would like to make a video of a trajectory, load a trajectory and click the "Create Video" button.  This will open an interactive panel where you can choose video type and output format.
+
+You can also watch the tutorial: [Creating oxDNA videos in oxView](https://www.youtube.com/watch?v=yKAD07NoZpc).
 
 ### Video types  
 **Trajectory**: Will run through the provided trajectory, saving every configuration as a frame.  Will play back at the provided frame rate.  If you want to stop the capture early, click the "Stop" button and the video will download as-is.  If the camera is moved during trajectory capture this will appear in the final video, allowing you to easily show different angles.  
@@ -80,6 +82,8 @@ CaDNAno files exported to oxDNA using [conversion tools](http://tacoxdna.sissa.i
 
 To use, first click on the "Cluster" options button (![clusterOptions](https://fonts.gstatic.com/s/i/materialicons/tune/v1/24px.svg)) under the "Selection Mode" header in the sidebar. This will bring up a UI for selecting clusters. Either allow the software to automatically choose clusters using a DBSCAN algorithm (works quite well for most CaDNAno designs), or select them yourself. Once clusters are defined, click the "Rigid cluster dynamics" checkbox to initiate simulation.  Click it again to stop.  You can drag clusters around during simulation to help the relaxation along or correct topological inaccuracies by switching to drag mode.
 
+For more information, watch the tutorial: [Arranging a tetrahedron from caDNAno in oxView](https://www.youtube.com/watch?v=yKAD07NoZpc) and have a look at [our examples](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples#rigid-body-relaxation).
+
 ---
 
 ## 3D Printing Export 
@@ -103,16 +107,16 @@ This software is still in active development, so features remain in high flux.  
 
 If you want to extend the code for your own purposes, you will also need to install Typescript, Three.js and Typescript bindings for Three.  Full download instructions:
 
-1) "git clone -b master https://github.com/sulcgroup/oxdna-viewer.git"  
+1) `git clone -b master https://github.com/sulcgroup/oxdna-viewer.git`
 2) Download Typescript and Node.js 
    ts and npm ask for different name of node.js: one is node and another is nodejs, you may need to change the name of it accordingly or get an extra copy  
-3) "npm install --save @types/three"  
+3) `npm install --save @types/three`
    If it goes wrong, open the package.json file and change "name", into "types/three-test" and try again  
    Refer to https://thisdavej.com/node-newbie-error-npm-refusing-to-install-package-as-a-dependency-of-itself  
 4) Go to oxdna-viewer folder  
-5) npm install --save @types/webvr-api  
+5) `npm install --save @types/webvr-api`
    These previous two steps install the necessary Typescript bindings for Three.js  
-6) tsc  
+6) `tsc`  
    This is the command to run the typescript compiler.  Output directory and adding new files to the compiler can be found in tsconfig.json  
    tsc needs to be run every time you make changes to the Typescript.  If you run tsc with the -w flag it will continuously watch for file changes.  
 7) The compiled Javascript will be in the dist/ directory  
