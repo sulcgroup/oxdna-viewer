@@ -130,6 +130,8 @@ class OXServeSocket extends WebSocket{
             let {file_name, file} = makeParFile(name, reorganized, counts);
             conf["par_file"] = file;
         }
+        conf["type"] = "DNA";
+        conf["settings"] = {};
         this.send(
             JSON.stringify(conf)
         );
