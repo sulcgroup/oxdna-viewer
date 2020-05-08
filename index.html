@@ -59,25 +59,38 @@
         </div>
     </div>
 
-    <!--Stl Export options-->
-    <div class="modal" id="stlExportOptions">
+    <!--3d Export options-->
+    <div class="modal" id="3dExportOptions">
         <div class="modal-content">
-            <!-- STLExporter(elements, , , , include_bbconnector, scale,faces_mul ); -->
-            <p>The viewer supports scene export in the common 3D printing STL format. For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file, choosing from:</p>
+            <p>
+                The viewer supports 3D format export in both STL and glTF. STL is a common 3D printing format but generates quite large files.
+                glTF is a more recent format and is recommended for rendering nice-looking graphics in programs such as Blender.
+                The gltf files is already much smaller than STL, but you can also export to binary glb if you want to go smaller still.
+            </p>
+            <label for="3dExportFormat">Video type:</label>
+            <select id="3dExportFormat" >
+                <option value="gltf">gltf</option>
+                <option value="glb">glb</option>
+                <option value="stl">stl</option>
+            </select>
+            <p>For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file, choosing from:</p>
             <input type="checkbox" name="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
             <input type="checkbox" name="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
             <input type="checkbox" name="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
             <input type="checkbox" name="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
             <p>By increasing the scaling of the model objects can be made to overlap, which is benefitial for sturdy printed models.</p>
-            <label for="stlScale">scale: </label>
-            <input type="number" value="1" id="stlScale" title="rescale the model" min=1 max = 10></br>
-            <p>The smoothness of the exported model is controlled via the faces multiplier setting. Note that additional smoothness results in very large STL files which not every browser can handle.</p>
-            <label for="facesMul">faces multiplier: </label>
-            <input type="number" value="1" id="facesMul" title="increases model smoothness" min=1 max=5><br>
-            <label for="outputSTLFilename">File name: </label>
-            <input type="text" id="outputSTLFilename" size="13" value="output" title="STL file name"><br><br>
-            <button style="width: 49%" onclick="toggleModal('stlExportOptions')" title="Cancel">Cancel</button>
-            <button style="width: 49%" onclick="makeSTLOutput()" title="Download the specified files">Download Files</button>
+            <label for="3dExportScale">scale: </label>
+            <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max = 10></br>
+            <p>
+                The smoothness of the exported model is controlled via the faces multiplier setting.
+                Note that high smoothness in STL results in very large 3d files which not every browser can handle.
+            </p>
+            <label for="3dExportFacesMul">faces multiplier: </label>
+            <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5><br>
+            <label for="3dExportFilename">File name: </label>
+            <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name"><br><br>
+            <button style="width: 49%" onclick="toggleModal('3dExportOptions')" title="Cancel">Cancel</button>
+            <button style="width: 49%" onclick="make3dOutput()" title="Download the specified files">Download Files</button>
         </div>
     </div>
 
@@ -97,7 +110,7 @@
                 <div hidden="true">
                     <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
                     <button onclick="toggleModal('fileOptions')" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
-                    <button onclick="toggleModal('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>
+                    <button onclick="toggleModal('3dExportOptions')" type="button" title="Options for 3d export of the scene.">3d Export</button>
                     <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
                     <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
                     <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
@@ -392,6 +405,7 @@
         <script src="./dist/api/editing_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
         <script src="./dist/file_handling/stl_exporter.js"></script>
+        <script src="./dist/file_handling/GLTFExporter.js"></script>
     </div>
 </body>
 

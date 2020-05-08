@@ -19,15 +19,46 @@ function makeOutputFiles() {
         makeParFile(name, reorganized, counts);
     }
 }
-function makeSTLOutput() {
-    const name = document.getElementById("outputSTLFilename").value;
+function makeArrayBuffer(buffer, filename) {
+    var link = document.createElement('a');
+    link.style.display = 'none';
+    document.body.appendChild(link); // Firefox workaround, see #6594 threejs
+    let blob = new Blob([buffer], { type: 'application/octet-stream' });
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+function make3dOutput() {
+    const name = document.getElementById("3dExportFilename").value;
+    const fileFormat = document.getElementById("3dExportFormat").value;
     const include_backbone = document.getElementsByName("includeBackbone")[0].checked;
     const include_nucleoside = document.getElementsByName("includeNucleoside")[0].checked;
     const include_connector = document.getElementsByName("includeConnector")[0].checked;
     const include_bbconnector = document.getElementsByName("includeBBconnector")[0].checked;
-    const faces_mul = parseFloat(document.getElementById("facesMul").value);
-    const stl_scale = parseFloat(document.getElementById("stlScale").value);
-    saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+    const faces_mul = parseFloat(document.getElementById("3dExportFacesMul").value);
+    const stl_scale = parseFloat(document.getElementById("3dExportScale").value);
+    if (fileFormat === 'stl') {
+        saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+    }
+    else if (fileFormat === 'gltf' || fileFormat === 'glb') {
+        let binary = fileFormat === 'glb';
+        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+        var exporter = new GLTFExporter();
+        var options = { 'forceIndices': true, 'binary': binary };
+        // Parse the input and generate the glTF output
+        exporter.parse(objects, function (result) {
+            if (result instanceof ArrayBuffer) {
+                makeArrayBuffer(result, name + '.glb');
+            }
+            else {
+                var output = JSON.stringify(result);
+                makeTextFile(name + '.gltf', output);
+            }
+        }, options);
+    }
+    else {
+        notify(`Unknown file format: ${fileFormat}`);
+    }
 }
 function makeTopFile(name) {
     const top = []; //string of contents of .top file
