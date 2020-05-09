@@ -348,6 +348,88 @@
             Selected Base Info:
             <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly></textarea>
         </div>
+
+        <!--Relaxation options-->
+        <div class="opts" id="relaxConfigWindow" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('relaxConfigWindow')">close</i>
+            </div>
+            Relaxation settings:
+            <fieldset>
+                <legend> Relax method:</legend>
+                <input type="radio" id="rxBackend" name="relaxBackend" value="MC" checked onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;" >CPU<br>
+                <input type="radio" id="rxBackend" name="relaxBackend" value="MD_GPU" onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;">GPU<br>
+            </fieldset>
+            <fieldset>
+                <button id="oxIP${id}_1" style="width: 40px; height:30px;" onclick="if(socket) socket.stop_simulation()" title="Delete entry">x</button>
+                <button id="oxIP${id}_2"style="width: 40px; height:30px;" onclick="if(socket) socket.start_simulation()" title="Establish connection">►</button>
+            
+            <fieldset>
+            <fieldset id="relax_MC_settings" >
+                <label for="mcT">T: </label>
+                <input type="number" value="20" id="mcT" title="Simulation temperature"><br>
+            
+                <label for="mcSteps">Steps: </label>
+                <input type="number" value="100000" id="mcSteps" style="width: 7em" title="Number of steps to simulate"><br>
+                
+                <label for="mcSalt">Salt: </label>
+                <input type="number" value="1" id="mcSalt" title="Na concentration"><br>
+                
+                <label for="mcInteractionType">Interaction type: </label>
+                <input type="text" value="DNA_relax" id="mcInteractionType" title="Interaction type."><br>
+                
+                <label for="mcRelaxType">Interaction type: </label>
+                <input type="text" value="harmonic_force" id="mcRelaxType" title="Relaxation type."><br>
+                
+
+                <label for="mcPrintConfInterval">Print Conf Interval: </label>
+                <input type="number" value="1000" id="mcPrintConfInterval" style="width: 7em" title="Output configuration every # of steps."><br>
+            
+                <label for="mcPrintEnergyInterval">Print Energy Interval: </label>
+                <input type="number" value="1000" id="mcPrintEnergyInterval" style="width: 7em" title="Output energy every # of steps."><br>
+            
+                <label for="mcDeltaTranslation">Delta Translation: </label>
+                <input type="number" value="0.02" id="mcDeltaTranslation" style="width: 7em" title=""><br>
+                
+                <label for="mcDeltaRotation">Delta Rotation: </label>
+                <input type="number" value="0.04" id="mcDeltaRotation" style="width: 7em" title=""><br>
+
+
+            </fieldset>
+
+            <fieldset id="relax_MD_settings" hidden=true>
+                <label for="mdT">T: </label>
+                <input type="number" value="20" id="mdT" title="Simulation temperature"><br>
+                
+                <label for="mdSteps">Steps: </label>
+                <input type="number" value="1000000" id="mdSteps" style="width: 7em" title="Number of steps to simulate"><br>
+            
+                <label for="mdSalt">Salt: </label>
+                <input type="number" value="1" id="mdSalt" title="Na concentration"><br>
+                
+                <label for="mdInteractionType">Interaction type: </label>
+                <input type="text" value="DNA2" id="mdInteractionType" title="Interaction type."><br>
+
+                <label for="mdPrintConfInterval">Print Conf Interval: </label>
+                <input type="number" value="10000" id="mdPrintConfInterval" style="width: 7em" title="Output configuration every # of steps."><br>
+            
+                <label for="mdPrintEnergyInterval">Print Energy Interval: </label>
+                <input type="number" value="10000" id="mdPrintEnergyInterval" style="width: 7em" title="Output energy every # of steps."><br>
+            
+                <label for="mdThermostat">Interaction type: </label>
+                <input type="text" value="john" id="mdThermostat" title="Thermostat to use."><br>
+
+                <label for="mdDT">dt: </label>
+                <input type="number" value="0.005" id="mdDT" title="dt value."><br>
+                
+                <label for="mdDiff_Coeff">diff coeff: </label>
+                <input type="number" value="0.25" id="mdDiff_Coeff" title="Diffusion coeff value."><br>
+
+
+            </fieldset>
+            
+        </div>
+
     </div>
 
     <!--Notices-->
@@ -412,7 +494,8 @@
         <script src="./dist/api/editing_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
         <script src="./dist/file_handling/stl_exporter.js"></script>
-        <script src="./dist/api/live_relax.js"></script>
+        <script src="./dist/ox_serve/relax_scenarios.js"></script>
+        <script src="./dist/ox_serve/live_relax.js"></script>
     </div>
 </body>
 

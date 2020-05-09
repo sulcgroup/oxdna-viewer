@@ -1,5 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../typescript_definitions/oxView.d.ts" />
+/// <reference path="./relax_scenarios.ts" />
+
 
 
 // make sure local storage contains the relevant key 
@@ -24,9 +26,10 @@ function openConnections() {
             } 
         });
             
-    //if (window.sessionStorage.inboxingOption)    
-    //(document.getElementById("inboxing") as HTMLSelectElement).value = window.sessionStorage.inboxingOption ;
-
+    //make sure the previous connection is killed before adding a new one  
+    if(socket){
+        socket.close();
+    }
     toggleModal('socketConnections');
 }
 
@@ -113,8 +116,12 @@ class OXServeSocket extends WebSocket{
         notify("lost oxServe Connection");
     }
 
+    
+    stop_simulation = () =>{
+        this.send("abort");
+    }
 
-    send_configuration = () => {
+    start_simulation = () => {
         let reorganized, counts, conf = {};
         {
             let {a, b, file_name, file} = makeTopFile(name);
@@ -130,8 +137,37 @@ class OXServeSocket extends WebSocket{
             let {file_name, file} = makeParFile(name, reorganized, counts);
             conf["par_file"] = file;
         }
-        conf["type"] = "DNA";
+        //conf["type"] = "DNA";
+
         conf["settings"] = {};
+        let sim_type = "";
+        let backend = (document.getElementsByName("relaxBackend") as NodeListOf<HTMLInputElement>);
+        for(let i = 0; i < backend.length; i++) { 
+                  
+            if(backend[i].type="radio") { 
+              
+                if(backend[i].checked) 
+                     sim_type = backend[i].value;  
+            } 
+        } 
+        console.log(`Simulation type is ${sim_type}`);
+        let settings_list = relax_scenarios[sim_type];
+
+        //set all const fields 
+        for (let [key, value] of Object.entries(settings_list["const"])) {
+            conf["settings"][key] = value["val"];
+            
+        }
+        //console.log(conf)
+
+        //set all var fields 
+        for (let [key, value] of Object.entries(settings_list["var"])) {
+            
+            conf["settings"][key] = (document.getElementById(value["id"]) as HTMLInputElement).value;
+            if(key === "T") conf["settings"][key] += "C";
+        }     
+        //conf["settings"]["T"] = "30C";    
+
         this.send(
             JSON.stringify(conf)
         );
@@ -145,6 +181,3 @@ function establishConnection(id){
     socket = new OXServeSocket(url);   
 
 }
-
-//var ws = new WebSocket('ws://localhost:8888');
-//var ws = new OXServeSocket('ws://9ecc6936.ngrok.io');

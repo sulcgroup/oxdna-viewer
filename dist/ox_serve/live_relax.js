@@ -1,5 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../typescript_definitions/oxView.d.ts" />
+/// <reference path="./relax_scenarios.ts" />
 // make sure local storage contains the relevant key 
 if (window.localStorage.getItem("oxServeIps") === null) {
     window.localStorage.setItem("oxServeIps", "");
@@ -90,7 +91,10 @@ class OXServeSocket extends WebSocket {
             connect_button.textContent = "Connect to oxServe";
             notify("lost oxServe Connection");
         };
-        this.send_configuration = () => {
+        this.stop_simulation = () => {
+            this.send("abort");
+        };
+        this.start_simulation = () => {
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);
@@ -106,8 +110,30 @@ class OXServeSocket extends WebSocket {
                 let { file_name, file } = makeParFile(name, reorganized, counts);
                 conf["par_file"] = file;
             }
-            conf["type"] = "DNA";
+            //conf["type"] = "DNA";
             conf["settings"] = {};
+            let sim_type = "";
+            let backend = document.getElementsByName("relaxBackend");
+            for (let i = 0; i < backend.length; i++) {
+                if (backend[i].type = "radio") {
+                    if (backend[i].checked)
+                        sim_type = backend[i].value;
+                }
+            }
+            console.log(`Simulation type is ${sim_type}`);
+            let settings_list = relax_scenarios[sim_type];
+            //set all const fields 
+            for (let [key, value] of Object.entries(settings_list["const"])) {
+                conf["settings"][key] = value["val"];
+            }
+            //console.log(conf)
+            //set all var fields 
+            for (let [key, value] of Object.entries(settings_list["var"])) {
+                conf["settings"][key] = document.getElementById(value["id"]).value;
+                if (key === "T")
+                    conf["settings"][key] += "C";
+            }
+            //conf["settings"]["T"] = "30C";    
             this.send(JSON.stringify(conf));
         };
     }
@@ -117,5 +143,3 @@ function establishConnection(id) {
     let url = window.localStorage.getItem("oxServeIps").split(",")[id];
     socket = new OXServeSocket(url);
 }
-//var ws = new WebSocket('ws://localhost:8888');
-//var ws = new OXServeSocket('ws://9ecc6936.ngrok.io');
