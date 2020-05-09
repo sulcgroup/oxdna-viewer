@@ -52,8 +52,8 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
     // Setup geometries
     const backbone = new THREE.SphereBufferGeometry(.2 * scale, 5 * faces_mul, 5 * faces_mul);
     const nucleoside = new THREE.SphereBufferGeometry(.3 * scale, 5 * faces_mul, 5 * faces_mul);
-    const connector = new THREE.CylinderBufferGeometry(.1 * scale, .1 * scale, 1 * scale, 4 * faces_mul);
-    const bbConnector = new THREE.CylinderBufferGeometry(.1 * scale, .05 * scale, 1 * scale, 4 * faces_mul);
+    const connector = new THREE.CylinderBufferGeometry(.1 * scale, .1 * scale, 1, 4 * faces_mul);
+    const bbConnector = new THREE.CylinderBufferGeometry(.1 * scale, .05 * scale, 1, 4 * faces_mul);
     // Setup materials
     let materialMap = new Map();
     // Export the whole system hierarchy
@@ -116,7 +116,6 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
                     bbconnector_mesh.position.copy(bbconOffsets);
                     elemObj.add(bbconnector_mesh);
                 }
-                elemObj.updateMatrix();
                 strandObj.add(elemObj);
             });
             sysObj.add(strandObj);

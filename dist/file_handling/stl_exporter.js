@@ -11,8 +11,8 @@ class STLExporter {
         //this.BBconnector = new THREE.CylinderGeometry(.1,.05,1, 8); 
         this.Backbone = new THREE.SphereGeometry(.2 * scale, 5 * faces_mul, 5 * faces_mul);
         this.Nucleoside = new THREE.SphereGeometry(.3 * scale, 5 * faces_mul, 5 * faces_mul);
-        this.Connector = new THREE.CylinderGeometry(.1 * scale, .1 * scale, 1 * scale, 4 * faces_mul);
-        this.BBconnector = new THREE.CylinderGeometry(.1 * scale, .05 * scale, 1 * scale, 4 * faces_mul);
+        this.Connector = new THREE.CylinderGeometry(.1 * scale, .1 * scale, 1, 4 * faces_mul);
+        this.BBconnector = new THREE.CylinderGeometry(.1 * scale, .05 * scale, 1, 4 * faces_mul);
         this.include_backbone = include_backbone;
         this.include_bbconnector = include_bbconnector;
         this.include_connector = include_connector;
