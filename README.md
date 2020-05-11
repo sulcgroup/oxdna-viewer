@@ -102,6 +102,14 @@ The resulting STL can than be imported into the 3D printer software.
 
 ---
 
+## Live relaxation of oxDNA configurations
+The viewer supports live relaxation of loaded configurations using [ox-serve](https://github.com/zoombya/ox-serve) nodes.
+To connect to an existing node open the `Connect` menu in the `OX-Serve` tab and input the url and port of the respective 
+server. Note that communication between the server and ox-view is established via web sockets, so a typical url looks like: `ws://127.0.0.1:8888`. Further on one can open the `Settings` menu and run the relaxation simulations. 
+It is assumed that the [ox-serve](https://github.com/zoombya/ox-serve) server runs on a machine with cuda support. 
+
+---
+
 ## Updates and writing your own extensions
 This software is still in active development, so features remain in high flux.  If you would like to make a feature request or to report a bug, please let us know in the Issues tab!  Remember to pull often if you're running the viewer locally to get the newest features.
 
