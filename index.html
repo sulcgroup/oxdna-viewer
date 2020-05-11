@@ -110,11 +110,20 @@
     <div id="sidenav">
         <div id="sidenavContent">
             <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
+            
+            <!--OX-serve-->
+            <fieldset>
+                <legend onclick="toggleFieldSet(this)">OX-Serve</legend>
+                <div hidden="true">
+                    <button id="btnConnect" onclick="openConnections()" type="button" title="Live interactions.">Connect</button>
+                    <button id="btnControlSim" type="button" onclick="toggleOptions('relaxConfigWindow')"> Settings</button>                    
+                </div>
+            </fieldset>
+
             <!--File-->
             <fieldset>
                 <legend onclick="toggleFieldSet(this)">File</legend>
                 <div hidden="true">
-                    <button id="btnConnect" onclick="openConnections()" type="button" title="Live interactions.">Connect to oxServe</button>
                     <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
                     <button onclick="toggleModal('fileOptions')" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
                     <button onclick="toggleModal('stlExportOptions')" type="button" title="Options for STL export of the scene.">STL Export</button>                    
@@ -423,7 +432,7 @@
                 <input type="number" value="0.005" id="mdDT" title="dt value."><br>
                 
                 <label for="mdDiff_Coeff">diff coeff: </label>
-                <input type="number" value="0.25" id="mdDiff_Coeff" title="Diffusion coeff value."><br>
+                <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value."><br>
 
 
             </fieldset>
