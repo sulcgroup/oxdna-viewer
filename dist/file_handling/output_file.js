@@ -3,9 +3,10 @@ function makeOutputFiles() {
     let top = document.getElementsByName("topDownload");
     let reorganized, counts;
     if (top[0].checked == true) {
-        let { a, b } = makeTopFile(name);
+        let { a, b, file_name, file } = makeTopFile(name);
         reorganized = a;
         counts = b;
+        makeTextFile(file_name, file);
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated");
@@ -13,10 +14,12 @@ function makeOutputFiles() {
     }
     let dat = document.getElementsByName("datDownload");
     if (dat[0].checked == true) {
-        makeDatFile(name, reorganized);
+        let { file_name, file } = makeDatFile(name, reorganized);
+        makeTextFile(file_name, file);
     }
     if (ANMs.length > 0) {
-        makeParFile(name, reorganized, counts);
+        let { file_name, file } = makeParFile(name, reorganized, counts);
+        makeTextFile(file_name, file);
     }
 }
 function makeArrayBuffer(buffer, filename) {
@@ -144,9 +147,9 @@ function makeTopFile(name) {
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
         top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
     });
-    makeTextFile(name + ".top", top.join("\n")); //make .top 
+    //makeTextFile(name+".top", top.join("\n")); //make .top 
     //this is absolute abuse of ES6 and I feel a little bad about it
-    return { a: newElementIds, b: firstLine };
+    return { a: newElementIds, b: firstLine, file_name: name + ".top", file: top.join("\n") };
 }
 function makeDatFile(name, altNumbering = undefined) {
     // Get largest absolute coordinate:
@@ -177,7 +180,7 @@ function makeDatFile(name, altNumbering = undefined) {
             });
         });
     }
-    makeTextFile(name + ".dat", dat); //make .dat file
+    return { file_name: name + ".dat", file: dat }; //make .dat file
 }
 function makeParFile(name, altNumbering, counts) {
     const par = [];
@@ -194,7 +197,7 @@ function makeParFile(name, altNumbering, counts) {
             par.push(line.join(" "));
         }
     });
-    makeTextFile(name + ".par", par.join('\n'));
+    return { file_name: name + ".par", file: par.join('\n') };
 }
 function writeMutTrapText(base1, base2) {
     return "{\n" + "type = mutual_trap\n" +
