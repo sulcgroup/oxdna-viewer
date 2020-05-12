@@ -178,6 +178,95 @@ function colorOptions() {
     }
 }
 ;
+function colorSelection() {
+    const opt = document.getElementById("colorSelectionContent");
+    if (!opt.hidden) {
+        opt.innerHTML = ""; // clear content
+        const setButton = document.createElement('button');
+        const resetButton = document.createElement('button');
+        setButton.innerText = "Set Color";
+        resetButton.innerText = "Reset Colors";
+        let coloringChanged = false;
+        // create color map with selected color
+        setButton.onclick = () => {
+            const colorSelect = new THREE.Color(colorInput.value);
+            // ensures colors won't be lost when switching 'color by' options
+            if (coloringChanged) {
+                setColoringMode("Overlay");
+            }
+            if (lut == undefined) {
+                lut = new THREE.Lut(defaultColormap, 512);
+                // legend is necessary to set 'color by' to Overlay, gets removed later
+                lut.setLegendOn();
+                lut.setLegendLabels();
+            }
+            // initialize lutCols to existing colors
+            for (let i = 0; i < systems.length; i++) {
+                const system = systems[i];
+                const end = system.bbColors.length;
+                for (let j = 0; j < end; j += 3) {
+                    const r = system.bbColors[j];
+                    const g = system.bbColors[j + 1];
+                    const b = system.bbColors[j + 2];
+                    system.lutCols[j / 3] = new THREE.Color(r, g, b);
+                }
+            }
+            // set lutCols to selected color
+            selectedBases.forEach(e => {
+                let sid = e["gid"] - e.getSystem().globalStartId;
+                e.getSystem().lutCols[sid] = colorSelect;
+            });
+            setColoringMode("Overlay");
+            if (!systems.some(system => system.colormapFile)) {
+                api.removeColorbar();
+            }
+            coloringChanged = true;
+            clearSelection();
+        };
+        // reset color overlay
+        resetButton.onclick = () => {
+            setColoringMode("Strand");
+            for (let i = 0; i < systems.length; i++) {
+                const system = systems[i];
+                const end = system.bbColors.length;
+                for (let j = 0; j < end; j += 3) {
+                    const r = system.bbColors[j];
+                    const g = system.bbColors[j + 1];
+                    const b = system.bbColors[j + 2];
+                    system.lutCols[j / 3] = new THREE.Color(r, g, b);
+                }
+            }
+            clearSelection();
+        };
+        let colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        opt.appendChild(colorInput);
+        opt.appendChild(setButton);
+        opt.appendChild(resetButton);
+    }
+}
+;
+function toggleVisArbitrary() {
+    // arbitrary visibility toggling
+    // toggle hidden monomers
+    if (selectedBases.size == 0) {
+        systems.forEach(system => {
+            system.strands.forEach(strand => {
+                strand.monomers.forEach(monomer => {
+                    if (monomer.getInstanceParameter3("visibility").x == 0)
+                        monomer.toggleVisibility();
+                });
+            });
+        });
+    }
+    // toggle selected monomers
+    else {
+        selectedBases.forEach(e => e.toggleVisibility());
+    }
+    systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
+    tmpSystems.forEach(tempSys => tempSys.callUpdates(['instanceVisibility']));
+    clearSelection();
+}
 function notify(message) {
     const noticeboard = document.getElementById('noticeboard');
     // Remove any identical notifications from the board

@@ -252,6 +252,8 @@
                     <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
                     <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
                         Colors</button>
+                    <button onclick="toggleOptions('colorSelection'); colorSelection()" type="button" title="set color for selected nucleotides">Label Selection</button>
+                    <button onclick="toggleVisArbitrary();" type="button" title="toggle visibility of selected nucleotides">Toggle Visibility</button>
                     <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
                     <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
                     <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
@@ -313,13 +315,22 @@
             <button id="videoStartStop" onclick="createVideo()">Start</button>
         </div>
 
-        <!--Color-->
+        <!--Color Options-->
         <div class="opts" id="colorOptions" hidden="true">
             <div style="text-align: right; background-color: #acc">
                 <i class="material-icons" onclick="toggleOptions('colorOptions'); colorOptions()">close</i>
             </div>
             Click a color to edit, right click to remove:
             <div id="colorOptionContent" style="background-color: inherit"></div>
+        </div>
+
+        <!--Color Selection-->
+        <div class="opts" id="colorSelection" hidden="true">
+            <div style="text-align: right; background-color: #acc">
+                <i class="material-icons" onclick="toggleOptions('colorSelection'); colorSelection()">close</i>
+            </div>
+            Select element(s) and click color to edit
+            <div id="colorSelectionContent" style="background-color: inherit"></div>
         </div>
 
         <!--Hierarchy-->
