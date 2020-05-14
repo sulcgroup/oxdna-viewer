@@ -43,6 +43,8 @@ class ANM {
         const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength)
         con.init();
         this.children.push(con);
+        p1.connections.push(con)
+        p2.connections.push(con);
         return con
     }
 

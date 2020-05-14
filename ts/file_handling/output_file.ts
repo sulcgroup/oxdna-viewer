@@ -163,12 +163,21 @@ function makeTopFile(name){
         notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
     }
 
-    //needs to be updated to dereference anm connections
     newElementIds.forEach((_gid, e) => { //for each nucleotide
         let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
         let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
+        let cons: number[] = []
+        
+        if (proteinMode) {
+            for (let i = 0; i < e.connections.length; i++) {
+                let c = e.connections[i];
+                if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != neighbor5) {
+                    cons.push(newElementIds.get(c.p2));
+                }
+            }
+        }
 
-        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5].join(' '));
+        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5, ...cons].join(' '));
     });
     //makeTextFile(name+".top", top.join("\n")); //make .top 
 
@@ -219,7 +228,6 @@ function makeParFile(name: string, altNumbering, counts) {
     ANMs.forEach ((anm: ANM) => {
         //ANMs can be huge so we need to use a traditional for loop here
         const l = anm.children.length
-        console.log(anm.children[0]);
         for (let i = 0; i < l; i++) {
             const curCon = anm.children[i]
             const p1ID: number = altNumbering.get(curCon.p1);
