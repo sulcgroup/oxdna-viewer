@@ -53,6 +53,9 @@ class OXServeSocket extends WebSocket {
         super(url);
         this.onmessage = (response) => {
             let message = JSON.parse(response.data);
+            if ("console_log" in message) {
+                console.log(message["console_log"]);
+            }
             if ("dat_file" in message) {
                 let lines = message["dat_file"].split("\n");
                 lines = lines.slice(3); // discard the header
@@ -95,6 +98,11 @@ class OXServeSocket extends WebSocket {
             this.send("abort");
         };
         this.start_simulation = () => {
+            trap_objs.forEach(() => {
+                scene.children.pop();
+                scene.children.pop();
+            });
+            trap_objs = [];
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);
@@ -110,7 +118,6 @@ class OXServeSocket extends WebSocket {
                 let { file_name, file } = makeParFile(name, reorganized, counts);
                 conf["par_file"] = file;
             }
-            //conf["type"] = "DNA";
             conf["settings"] = {};
             let sim_type = "";
             let backend = document.getElementsByName("relaxBackend");
@@ -122,6 +129,9 @@ class OXServeSocket extends WebSocket {
             }
             console.log(`Simulation type is ${sim_type}`);
             let settings_list = relax_scenarios[sim_type];
+            if (trap_file) {
+                conf["trap_file"] = trap_file;
+            }
             //set all const fields 
             for (let [key, value] of Object.entries(settings_list["const"])) {
                 conf["settings"][key] = value["val"];
@@ -133,7 +143,6 @@ class OXServeSocket extends WebSocket {
                 if (key === "T")
                     conf["settings"][key] += "C";
             }
-            //conf["settings"]["T"] = "30C";    
             this.send(JSON.stringify(conf));
         };
     }

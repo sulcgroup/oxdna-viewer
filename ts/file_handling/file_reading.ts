@@ -143,18 +143,20 @@ target.addEventListener("drop", function (event) {
 }, false);
 
 
-
+let trap_objs = [];
+let trap_file = "";
 //parse a trap file
 function readTrap(system, trapReader) {
 
     let file = trapReader.result as string;
+    trap_file = file;
     //{ can be replaced with \n to make sure no parameter is lost 
     while(file.indexOf("{")>=0)
         file = file.replace("{","\n");
     // traps can be split by } because everything between {} is one trap 
     let traps = file.split("}");
 
-    let trap_objs = [];
+    
     traps.forEach((trap) =>{
         let lines = trap.split('\n');
         //empty lines and empty traps need not be processed as well as comments  
