@@ -408,7 +408,23 @@ module edit{
                     i.strand.addMonomer(e);
                 } else {
                     // Create a new strand
-                    let strand = sys.createStrand(sys.strands.length + 1);
+
+                    // This is ugly, but we need to find the next available
+                    // strand ID and we can't do sys.strands.length because
+                    // of proteins
+                    let sMin = Infinity;
+                    let sMax = -Infinity
+                    sys.strands.forEach(s=>{
+                        sMin = Math.min(sMin, s.strandID);
+                        sMax = Math.max(sMax, s.strandID);
+                    })
+                    let newStrandID: number;
+                    if (e.isAminoAcid()) {
+                        newStrandID = sMin - 1;
+                    } else {
+                        newStrandID = sMax + 1;
+                    }
+                    let strand = sys.createStrand(newStrandID);
                     sys.addStrand(strand);
                     strand.addMonomer(e);
                 }

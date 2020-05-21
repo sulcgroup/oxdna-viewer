@@ -150,6 +150,10 @@ abstract class BasicElement {
         }
     }
 
+    isAminoAcid() {
+        return false;
+    }
+
     toJSON() {
         // Specify required attributes
         let json = {

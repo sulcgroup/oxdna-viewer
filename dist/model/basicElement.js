@@ -99,6 +99,9 @@ class BasicElement {
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
     }
+    isAminoAcid() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {

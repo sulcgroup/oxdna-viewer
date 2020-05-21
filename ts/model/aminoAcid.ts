@@ -224,6 +224,10 @@ class AminoAcid extends BasicElement {
 
     }
 
+    isAminoAcid() {
+        return true;
+    }
+
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
