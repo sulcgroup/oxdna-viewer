@@ -142,6 +142,26 @@ module api{
         return(out);
     }
 
+    export function selectElementIDs(targets: number[], keepPrevious?: boolean) {
+        selectElements(getElements(targets), keepPrevious);
+    }
+
+    export function selectElements(elems: BasicElement[], keepPrevious?: boolean) {
+        if (!keepPrevious) {
+            clearSelection();
+        }
+        elems.forEach(e => {
+            if (!selectedBases.has(e)) {
+                e.toggle();
+            }
+        });
+        systems.forEach(sys => {
+            updateView(sys);
+        });
+        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            transformControls.show();
+        }
+    }
     
 
     export function getSequence(elems: BasicElement[]) : string {

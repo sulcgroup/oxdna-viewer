@@ -141,6 +141,27 @@ var api;
         return (out);
     }
     api.getElements = getElements;
+    function selectElementIDs(targets, keepPrevious) {
+        selectElements(getElements(targets), keepPrevious);
+    }
+    api.selectElementIDs = selectElementIDs;
+    function selectElements(elems, keepPrevious) {
+        if (!keepPrevious) {
+            clearSelection();
+        }
+        elems.forEach(e => {
+            if (!selectedBases.has(e)) {
+                e.toggle();
+            }
+        });
+        systems.forEach(sys => {
+            updateView(sys);
+        });
+        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            transformControls.show();
+        }
+    }
+    api.selectElements = selectElements;
     function getSequence(elems) {
         // Sort elements by their id, in 5' to 3' order
         elems.sort((a, b) => { return a.lid < b.lid ? 1 : -1; });
