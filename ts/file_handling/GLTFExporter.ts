@@ -249,7 +249,7 @@ GLTFExporter.prototype = {
 		 */
 		function stringToArrayBuffer( text ) {
 
-			if ( window.TextEncoder !== undefined ) {
+			if (!("TextEncoder" in window)) {
 
 				return new TextEncoder().encode( text ).buffer;
 

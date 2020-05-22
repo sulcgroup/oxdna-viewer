@@ -400,7 +400,7 @@
             <fieldset>
             <fieldset id="relax_MC_settings" >
                 <label for="mcT">T: </label>
-                <input type="number" value="20" id="mcT" title="Simulation temperature"><br>
+                <input type="number" value="30" id="mcT" title="Simulation temperature"><br>
             
                 <label for="mcSteps">Steps: </label>
                 <input type="number" value="100000" id="mcSteps" style="width: 7em" title="Number of steps to simulate"><br>
@@ -409,11 +409,7 @@
                 <input type="number" value="1" id="mcSalt" title="Na concentration"><br>
                 
                 <label for="mcInteractionType">Interaction type: </label>
-                <input type="text" value="DNA_relax" id="mcInteractionType" title="Interaction type."><br>
-                
-                <label for="mcRelaxType">Interaction type: </label>
-                <input type="text" value="harmonic_force" id="mcRelaxType" title="Relaxation type."><br>
-                
+                <input type="text" value="DNA2" id="mcInteractionType" title="Interaction type."><br>
 
                 <label for="mcPrintConfInterval">Print Conf Interval: </label>
                 <input type="number" value="1000" id="mcPrintConfInterval" style="width: 7em" title="Output configuration every # of steps."><br>
@@ -422,15 +418,15 @@
                 <input type="number" value="1000" id="mcPrintEnergyInterval" style="width: 7em" title="Output energy every # of steps."><br>
             
                 <label for="mcDeltaTranslation">Delta Translation: </label>
-                <input type="number" value="0.02" id="mcDeltaTranslation" style="width: 7em" title=""><br>
+                <input type="number" value="0.22" id="mcDeltaTranslation" style="width: 7em" title=""><br>
                 
                 <label for="mcDeltaRotation">Delta Rotation: </label>
-                <input type="number" value="0.04" id="mcDeltaRotation" style="width: 7em" title=""><br>
+                <input type="number" value="0.22" id="mcDeltaRotation" style="width: 7em" title=""><br>
 
 
             </fieldset>
 
-            <fieldset id="relax_MD_settings" hidden=true>
+           <fieldset id="relax_MD_settings" hidden=true>
                 <label for="mdT">T: </label>
                 <input type="number" value="20" id="mdT" title="Simulation temperature"><br>
                 

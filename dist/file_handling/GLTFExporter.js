@@ -204,7 +204,7 @@ GLTFExporter.prototype = {
          * @return {ArrayBuffer}
          */
         function stringToArrayBuffer(text) {
-            if (window.TextEncoder !== undefined) {
+            if (!("TextEncoder" in window)) {
                 return new TextEncoder().encode(text).buffer;
             }
             var array = new Uint8Array(new ArrayBuffer(text.length));

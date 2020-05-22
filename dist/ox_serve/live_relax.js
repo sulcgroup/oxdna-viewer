@@ -98,9 +98,11 @@ class OXServeSocket extends WebSocket {
             this.send("abort");
         };
         this.start_simulation = () => {
-            trap_objs.forEach(() => {
-                scene.children.pop();
-                scene.children.pop();
+            trap_objs.forEach((obj) => {
+                if (obj.type === "mutual_trap") {
+                    scene.children.pop();
+                    scene.children.pop();
+                }
             });
             trap_objs = [];
             let reorganized, counts, conf = {};
@@ -132,16 +134,15 @@ class OXServeSocket extends WebSocket {
             if (trap_file) {
                 conf["trap_file"] = trap_file;
             }
-            //set all const fields 
-            for (let [key, value] of Object.entries(settings_list["const"])) {
-                conf["settings"][key] = value["val"];
-            }
-            //console.log(conf)
             //set all var fields 
             for (let [key, value] of Object.entries(settings_list["var"])) {
                 conf["settings"][key] = document.getElementById(value["id"]).value;
                 if (key === "T")
                     conf["settings"][key] += "C";
+            }
+            //set all const fields 
+            for (let [key, value] of Object.entries(settings_list["const"])) {
+                conf["settings"][key] = value["val"];
             }
             this.send(JSON.stringify(conf));
         };

@@ -3,16 +3,21 @@ var relax_scenarios = {
         "const": {
             "sim_type": { "val": "MC" },
             "backend": { "val": "CPU" },
-            "T_units": { "val": "C" },
-            //"list_type" : {"val":"cell"},
             "ensemble": { "val": "NVT" },
-            "verlet_skin": { "val": 0.5 },
+            "verlet_skin": { "val": 1.0 },
             "time_scale": { "val": "linear" },
-            "restart_step_counter": { "val": 1 }
+            "restart_step_counter": { "val": 1.0 },
+            "backend_precision": { "val": "double" },
+            "use_average_seq": { "val": 0 },
+            "use_edge": { "val": 1 },
+            "edge_n_forces": { "val": 1 },
+            "seq_dep_file": { "val": "oxDNA2_sequence_dependent_parameters.txt" },
+            "max_backbone_force": { "val": 5 },
+            "max_backbone_force_far": { "val": 10 }
         },
         "var": {
             "T": {
-                "val": 20,
+                "val": 30,
                 "id": "mcT"
             },
             "steps": {
@@ -24,12 +29,8 @@ var relax_scenarios = {
                 "id": "mcSalt"
             },
             "interaction_type": {
-                "val": "DNA_relax",
+                "val": "DNA2",
                 "id": "mcInteractionType"
-            },
-            "relax_type": {
-                "val": "harmonic_force",
-                "id": "mcRelaxType"
             },
             "print_conf_interval": {
                 "val": 50000,
@@ -40,11 +41,11 @@ var relax_scenarios = {
                 "id": "mcPrintEnergyInterval"
             },
             "delta_translation": {
-                "val": 0.02,
+                "val": 0.22,
                 "id": "mcDeltaTranslation"
             },
             "delta_rotation": {
-                "val": 0.04,
+                "val": 0.22,
                 "id": "mcDeltaRotation"
             }
         }
