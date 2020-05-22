@@ -37,13 +37,16 @@ class DNANucleotide extends Nucleotide {
         const ns_pos = this.getInstanceParameter3("nsOffsets");
         const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z)
         let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
+        let a1 = old_A1.clone()
         if (direction == "neighbor3") {
             dir.multiplyScalar(-1);
+        }
+        else { // neighbor5
+            a1.multiplyScalar(-1);
         }
         let R = new THREE.Matrix4;
         R.makeRotationAxis(dir, rot)
         let rb = new THREE.Vector3(0.6, 0, 0)
-        let a1 = old_A1.clone()
         let a3 = dir;
         let out = [];
 

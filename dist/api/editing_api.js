@@ -407,7 +407,7 @@ var edit;
     function addElementsBySeq(end, sequence, tmpSys, direction, inverse, lidCounter) {
         // add monomers to the strand
         const strand = end.strand;
-        const lines = end.extendStrand(sequence.length, inverse);
+        const lines = end.extendStrand(sequence.length, direction);
         let last = end;
         let addedElems = [];
         //create topology
