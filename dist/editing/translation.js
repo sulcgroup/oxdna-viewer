@@ -172,7 +172,7 @@ function calcsp(currentNuc) {
         temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
     }
     catch (error) {
-        notify("Can't calculate backbone connection for particles without upstream connection");
+        notify("Can't calculate backbone connection for particle " + currentNuc.gid + " because there is no upstream connection");
         return;
     }
     let xbbLast = temp.x, ybbLast = temp.y, zbbLast = temp.z;
