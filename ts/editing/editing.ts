@@ -163,6 +163,17 @@ function deleteWrapper() {
     }
     editHistory.do(new RevertableDeletion(e));
     topologyEdited = true;
+
+}
+
+function skipWrapper() {
+    let e: BasicElement[] = listBases.map(i => elements.get(i));
+    clearSelection();
+    if (e.length == 0) {
+        notify("Please select monomers to skip");
+        return;
+    }
+    edit.skipElements(e);
 }
 
 function setSeqWrapper() {
