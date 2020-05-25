@@ -68,6 +68,71 @@ module edit{
         return newStrand;
     }
 
+    export function insert(e :BasicElement, sequence: string): BasicElement[] {
+        let edits = [];
+
+        let end5 = e;
+        let end3 = e.neighbor3;
+        if (!end3) {
+            notify("Cannot insert at the end of a strand, use extend instead");
+            return;
+        }
+
+        // Shorthand to get the backbone position
+        const getPos = e => {return e.getInstanceParameter3("bbOffsets");};
+
+        // Nick between the elements
+        let nicking = new RevertableNick(end5);
+        edits.push(nicking);
+        nicking.do()
+
+        // Extend, move and make sure to be revertable
+        const added = extendStrand(end5, sequence);
+        
+        const firstPos = getPos(end5);
+        const lastPos = getPos(end3);
+        added.forEach((e, i)=>{
+            // Position on line between e1 and e2
+            let newPos = firstPos.clone().lerp(lastPos, (i+1)/(added.length+1));
+            translateElements(new Set<BasicElement>([e]), newPos.sub(getPos(e)));
+        })
+
+        let instanceCopies = added.map(e=>{return new InstanceCopy(e)});
+
+        // Get center of mass so that we can place them back if reverted
+        let pos = new THREE.Vector3();
+        added.forEach(e=>pos.add(getPos(e)));
+        pos.divideScalar(added.length);
+        let addition = new RevertableAddition(instanceCopies, added, pos);
+        edits.push(addition);
+
+        // Finally, ligate the last added element to e2
+        const lastAdded = added[added.length - 1];
+        let ligation = new RevertableLigation(lastAdded, end3);
+        edits.push(ligation);
+        ligation.do();
+
+        editHistory.add(new RevertableMultiEdit(edits));
+        return added;
+    }
+
+    export function skip(elems: BasicElement[]) {
+        let edits = [];
+        elems.forEach(e=>{
+            let e3 = e.neighbor3;
+            let e5 = e.neighbor5;
+
+            let deletion = new RevertableDeletion([e])
+            edits.push(deletion);
+            deletion.do();
+
+            let ligation = new RevertableLigation(e3, e5);
+            edits.push(ligation);
+            ligation.do();
+        })
+        editHistory.add(new RevertableMultiEdit(edits));
+    }
+
     export function nick(element: BasicElement){
         let sys = element.getSystem(),
             sid = element.gid - sys.globalStartId;
