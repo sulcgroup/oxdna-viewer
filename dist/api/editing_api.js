@@ -103,9 +103,12 @@ var edit;
             let deletion = new RevertableDeletion([e]);
             edits.push(deletion);
             deletion.do();
-            let ligation = new RevertableLigation(e3, e5);
-            edits.push(ligation);
-            ligation.do();
+            // Only ligate if it has both neigbors
+            if (e3 && e5) {
+                let ligation = new RevertableLigation(e3, e5);
+                edits.push(ligation);
+                ligation.do();
+            }
         });
         editHistory.add(new RevertableMultiEdit(edits));
     }
@@ -515,13 +518,13 @@ var edit;
         // figure out which way we're going
         let direction;
         let inverse;
-        if (end.neighbor5 == null) {
-            direction = "neighbor5";
-            inverse = "neighbor3";
-        }
-        else if (end.neighbor3 == null) {
+        if (end.neighbor3 == null) {
             direction = "neighbor3";
             inverse = "neighbor5";
+        }
+        else if (end.neighbor5 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
         }
         else {
             notify("Please select a monomer that has an open neighbor");
