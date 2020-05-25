@@ -9,8 +9,6 @@ var relax_scenarios = {
             "restart_step_counter": { "val": 1.0 },
             "backend_precision": { "val": "double" },
             "use_average_seq": { "val": 0 },
-            "use_edge": { "val": 1 },
-            "edge_n_forces": { "val": 1 },
             "seq_dep_file": { "val": "oxDNA2_sequence_dependent_parameters.txt" },
             "max_backbone_force": { "val": 5 },
             "max_backbone_force_far": { "val": 10 }
