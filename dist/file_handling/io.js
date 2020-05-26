@@ -240,7 +240,7 @@ class TrajectoryReader {
         }
         const endChunkLines = end.chunk.split(/[\n]+/g);
         const start = new marker;
-        if (end.lineID - this.confLen >= 0) { //is the whole conf in a single chunk?
+        if (end.lineID - this.confLen >= -1) { //is the whole conf in a single chunk?
             start.chunk = end.chunk;
             start.lineID = end.lineID - this.confLen + 1;
             const startChunkLines = start.chunk.split(/[\n]+/g);
@@ -264,13 +264,13 @@ class TrajectoryReader {
             const startChunkLines = start.chunk.split(/[\n]+/g);
             start.lineID = startChunkLines.length - (this.confLen - (end.lineID + 1));
             for (let i = start.lineID; i < startChunkLines.length; i++) {
-                if (startChunkLines[i] == "" || startChunkLines == undefined) {
+                if (startChunkLines[i] == "" || startChunkLines[i] == undefined) {
                     return undefined;
                 }
                 previousConf.push(startChunkLines[i]);
             }
             for (let i = 0; i < end.lineID + 1; i++) {
-                if (endChunkLines[i] == "" || endChunkLines == undefined) {
+                if (endChunkLines[i] == "" || endChunkLines[i] == undefined) {
                     return undefined;
                 }
                 previousConf.push(endChunkLines[i]);
@@ -302,13 +302,19 @@ class TrajectoryReader {
         this.previousChunk = this.previousPreviousChunk;
         this.pHangingLine = this.ppHangingLine;
         if (chunkNumber < 0) {
-            console.log("tried to load conf -1");
-            if (this.previousPreviousChunk == undefined) {
-                this.previousChunk = undefined;
-            }
-            else {
+            if (this.previousPreviousChunk != undefined) {
                 this.previousPreviousChunk = undefined;
+                if (this.ppHangingLine) {
+                    if (this.confBegin.chunk == this.previousChunk) {
+                        this.confBegin.chunk = this.ppHangingLine + "\n" + this.previousChunk;
+                        this.confBegin.lineID += 1;
+                    }
+                    this.previousChunk = this.ppHangingLine + "\n" + this.previousChunk;
+                }
             }
+            //else {
+            //    this.previousChunk = undefined;
+            //}
             this.currentChunkNumber -= 1;
             return;
         }
@@ -327,11 +333,11 @@ class TrajectoryReader {
             let lines;
             if (mode == 1) {
                 lines = this.extractNextConf();
-                confNum += 1;
+                confNum += mode;
             }
             if (mode == -1) {
                 lines = this.extractPreviousConf();
-                confNum -= 1;
+                confNum += mode;
             }
             if (lines == undefined || lines[0] == "" || lines[0] == undefined) {
                 notify("No more confs to load!");
@@ -380,7 +386,7 @@ class TrajectoryReader {
     }
     ;
     previousConfig() {
-        if (this.previousReader.readyState == 1) {
+        if (this.previousReader.readyState == 1 || confNum == 1) {
             return;
         }
         this.getNewConfig(-1);
