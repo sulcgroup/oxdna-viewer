@@ -9,7 +9,7 @@ class EditHistory {
      * @param edit object describing the revertable edit.
      */
     do(edit) {
-        edit.redo();
+        edit.do();
         this.undoStack.push(edit);
         // We no longer care about the alternate future:
         this.redoStack = new Stack();
@@ -48,7 +48,7 @@ class EditHistory {
         catch (e) {
             return; // Cannot undo any further
         }
-        edit.redo();
+        edit.do();
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
         drawSystemHierarchy();
@@ -60,11 +60,16 @@ class RevertableEdit {
      * @param undo function that, when applied, will revert the edit
      * @param redo function that, when applied, will perform the edit
      */
-    constructor(undo, redo) {
-        this.undo = undo;
-        this.redo = redo;
+    constructor(undoFunction, doFunction) {
+        this.undo = undoFunction;
+        this.do = doFunction;
     }
     ;
+}
+class RevertableMultiEdit extends RevertableEdit {
+    constructor(edits) {
+        super(() => { edits.slice().reverse().forEach(edit => { edit.undo(); }); }, () => { edits.forEach(edit => { edit.do(); }); });
+    }
 }
 class RevertableAddition extends RevertableEdit {
     constructor(saved, added, pos) {

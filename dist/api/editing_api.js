@@ -56,6 +56,63 @@ var edit;
         sys.callUpdates(['instanceColor']);
         return newStrand;
     }
+    function insert(e, sequence) {
+        let edits = [];
+        let end5 = e;
+        let end3 = e.neighbor3;
+        if (!end3) {
+            notify("Cannot insert at the end of a strand, use extend instead");
+            return;
+        }
+        // Shorthand to get the backbone position
+        const getPos = e => { return e.getInstanceParameter3("bbOffsets"); };
+        // Nick between the elements
+        let nicking = new RevertableNick(end5);
+        edits.push(nicking);
+        nicking.do();
+        // Extend, move and make sure to be revertable
+        const added = extendStrand(end5, sequence);
+        const firstPos = getPos(end5);
+        const lastPos = getPos(end3);
+        added.forEach((e, i) => {
+            // Position on line between e1 and e2
+            let newPos = firstPos.clone().lerp(lastPos, (i + 1) / (added.length + 1));
+            translateElements(new Set([e]), newPos.sub(getPos(e)));
+        });
+        let instanceCopies = added.map(e => { return new InstanceCopy(e); });
+        // Get center of mass so that we can place them back if reverted
+        let pos = new THREE.Vector3();
+        added.forEach(e => pos.add(getPos(e)));
+        pos.divideScalar(added.length);
+        let addition = new RevertableAddition(instanceCopies, added, pos);
+        edits.push(addition);
+        // Finally, ligate the last added element to e2
+        const lastAdded = added[added.length - 1];
+        let ligation = new RevertableLigation(lastAdded, end3);
+        edits.push(ligation);
+        ligation.do();
+        editHistory.add(new RevertableMultiEdit(edits));
+        return added;
+    }
+    edit.insert = insert;
+    function skip(elems) {
+        let edits = [];
+        elems.forEach(e => {
+            let e3 = e.neighbor3;
+            let e5 = e.neighbor5;
+            let deletion = new RevertableDeletion([e]);
+            edits.push(deletion);
+            deletion.do();
+            // Only ligate if it has both neigbors
+            if (e3 && e5) {
+                let ligation = new RevertableLigation(e3, e5);
+                edits.push(ligation);
+                ligation.do();
+            }
+        });
+        editHistory.add(new RevertableMultiEdit(edits));
+    }
+    edit.skip = skip;
     function nick(element) {
         let sys = element.getSystem(), sid = element.gid - sys.globalStartId;
         if (element.dummySys !== null) {
@@ -461,13 +518,13 @@ var edit;
         // figure out which way we're going
         let direction;
         let inverse;
-        if (end.neighbor5 == null) {
-            direction = "neighbor5";
-            inverse = "neighbor3";
-        }
-        else if (end.neighbor3 == null) {
+        if (end.neighbor3 == null) {
             direction = "neighbor3";
             inverse = "neighbor5";
+        }
+        else if (end.neighbor5 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
         }
         else {
             notify("Please select a monomer that has an open neighbor");

@@ -131,6 +131,30 @@ function deleteWrapper() {
     editHistory.do(new RevertableDeletion(e));
     topologyEdited = true;
 }
+function skipWrapper() {
+    let e = listBases.map(i => elements.get(i));
+    clearSelection();
+    if (e == []) {
+        notify("Please select monomers to skip");
+        return;
+    }
+    edit.skip(e);
+    topologyEdited = true;
+}
+function insertWrapper() {
+    let seq = document.getElementById("sequence").value.toUpperCase();
+    if (seq == "") {
+        notify("Please type a sequence into the box");
+        return;
+    }
+    let e = elements.get(listBases.slice(-1)[0]);
+    if (e == undefined) {
+        notify("Please select a monomer insert after");
+        return;
+    }
+    edit.insert(e, seq);
+    topologyEdited = true;
+}
 function setSeqWrapper() {
     let seq = document.getElementById("sequence").value.toUpperCase();
     let setCompl = document.getElementById("setCompl").checked;
