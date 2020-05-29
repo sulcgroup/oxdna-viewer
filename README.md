@@ -132,4 +132,4 @@ If you want to extend the code for your own purposes, you will also need to inst
 
 ## Citation
 If you use oxView or our oxDNA analysis package in your research, please cite:  
-Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr Sulc: Design, optimization, and analysis of large DNA and RNA nanostructures through interactive visualization, editing, and molecular simulation (bioarxiv preprint: https://doi.org/10.1101/2020.01.24.917419)
+Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr Sulc: Design, optimization, and analysis of large DNA and RNA nanostructures through interactive visualization, editing, and molecular simulation, Nucleic Acids Research, 2020 (https://doi.org/10.1093/nar/gkaa417)
