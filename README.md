@@ -8,6 +8,24 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
 
 ---
 
+ ## Table of Contents
+  * [Examples](#examples)
+  * [Editing Features](#editing-features)
+  * [Video Options](#video-options)
+    + [Video types](#video-types)
+    + [Output Formats](#output-formats)
+    + [Input Format](#input-format)
+  * [Console Commands](#console-commands)
+    + [Scene API](#scene-api)
+    + [Edit API](#edit-api)
+  * [Rigid Body Simulations](#rigid-body-simulations)
+  * [3D Printing Export](#3d-printing-export)
+  * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
+  * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions)
+  * [Citation](#citation)
+
+---
+
 ## Examples
 You can find a set of example structures and tutorials in the [example directory](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples), including structures used in our [paper](https://doi.org/10.1101/2020.01.24.917419).
 
