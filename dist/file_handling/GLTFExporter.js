@@ -93,6 +93,7 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
                 if (include_backbone) {
                     let backbone_mesh = new THREE.Mesh(backbone, materialMap.get(bbColor));
                     backbone_mesh.position.copy(bbOffsets);
+                    backbone_mesh.name = `backbone_${e.gid}`;
                     elemObj.add(backbone_mesh);
                 }
                 if (include_nucleoside) {
@@ -100,6 +101,7 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
                     nucleoside_mesh.applyMatrix(new THREE.Matrix4().makeScale(nsScales.x, nsScales.y, nsScales.z));
                     nucleoside_mesh.quaternion.copy(glsl2three(nsRotation));
                     nucleoside_mesh.position.copy(nsOffsets);
+                    nucleoside_mesh.name = `nucleoside_${e.gid}`;
                     elemObj.add(nucleoside_mesh);
                 }
                 if (include_connector) {
@@ -107,6 +109,7 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
                     connector_mesh.applyMatrix(new THREE.Matrix4().makeScale(conScales.x, conScales.y, conScales.z));
                     connector_mesh.quaternion.copy(glsl2three(conRotation));
                     connector_mesh.position.copy(conOffsets);
+                    connector_mesh.name = `connector_${e.gid}`;
                     elemObj.add(connector_mesh);
                 }
                 if (include_bbconnector) {
@@ -114,12 +117,16 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
                     bbconnector_mesh.applyMatrix(new THREE.Matrix4().makeScale(bbconScales.x, bbconScales.y, bbconScales.z));
                     bbconnector_mesh.quaternion.copy(glsl2three(bbconRotation));
                     bbconnector_mesh.position.copy(bbconOffsets);
+                    bbconnector_mesh.name = `bbconnector_${e.gid}`;
                     elemObj.add(bbconnector_mesh);
                 }
+                elemObj.name = `element_${e.gid}`;
                 strandObj.add(elemObj);
             });
+            strandObj.name = `strand_${strand.strandID}`;
             sysObj.add(strandObj);
         });
+        sysObj.name = `system_${system.systemID}`;
         return sysObj;
     });
 }
