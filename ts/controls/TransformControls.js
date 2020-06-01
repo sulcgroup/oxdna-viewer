@@ -155,7 +155,7 @@ THREE.TransformControls = function ( camera, domElement ) {
 		this.visible = true;
 
 		currentPosition = new THREE.Vector3();
-		selectedBases.forEach(e => currentPosition.add(e.getInstanceParameter3("cmOffsets")));
+		selectedBases.forEach(e => currentPosition.add(e.getInstanceParameter3("bbOffsets")));
 		currentPosition.divideScalar(selectedBases.size);
 
 		rotation = new THREE.Vector3()
@@ -272,7 +272,7 @@ THREE.TransformControls = function ( camera, domElement ) {
 
 		// Calculate COM as position
 		position = new THREE.Vector3(); //currentPosition.clone();
-		selectedBases.forEach(e => position.add(e.getInstanceParameter3("cmOffsets")));
+		selectedBases.forEach(e => position.add(e.getInstanceParameter3("bbOffsets")));
 		position.divideScalar(selectedBases.size);
 
 		if ( ( pointer.button === 0 || pointer.button === undefined ) && this.axis !== null ) {
