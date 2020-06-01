@@ -50,12 +50,13 @@
     <div class="modal" id="fileOptions">
         <div class="modal-content">
             <p>Save the current stucture to oxDNA configuration and/or topology files</p>
+            <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
             <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
             <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
             <label for="outputFilename">File name: </label>
             <input type="text" id="outputFilename" size="13" value="output" title="The prefix to name the .dat and .top files"><br>
             <button style="width: 49%" onclick="toggleModal('fileOptions')" title="Cancel">Cancel</button>
-            <button style="width: 49%" onclick="makeOutputFiles()" title="Download the specified files">Download Files</button>
+            <button style="width: 49%" onclick="makeOutputFiles(); toggleModal('fileOptions')" title="Download the specified files">Download Files</button>
         </div>
     </div>
 
@@ -138,7 +139,7 @@
                 <legend onclick="toggleFieldSet(this)">File</legend>
                 <div hidden="true">
                     <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
-                    <button onclick="toggleModal('fileOptions')" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
+                    <button onclick="toggleModal('fileOptions'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
                     <button onclick="toggleModal('3dExportOptions')" type="button" title="Options for 3d export of the scene.">3d Export</button>
                     <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
                     <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
