@@ -38,10 +38,12 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     const name = (<HTMLInputElement>document.getElementById("3dExportFilename")).value;
     const fileFormat = (<HTMLInputElement>document.getElementById("3dExportFormat")).value;
     
-    const include_backbone = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeBackbone"))[0].checked;
-    const include_nucleoside = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeNucleoside"))[0].checked;
-    const include_connector = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeConnector"))[0].checked;
-    const include_bbconnector = (<NodeListOf<HTMLInputElement>>document.getElementsByName("includeBBconnector"))[0].checked;
+    const include_backbone = (<HTMLInputElement>document.getElementById("includeBackbone")).checked;
+    const include_nucleoside = (<HTMLInputElement>document.getElementById("includeNucleoside")).checked;
+    const include_connector = (<HTMLInputElement>document.getElementById("includeConnector")).checked;
+    const include_bbconnector = (<HTMLInputElement>document.getElementById("includeBBconnector")).checked;
+
+    const flattenHierarchy = (<HTMLInputElement>document.getElementById("3dExportFlat")).checked;
     
     const faces_mul = parseFloat((<HTMLInputElement>document.getElementById("3dExportFacesMul")).value);
     const stl_scale = parseFloat((<HTMLInputElement>document.getElementById("3dExportScale")).value);
@@ -51,7 +53,7 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     } else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
 
-        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul, flattenHierarchy);
         var exporter = new GLTFExporter();
         var options = { 'forceIndices': true, 'binary': binary };
         // Parse the input and generate the glTF output

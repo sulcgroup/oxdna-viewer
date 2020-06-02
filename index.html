@@ -75,10 +75,10 @@
                 <option value="stl">stl</option>
             </select>
             <p>For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file, choosing from:</p>
-            <input type="checkbox" name="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
-            <input type="checkbox" name="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
-            <input type="checkbox" name="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
-            <input type="checkbox" name="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
+            <input type="checkbox" id="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
+            <input type="checkbox" id="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
+            <input type="checkbox" id="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
+            <input type="checkbox" id="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
             <p>By increasing the scaling of the model objects can be made to overlap, which is benefitial for sturdy printed models.</p>
             <label for="3dExportScale">scale: </label>
             <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max = 10></br>
@@ -88,6 +88,8 @@
             </p>
             <label for="3dExportFacesMul">faces multiplier: </label>
             <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5><br>
+            <p>Optionally, you can export glTF files without any hierarchy information to make it faster to import.</p>
+            <input type="checkbox" id="3dExportFlat" title="Ignore system hierarchy and export all object on the same level (makes faster import)">Export flat hierarchy<br>
             <label for="3dExportFilename">File name: </label>
             <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name"><br><br>
             <button style="width: 49%" onclick="toggleModal('3dExportOptions')" title="Cancel">Cancel</button>

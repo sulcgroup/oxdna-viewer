@@ -48,7 +48,7 @@ var PATH_PROPERTIES = {
     quaternion: 'rotation',
     morphTargetInfluences: 'weights'
 };
-function exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, scale, faces_mul) {
+function exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, scale, faces_mul, flattenHierarchy) {
     // Setup geometries
     const backbone = new THREE.SphereBufferGeometry(.2 * scale, 5 * faces_mul, 5 * faces_mul);
     const nucleoside = new THREE.SphereBufferGeometry(.3 * scale, 5 * faces_mul, 5 * faces_mul);
@@ -56,79 +56,93 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
     const bbConnector = new THREE.CylinderBufferGeometry(.1 * scale, .05 * scale, 1, 4 * faces_mul);
     // Setup materials
     let materialMap = new Map();
-    // Export the whole system hierarchy
-    return systems.map(system => {
-        let sysObj = new THREE.Group();
-        system.strands.forEach(strand => {
-            let strandObj = new THREE.Group();
-            strand.monomers.forEach(e => {
-                let elemObj = new THREE.Group();
-                // Get instance parameters
-                let bbOffsets = e.getInstanceParameter3('bbOffsets');
-                let nsOffsets = e.getInstanceParameter3('nsOffsets');
-                let nsRotation = e.getInstanceParameter4('nsRotation');
-                let conOffsets = e.getInstanceParameter3('conOffsets');
-                let conRotation = e.getInstanceParameter4('conRotation');
-                let bbconOffsets = e.getInstanceParameter3('bbconOffsets');
-                let bbconRotation = e.getInstanceParameter4('bbconRotation');
-                let nsScales = e.getInstanceParameter3('nsScales');
-                let conScales = e.getInstanceParameter3('conScales');
-                let bbconScales = e.getInstanceParameter3('bbconScales');
-                let nsColor = new THREE.Color().fromArray(e.getInstanceParameter3('nsColors').toArray()).getHex();
-                let bbColor = new THREE.Color().fromArray(e.getInstanceParameter3('bbColors').toArray()).getHex();
-                // Only create one material per color
-                if (!materialMap.has(nsColor)) {
-                    materialMap.set(nsColor, new THREE.MeshStandardMaterial({
-                        color: nsColor,
-                        roughness: 0.2
-                    }));
-                }
-                if (!materialMap.has(bbColor)) {
-                    materialMap.set(bbColor, new THREE.MeshStandardMaterial({
-                        color: bbColor,
-                        roughness: 0.2
-                    }));
-                }
-                // Add meshes for the components selected, using shared geometry
-                if (include_backbone) {
-                    let backbone_mesh = new THREE.Mesh(backbone, materialMap.get(bbColor));
-                    backbone_mesh.position.copy(bbOffsets);
-                    backbone_mesh.name = `backbone_${e.gid}`;
-                    elemObj.add(backbone_mesh);
-                }
-                if (include_nucleoside) {
-                    let nucleoside_mesh = new THREE.Mesh(nucleoside, materialMap.get(nsColor));
-                    nucleoside_mesh.applyMatrix(new THREE.Matrix4().makeScale(nsScales.x, nsScales.y, nsScales.z));
-                    nucleoside_mesh.quaternion.copy(glsl2three(nsRotation));
-                    nucleoside_mesh.position.copy(nsOffsets);
-                    nucleoside_mesh.name = `nucleoside_${e.gid}`;
-                    elemObj.add(nucleoside_mesh);
-                }
-                if (include_connector) {
-                    let connector_mesh = new THREE.Mesh(connector, materialMap.get(bbColor));
-                    connector_mesh.applyMatrix(new THREE.Matrix4().makeScale(conScales.x, conScales.y, conScales.z));
-                    connector_mesh.quaternion.copy(glsl2three(conRotation));
-                    connector_mesh.position.copy(conOffsets);
-                    connector_mesh.name = `connector_${e.gid}`;
-                    elemObj.add(connector_mesh);
-                }
-                if (include_bbconnector) {
-                    let bbconnector_mesh = new THREE.Mesh(bbConnector, materialMap.get(bbColor));
-                    bbconnector_mesh.applyMatrix(new THREE.Matrix4().makeScale(bbconScales.x, bbconScales.y, bbconScales.z));
-                    bbconnector_mesh.quaternion.copy(glsl2three(bbconRotation));
-                    bbconnector_mesh.position.copy(bbconOffsets);
-                    bbconnector_mesh.name = `bbconnector_${e.gid}`;
-                    elemObj.add(bbconnector_mesh);
-                }
-                elemObj.name = `element_${e.gid}`;
-                strandObj.add(elemObj);
+    let handleElement = (e) => {
+        let elemObj = new THREE.Group();
+        // Get instance parameters
+        let bbOffsets = e.getInstanceParameter3('bbOffsets');
+        let nsOffsets = e.getInstanceParameter3('nsOffsets');
+        let nsRotation = e.getInstanceParameter4('nsRotation');
+        let conOffsets = e.getInstanceParameter3('conOffsets');
+        let conRotation = e.getInstanceParameter4('conRotation');
+        let bbconOffsets = e.getInstanceParameter3('bbconOffsets');
+        let bbconRotation = e.getInstanceParameter4('bbconRotation');
+        let nsScales = e.getInstanceParameter3('nsScales');
+        let conScales = e.getInstanceParameter3('conScales');
+        let bbconScales = e.getInstanceParameter3('bbconScales');
+        let nsColor = new THREE.Color().fromArray(e.getInstanceParameter3('nsColors').toArray()).getHex();
+        let bbColor = new THREE.Color().fromArray(e.getInstanceParameter3('bbColors').toArray()).getHex();
+        // Only create one material per color
+        if (!materialMap.has(nsColor)) {
+            materialMap.set(nsColor, new THREE.MeshStandardMaterial({
+                color: nsColor,
+                roughness: 0.2
+            }));
+        }
+        if (!materialMap.has(bbColor)) {
+            materialMap.set(bbColor, new THREE.MeshStandardMaterial({
+                color: bbColor,
+                roughness: 0.2
+            }));
+        }
+        // Add meshes for the components selected, using shared geometry
+        if (include_backbone) {
+            let backbone_mesh = new THREE.Mesh(backbone, materialMap.get(bbColor));
+            backbone_mesh.position.copy(bbOffsets);
+            backbone_mesh.name = `backbone_${e.gid}`;
+            elemObj.add(backbone_mesh);
+        }
+        if (include_nucleoside) {
+            let nucleoside_mesh = new THREE.Mesh(nucleoside, materialMap.get(nsColor));
+            nucleoside_mesh.applyMatrix(new THREE.Matrix4().makeScale(nsScales.x, nsScales.y, nsScales.z));
+            nucleoside_mesh.quaternion.copy(glsl2three(nsRotation));
+            nucleoside_mesh.position.copy(nsOffsets);
+            nucleoside_mesh.name = `nucleoside_${e.gid}`;
+            elemObj.add(nucleoside_mesh);
+        }
+        if (include_connector) {
+            let connector_mesh = new THREE.Mesh(connector, materialMap.get(bbColor));
+            connector_mesh.applyMatrix(new THREE.Matrix4().makeScale(conScales.x, conScales.y, conScales.z));
+            connector_mesh.quaternion.copy(glsl2three(conRotation));
+            connector_mesh.position.copy(conOffsets);
+            connector_mesh.name = `connector_${e.gid}`;
+            elemObj.add(connector_mesh);
+        }
+        if (include_bbconnector) {
+            let bbconnector_mesh = new THREE.Mesh(bbConnector, materialMap.get(bbColor));
+            bbconnector_mesh.applyMatrix(new THREE.Matrix4().makeScale(bbconScales.x, bbconScales.y, bbconScales.z));
+            bbconnector_mesh.quaternion.copy(glsl2three(bbconRotation));
+            bbconnector_mesh.position.copy(bbconOffsets);
+            bbconnector_mesh.name = `bbconnector_${e.gid}`;
+            elemObj.add(bbconnector_mesh);
+        }
+        elemObj.name = `element_${e.gid}`;
+        return elemObj;
+    };
+    if (flattenHierarchy) {
+        // Export just a flat list of the meshes
+        let l = [];
+        elements.forEach(e => {
+            let elemObj = handleElement(e);
+            elemObj.children.forEach(mesh => {
+                l.push(mesh);
             });
-            strandObj.name = `strand_${strand.strandID}`;
-            sysObj.add(strandObj);
         });
-        sysObj.name = `system_${system.systemID}`;
-        return sysObj;
-    });
+        return l;
+    }
+    else {
+        // Export the whole system hierarchy
+        return systems.map(system => {
+            let sysObj = new THREE.Group();
+            system.strands.forEach(strand => {
+                let strandObj = new THREE.Group();
+                strand.monomers.forEach(e => strandObj.add(handleElement(e)));
+                strandObj.name = `strand_${strand.strandID}`;
+                sysObj.add(strandObj);
+            });
+            sysObj.name = `system_${system.systemID}`;
+            return sysObj;
+        });
+    }
 }
 //------------------------------------------------------------------------------
 // GLTF Exporter

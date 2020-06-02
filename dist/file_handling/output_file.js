@@ -34,10 +34,11 @@ function makeArrayBuffer(buffer, filename) {
 function make3dOutput() {
     const name = document.getElementById("3dExportFilename").value;
     const fileFormat = document.getElementById("3dExportFormat").value;
-    const include_backbone = document.getElementsByName("includeBackbone")[0].checked;
-    const include_nucleoside = document.getElementsByName("includeNucleoside")[0].checked;
-    const include_connector = document.getElementsByName("includeConnector")[0].checked;
-    const include_bbconnector = document.getElementsByName("includeBBconnector")[0].checked;
+    const include_backbone = document.getElementById("includeBackbone").checked;
+    const include_nucleoside = document.getElementById("includeNucleoside").checked;
+    const include_connector = document.getElementById("includeConnector").checked;
+    const include_bbconnector = document.getElementById("includeBBconnector").checked;
+    const flattenHierarchy = document.getElementById("3dExportFlat").checked;
     const faces_mul = parseFloat(document.getElementById("3dExportFacesMul").value);
     const stl_scale = parseFloat(document.getElementById("3dExportScale").value);
     if (fileFormat === 'stl') {
@@ -45,7 +46,7 @@ function make3dOutput() {
     }
     else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
-        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul, flattenHierarchy);
         var exporter = new GLTFExporter();
         var options = { 'forceIndices': true, 'binary': binary };
         // Parse the input and generate the glTF output
