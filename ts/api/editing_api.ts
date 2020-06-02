@@ -271,29 +271,6 @@ module edit{
     }
 
     /**
-     * Deletes selected elements and ligates their pairs
-     * @param e Elements to skip
-     */
-    export function skipElements(e: BasicElement[]) {
-        let pairs = []; // pairs of elements to be ligated after deletion
-        e.sort((a, b) => a.gid - b.gid);
-
-        for(let i = 0; i < e.length; i++) {
-            if (!e[i].neighbor3 || !e[i].neighbor5) {
-                notify("Element " + e[i].gid + " needs two neighbors in order to skip");
-                return;
-            }
-            pairs.push(e[i].neighbor3);
-            while (i < e.length - 1 && e[i + 1] == e[i].neighbor5) {
-                i++;
-            }
-            pairs.push(e[i].neighbor5);
-        }
-
-        editHistory.do(new RevertableSkip(e,pairs));
-    }
-
-    /**
      * Add elements from saved instance copies, at specified position
      * @param instCopies Instance copies of elements to add
      * @param pos Intended position of elements center of mass

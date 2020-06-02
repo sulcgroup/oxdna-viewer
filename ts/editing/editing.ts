@@ -166,16 +166,6 @@ function deleteWrapper() {
 
 }
 
-function skipWrapper() {
-    let e: BasicElement[] = listBases.map(i => elements.get(i));
-    clearSelection();
-    if (e.length == 0) {
-        notify("Please select monomers to skip");
-        return;
-    }
-    edit.skipElements(e);
-}
-
 function setSeqWrapper() {
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
     let setCompl = (<HTMLInputElement>document.getElementById("setCompl")).checked;

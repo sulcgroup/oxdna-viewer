@@ -135,27 +135,6 @@ class RevertableLigation extends RevertableEdit {
     };
 }
 
-class RevertableSkip extends RevertableEdit {
-    victims: BasicElement[];
-    constructor(victims: BasicElement[], pairs: BasicElement[]) {
-        const saved = victims.map(e=> new InstanceCopy(e));
-        let undo = function() {
-            for(let i = 1; i < pairs.length; i += 2) {
-                edit.nick(pairs[i]);
-            }
-            this.victims = edit.addElements(saved);
-        };
-        let redo = function() {
-            edit.deleteElements(this.victims)
-            for(let i = 0; i < pairs.length; i += 2) {
-                edit.ligate(pairs[i], pairs[i + 1]);
-            }
-        };
-        super(undo, redo);
-        this.victims = victims;
-    };
-}
-
 class RevertableSequenceEdit extends RevertableEdit {
     constructor(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
         const oldseq = api.getSequence(elems);
