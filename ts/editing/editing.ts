@@ -163,6 +163,7 @@ function deleteWrapper() {
     }
     editHistory.do(new RevertableDeletion(e));
     topologyEdited = true;
+
 }
 
 function setSeqWrapper() {

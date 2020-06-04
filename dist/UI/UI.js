@@ -178,6 +178,17 @@ function colorOptions() {
     }
 }
 ;
+function initLutCols(systems) {
+    for (let i = 0; i < systems.length; i++) {
+        const system = systems[i];
+        for (let j = 0; j < system.bbColors.length; j += 3) {
+            const r = system.bbColors[j];
+            const g = system.bbColors[j + 1];
+            const b = system.bbColors[j + 2];
+            system.lutCols[j / 3] = new THREE.Color(r, g, b);
+        }
+    }
+}
 function colorSelection() {
     const opt = document.getElementById("colorSelectionContent");
     if (!opt.hidden) {
@@ -186,56 +197,44 @@ function colorSelection() {
         const resetButton = document.createElement('button');
         setButton.innerText = "Set Color";
         resetButton.innerText = "Reset Colors";
-        let coloringChanged = false;
         // create color map with selected color
         setButton.onclick = () => {
-            const colorSelect = new THREE.Color(colorInput.value);
-            // ensures colors won't be lost when switching 'color by' options
-            if (coloringChanged) {
-                setColoringMode("Overlay");
-            }
+            const selectedColor = new THREE.Color(colorInput.value);
             if (lut == undefined) {
                 lut = new THREE.Lut(defaultColormap, 512);
-                // legend is necessary to set 'color by' to Overlay, gets removed later
+                // legend needed to set 'color by' to Overlay, gets removed later
                 lut.setLegendOn();
                 lut.setLegendLabels();
             }
-            // initialize lutCols to existing colors
-            for (let i = 0; i < systems.length; i++) {
-                const system = systems[i];
-                const end = system.bbColors.length;
-                for (let j = 0; j < end; j += 3) {
-                    const r = system.bbColors[j];
-                    const g = system.bbColors[j + 1];
-                    const b = system.bbColors[j + 2];
-                    system.lutCols[j / 3] = new THREE.Color(r, g, b);
+            else {
+                const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.lutCols.length == 0);
+                if (emptyTmpSystems.length > 0) {
+                    console.log(emptyTmpSystems);
+                    initLutCols(emptyTmpSystems);
                 }
+                setColoringMode("Overlay");
             }
-            // set lutCols to selected color
+            initLutCols(systems);
+            initLutCols(tmpSystems);
             selectedBases.forEach(e => {
-                let sid = e["gid"] - e.getSystem().globalStartId;
-                e.getSystem().lutCols[sid] = colorSelect;
+                let sid;
+                if (e.dummySys) {
+                    sid = e["gid"] - e.dummySys.globalStartId;
+                    e.dummySys.lutCols[e.sid] = selectedColor;
+                }
+                sid = e["gid"] - e.getSystem().globalStartId;
+                e.getSystem().lutCols[sid] = selectedColor;
             });
             setColoringMode("Overlay");
             if (!systems.some(system => system.colormapFile)) {
                 api.removeColorbar();
             }
-            coloringChanged = true;
             clearSelection();
         };
-        // reset color overlay
         resetButton.onclick = () => {
             setColoringMode("Strand");
-            for (let i = 0; i < systems.length; i++) {
-                const system = systems[i];
-                const end = system.bbColors.length;
-                for (let j = 0; j < end; j += 3) {
-                    const r = system.bbColors[j];
-                    const g = system.bbColors[j + 1];
-                    const b = system.bbColors[j + 2];
-                    system.lutCols[j / 3] = new THREE.Color(r, g, b);
-                }
-            }
+            initLutCols(systems);
+            initLutCols(tmpSystems);
             clearSelection();
         };
         let colorInput = document.createElement('input');
