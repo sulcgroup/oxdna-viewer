@@ -448,7 +448,7 @@ module edit{
     function addElementsBySeq (end, sequence, tmpSys, direction, inverse, lidCounter): BasicElement[] {
         // add monomers to the strand
         const strand: Strand = end.strand;
-        const lines = end.extendStrand(sequence.length, direction);
+        const lines = end.extendStrand(sequence.length, direction, false);
         let last = end;
 
         let addedElems = [];
@@ -496,6 +496,97 @@ module edit{
         return addedElems;
     }
 
+    function addDuplexBySeq (end, sequence, tmpSys, tmpSys2, direction, inverse, lidCounter): BasicElement[] {
+        // variables ending in "2" correspond to complement strand
+        let end2: BasicElement = (end as DNANucleotide).findPair() as BasicElement;
+        let direction2: string = inverse;
+        let inverse2: string = direction;
+        let lidCounter2: number = lidCounter;
+        const strand: Strand = end.strand;
+        const strand2: Strand = end2.strand;
+        
+        const lines = end.extendStrand(sequence.length, direction, true); // 3rd param indicates double strand
+
+        let last = end;
+        let last2 = end2;
+        let addedElems = [];
+
+        for (let i = 0, len = sequence.length; i < len; i++) {
+            let e = strand.createBasicElement(undefined);
+            elements.push(e);
+            e.lid = lidCounter;
+            e.sid = lidCounter;
+            e.dummySys = tmpSys;
+            last[direction] = e;
+            e[inverse] = last;
+            e.type = sequence[i];
+            strand.addMonomer(e);
+            last = e;
+            lidCounter++;
+            addedElems.push(e);
+        }
+        // complement strand
+        const map = {A:'T', G:'C', C:'G', T:'A'}
+        for (let i = 0, len = sequence.length; i < len; i++) {
+            let e2 = strand2.createBasicElement(undefined);
+            elements.push(e2);
+            e2.lid = lidCounter2;
+            e2.sid = lidCounter2;
+            e2.dummySys = tmpSys2;
+            last2[direction2] = e2;
+            e2[inverse2] = last2;
+            e2.type = map[sequence[i]];
+            strand2.addMonomer(e2);
+            last2 = e2;
+            lidCounter2++;
+            addedElems.push(e2);
+        }
+
+        last[direction] = null;
+        last2[direction2] = null;
+        let e: BasicElement = end[direction];
+        let e2: BasicElement = end2[direction2];
+
+        for (let i = 0, len = sequence.length; i < len; i++) {
+            e.calculatePositions(lines[i]);
+            e = e[direction];
+        }
+        for (let i = sequence.length, len = sequence.length * 2; i < len; i++) {
+            e2.calculatePositions(lines[i]);
+            e2 = e2[direction2];
+        }
+        // backwards
+        // for (let i = sequence.length * 2 - 1; i >= sequence.length; i--) {
+        //     e2.calculatePositions(lines[i]);
+        //     e2 = e2[direction2];
+        // }
+        strand.circular = false;
+        strand2.circular = false;
+        addSystemToScene(tmpSys);
+        addSystemToScene(tmpSys2);
+
+        e = end;
+        e2 = end2;
+        while (e && e[direction]) {
+            if (direction == "neighbor5") {
+                calcsp(e.neighbor5);
+            } else {
+                calcsp(e);
+            }
+            e = e[direction];
+        }
+        while (e2 && e2[direction2]) {
+            if (direction2 == "neighbor5") {
+                calcsp(e2.neighbor5);
+            } else {
+                calcsp(e2);
+            }
+            e2 = e2[direction2];
+        }
+
+        return addedElems;
+    }
+
     /**
      * Create new monomers extending from the provided one.
      * @param end 
@@ -523,7 +614,44 @@ module edit{
         tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
 
-        let addedElems = addElementsBySeq (end, sequence, tmpSys, direction, inverse, 0);
+        let addedElems = addElementsBySeq(end, sequence, tmpSys, direction, inverse, 0);
+
+        render();
+        return addedElems;
+    }
+
+    /**
+     * Create double helix of monomers extending from provided helix
+     * @param end 
+     * @param sequence 
+     */
+    export function extendDuplex(end: BasicElement, sequence: string) {
+        let endComplement: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+        let direction: string;
+        let inverse: string;
+        if (end.neighbor5 == null && endComplement.neighbor3 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
+        }
+        else if (end.neighbor3 == null && endComplement.neighbor5 == null) {
+            direction = "neighbor3";
+            inverse = "neighbor5";
+        }
+        else {
+            notify("Please select a monomer that has an open neighbor and a pair with an open neighbor");
+            return;
+        }
+
+        // initialize a dummy system to put the monomers in
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(sequence.length/**2*/);
+        tmpSystems.push(tmpSys);
+
+        const tmpSys2 = new System(tmpSystems.length, 0);
+        tmpSys2.initInstances(sequence.length);
+        tmpSystems.push(tmpSys2);
+
+        let addedElems = addDuplexBySeq(end, sequence, tmpSys, tmpSys2, direction, inverse, 0);
 
         render();
         return addedElems;
