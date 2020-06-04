@@ -27,16 +27,19 @@ class DNANucleotide extends Nucleotide {
         return new THREE.Vector3(xA3, yA3, zA3);
     };
 
-    // Uses method from generators.py.  Needs to be relaxed since this is oxDNA1 helix
-    extendStrand(len: number, direction:string) {
+    // Uses method from generate-sa.py.  Needs to be relaxed since this is oxDNA1 helix
+    extendStrand(len: number, direction: string, double: boolean) {
         let rot = 35.9*Math.PI/180
         let rise = 0.3897628551303122
-        
+
         const start_pos = this.getInstanceParameter3("cmOffsets");
         const bb_pos = this.getInstanceParameter3("bbOffsets");
         const ns_pos = this.getInstanceParameter3("nsOffsets");
-        const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z)
+        const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z);
         let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
+        // normalize dir
+        const dir_norm = Math.sqrt(dir.clone().dot(dir));
+        dir.divideScalar(dir_norm);
         let a1 = old_A1.clone()
         if (direction == "neighbor3") {
             dir.multiplyScalar(-1);
@@ -46,17 +49,33 @@ class DNANucleotide extends Nucleotide {
         }
         let R = new THREE.Matrix4;
         R.makeRotationAxis(dir, rot)
-        let rb = new THREE.Vector3(0.6, 0, 0)
+        let rb = new THREE.Vector3(0.6, 0, 0);
         let a3 = dir;
-        let out = [];
+        // a1.applyMatrix4(R);
 
+        let out = [];
         for (let i = 0; i < len; i++) {
             a1.applyMatrix4(R);
             rb.add(a3.clone().multiplyScalar(rise)).applyMatrix4(R);
-            out.push([rb.x+start_pos.x, rb.y+start_pos.y, rb.z+start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            out.push([rb.x + start_pos.x, rb.y + start_pos.y, rb.z + start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
 
-        return out
+        if (double) {
+            a1 = old_A1.clone();
+            if (direction == "neighbor5") {
+                a1.multiplyScalar(-1);
+            }
+            // a3.multiplyScalar(-1);
+            R.transpose();
+            // R.multiplyScalar(-1);
+            rb = new THREE.Vector3(0.6, 0, 0);
+            for (let i = 0; i < len; i++) {
+                a1.applyMatrix4(R);
+                rb.add(a3.clone().multiplyScalar(rise)).applyMatrix4(R);
+                out.push([rb.x + start_pos.x, rb.y + start_pos.y, rb.z + start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            }
+        }
+        return out;
     }
 
     getComplementaryType(): string {

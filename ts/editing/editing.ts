@@ -114,7 +114,7 @@ function ligateWrapper() {
     topologyEdited = true;
 }
 
-function extendWrapper() {
+function extendWrapper(double: boolean) {
     let e: BasicElement = elements.get(listBases.slice(-1)[0]);
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
     if (e == undefined) {
@@ -125,7 +125,7 @@ function extendWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = edit.extendStrand(e, seq);
+    let elems = double ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
     elems.forEach(e=>pos.add(e.getInstanceParameter3("cmOffsets")));
