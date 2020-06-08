@@ -498,14 +498,12 @@ module edit{
 
     function addDuplexBySeq (end, sequence, tmpSys, tmpSys2, direction, inverse, lidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
-        let end2: BasicElement = (end as DNANucleotide).findPair() as BasicElement;
-        let direction2: string = inverse;
-        let inverse2: string = direction;
+        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
         let lidCounter2: number = lidCounter;
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
         
-        const lines = end.extendStrand(sequence.length, direction, true); // 3rd param indicates double strand
+        const lines = end.extendStrand(sequence.length, direction, true); // true = double strand
 
         let last = end;
         let last2 = end2;
@@ -533,8 +531,8 @@ module edit{
             e2.lid = lidCounter2;
             e2.sid = lidCounter2;
             e2.dummySys = tmpSys2;
-            last2[direction2] = e2;
-            e2[inverse2] = last2;
+            last2[inverse] = e2;
+            e2[direction] = last2;
             e2.type = map[sequence[i]];
             strand2.addMonomer(e2);
             last2 = e2;
@@ -543,23 +541,19 @@ module edit{
         }
 
         last[direction] = null;
-        last2[direction2] = null;
+        last2[inverse] = null;
         let e: BasicElement = end[direction];
-        let e2: BasicElement = end2[direction2];
+        let e2: BasicElement = end2[inverse];
 
         for (let i = 0, len = sequence.length; i < len; i++) {
             e.calculatePositions(lines[i]);
             e = e[direction];
         }
-        for (let i = sequence.length, len = sequence.length * 2; i < len; i++) {
+        // complementary strand adds elements in reverse direction
+        for (let i = sequence.length * 2 - 1; i >= sequence.length; i--) {
             e2.calculatePositions(lines[i]);
-            e2 = e2[direction2];
+            e2 = e2[inverse];
         }
-        // backwards
-        // for (let i = sequence.length * 2 - 1; i >= sequence.length; i--) {
-        //     e2.calculatePositions(lines[i]);
-        //     e2 = e2[direction2];
-        // }
         strand.circular = false;
         strand2.circular = false;
         addSystemToScene(tmpSys);
@@ -575,13 +569,13 @@ module edit{
             }
             e = e[direction];
         }
-        while (e2 && e2[direction2]) {
-            if (direction2 == "neighbor5") {
+        while (e2 && e2[inverse]) {
+            if (inverse == "neighbor5") {
                 calcsp(e2.neighbor5);
             } else {
                 calcsp(e2);
             }
-            e2 = e2[direction2];
+            e2 = e2[inverse];
         }
 
         return addedElems;
@@ -625,26 +619,30 @@ module edit{
      * @param end 
      * @param sequence 
      */
-    export function extendDuplex(end: BasicElement, sequence: string) {
-        let endComplement: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+    export function extendDuplex(end: BasicElement, sequence: string): BasicElement[] {
+        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+        // create base pair if end doesn't have one already
+        if (!end2) {
+            end2 = createBP(end as DNANucleotide);
+        }
         let direction: string;
         let inverse: string;
-        if (end.neighbor5 == null && endComplement.neighbor3 == null) {
+        if (end.neighbor5 == null && end2.neighbor3 == null) {
             direction = "neighbor5";
             inverse = "neighbor3";
         }
-        else if (end.neighbor3 == null && endComplement.neighbor5 == null) {
+        else if (end.neighbor3 == null && end2.neighbor5 == null) {
             direction = "neighbor3";
             inverse = "neighbor5";
         }
         else {
-            notify("Please select a monomer that has an open neighbor and a pair with an open neighbor");
+            notify("Please select a monomer that has an open neighbor");
             return;
         }
 
-        // initialize a dummy system to put the monomers in
+        // initialize dummy systems to put each sequence in
         const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length/**2*/);
+        tmpSys.initInstances(sequence.length);
         tmpSystems.push(tmpSys);
 
         const tmpSys2 = new System(tmpSystems.length, 0);
@@ -766,6 +764,61 @@ module edit{
         return addedElems.concat(
             addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1)
         );
+    }
+
+    /**
+     * Creates complementary base pair for an element.
+     * @param elem
+     */
+    export function createBP(elem: DNANucleotide): DNANucleotide {
+        if (elem.findPair()) {
+            notify("Element already has a base pair")
+            return;
+        }
+        // Similar to createStrand
+        // Initialize dummy system to put the monomer in
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(1);
+        tmpSystems.push(tmpSys);
+        
+        const realSys = systems.slice(-1)[0];
+        const strand = realSys.createStrand(1);
+        realSys.addStrand(strand);
+
+        // Add element and assign gid
+        const e = new DNANucleotide(undefined, strand);
+        elements.push(e);
+        e.dummySys = tmpSys;
+        e.lid = 0;
+        e.sid = 0;
+        e.type = elem.getComplementaryType();
+        e.neighbor3 = null;
+        strand.addMonomer(e);
+        
+        const cm = elem.getInstanceParameter3("cmOffsets");
+        const bb = elem.getInstanceParameter3("bbOffsets");
+        const ns = elem.getInstanceParameter3("nsOffsets");
+        const a1 = elem.getA1(ns.x, ns.y, ns.z, cm.x, cm.y, cm.z);
+        const a3 = elem.getA3(bb.x, bb.y, bb.z, cm.x, cm.y, cm.z, a1.x, a1.y, a1.z);
+
+        // calculate position of base pair
+        a1.negate();
+        a3.negate();
+        const pos: THREE.Vector3 = cm.clone().sub(a1.clone().multiplyScalar(1.2));
+        const line = [pos.x, pos.y, pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z] as unknown as string[];
+        e.calculatePositions(line);
+        e.dummySys = tmpSys;
+
+        addSystemToScene(tmpSys);
+
+        // Add to history
+        const instanceCopy = [new InstanceCopy(e)];
+        const newCm = e.getInstanceParameter3("cmOffsets");
+        const position = new THREE.Vector3(newCm.x, newCm.y, newCm.z);
+        editHistory.add(new RevertableAddition(instanceCopy, [e], position));
+        topologyEdited = true;
+
+        return e;
     }
 
     /**
