@@ -416,7 +416,7 @@ abstract class Nucleotide extends BasicElement {
         return(new THREE.Vector3(xA1, yA1, zA1))
     }
 
-    extendStrand(len, direction){
+    extendStrand(len, direction, double){
     }
 
     toJSON() {

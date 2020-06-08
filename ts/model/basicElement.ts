@@ -31,7 +31,7 @@ abstract class BasicElement {
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
     abstract getDatFileOutput(): string; 
-    abstract extendStrand(len, direction): void;
+    abstract extendStrand(len, direction, double): void;
     abstract translatePosition(amount: THREE.Vector3): void;
     //abstract rotate(quat: THREE.Quaternion): void;
 

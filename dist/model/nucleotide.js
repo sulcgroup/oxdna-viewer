@@ -331,7 +331,7 @@ class Nucleotide extends BasicElement {
         let zA1 = (zns - z) / 0.4;
         return (new THREE.Vector3(xA1, yA1, zA1));
     }
-    extendStrand(len, direction) {
+    extendStrand(len, direction, double) {
     }
     toJSON() {
         // Get superclass attributes

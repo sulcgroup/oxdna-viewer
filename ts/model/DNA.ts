@@ -27,36 +27,58 @@ class DNANucleotide extends Nucleotide {
         return new THREE.Vector3(xA3, yA3, zA3);
     };
 
-    // Uses method from generators.py.  Needs to be relaxed since this is oxDNA1 helix
-    extendStrand(len: number, direction:string) {
-        let rot = 35.9*Math.PI/180
-        let rise = 0.3897628551303122
+    // Uses method from generate-sa.py.  Needs to be relaxed since this is oxDNA1 helix
+    extendStrand(len: number, direction: string, double: boolean) {
+        const rot = 35.9*Math.PI/180 // 0.68940505
+        let rise = 0.3897628551303122;
+        const startPos = this.getInstanceParameter3("cmOffsets");
+        const bbPos = this.getInstanceParameter3("bbOffsets");
+        const nsPos = this.getInstanceParameter3("nsOffsets");
+        const oldA1 = this.getA1(nsPos.x, nsPos.y, nsPos.z, startPos.x, startPos.y, startPos.z);
+        let dir = this.getA3(bbPos.x, bbPos.y, bbPos.z, startPos.x, startPos.y, startPos.z, oldA1.x, oldA1.y, oldA1.z);
+
+        // normalize dir
+        const dir_norm = Math.sqrt(dir.clone().dot(dir));
+        dir.divideScalar(dir_norm);
+        const a1 = oldA1.clone();
+        const center = startPos.add(a1.clone().multiplyScalar(0.6));
         
-        const start_pos = this.getInstanceParameter3("cmOffsets");
-        const bb_pos = this.getInstanceParameter3("bbOffsets");
-        const ns_pos = this.getInstanceParameter3("nsOffsets");
-        const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z)
-        let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
-        let a1 = old_A1.clone()
+        // create rotational matrix
+        let R = new THREE.Matrix4;
         if (direction == "neighbor3") {
-            dir.multiplyScalar(-1);
+            R.makeRotationAxis(dir.clone().negate(), rot);
+            rise = -rise;
         }
         else { // neighbor5
-            a1.multiplyScalar(-1);
+            R.makeRotationAxis(dir, rot);
         }
-        let R = new THREE.Matrix4;
-        R.makeRotationAxis(dir, rot)
-        let rb = new THREE.Vector3(0.6, 0, 0)
-        let a3 = dir;
-        let out = [];
 
+        let rb = new THREE.Vector3(0, 0, 0);
+        const a3 = dir;
+        const rbShift = a3.clone().multiplyScalar(rise);
+        const out = [];
+
+        // add single strand
         for (let i = 0; i < len; i++) {
             a1.applyMatrix4(R);
-            rb.add(a3.clone().multiplyScalar(rise)).applyMatrix4(R);
-            out.push([rb.x+start_pos.x, rb.y+start_pos.y, rb.z+start_pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            rb.add(rbShift);
+            out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
 
-        return out
+        // add complementary strand in the opposite direction
+        if (double) {
+            a1.negate();
+            a3.negate();
+            rbShift.negate();
+            R.transpose();
+            out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            for (let i = 0; i < len - 1; i++) {
+                a1.applyMatrix4(R);
+                rb.add(rbShift);
+                out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
+            }
+        }
+        return out;
     }
 
     getComplementaryType(): string {

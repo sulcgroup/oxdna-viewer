@@ -91,7 +91,7 @@ render();
 function coloringChanged() {
     if (getColoringMode() === "Overlay") {
         if (lut) {
-            if (systems.some(system => system.colormapFile)) {
+            if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
                 api.showColorbar();
             }
         }

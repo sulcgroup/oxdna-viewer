@@ -210,7 +210,8 @@
                             Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;">
                             <button onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">Set sequence</button>
                             <input type="checkbox" id="setCompl" title="Set also complementary bases" checked> Set compl<br>
-                            <button onclick="extendWrapper()" title="Extend strand from the selected monomer with the given sequence">Extend</button>
+                            <button onclick="extendWrapper(false)" title="Extend strand from the selected monomer with the given sequence">Extend</button>
+                            <button onclick="extendWrapper(true)" title="Extend duplex from the selected monomer with the given sequence">Extend Duplex</button>
                             <button onclick="createWrapper()" title="Create a new strand with the provided sequences">Create</button>
                             <button onclick="insertWrapper()" title="Insert elements of the provided sequences upstream of the last selected particle">Insert</button>
                             <button onclick="skipWrapper()" title="Remove selected elements and connect neigbours">Skip</button>
