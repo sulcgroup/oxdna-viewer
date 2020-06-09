@@ -761,9 +761,10 @@ module edit{
                     }
                 }
             }
-            for (let i = 0; i < systems.length; i++) {
-                systems[i].nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
-            }
+            systems.concat(tmpSystems).forEach(system=>{
+                system.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
+                system.callUpdates(['instanceColor'])
+            });
             render();
         }
 

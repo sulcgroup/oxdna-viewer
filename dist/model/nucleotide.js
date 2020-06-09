@@ -290,9 +290,10 @@ class Nucleotide extends BasicElement {
     }
     changeType(type) {
         this.type = type;
-        let sys = this.getSystem();
+        // Get the dummy system if it exists, otherwise get the real system
+        let sys = this.dummySys ? this.dummySys : this.getSystem();
         let newC = this.elemToColor(type);
-        sys.fillVec('nsColors', 3, this.gid - sys.globalStartId, [newC.r, newC.g, newC.b]);
+        sys.fillVec('nsColors', 3, this.gid - this.getSystem().globalStartId, [newC.r, newC.g, newC.b]);
     }
     findPair() {
         let bestCandidate = null;
