@@ -18,6 +18,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
   * [Console Commands](#console-commands)
     + [Scene API](#scene-api)
     + [Edit API](#edit-api)
+    + [Observable API](#observable-api)
   * [Rigid Body Simulations](#rigid-body-simulations)
   * [3D Printing Export](#3d-printing-export)
   * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
@@ -92,6 +93,38 @@ The edit API can be accessed by typing `edit.<command>(<arguments>)` in the brow
  * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
 
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].monomers[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999).
+
+### Observable API
+The observable API can be accessed by typing `api.observable.(observable)` in the browser console.
+Following observables are currently availabe:
+* `api.observable.CMS(elements:BasicElement[], size:number, color:number)` this creates a sphere of the
+given `size` and `color` at the center of mass of a group of bases. 
+* `api.observable.Track(particle : THREE.Mesh)` this creates a line track following the provided mesh object during trajectory update. 
+
+#### Combined example: 
+Compute the CMS of a given set of bases and follow its track through the trajectory. 
+Type following lines in the browser console, assuming a group of bases is selected.
+```js
+let cms = new api.observable.CMS(selectedBases, 1, 0xFF0000);
+let track =  new api.observable.Track(cms);
+let update_func =()=>{
+    cms.calculate();
+    track.calculate();
+};
+trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, update_func);
+trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, update_func);
+render();
+```
+
+* `api.observable.NickOrientation(bases : BasicElement[])` provided two flanking bases at a nick site
+this observable draws a vector, emphasizing the orientation of the nick.
+#### Example: 
+Type following lines in the browser console, assuming two bases are selected.
+```js
+let nick =  new api.observable.NickOrientation(Array.from(selectedBases));
+render = api.observable.wrap(render, () => {nick.calculate()});
+render(); 
+```
 
 ---
 

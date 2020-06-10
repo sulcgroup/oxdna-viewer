@@ -93,7 +93,7 @@ module api.observable{
                 b1.getInstanceParameter3('bbOffsets'),
                 b2.getInstanceParameter3('bbOffsets'),
             ]).sub(origin).normalize();
-            super(dir, origin, 10);
+            super(dir, origin, 10,0x000000);
             this.bases = bases;
             scene.add(this);
             
