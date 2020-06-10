@@ -27,5 +27,23 @@ var api;
             }
         }
         observable.CMS = CMS;
+        class Track extends THREE.Line {
+            constructor(particle) {
+                let points = [];
+                let pos = particle.position;
+                points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+                //let geometry = 
+                super(new THREE.BufferGeometry().setFromPoints(points), new THREE.LineBasicMaterial({ color: 0x0000ff }));
+                this.points = points;
+                this.particle = particle;
+                scene.add(this);
+            }
+            calculate() {
+                let pos = this.particle.position;
+                this.points.push(new THREE.Vector3(pos.x, pos.y, pos.z));
+                this.geometry = new THREE.BufferGeometry().setFromPoints(this.points);
+            }
+        }
+        observable.Track = Track;
     })(observable = api.observable || (api.observable = {}));
 })(api || (api = {}));
