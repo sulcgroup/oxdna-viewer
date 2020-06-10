@@ -89,6 +89,7 @@ function ligateWrapper() {
 function extendWrapper(double) {
     let e = elements.get(listBases.slice(-1)[0]);
     let seq = document.getElementById("sequence").value.toUpperCase();
+    let extendDuplex = document.getElementById("setCompl").checked;
     if (e == undefined) {
         notify("Please select a monomer to extend from");
         return;
@@ -97,7 +98,7 @@ function extendWrapper(double) {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = double ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
+    let elems = extendDuplex ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
     let pos = new THREE.Vector3();
     elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));
@@ -108,11 +109,12 @@ function extendWrapper(double) {
 }
 function createWrapper() {
     let seq = document.getElementById("sequence").value.toUpperCase();
+    let createDuplex = document.getElementById("setCompl").checked;
     if (seq == "") {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = edit.createStrand(seq);
+    let elems = edit.createStrand(seq, createDuplex);
     let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
     let pos = new THREE.Vector3();
     elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));

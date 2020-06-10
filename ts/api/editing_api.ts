@@ -32,10 +32,10 @@ module edit{
         // Create, fill and deploy new strand
         let newStrand: Strand;
         if (strand.getType() == "Peptide") {
-            newStrand = strand.system.createStrand(-strand.system.strands.length - 1)
+            newStrand = strand.system.createStrand(-strand.system.strands.length)
         }
         else {
-            newStrand = strand.system.createStrand(strand.system.strands.length + 1);
+            newStrand = strand.system.createStrand(strand.system.strands.length);
         }
         strand.system.addStrand(newStrand);
         let lidCounter = 0
@@ -292,11 +292,11 @@ module edit{
                 newStrand = splitStrand(e);
             }
 
-            if (e.neighbor3 !== null){
+            if (e.neighbor3){
                 e.neighbor3.neighbor5 = null;
                 e.neighbor3 = null;
             }
-            if (e.neighbor5 !== null) {
+            if (e.neighbor5) {
                 // If different systems, we need to update both
                 let n5sys = e.neighbor5.dummySys ? e.neighbor5.dummySys : e.neighbor5.getSystem();
                 needsUpdateList.add(n5sys);
@@ -333,7 +333,7 @@ module edit{
         });
 
         needsUpdateList.forEach((s:System) => {
-            s.callUpdates(['instanceVisibility', 'instanceScale'])
+            s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor'])
         });
         render();
     }
@@ -480,8 +480,8 @@ module edit{
                     // This is ugly, but we need to find the next available
                     // strand ID and we can't do sys.strands.length because
                     // of proteins
-                    let sMin = Infinity;
-                    let sMax = -Infinity
+                    let sMin = 1;
+                    let sMax = -1
                     sys.strands.forEach(s=>{
                         sMin = Math.min(sMin, s.strandID);
                         sMax = Math.max(sMax, s.strandID);
@@ -496,6 +496,10 @@ module edit{
                     sys.addStrand(strand);
                     strand.addMonomer(e);
                 }
+            }
+            // If the whole system has been removed we have to add it back again
+            if (!systems.includes(sys)) {
+                systems.push(sys);
             }
         });
 
@@ -538,7 +542,7 @@ module edit{
         let addedElems = [];
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
-            let e = strand.createBasicElement(undefined);
+            let e = strand.createBasicElement();
             elements.push(e); // Add element and assign gid
             e.lid = lidCounter;
             e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
@@ -580,78 +584,79 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end, sequence, tmpSys, tmpSys2, direction, inverse, lidCounter): BasicElement[] {
+    function addDuplexBySeq (end, sequence, tmpSys, direction, inverse, lidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
         let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
-        let lidCounter2: number = lidCounter;
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
+        const l = sequence.length
         
-        const lines = end.extendStrand(sequence.length, direction, true); // true = double strand
+        const lines = end.extendStrand(l, direction, true); // true = double strand
 
-        let last = end;
+        let last1 = end;
         let last2 = end2;
         let addedElems = [];
 
-        for (let i = 0, len = sequence.length; i < len; i++) {
-            let e = strand.createBasicElement(undefined);
-            elements.push(e);
-            e.lid = lidCounter;
-            e.sid = lidCounter;
-            e.dummySys = tmpSys;
-            last[direction] = e;
-            e[inverse] = last;
-            e.type = sequence[i];
-            strand.addMonomer(e);
-            last = e;
-            lidCounter++;
-            addedElems.push(e);
+        for (let i = 0; i < l; i++) {
+            let e1 = strand.createBasicElement();
+            elements.push(e1);
+            e1.lid = lidCounter + i;
+            e1.sid = lidCounter + i;
+            e1.dummySys = tmpSys;
+            last1[direction] = e1;
+            e1[inverse] = last1;
+            e1.type = sequence[i];
+            strand.addMonomer(e1);
+            last1 = e1;
+            addedElems.push(e1);
         }
-        // complement strand
-        const map = {A:'T', G:'C', C:'G', T:'A'}
-        for (let i = 0, len = sequence.length; i < len; i++) {
-            let e2 = strand2.createBasicElement(undefined);
+
+        for (let i = 0; i < l; i++) {
+            let e1 = addedElems[i] as Nucleotide;
+            let e2 = strand2.createBasicElement() as Nucleotide;
             elements.push(e2);
-            e2.lid = lidCounter2;
-            e2.sid = lidCounter2;
-            e2.dummySys = tmpSys2;
+            e2.lid = lidCounter + i;
+            e2.sid = lidCounter + l + i;
+            e2.dummySys = tmpSys;
             last2[inverse] = e2;
             e2[direction] = last2;
-            e2.type = map[sequence[i]];
+            e2.type = e1.getComplementaryType();
             strand2.addMonomer(e2);
             last2 = e2;
-            lidCounter2++;
             addedElems.push(e2);
+
+            e1.pair = e2;
+            e2.pair = e1;
         }
 
-        last[direction] = null;
+        last1[direction] = null;
         last2[inverse] = null;
-        let e: BasicElement = end[direction];
+        let e1: BasicElement = end[direction];
         let e2: BasicElement = end2[inverse];
 
-        for (let i = 0, len = sequence.length; i < len; i++) {
-            e.calculatePositions(lines[i]);
-            e = e[direction];
+        for (let i = 0; i < l; i++) {
+            e1.calculatePositions(lines[i]);
+            e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
-        for (let i = sequence.length * 2 - 1; i >= sequence.length; i--) {
+        for (let i = l * 2 - 1; i >= l; i--) {
             e2.calculatePositions(lines[i]);
             e2 = e2[inverse];
         }
+
         strand.circular = false;
         strand2.circular = false;
-        addSystemToScene(tmpSys);
-        addSystemToScene(tmpSys2);
 
-        e = end;
+        addSystemToScene(tmpSys);
+        e1 = end;
         e2 = end2;
-        while (e && e[direction]) {
+        while (e1 && e1[direction]) {
             if (direction == "neighbor5") {
-                calcsp(e.neighbor5);
+                calcsp(e1.neighbor5);
             } else {
-                calcsp(e);
+                calcsp(e1);
             }
-            e = e[direction];
+            e1 = e1[direction];
         }
         while (e2 && e2[inverse]) {
             if (inverse == "neighbor5") {
@@ -661,6 +666,7 @@ module edit{
             }
             e2 = e2[inverse];
         }
+        render();
 
         return addedElems;
     }
@@ -706,9 +712,11 @@ module edit{
      */
     export function extendDuplex(end: BasicElement, sequence: string): BasicElement[] {
         let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
-        // create base pair if end doesn't have one already
+        // create base pair if end doesn't have one alreadyl
+        let addedElems = [];
         if (!end2) {
             end2 = createBP(end as DNANucleotide);
+            addedElems.push(end2);
         }
         let direction: string;
         let inverse: string;
@@ -727,14 +735,10 @@ module edit{
 
         // initialize dummy systems to put each sequence in
         const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length);
+        tmpSys.initInstances(sequence.length * 2);
         tmpSystems.push(tmpSys);
 
-        const tmpSys2 = new System(tmpSystems.length, 0);
-        tmpSys2.initInstances(sequence.length);
-        tmpSystems.push(tmpSys2);
-
-        let addedElems = addDuplexBySeq(end, sequence, tmpSys, tmpSys2, direction, inverse, 0);
+        addedElems = addedElems.concat(addDuplexBySeq(end, sequence, tmpSys, direction, inverse, 0));
 
         render();
         return addedElems;
@@ -782,7 +786,7 @@ module edit{
      * Creates a new strand with the provided sequence
      * @param sequence
      */
-    export function createStrand(sequence: string, isRNA?: Boolean) {
+    export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
         if (sequence.includes('U')) {
             isRNA = true;
         }
@@ -794,7 +798,7 @@ module edit{
 
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length);
+        tmpSys.initInstances(sequence.length * (createDuplex ? 2:1)); // Need to be x2 if duplex
         tmpSystems.push(tmpSys);
 
         // The strand gets added to the last-added system.
@@ -814,7 +818,7 @@ module edit{
         }
 
         // Create a new strand
-        let strand = realSys.createStrand(1);
+        let strand = realSys.createStrand(realSys.strands.length);
         realSys.addStrand(strand);
 
         // Initialise proper nucleotide
@@ -847,16 +851,26 @@ module edit{
 
         // Extends the strand 3'->5' with the rest of the sequence
         // and return all added elements.
-        return addedElems.concat(
-            addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1)
-        );
+
+        if (createDuplex) {
+            // create base pair if end doesn't have one already
+            if (!e.findPair()) {
+                e.pair = createBP(e);
+                addedElems.push(e.pair);
+            }
+            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "neighbor5", "neighbor3", 1));
+        } else {
+            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1));
+        }
+
+        return addedElems;
     }
 
     /**
      * Creates complementary base pair for an element.
      * @param elem
      */
-    export function createBP(elem: DNANucleotide): DNANucleotide {
+    export function createBP(elem: DNANucleotide, undoable?: boolean): DNANucleotide {
         if (elem.findPair()) {
             notify("Element already has a base pair")
             return;
@@ -868,7 +882,7 @@ module edit{
         tmpSystems.push(tmpSys);
         
         const realSys = systems.slice(-1)[0];
-        const strand = realSys.createStrand(1);
+        const strand = realSys.createStrand(realSys.strands.length);
         realSys.addStrand(strand);
 
         // Add element and assign gid
@@ -897,11 +911,13 @@ module edit{
 
         addSystemToScene(tmpSys);
 
-        // Add to history
-        const instanceCopy = [new InstanceCopy(e)];
-        const newCm = e.getInstanceParameter3("cmOffsets");
-        const position = new THREE.Vector3(newCm.x, newCm.y, newCm.z);
-        editHistory.add(new RevertableAddition(instanceCopy, [e], position));
+        // Add to history, but we only want this if it is a atomic edit
+        if (undoable) {
+            const instanceCopy = [new InstanceCopy(e)];
+            const newCm = e.getInstanceParameter3("cmOffsets");
+            const position = new THREE.Vector3(newCm.x, newCm.y, newCm.z);
+            editHistory.add(new RevertableAddition(instanceCopy, [e], position));
+        }
         topologyEdited = true;
 
         return e;

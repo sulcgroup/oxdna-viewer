@@ -117,6 +117,7 @@ function ligateWrapper() {
 function extendWrapper(double: boolean) {
     let e: BasicElement = elements.get(listBases.slice(-1)[0]);
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
+    let extendDuplex = (<HTMLInputElement>document.getElementById("setCompl")).checked;
     if (e == undefined) {
         notify("Please select a monomer to extend from");
         return;
@@ -125,7 +126,7 @@ function extendWrapper(double: boolean) {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = double ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
+    let elems = extendDuplex ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
     elems.forEach(e=>pos.add(e.getInstanceParameter3("cmOffsets")));
@@ -138,11 +139,12 @@ function extendWrapper(double: boolean) {
 
 function createWrapper() {
     let seq: string = (<HTMLInputElement>document.getElementById("sequence")).value.toUpperCase();
+    let createDuplex = (<HTMLInputElement>document.getElementById("setCompl")).checked;
     if (seq == "") {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = edit.createStrand(seq);
+    let elems = edit.createStrand(seq, createDuplex);
 
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
