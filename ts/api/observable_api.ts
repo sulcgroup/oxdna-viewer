@@ -66,11 +66,5 @@ module api.observable{
     
     }
 
-    trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, 
-        ()=>{
-            cms.calculate();
-            track.calculate(); 
-        })
-
 }
 

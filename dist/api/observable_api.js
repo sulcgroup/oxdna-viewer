@@ -53,9 +53,5 @@ var api;
             };
         }
         observable.wrap = wrap;
-        trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, () => {
-            cms.calculate();
-            track.calculate();
-        });
     })(observable = api.observable || (api.observable = {}));
 })(api || (api = {}));
