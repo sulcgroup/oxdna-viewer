@@ -2,6 +2,9 @@
 /// <reference path="../model/basicElement.ts" />
 /// <reference path="../scene/scene_setup.ts" />
 
+//import { Vector3 } from "../typescript_definitions/index";
+//import * as THREE from "../typescript_definitions/index";
+
 // example code calculating different properties from the scene 
 // and displaying the results 
 module api.observable{
@@ -31,6 +34,17 @@ module api.observable{
 
     export class Track extends THREE.Line{
         // draw displacements of a selected mesh 
+        // Example usage, assuming one creates as CMS object from selected bases to track:
+        //
+        // let cms = new api.observable.CMS(selectedBases, 1, 0xFF0000);
+        // let track =  new api.observable.Track(cms);
+        // let update_func =()=>{
+        //     cms.calculate();
+        //     track.calculate(); 
+        // };
+        // trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, update_func);
+        // trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, update_func);
+        // render();
         points: THREE.Vector3[];
         particle: THREE.Mesh; 
         constructor(particle : THREE.Mesh){
@@ -54,14 +68,70 @@ module api.observable{
         }
     }
 
+    export class NickOrientation extends THREE.ArrowHelper{
+        // orientation of a nick defined by 2 consecutive bases
+        // has aligning problems when hooked to trajReader.nextConfig
+        // works when hooked to render 
+        // TODO: possibly fix this behavior at some point 
+        //
+        // Example usage, assuming 2 nick bases are selected type in the dev console:
+        //
+        // let nick =  new api.observable.NickOrientation(Array.from(selectedBases));
+        // render = api.observable.wrap(render, () => {nick.calculate()});
+        bases : BasicElement[];
+        constructor(bases : BasicElement[]){
+            if (bases.length != 2){
+                throw new Error("Nick Orientation requiles 2 bases to work");
+            } 
+            let b1 = bases[0]; 
+            let b2 = bases[1];
+            let origin = mean_point([
+                b1.getInstanceParameter3('nsOffsets'),
+                b2.getInstanceParameter3('nsOffsets')
+            ]);
+            let dir = mean_point([
+                b1.getInstanceParameter3('bbOffsets'),
+                b2.getInstanceParameter3('bbOffsets'),
+            ]).sub(origin).normalize();
+            super(dir, origin, 10);
+            this.bases = bases;
+            scene.add(this);
+            
+        }
+        calculate(){
+            let b1 = this.bases[0]; 
+            let b2 = this.bases[1];
+            let origin = mean_point([
+                b1.getInstanceParameter3('nsOffsets'),
+                b2.getInstanceParameter3('nsOffsets')
+            ]);
+            let dir = mean_point([
+                b1.getInstanceParameter3('bbOffsets'),
+                b2.getInstanceParameter3('bbOffsets'),
+            ]).sub(origin).normalize();
+            this.position.set(origin.x, origin.y, origin.z);
+            this.setDirection(dir);
+
+        }
+
+    }
+    function mean_point(vs :THREE.Vector3 []):THREE.Vector3{
+        let mean = new THREE.Vector3(0,0,0);
+        vs.forEach(v => {
+            mean.add(v);
+            
+        });
+        return mean.divideScalar(vs.length);
+    }
     
-    export function wrap (fn, fn_wrap,)
+    export function wrap (fn, fn_wrap : Function)
     {
         https://dzone.com/articles/javascript-wrap-all-methods 
         return function ()
         {   
+            let result =  fn.apply(this, arguments);
             fn_wrap();
-            return fn.apply(this, arguments);
+            return result;
         };
     
     }

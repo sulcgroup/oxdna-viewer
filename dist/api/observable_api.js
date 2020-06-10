@@ -1,6 +1,8 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../model/basicElement.ts" />
 /// <reference path="../scene/scene_setup.ts" />
+//import { Vector3 } from "../typescript_definitions/index";
+//import * as THREE from "../typescript_definitions/index";
 // example code calculating different properties from the scene 
 // and displaying the results 
 var api;
@@ -45,11 +47,54 @@ var api;
             }
         }
         observable.Track = Track;
+        class NickOrientation extends THREE.ArrowHelper {
+            constructor(bases) {
+                if (bases.length != 2) {
+                    throw new Error("Nick Orientation requiles 2 bases to work");
+                }
+                let b1 = bases[0];
+                let b2 = bases[1];
+                let origin = mean_point([
+                    b1.getInstanceParameter3('nsOffsets'),
+                    b2.getInstanceParameter3('nsOffsets')
+                ]);
+                let dir = mean_point([
+                    b1.getInstanceParameter3('bbOffsets'),
+                    b2.getInstanceParameter3('bbOffsets'),
+                ]).sub(origin).normalize();
+                super(dir, origin, 10);
+                this.bases = bases;
+                scene.add(this);
+            }
+            calculate() {
+                let b1 = this.bases[0];
+                let b2 = this.bases[1];
+                let origin = mean_point([
+                    b1.getInstanceParameter3('nsOffsets'),
+                    b2.getInstanceParameter3('nsOffsets')
+                ]);
+                let dir = mean_point([
+                    b1.getInstanceParameter3('bbOffsets'),
+                    b2.getInstanceParameter3('bbOffsets'),
+                ]).sub(origin).normalize();
+                this.position.set(origin.x, origin.y, origin.z);
+                this.setDirection(dir);
+            }
+        }
+        observable.NickOrientation = NickOrientation;
+        function mean_point(vs) {
+            let mean = new THREE.Vector3(0, 0, 0);
+            vs.forEach(v => {
+                mean.add(v);
+            });
+            return mean.divideScalar(vs.length);
+        }
         function wrap(fn, fn_wrap) {
             https: //dzone.com/articles/javascript-wrap-all-methods 
              return function () {
+                let result = fn.apply(this, arguments);
                 fn_wrap();
-                return fn.apply(this, arguments);
+                return result;
             };
         }
         observable.wrap = wrap;
