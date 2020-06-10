@@ -893,6 +893,9 @@ module edit{
         e.sid = 0;
         e.type = elem.getComplementaryType();
         e.neighbor3 = null;
+        e.neighbor5 = null;
+        e.pair = elem;
+        elem.pair = e;
         strand.addMonomer(e);
         
         const cm = elem.getInstanceParameter3("cmOffsets");
