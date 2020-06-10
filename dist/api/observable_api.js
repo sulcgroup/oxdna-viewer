@@ -45,5 +45,17 @@ var api;
             }
         }
         observable.Track = Track;
+        function wrap(fn, fn_wrap) {
+            https: //dzone.com/articles/javascript-wrap-all-methods 
+             return function () {
+                fn_wrap();
+                return fn.apply(this, arguments);
+            };
+        }
+        observable.wrap = wrap;
+        trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, () => {
+            cms.calculate();
+            track.calculate();
+        });
     })(observable = api.observable || (api.observable = {}));
 })(api || (api = {}));

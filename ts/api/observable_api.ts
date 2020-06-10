@@ -54,5 +54,23 @@ module api.observable{
         }
     }
 
+    
+    export function wrap (fn, fn_wrap,)
+    {
+        https://dzone.com/articles/javascript-wrap-all-methods 
+        return function ()
+        {   
+            fn_wrap();
+            return fn.apply(this, arguments);
+        };
+    
+    }
+
+    trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, 
+        ()=>{
+            cms.calculate();
+            track.calculate(); 
+        })
+
 }
 
