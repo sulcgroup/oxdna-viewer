@@ -207,12 +207,15 @@
                             <button onclick="nickWrapper()" title="break the upstream connection of the last selected particle">Nick</button>
                             <button onclick="deleteWrapper()" title="delete the selected monomers">Delete</button>
                             <button onclick="ligateWrapper()" title="ligate the last two selected particles together">Ligate</button><br>
-                            Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;">
+                            <span>
+                            Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;"
+                                oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
+                                <span id="seqLen"></span>
+                            </span>
+                            <input type="checkbox" id="setCompl" title="Set also complementary bases" checked>Duplex mode<br>
                             <button onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">Set sequence</button>
-                            <input type="checkbox" id="setCompl" title="Set also complementary bases" checked> Set compl<br>
-                            <button onclick="extendWrapper(false)" title="Extend strand from the selected monomer with the given sequence">Extend</button>
-                            <button onclick="extendWrapper(true)" title="Extend duplex from the selected monomer with the given sequence">Extend Duplex</button>
-                            <button onclick="createWrapper()" title="Create a new strand with the provided sequences">Create</button>
+                            <button onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">Extend</button>
+                            <button onclick="createWrapper()" title="Create a new strand (or duplex) with the provided sequences">Create</button>
                             <button onclick="insertWrapper()" title="Insert elements of the provided sequences upstream of the last selected particle">Insert</button>
                             <button onclick="skipWrapper()" title="Remove selected elements and connect neigbours">Skip</button>
                         </div>
@@ -527,6 +530,7 @@
         <script src="./ts/controls/SceneUtils.js"></script>
         <script src="./dist/api/scene_api.js"></script>
         <script src="./dist/api/editing_api.js"></script>
+        <script src="./dist/api/observable_api.js"></script>
         <script src="./dist/editing/clustering.js"></script>
         <script src="./dist/file_handling/stl_exporter.js"></script>
         <script src="./dist/file_handling/GLTFExporter.js"></script>

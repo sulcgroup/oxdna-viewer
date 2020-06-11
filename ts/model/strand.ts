@@ -25,7 +25,7 @@ abstract class Strand {
         elem.strand = this;
     };
 
-    createBasicElement(gid: number): BasicElement {
+    createBasicElement(gid?: number): BasicElement {
         throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc.";
     }
 
@@ -87,7 +87,7 @@ class NucleicAcidStrand extends Strand {
         super(id, system);
     };
 
-    createBasicElement(gid: number) {
+    createBasicElement(gid?: number) {
         if (RNA_MODE)
             return new RNANucleotide(gid, this);
         else
@@ -140,7 +140,7 @@ class Peptide extends Strand {
         super(id, system);
     };
 
-    createBasicElement(gid: number) {
+    createBasicElement(gid?: number) {
         return new AminoAcid(gid, this);
     };
 

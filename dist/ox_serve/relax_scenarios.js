@@ -9,7 +9,6 @@ var relax_scenarios = {
             "restart_step_counter": { "val": 1.0 },
             "backend_precision": { "val": "double" },
             "use_average_seq": { "val": 0 },
-            "seq_dep_file": { "val": "oxDNA2_sequence_dependent_parameters.txt" },
             "max_backbone_force": { "val": 5 },
             "max_backbone_force_far": { "val": 10 }
         },
@@ -59,7 +58,7 @@ var relax_scenarios = {
             "max_backbone_force_far": { "val": 10 },
             "time_scale": { "val": "linear" },
             "verlet_skin": { "val": 0.5 },
-            "seq_dep_file": { "val": "oxDNA2_sequence_dependent_parameters.txt" },
+            "use_average_seq": { "val": 0 },
             "refresh_vel": { "val": 1 },
             "CUDA_list": { "val": "verlet" },
             "restart_step_counter": { "val": 1 },

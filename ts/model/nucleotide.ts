@@ -369,9 +369,15 @@ abstract class Nucleotide extends BasicElement {
 
     changeType(type: string) {
         this.type = type;
+        // Get the dummy system if it exists, otherwise get the real system
         let sys = this.getSystem();
+        let sid = this.gid - sys.globalStartId
+        if (this.dummySys) {
+            sys = this.dummySys
+            sid = this.sid;
+        }
         let newC = this.elemToColor(type);
-        sys.fillVec('nsColors', 3, this.gid - sys.globalStartId, [newC.r, newC.g, newC.b])
+        sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b])
     }
 
     findPair(): Nucleotide {
