@@ -225,7 +225,7 @@ class TrajectoryReader {
         if (nextChunkLines[0] == "") {
             return undefined
         }
-        if (this.confEnd.lineID != currentChunkLength) { //handle very rare edge case where conf ended exactly at end of chunk
+        if (this.confEnd.lineID != currentChunkLength-1) { //handle very rare edge case where conf ended exactly at end of chunk
             start.chunk = this.confEnd.chunk;
             start.lineID = this.confEnd.lineID + 1;
         }
@@ -235,7 +235,7 @@ class TrajectoryReader {
             needNextChunk = true;
         }
         const end = new marker;
-        if (start.lineID + this.confLen <= currentChunkLength) { //is the whole conf in a single chunk?
+        if (start.lineID + this.confLen < currentChunkLength) { //is the whole conf in a single chunk?
             end.chunk = start.chunk;
             end.lineID = start.lineID + this.confLen - 1;
             for (let i = start.lineID; i < end.lineID + 1; i++) {
@@ -267,6 +267,7 @@ class TrajectoryReader {
         let needPreviousChunk: boolean = false;
         const previousConf: string[] = []
         const end = new marker;
+        let endChunkLines: string[]
         if (confNum == 1) { //can't go backwards from 1
             return undefined
         }
@@ -276,13 +277,15 @@ class TrajectoryReader {
                 needPreviousChunk = true;
             }
             end.lineID = this.confBegin.lineID - 1;
+            endChunkLines = end.chunk.split(/[\n]+/g);
         }
         else {
             end.chunk = this.previousChunk;
-            end.lineID = this.previousChunk.length - 1;
+            endChunkLines = end.chunk.split(/[\n]+/g);
+            end.lineID = endChunkLines.length - 1;
             needPreviousChunk = true;
         }
-        const endChunkLines: string[] = end.chunk.split(/[\n]+/g);
+         
     
         const start = new marker;
         if (end.lineID - this.confLen >= -1) { //is the whole conf in a single chunk?
