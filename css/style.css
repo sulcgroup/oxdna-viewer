@@ -34,7 +34,7 @@ canvas {
     font-size: 12px;
     right: 0;
     text-align: left;
-    overflow-y: scroll;
+    overflow-y: auto;
     background-color: rgba(252, 249, 249, 0.9);
     opacity: 0.95;
     padding: 2px;
@@ -44,7 +44,7 @@ textarea {
     width: 100%;
     max-width: 100%;
     min-width: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
     font-size: 12px;
 }
 
