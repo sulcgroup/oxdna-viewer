@@ -81,7 +81,8 @@ function drawHierarchyLevel(
  */
 function drawSystemHierarchy() {
     const opt: HTMLElement = document.getElementById("hierarchyContent");
-    if (!opt.hidden) {
+    if (!opt.hidden) 
+    {
         opt.innerHTML = ""; // Clear
         // Add each system
         systems.forEach(system=>{

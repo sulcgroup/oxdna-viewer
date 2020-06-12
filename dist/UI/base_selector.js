@@ -162,10 +162,8 @@ function updateView(sys) {
 }
 ;
 function clearSelection() {
-    elements.forEach(element => {
-        if (selectedBases.has(element)) {
-            element.toggle();
-        }
+    selectedBases.forEach(element => {
+        element.toggle();
     });
     systems.forEach(sys => {
         updateView(sys);
