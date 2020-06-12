@@ -211,7 +211,7 @@
                             Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;"
                                 oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
                                 <span id="seqLen"></span>
-                            </span>
+                            </span><br>
                             <input type="checkbox" id="setCompl" title="Set also complementary bases" checked>Duplex mode<br>
                             <button onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">Set sequence</button>
                             <button onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">Extend</button>
@@ -254,6 +254,7 @@
                         <legend>Color by:</legend>
                         <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
                         <input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
+                        <br>
                         <input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
                         <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
                     </fieldset>
@@ -292,7 +293,7 @@
                 </div>
             </fieldset>
         </div>
-        <button id="sideNavToggleButton" onclick="toggleSideNav()" type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide toolbar</button>
+        <button id="sideNavToggleButton" onclick="toggleSideNav(this)" type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide toolbar</button>
     </div>
 
     <!--Extra option windows-->

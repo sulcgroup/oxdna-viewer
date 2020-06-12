@@ -84,6 +84,20 @@ function drawSystemHierarchy() {
         });
     }
 }
+function toggleSideNav(button) {
+    let hidden = "show toolbar";
+    let visible = "hide toolbar";
+    let content = document.getElementById("sidenavContent");
+    if (button.innerText.toLowerCase() == hidden) {
+        //tabcontent[0].style.display = "block";
+        content.hidden = false;
+        button.innerHTML = visible;
+    }
+    else {
+        content.hidden = true;
+        button.innerHTML = hidden;
+    }
+}
 function toggleFieldSet(elem) {
     let elems = elem.parentElement.children;
     for (let i = 0; i < elems.length; i++) {
