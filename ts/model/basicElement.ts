@@ -178,4 +178,7 @@ abstract class BasicElement {
 
         return json;
     }
+    getTypeNumber(): number {
+        return(0)
+    }
 };

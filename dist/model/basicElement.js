@@ -129,5 +129,8 @@ class BasicElement {
         });
         return json;
     }
+    getTypeNumber() {
+        return (0);
+    }
 }
 ;

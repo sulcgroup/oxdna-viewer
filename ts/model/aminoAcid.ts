@@ -228,6 +228,20 @@ class AminoAcid extends BasicElement {
         return true;
     }
 
+    getTypeNumber(): number {
+        let c = this.type;
+        let i = ['X', 'A', 'R', 'N', 'D', 'C', 
+                'E', 'Q', 'G', 'H', 'I', 
+                'L', 'K', 'M', 'F', 
+                'P', 'S', 'T', 'W', 
+                'Y', 'V', 'Z'].indexOf(c);
+        if (i>=0) {
+            return -i;
+        } else {
+            return parseInt(c);
+        }
+    }
+
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
