@@ -285,25 +285,25 @@
             <!--Edit-->
             <div class="section" id="section-edit">
                 <div class="tight group">
-                    <button class="ribbon-button" title="Undo (ctrl-z)">
+                    <button class="ribbon-button" title="Undo (ctrl-z)" onclick="editHistory.undo()">
                         <span class="mif-undo mif-2x"></span>
                         <span class="caption">Undo</span>
                     </button>
-                    <button class="ribbon-button" title="Redo (ctrl-y)">
+                    <button class="ribbon-button" title="Redo (ctrl-y)" onclick="editHistory.redo()">
                         <span class="mif-redo mif-2x"></span>
                         <span class="caption">Redo</span>
                     </button>
                 </div>
                 <div class="tight group">
-                    <button class="ribbon-button" title="Cut selection (ctrl-x)">
+                    <button class="ribbon-button" title="Cut selection (ctrl-x)" onclick="cutWrapper()">
                         <span class="mif-cut mif-2x"></span>
                         <span class="caption">Cut</span>
                     </button>
-                    <button class="ribbon-button" title="Copy selection (ctrl-c)">
+                    <button class="ribbon-button" title="Copy selection (ctrl-c)" onclick="copyWrapper()">
                         <span class="mif-copy mif-2x"></span>
                         <span class="caption">Copy</span>
                     </button>
-                    <button class="ribbon-button" title="Paste (ctrl-p)">
+                    <button class="ribbon-button" title="Paste (ctrl-p)" onclick="pasteWrapper()">
                         <span class="mif-paste mif-2x"></span>
                         <span class="caption">Paste</span>
                     </button>
