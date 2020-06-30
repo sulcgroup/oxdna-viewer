@@ -1,0 +1,17 @@
+<h2>Automatic</h2>
+<div class="group">
+    <label>Min points: </label>
+    <input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1>
+</div>
+<div class="group">
+    <label>Max dist (ε): </label>
+    <input type="number" value="3" id="epsilon" title="Max distance between cluster neigbours" min=0>
+</div>
+<button class="button primary" onclick="calculateClusters()">Start clustering</button>
+
+<h2>Manual</h2>
+<div class="group">
+    <button class="button primary" onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to
+        cluster</button>
+    <button class="button" onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
+</div>

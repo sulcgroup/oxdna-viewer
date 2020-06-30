@@ -15,7 +15,7 @@ class BasicElement {
     ;
     //abstract rotate(quat: THREE.Quaternion): void;
     // highlight/remove highlight the bases we've clicked from the list and modify color
-    toggle() {
+    toggle(supressEvent) {
         if (selectedBases.has(this)) {
             selectedBases.delete(this);
         }
@@ -25,6 +25,14 @@ class BasicElement {
         this.updateColor();
     }
     ;
+    select() {
+        selectedBases.add(this);
+        this.updateColor();
+    }
+    deselect() {
+        selectedBases.delete(this);
+        this.updateColor();
+    }
     updateSP(num) {
         return new THREE.Object3D();
     }

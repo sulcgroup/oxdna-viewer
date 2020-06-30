@@ -1,0 +1,178 @@
+body {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+}
+
+canvas {
+    position: absolute;
+    height: 100%;
+    z-index: 1;
+}
+
+.opts {
+    position: relative;
+    width: 200px;
+    bottom: 0px;
+    z-index: 2;
+    background-color: rgba(252, 249, 249, 0.9);
+    padding: 2px;
+    border: 3px solid #acc;
+    margin: 10px;
+}
+
+.inline-icon {
+   vertical-align: bottom;
+   font-size: 18px !important;
+}
+
+#sidenav {
+    width: 200px;
+    max-height: 100%;
+    position: fixed;
+    z-index: 2;
+    font-size: 12px;
+    right: 0;
+    text-align: left;
+    overflow-y: auto;
+    background-color: rgba(252, 249, 249, 0.9);
+    opacity: 0.95;
+    padding: 2px;
+}
+
+textarea {
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+button {
+    width: 100%;
+    background-color: #acc;
+    border: none;
+    color: #fff;
+    font-size: 1em;
+    padding: 5px 15px;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+fieldset {
+    margin: 5px 0px;
+    min-width: 0;
+    background-color: rgba(170, 204, 204, 0.3);
+    border: none;
+    font-size: 1em;
+    font-weight: normal;
+}
+
+legend {
+    padding: 2px 20px;
+    margin: 1px;
+    background-color: rgb(222, 233, 233);
+    width: auto;
+    border-radius: 2px;
+    margin-left: auto;
+    margin-right: auto;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: rgb(143, 199, 199);
+    cursor: pointer;
+}
+
+input[type=number] {
+    width: 4em;
+}
+
+.material-icons:hover {
+    color: rgb(65, 114, 179);
+    cursor: pointer;
+}
+
+#dragInstruction {
+    position: fixed;
+    z-index: 2;
+    left: 0;
+    right: 200;
+    padding: 0.5em;
+    background-color: #acc;
+    opacity: 0.8;
+    text-align: center;
+    color: #fff;
+    font-family: Arial, serif;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+#container {
+    position: relative;
+}
+#colorbarCanvas{
+    position: fixed;
+    pointer-events: none;
+    z-index: 2;
+    width: 450px;
+    height: 150px;
+    bottom: 0;
+    right: 200px;
+}
+
+.modal {
+    position: fixed;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(1.1);
+    transition: visibility 0s linear 0.25s, opacity 0.25s 0s, transform 0.25s;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 1rem 1rem;
+    max-width: 100%;
+    border-radius: 0.5rem;
+}
+
+.show-modal {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1.0);
+    transition: visibility 0s linear 0s, opacity 0.25s 0s, transform 0.25s;
+}
+
+.notification {
+    position: relative;
+    z-index: 3;
+    bottom: 0;
+    margin-top: 2px;
+    padding: 0.5em;
+    background-color: #d98883;
+    opacity: 0.9;
+    text-align: center;
+    color: #fff;
+    font-family: Arial, serif;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.selectBox {
+    border: 1px solid #55aaff;
+    background-color: rgba(75, 160, 255, 0.15);
+    position: fixed;
+    z-index: 1;
+}

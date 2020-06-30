@@ -13,7 +13,7 @@ export class TransformControls extends Object3D {
 
     hide(): void;
 
-    hide(): void;
+    isHovered(): boolean;
 
     getMode(): string;
 

@@ -6,8 +6,8 @@
  * @param elems A list of elements to centre
  */
 function centerAndPBCBtnClick(elems) {
-    window.sessionStorage.centerOption = document.getElementById("centering").value;
-    window.sessionStorage.inboxingOption = document.getElementById("inboxing").value;
+    window.sessionStorage.centerOption = view.getCenteringSetting();
+    window.sessionStorage.inboxingOption = view.getInboxingSetting();
     centerAndPBC(elems);
 }
 function centerAndPBC(elems) {
@@ -33,11 +33,11 @@ function getCenteringGoal() {
         centerOption = window.sessionStorage.centerOption;
     }
     else {
-        centerOption = document.getElementById("centering").value;
+        centerOption = view.getCenteringSetting();
     }
     //let centerOption = 
     switch (centerOption) {
-        case "Box Center": return box.clone().divideScalar(2);
+        case "Box": return box.clone().divideScalar(2);
         case "Origin": return new THREE.Vector3();
         default: return undefined;
     }
@@ -50,12 +50,15 @@ function getInboxingMode() {
     if (window.sessionStorage.inboxingOption) {
         return window.sessionStorage.inboxingOption;
     }
-    return document.getElementById("inboxing").value;
+    return view.getInboxingSetting();
 }
 /**
  * Bring all elements (or strands) inside the simulation box
  */
 function bringInBox(boxOption) {
+    if (boxOption == "None") {
+        return;
+    }
     // We need actual modulus
     let realMod = (n, m) => ((n % m) + m) % m;
     // Find out which center we use, or just use box center
@@ -94,7 +97,7 @@ function bringInBox(boxOption) {
         });
     }
     else {
-        notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`);
+        notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`, "alert");
     }
 }
 /**

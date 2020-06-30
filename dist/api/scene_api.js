@@ -145,6 +145,20 @@ var api;
         selectElements(getElements(targets), keepPrevious);
     }
     api.selectElementIDs = selectElementIDs;
+    /**
+     * Show the specified element in the viewport
+     * @param element Element to center view at
+     */
+    function findElement(element) {
+        let targetPos = element.getInstanceParameter3('bbOffsets');
+        // Target trackball controls at element position
+        controls.target = targetPos;
+        // Move in close to the element
+        let targetDist = 3;
+        let dist = (camera.position.distanceTo(targetPos));
+        camera.position.lerp(targetPos, 1 - (targetDist / dist));
+    }
+    api.findElement = findElement;
     function selectElements(elems, keepPrevious) {
         if (!keepPrevious) {
             clearSelection();
@@ -157,7 +171,7 @@ var api;
         systems.forEach(sys => {
             updateView(sys);
         });
-        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+        if (selectedBases.size > 0 && view.transformEnabled()) {
             transformControls.show();
         }
     }
@@ -219,7 +233,7 @@ var api;
                     system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
                 }
             }
-            coloringChanged();
+            updateColoring();
         }
         else {
             defaultColormap = name;
@@ -240,7 +254,7 @@ var api;
                 system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
             }
         }
-        coloringChanged();
+        updateColoring();
     }
     api.setColorBounds = setColorBounds;
     function spOnly() {

@@ -15,6 +15,8 @@ export class TransformControls extends Object3D {
 
     show(): void;
 
+    isHovered(): boolean;
+
     getMode(): string;
 
     setMode(mode: string): void;

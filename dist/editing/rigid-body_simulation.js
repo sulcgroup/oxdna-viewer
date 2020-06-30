@@ -4,7 +4,7 @@ let rigidClusterSimulator;
  * Start rigid-body simulator if it's not already running
  */
 function toggleClusterSim() {
-    if (!document.getElementById("clusterSim")["checked"]) {
+    if (!view.getInputBool("clusterSim")) {
         rigidClusterSimulator = null;
         return;
     }
@@ -12,7 +12,7 @@ function toggleClusterSim() {
         rigidClusterSimulator = new RigidClusterSimulator();
         if (rigidClusterSimulator.getNumberOfClusters() < 2) {
             notify("Please create at least 2 clusters");
-            document.getElementById("clusterOptions").hidden = false;
+            view.toggleWindow("clusteringWindow");
             document.getElementById("clusterSim")["checked"] = false;
             rigidClusterSimulator = null;
             return;
@@ -34,6 +34,7 @@ class RigidClusterSimulator {
         this.connectionRelaxedLength = 3;
         this.connectionSpringConst = 10;
         this.friction = 0.25;
+        this.dt = 0.1;
         // Create Cluster objects for each cluster label among the elements
         let m = new Map();
         elements.forEach((e) => {
@@ -79,7 +80,7 @@ class RigidClusterSimulator {
             c.integrate(dt);
         });
         // Update transform controls, if neccessary
-        if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+        if (selectedBases.size > 0 && view.transformEnabled()) {
             transformControls.show();
         }
     }
@@ -88,7 +89,7 @@ class RigidClusterSimulator {
      * Start simulation and run while checkbox is checked
      */
     simulate() {
-        this.integrate(0.1);
+        this.integrate(this.dt);
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
@@ -180,7 +181,7 @@ class Cluster {
      */
     integrate(dt) {
         // Position needs to be updated if the cluster is dragged manually
-        if (getActionModes().includes("Transform")) {
+        if (view.transformEnabled()) {
             this.calculateCenter();
         }
         // Calculate translation

@@ -1,7 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-let listBases: number[] = []; //list of bases to download in .txt file
-let basesInfo: string = ""; //list of bases' info - location, strand and system ids, etc. - to download in .txt file
 let mouse3D;
 let raycaster = new THREE.Raycaster();;
 let intersects;
@@ -20,12 +18,11 @@ canvas.addEventListener('mousemove', event => {
 
 canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
-	if (getActionModes().includes("Select")) {
+	if (view.selectionEnabled()) {
 		let id = gpuPicker(event)
 
 		//if something was clicked, toggle the coloration of the appropriate things.
-		if (id > -1) {
-
+		if (id > -1 && !transformControls.isHovered()) {
 			// This runs after the selection is done and the nucleotides are toggled,
 			// but it needs to be defined as a callback since the cluster selection
 			// can take a while to finish.
@@ -39,7 +36,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 			}
 			
 			let strandCount = sys.strands.length;
-			switch(getScopeMode()){
+			switch(view.getSelectionMode()){
 				case "System" :
 					sys.strands.forEach(strand=>{
 						strand.monomers.forEach(e=>{
@@ -52,9 +49,9 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					let strandLength = nucleotide.strand.monomers.length;
 					for (let i= 0; i < strandLength; i++) { //for every nucleotide in strand
 						nucleotide.strand.monomers[i].toggle();
-						if(selectPairs()) {
+						if(view.selectPairs()) {
 							if (!nucleotide.isPaired()) {
-								longCalculation(findBasepairs, basepairMessage,
+								view.longCalculation(findBasepairs, view.basepairMessage,
 								()=>{selectPaired(nucleotide.strand.monomers[i]);updateView(sys);});
 							} else {
 								selectPaired(nucleotide.strand.monomers[i]);
@@ -66,9 +63,9 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 				case "Monomer":
 					nucleotide.toggle();
 					if(event.shiftKey) {
-						if(selectPairs()){
+						if(view.selectPairs()){
 							if(!nucleotide.isPaired()) {
-								longCalculation(findBasepairs, basepairMessage,
+								view.longCalculation(findBasepairs, view.basepairMessage,
 								()=>{fancySelectIntermediate(nucleotide);updateView(sys);});
 							} else {
 								fancySelectIntermediate(nucleotide);
@@ -80,9 +77,9 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 								selectIntermediate();
 							}
 						}
-					} else if(selectPairs()) {
+					} else if(view.selectPairs()) {
 						if(!nucleotide.isPaired()) {
-							longCalculation(findBasepairs, basepairMessage,
+							view.longCalculation(findBasepairs, view.basepairMessage,
 							()=>{selectPaired(nucleotide);updateView(sys);});
 						} else {
 							selectPaired(nucleotide);
@@ -116,7 +113,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 				});
 			}
 
-			if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+			if (selectedBases.size > 0 && view.transformEnabled()) {
 				transformControls.show();
 			} else {
 				transformControls.hide();
@@ -136,7 +133,7 @@ function updateView(sys: System) {
 
 	render(); //update scene;
 
-	listBases = [];
+	let listBases = [];
 	let baseInfoStrands = {};
 
 	//sort selection info into respective containers
@@ -154,9 +151,21 @@ function updateView(sys: System) {
 		}
 	);
 
-	//Display every selected nucleotide id (top txt box)
-	makeTextArea(listBases.join(","), "BaseList");
+	// Display every selected nucleotide id (top txt box)
+	makeTextArea(listBases.join(","), "baseList");
 
+	// Update hierarchy checkboxes to match selected elements
+	if (view.isWindowOpen('systemHierarchyWindow')) {
+		let recheck = ()=> {
+			let hierarchy = $('#hierarchyContent');
+			hierarchy.data('checkboxMap').forEach((checkbox, gid)=>{
+				checkbox.checked = selectedBases.has(elements.get(gid));
+			})
+			hierarchy.data('treeview')._recheck(hierarchy);
+		};
+		recheck();
+	}
+	
 	//Brake down info (low txt box)
 	let baseInfoLines = [];
 	for (let strandID in baseInfoStrands){
@@ -174,6 +183,27 @@ function updateView(sys: System) {
 		}
 	}
 	makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
+
+	/*
+	// Sadly. this seems to be doable only with jquery
+	// https://stackoverflow.com/questions/25286488/with-vanilla-javascript-how-can-i-access-data-stored-by-jquerys-data-method
+	let table = $('#baseInfo').data()['listview'];
+
+	for (let strandID in baseInfoStrands){
+		let sBases = baseInfoStrands[strandID];
+		let strand = table.addGroup({
+			caption: `Strand ${strandID} (System ${sBases[0].getSystem().systemID})`
+		});
+		
+		for(let i = 0; i < sBases.length; i++){
+			let color = sBases[i].elemToColor(sBases[i].type).getHexString();
+			table.add(strand, {
+				caption: `gid: ${sBases[i].gid} | lID:  ${sBases[i].lid}`,
+				icon: `<span style="background:#${color}4f">${sBases[i].type}</span>`
+			});
+		}
+	}
+	*/
 };
 
 function clearSelection() {
@@ -193,7 +223,7 @@ function invertSelection() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
-	if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+	if (selectedBases.size > 0 && view.transformEnabled()) {
 		transformControls.show();
 	} else {
 		transformControls.hide();
@@ -209,7 +239,7 @@ function selectAll() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
-	if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+	if (selectedBases.size > 0 && view.transformEnabled()) {
 		transformControls.show();
 	}
 }
@@ -224,10 +254,10 @@ function selectPaired(e: BasicElement) {
 }
 
 function fancySelectIntermediate(e: BasicElement) {
-	let paired = selectPairs();
+	let paired = view.selectPairs();
 	let d = new Dijkstra(Array.from(elements.values()), paired);
 	let elems: BasicElement[] = [];
-	longCalculation(()=>{
+	view.longCalculation(()=>{
 		elems = d.shortestPath(e, Array.from(selectedBases));
 	},"Calculating intermediate elements...",
 	()=>{
@@ -279,7 +309,7 @@ function makeTextArea(bases: string, id) { //insert "bases" string into text are
 
 let boxSelector;
 canvas.addEventListener('mousemove', event => {
-	if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+	if (boxSelector && view.selectionEnabled() && view.getSelectionMode() === "Box") {
 		// Box selection
 		event.preventDefault();
 		boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
@@ -288,7 +318,7 @@ canvas.addEventListener('mousemove', event => {
 
 
 canvas.addEventListener('mousedown', event => {
-	if (getActionModes().includes("Select") && getScopeMode() === "Box") {
+	if (view.selectionEnabled() && view.getSelectionMode() === "Box" && !transformControls.isHovered()) {
 		// Box selection
 		event.preventDefault();
 
@@ -309,7 +339,7 @@ canvas.addEventListener('mousedown', event => {
 }, false);
 
 let onDocumentMouseCancel = event => {
-	if (boxSelector && getActionModes().includes("Select") && getScopeMode() === "Box") {
+	if (boxSelector && view.selectionEnabled() && view.getSelectionMode() === "Box") {
 		// Box selection
 		event.preventDefault();
 
@@ -325,7 +355,7 @@ let onDocumentMouseCancel = event => {
 			}
 		});
 
-		if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+		if (selectedBases.size > 0 && view.transformEnabled()) {
 			transformControls.show();
 		} else {
 			transformControls.hide();

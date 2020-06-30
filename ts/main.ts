@@ -106,15 +106,20 @@ readFilesFromURLParams();
 render();
 
 //toggles display of coloring by json file / structure modeled off of base selector
-function coloringChanged() {
-    if (getColoringMode() === "Overlay") {
+function updateColoring(mode?: string) {
+    if(!mode) {
+        mode = view.getColoringMode()
+    } else {
+        view.setColoringMode(mode);
+    }
+    if (mode === "Overlay") {
         if (lut) {
             if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
                 api.showColorbar();
             }
         } else {
             notify("Please drag and drop the corresponding .json file.");
-            setColoringMode("Strand");
+            view.setColoringMode("Strand");
             return;
         }
     } else if (lut) {
@@ -129,18 +134,6 @@ function coloringChanged() {
     }
     render();
 }
-
-function getColoringMode(): string {
-    return document.querySelector('input[name="coloring"]:checked')['value'];
-}
-
-function setColoringMode(mode: string) {
-    const modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("coloring");
-    for (let i = 0; i < modes.length; i++) {
-        modes[i].checked = (modes[i].value === mode);
-    }
-    coloringChanged();
-};
 
 function findBasepairs() {
     elements.forEach(e => {
@@ -176,9 +169,11 @@ function divAndNeg(mat:number[],divisor:number){ //divide a matrix by divisor; n
 
 //Temporary solution to adding configuration storage
 //This section sets interface values from the storage 
-if (window.sessionStorage.centerOption)
-(document.getElementById("centering") as HTMLSelectElement).value = window.sessionStorage.centerOption;
-if (window.sessionStorage.inboxingOption)    
-(document.getElementById("inboxing") as HTMLSelectElement).value = window.sessionStorage.inboxingOption ;
+if (window.sessionStorage.centerOption) {
+    view.setCenteringSetting(window.sessionStorage.centerOption);
+}
+if (window.sessionStorage.inboxingOption) {
+    view.setInboxingSetting(window.sessionStorage.inboxingOption);
+}
 
 

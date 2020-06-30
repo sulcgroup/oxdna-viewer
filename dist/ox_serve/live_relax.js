@@ -12,27 +12,41 @@ function openConnections() {
     let lst;
     lst = val ? val.split(',') : [];
     //console.log(lst);
-    lst.forEach((element, id) => {
-        if (element !== "") {
-            node.innerHTML += `<p id="oxIP${id}">`;
-            node.innerHTML += `<button id="oxIP${id}_1" style="width: 40px; height:30px;" onclick="deleteOXServeCon(${id})" title="Delete entry">x</button> `;
-            node.innerHTML += `<button id="oxIP${id}_2"style="width: 40px; height:30px;" onclick="establishConnection(${id})" title="Establish connection">►</button>`;
-            node.innerHTML += `<label  id="oxIP${id}_3" for="oxIP${id}_1">${element}</label></p>`;
-        }
-    });
+    lst.forEach(addConnectionDom);
     //make sure the previous connection is killed before adding a new one  
     if (socket) {
         socket.close();
     }
-    toggleModal('socketConnections');
+    Metro.dialog.open('#socketConnectionsDialog');
 }
-function deleteOXServeCon(id) {
-    document.getElementById(`oxIP${id}_3`).remove();
-    document.getElementById(`oxIP${id}_2`).remove();
-    document.getElementById(`oxIP${id}_1`).remove();
-    let lst = window.localStorage.oxServeIps.split(',');
-    lst.splice(id, 1);
-    window.localStorage.setItem("oxServeIps", lst);
+function addConnectionDom(element, id) {
+    if (element !== "") {
+        let item = document.createElement('div');
+        //item.classList.add('item');
+        item.id = `oxIp${id}`;
+        let del = document.createElement('button');
+        del.classList.add('square', 'button');
+        del.innerHTML = "<span class='mif-cross'></span>";
+        del.onclick = () => {
+            item.remove();
+            let lst = window.localStorage.oxServeIps.split(',');
+            lst.splice(id, 1);
+            window.localStorage.setItem("oxServeIps", lst);
+        };
+        del.title = "Delete entry";
+        let connect = document.createElement('button');
+        connect.classList.add('square', 'button', 'secondary');
+        connect.innerHTML = "<span class='mif-play'></span>";
+        connect.onclick = () => { establishConnection(id); };
+        connect.title = "Establish connection";
+        let label = document.createElement('span');
+        label.classList.add('label');
+        label.innerHTML = element;
+        item.appendChild(del);
+        item.appendChild(connect);
+        item.appendChild(label);
+        document.getElementById("serverList").appendChild(item);
+    }
 }
 function addOXServeURL() {
     let host = document.getElementById("newHostText").value; //= window.sessionStorage.inboxingOption ;
@@ -40,11 +54,7 @@ function addOXServeURL() {
     if (host !== "ws://some_host") {
         lst.push(host);
         window.localStorage.setItem("oxServeIps", lst);
-        const node = document.getElementById("serverList");
-        node.innerHTML += `<p id="oxIP${lst.length - 1}>`;
-        node.innerHTML += `<button id="oxIP${lst.length - 1}_1" style="width: 40px; height:30px;" onclick="deleteOXServeCon(${lst.length - 1})" title="Delete entry">x</button> `;
-        node.innerHTML += `<button id="oxIP${lst.length - 1}_2"style="width: 40px; height:30px;" onclick="establishConnection(${lst.length - 1})" title="Establish connection">►</button>`;
-        node.innerHTML += `<label  id="oxIP${lst.length - 1}_3" for="oxIP$${lst.length}_1">${host}</label></p>`;
+        addConnectionDom(host, lst.length - 1);
         document.getElementById("newHostText").innerText = "";
     }
 }
@@ -86,13 +96,13 @@ class OXServeSocket extends WebSocket {
             let connect_button = document.getElementById("btnConnect");
             connect_button.style.backgroundColor = "green";
             connect_button.textContent = "Connected!";
-            toggleModal('socketConnections');
+            view.toggleModal('socketConnections');
         };
         this.onclose = (resonse) => {
             let connect_button = document.getElementById("btnConnect");
             connect_button.style.backgroundColor = "";
             connect_button.textContent = "Connect to oxServe";
-            notify("lost oxServe Connection");
+            notify("lost oxServe Connection", "warn");
         };
         this.stop_simulation = () => {
             this.send("abort");

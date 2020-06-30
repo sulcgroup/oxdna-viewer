@@ -50,14 +50,10 @@ target.addEventListener("dragover", function (event) {
 
 target.addEventListener("dragenter", function (event) {
     event.preventDefault();
-    const e = document.getElementById("dragInstruction");
-    e.style.opacity = "0.1";
 }, false);
 
 target.addEventListener("dragexit", function (event) {
     event.preventDefault();
-    const e = document.getElementById("dragInstruction");
-    e.style.opacity = "0.8";
 }, false);
 
 // the actual code to drop in the config files
@@ -79,9 +75,14 @@ var toggleFailure: Boolean = false,
 target.addEventListener("drop", function (event) {
     // cancel default actions
     event.preventDefault();
+    const files = event.dataTransfer.files;
+    handleFiles(files);
 
-    const files = event.dataTransfer.files,
-        filesLen = files.length;
+}, false);
+
+function handleFiles(files: FileList) {
+
+    const filesLen = files.length;
 
     let topFile, jsonFile, trapFile;
 
@@ -140,8 +141,7 @@ target.addEventListener("drop", function (event) {
         renderer.domElement.style.cursor = "auto"; 
     }
     render();
-}, false);
-
+}
 
 let trap_objs = [];
 let trap_file = "";
@@ -277,10 +277,6 @@ function readFilesFromURLParams() {
 
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, jsonFile?: File) {
-    // Remove drag instructions
-    const dragInstruction = document.getElementById("dragInstruction");
-    dragInstruction.style.display = "none";
-
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -315,7 +311,7 @@ function readDat(datReader, system) {
     // parse file into lines
     let lines = datReader.result.split(/[\n]+/g);
     if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-        notify(".dat and .top files incompatible")
+        notify(".dat and .top files incompatible", "alert");
         return
     }
     // Increase the simulation box size if larger than current
@@ -328,7 +324,7 @@ function readDat(datReader, system) {
     confNum += 1
     console.log(confNum, "t =", time);
     let timedisp = document.getElementById("trajTimestep");
-    timedisp.innerHTML = `t = ${time}`;
+    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
     timedisp.hidden = false;
     // discard the header
     lines = lines.slice(3);
@@ -377,7 +373,7 @@ function readJson(system, jsonReader) {
                 system.setColorFile(data);
                 makeLut(data, key);
                 try{ //you need to toggle here for small systems, during the scene add for large systems because asynchronous reading.
-                    setColoringMode("Overlay");
+                    view.setColoringMode("Overlay");
                 }
                 catch {
                     toggleFailure = true;
@@ -405,7 +401,7 @@ function readJson(system, jsonReader) {
             }
         }
         else { //if json and dat files do not match, display error message and set filesLen to 2 (not necessary)
-            notify(".json and .top files are not compatible.");
+            notify(".json and .top files are not compatible.", "alert");
             return;
         }
     }
@@ -442,7 +438,7 @@ function readOxViewJsonFile(file: File) {
                         case 'Peptide': constr = Peptide; break;
                         default:
                             let error = `Unrecognised type of strand:  ${strandData.class}`;
-                            notify(error);
+                            notify(error, "alert");
                             throw error;
                     }
                     strand = new constr(strandData.id, sys);
@@ -663,7 +659,7 @@ function addSystemToScene(system: System) {
 
     // Catch an error caused by asynchronous readers and different file sizes
     if(toggleFailure){
-        setColoringMode("Overlay");
+        view.setColoringMode("Overlay");
     }
 
     render();

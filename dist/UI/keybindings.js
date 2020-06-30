@@ -81,38 +81,60 @@ canvas.addEventListener("keydown", event => {
             }
             break;
         // Transform controls:
-        case 't':
-            showTransformControl('translate');
+        case 't': // Toggle translate
+            if (view.getTransformSetting() == 'Translate') {
+                view.handleTransformMode('None');
+            }
+            else {
+                view.handleTransformMode('Translate');
+            }
             break;
-        case 'r':
-            showTransformControl('rotate');
+        case 'r': // Toggle rotate
+            if (view.getTransformSetting() == 'Rotate') {
+                view.handleTransformMode('None');
+            }
+            else {
+                view.handleTransformMode('Rotate');
+            }
             break;
         case 'shift':
             transformControls.setTranslationSnap(1);
             transformControls.setRotationSnap(Math.PI / 12);
             break;
+        case 'o':
+            if (event.ctrlKey) {
+                event.preventDefault();
+                Metro.dialog.open('#openFileDialog');
+                break;
+            }
+            break;
         case 's':
             // Save output
             if (event.ctrlKey) {
                 event.preventDefault();
-                makeOutputFiles();
+                Metro.dialog.open('#exportOxdnaDialog');
+                document.getElementById('gidUpdateWarning').hidden = !topologyEdited;
                 break;
             }
             // Toggle selection:
-            let selectToggle = document.getElementById("selectToggle");
-            selectToggle.checked = !selectToggle.checked;
+            if (view.selectionEnabled()) {
+                view.setSelectionMode("Disabled");
+            }
+            else {
+                view.setSelectionMode("Monomer");
+            }
             break;
         // Toggle dragging:
         case 'd':
             if (transformControls.visible) {
-                showTransformControl("none");
+                view.handleTransformMode("None");
             }
             else {
-                showTransformControl("translate");
+                view.handleTransformMode("Translate");
             }
             break;
         case 'f1':
-            toggleModal("keyboardShortcuts");
+            view.toggleModal("keyboardShortcuts");
             break;
     }
     // Key is value of the key, e.g. '1', while code is the id of

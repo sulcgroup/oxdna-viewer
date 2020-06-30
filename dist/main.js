@@ -88,8 +88,14 @@ var topologyEdited = false;
 readFilesFromURLParams();
 render();
 //toggles display of coloring by json file / structure modeled off of base selector
-function coloringChanged() {
-    if (getColoringMode() === "Overlay") {
+function updateColoring(mode) {
+    if (!mode) {
+        mode = view.getColoringMode();
+    }
+    else {
+        view.setColoringMode(mode);
+    }
+    if (mode === "Overlay") {
         if (lut) {
             if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
                 api.showColorbar();
@@ -97,7 +103,7 @@ function coloringChanged() {
         }
         else {
             notify("Please drag and drop the corresponding .json file.");
-            setColoringMode("Strand");
+            view.setColoringMode("Strand");
             return;
         }
     }
@@ -111,17 +117,6 @@ function coloringChanged() {
     }
     render();
 }
-function getColoringMode() {
-    return document.querySelector('input[name="coloring"]:checked')['value'];
-}
-function setColoringMode(mode) {
-    const modes = document.getElementsByName("coloring");
-    for (let i = 0; i < modes.length; i++) {
-        modes[i].checked = (modes[i].value === mode);
-    }
-    coloringChanged();
-}
-;
 function findBasepairs() {
     elements.forEach(e => {
         if (e instanceof Nucleotide) {
@@ -152,7 +147,9 @@ function divAndNeg(mat, divisor) {
 }
 //Temporary solution to adding configuration storage
 //This section sets interface values from the storage 
-if (window.sessionStorage.centerOption)
-    document.getElementById("centering").value = window.sessionStorage.centerOption;
-if (window.sessionStorage.inboxingOption)
-    document.getElementById("inboxing").value = window.sessionStorage.inboxingOption;
+if (window.sessionStorage.centerOption) {
+    view.setCenteringSetting(window.sessionStorage.centerOption);
+}
+if (window.sessionStorage.inboxingOption) {
+    view.setInboxingSetting(window.sessionStorage.inboxingOption);
+}

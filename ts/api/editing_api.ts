@@ -226,7 +226,7 @@ module edit{
         );
 
         //since strand IDs were updated, we also need to update the coloring
-        coloringChanged();
+        updateColoring();
 
         //connect the 2 element objects 
         end5.neighbor5 = end3;
@@ -753,7 +753,7 @@ module edit{
         // Sort elements by their id, in 5' to 3' order
         elems.sort((a,b)=>{return a.lid<b.lid ? 1:-1});
 
-        // Define a function to satisfy longCalculation callback
+        // Define a function to satisfy view.longCalculation callback
         let set = function(){
             let len = Math.min(elems.length, sequence.length);
             for(let i=0; i<len; i++) {
@@ -776,7 +776,7 @@ module edit{
         // for the calculation to finish. Otherwise, set the
         // sequence immediately.
         if (setComplementaryBases && !elems[0].isPaired()) {
-            longCalculation(findBasepairs, basepairMessage, set);
+            view.longCalculation(findBasepairs, view.basepairMessage, set);
         } else {
             set();
         }

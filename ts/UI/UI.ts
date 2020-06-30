@@ -1,143 +1,105 @@
-/**
- * Create a level in the System Hierarchy; Either system, strand or monomer.
- * @param parent Parent HTML container
- * @param label Text to display for this item
- * @param onClick Function to call if text is clicked
- * @param onEdit Function to call if edit button is clicked
- * @param onVisibilityToggle Function to call if the visibility button is clicked
- * @param expanded If true, automatically show child elements
- * @param isBottom If true, don't add any child elements
- * @returns Returns the child container, unless isBottom is true
- */
-function drawHierarchyLevel(
-        parent: HTMLElement,
-        label: string,
-        onClick: (event: MouseEvent)=>void,
-        onEdit: ()=>void,
-        onVisibilityToggle: (visible: boolean)=>void,
-        expanded?: boolean,
-        isBottom?: boolean
-    ): HTMLElement
-{
-    // Create level div
-    const level = document.createElement('div');
-    level.style.paddingLeft ="10px";
-    const levelLabel = document.createElement('i');
-    levelLabel.innerHTML = label;
-    levelLabel.onclick = onClick;
-    levelLabel.style.cursor = 'pointer';
+// Use Metro GUI
+declare var Metro: any;
 
-    // Create edit label icon
-    const editIcon = document.createElement('i');
-    editIcon.classList.add('material-icons');
-    editIcon.innerHTML = 'edit';
-    editIcon.onclick = onEdit;
-
-    // Create visibility toggle icon
-    const toggleVisIcon = document.createElement('i');
-    toggleVisIcon.classList.add('material-icons');
-    toggleVisIcon.innerHTML = 'visibility';
-    toggleVisIcon.onclick = ()=>{
-        let visible = toggleVisIcon.innerHTML == 'visibility';
-        toggleVisIcon.innerHTML = visible ? 'visibility_off' : 'visibility';
-        onVisibilityToggle(visible);
-    };
-
-    if (isBottom) {
-        level.appendChild(levelLabel);
-        parent.appendChild(level);
-        level.appendChild(editIcon);
-        level.appendChild(toggleVisIcon);
-        return;
-    } else {
-        // Create container and buttons for child elements
-        const expandButton = document.createElement('i');
-        expandButton.classList.add('material-icons');
-        expandButton.innerHTML = "arrow_right";
-        const childContainer = document.createElement('div');
-        childContainer.hidden = !expanded;
-
-        expandButton.onclick = (event: MouseEvent)=> {
-            if(childContainer.hidden) {
-                expandButton.innerHTML = 'arrow_drop_down';
-            } else {
-                expandButton.innerHTML = 'arrow_right';
-            }
-            childContainer.hidden = !childContainer.hidden;
-        };
-
-        level.appendChild(expandButton);
-        level.appendChild(levelLabel);
-        level.appendChild(editIcon);
-        level.appendChild(toggleVisIcon);
-        level.appendChild(childContainer);
-        parent.appendChild(level);
-        return childContainer;
-    }
-}
-
-/**
- * Draw the system hierarchy option content
- */
 function drawSystemHierarchy() {
-    const opt: HTMLElement = document.getElementById("hierarchyContent");
-    if (!opt.hidden) 
-    {
-        opt.innerHTML = ""; // Clear
-        // Add each system
-        systems.forEach(system=>{
-            let strands = drawHierarchyLevel(opt,
-                system.label ? system.label : `System: ${system.systemID}`,
-                (event)=>{system.toggleStrands(); updateView(system)},
-                ()=>{system.label=prompt("Please enter system label");drawSystemHierarchy()},
-                (visible)=>api.toggleElements(system.getMonomers()), true
-            );
-            // Add each strand in system
-            system.strands.forEach(strand=>{
-                let monomers = drawHierarchyLevel(
-                    strands,
-                    strand.label ? strand.label : `Strand: ${strand.strandID}`,
-                    (event)=>{strand.toggleMonomers(); updateView(system)},
-                    ()=>{strand.label=prompt("Please enter strand label");drawSystemHierarchy()},
-                    (visible)=>api.toggleStrand(strand)
-                );
-                // Add each monomer in strand
-                strand.monomers.forEach(monomer=>{
-                    drawHierarchyLevel(monomers,
-                        `${monomer.gid}: ${monomer.type}`.concat(
-                            monomer.label ? ` (${monomer.label})` : ""),
-                        (event)=>{monomer.toggle(); updateView(system)},
-                        ()=>{monomer.label=prompt("Please enter monomer label");drawSystemHierarchy()},
-                        ()=>api.toggleElements([monomer]),
-                        false, true
-                    );
-                });
-            });
+    let checkboxhtml = (label)=> `<input data-role="checkbox" data-caption="${label}">`;
+
+    const includeMonomers = (document.getElementById("hierarchyMonomers") as HTMLInputElement).checked;
+
+    var frag = document.createDocumentFragment();
+    const content: HTMLElement = document.getElementById("hierarchyContent");
+    content.innerText = '';
+
+     let hierarchy = Metro.makePlugin(content, "treeview", {
+        onCheckClick: (state, check, node, tree) => {
+            let n = $(node);
+            let element: BasicElement = n.data('monomer');
+            if (element) {
+                if (check.checked) {element.select()}
+                else {element.deselect()}
+                updateView(element.getSystem());
+                return;
+            }
+            let strand: Strand = n.data('strand');
+            if (strand) {
+                if (check.checked) {strand.select()}
+                else {strand.deselect()}
+                updateView(strand.system);
+                return;
+            }
+            let system = n.data('system');
+            if (system) {
+                if (check.checked) {system.select()}
+                else {system.deselect()}
+                updateView(system);
+                return;
+            }
+        },
+        showChildCount: true
+    });
+    let treeview = hierarchy.data('treeview');
+
+    let checkboxMap: Map<number, HTMLInputElement> = new Map();
+
+    // Add checkbox nodes for, systems, strands and monomers
+    for(const system of systems) {
+        let systemNode = treeview.addTo(null, {
+            html: checkboxhtml(system.label ? system.label : `System ${system.systemID}`)
         });
-    }
-}
+        systemNode.data('system', system);
+        for(const strand of system.strands) {
+            let strandNode = treeview.addTo(systemNode, {
+                html: checkboxhtml(strand.label ? strand.label : `Strand ${strand.strandID} (${strand.monomers.length})`)
+            });
+            strandNode.data('strand', strand);
+            if (includeMonomers) {
+                let addMonomer = (monomer) => {
+                    let color = monomer.elemToColor(monomer.type).getHexString();
+                    let monomerNode = treeview.addTo(strandNode, {
+                        html: checkboxhtml(`gid: ${monomer.gid}`.concat(
+                            monomer.label ? ` (${monomer.label})` : "")) +
+                            `<span style="background:#${color}4f; padding: 5px">${monomer.type}</span>`
+                    });
+                    monomerNode.data('monomer', monomer);
+    
+                    // Save reference for checbox in map:
+                    let checkbox = monomerNode.find("input")[0];
+                    checkbox.checked = selectedBases.has(monomer);
+                    checkboxMap.set(monomer.gid, checkbox);
+                }
+                for(const [i, monomer] of strand.monomers.entries()) {
+                    if (i<20) {
+                        addMonomer(monomer);
+                    } else {
+                        let moreNode = treeview.addTo(strandNode, {
+                            caption: `View remaining ${strand.monomers.length-i} monomers`,
+                            icon: '<span class="mif-plus"></span>'
+                        });
+                        moreNode[0].onclick = ()=>{
+                            treeview.del(moreNode);
+                            for(let j=i; j<strand.monomers.length; j++) {
+                                addMonomer(strand.monomers[j]);
+                            }
+                        }
 
-function toggleSideNav(button: HTMLInputElement) {
-    let hidden = "show toolbar";
-    let visible = "hide toolbar";
-    let content = document.getElementById("sidenavContent");
-    if (button.innerText.toLowerCase() == hidden) {
-        //tabcontent[0].style.display = "block";
-        content.hidden = false;
-        button.innerHTML = visible;
-    } else {
-        content.hidden = true;
-        button.innerHTML = hidden;
-    }
-}
-
-function toggleFieldSet(elem: HTMLLegendElement) {
-    let elems = elem.parentElement.children;
-    for (let i=0; i<elems.length; i++) {
-        if (elems[i] !== elem) {
-            elems[i]['hidden'] = !elems[i]['hidden'];
+                        break;
+                    }
+                }
+            }
         }
     }
+    //});});});
+
+    treeview._recheck(hierarchy);
+
+    hierarchy.data('checkboxMap', checkboxMap);
+    /*
+    // Add listeners for if an element is toggled
+    document.addEventListener('elementSelectionEvent', event=>{
+        checkboxMap.get(event['element'].gid).checked = event['selected'];
+        //treeview._recheck(tv);
+    });
+    */
 }
 
 function handleMenuAction(event: String) {
@@ -154,27 +116,10 @@ function handleMenuAction(event: String) {
     }
 }
 
-function toggleModal(id) {
-    let modal = document.getElementById(id);
-    modal.classList.toggle("show-modal");
-}
-
-function toggleOptions(id) {
-    let opt = document.getElementById(id);
-    opt.hidden = !opt.hidden;
-}
-
-function colorOptions() {
-    const opt: HTMLElement = document.getElementById("colorOptionContent");
+function updateColorPalette() {
+    const opt: HTMLElement = document.getElementById("colorPaletteContent");
     if (!opt.hidden) {
         opt.innerHTML = "";  //Clear content
-        const addButton = document.createElement('button');
-        addButton.innerText = "Add Color";
-        // Append new color to the end of the color list and reset colors
-        addButton.onclick = function () {
-            backboneColors.push(new THREE.Color(0x0000ff));
-            colorOptions();
-        }
 
         //modifies the backboneColors array
         for (let i = 0; i < backboneColors.length; i++) {
@@ -184,19 +129,18 @@ function colorOptions() {
             c.value = "#" + m.getHexString();
             c.onchange = function () {
                 backboneColors[i] = new THREE.Color(c.value);
-                colorOptions();
+                updateColorPalette();
             }
             
             //deletes color on right click
             c.oncontextmenu = function (event) {
                 event.preventDefault();
                 backboneColors.splice(i, 1);
-                colorOptions();
+                updateColorPalette();
                 return false;
             }
             opt.appendChild(c);
         }
-        opt.appendChild(addButton);
 
         //actually update things in the scene
         elements.forEach(e=>{
@@ -229,68 +173,61 @@ function initLutCols(systems: System[]) {
     }
 }
 
-function colorSelection() {
-    const opt: HTMLElement = document.getElementById("colorSelectionContent");
-    if(!opt.hidden) {
-        opt.innerHTML = ""; // clear content
-        const setButton = document.createElement('button');
-        const resetButton = document.createElement('button');
-        setButton.innerText = "Set Color";
-        resetButton.innerText = "Reset Colors";
+function resetCustomColoring() {
+    view.setColoringMode("Strand");
+    initLutCols(systems);
+    initLutCols(tmpSystems);
+    clearSelection();
+}
 
-        // create color map with selected color
-        setButton.onclick = () => {
-            const selectedColor = new THREE.Color(colorInput.value);
-
-            if (lut == undefined) {
-                lut = new THREE.Lut(defaultColormap, 512);
-                // legend needed to set 'color by' to Overlay, gets removed later
-                lut.setLegendOn();
-                lut.setLegendLabels();
-            }
-            else {
-                const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.lutCols.length == 0)
-                if (emptyTmpSystems.length > 0) {
-                    console.log(emptyTmpSystems)
-                    initLutCols(emptyTmpSystems)
-                }
-                setColoringMode("Overlay");
-            }
-
-            initLutCols(systems);
-            initLutCols(tmpSystems);
-
-            selectedBases.forEach(e => {
-                let sid;
-                if (e.dummySys) {
-                    sid = e["gid"] - e.dummySys.globalStartId;
-                    e.dummySys.lutCols[e.sid] = selectedColor;
-                }
-                sid = e["gid"] - e.getSystem().globalStartId;
-                e.getSystem().lutCols[sid] = selectedColor;
-            });
-            
-            setColoringMode("Overlay");
-            if (!systems.some(system => system.colormapFile)) {
-                api.removeColorbar();
-            }
-            clearSelection();
-        }
-
-        resetButton.onclick = () => {
-            setColoringMode("Strand");
-            initLutCols(systems);
-            initLutCols(tmpSystems);
-            clearSelection();
-        }
-        
-        let colorInput = document.createElement('input');
-        colorInput.type = 'color';
-        opt.appendChild(colorInput);
-        opt.appendChild(setButton);
-        opt.appendChild(resetButton);
+// create color map with selected color
+function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
+    if (!color) {
+        let colorInput = (document.getElementById("customColor") as HTMLInputElement);
+        color = new THREE.Color(colorInput.value);
     }
-};
+    if (!elems) {
+        elems = Array.from(selectedBases);
+    }
+
+    if(elems.length == 0) {
+        notify("Please first select the elements you wish to color");
+    }
+
+    if (lut == undefined) {
+        lut = new THREE.Lut(defaultColormap, 512);
+        // legend needed to set 'color by' to Overlay, gets removed later
+        lut.setLegendOn();
+        lut.setLegendLabels();
+    }
+    else {
+        const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.lutCols.length == 0)
+        if (emptyTmpSystems.length > 0) {
+            console.log(emptyTmpSystems)
+            initLutCols(emptyTmpSystems)
+        }
+        view.setColoringMode("Overlay");
+    }
+
+    initLutCols(systems);
+    initLutCols(tmpSystems);
+
+    elems.forEach(e => {
+        let sid;
+        if (e.dummySys) {
+            sid = e["gid"] - e.dummySys.globalStartId;
+            e.dummySys.lutCols[e.sid] = color;
+        }
+        sid = e["gid"] - e.getSystem().globalStartId;
+        e.getSystem().lutCols[sid] = color;
+    });
+
+    view.setColoringMode("Overlay");
+    if (!systems.some(system => system.colormapFile)) {
+        api.removeColorbar();
+    }
+    clearSelection();
+}
 
 function toggleVisArbitrary() {
     // arbitrary visibility toggling
@@ -315,45 +252,176 @@ function toggleVisArbitrary() {
     clearSelection();
 }
 
-function notify(message: string) {
-    const noticeboard = document.getElementById('noticeboard');
-
-    // Remove any identical notifications from the board
-    for (let notification of noticeboard.children) {
-        if (notification.innerHTML === message) {
-            noticeboard.removeChild(notification);
-        }
+function notify(message: string, type?: string, title?: string) {
+    let n = Metro.notify;
+    if(!type) {
+        type = "info";
     }
-
-    // Create a new notification
-    const notification = document.createElement('div');
-    notification.className = "notification";
-    notification.innerHTML = message;
-
-    // Add it to the board and remove it on mouseover
-    // or after 5 seconds
-    const remove = function() {
-        try {noticeboard.removeChild(notification);}
-        catch (e) {} // Notification already removed
-    }
-    notification.onmouseover = remove;
-    noticeboard.appendChild(notification);
-    setTimeout(remove, 5000);
-
+    n.create(message, title, {
+        cls: type,
+        timeout: 5000
+    });
     console.info(`Notification: ${message}`);
 }
 
-let basepairMessage = "Locating basepairs, please be patient...";
-function longCalculation(calc: () => void, message: string, callback?: () => void) {
-    // Create an information modal
-    const modal = document.getElementById('pause');
-    const notification = document.createElement('div');
-    notification.className = "modal-content";
-    notification.innerHTML = message;
-    modal.appendChild(notification);
-    modal.classList.add("show-modal");
+class View {
+    private doc: Document;
+    basepairMessage = "Locating basepairs, please be patient...";
 
-    // Set wait cursor and request an animation frame to make sure
+
+    constructor(doc: Document) {
+        this.doc = doc;
+    }
+
+    private setToggleGroupValue(id: string, value: string) {
+        let toggleGroup = this.doc.getElementById(id);
+        let active = toggleGroup.querySelector('.active');
+        if(active) {
+            active.classList.remove('active');
+        }
+        for (let opt of toggleGroup.children) {
+            if (opt.querySelector('.caption').innerHTML == value) {
+                opt.classList.add('active');
+                return;
+            }
+        }
+    }
+
+    private getToggleGroupValue(id: string): string {
+        return this.doc.getElementById(id).querySelector('.active').querySelector('.caption').innerHTML;
+    }
+
+    public getRandomHue(): THREE.Color {
+        return new THREE.Color(`hsl(${Math.random()*360}, 100%, 50%)`);
+    }
+
+    public getInputNumber(id: string): number {
+        return (<HTMLInputElement>this.doc.getElementById(id)).valueAsNumber;
+    }
+
+    public getInputValue(id: string): string {
+        return (<HTMLInputElement>this.doc.getElementById(id)).value;
+    }
+
+    public getInputBool(id: string): boolean {
+        return (<HTMLInputElement>document.getElementById(id)).checked;
+    }
+
+    public isWindowOpen(id: string): boolean {
+        let elem = this.doc.getElementById(id);
+        if (elem) {
+            // Should work but doesn't
+            //return Metro.window.isOpen(elem);
+            return elem.parentElement.parentElement.style.display != "none";
+        } else {
+            return false;
+        }
+        
+    }
+
+    public toggleWindow(id: string, oncreate?: ()=>void) {
+        let elem = this.doc.getElementById(id);
+        if (elem) {
+            Metro.window.toggle(elem);
+        } else {
+            this.createWindow(id, oncreate);
+        }
+    }
+
+    public createWindow(id: string, oncreate?: ()=>void) {
+        fetch(`windows/${id}.json`)
+            .then(response => response.json())
+            .then(data => {
+                let w = Metro.window.create(data);
+                w[0].id = id;
+                w.load(`windows/${id}.html`).then(oncreate);
+            }
+        );
+    }
+
+    public toggleModal(id: string) {
+         ;
+     }
+
+    // nucleotides/strand/system
+    public getSelectionMode(): string {
+        return this.getToggleGroupValue('selectionScope');
+    }
+
+    public setSelectionMode(setting: string) {
+        this.setToggleGroupValue('selectionScope', setting);
+    }
+
+    public selectionEnabled() {
+        return this.getSelectionMode() != "Disabled";
+    }
+
+    public selectPairs(): boolean {
+        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+    }
+
+    public getCenteringSetting() {
+        return this.getToggleGroupValue('centering');
+    }
+
+    public setCenteringSetting(setting: string) {
+        this.setToggleGroupValue('centering', setting);
+    }
+
+    public getInboxingSetting() {
+        return this.getToggleGroupValue('inboxing');
+    }
+
+    public setInboxingSetting(setting: string) {
+        return this.setToggleGroupValue('inboxing', setting);
+    }
+
+    public getTransformSetting() {
+        return this.getToggleGroupValue('transform');
+    }
+
+    public transformEnabled() {
+        return this.getTransformSetting() != "None";
+    }
+
+    public getColoringMode(): string {
+        return this.getToggleGroupValue('coloringMode');
+    }
+
+    public setColoringMode(mode: string) {
+        this.setToggleGroupValue('coloringMode', mode);
+        updateColoring();
+    };
+
+    public handleTransformMode(mode: string) {
+        // Make sure that buttons correspond to specified mode
+        this.setToggleGroupValue('transform', mode);
+
+        // If we should show something
+        if (mode != "None") {
+            // Make sure something is selected
+            if (selectedBases.size > 0) {
+                transformControls.show();
+                transformControls.setMode(mode.toLowerCase());
+            } else {
+                notify("Please select elements to transform");
+                // Reset buttons to none
+                this.setToggleGroupValue('transform', 'None');
+            }
+        } else {
+            transformControls.hide()
+        }
+    }
+
+    public longCalculation(calc: () => void, message: string, callback?: () => void) {
+        let activity = Metro.activity.open({
+            type: 'square',
+            overlayColor: '#fff',
+            overlayAlpha: 1,
+            text: message
+        });
+
+        // Set wait cursor and request an animation frame to make sure
     // that it gets changed before starting calculation:
     let dom = document.activeElement;
     dom['style'].cursor = "wait";
@@ -361,15 +429,18 @@ function longCalculation(calc: () => void, message: string, callback?: () => voi
         try {
            calc(); 
         } catch (error) {
-           notify(`Sorry, something went wrong with the calculation: ${error}`);
+           notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
         }
 
         // Change cursor back and remove modal
         dom['style'].cursor = "auto";
-        modal.removeChild(notification);
-        modal.classList.remove("show-modal");
+        Metro.activity.close(activity);
         if(callback) {
             callback();
         }
     }));
+    }
+
 }
+
+let view = new View(document);

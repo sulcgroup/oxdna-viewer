@@ -1,89 +1,9 @@
-function showTransformControl(mode: string) {
-    const modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("transform");
-    // Make sure that radio buttons correspond to specified mode
-    for (let i = 0; i < modes.length; i++) {
-        modes[i].checked = (modes[i].value === mode);
-    }
-    // If we should show something
-    if (mode != "none") {
-        // Make sure something is selected
-        if (selectedBases.size > 0) {
-            transformControls.show();
-            transformControls.setMode(mode);
-        } else {
-            notify("Please select elements to transform");
-            // Reset radio buttons to none
-            for (let i = 0; i < modes.length; i++) {
-                modes[i].checked = (modes[i].value === "none");
-            }
-        }
-    } else {
-        transformControls.hide()
-    }
-}
-
-// Select and/or transform
-function getActionModes(): string[] {
-    let modes = <NodeListOf<HTMLInputElement>>document.getElementsByName("action");
-    let checked = [];
-    for (let i = 0; i < modes.length; i++) {
-        if (modes[i].checked) {
-            checked.push(modes[i].value);
-        }
-    }
-    return checked;
-}
-
-// nucleotides/strand/system
-function getScopeMode(): string {
-    return document.querySelector('input[name="scope"]:checked')['value'];
-}
-
-// X/Y/Z
-function getAxisMode(): string {
-    return document.querySelector('input[name="rotate"]:checked')['value'];
-}
-
-function getAngle(): number {
-    return (<HTMLInputElement>document.getElementById("rotAngle")).valueAsNumber * Math.PI / 180;
-}
-
-function selectPairs(): boolean {
-    return (<HTMLInputElement>document.getElementById("selectPairs")).checked;
-}
-
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order
 //So when you need to convert between them...
 function glsl2three(input: THREE.Vector4) {
     let out = new THREE.Quaternion(input.w, input.z, input.y, input.x);
     return out;
-}
-
-function rotateByInput() { //rotate selected according to input controls
-    if (selectedBases.size < 1) { //if no object has been selected, rotation will not occur and error message displayed
-        notify("Please select elements to rotate.");
-    }
-    let angle = getAngle();
-    let axisString = getAxisMode();
-
-    // Rotate around user selected axis with user entered angle
-    let axis = new THREE.Vector3();
-    switch (axisString) {
-        case "X": axis.set(1, 0, 0); break;
-        case "Y": axis.set(0, 1, 0); break;
-        case "Z": axis.set(0, 0, 1); break;
-        default: notify("Unknown rotation axis: " + axisString);
-    }
-
-    // This will be rotating around the center of mass of the selected bases.
-    let c = new THREE.Vector3(0, 0, 0);
-    selectedBases.forEach((base) => {
-        c.add(base.getInstanceParameter3("cmOffsets"));
-    });
-    c.multiplyScalar(1/selectedBases.size)
-
-    editHistory.do(new RevertableRotation(selectedBases, axis, angle, c));
 }
 
 function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {

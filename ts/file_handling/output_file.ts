@@ -1,19 +1,21 @@
 function makeOutputFiles() { //makes .dat and .top files with update position information; includes all systems as 1 system
-    let name = (<HTMLInputElement>document.getElementById("outputFilename")).value;
-    let top = <NodeListOf<HTMLInputElement>>document.getElementsByName("topDownload");
+    let name = view.getInputValue("outputFilename");
+    let top = view.getInputBool("topDownload");
+
     let reorganized, counts;
-    if (top[0].checked == true) {
+    if (top) {
         let {a, b, file_name, file} = makeTopFile(name);
         reorganized = a;
         counts = b;
         makeTextFile(file_name,file);
     }
     else if (systems.length > 1 || topologyEdited) {
-        notify("You have edited the topology of the scene, a new topology file must be generated");
+        notify("You have edited the topology of the scene, a new topology file must be generated", "warning");
         return
     }
-    let dat = <NodeListOf<HTMLInputElement>>document.getElementsByName("datDownload");
-    if (dat[0].checked == true) {
+    let dat = view.getInputBool("datDownload");
+
+    if (dat) {
         let {file_name, file} = makeDatFile(name, reorganized);
         makeTextFile(file_name, file);	
     }
@@ -35,18 +37,18 @@ function makeArrayBuffer(buffer, filename) {
 }
 
 function make3dOutput(){ //makes stl or gltf export from the scene
-    const name = (<HTMLInputElement>document.getElementById("3dExportFilename")).value;
-    const fileFormat = (<HTMLInputElement>document.getElementById("3dExportFormat")).value;
+    const name = view.getInputValue("3dExportFilename");
+    const fileFormat = view.getInputValue("3dExportFormat");
     
-    const include_backbone = (<HTMLInputElement>document.getElementById("includeBackbone")).checked;
-    const include_nucleoside = (<HTMLInputElement>document.getElementById("includeNucleoside")).checked;
-    const include_connector = (<HTMLInputElement>document.getElementById("includeConnector")).checked;
-    const include_bbconnector = (<HTMLInputElement>document.getElementById("includeBBconnector")).checked;
+    const include_backbone = view.getInputBool("includeBackbone");
+    const include_nucleoside = view.getInputBool("includeNucleoside");
+    const include_connector = view.getInputBool("includeConnector");
+    const include_bbconnector = view.getInputBool("includeBBconnector");
 
-    const flattenHierarchy = (<HTMLInputElement>document.getElementById("3dExportFlat")).checked;
+    const flattenHierarchy = view.getInputBool("3dExportFlat");
     
-    const faces_mul = parseFloat((<HTMLInputElement>document.getElementById("3dExportFacesMul")).value);
-    const stl_scale = parseFloat((<HTMLInputElement>document.getElementById("3dExportScale")).value);
+    const faces_mul = view.getInputNumber("3dExportFacesMul");
+    const stl_scale = view.getInputNumber("3dExportScale");
 
     if (fileFormat === 'stl') {
         saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
@@ -66,7 +68,7 @@ function make3dOutput(){ //makes stl or gltf export from the scene
                 }
         }, options);
     } else {
-        notify(`Unknown file format: ${fileFormat}`);
+        notify(`Unknown file format: ${fileFormat}`, "alert");
     }
 }
 
@@ -253,6 +255,7 @@ function writeMutTrapText(base1: number, base2: number): string { //create strin
 
 function makeMutualTrapFile() { //make download of mutual trap file from selected bases
     let mutTrapText: string = "";
+    let listBases = Array.from(selectedBases).map(e=>e.gid);
     for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
         if (listBases[x+1] !== undefined) { //if there is another nucleotide in the pair
             mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
@@ -286,14 +289,14 @@ function makePairTrapFile() {
         }
     }
     if (!pairsCalculated) {
-        longCalculation(findBasepairs, basepairMessage, write);
+        view.longCalculation(findBasepairs, view.basepairMessage, write);
     } else {
         write();
     }
 }
 
-function makeSelectedBasesFile() { //make selected base file by addign listBases to text area
-    makeTextFile("baseListFile", listBases.join(" "));
+function makeSelectedBasesFile() { //make selected base file
+    makeTextFile("baseListFile", Array.from(selectedBases).map(e=>e.gid).join(" "));
 }
 
 function makeSequenceFile() {

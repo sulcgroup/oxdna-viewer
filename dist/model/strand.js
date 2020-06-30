@@ -34,6 +34,12 @@ class Strand {
     toggleMonomers() {
         this.monomers.forEach(e => e.toggle());
     }
+    select() {
+        this.monomers.forEach(e => e.select());
+    }
+    deselect() {
+        this.monomers.forEach(e => e.deselect());
+    }
     isEmpty() {
         return this.monomers.length == 0;
     }

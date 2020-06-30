@@ -110,6 +110,14 @@ class System {
         })
     }
 
+    select() {
+        this.strands.forEach(s=>s.select());
+    }
+
+    deselect() {
+        this.strands.forEach(s=>s.deselect());
+    }
+
     /**
      * Return a list of all monomers in the system
      */

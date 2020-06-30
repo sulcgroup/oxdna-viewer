@@ -186,6 +186,10 @@ THREE.TransformControls = function ( camera, domElement ) {
 
 	};
 
+	this.isHovered = function () {
+		return this.axis != null;
+	}
+
 	// Defined getter, setter and store for a property
 	function defineProperty( propName, defaultValue ) {
 

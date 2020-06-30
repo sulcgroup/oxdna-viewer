@@ -1,0 +1,17 @@
+<label for="videoType">Video type:</label>
+<select id="videoType" onchange="document.getElementById('videoLeminiscateOpts').hidden = this.selectedIndex == 0;">
+    <option value="trajectory">Trajectory</option>
+    <option value="lemniscate">XY lemniscate</option>
+</select>
+<fieldset>
+    <legend onclick="toggleFieldSet(this)">File format:</legend>
+    <input type="radio" data-role="radio" name="videoFormat" value="webm" checked>webm (Chrome only!)<br>
+    <input type="radio" data-role="radio" name="videoFormat" value="gif">gif<br>
+    <input type="radio" data-role="radio" name="videoFormat" value="png">png<br>
+    <input type="radio" data-role="radio" name="videoFormat" value="jpg">jpg<br>
+</fieldset>
+<input type="number" value="24" id="videoFramerate" data-role="input" data-prepend="Framerate" data-append="fps">
+<div id="videoLeminiscateOpts" hidden="true">
+    <input type="number" value="20" id="videoDuration" data-role="input" data-prepend="Duration" data-append="seconds">
+</div>
+<button class="primary button" id="videoStartStop" onclick="createVideo()">Start</button>

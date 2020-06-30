@@ -15,7 +15,7 @@ class EditHistory {
         this.redoStack = new Stack();
         // Update the hierarchy, since we've made changes
         // if it is open, otherwise we don't care !
-        if (!document.getElementById('hierarchy').hidden)
+        if (view.isWindowOpen('systemHierarchyWindow'))
             drawSystemHierarchy();
         //Return focus to the canvas so undo can be called immediatley
         canvas.focus();
@@ -27,7 +27,7 @@ class EditHistory {
     add(edit) {
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        if (!document.getElementById('hierarchy').hidden)
+        if (view.isWindowOpen('systemHierarchyWindow'))
             drawSystemHierarchy();
     }
     undo() {
@@ -41,7 +41,7 @@ class EditHistory {
         edit.undo();
         this.redoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        if (!document.getElementById('hierarchy').hidden)
+        if (view.isWindowOpen('systemHierarchyWindow'))
             drawSystemHierarchy();
     }
     redo() {
@@ -55,7 +55,7 @@ class EditHistory {
         edit.do();
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
-        if (!document.getElementById('hierarchy').hidden)
+        if (view.isWindowOpen('systemHierarchyWindow'))
             drawSystemHierarchy();
     }
 }
@@ -176,7 +176,7 @@ class RevertableTransformation extends RevertableEdit {
         let undo = function () {
             rotateElementsByQuaternion(elements, r.clone().conjugate(), c);
             translateElements(elements, t.clone().negate());
-            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            if (selectedBases.size > 0 && view.transformEnabled()) {
                 transformControls.show();
             }
             else {
@@ -186,7 +186,7 @@ class RevertableTransformation extends RevertableEdit {
         let redo = function () {
             translateElements(elements, t);
             rotateElementsByQuaternion(elements, r, c);
-            if (selectedBases.size > 0 && getActionModes().includes("Transform")) {
+            if (selectedBases.size > 0 && view.transformEnabled()) {
                 transformControls.show();
             }
             else {

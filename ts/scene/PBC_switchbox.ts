@@ -8,8 +8,8 @@
  */
 
 function centerAndPBCBtnClick(elems?: BasicElement[]){
-    window.sessionStorage.centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
-    window.sessionStorage.inboxingOption = (document.getElementById("inboxing") as HTMLSelectElement).value;
+    window.sessionStorage.centerOption = view.getCenteringSetting();
+    window.sessionStorage.inboxingOption = view.getInboxingSetting();
 
     centerAndPBC(elems);
 
@@ -40,11 +40,11 @@ function getCenteringGoal(): THREE.Vector3 {
         centerOption = window.sessionStorage.centerOption;
     } 
     else{
-        centerOption = (document.getElementById("centering") as HTMLSelectElement).value;
+        centerOption = view.getCenteringSetting();
     }
     //let centerOption = 
     switch (centerOption) {
-        case "Box Center": return box.clone().divideScalar(2);
+        case "Box": return box.clone().divideScalar(2);
         case "Origin": return new THREE.Vector3();
         default: return undefined;
     }
@@ -58,13 +58,16 @@ function getInboxingMode(): string {
     if(window.sessionStorage.inboxingOption){
         return window.sessionStorage.inboxingOption;
     }
-    return (document.getElementById("inboxing") as HTMLSelectElement).value;
+    return view.getInboxingSetting();
 }
 
 /**
  * Bring all elements (or strands) inside the simulation box
  */
 function bringInBox(boxOption: string) {
+    if (boxOption == "None") {
+        return;
+    }
     // We need actual modulus
     let realMod = (n: number, m:number)=>((n % m) + m) % m;
 
@@ -103,7 +106,7 @@ function bringInBox(boxOption: string) {
             });
         });
     } else {
-        notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`);
+        notify(`"${boxOption}" is not a valid inboxing option. Please use either "Monomer" or "Strand"`, "alert");
     }
 }
 

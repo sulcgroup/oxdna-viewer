@@ -196,7 +196,7 @@ class Nucleotide extends BasicElement {
             color = selectionColor;
         }
         else {
-            switch (getColoringMode()) {
+            switch (view.getColoringMode()) {
                 case "Strand":
                     color = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length];
                     break;
@@ -217,25 +217,6 @@ class Nucleotide extends BasicElement {
             }
         }
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
-    }
-    // highlight/remove highlight the bases we've clicked from the list and modify color
-    toggle() {
-        if (selectedBases.has(this)) {
-            selectedBases.delete(this);
-        }
-        else {
-            selectedBases.add(this);
-        }
-        this.updateColor();
-    }
-    ;
-    select() {
-        selectedBases.add(this);
-        this.updateColor();
-    }
-    deselect() {
-        selectedBases.delete(this);
-        this.updateColor();
     }
     elemToColor(elem) {
         elem = { "A": 0, "G": 1, "C": 2, "T": 3, "U": 3 }[elem];

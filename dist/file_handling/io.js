@@ -350,7 +350,7 @@ class TrajectoryReader {
             this.time = parseInt(lines[0].split(" ")[2]);
             console.log(confNum, 't =', this.time);
             let timedisp = document.getElementById("trajTimestep");
-            timedisp.innerHTML = `t = ${this.time}`;
+            timedisp.innerHTML = `t = ${this.time.toLocaleString()}`;
             timedisp.hidden = false;
             // discard the header
             lines = lines.slice(3);
@@ -401,19 +401,20 @@ class TrajectoryReader {
      * @param backwards Step backwards
      */
     stepUntil(timeLim, backwards) {
-        let icon = document.getElementById(backwards ? 'trajPrevUntilBtn' : 'trajNextUntilBtn');
-        if (icon.innerHTML == 'pause') {
+        let icon = document.getElementById(backwards ? 'trajPrevUntilIco' : 'trajNextUntilIco');
+        if (icon.classList.contains('mif-pause')) {
             // If we're already running, abort!
-            icon.innerHTML = backwards ? 'fast_rewind' : 'fast_forward';
+            icon.classList.replace('mif-pause', backwards ? 'mif-previous' : 'mif-next');
             return;
         }
         // Set icon to enable pausing
-        icon.innerHTML = 'pause';
+        icon.classList.remove('mif-previous', 'mif-next');
+        icon.classList.add('mif-pause');
         // Define loop, for requestAnimationFrame
         let loop = () => {
-            if (icon.innerHTML == 'pause' && ( // If user has clicked pause
+            if (icon.classList.contains('mif-pause') && ( // If user has clicked pause
             !this.time || // Or we don't know the current timestep
-                // Or if we have stepped to far:
+                // Or if we have stepped too far:
                 backwards && this.previousChunk && (this.time > timeLim) ||
                 !backwards && this.nextChunk && ((timeLim < 0) || this.time < timeLim))) {
                 // Take one step
@@ -427,7 +428,8 @@ class TrajectoryReader {
             }
             else {
                 // When finished, change icon back from pause
-                icon.innerHTML = backwards ? 'fast_rewind' : 'fast_forward';
+                icon.classList.remove('mif-pause');
+                icon.classList.add(backwards ? 'mif-previous' : 'mif-next');
             }
         };
         loop(); // Actually call the function

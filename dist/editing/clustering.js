@@ -6,6 +6,7 @@ function clearClusters() {
     elements.forEach(element => {
         delete element.clusterId;
     });
+    view.setColoringMode("Strand"); // Then color by strand
 }
 /**
  * Calculate DBSCAN clusters using parameters from input
@@ -13,9 +14,9 @@ function clearClusters() {
 function calculateClusters() {
     const minPts = parseFloat(document.getElementById("minPts").value);
     const epsilon = parseFloat(document.getElementById("epsilon").value);
-    longCalculation(() => { dbscan(minPts, epsilon); }, // Run this
+    view.longCalculation(() => { dbscan(minPts, epsilon); }, // Run this
     "Calculating clusters, please be patient...", // Tell the user
-    () => { setColoringMode("Cluster"); } // Then color by cluster
+    () => { view.setColoringMode("Cluster"); } // Then color by cluster
     );
 }
 /**
@@ -82,6 +83,7 @@ function selectionToCluster() {
         selectedBases.forEach(element => {
             element.clusterId = clusterCounter;
         });
+        view.setColoringMode("Cluster"); // Then color by cluster
     }
     else {
         notify("First make a selection of elements you want to include in the cluster");

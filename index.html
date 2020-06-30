@@ -1,500 +1,622 @@
-﻿<meta charset="UTF-8">
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <title>oxDNA three.js viewer</title>
-    <!--Nice icons, from http://google.github.io/material-design-icons/-->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!--Link external stylesheet files-->
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Metro 4 -->
+    <link rel="stylesheet" href="css/metro.min.css">
+    <link rel="stylesheet" href="css/metro-colors.min.css">
+    <link rel="stylesheet" href="css/metro-icons.min.css">
+
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/justcontext.css">
-    <!--Set favicon-->
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
 </head>
 
 <body>
-    <!--Keyboard shortcut modal-->
-    <div id="keyboardShortcuts" class="modal" onclick="toggleModal(this.id)">
-        <div class="modal-content">
-            <table>
-                <tr>
-                    <th>Key</th>
-                    <th>Action</th>
-                </tr>
-				<tr><td>p</td><td>Save image</td></tr>
-				<tr><td>s</td><td>Toggle selection mode</td></tr>
-				<tr><td>d</td><td>Toggle dragging mode</td></tr>
-                <tr><td>Right arrow</td><td>Next configuration</td></tr>
-				<tr><td>Left arrow</td><td>Previous configuration</td></tr>
-				<tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
-				<tr><td>ctrl-z</td><td>Undo edit</td></tr>
-				<tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
-				<tr><td>ctrl-a</td><td>Select all elements</td></tr>
-				<tr><td>ctrl-i</td><td>Invert selection</td></tr>
-				<tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
-				<tr><td>shift-click</td><td>Select intermediate monomers</td></tr>
-				<tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
-				<tr><td>Numpad2</td><td>Rotate camera down</td></tr>
-				<tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
-				<tr><td>Numpad4</td><td>Rotate camera left</td></tr>
-				<tr><td>Numpad5</td><td>Reset camera</td></tr>
-				<tr><td>Numpad6</td><td>Rotate camera right</td></tr>
-				<tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
-                <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
-                <tr><td>F1</td><td>Show this list</td></tr>
-            </table>
+    <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
+        data-shift=".shifted-content">
+        <div class="sidebar-header bg-grayMouse">
+            <span class="title fg-white">oxView</span>
+            <span class="subtitle fg-white"> An oxDNA viewer and editor</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/"><span class="mif-github icon"></span>Github</a>
+            </li>
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/blob/master/README.md"><span
+                        class="mif-books icon"></span>Documentation</a></li>
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/tree/master/examples"><span
+                        class="mif-files-empty icon"></span>Examples</a></li>
+            <li><a href="https://www.youtube.com/channel/UC4ClrQ8xMypSbDZG2QCehpA"><span
+                        class="mif-youtube-play icon"></span>Video tutorials</a></li>
+            <li class="divider"></li>
+            <li><a href="https://doi.org/10.1093/nar/gkaa417"><span class="mif-file-text icon"></span>Please cite our
+                    paper</a></li>
+        </ul>
+    </aside>
+
+    <div id="keybindingsDialog" class="dialog" data-role="dialog">
+        <table>
+            <tr>
+                <th>Key</th>
+                <th>Action</th>
+            </tr>
+            <tr><td>p</td><td>Save image</td></tr>
+            <tr><td>s</td><td>Toggle selection</td></tr>
+            <tr><td>d</td><td>Toggle transformation</td></tr>
+            <tr><td>t</td><td>Translate mode</td></tr>
+            <tr><td>r</td><td>Rotate mode</td></tr>
+            <tr><td>Right arrow</td><td>Next configuration</td></tr>
+            <tr><td>Left arrow</td><td>Previous configuration</td></tr>
+            <tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
+            <tr><td>ctrl-z</td><td>Undo edit</td></tr>
+            <tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
+            <tr><td>ctrl-a</td><td>Select all elements</td></tr>
+            <tr><td>ctrl-i</td><td>Invert selection</td></tr>
+            <tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
+            <tr><td>shift-click</td><td>Select intermediate by gid</td></tr>
+            <tr><td>shift-alt-click</td><td>Select intermediate by shortest path</td></tr>
+            <tr><td>ctrl-c</td><td>Copy selection</td></tr>
+            <tr><td>ctrl-v</td><td>Paste selection</td></tr>
+            <tr><td>ctrl-shift-v</td><td>Paste selection in-place</td></tr>
+            <tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
+            <tr><td>Numpad2</td><td>Rotate camera down</td></tr>
+            <tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
+            <tr><td>Numpad4</td><td>Rotate camera left</td></tr>
+            <tr><td>Numpad5</td><td>Reset camera</td></tr>
+            <tr><td>Numpad6</td><td>Rotate camera right</td></tr>
+            <tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
+            <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
+            <tr><td>F1</td><td>Show this list</td></tr>
+        </table>
+    </div>
+
+    <div id='socketConnectionsDialog' class="dialog" data-role="dialog">
+        <p>The viewer supports live relaxation using ox-serve nodes.</p>
+        <p>List of available servers:</p>
+        <div id="serverList" class="items-list"></div>
+        <div>
+            <div class="inline-form">
+                <input type="text" data-role="input" id="newHostText"
+                    data-prepend="Add host:"
+                    value="ws://some_host" title="ox-serve url address">
+                <button class="button primary" onclick="addOXServeURL()" title="Add ox-serve url address.">+</button>
+            </div>
+        </div>
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Close</button>
         </div>
     </div>
 
-    <!--File Output-->
-    <div class="modal" id="fileOptions">
-        <div class="modal-content">
-            <p>Save the current stucture to oxDNA configuration and/or topology files</p>
-            <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
-            <input type="checkbox" name="topDownload" title="identies and connections of particles" checked>Topology<br>
-            <input type="checkbox" name="datDownload" title="the xyz positions and rotations of particles" checked>Configuration<br>
-            <label for="outputFilename">File name: </label>
-            <input type="text" id="outputFilename" size="13" value="output" title="The prefix to name the .dat and .top files"><br>
-            <button style="width: 49%" onclick="toggleModal('fileOptions')" title="Cancel">Cancel</button>
-            <button style="width: 49%" onclick="makeOutputFiles(); toggleModal('fileOptions')" title="Download the specified files">Download Files</button>
+    <div id='openFileDialog' class="dialog" data-role="dialog">
+        <input id='fileInput' type="file" multiple="multiple" data-role="file" data-mode="drop">    
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="handleFiles(document.getElementById('fileInput').files)" class="button primary js-dialog-close">Open</button>
         </div>
     </div>
 
-    <!--3d Export options-->
-    <div class="modal" id="3dExportOptions">
-        <div class="modal-content">
-            <p>
-                The viewer supports 3D format export in both STL and glTF. STL is a common 3D printing format but generates quite large files.
-                glTF is a more recent format and is recommended for rendering nice-looking graphics in programs such as Blender.
-                The gltf files is already much smaller than STL, but you can also export to binary glb if you want to go smaller still.
-            </p>
+    <div id='exportOxdnaDialog' class="dialog" data-role="dialog">
+        <p>Save the current stucture to oxDNA configuration and/or topology files</p>
+        <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
+        <input type="checkbox" id="topDownload" data-caption="Topology" title="identies and connections of particles" checked data-role="checkbox">
+        <input type="checkbox" id="datDownload" data-caption="Configuration" title="the xyz positions and rotations of particles" checked data-role="checkbox">
+        <input type="text" data-role="input" data-prepend="Name" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="makeOutputFiles()" class="button primary js-dialog-close">Export</button>
+        </div>
+    </div>
+
+    <div id='export3DDialog' class="dialog" data-role="dialog">
+        <div class="dialog-title">3D Export Options</div>
+        <div class="dialog-content">
             <label for="3dExportFormat">Export format:</label>
-            <select id="3dExportFormat" >
+            <select id="3dExportFormat">
                 <option value="gltf">gltf</option>
                 <option value="glb">glb</option>
                 <option value="stl">stl</option>
             </select>
-            <p>For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file, choosing from:</p>
             <input type="checkbox" id="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
             <input type="checkbox" id="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
             <input type="checkbox" id="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
             <input type="checkbox" id="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
-            <p>By increasing the scaling of the model objects can be made to overlap, which is benefitial for sturdy printed models.</p>
             <label for="3dExportScale">scale: </label>
-            <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max = 10></br>
-            <p>
-                The smoothness of the exported model is controlled via the faces multiplier setting.
-                Note that high smoothness in STL results in very large 3d files which not every browser can handle.
-            </p>
+            <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max=10></br>
             <label for="3dExportFacesMul">faces multiplier: </label>
             <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5><br>
-            <p>Optionally, you can export glTF files without any hierarchy information to make it faster to import.</p>
-            <input type="checkbox" id="3dExportFlat" title="Ignore system hierarchy and export all object on the same level (makes faster import)">Export flat hierarchy<br>
+            <input type="checkbox" id="3dExportFlat"
+                title="Ignore system hierarchy and export all object on the same level (makes faster import)">Export flat hierarchy<br>
             <label for="3dExportFilename">File name: </label>
-            <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name"><br><br>
-            <button style="width: 49%" onclick="toggleModal('3dExportOptions')" title="Cancel">Cancel</button>
-            <button style="width: 49%" onclick="make3dOutput()" title="Download the specified files">Download Files</button>
+            <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name">
+        </div>
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="make3dOutput()" class="button primary js-dialog-close">Export</button>
         </div>
     </div>
 
-    <div class="modal" id="socketConnections">
-        <div class="modal-content">
-            <p>The viewer supports live relaxation using ox-serve nodes.</p>
-            <p>List of available servers:</p>
-            <div id="serverList" style="display: inline-block;">
-            </div><br>
-            <div>
-                <label for="newHostText">New Host: </label>
-                <input type="text" id="newHostText" size="13" value="ws://some_host" title="ox-serve url address">
-                <button style="width: 50px; height:30px;" onclick="addOXServeURL()" title="Add ox-serve url address.">+</button>
-                <br><br>
+    <nav id="menu" data-role="ribbonmenu" class="shifted-content">
+        <ul class="tabs-holder">
+            <li id='sidebar-toggle' class="static"><a href="#">oxView</a></li>
+            <li><a href="#section-file">File</a></li>
+            <li><a href="#section-select">Select</a></li>
+            <li><a href="#section-edit">Edit</a></li>
+            <li><a href="#section-view">View</a></li>
+            <li><a href="#section-trajectory">Trajectory</a></li>
+            <li><a href="#section-dynamics">Dynamics</a></li>
+        </ul>
+
+        <div class="content-holder">
+            <div class="section" id="section-file">
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (ctrl-o)"
+                    title="Open files (ctrl-o)">
+                    <span class="mif-folder-open mif-3x"></span>
+                    <span class="caption">Open</span>
+                </button>
+                <button class="ribbon-button" onclick="makeOxViewJsonFile()"
+                    title="Download a file JSON file storing the current design">
+                    <span class="mif-floppy-disk mif-3x"></span>
+                    <span class="caption">Save .oxview</span>
+                </button>
+                <div class="group">
+                    <button class="ribbon-button"
+                        onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited"
+                        title="Downloading the current scene as oxDNA files (ctrl-s)">
+                        <span class="mif-floppy-disk mif-2x"></span>
+                        <span class="caption">Simulation files</span>
+                    </button>
+                    <button onclick="makePairTrapFile()" class="ribbon-button"
+                        title="Download a mutual trap file for all basepairs">
+                        <span class="mif-file-download mif-2x"></span>
+                        <span class="caption">Pair trap</span>
+                    </button>
+                    <span class="title">oxDNA files</span>
+                </div>
+                <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')"
+                    title="Options for 3d export of the scene.">
+                    <span class="mif-file-download mif-3x"></span>
+                    <span class="caption">3D Export</span>
+                </button>
+                <button onclick="makeSequenceFile()" class="ribbon-button"
+                    title="Download a file containing all sequences">
+                    <span class="mif-file-download mif-3x"></span>
+                    <span class="caption">Sequence file</span>
+                </button>
+                <button class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')">
+                    <span class="mif-video-camera mif-3x"></span>
+                    <span class="caption">Create video</span>
+                </button>
             </div>
-            <button  onclick="toggleModal('socketConnections')" title="Cancel">Cancel</button>            
-        </div>
-    </div>
-    
-
-
-
-    <!--Pause notices-->
-    <div id="pause" class="modal"></div>
-
-    <!--Initial instructions for drag and drop of files-->
-    <div id="dragInstruction">Drag and drop oxDNA .conf and .top files below</div>
-
-    <!--Sidebar-->
-    <div id="sidenav">
-        <div id="sidenavContent">
-            <button onclick="toggleModal('keyboardShortcuts')" type="button" title="Show keyboard shortcuts">Keyboard shortcuts</button>
-            
-            <!--OX-serve-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">OX-Serve</legend>
-                <div hidden="true">
-                    <button id="btnConnect" onclick="openConnections()" type="button" title="Live interactions.">Connect</button>
-                    <button id="btnControlSim" type="button" onclick="toggleOptions('relaxConfigWindow')"> Settings</button>                    
-                </div>
-            </fieldset>
-
-            <!--File-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">File</legend>
-                <div hidden="true">
-                    <button onclick="makeOxViewJsonFile()" type="button" title="Download a file JSON file storing the current design">Download oxView file</button>
-                    <button onclick="toggleModal('fileOptions'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited" type="button" title="Options for downloading the current scene">Download oxDNA Files</button>
-                    <button onclick="toggleModal('3dExportOptions')" type="button" title="Options for 3d export of the scene.">3d Export</button>
-                    <button onclick="makeSequenceFile()" type="button" title="Download a file containing all sequences">Download sequences</button>
-                    <button onclick="makePairTrapFile()" type="button" title="Download a mutual trap file for all basepairs">Download pair trap file</button>
-                    <button onclick="toggleOptions('videoOptions')" type="button" title="Create a video of the trajectory starting with the current frame">Create Video</button>
-                </div>
-            </fieldset>
 
             <!--Select-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">Select</legend>
-                <div hidden="true">
-                    <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Enable selection
-                    <fieldset>
-                        <legend onclick="toggleFieldSet(this)">Selection mode:</legend>
-                        <div>
-                            <input type="radio" name="scope" value="Monomer" checked>Monomer<br>
-                            <input type="radio" name="scope" value="Strand">Strand<br>
-                            <input type="radio" name="scope" value="System">System<br>
-                            <input type="radio" name="scope" value="Cluster" title="Select by clusters calculated by DBSCAN" onchange="if (typeof elements.values().next().value.clusterId == 'undefined') {toggleOptions('clusterOptions');}"> Cluster <i class="material-icons" onclick="toggleOptions('clusterOptions')"
-                                title="Clustering options" style="font-size: 1.5em; vertical-align: middle">tune</i><br>
-                            <input type="radio" name="scope" value="Box" title="Draw a rectangle and select everything within it">Box<br>
-                            <input type="checkbox" id="selectPairs" title="Select paired nucleotides">Select pairs<br>
-                        </div>
-                    </fieldset>
-                    <textarea id="BaseList" cols="25" rows="3" name="textarea" readonly> Selected Bases List </textarea>
-                    <button onclick="toggleOptions('baseInfoWindow')" type="button" title="Show selected base information">Show selected base info</button>
-                    <button onclick="makeSelectedBasesFile()" type="button" title="Download plain-text file of selected bases">Download selected base list</button>
-                    <button onclick="makeMutualTrapFile()" type="button" title="Create mutual trap file pairing every two bases in the selected base list">Download selected base trap file</button>
+            <div class="section" id="section-select">
+                <div class="group">
+                    <div class="ribbon-toggle-group toggleGroup_w2" id="selectionScope">
+                        <button class="ribbon-icon-button">
+                            <span class="icon">
+                                <span class="mif-not"></span>
+                            </span>
+                            <span class="caption">Disabled</span>
+                        </button>
+                        <button class="ribbon-icon-button active">
+                            <span class="icon">
+                                <span class="mif-location"></span>
+                            </span>
+                            <span class="caption">Monomer</span>
+                        </button>
+
+                        <button class="ribbon-icon-button">
+                            <span class="icon">
+                                <span class="mif-flow-line"></span>
+                            </span>
+                            <span class="caption">Strand</span>
+                        </button>
+
+                        <button class="ribbon-icon-button">
+                            <span class="icon">
+                                <span class="mif-flow-tree"></span>
+                            </span>
+                            <span class="caption">System</span>
+                        </button>
+
+                        <button class="ribbon-icon-button">
+                            <span class="icon">
+                                <span class="mif-cloudy4"></span>
+                            </span>
+                            <span class="caption">Cluster</span>
+                        </button>
+
+                        <button class="ribbon-icon-button">
+                            <span class="icon">
+                                <span class="mif-crop"></span>
+                            </span>
+                            <span class="caption">Box</span>
+                        </button>
+                    </div>
+                    <span class="title">Selection mode</span>
                 </div>
-            </fieldset>
+                <button class="ribbon-button" onclick="view.toggleWindow('clusteringWindow')">
+                    <span class="mif-cloudy4 mif-3x"></span>
+                    <span class="caption">Clustering</span>
+                </button>
+                <textarea id="baseList" cols="25" rows="3" readonly> Selected Bases List </textarea>
+                <div class="tight group flex-column">
+                    <span>Select<br>pairs</span>
+                    <input type="checkbox" id="selectPairs" data-role="switch" title="Automatically select basepairs">
+                </div>
+                <div class="tight group flex-column">
+                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (ctrl-a)">
+                        <span class="mif-done_all mif-1x"></span>
+                        <span class="caption">Select all</span>
+                    </button>
+                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (ctrl-i)">
+                        <span class="mif-contrast mif-1x"></span>
+                        <span class="caption">Invert selection</span>
+                    </button>
+                    <button class="ribbon-icon-button" onclick="clearSelection()" title="Clear selection">
+                        <span class="mif-not mif-1x"></span>
+                        <span class="caption">Clear selection</span>
+                    </button>
+                </div>
+                <button class="ribbon-button" onclick="view.toggleWindow('baseInfoWindow', ()=>{if(systems.length>0){updateView(systems[0])}})">
+                    <span class="mif-list mif-3x"></span>
+                    <span class="caption">Selected base info</span>
+                </button>
+                <button class="ribbon-button" onclick="makeSelectedBasesFile()"
+                    title="Download plain-text file of selected bases">
+                    <span class="mif-file-download mif-3x"></span>
+                    <span class="caption">Selected base list</span>
+                </button>
+                <button class="ribbon-button" onclick="makeMutualTrapFile()"
+                    title="Create mutual trap file pairing every two bases in the selected base list">
+                    <span class="mif-shrink2 mif-2x"></span>
+                    <span class="mif-file-download mif-2x"></span>
+                    <span class="caption">Selected base<br>trap file</span>
+                </button>
+            </div>
 
             <!--Edit-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">Edit</legend>
-                <div hidden="true">
-                    <div style="text-align: center;">
-                        <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
-                        <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+            <div class="section" id="section-edit">
+                <div class="tight group">
+                    <button class="ribbon-button" title="Undo (ctrl-z)">
+                        <span class="mif-undo mif-2x"></span>
+                        <span class="caption">Undo</span>
+                    </button>
+                    <button class="ribbon-button" title="Redo (ctrl-y)">
+                        <span class="mif-redo mif-2x"></span>
+                        <span class="caption">Redo</span>
+                    </button>
+                </div>
+                <div class="tight group">
+                    <button class="ribbon-button" title="Cut selection (ctrl-x)">
+                        <span class="mif-cut mif-2x"></span>
+                        <span class="caption">Cut</span>
+                    </button>
+                    <button class="ribbon-button" title="Copy selection (ctrl-c)">
+                        <span class="mif-copy mif-2x"></span>
+                        <span class="caption">Copy</span>
+                    </button>
+                    <button class="ribbon-button" title="Paste (ctrl-p)">
+                        <span class="mif-paste mif-2x"></span>
+                        <span class="caption">Paste</span>
+                    </button>
+                </div>
+
+                <div class="tight group">
+                    <div class="ribbon-toggle-group toggleGroup_w1" id="transform">
+                        <button class="ribbon-icon-button active" onclick="view.handleTransformMode('None')" title="Toggle with 'd'">
+                            <span class="icon">
+                                <span class="mif-not"></span>
+                            </span>
+                            <span class="caption">None</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="view.handleTransformMode('Translate')" title="Toggle with 't'">
+                            <span class="icon">
+                                <span class="mif-enlarge"></span>
+                            </span>
+                            <span class="caption">Translate</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="view.handleTransformMode('Rotate')" title="Toggle with 'r'">
+                            <span class="icon">
+                                <span class="mif-3d-rotation"></span>
+                            </span>
+                            <span class="caption">Rotate</span>
+                        </button>
                     </div>
-                    <fieldset>
-                        <legend onclick="toggleFieldSet(this)">Mouse transformation</legend>
-                        <div>
-                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="none" checked>None<br>
-                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="translate">Translate<br>
-                            <input type="radio" name="transform" onchange="showTransformControl(this.value)" value="rotate">Rotate<br>
-                        </div>
-                    </fieldset>
-                    <fieldset>
-                        <legend onclick="toggleFieldSet(this)">Rotate</legend>
-                        <div>
-                            Axis:
-                            <input type="radio" name="rotate" value="X" checked><span style="color: rgb(206, 54, 27)">X</span>
-                            <!--default checked is x-axis-->
-                            <input type="radio" name="rotate" value="Y"><span style="color: rgb(19, 102, 2)">Y</span>
-                            <input type="radio" name="rotate" value="Z"><span style="color: rgb(30, 96, 196)">Z</span><br> Rotation angle:
-                            <input type="number" value="-90" id="rotAngle" width="20">
-                            <button onclick="rotateByInput()" title="rotate selected objects around center of mass specified by the selection mode by the rotation angle">Rotate</button>
-                        </div>
-                    </fieldset>
-                    <fieldset>
-                        <legend onclick="toggleFieldSet(this)">Edit Topology</legend>
-                        <div>
-                            <button onclick="nickWrapper()" title="break the upstream connection of the last selected particle">Nick</button>
-                            <button onclick="deleteWrapper()" title="delete the selected monomers">Delete</button>
-                            <button onclick="ligateWrapper()" title="ligate the last two selected particles together">Ligate</button><br>
-                            <span>
-                            Sequence:<input type="text" id="sequence" size="10" style="text-transform: uppercase;"
-                                oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
-                                <span id="seqLen"></span>
-                            </span><br>
-                            <input type="checkbox" id="setCompl" title="Set also complementary bases" checked>Duplex mode<br>
-                            <button onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">Set sequence</button>
-                            <button onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">Extend</button>
-                            <button onclick="createWrapper()" title="Create a new strand (or duplex) with the provided sequences">Create</button>
-                            <button onclick="insertWrapper()" title="Insert elements of the provided sequences upstream of the last selected particle">Insert</button>
-                            <button onclick="skipWrapper()" title="Remove selected elements and connect neigbours">Skip</button>
-                        </div>
-                    </fieldset>
-                    <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()">Rigid cluster dynamics<br>
-                    <fieldset>
-                        <legend onclick="toggleFieldSet(this)">PBC / Centering</legend>
-                        <div>
-                            <caption> PBC: </caption>
-                            <select id="inboxing" title="At what scale to apply periodic boundary conditions">
-                                <option>Monomer</option>
-                                <option>Strand</option>
-                                <option>None</option>
-                            </select>
-                            <br>
-                            <caption>Centering:</caption>
-                            <select id="centering" title="Where to center the structure relative to the simulation box" onchange="redrawBox()">
-                                <option>Origin</option>
-                                <option>Box Center</option>
-                                <option>None</option>
-                            </select>
-                            <br>
-                            <button onclick="centerAndPBCBtnClick()" type="button" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">Apply</button>
-                        </div>
-                    </fieldset>
                 </div>
-            </fieldset>
 
-            <!--View-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">View</legend>
-                <div hidden="true">
-                    <input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)" title="Show/hide the coordinate axes" checked>Display Arrows<br>
-                    <input type="checkbox" id="boxToggle" onchange="toggleBox(this)" title="Show/hide the bounding box">Display Box<br>
-                    <fieldset>
-                        <legend>Color by:</legend>
-                        <input type="radio" name="coloring" value="Strand" onchange="coloringChanged()" checked>Strand
-                        <input type="radio" name="coloring" value="Cluster" onchange="coloringChanged()">Cluster
-                        <br>
-                        <input type="radio" name="coloring" value="System" onchange="coloringChanged()">System
-                        <input type="radio" name="coloring" value="Overlay" onchange="coloringChanged()">Overlay
-                    </fieldset>
-                    <input type="checkbox" id="backgroundToggle" onchange="toggleBackground()" title="White or black background?">Toggle Background Color<br>
-                    <button onclick="toggleOptions('colorOptions'); colorOptions()" type="button" title="modify the default strand colors">Edit
-                        Colors</button>
-                    <button onclick="toggleOptions('colorSelection'); colorSelection()" type="button" title="set color for selected nucleotides">Label Selection</button>
-                    <button onclick="toggleVisArbitrary();" type="button" title="toggle visibility of selected nucleotides">Toggle Visibility</button>
-                    <button onclick="controls.reset()" type="button" title="moves camera to default position (100,0,0)">Reset Camera</button>
-                    <button onclick="api.switchCamera()" id="cameraSwitch" type="button" title="Switches between perspective and orthographic cameras">Orthographic</button>
-                    <button onclick="toggleOptions('fogOptions')" type="button" title="View fog options">Fog</button>
-                    <button onclick="toggleOptions('hierarchy'); drawSystemHierarchy();" type="button" title="View system hierarchy">System hierarchy</button>
+                <div class="tight group">
+                    <button class="ribbon-button" onclick="nickWrapper()" title="break the upstream connection of the last selected particle">
+                        <img src="img/ico/nick.svg">
+                        <span class="caption">Nick</span>
+                    </button>
+                    <button class="ribbon-button" onclick="deleteWrapper()" title="delete the selected monomers">
+                        <img src="img/ico/delete.svg">
+                        <span class="caption">Delete</span>
+                    </button>
+                    <button class="ribbon-button" onclick="ligateWrapper()" title="ligate the last two selected particles together">
+                        <img src="img/ico/ligate.svg">
+                        <span class="caption">Ligate</span>
+                    </button>
                 </div>
-            </fieldset>
 
+                <div class="tight group flex-column">
+                    <div>
+                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
+                        <button class="ribbon-icon-button" onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">
+                            <img src="img/ico/set.svg">
+                            <span class="caption"> Set</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">
+                            <img src="img/ico/extend.svg">
+                            <span class="caption"> Extend</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="createWrapper()" title="Create a new strand (or duplex) with the provided sequences">
+                            <img src="img/ico/create.svg">
+                            <span class="caption"> Create</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="insertWrapper()" title="Insert elements of the provided sequences upstream of the last selected particle">
+                            <img src="img/ico/insert.svg">
+                            <span class="caption"> Insert</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="skipWrapper()" title="Remove selected elements and connect neigbours">
+                            <img src="img/ico/skip.svg">
+                            <span class="caption"> Skip</span>
+                        </button>
+                    </div>
+                    <input type="text" data-role="input" id="sequence" class="mb-1"
+                        data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
+                        data-history="true" data-prevent-submit="true"
+                        placeholder="Type a sequence here"
+                        style="text-transform: uppercase;"
+                        oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
+                </div>
+            </div>
+
+            <!-- View -->
+            <div class="section" id="section-view">
+                <div class="tight group">
+                    <div class="group">
+                        <div id="inboxing" class="ribbon-toggle-group toggleGroup_w1">
+                            <button class="ribbon-icon-button">
+                                <span class="icon">
+                                    <span class="mif-not"></span>
+                                </span>
+                                <span class="caption">None</span>
+                            </button>
+
+                            <button class="ribbon-icon-button active">
+                                <span class="icon">
+                                    <span class="mif-location"></span>
+                                </span>
+                                <span class="caption">Monomer</span>
+                            </button>
+
+                            <button class="ribbon-icon-button">
+                                <span class="icon">
+                                    <span class="mif-flow-line"></span>
+                                </span>
+                                <span class="caption">Strand</span>
+                            </button>
+                        </div>
+                        <span class="title">PBC</span>
+                    </div>
+                    <div class="group">
+                        <div id="centering" class="ribbon-toggle-group toggleGroup_w1">
+                            <button class="ribbon-icon-button">
+                                <span class="icon">
+                                    <span class="mif-not"></span>
+                                </span>
+                                <span class="caption">None</span>
+                            </button>
+
+                            <button class="ribbon-icon-button">
+                                <span class="icon">
+                                    <span class="mif-crop"></span>
+                                </span>
+                                <span class="caption">Box</span>
+                            </button>
+
+                            <button class="ribbon-icon-button active">
+                                <span class="icon">
+                                    <span>+</span>
+                                </span>
+                                <span class="caption">Origin</span>
+                            </button>
+                        </div>
+                        <span class="title">Centering</span>
+                    </div>
+                    <button class="ribbon-button" onclick="centerAndPBCBtnClick()" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">
+                        <span class="mif-done mif-3x"></span>
+                        <span class="caption">Apply</span>
+                    </button>
+                </div>
+                <div class="tight group flex-column">
+                    <div style="height: 27px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
+                            data-role="switch" data-caption="Arrows" checked>
+                    </div>
+                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
+                            data-role="switch" data-caption="Box">
+                    </div>
+                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
+                            data-role="switch" data-caption="Fog">
+                        <span class="ribbon-split dropdown-toggle"></span>
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
+                            <label for="fogNear">Near: </label>
+                            <input type="text" data-role="spinner" class="input-small" value="1" id="fogNear"
+                                title="Minimum distance to apply fog" min=0
+                                onchange="if(scene.fog!=null){setFog();}"><br>
+                            <label for="fogNear">Far: </label>
+                            <input type="text" data-role="spinner" class="input-small" value="200" id="fogFar"
+                                title="Maximum distance to apply fog" min=0
+                                onchange="if(scene.fog!=null){setFog();}"><br>
+                        </ul>
+                    </div>
+                </div>
+                <div class="group">
+                    <div id="coloringMode" class="ribbon-toggle-group toggleGroup_w2">
+                        <button class="ribbon-icon-button active" onclick="updateColoring('Strand')">
+                            <span class="icon">
+                                <span class="mif-flow-line"></span>
+                            </span>
+                            <span class="caption">Strand</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="updateColoring('Cluster')">
+                            <span class="icon">
+                                <span class="mif-cloudy4"></span>
+                            </span>
+                            <span class="caption">Cluster</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="updateColoring('System')">
+                            <span class="icon">
+                                <span class="mif-flow-tree"></span>
+                            </span>
+                            <span class="caption">System</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="updateColoring('Overlay')">
+                            <span class="icon">
+                                <span class="mif-chart-dots"></span>
+                            </span>
+                            <span class="caption">Overlay</span>
+                        </button>
+                    </div>
+                    <button class="ribbon-button" onclick="view.toggleWindow('colorPaletteWindow', updateColorPalette)">
+                        <span class="mif-palette mif-2x"></span>
+                        <span class="caption">Edit color palette</span>
+                    </button>
+                    <div class="tight group flex-column">
+                        <span>
+                            <button class="ribbon-icon-button" id="setCustomColor"
+                                onclick="colorElements()"
+                                title="Color selected elements">
+                                <span class="mif-pencil"></span>
+                            </button>
+                            <button class="ribbon-icon-button" id="resetCustomColor"
+                                onclick="resetCustomColoring()"
+                                title="Reset coloring on selected elements">
+                                <span class="mif-undo"></span>
+                            </button>
+                        </span>
+                        <input type="color" id="customColor" value="#ff0000" title="Custom color">
+                    </div>
+                    <span class="title">Colors</span>
+                </div>
+                <div class="tight group">
+                    <button class="ribbon-button" onclick="toggleVisArbitrary()">
+                        <span class="mif-eye mif-3x"></span>
+                        <span class="caption">Toggle visibility</span>
+                    </button>
+                    <button class="ribbon-button" onclick="api.switchCamera()">
+                        <span class="mif-video-camera mif-3x"></span>
+                        <span id="cameraSwitch" class="caption">Orthographic</span>
+                    </button>
+                    <button class="ribbon-button" onclick="view.toggleWindow('systemHierarchyWindow', drawSystemHierarchy)">
+                        <span class="mif-flow-cascade mif-3x"></span>
+                        <span class="caption">System hierarchy</span>
+                    </button>
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#keybindingsDialog')"
+                        title="Show the available keyboard shortcuts">
+                    <span class="mif-keyboard mif-3x"></span>
+                    <span class="caption">Keyboard shortcuts</span>
+                </button>
+                </div>
+            </div>
 
             <!--Trajectory-->
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">Trajectory</legend>
-                <div hidden=true>
-                    <div style="text-align: center;">
+            <div class="section" id="section-trajectory">
+                <div class="tight group">
+                    <div class="row flex-align-center">
+                        <button class="ribbon-button" onclick="trajReader.previousConfig()"
+                            title="Previous config (left keyboard arrow)">
+                            <span class="mif-previous mif-2x"></span>
+                            <span class="caption">Previous</span>
+                        </button>
+                        <div id="trajTimestep" hidden="true"></div>
+                        <button class="ribbon-button" onclick="trajReader.nextConfig()"
+                            title="Next config (right keyboard arrow)">
+                            <span class="mif-next mif-2x"></span>
+                            <span class="caption">Next</span>
+                        </button>
                     </div>
-                    <div style="text-align: center;">
-                        <p id="trajTimestep" hidden="true"></p>
-                        <i class="material-icons" onclick="trajReader.previousConfig()" style="font-size: 32px;" title="Previous config (left keyboard arrow)">skip_previous</i>
-                        <i class="material-icons" onclick="trajReader.nextConfig()" style="font-size: 32px;" title="Next config (right keyboard arrow)">skip_next</i>
-                    </div>
-                    <p>
-                        <i id="trajPrevUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajPrevLim').value), true)" title="Click to rewind">fast_rewind</i> until t &le;
-                        <input type="number" id="trajPrevLim" style="width: 6em;" value="0" min="0" title="Input trajectory step at which to stop rewinding.">
-                    </p>
-                    <p>
-                        <i id="trajNextUntilBtn" class="inline-icon material-icons" onclick="trajReader.stepUntil(parseInt(document.getElementById('trajNextLim').value), false)" title="Click to play">fast_forward</i> until t &ge;
-                        <input type="number" id="trajNextLim" style="width: 6em;" value="-1" title="Input trajectory step at which to stop playback. Input a negative number to play until the end.">
-                    </p>
                 </div>
-            </fieldset>
-        </div>
-        <button id="sideNavToggleButton" onclick="toggleSideNav(this)" type="button" style="background-color: #acc; border: 0px; height: 20px; padding: 0px;">hide toolbar</button>
-    </div>
-
-    <!--Extra option windows-->
-    <div style="position: absolute; bottom: 0px; overflow-y: scroll; max-height: 100%;">
-        <!--Video-->
-        <div class="opts" id="videoOptions" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('videoOptions')">close</i>
+                <div class="tight group flex-column">
+                    <div class="tight group">
+                        <button
+                            class="ribbon-icon-button" 
+                            onclick="trajReader.stepUntil(parseInt(document.getElementById('trajPrevLim').value), true)"
+                            title="Click to rewind">
+                                <span id="trajPrevUntilIco" class="mif-previous mif-2x"></span>
+                                <span class="caption">until t &le;</span>
+                        </button>
+                        <input type="text" style="width: 6em;" data-role="spinner" id="trajPrevLim" class="input-small" value="0" min="0" title="Input trajectory step at which to stop rewinding.">
+                    </div>
+                    <div class="tight group">
+                        <button
+                            class="ribbon-icon-button" 
+                            onclick="trajReader.stepUntil(parseInt(document.getElementById('trajNextLim').value), false)"
+                            title="Click to play">
+                                <span id="trajNextUntilIco" class="mif-next mif-2x"></span>
+                                <span class="caption">until t &ge;</span>
+                        </button>
+                        <input type="text" style="width: 6em;" data-role="spinner" id="trajNextLim" class="input-small" value="-1" min="0" title="Input trajectory step at which to stop playback. Input a negative number to play until the end.">
+                    </div>
+                </div>
             </div>
-            <label for="videoType">Video type:</label>
-            <select id="videoType" onchange="document.getElementById('videoLeminiscateOpts').hidden = this.selectedIndex == 0;">
-                <option value="trajectory">Trajectory</option>
-                <option value="lemniscate">XY lemniscate</option>
-            </select>
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">File format:</legend>
-                <input type="radio" name="videoFormat" value="webm" checked>webm (Chrome only!)<br>
-                <input type="radio" name="videoFormat" value="gif">gif<br>
-                <input type="radio" name="videoFormat" value="png">png<br>
-                <input type="radio" name="videoFormat" value="jpg">jpg<br>
-            </fieldset>
-            <label for="videoFramerate">Framerate:</label>
-            <input type="number" value="24" id="videoFramerate" width="20">fps
-            <div id="videoLeminiscateOpts" hidden="true">
-                <label for="videoDuration">Duration:</label>
-                <input type="number" value="20" id="videoDuration" width="20">s
+
+            <div class="section" id="section-dynamics">
+                <div class="group">
+                    <div class="tight group flex-column">
+                        <input type="checkbox" id="clusterSim" onchange="toggleClusterSim()" data-role="switch">
+                        <span>Enable</span>
+                    </div>
+                    <div>
+                        <button class="ribbon-button dropdown-toggle">
+                            <span class="icon">
+                                <span class="mif-cogs mif-3x"></span>
+                            </span>
+                            <span class="caption">Settings</span>
+                        </button>
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: 200px;">
+                        <p>Cluster repulsion constant</p><input id='rbd_clusterRepulsionConst' value = 1000 onchange="if(rigidClusterSimulator){rigidClusterSimulator.clusterRepulsionConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1000>
+                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value = 10 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionSpringConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=10>
+                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value = 3 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionRelaxedLength = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Friction</p><input id='rbd_friction' value = 0.25 onchange="if(rigidClusterSimulator){rigidClusterSimulator.friction = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.1 data-fixed="1">
+                            <p>dt</p><input id='rbd_dt' value = 0.1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.dt = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.01 data-fixed="2">
+                        </ul>
+                    </div>
+                    <span class="title">Rigid-body</span>
+                </div>
+                <div class="group">
+                    <button class="ribbon-button" id="btnConnect" onclick="openConnections()" title="Live interactions.">
+                        <span class="mif-cast mif-3x"></span>
+                        <span class="caption">Connect</span>
+                    </button>
+                    <button class="ribbon-button" id="btnControlSim" onclick="view.toggleWindow('oxserveWindow')">
+                        <span class="mif-cogs mif-3x"></span>
+                        <span class="caption">Settings</span>
+                    </button>
+                    <span class="title">Ox-Serve</span>
+                </div>
             </div>
-            <button id="videoStartStop" onclick="createVideo()">Start</button>
         </div>
-
-        <!--Color Options-->
-        <div class="opts" id="colorOptions" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('colorOptions'); colorOptions()">close</i>
-            </div>
-            Click a color to edit, right click to remove:
-            <div id="colorOptionContent" style="background-color: inherit"></div>
-        </div>
-
-        <!--Color Selection-->
-        <div class="opts" id="colorSelection" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('colorSelection'); colorSelection()">close</i>
-            </div>
-            Select element(s) and click color to edit
-            <div id="colorSelectionContent" style="background-color: inherit"></div>
-        </div>
-
-        <!--Hierarchy-->
-        <div class="opts" id="hierarchy" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('hierarchy')">close</i>
-            </div>
-            <div id="hierarchyContent" style="background-color: inherit"></div>
-        </div>
-
-        <!--Clustering-->
-        <div class="opts" id="clusterOptions" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('clusterOptions')">close</i>
-            </div>
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">Automatic</legend>
-                <label for="minPts">Min points: </label>
-                <input type="number" value="6" id="minPts" title="Minimum number of nucleotides in a cluster" min=1><br>
-                <label for="epsilon">Max dist (ε): </label>
-                <input type="number" value="3" id="epsilon" title="Max distance between cluster neigbours" min=0>
-                <button onclick="calculateClusters()">Start clustering</button>
-            </fieldset>
-            <fieldset>
-                <legend onclick="toggleFieldSet(this)">Manual</legend>
-                <button onclick="selectionToCluster()" title="Add all selected elements to a new cluster">Selection to
-                    cluster</button>
-                <button onclick="clearClusters()" title="Remove all clusters">Clear clusters</button>
-            </fieldset>
-        </div>
-
-        <!--Fog-->
-        <div class="opts" id="fogOptions" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('fogOptions')">close</i>
-            </div>
-            <label for="fogNear">Near: </label>
-            <input type="number" value="1" id="fogNear" title="Minimum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
-            <label for="fogNear">Far: </label>
-            <input type="number" value="200" id="fogFar" title="Maximum distance to apply fog" min=0 onchange="if(scene.fog!=null){setFog();}"><br>
-            <button onclick="toggleFog()">Toggle fog</button>
-        </div>
-
-        <!--Base info-->
-        <div class="opts" id="baseInfoWindow" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('baseInfoWindow')">close</i>
-            </div>
-            Selected Base Info:
-            <textarea id="BaseInfo" cols="25" rows="10" name="textarea" readonly></textarea>
-        </div>
-
-        <!--Relaxation options-->
-        <div class="opts" id="relaxConfigWindow" hidden="true">
-            <div style="text-align: right; background-color: #acc">
-                <i class="material-icons" onclick="toggleOptions('relaxConfigWindow')">close</i>
-            </div>
-            Relaxation settings:
-            <fieldset>
-                <legend> Relax method:</legend>
-                <input type="radio" id="rxBackend" name="relaxBackend" value="MC" checked onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;" >CPU<br>
-                <input type="radio" id="rxBackend" name="relaxBackend" value="MD_GPU" onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;">GPU<br>
-            </fieldset>
-            <fieldset>
-                <button id="oxIP${id}_1" style="width: 40px; height:30px;" onclick="if(socket) socket.stop_simulation()" title="Delete entry">x</button>
-                <button id="oxIP${id}_2"style="width: 40px; height:30px;" onclick="if(socket) socket.start_simulation()" title="Establish connection">►</button>
-            
-            <fieldset>
-            <fieldset id="relax_MC_settings" >
-                <label for="mcT">T: </label>
-                <input type="number" value="30" id="mcT" title="Simulation temperature"><br>
-            
-                <label for="mcSteps">Steps: </label>
-                <input type="number" value="100000" id="mcSteps" style="width: 7em" title="Number of steps to simulate"><br>
-                
-                <label for="mcSalt">Salt: </label>
-                <input type="number" value="1" id="mcSalt" title="Na concentration"><br>
-                
-                <label for="mcInteractionType">Interaction type: </label>
-                <input type="text" value="DNA2" id="mcInteractionType" title="Interaction type."><br>
-
-                <label for="mcPrintConfInterval">Print Conf Interval: </label>
-                <input type="number" value="1000" id="mcPrintConfInterval" style="width: 7em" title="Output configuration every # of steps."><br>
-            
-                <label for="mcPrintEnergyInterval">Print Energy Interval: </label>
-                <input type="number" value="1000" id="mcPrintEnergyInterval" style="width: 7em" title="Output energy every # of steps."><br>
-            
-                <label for="mcDeltaTranslation">Delta Translation: </label>
-                <input type="number" value="0.22" id="mcDeltaTranslation" style="width: 7em" title=""><br>
-                
-                <label for="mcDeltaRotation">Delta Rotation: </label>
-                <input type="number" value="0.22" id="mcDeltaRotation" style="width: 7em" title=""><br>
-
-
-            </fieldset>
-
-           <fieldset id="relax_MD_settings" hidden=true>
-                <label for="mdT">T: </label>
-                <input type="number" value="20" id="mdT" title="Simulation temperature"><br>
-                
-                <label for="mdSteps">Steps: </label>
-                <input type="number" value="1000000" id="mdSteps" style="width: 7em" title="Number of steps to simulate"><br>
-            
-                <label for="mdSalt">Salt: </label>
-                <input type="number" value="1" id="mdSalt" title="Na concentration"><br>
-                
-                <label for="mdInteractionType">Interaction type: </label>
-                <input type="text" value="DNA2" id="mdInteractionType" title="Interaction type."><br>
-
-                <label for="mdPrintConfInterval">Print Conf Interval: </label>
-                <input type="number" value="10000" id="mdPrintConfInterval" style="width: 7em" title="Output configuration every # of steps."><br>
-            
-                <label for="mdPrintEnergyInterval">Print Energy Interval: </label>
-                <input type="number" value="10000" id="mdPrintEnergyInterval" style="width: 7em" title="Output energy every # of steps."><br>
-            
-                <label for="mdThermostat">Interaction type: </label>
-                <input type="text" value="john" id="mdThermostat" title="Thermostat to use."><br>
-
-                <label for="mdDT">dt: </label>
-                <input type="number" value="0.005" id="mdDT" title="dt value."><br>
-                
-                <label for="mdDiff_Coeff">diff coeff: </label>
-                <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value."><br>
-
-
-            </fieldset>
-            
-        </div>
-
-    </div>
-
-    <!--Notices-->
-    <div id="noticeboard" style="position: absolute; bottom: 0px; overflow-y: scroll; width: 100%; max-height: 100%;"></div>
+    </nav>
 
     <!--Canvas-->
     <div id="container">
         <div><canvas id="colorbarCanvas"></canvas></div>
     </div>
-    <canvas id="threeCanvas" tabindex="1" class="jctx-host jctx-id-canvas"></canvas>
+    <canvas id="threeCanvas" tabindex="1" style="width: 100%; height: 100%;"></canvas>
 
-    <!-- Context menu-->
-    <ul class="jctx jctx-id-canvas jctx-white jctx-white-shadow">
-        <li data-action="undo">Undo (ctrl+Z)</li>
-        <li data-action="redo">Redo (ctrl+Y)</li>
-        <hr>
-        <li data-action="del">Delete (del)</li>
-        <li data-action="cut">Cut (ctrl+X)</li>
-        <li data-action="copy">Copy (ctrl+C)</li>
-        <li data-action="paste">Paste (ctrl+V)</li>
-        <hr>
-        <li data-action="all">Select all (ctrl+A)</li>
-        <li data-action="invert">Invert selection (ctrl+I)</li>
-        <li data-action="clear">Clear selection</li>
-    </ul>
-
+    <!-- Metro 4 -->
+    <script src="./ts/lib/metro.min.js"></script>
     <div class="main">
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/CCapture.all.min.js"></script>
@@ -513,6 +635,7 @@
         <script src="./dist/editing/doUndo.js"></script>
         <script src="./dist/editing/dijkstra.js"></script>
         <script src="./dist/editing/rigid-body_simulation.js"></script>
+        <script src="./dist/UI/UI.js"></script>
         <script src="./dist/main.js"></script>
         <script src="./dist/model/basicElement.js"></script>
         <script src="./dist/model/aminoAcid.js"></script>
@@ -521,10 +644,9 @@
         <script src="./dist/model/RNA.js"></script>
         <script src="./dist/model/strand.js"></script>
         <script src="./dist/model/system.js"></script>
-        <script src="./dist/model/anm.js"></script>        
+        <script src="./dist/model/anm.js"></script>
         <script src="./dist/UI/base_selector.js"></script>
         <script src="./dist/UI/keybindings.js"></script>
-        <script src="./dist/UI/UI.js"></script>
         <script src="./dist/file_handling/output_file.js"></script>
         <script src="./dist/file_handling/video.js"></script>
         <script src="./dist/editing/translation.js"></script>
