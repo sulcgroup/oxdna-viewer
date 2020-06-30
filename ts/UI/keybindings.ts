@@ -3,27 +3,8 @@
 
 canvas.addEventListener("keydown", event =>{
     switch (event.key.toLowerCase()) {
-        //Save image on "p" press
-        case 'p' :
-            canvas.toBlob(function(blob){
-                var a = document.createElement('a');
-                var url = URL.createObjectURL(blob);
-                a.href = url;
-                a.download = 'canvas.png';
-                a.click();
-            }, 'image/png', 1.0);
-            //get the colorbar too
-            if (colorbarScene.children.length != 0) {
-                renderColorbar();
-                colorbarCanvas.toBlob(function(blob) {
-                    var a = document.createElement('a');
-                    var url = URL.createObjectURL(blob);
-                    a.href = url;
-                    a.download = 'colorbar.png';
-                    a.click();
-                }, 'image/png', 1.0);
-            }
-            break;
+        // Save image on "p" press
+        case 'p' : view.saveCanvasImage(); break;
 
         // Mapping the next and prev to the arrow keys
         case 'arrowright': trajReader.nextConfig(); break;

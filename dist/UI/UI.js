@@ -387,6 +387,26 @@ class View {
             transformControls.hide();
         }
     }
+    saveCanvasImage() {
+        canvas.toBlob(function (blob) {
+            var a = document.createElement('a');
+            var url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = 'canvas.png';
+            a.click();
+        }, 'image/png', 1.0);
+        //get the colorbar too
+        if (colorbarScene.children.length != 0) {
+            renderColorbar();
+            colorbarCanvas.toBlob(function (blob) {
+                var a = document.createElement('a');
+                var url = URL.createObjectURL(blob);
+                a.href = url;
+                a.download = 'colorbar.png';
+                a.click();
+            }, 'image/png', 1.0);
+        }
+    }
     longCalculation(calc, message, callback) {
         let activity = Metro.activity.open({
             type: 'square',
