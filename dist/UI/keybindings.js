@@ -117,7 +117,7 @@ canvas.addEventListener("keydown", event => {
             }
             break;
         case 'f1':
-            view.toggleModal("keyboardShortcuts");
+            window.open("https://github.com/sulcgroup/oxdna-viewer/");
             break;
     }
     // Key is value of the key, e.g. '1', while code is the id of

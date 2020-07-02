@@ -96,7 +96,7 @@ class OXServeSocket extends WebSocket {
             let connect_button = document.getElementById("btnConnect");
             connect_button.style.backgroundColor = "green";
             connect_button.textContent = "Connected!";
-            view.toggleModal('socketConnections');
+            Metro.dialog.close('#socketConnectionsDialog');
         };
         this.onclose = (resonse) => {
             let connect_button = document.getElementById("btnConnect");

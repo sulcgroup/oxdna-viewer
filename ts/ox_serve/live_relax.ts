@@ -123,8 +123,8 @@ class OXServeSocket extends WebSocket{
         console.log(resonse);
         let connect_button =  (document.getElementById("btnConnect") as HTMLSelectElement);
         connect_button.style.backgroundColor = "green";
-        connect_button.textContent = "Connected!"
-        view.toggleModal('socketConnections');
+        connect_button.textContent = "Connected!";
+        Metro.dialog.close('#socketConnectionsDialog');
     }
 
     onclose = (resonse) => {

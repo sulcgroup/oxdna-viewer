@@ -339,10 +339,6 @@ class View {
         );
     }
 
-    public toggleModal(id: string) {
-         ;
-     }
-
     // nucleotides/strand/system
     public getSelectionMode(): string {
         return this.getToggleGroupValue('selectionScope');

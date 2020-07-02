@@ -325,9 +325,6 @@ class View {
             w.load(`windows/${id}.html`).then(oncreate);
         });
     }
-    toggleModal(id) {
-        ;
-    }
     // nucleotides/strand/system
     getSelectionMode() {
         return this.getToggleGroupValue('selectionScope');
