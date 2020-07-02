@@ -183,7 +183,7 @@ function initLutCols(systems) {
     }
 }
 function resetCustomColoring() {
-    view.setColoringMode("Strand");
+    view.coloringMode.set("Strand");
     initLutCols(systems);
     initLutCols(tmpSystems);
     clearSelection();
@@ -212,7 +212,7 @@ function colorElements(color, elems) {
             console.log(emptyTmpSystems);
             initLutCols(emptyTmpSystems);
         }
-        view.setColoringMode("Overlay");
+        view.coloringMode.set("Overlay");
     }
     initLutCols(systems);
     initLutCols(tmpSystems);
@@ -225,7 +225,7 @@ function colorElements(color, elems) {
         sid = e["gid"] - e.getSystem().globalStartId;
         e.getSystem().lutCols[sid] = color;
     });
-    view.setColoringMode("Overlay");
+    view.coloringMode.set("Overlay");
     if (!systems.some(system => system.colormapFile)) {
         api.removeColorbar();
     }
@@ -263,13 +263,14 @@ function notify(message, type, title) {
     });
     console.info(`Notification: ${message}`);
 }
-class View {
-    constructor(doc) {
-        this.basepairMessage = "Locating basepairs, please be patient...";
+class ToggleGroup {
+    constructor(id, doc, onChange) {
+        this.id = id;
         this.doc = doc;
+        this.onChange = onChange;
     }
-    setToggleGroupValue(id, value) {
-        let toggleGroup = this.doc.getElementById(id);
+    set(value) {
+        let toggleGroup = this.doc.getElementById(this.id);
         let active = toggleGroup.querySelector('.active');
         if (active) {
             active.classList.remove('active');
@@ -280,9 +281,66 @@ class View {
                 return;
             }
         }
+        if (this.onChange) {
+            this.onChange(this);
+        }
     }
-    getToggleGroupValue(id) {
-        return this.doc.getElementById(id).querySelector('.active').querySelector('.caption').innerHTML;
+    get() {
+        return this.doc.getElementById(this.id).querySelector('.active').querySelector('.caption').innerHTML;
+    }
+}
+class ToggleGroupWithDisable extends ToggleGroup {
+    constructor(id, doc, lastActive, disabled, onChange) {
+        super(id, doc, onChange);
+        this.lastActive = lastActive;
+        this.disabled = disabled;
+    }
+    toggle() {
+        this.enabled() ? this.disable() : this.enable();
+    }
+    disable() {
+        if (this.enabled()) {
+            this.lastActive = this.get();
+            this.set(this.disabled);
+        }
+    }
+    ;
+    enable() {
+        if (!this.enabled()) {
+            this.set(this.lastActive);
+        }
+    }
+    ;
+    enabled() {
+        return this.get() !== this.disabled;
+    }
+}
+class View {
+    constructor(doc) {
+        this.basepairMessage = "Locating basepairs, please be patient...";
+        this.doc = doc;
+        // Initialise toggle groups
+        this.coloringMode = new ToggleGroup('coloringMode', doc);
+        this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
+        this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
+        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
+            // If we should show something
+            if (!g.enabled()) {
+                // Make sure something is selected
+                if (selectedBases.size > 0) {
+                    transformControls.show();
+                    transformControls.setMode(g.get().toLowerCase());
+                }
+                else {
+                    notify("Please select elements to transform");
+                    g.disable();
+                }
+            }
+            else {
+                transformControls.hide();
+            }
+        });
     }
     getRandomHue() {
         return new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`);
@@ -325,64 +383,8 @@ class View {
             w.load(`windows/${id}.html`).then(oncreate);
         });
     }
-    // nucleotides/strand/system
-    getSelectionMode() {
-        return this.getToggleGroupValue('selectionScope');
-    }
-    setSelectionMode(setting) {
-        this.setToggleGroupValue('selectionScope', setting);
-    }
-    selectionEnabled() {
-        return this.getSelectionMode() != "Disabled";
-    }
     selectPairs() {
         return this.doc.getElementById("selectPairs").checked;
-    }
-    getCenteringSetting() {
-        return this.getToggleGroupValue('centering');
-    }
-    setCenteringSetting(setting) {
-        this.setToggleGroupValue('centering', setting);
-    }
-    getInboxingSetting() {
-        return this.getToggleGroupValue('inboxing');
-    }
-    setInboxingSetting(setting) {
-        return this.setToggleGroupValue('inboxing', setting);
-    }
-    getTransformSetting() {
-        return this.getToggleGroupValue('transform');
-    }
-    transformEnabled() {
-        return this.getTransformSetting() != "None";
-    }
-    getColoringMode() {
-        return this.getToggleGroupValue('coloringMode');
-    }
-    setColoringMode(mode) {
-        this.setToggleGroupValue('coloringMode', mode);
-        updateColoring();
-    }
-    ;
-    handleTransformMode(mode) {
-        // Make sure that buttons correspond to specified mode
-        this.setToggleGroupValue('transform', mode);
-        // If we should show something
-        if (mode != "None") {
-            // Make sure something is selected
-            if (selectedBases.size > 0) {
-                transformControls.show();
-                transformControls.setMode(mode.toLowerCase());
-            }
-            else {
-                notify("Please select elements to transform");
-                // Reset buttons to none
-                this.setToggleGroupValue('transform', 'None');
-            }
-        }
-        else {
-            transformControls.hide();
-        }
     }
     saveCanvasImage() {
         canvas.toBlob(function (blob) {

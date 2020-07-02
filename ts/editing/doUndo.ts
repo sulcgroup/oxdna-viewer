@@ -204,7 +204,7 @@ class RevertableTransformation extends RevertableEdit {
         let undo = function() {
             rotateElementsByQuaternion(elements, r.clone().conjugate(), c);
             translateElements(elements, t.clone().negate());
-            if (selectedBases.size > 0 && view.transformEnabled()) {
+            if (selectedBases.size > 0 && view.transformMode.enabled()) {
                 transformControls.show();
             } else {
                 transformControls.hide();
@@ -214,7 +214,7 @@ class RevertableTransformation extends RevertableEdit {
         let redo = function() {
             translateElements(elements, t);
             rotateElementsByQuaternion(elements, r, c);
-            if (selectedBases.size > 0 && view.transformEnabled()) {
+            if (selectedBases.size > 0 && view.transformMode.enabled()) {
                 transformControls.show();
             } else {
                 transformControls.hide();

@@ -317,7 +317,7 @@ function readJson(system, jsonReader) {
                 system.setColorFile(data);
                 makeLut(data, key);
                 try { //you need to toggle here for small systems, during the scene add for large systems because asynchronous reading.
-                    view.setColoringMode("Overlay");
+                    view.coloringMode.set("Overlay");
                 }
                 catch {
                     toggleFailure = true;
@@ -571,7 +571,7 @@ function addSystemToScene(system) {
     pickingScene.add(system.dummyBackbone);
     // Catch an error caused by asynchronous readers and different file sizes
     if (toggleFailure) {
-        view.setColoringMode("Overlay");
+        view.coloringMode.set("Overlay");
     }
     render();
     // Reset the cursor from the loading spinny and reset canvas focus

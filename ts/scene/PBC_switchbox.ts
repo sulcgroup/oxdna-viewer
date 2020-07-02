@@ -8,11 +8,10 @@
  */
 
 function centerAndPBCBtnClick(elems?: BasicElement[]){
-    window.sessionStorage.centerOption = view.getCenteringSetting();
-    window.sessionStorage.inboxingOption = view.getInboxingSetting();
+    window.sessionStorage.centerOption = view.centeringMode.get();
+    window.sessionStorage.inboxingOption = view.inboxingMode.get();
 
     centerAndPBC(elems);
-
 }
 
 
@@ -40,7 +39,7 @@ function getCenteringGoal(): THREE.Vector3 {
         centerOption = window.sessionStorage.centerOption;
     } 
     else{
-        centerOption = view.getCenteringSetting();
+        centerOption = view.centeringMode.get();
     }
     //let centerOption = 
     switch (centerOption) {
@@ -58,7 +57,7 @@ function getInboxingMode(): string {
     if(window.sessionStorage.inboxingOption){
         return window.sessionStorage.inboxingOption;
     }
-    return view.getInboxingSetting();
+    return view.inboxingMode.get();
 }
 
 /**

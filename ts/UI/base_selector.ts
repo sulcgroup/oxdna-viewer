@@ -18,7 +18,7 @@ canvas.addEventListener('mousemove', event => {
 
 canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
-	if (view.selectionEnabled()) {
+	if (view.selectionMode.enabled()) {
 		let id = gpuPicker(event)
 
 		//if something was clicked, toggle the coloration of the appropriate things.
@@ -36,7 +36,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 			}
 			
 			let strandCount = sys.strands.length;
-			switch(view.getSelectionMode()){
+			switch(view.selectionMode.get()){
 				case "System" :
 					sys.strands.forEach(strand=>{
 						strand.monomers.forEach(e=>{
@@ -113,7 +113,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 				});
 			}
 
-			if (selectedBases.size > 0 && view.transformEnabled()) {
+			if (selectedBases.size > 0 && view.transformMode.enabled()) {
 				transformControls.show();
 			} else {
 				transformControls.hide();
@@ -223,7 +223,7 @@ function invertSelection() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
-	if (selectedBases.size > 0 && view.transformEnabled()) {
+	if (selectedBases.size > 0 && view.transformMode.enabled()) {
 		transformControls.show();
 	} else {
 		transformControls.hide();
@@ -239,7 +239,7 @@ function selectAll() {
 	systems.forEach(sys => {
 		updateView(sys);
 	});
-	if (selectedBases.size > 0 && view.transformEnabled()) {
+	if (selectedBases.size > 0 && view.transformMode.enabled()) {
 		transformControls.show();
 	}
 }
@@ -309,7 +309,7 @@ function makeTextArea(bases: string, id) { //insert "bases" string into text are
 
 let boxSelector;
 canvas.addEventListener('mousemove', event => {
-	if (boxSelector && view.selectionEnabled() && view.getSelectionMode() === "Box") {
+	if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
 		// Box selection
 		event.preventDefault();
 		boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
@@ -318,7 +318,7 @@ canvas.addEventListener('mousemove', event => {
 
 
 canvas.addEventListener('mousedown', event => {
-	if (view.selectionEnabled() && view.getSelectionMode() === "Box" && !transformControls.isHovered()) {
+	if (view.selectionMode.enabled() && view.selectionMode.get() === "Box" && !transformControls.isHovered()) {
 		// Box selection
 		event.preventDefault();
 
@@ -339,7 +339,7 @@ canvas.addEventListener('mousedown', event => {
 }, false);
 
 let onDocumentMouseCancel = event => {
-	if (boxSelector && view.selectionEnabled() && view.getSelectionMode() === "Box") {
+	if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
 		// Box selection
 		event.preventDefault();
 
@@ -355,7 +355,7 @@ let onDocumentMouseCancel = event => {
 			}
 		});
 
-		if (selectedBases.size > 0 && view.transformEnabled()) {
+		if (selectedBases.size > 0 && view.transformMode.enabled()) {
 			transformControls.show();
 		} else {
 			transformControls.hide();

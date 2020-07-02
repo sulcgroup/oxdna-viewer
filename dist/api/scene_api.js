@@ -171,7 +171,7 @@ var api;
         systems.forEach(sys => {
             updateView(sys);
         });
-        if (selectedBases.size > 0 && view.transformEnabled()) {
+        if (selectedBases.size > 0 && view.transformMode.enabled()) {
             transformControls.show();
         }
     }

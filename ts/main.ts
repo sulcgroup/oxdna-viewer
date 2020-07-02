@@ -108,9 +108,9 @@ render();
 //toggles display of coloring by json file / structure modeled off of base selector
 function updateColoring(mode?: string) {
     if(!mode) {
-        mode = view.getColoringMode()
+        mode = view.coloringMode.get()
     } else {
-        view.setColoringMode(mode);
+        view.coloringMode.set(mode);
     }
     if (mode === "Overlay") {
         if (lut) {
@@ -119,7 +119,7 @@ function updateColoring(mode?: string) {
             }
         } else {
             notify("Please drag and drop the corresponding .json file.");
-            view.setColoringMode("Strand");
+            view.coloringMode.set("Strand");
             return;
         }
     } else if (lut) {
@@ -170,10 +170,10 @@ function divAndNeg(mat:number[],divisor:number){ //divide a matrix by divisor; n
 //Temporary solution to adding configuration storage
 //This section sets interface values from the storage 
 if (window.sessionStorage.centerOption) {
-    view.setCenteringSetting(window.sessionStorage.centerOption);
+    view.centeringMode.set(window.sessionStorage.centerOption);
 }
 if (window.sessionStorage.inboxingOption) {
-    view.setInboxingSetting(window.sessionStorage.inboxingOption);
+    view.inboxingMode.set(window.sessionStorage.inboxingOption);
 }
 
 

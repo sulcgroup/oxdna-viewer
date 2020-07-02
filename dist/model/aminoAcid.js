@@ -136,7 +136,7 @@ class AminoAcid extends BasicElement {
             aaColor = selectionColor;
         }
         else {
-            switch (view.getColoringMode()) {
+            switch (view.coloringMode.get()) {
                 case "Strand":
                     bbColor = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length];
                     aaColor = this.elemToColor(this.type);

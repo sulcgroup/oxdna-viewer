@@ -6,8 +6,8 @@
  * @param elems A list of elements to centre
  */
 function centerAndPBCBtnClick(elems) {
-    window.sessionStorage.centerOption = view.getCenteringSetting();
-    window.sessionStorage.inboxingOption = view.getInboxingSetting();
+    window.sessionStorage.centerOption = view.centeringMode.get();
+    window.sessionStorage.inboxingOption = view.inboxingMode.get();
     centerAndPBC(elems);
 }
 function centerAndPBC(elems) {
@@ -33,7 +33,7 @@ function getCenteringGoal() {
         centerOption = window.sessionStorage.centerOption;
     }
     else {
-        centerOption = view.getCenteringSetting();
+        centerOption = view.centeringMode.get();
     }
     //let centerOption = 
     switch (centerOption) {
@@ -50,7 +50,7 @@ function getInboxingMode() {
     if (window.sessionStorage.inboxingOption) {
         return window.sessionStorage.inboxingOption;
     }
-    return view.getInboxingSetting();
+    return view.inboxingMode.get();
 }
 /**
  * Bring all elements (or strands) inside the simulation box

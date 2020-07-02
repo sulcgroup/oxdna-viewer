@@ -174,7 +174,7 @@ function initLutCols(systems: System[]) {
 }
 
 function resetCustomColoring() {
-    view.setColoringMode("Strand");
+    view.coloringMode.set("Strand");
     initLutCols(systems);
     initLutCols(tmpSystems);
     clearSelection();
@@ -206,7 +206,7 @@ function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
             console.log(emptyTmpSystems)
             initLutCols(emptyTmpSystems)
         }
-        view.setColoringMode("Overlay");
+        view.coloringMode.set("Overlay");
     }
 
     initLutCols(systems);
@@ -222,7 +222,7 @@ function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
         e.getSystem().lutCols[sid] = color;
     });
 
-    view.setColoringMode("Overlay");
+    view.coloringMode.set("Overlay");
     if (!systems.some(system => system.colormapFile)) {
         api.removeColorbar();
     }
@@ -264,19 +264,21 @@ function notify(message: string, type?: string, title?: string) {
     console.info(`Notification: ${message}`);
 }
 
-class View {
+class ToggleGroup {
+    private id: string;
     private doc: Document;
-    basepairMessage = "Locating basepairs, please be patient...";
+    private onChange: (toggleGroup: ToggleGroup)=>void;
 
-
-    constructor(doc: Document) {
+    constructor(id: string, doc: Document, onChange?:(toggleGroup: ToggleGroup)=>void) {
+        this.id = id;
         this.doc = doc;
+        this.onChange = onChange;
     }
 
-    private setToggleGroupValue(id: string, value: string) {
-        let toggleGroup = this.doc.getElementById(id);
+    public set(value: string) {
+        let toggleGroup = this.doc.getElementById(this.id);
         let active = toggleGroup.querySelector('.active');
-        if(active) {
+        if (active) {
             active.classList.remove('active');
         }
         for (let opt of toggleGroup.children) {
@@ -285,10 +287,83 @@ class View {
                 return;
             }
         }
+        if (this.onChange) {
+            this.onChange(this);
+        }
     }
 
-    private getToggleGroupValue(id: string): string {
-        return this.doc.getElementById(id).querySelector('.active').querySelector('.caption').innerHTML;
+    public get() {
+        return this.doc.getElementById(this.id).querySelector('.active').querySelector('.caption').innerHTML;
+    }
+}
+
+class ToggleGroupWithDisable extends ToggleGroup {
+    private lastActive: string;
+    private disabled: string;
+
+    constructor(id: string, doc: Document, lastActive: string, disabled: string, onChange?: (toggleGroup: ToggleGroupWithDisable)=>void) {
+        super(id, doc, onChange);
+        this.lastActive = lastActive;
+        this.disabled = disabled;
+    }
+
+    public toggle() {
+        this.enabled() ? this.disable() : this.enable();
+    }
+
+    public disable() {
+        if (this.enabled()) {
+            this.lastActive = this.get();
+            this.set(this.disabled);
+        }
+    };
+
+    public enable() {
+        if (!this.enabled()) {
+            this.set(this.lastActive)
+        }
+    };
+
+    public enabled(): boolean {
+        return this.get() !== this.disabled;
+    }
+}
+
+class View {
+    private doc: Document;
+
+    coloringMode: ToggleGroup;
+    centeringMode: ToggleGroupWithDisable;
+    inboxingMode: ToggleGroupWithDisable;
+    selectionMode: ToggleGroupWithDisable;
+    transformMode: ToggleGroupWithDisable;
+
+    basepairMessage = "Locating basepairs, please be patient...";
+
+
+    constructor(doc: Document) {
+        this.doc = doc;
+
+        // Initialise toggle groups
+        this.coloringMode = new ToggleGroup('coloringMode', doc);
+        this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
+        this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
+        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
+            // If we should show something
+            if (!g.enabled()) {
+                // Make sure something is selected
+                if (selectedBases.size > 0) {
+                    transformControls.show();
+                    transformControls.setMode(g.get().toLowerCase());
+                } else {
+                    notify("Please select elements to transform");
+                    g.disable();
+                }
+            } else {
+                transformControls.hide()
+            }
+        });
     }
 
     public getRandomHue(): THREE.Color {
@@ -339,74 +414,8 @@ class View {
         );
     }
 
-    // nucleotides/strand/system
-    public getSelectionMode(): string {
-        return this.getToggleGroupValue('selectionScope');
-    }
-
-    public setSelectionMode(setting: string) {
-        this.setToggleGroupValue('selectionScope', setting);
-    }
-
-    public selectionEnabled() {
-        return this.getSelectionMode() != "Disabled";
-    }
-
     public selectPairs(): boolean {
         return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
-    }
-
-    public getCenteringSetting() {
-        return this.getToggleGroupValue('centering');
-    }
-
-    public setCenteringSetting(setting: string) {
-        this.setToggleGroupValue('centering', setting);
-    }
-
-    public getInboxingSetting() {
-        return this.getToggleGroupValue('inboxing');
-    }
-
-    public setInboxingSetting(setting: string) {
-        return this.setToggleGroupValue('inboxing', setting);
-    }
-
-    public getTransformSetting() {
-        return this.getToggleGroupValue('transform');
-    }
-
-    public transformEnabled() {
-        return this.getTransformSetting() != "None";
-    }
-
-    public getColoringMode(): string {
-        return this.getToggleGroupValue('coloringMode');
-    }
-
-    public setColoringMode(mode: string) {
-        this.setToggleGroupValue('coloringMode', mode);
-        updateColoring();
-    };
-
-    public handleTransformMode(mode: string) {
-        // Make sure that buttons correspond to specified mode
-        this.setToggleGroupValue('transform', mode);
-
-        // If we should show something
-        if (mode != "None") {
-            // Make sure something is selected
-            if (selectedBases.size > 0) {
-                transformControls.show();
-                transformControls.setMode(mode.toLowerCase());
-            } else {
-                notify("Please select elements to transform");
-                // Reset buttons to none
-                this.setToggleGroupValue('transform', 'None');
-            }
-        } else {
-            transformControls.hide()
-        }
     }
 
     public saveCanvasImage(){

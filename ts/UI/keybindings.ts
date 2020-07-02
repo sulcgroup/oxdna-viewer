@@ -32,17 +32,17 @@ canvas.addEventListener("keydown", event =>{
 
         // Transform controls:
         case 't': // Toggle translate
-            if (view.getTransformSetting() == 'Translate') {
-                view.handleTransformMode('None');
+            if (view.transformMode.get() == 'Translate') {
+                view.transformMode.disable();
             } else {
-                view.handleTransformMode('Translate')
+                view.transformMode.set('Translate');
             }
             break;
         case 'r': // Toggle rotate
-            if (view.getTransformSetting() == 'Rotate') {
-                view.handleTransformMode('None');
+            if (view.transformMode.get() == 'Rotate') {
+                view.transformMode.disable();
             } else {
-                view.handleTransformMode('Rotate')
+                view.transformMode.set('Rotate');
             }
             break;
         case 'shift':
@@ -68,20 +68,13 @@ canvas.addEventListener("keydown", event =>{
             }
 
             // Toggle selection:
-            if (view.selectionEnabled()) {
-                view.setSelectionMode("Disabled");
-            } else {
-                view.setSelectionMode("Monomer");
-            }
+            view.selectionMode.toggle();
+
             break;
 
         // Toggle dragging:
         case 'd':
-            if (transformControls.visible) {
-                view.handleTransformMode("None");
-            } else {
-                view.handleTransformMode("Translate");
-            }
+            view.transformMode.toggle();
             break;
         case 'f1': window.open("https://github.com/sulcgroup/oxdna-viewer/"); break;
     }

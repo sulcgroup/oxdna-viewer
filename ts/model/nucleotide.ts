@@ -279,7 +279,7 @@ abstract class Nucleotide extends BasicElement {
         if (selectedBases.has(this)) {
             color = selectionColor;
         } else {
-            switch (view.getColoringMode()) {
+            switch (view.coloringMode.get()) {
                 case "Strand": color = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length]; break;
                 case "System": color = backboneColors[this.getSystem().systemID % backboneColors.length]; break;
                 case "Cluster":

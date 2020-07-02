@@ -92,7 +92,7 @@ class RigidClusterSimulator {
         });
 
         // Update transform controls, if neccessary
-        if (selectedBases.size > 0 && view.transformEnabled()) {
+        if (selectedBases.size > 0 && view.transformMode.enabled()) {
             transformControls.show();
         }
     };
@@ -220,7 +220,7 @@ class Cluster {
      */
     public integrate(dt: number) {
         // Position needs to be updated if the cluster is dragged manually
-        if (view.transformEnabled()) {
+        if (view.transformMode.enabled()) {
             this.calculateCenter();
         }
 
