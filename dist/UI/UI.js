@@ -342,6 +342,10 @@ class View {
             }
         });
     }
+    sectionClicked() {
+        let s = document.getElementsByClassName("section active")[0];
+        s.hidden = !s.hidden;
+    }
     getRandomHue() {
         return new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`);
     }

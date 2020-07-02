@@ -366,6 +366,11 @@ class View {
         });
     }
 
+    public sectionClicked() {
+        let s = document.getElementsByClassName("section active")[0] as HTMLElement;
+        s.hidden = !s.hidden;
+    }
+
     public getRandomHue(): THREE.Color {
         return new THREE.Color(`hsl(${Math.random()*360}, 100%, 50%)`);
     }
