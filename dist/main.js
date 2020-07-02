@@ -87,36 +87,6 @@ var topologyEdited = false;
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 render();
-//toggles display of coloring by json file / structure modeled off of base selector
-function updateColoring(mode) {
-    if (!mode) {
-        mode = view.coloringMode.get();
-    }
-    else {
-        view.coloringMode.set(mode);
-    }
-    if (mode === "Overlay") {
-        if (lut) {
-            if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
-                api.showColorbar();
-            }
-        }
-        else {
-            notify("Please drag and drop the corresponding .json file.");
-            view.coloringMode.set("Strand");
-            return;
-        }
-    }
-    else if (lut) {
-        api.removeColorbar();
-    }
-    elements.forEach(e => e.updateColor());
-    systems.forEach(s => s.callUpdates(['instanceColor']));
-    if (tmpSystems.length > 0) {
-        tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
-    }
-    render();
-}
 function findBasepairs() {
     elements.forEach(e => {
         if (e instanceof Nucleotide) {

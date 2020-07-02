@@ -231,6 +231,36 @@ function colorElements(color, elems) {
     }
     clearSelection();
 }
+//toggles display of coloring by json file / structure modeled off of base selector
+function updateColoring(mode) {
+    if (!mode) {
+        mode = view.coloringMode.get();
+    }
+    else {
+        view.coloringMode.set(mode);
+    }
+    if (mode === "Overlay") {
+        if (lut) {
+            if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
+                api.showColorbar();
+            }
+        }
+        else {
+            notify("Please drag and drop the corresponding .json file.");
+            view.coloringMode.set("Strand");
+            return;
+        }
+    }
+    else if (lut) {
+        api.removeColorbar();
+    }
+    elements.forEach(e => e.updateColor());
+    systems.forEach(s => s.callUpdates(['instanceColor']));
+    if (tmpSystems.length > 0) {
+        tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
+    }
+    render();
+}
 function toggleVisArbitrary() {
     // arbitrary visibility toggling
     // toggle hidden monomers
@@ -320,7 +350,7 @@ class View {
         this.basepairMessage = "Locating basepairs, please be patient...";
         this.doc = doc;
         // Initialise toggle groups
-        this.coloringMode = new ToggleGroup('coloringMode', doc);
+        this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
