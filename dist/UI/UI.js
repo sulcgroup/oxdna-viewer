@@ -278,7 +278,7 @@ class ToggleGroup {
         for (let opt of toggleGroup.children) {
             if (opt.querySelector('.caption').innerHTML == value) {
                 opt.classList.add('active');
-                return;
+                break;
             }
         }
         if (this.onChange) {
@@ -326,7 +326,7 @@ class View {
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
             // If we should show something
-            if (!g.enabled()) {
+            if (g.enabled()) {
                 // Make sure something is selected
                 if (selectedBases.size > 0) {
                     transformControls.show();
