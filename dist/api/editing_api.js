@@ -385,11 +385,16 @@ var edit;
         elems.forEach((e, sid) => {
             let c = instCopies[sid];
             let sys = c.system;
+            let circular;
             // Do we have a strand assigned already?
             if (!e.strand) {
                 // Does any of our neighbors know what strand this is?
                 let i = e;
                 while (!i.strand) { // Look in 3' dir
+                    if (e === i.neighbor3) {
+                        circular = true;
+                        break;
+                    }
                     if (i.neighbor3)
                         i = i.neighbor3;
                     else
@@ -398,6 +403,10 @@ var edit;
                 if (!i.strand) { // If nothing, look in 5' dir
                     i = e;
                     while (!i.strand) {
+                        if (e === i.neighbor5) {
+                            circular = true;
+                            break;
+                        }
                         if (i.neighbor5)
                             i = i.neighbor5;
                         else
@@ -430,6 +439,9 @@ var edit;
                     let strand = sys.createStrand(newStrandID);
                     sys.addStrand(strand);
                     strand.addMonomer(e);
+                }
+                if (circular) {
+                    e.strand.circular = true;
                 }
             }
             // If the whole system has been removed we have to add it back again
