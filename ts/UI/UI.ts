@@ -294,6 +294,22 @@ function notify(message: string, type?: string, title?: string) {
     console.info(`Notification: ${message}`);
 }
 
+function setBackgroundImage() {
+    let file = (document.getElementById("backgroundInput") as HTMLInputElement).files[0];
+    let reader = new FileReader();
+    reader.onloadend = function() {
+        document.getElementById('threeCanvas').style.backgroundImage = "url(" + reader.result + ")";
+    }
+    if (file) {
+        reader.readAsDataURL(file);
+    }
+}
+
+function setBackgroundColor() {
+    let color = (document.getElementById("backgroundColor") as HTMLInputElement).value;
+    document.getElementById('threeCanvas').style.background = color;
+}
+
 class ToggleGroup {
     private id: string;
     private doc: Document;

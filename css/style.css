@@ -7,6 +7,9 @@ canvas {
     position: absolute;
     height: 100%;
     z-index: 1;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
 }
 .selectBox {
     border: 1px solid #55aaff;

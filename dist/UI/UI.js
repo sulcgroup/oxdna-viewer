@@ -293,6 +293,20 @@ function notify(message, type, title) {
     });
     console.info(`Notification: ${message}`);
 }
+function setBackgroundImage() {
+    let file = document.getElementById("backgroundInput").files[0];
+    let reader = new FileReader();
+    reader.onloadend = function () {
+        document.getElementById('threeCanvas').style.backgroundImage = "url(" + reader.result + ")";
+    };
+    if (file) {
+        reader.readAsDataURL(file);
+    }
+}
+function setBackgroundColor() {
+    let color = document.getElementById("backgroundColor").value;
+    document.getElementById('threeCanvas').style.background = color;
+}
 class ToggleGroup {
     constructor(id, doc, onChange) {
         this.id = id;

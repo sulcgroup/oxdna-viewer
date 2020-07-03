@@ -59,7 +59,6 @@ const GREY = new THREE.Color(0x888888);
 const BLACK = new THREE.Color(0x000000);
 const WHITE = new THREE.Color();
 const scene = new THREE.Scene();
-scene.background = WHITE;
 camera = createPerspectiveCamera(45, 0.1, 999999, [100, 0, 0]); //create camera
 const refQ = camera.quaternion.clone();
 // Create canvas and renderer
@@ -70,6 +69,7 @@ var renderer = new THREE.WebGLRenderer({
     antialias: true,
     canvas: canvas
 });
+renderer.setClearColor(0x000000, 0);
 renderer.setSize(window.innerWidth, window.innerHeight); //set size of renderer - where actions are recognized
 document.body.appendChild(canvas); //add renderer to document body
 // Colorbars are rendered on a second canvas
@@ -149,21 +149,10 @@ function toggleArrows(chkBox) {
     }
     render(); //update scene
 }
-function toggleBackground() {
-    if (scene.background == WHITE) {
-        scene.background = BLACK;
-        render();
-    }
-    else {
-        scene.background = WHITE;
-        render();
-    }
-}
-;
 function setFog(near, far) {
     near = near | parseFloat(document.getElementById("fogNear").value);
     far = near | parseFloat(document.getElementById("fogFar").value);
-    scene.fog = new THREE.Fog(scene.background, near, far);
+    scene.fog = new THREE.Fog(WHITE.getHex(), near, far);
     render();
 }
 function toggleFog(near, far) {

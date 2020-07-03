@@ -90,6 +90,16 @@
         </div>
     </div>
 
+    <div id='backgroundDialog' class="dialog" data-role="dialog">
+        Pick a background color:
+        <input type="color" id="backgroundColor" value="#0" title="Background color" onchange="setBackgroundColor()">
+        Or upload a background image:
+        <input id='backgroundInput' type="file" data-role="file" onchange="setBackgroundImage()">
+        <div class="dialog-actions">
+            <button class="button primary js-dialog-close">Done</button>
+        </div>
+    </div>
+
     <div id='openFileDialog' class="dialog" data-role="dialog">
         <input id='fileInput' type="file" multiple="multiple" data-role="file" data-mode="drop">    
         <div class="dialog-actions">
@@ -514,6 +524,10 @@
                     <span class="title">Colors</span>
                 </div>
                 <div class="tight group">
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
+                        <span class="mif-image mif-3x"></span>
+                        <span class="caption">Background</span>
+                    </button>
                     <button class="ribbon-button" onclick="toggleVisArbitrary()">
                         <span class="mif-eye mif-3x"></span>
                         <span class="caption">Toggle visibility</span>
