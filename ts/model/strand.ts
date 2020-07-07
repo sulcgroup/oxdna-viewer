@@ -40,6 +40,51 @@ abstract class Strand {
         });
     };
 
+    get3prime(): Nucleotide {
+        let start = this.monomers[0];
+        let i = start;
+        // Rewind until to 3' end or back to start (if circular)
+        while (i.neighbor3) {
+            if (i.neighbor3 === start) {
+                // Back to start, circular
+                this.circular = true;
+                return start as Nucleotide;
+            }
+            i = i.neighbor3;
+        }
+        return i as Nucleotide;
+    }
+
+    get5prime(): Nucleotide {
+        let start = this.monomers[this.monomers.length];
+        let i = start;
+        // Rewind until to 5' end or back to start (if circular)
+        while (i.neighbor5) {
+            if (i.neighbor5 === start) {
+                // Back to start, circular
+                this.circular = true;
+                return start as Nucleotide;
+            }
+            i = i.neighbor5;
+        }
+        return i as Nucleotide;
+    }
+
+    getOrderedMonomers(): Nucleotide[] {
+        let ordered = [];
+        let start = this.get3prime();
+        let i = start;
+        while(i) {
+            ordered.push(i);
+            i = i.neighbor5 as Nucleotide;
+            if(i === start) {
+                break;
+            }
+        }
+        console.assert(ordered.length == this.monomers.length);
+        return ordered;
+    }
+
     toggleMonomers() {
         this.monomers.forEach(e=>e.toggle());
     }

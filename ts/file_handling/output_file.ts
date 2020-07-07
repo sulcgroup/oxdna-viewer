@@ -116,7 +116,7 @@ function makeTopFile(name){
             system.strands.forEach((strand: Strand) => {
                 newStrandIds.set(strand, sidCounter++); //Assign new strandID
                 totNuc += strand.monomers.length; // Count elements
-                strand.monomers.forEach(e => {
+                strand.getOrderedMonomers().forEach(e => {
                     newElementIds.set(e, gidCounter++); //Assign new elementID
                 });
             });
