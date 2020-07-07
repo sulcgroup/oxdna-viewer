@@ -422,7 +422,7 @@ class View {
     }
 
     public getInputNumber(id: string): number {
-        return (<HTMLInputElement>this.doc.getElementById(id)).valueAsNumber;
+        return parseFloat(this.getInputValue(id));
     }
 
     public getInputValue(id: string): string {

@@ -30,11 +30,12 @@ function toggleClusterSim() {
 class RigidClusterSimulator {
     constructor() {
         this.clusters = [];
-        this.clusterRepulsionConst = 1000;
-        this.connectionRelaxedLength = 3;
-        this.connectionSpringConst = 10;
-        this.friction = 0.25;
-        this.dt = 0.1;
+        // load settings from view:
+        this.clusterRepulsionConst = view.getInputNumber('rbd_clusterRepulsionConst');
+        this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
+        this.connectionSpringConst = view.getInputNumber('rbd_connectionSpringConst');
+        this.friction = view.getInputNumber('rbd_friction');
+        this.dt = view.getInputNumber('rbd_dt');
         // Create Cluster objects for each cluster label among the elements
         let m = new Map();
         elements.forEach((e) => {

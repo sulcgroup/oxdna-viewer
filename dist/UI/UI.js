@@ -394,7 +394,7 @@ class View {
         return new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`);
     }
     getInputNumber(id) {
-        return this.doc.getElementById(id).valueAsNumber;
+        return parseFloat(this.getInputValue(id));
     }
     getInputValue(id) {
         return this.doc.getElementById(id).value;
