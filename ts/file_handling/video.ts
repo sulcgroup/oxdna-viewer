@@ -3,15 +3,28 @@ function createVideo() {
     const canvas = <HTMLCanvasElement>document.getElementById("threeCanvas");
 
     // Get options:
-    const format = (<HTMLInputElement>document.querySelector('input[name="videoFormat"]:checked')).value;
-    const framerate = (<HTMLInputElement>document.getElementById("videoFramerate")).value;
-    const videoType = <HTMLInputElement>document.getElementById("videoType");
+    const format = (document.querySelector('input[name="videoFormat"]:checked') as HTMLInputElement).value;
+    const framerate = (document.getElementById("videoFramerate") as HTMLInputElement).value;
+    const videoType = (document.getElementById("videoType") as HTMLInputElement).value;
+
+    // Transparent background becomes black in videos
+    const fixBackground = !scene.background && ['webm', 'gif'].includes(format);
+    if (fixBackground) {
+        scene.background = new THREE.Color((document.getElementById("backgroundColor") as HTMLInputElement).value);
+    }
+
+    let onComplete = ()=>{
+         // Reset transparent background
+        if (fixBackground) {
+            scene.background = null;
+        }
+    }
 
     // Set up movie capturer
     const capturer = new CCapture({
         format: format,
         framerate: framerate,
-        name: videoType.value,
+        name: videoType,
         verbose: true,
         display: true,
         workersPath: 'ts/lib/'
@@ -22,18 +35,20 @@ function createVideo() {
     button.onclick = function () {
         capturer.stop();
         capturer.save();
+        onComplete();
     }
     try {
-        switch (videoType.value) {
+        switch (videoType) {
             case "trajectory":
-                createTrajectoryVideo(canvas, capturer);
+                createTrajectoryVideo(canvas, capturer, onComplete);
                 break;
             case "lemniscate":
                 let duration = (<HTMLInputElement>document.getElementById("videoDuration")).value;
                 createLemniscateVideo(
                     canvas, capturer,
                     <number><unknown>framerate,
-                    <number><unknown>duration
+                    <number><unknown>duration,
+                    onComplete
                 );
                 break;
         }
@@ -43,7 +58,7 @@ function createVideo() {
     }
 };
 
-function createTrajectoryVideo(canvas, capturer) {
+function createTrajectoryVideo(canvas, capturer, onComplete?) {
     // Listen for configuration loaded events
     function _load(e) {
         e.preventDefault(); // cancel default actions
@@ -59,7 +74,7 @@ function createTrajectoryVideo(canvas, capturer) {
         capturer.save();
         button.innerText = "Start";
         button.onclick = createVideo;
-        return;
+        if(onComplete) onComplete();
     };
 
     // Overload stop button so that we don't forget to remove listeners
@@ -74,7 +89,7 @@ function createTrajectoryVideo(canvas, capturer) {
     trajReader.nextConfig();
 };
 
-function createLemniscateVideo(canvas, capturer, framerate:number, duration:number) {
+function createLemniscateVideo(canvas, capturer, framerate:number, duration:number, onComplete?: ()=>void) {
     // Setup timing
     let tMax = 2 * Math.PI;
     let nFrames = duration * framerate;
@@ -99,6 +114,7 @@ function createLemniscateVideo(canvas, capturer, framerate:number, duration:numb
             capturer.save();
             button.innerText = "Start";
             button.onclick = createVideo;
+            if(onComplete) onComplete();
             return;
         }
         requestAnimationFrame(animate);
