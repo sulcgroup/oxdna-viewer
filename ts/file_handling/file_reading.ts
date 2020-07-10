@@ -167,8 +167,8 @@ function readTrap(system, trapReader) {
         lines.forEach((line)  =>{
             let com_pos = line.indexOf("#");
             if (com_pos >= 0) line =  line.slice(0, com_pos).trim();
-            //another chance an empty line can be encountered 
-            if(line.length == 0 || line == " ") return;
+            //another chance an empty line can be encountered. Remove whitespace
+            if(line.trim().length == 0) return;
             //split into option name and value
             let options = line.split("=");
             let lft = options[0].trim(); 
