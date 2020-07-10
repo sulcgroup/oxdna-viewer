@@ -264,7 +264,7 @@ function makeMutualTrapFile() { //make download of mutual trap file from selecte
 			notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
 		}
 	}
-	makeTextFile("mutTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
+	makeTextFile("mutual_trap.txt", mutTrapText); //after addding all mutual trap data, make mutual trap file
 }
 
 function makePairTrapFile() {
@@ -278,7 +278,7 @@ function makePairTrapFile() {
                 );
             }
         });
-        makeTextFile("pairTrapFile", mutTrapText); //after addding all mutual trap data, make mutual trap file
+        makeTextFile("basepair_trap.txt", mutTrapText); //after addding all mutual trap data, make mutual trap file
     }
     // Find out if we have calculated pairs already
     let pairsCalculated = false;
