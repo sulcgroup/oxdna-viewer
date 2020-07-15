@@ -32,6 +32,7 @@
         "./ts/model/strand.ts",
         "./ts/model/system.ts",
         "./ts/model/anm.ts",
+        "./ts/model/force.ts",
         "./ts/scene/instancing.ts",
         "./ts/scene/mesh_setup.ts",
         "./ts/scene/PBC_switchbox.ts",
@@ -40,6 +41,6 @@
         "./ts/UI/base_selector.ts",
         "./ts/UI/UI.ts",
         "ts/ox_serve/live_relax.ts",
-        "ts/ox_serve/relax_scenarios.ts"
+        "ts/ox_serve/relax_scenarios.ts",
     ]
 }

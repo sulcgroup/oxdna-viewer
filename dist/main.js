@@ -72,6 +72,7 @@ let elements = new ElementMap(); //contains references to all BasicElements
 const systems = [];
 var tmpSystems = []; //used for editing
 const ANMs = [];
+const forces = [];
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();

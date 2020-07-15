@@ -140,13 +140,9 @@ class OXServeSocket extends WebSocket{
     }
 
     start_simulation = () => {
-        trap_objs.forEach((obj)=>{
-            if(obj.type === "mutual_trap"){
-                scene.children.pop();
-                scene.children.pop();
-            }
-        });
-        trap_objs = [];
+        forces.forEach(force=>{
+            force.clearDrawn();
+        })
 
         let reorganized, counts, conf = {};
         {
@@ -178,8 +174,8 @@ class OXServeSocket extends WebSocket{
         console.log(`Simulation type is ${sim_type}`);
         let settings_list = relax_scenarios[sim_type];
 
-        if(trap_file){
-            conf["trap_file"] = trap_file;
+        if(forces.length > 0){
+            conf["trap_file"] = forcesToString();
         }
 
         //set all var fields 

@@ -143,20 +143,18 @@ function handleFiles(files: FileList) {
     render();
 }
 
-let trap_objs = [];
-let trap_file = "";
 //parse a trap file
 function readTrap(system, trapReader) {
 
     let file = trapReader.result as string;
-    trap_file = file;
+    let trap_file = file;
     //{ can be replaced with \n to make sure no parameter is lost 
     while(file.indexOf("{")>=0)
         file = file.replace("{","\n");
     // traps can be split by } because everything between {} is one trap 
     let traps = file.split("}");
 
-    
+    let trap_objs = [];
     traps.forEach((trap) =>{
         let lines = trap.split('\n');
         //empty lines and empty traps need not be processed as well as comments  
@@ -173,7 +171,7 @@ function readTrap(system, trapReader) {
             let options = line.split("=");
             let lft = options[0].trim(); 
             let rght = options[1].trim();
-            trap_obj[lft] = rght;  
+            trap_obj[lft] = Number.isNaN(parseFloat(rght)) ? rght : parseFloat(rght);
         });
         if(Object.keys(trap_obj).length > 0)
             trap_objs.push(trap_obj);
@@ -182,48 +180,13 @@ function readTrap(system, trapReader) {
     //handle the different traps 
     trap_objs.forEach((trap)=>{
         switch(trap.type){
-            //case "trap":
-            //    //notify(`${trap["type"]} type `);
-            //    
-            //    break;
-            //case "repulsion_plane":
-            //    //notify(`${trap["type"]} type `);
-            //    
-            //    break;
             case "mutual_trap":
-                const particle =  system.getElementBySID( parseInt(trap.particle) ).getInstanceParameter3("bbOffsets"); // the particle on which to exert the force.
-                const ref_particle = system.getElementBySID( parseInt(trap.ref_particle) ).getInstanceParameter3("bbOffsets"); // particle to pull towards. 
-                                                                                            // Please note that this particle will not feel any force (the name mutual trap is thus misleading).
-                const stiff = parseFloat(trap.stiff);// stiffness of the trap.
-                const r0 = parseFloat(trap.r0);      // equilibrium distance of the trap.
-                let dir = ref_particle.clone().sub(particle);
-                dir.normalize();
-                
-                //draw equilibrium distance 
-                let equilibrium_distance = new THREE.Line( 
-                    new THREE.BufferGeometry().setFromPoints([
-                        particle, particle.clone().add(dir.clone().multiplyScalar(r0))
-                    ]),
-                    new THREE.LineBasicMaterial({
-                        color: 0x0000ff//, //linewidth: stiff
-                    }));
-                equilibrium_distance.name = `mutual_trap_distance ${trap.particle}->${trap.ref_particle}`;
-                scene.add(equilibrium_distance);                
-                
-                //draw force 
-                dir = ref_particle.clone().sub(particle);
-                let force_v = dir.clone().normalize().multiplyScalar(
-                    (dir.length() - r0 )* stiff
-                );
-                dir.normalize();
-                let force = new THREE.ArrowHelper(dir,
-                                                  particle, 
-                                                  force_v.length(), 0xC0C0C0, .3);
-                force.name = `mutual_trap_force ${trap.particle}->${trap.ref_particle}`;
-                scene.add(force);
+                let mutTrap = new MutualTrap(trap, system);
+                forces.push(mutTrap);
+                mutTrap.draw();
                 break;
             default:
-                notify(`trap ${trap["type"]}  type not supported yet, feel free to implement in file_reading.ts`);
+                notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
         }
     });
