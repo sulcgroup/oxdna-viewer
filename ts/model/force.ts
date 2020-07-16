@@ -3,6 +3,7 @@ function forcesToString() {
 }
 
 abstract class Force {   
+    type: string;
     system: System;
     sceneObjects: THREE.Object3D[] = [];
     paramKeys: string[] = [];
@@ -34,9 +35,17 @@ class MutualTrap extends Force {
     stiff: number; // stiffness of the trap.
     r0: number; // equilibrium distance of the trap.
 
+    getParticle() {
+        return this.system.getElementBySID(this.particle);
+    }
+
+    getRefParticle() {
+        return this.system.getElementBySID(this.ref_particle);
+    }
+
     draw() {
-        const p1 = this.system.getElementBySID(this.particle).getInstanceParameter3("bbOffsets"); // position from which to exert the force.
-        const p2 = this.system.getElementBySID(this.ref_particle).getInstanceParameter3("bbOffsets"); // position to pull towards. 
+        const p1 = this.getParticle().getInstanceParameter3("bbOffsets"); // position from which to exert the force.
+        const p2 = this.getRefParticle().getInstanceParameter3("bbOffsets"); // position to pull towards.
                  
         let dir = p2.clone().sub(p1).normalize();
         

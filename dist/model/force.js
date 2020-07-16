@@ -25,9 +25,15 @@ class MutualTrap extends Force {
         super(...arguments);
         this.type = 'mutual_trap';
     }
+    getParticle() {
+        return this.system.getElementBySID(this.particle);
+    }
+    getRefParticle() {
+        return this.system.getElementBySID(this.ref_particle);
+    }
     draw() {
-        const p1 = this.system.getElementBySID(this.particle).getInstanceParameter3("bbOffsets"); // position from which to exert the force.
-        const p2 = this.system.getElementBySID(this.ref_particle).getInstanceParameter3("bbOffsets"); // position to pull towards. 
+        const p1 = this.getParticle().getInstanceParameter3("bbOffsets"); // position from which to exert the force.
+        const p2 = this.getRefParticle().getInstanceParameter3("bbOffsets"); // position to pull towards.
         let dir = p2.clone().sub(p1).normalize();
         //draw equilibrium distance 
         let equilibrium_distance = new THREE.Line(new THREE.BufferGeometry().setFromPoints([
