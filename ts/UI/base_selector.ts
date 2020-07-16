@@ -14,10 +14,20 @@ canvas.addEventListener('mousemove', event => {
 		canvas.style.cursor = 'auto';
 	}
 });
-			
 
-canvas.addEventListener('mousedown', event => { //if mouse is pressed down
+canvas.addEventListener('click', event => { //if mouse is pressed down
 	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
+
+	// If double click, zoom in on element
+	if(event.detail == 2) {
+		let id = gpuPicker(event);
+		if (id > -1 && !transformControls.isHovered()) {
+			api.findElement(elements.get(id));
+			event.preventDefault();
+		}
+		return;
+	}
+
 	if (view.selectionMode.enabled()) {
 		let id = gpuPicker(event)
 

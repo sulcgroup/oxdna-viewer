@@ -13,8 +13,17 @@ canvas.addEventListener('mousemove', event => {
         canvas.style.cursor = 'auto';
     }
 });
-canvas.addEventListener('mousedown', event => {
+canvas.addEventListener('click', event => {
     canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
+    // If double click, zoom in on element
+    if (event.detail == 2) {
+        let id = gpuPicker(event);
+        if (id > -1 && !transformControls.isHovered()) {
+            api.findElement(elements.get(id));
+            event.preventDefault();
+        }
+        return;
+    }
     if (view.selectionMode.enabled()) {
         let id = gpuPicker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
