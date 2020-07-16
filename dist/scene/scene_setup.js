@@ -150,9 +150,10 @@ function toggleArrows(chkBox) {
     render(); //update scene
 }
 function setFog(near, far) {
-    near = near | parseFloat(document.getElementById("fogNear").value);
-    far = near | parseFloat(document.getElementById("fogFar").value);
-    scene.fog = new THREE.Fog(WHITE.getHex(), near, far);
+    near = near | view.getInputNumber("fogNear");
+    far = near | view.getInputNumber("fogFar");
+    let color = new THREE.Color(view.getInputValue('backgroundColor')).getHex();
+    scene.fog = new THREE.Fog(color, near, far);
     render();
 }
 function toggleFog(near, far) {

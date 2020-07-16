@@ -175,9 +175,10 @@ function toggleArrows(chkBox: HTMLInputElement) { //make arrows visible or invis
 }
 
 function setFog(near?: number, far?: number) {
-    near = near | parseFloat((<HTMLInputElement>document.getElementById("fogNear")).value);
-    far = near | parseFloat((<HTMLInputElement>document.getElementById("fogFar")).value);
-    scene.fog = new THREE.Fog(WHITE.getHex(), near, far);
+    near = near | view.getInputNumber("fogNear");
+    far = near | view.getInputNumber("fogFar");
+    let color = new THREE.Color(view.getInputValue('backgroundColor')).getHex();
+    scene.fog = new THREE.Fog(color, near, far);
     render();
 }
 
