@@ -10,89 +10,95 @@ abstract class Nucleotide extends BasicElement {
     constructor(gid: number, strand: Strand) {
         super(gid, strand);
     };
+
     calculatePositions(l: string[]) {
+        let sys = this.getSystem();
+        let sid = this.gid - sys.globalStartId;
+
+        if (this.dummySys) {
+            sys = this.dummySys
+            sid = this.sid;
+        }
+        //extract position
+        let p = new THREE.Vector3(
+            parseFloat(l[0]),
+            parseFloat(l[1]),
+            parseFloat(l[2])
+        );
+
+        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
+        let a1 = new THREE.Vector3(
+            parseFloat(l[3]),
+            parseFloat(l[4]),
+            parseFloat(l[5])
+        );
+        let a3 = new THREE.Vector3(
+            parseFloat(l[6]),
+            parseFloat(l[7]),
+            parseFloat(l[8])
+        );
+        this.calcPositionsFromVectors(p, a1, a3)
+    };
+
+    calcPositionsFromVectors(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3) {
         let sys = this.getSystem(),
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
             sid = this.sid;
         }
-
-        //extract position
-        const x = parseFloat(l[0]),
-            y = parseFloat(l[1]),
-            z = parseFloat(l[2]);
-
-        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-        const xA1 = parseFloat(l[3]),
-            yA1 = parseFloat(l[4]),
-            zA1 = parseFloat(l[5]),
-            xA3 = parseFloat(l[6]),
-            yA3 = parseFloat(l[7]),
-            zA3 = parseFloat(l[8]);
-
         // according to base.py a2 is the cross of a1 and a3
-        const [xA2, yA2, zA2] = cross(xA1, yA1, zA1, xA3, yA3, zA3);
+        let a2 = a1.clone().cross(a3);
         
         // compute backbone position
-        let xbb: number = 0;
-        let ybb: number = 0;
-        let zbb: number = 0;
-        const bbpos: THREE.Vector3 = this.calcBBPos(x, y, z, xA1, yA1, zA1, xA2, yA2, zA2, xA3, yA3, zA3);
-        xbb = bbpos.x;
-        ybb = bbpos.y;
-        zbb = bbpos.z;
+        let bb = this.calcBBPos(p, a1, a2, a3);
 
         // compute nucleoside cm
-        const xns = x + 0.4 * xA1,
-            yns = y + 0.4 * yA1,
-            zns = z + 0.4 * zA1;
+        let ns = new THREE.Vector3(
+            p.x + 0.4 * a1.x,
+            p.y + 0.4 * a1.y,
+            p.z + 0.4 * a1.z
+        )
 
         // compute nucleoside rotation
-        const baseRotation = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0),
-            new THREE.Vector3(xA3, yA3, zA3));
+        const baseRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0),a3);
 
         //compute connector position
-        const xCon = (xbb + xns) / 2,
-            yCon = (ybb + yns) / 2,
-            zCon = (zbb + zns) / 2;
+        const con = bb.clone().add(ns).divideScalar(2);
 
         // compute connector rotation
         const rotationCon = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), 
-            new THREE.Vector3(xCon - xns, yCon - yns, zCon - zns).normalize());   
+            new THREE.Vector3(0, 1, 0),
+            con.clone().sub(ns).normalize());
         
         // compute connector length
-        let conLen = this.bbnsDist
-        if ([xA1, yA1, zA1, xA3, yA3, zA3].every(x => x == 0)){
+        let conLen = this.bbnsDist;
+        if (a1.length() == 0 && a2.length() == 0) {
                 conLen = 0;
         }
 
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
-        let xsp, ysp, zsp, spLen, spRotation;
+        let sp: THREE.Vector3, spLen: number, spRotation;
         if (this.neighbor3 != null && (this.neighbor3.lid < this.lid || this.dummySys !== null)) {
-            xsp = (xbb + xbbLast) / 2, 
-            ysp = (ybb + ybbLast) / 2,
-            zsp = (zbb + zbbLast) / 2;
+            sp = new THREE.Vector3(
+                (bb.x + bbLast.x) / 2,
+                (bb.y + bbLast.y) / 2,
+                (bb.z + bbLast.z) / 2
+            );
 
-            spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+            spLen = bb.distanceTo(bbLast);
         
             spRotation = new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
+                new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize()
             );
         }
         else {
-            xsp = 0,
-            ysp = 0,
-            zsp = 0;
-
+            sp = new THREE.Vector3();
             spLen = 0;
-
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        this.handleCircularStrands(sys, sid, xbb, ybb, zbb);
+        this.handleCircularStrands(sys, sid, bb);
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color;
@@ -100,17 +106,16 @@ abstract class Nucleotide extends BasicElement {
 
         let idColor = new THREE.Color();
         idColor.setHex(this.gid+1); //has to be +1 or you can't grab nucleotide 0
-    
 
         //fill the instance matrices with data
-        sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('bbOffsets', 3, sid, [xbb, ybb, zbb]);
-        sys.fillVec('nsOffsets', 3, sid, [xns, yns, zns]);
-        sys.fillVec('nsOffsets', 3, sid, [xns, yns, zns]);
+        sys.fillVec('cmOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbOffsets', 3, sid, bb.toArray());
+        sys.fillVec('nsOffsets', 3, sid, ns.toArray());
+        sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
-        sys.fillVec('conOffsets', 3, sid, [xCon, yCon, zCon]);
+        sys.fillVec('conOffsets', 3, sid, con.toArray());
         sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
-        sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
+        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('scales', 3, sid, [1, 1, 1]);
@@ -129,9 +134,7 @@ abstract class Nucleotide extends BasicElement {
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
 
         // keep track of last backbone for sugar-phosphate positioning
-        xbbLast = xbb;
-        ybbLast = ybb;
-        zbbLast = zbb;
+        bbLast = bb;
     };
 
     translatePosition(amount: THREE.Vector3) {
@@ -164,8 +167,8 @@ abstract class Nucleotide extends BasicElement {
     }
 
     //different in DNA and RNA
-    calcBBPos(x: number, y: number, z: number, xA1: number, yA1: number, zA1: number, xA2: number, yA2: number, zA2: number, xA3: number, yA3: number, zA3: number): THREE.Vector3 {
-        return new THREE.Vector3(x, y, z);
+    calcBBPos(p: THREE.Vector3, a1: THREE.Vector3, a2: THREE.Vector3, a3: THREE.Vector3): THREE.Vector3 {
+        return p.clone();
     };
 
     calculateNewConfigPositions(l: string[]) {
@@ -177,82 +180,76 @@ abstract class Nucleotide extends BasicElement {
         }
 
         //extract position
-        const x = parseFloat(l[0]),
-            y = parseFloat(l[1]),
-            z = parseFloat(l[2]);
+        const p = new THREE.Vector3(
+            parseFloat(l[0]),
+            parseFloat(l[1]),
+            parseFloat(l[2])
+        );
 
-        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-        const xA1 = parseFloat(l[3]),
-            yA1 = parseFloat(l[4]),
-            zA1 = parseFloat(l[5]),
-            xA3 = parseFloat(l[6]),
-            yA3 = parseFloat(l[7]),
-            zA3 = parseFloat(l[8]);
+        // extract axis vector a1 (backbone vector) and a3 (stacking vector)
+        const a1 = new THREE.Vector3(
+            parseFloat(l[3]),
+            parseFloat(l[4]),
+            parseFloat(l[5])
+        );
+        const a3 = new THREE.Vector3(
+            parseFloat(l[6]),
+            parseFloat(l[7]),
+            parseFloat(l[8])
+        );
 
         // a2 is perpendicular to a1 and a3
-        const [xA2, yA2, zA2] = cross(xA1, yA1, zA1, xA3, yA3, zA3);
+        const a2 = a1.clone().cross(a3);
+
         // compute backbone cm
-        let xbb: number = 0;
-        let ybb: number = 0;
-        let zbb: number = 0;
-        let bbpos: THREE.Vector3 = this.calcBBPos(x, y, z, xA1, yA1, zA1, xA2, yA2, zA2, xA3, yA3, zA3);
-        xbb = bbpos.x;
-        ybb = bbpos.y;
-        zbb = bbpos.z;
+        const bb = this.calcBBPos(p, a1, a2, a3);
 
         // compute nucleoside cm
-        const xns = x + 0.4 * xA1,
-            yns = y + 0.4 * yA1,
-            zns = z + 0.4 * zA1;
+        const ns = new THREE.Vector3(
+            p.x + 0.4 * a1.x,
+            p.y + 0.4 * a1.y,
+            p.z + 0.4 * a1.z
+        );
 
         //compute connector position
-        const xCon = (xbb + xns) / 2,
-            yCon = (ybb + yns) / 2,
-            zCon = (zbb + zns) / 2;
+        const con = bb.clone().add(ns).divideScalar(2);
 
         //correctly display stacking interactions
         const baseRotation = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0),
-            new THREE.Vector3(xA3, yA3, zA3));
+            new THREE.Vector3(0, 1, 0), a3);
 
         // compute connector rotation
         const rotationCon = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), 
-            new THREE.Vector3(xbb - xns, ybb - yns, zbb - zns).normalize());
+            new THREE.Vector3(0, 1, 0),
+            bb.clone().sub(ns).normalize());
 
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
-        let xsp, ysp, zsp, spLen, spRotation;
+        let sp: THREE.Vector3, spLen:number, spRotation: THREE.Quaternion;
         if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
-            xsp = (xbb + xbbLast) / 2, 
-            ysp = (ybb + ybbLast) / 2,
-            zsp = (zbb + zbbLast) / 2;
-
-            spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+            sp = bb.clone().add(bbLast).divideScalar(2);
+            spLen = bb.distanceTo(bbLast);
         
             spRotation = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0),
-                new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
+                sp.clone().sub(bb).normalize()
+            );
         }
         else {
-            xsp = 0,
-            ysp = 0,
-            zsp = 0;
-
+            sp = new THREE.Vector3()
             spLen = 0;
-
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        this.handleCircularStrands(sys, sid, xbb, ybb, zbb);
+        this.handleCircularStrands(sys, sid, bb);
 
         //update the relevant instancing matrices
-        sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('bbOffsets', 3, sid, [xbb, ybb, zbb]);
-        sys.fillVec('nsOffsets', 3, sid, [xns, yns, zns]);
+        sys.fillVec('cmOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbOffsets', 3, sid, bb.toArray());
+        sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
-        sys.fillVec('conOffsets', 3, sid, [xCon, yCon, zCon]);
+        sys.fillVec('conOffsets', 3, sid, con.toArray());
         sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
-        sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
+        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         if(spLen == 0) {
             sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
@@ -262,10 +259,7 @@ abstract class Nucleotide extends BasicElement {
 
 
         // keep track of last backbone for sugar-phosphate positioning
-        xbbLast = xbb;
-        ybbLast = ybb;
-        zbbLast = zbb;
-
+        bbLast = bb.clone();
     };
 
     updateColor() {
@@ -323,7 +317,7 @@ abstract class Nucleotide extends BasicElement {
         xA1 = (xns - x) / 0.4;
         yA1 = (yns - y) / 0.4;
         zA1 = (zns - z) / 0.4;
-        const a3: THREE.Vector3 = this.getA3(xbb, ybb, zbb, x, y, z, xA1, yA1, zA1);
+        const a3: THREE.Vector3 = this.getA3();
         const xA3: number = a3.x;
         const yA3: number = a3.y;
         const zA3: number = a3.z;
@@ -389,19 +383,16 @@ abstract class Nucleotide extends BasicElement {
         return this.pair? true : false;
     }
 
-    getA3(xbb: number, ybb: number, zbb: number, x: number, y: number, z: number, xA1: number, yA1: number, zA1: number): THREE.Vector3 {
-        return new THREE.Vector3();
-    };
-    getA1 (xns, yns, zns, x, y, z) {
-        let xA1 = (xns - x) / 0.4;
-        let yA1 = (yns - y) / 0.4;
-        let zA1 = (zns - z) / 0.4;
-
-        return(new THREE.Vector3(xA1, yA1, zA1))
+    getA1 () {
+        const cm = this.getInstanceParameter3("cmOffsets");
+        const ns = this.getInstanceParameter3("nsOffsets");
+        return ns.clone().sub(cm).divideScalar(0.4);
     }
 
-    extendStrand(len, direction, double){
-    }
+    abstract getA2(): THREE.Vector3;
+    abstract getA3(): THREE.Vector3;
+
+    abstract extendStrand(len, direction, double);
 
     toJSON() {
         // Get superclass attributes

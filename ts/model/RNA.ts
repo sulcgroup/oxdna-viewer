@@ -10,18 +10,29 @@ class RNANucleotide extends Nucleotide {
 
     };
 
-    calcBBPos(x: number, y: number, z: number, xA1: number, yA1: number, zA1: number, xA2: number, yA2: number, zA2: number, xA3: number, yA3: number, zA3: number): THREE.Vector3 {
-        const xbb = x - (0.4 * xA1 + 0.2 * xA3),
-            ybb = y - (0.4 * yA1 + 0.2 * yA3),
-            zbb = z - (0.4 * zA1 + 0.2 * zA3);
-        return new THREE.Vector3(xbb, ybb, zbb);
+    calcBBPos(p: THREE.Vector3, a1: THREE.Vector3, a2: THREE.Vector3, a3: THREE.Vector3): THREE.Vector3 {
+        return new THREE.Vector3(
+            p.x - (0.4 * a1.x + 0.2 * a3.x),
+            p.y - (0.4 * a1.y + 0.2 * a3.y),
+            p.z - (0.4 * a1.z + 0.2 * a3.z)
+        );
     };
 
-    getA3(xbb: number, ybb: number, zbb: number, x: number, y: number, z: number, xA1: number, yA1: number, zA1: number): THREE.Vector3 {
-        const xA3 = ((xbb - x) + (0.4 * xA1)) / (-0.2);
-        const yA3 = ((ybb - y) + (0.4 * yA1)) / (-0.2);
-        const zA3 = ((zbb - z) + (0.4 * zA1)) / (-0.2);
-        return new THREE.Vector3(xA3, yA3, zA3);
+    getA2(): THREE.Vector3 {
+        const a1 = this.getA1();
+        const a3 = this.getA3();
+        const a2 = a1.clone().cross(a3);
+
+        return a2;
+    }
+
+    getA3(): THREE.Vector3 {
+        const cm = this.getInstanceParameter3("cmOffsets");
+        const bb = this.getInstanceParameter3("bbOffsets");
+        const a1 = this.getA1();
+        const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(-0.2);
+
+        return a3;
     };
 
     // Uses the method from generate_RNA.py found in the oxDNA UTILS directory
@@ -36,10 +47,7 @@ class RNANucleotide extends Nucleotide {
         
         //We just set the direction the the orientation of the a3 vector
         const start_pos = this.getInstanceParameter3("cmOffsets");
-        const bb_pos = this.getInstanceParameter3("bbOffsets");
-        const ns_pos = this.getInstanceParameter3("nsOffsets");
-        const old_A1 = this.getA1(ns_pos.x, ns_pos.y, ns_pos.z, start_pos.x, start_pos.y, start_pos.z)
-        let dir = this.getA3(bb_pos.x, bb_pos.y, bb_pos.z, start_pos.x, start_pos.y, start_pos.z, old_A1.x, old_A1.y, old_A1.z);
+        let dir = this.getA3();
         if (direction == "neighbor5") {
             dir.multiplyScalar(-1);
         }

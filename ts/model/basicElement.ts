@@ -139,26 +139,26 @@ abstract class BasicElement {
         sys.fillVec('visibility', 3, sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
     }
 
-    handleCircularStrands(sys, sid, xbb, ybb, zbb) {
+    handleCircularStrands(sys: System, sid: number, bb: THREE.Vector3) {
         if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
             this.strand.circular = true;
-            const xbbLast = sys.bbOffsets[this.neighbor5.gid * 3],
-            ybbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 1],
-            zbbLast = sys.bbOffsets[this.neighbor5.gid * 3 + 2];
+            const bbLast = new THREE.Vector3(
+                sys.bbOffsets[this.neighbor5.gid * 3],
+                sys.bbOffsets[this.neighbor5.gid * 3 + 1],
+                sys.bbOffsets[this.neighbor5.gid * 3 + 2]
+            );
 
-            const xsp = (xbb + xbbLast) / 2, 
-            ysp = (ybb + ybbLast) / 2,
-            zsp = (zbb + zbbLast) / 2;
-
-            const spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+            const sp = bb.clone().add(bbLast).divideScalar(2);
+            const spLen = bb.distanceTo(bbLast);
 
             const spRotation = new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
+                new THREE.Vector3(0, 1, 0),
+                sp.clone().sub(bb).normalize()
             );
 
             const sid5 = this.neighbor5.gid - sys.globalStartId
 
-            sys.fillVec('bbconOffsets', 3, sid5, [xsp, ysp, zsp]);
+            sys.fillVec('bbconOffsets', 3, sid5, sp.toArray());
             sys.fillVec('bbconRotation', 4, sid5, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
