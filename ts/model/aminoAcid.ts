@@ -21,34 +21,30 @@ class AminoAcid extends BasicElement {
         sid = this.gid - sys.globalStartId;
 
         //extract position
-        const x = parseFloat(l[0]),
-            y = parseFloat(l[1]),
-            z = parseFloat(l[2]);
+        const p = new THREE.Vector3(
+            parseFloat(l[0]),
+            parseFloat(l[1]),
+            parseFloat(l[2])
+        );
 
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
-        let xsp, ysp, zsp, spLen, spRotation;
+        let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
         if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
-            xsp = (x + xbbLast) / 2,
-                ysp = (y + ybbLast) / 2,
-                zsp = (z + zbbLast) / 2;
-
-            spLen = Math.sqrt(Math.pow(x - xbbLast, 2) + Math.pow(y - ybbLast, 2) + Math.pow(z - zbbLast, 2));
+            sp = p.clone().add(bbLast).divideScalar(2);
+            spLen = p.distanceTo(bbLast)
 
             spRotation = new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - x, ysp - y, zsp - z).normalize()
+                new THREE.Vector3(0, 1, 0),
+                sp.clone().sub(p).normalize()
             );
         }
         else {
-            xsp = 0,
-                ysp = 0,
-                zsp = 0;
-
+            sp = new THREE.Vector3();
             spLen = 0;
-
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        this.handleCircularStrands(sys, sid, x, y, z);
+        this.handleCircularStrands(sys, sid, p);
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color();
@@ -57,14 +53,14 @@ class AminoAcid extends BasicElement {
         idColor.setHex(this.gid+1); //has to be +1 or you can't grab nucleotide 0
 
         // fill in the instancing matrices
-        sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('bbOffsets', 3, sid, [x, y, z]);
+        sys.fillVec('cmOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('nsOffsets', 3, sid, [x, y, z]);
+        sys.fillVec('nsOffsets', 3, sid, p.toArray());
         sys.fillVec('nsRotation', 4, sid, [0, 0, 0, 0]);
         sys.fillVec('conOffsets', 3, sid, [0, 0, 0]);        
         sys.fillVec('conRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
+        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         sys.fillVec('scales', 3, sid, [0, 0, 0]);     
         sys.fillVec('nsScales', 3, sid, [1, 1, 1]);       
@@ -83,9 +79,7 @@ class AminoAcid extends BasicElement {
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
 
         // keep track of last backbone for sugar-phosphate positioning
-        xbbLast = x;
-        ybbLast = y;
-        zbbLast = z;
+        bbLast = p.clone();
     };
 
     calculateNewConfigPositions(l: string[]) {
@@ -93,39 +87,38 @@ class AminoAcid extends BasicElement {
         sid = this.gid - sys.globalStartId;
 
         //extract position
-        const x = parseFloat(l[0]),
-            y = parseFloat(l[1]),
-            z = parseFloat(l[2]);
+        const p = new THREE.Vector3(
+            parseFloat(l[0]),
+            parseFloat(l[1]),
+            parseFloat(l[2])
+        );
 
         //calculate new backbone connector position/rotation
-        let xsp, ysp, zsp, spLen, spRotation;
+        let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
         if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
-            xsp = (x + xbbLast) / 2,
-                ysp = (y + ybbLast) / 2,
-                zsp = (z + zbbLast) / 2;
-
-            spLen = Math.sqrt(Math.pow(x - xbbLast, 2) + Math.pow(y - ybbLast, 2) + Math.pow(z - zbbLast, 2));
+            sp = new THREE.Vector3(
+                (p.x + xbbLast) / 2,
+                (p.y + ybbLast) / 2,
+                (p.z + zbbLast) / 2
+            );
+            spLen = p.distanceTo(bbLast);
 
             spRotation = new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - x, ysp - y, zsp - z).normalize()
+                new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize()
             );
         }
         else {
-            xsp = 0,
-                ysp = 0,
-                zsp = 0;
-
+            sp = new THREE.Vector3();
             spLen = 0;
-
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
 
-        this.handleCircularStrands(sys, sid, x, y, z);
+        this.handleCircularStrands(sys, sid, p);
 
-        sys.fillVec('cmOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('bbOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('nsOffsets', 3, sid, [x, y, z]);
-        sys.fillVec('bbconOffsets', 3, sid, [xsp, ysp, zsp]);
+        sys.fillVec('cmOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbOffsets', 3, sid, p.toArray());
+        sys.fillVec('nsOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         if(spLen == 0) {
             sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
@@ -133,9 +126,7 @@ class AminoAcid extends BasicElement {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
         
-        xbbLast = x;
-        ybbLast = y;
-        zbbLast = z;
+        bbLast = p.clone();
     };
 
     translatePosition(amount: THREE.Vector3) {

@@ -76,7 +76,7 @@ const forces = [];
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
-var xbblast, ybblast, zbblast;
+var bbLast;
 var lut, devs; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;
@@ -101,21 +101,6 @@ function findBasepairs() {
     });
 }
 ;
-function cross(a1, a2, a3, b1, b2, b3) {
-    return [a2 * b3 - a3 * b2,
-        a3 * b1 - a1 * b3,
-        a1 * b2 - a2 * b1];
-}
-function det(mat) {
-    return (mat[0][0] * ((mat[1][1] * mat[2][2]) - (mat[1][2] * mat[2][1])) - mat[0][1] * ((mat[1][0] * mat[2][2]) -
-        (mat[2][0] * mat[1][2])) + mat[0][2] * ((mat[1][0] * mat[2][1]) - (mat[2][0] * mat[1][1])));
-}
-function dot(x1, y1, z1, x2, y2, z2) {
-    return x1 * x2 + y1 * y2 + z1 * z2;
-}
-function divAndNeg(mat, divisor) {
-    return [-mat[0] / divisor, -mat[1] / divisor, -mat[2] / divisor];
-}
 //Temporary solution to adding configuration storage
 //This section sets interface values from the storage 
 if (window.sessionStorage.centerOption) {

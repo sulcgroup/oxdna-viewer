@@ -810,10 +810,8 @@ var edit;
         elem.pair = e;
         strand.addMonomer(e);
         const cm = elem.getInstanceParameter3("cmOffsets");
-        const bb = elem.getInstanceParameter3("bbOffsets");
-        const ns = elem.getInstanceParameter3("nsOffsets");
-        const a1 = elem.getA1(ns.x, ns.y, ns.z, cm.x, cm.y, cm.z);
-        const a3 = elem.getA3(bb.x, bb.y, bb.z, cm.x, cm.y, cm.z, a1.x, a1.y, a1.z);
+        const a1 = elem.getA1();
+        const a3 = elem.getA3();
         // calculate position of base pair
         a1.negate();
         a3.negate();

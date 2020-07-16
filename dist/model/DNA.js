@@ -8,23 +8,21 @@ class DNANucleotide extends Nucleotide {
         this.bbnsDist = 0.8147053;
     }
     ;
-    calcBBPos(x, y, z, xA1, yA1, zA1, xA2, yA2, zA2, xA3, yA3, zA3) {
-        const xbb = x - (0.34 * xA1 + 0.3408 * xA2), ybb = y - (0.34 * yA1 + 0.3408 * yA2), zbb = z - (0.34 * zA1 + 0.3408 * zA2);
-        return new THREE.Vector3(xbb, ybb, zbb);
+    calcBBPos(p, a1, a2, a3) {
+        return new THREE.Vector3(p.x - (0.34 * a1.x + 0.3408 * a2.x), p.y - (0.34 * a1.y + 0.3408 * a2.y), p.z - (0.34 * a1.z + 0.3408 * a2.z));
     }
     ;
-    getA3(xbb, ybb, zbb, x, y, z, xA1, yA1, zA1) {
-        let xA2;
-        let yA2;
-        let zA2;
-        xA2 = ((xbb - x) + (0.34 * xA1)) / (-0.3408);
-        yA2 = ((ybb - y) + (0.34 * yA1)) / (-0.3408);
-        zA2 = ((zbb - z) + (0.34 * zA1)) / (-0.3408);
-        const a3 = divAndNeg(cross(xA1, yA1, zA1, xA2, yA2, zA2), dot(xA1, yA1, zA1, xA1, yA1, zA1));
-        const xA3 = a3[0];
-        let yA3 = a3[1];
-        let zA3 = a3[2];
-        return new THREE.Vector3(xA3, yA3, zA3);
+    getA2() {
+        const cm = this.getInstanceParameter3("cmOffsets");
+        const bb = this.getInstanceParameter3("bbOffsets");
+        const a1 = this.getA1();
+        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408);
+    }
+    getA3() {
+        const a1 = this.getA1();
+        const a2 = this.getA2();
+        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1));
+        return a3;
     }
     ;
     // Uses method from generate-sa.py.  Needs to be relaxed since this is oxDNA1 helix
@@ -32,10 +30,8 @@ class DNANucleotide extends Nucleotide {
         const rot = 35.9 * Math.PI / 180; // 0.68940505
         let rise = 0.3897628551303122;
         const startPos = this.getInstanceParameter3("cmOffsets");
-        const bbPos = this.getInstanceParameter3("bbOffsets");
-        const nsPos = this.getInstanceParameter3("nsOffsets");
-        const oldA1 = this.getA1(nsPos.x, nsPos.y, nsPos.z, startPos.x, startPos.y, startPos.z);
-        let dir = this.getA3(bbPos.x, bbPos.y, bbPos.z, startPos.x, startPos.y, startPos.z, oldA1.x, oldA1.y, oldA1.z);
+        const oldA1 = this.getA1();
+        let dir = this.getA3();
         // normalize dir
         const dir_norm = Math.sqrt(dir.clone().dot(dir));
         dir.divideScalar(dir_norm);

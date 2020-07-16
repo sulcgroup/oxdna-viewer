@@ -87,7 +87,7 @@ const forces: Force[] = [];
 var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
-var xbblast: number, ybblast:number, zbblast:number;
+var bbLast: THREE.Vector3;
 
 var lut, devs: number[]; //need for Lut coloring
 
@@ -118,25 +118,6 @@ function findBasepairs() {
         }
     });
 };
-
-function cross(a1, a2, a3, b1, b2, b3) { //calculate cross product of 2 THREE.Vectors but takes coordinates as (x,y,z,x1,y1,z1)
-    return [a2 * b3 - a3 * b2,
-    a3 * b1 - a1 * b3,
-    a1 * b2 - a2 * b1];
-}
-
-function det(mat:number[][]){ //calculate and return matrix's determinant
-	return (mat[0][0] * ((mat[1][1]*mat[2][2]) - (mat[1][2]*mat[2][1]))  - mat[0][1] * ((mat[1][0]*mat[2][2]) -
-		(mat[2][0]*mat[1][2])) + mat[0][2] * ((mat[1][0]*mat[2][1]) - (mat[2][0]*mat[1][1])));
-}
-
-function dot(x1:number,y1:number,z1:number,x2:number,y2:number,z2:number){ //calculate and return dot product of matrix given by list of vector positions
-	return x1*x2 + y1*y2 + z1*z2;
-}
-function divAndNeg(mat:number[],divisor:number){ //divide a matrix by divisor; negate matrix
-	return [-mat[0]/divisor, -mat[1]/divisor, -mat[2]/divisor];
-}
-
 
 //Temporary solution to adding configuration storage
 //This section sets interface values from the storage 
