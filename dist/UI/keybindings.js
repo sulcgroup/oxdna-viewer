@@ -15,27 +15,27 @@ canvas.addEventListener("keydown", event => {
             break;
         // Copy, cut, paste and delete. Holding shift pastes with preserved location
         case 'c':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 copyWrapper();
             }
             break;
         case 'x':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 cutWrapper();
             }
             break;
         case 'v':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 pasteWrapper(event.shiftKey);
             }
             break;
         case 'delete':
             deleteWrapper();
             break;
-        // Undo: ctrl-z
-        // Redo: ctrl-shift-z or ctrl-y
+        // Undo: ctrl-z, cmd-z
+        // Redo: ctrl-shift-z, ctrl-y, cmd-shift-z, cmd-y
         case 'z':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 if (event.shiftKey) {
                     editHistory.redo();
                 }
@@ -45,20 +45,20 @@ canvas.addEventListener("keydown", event => {
             }
             break;
         case 'y':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 editHistory.redo();
             }
             break;
         // Select everything not selected:
         case 'i':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 invertSelection();
             }
             break;
         // Select all elements:
         case 'a':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 selectAll();
             }
@@ -85,7 +85,7 @@ canvas.addEventListener("keydown", event => {
             transformControls.setRotationSnap(Math.PI / 12);
             break;
         case 'o':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 Metro.dialog.open('#openFileDialog');
                 break;
@@ -93,7 +93,7 @@ canvas.addEventListener("keydown", event => {
             break;
         case 's':
             // Save output
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 Metro.dialog.open('#exportOxdnaDialog');
                 document.getElementById('gidUpdateWarning').hidden = !topologyEdited;
@@ -115,7 +115,7 @@ canvas.addEventListener("keydown", event => {
     let stepAngle = Math.PI / 12;
     switch (event.code) {
         case 'Numpad1':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 controls.setToAxis(new THREE.Vector3(-1, 0, 0));
                 break;
             }
@@ -127,7 +127,7 @@ canvas.addEventListener("keydown", event => {
             controls.stepAroundAxis(new THREE.Vector3(-1, 0, 0), stepAngle);
             break;
         case 'Numpad3':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 controls.setToAxis(new THREE.Vector3(0, -1, 0));
                 break;
             }
@@ -145,7 +145,7 @@ canvas.addEventListener("keydown", event => {
             controls.stepAroundAxis(new THREE.Vector3(0, -1, 0), stepAngle);
             break;
         case 'Numpad7':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 controls.setToAxis(new THREE.Vector3(0, 0, -1));
                 break;
             }
@@ -157,7 +157,7 @@ canvas.addEventListener("keydown", event => {
             controls.stepAroundAxis(new THREE.Vector3(1, 0, 0), stepAngle);
             break;
         case 'Numpad9':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 controls.setToAxis(new THREE.Vector3(0, 0, 1));
                 break;
             }
