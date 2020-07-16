@@ -30,8 +30,8 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 			let nucleotide = elements.get(id);
 			let sys = nucleotide.getSystem();
 
-			// Select multiple elements my holding down ctrl
-			if (!event.ctrlKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
+			// Select multiple elements my holding down ctrl/command
+			if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
 				clearSelection();
 			}
 			
@@ -325,8 +325,8 @@ canvas.addEventListener('mousedown', event => {
 		// Disable trackball controlls
 		controls.enabled = false;
 
-		// Select multiple elements my holding down ctrl
-		if (!event.ctrlKey) {
+		// Select multiple elements my holding down ctrl/command
+		if (!event.ctrlKey && !event.metaKey) {
 			clearSelection();
 		}
 

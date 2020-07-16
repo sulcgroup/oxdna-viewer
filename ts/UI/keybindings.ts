@@ -11,24 +11,24 @@ canvas.addEventListener("keydown", event =>{
         case 'arrowleft': trajReader.previousConfig(); break;
 
         // Copy, cut, paste and delete. Holding shift pastes with preserved location
-        case 'c': if (event.ctrlKey) {copyWrapper();} break;
-        case 'x': if (event.ctrlKey) {cutWrapper();} break;
-        case 'v': if (event.ctrlKey) {pasteWrapper(event.shiftKey);} break;
+        case 'c': if (event.ctrlKey || event.metaKey) {copyWrapper();} break;
+        case 'x': if (event.ctrlKey || event.metaKey) {cutWrapper();} break;
+        case 'v': if (event.ctrlKey || event.metaKey) {pasteWrapper(event.shiftKey);} break;
         case 'delete': deleteWrapper(); break;
 
-        // Undo: ctrl-z
-        // Redo: ctrl-shift-z or ctrl-y
-        case 'z': if (event.ctrlKey) {
+        // Undo: ctrl-z, cmd-z
+        // Redo: ctrl-shift-z, ctrl-y, cmd-shift-z, cmd-y
+        case 'z': if (event.ctrlKey || event.metaKey) {
                 if (event.shiftKey) {editHistory.redo();}
                 else {editHistory.undo();}
             } break;
-        case 'y': if (event.ctrlKey) {editHistory.redo();} break;
+        case 'y': if (event.ctrlKey || event.metaKey) {editHistory.redo();} break;
 
         // Select everything not selected:
-        case 'i': if (event.ctrlKey) {event.preventDefault(); invertSelection()} break;
+        case 'i': if (event.ctrlKey || event.metaKey) {event.preventDefault(); invertSelection()} break;
 
         // Select all elements:
-        case 'a': if (event.ctrlKey) {event.preventDefault(); selectAll();} break;
+        case 'a': if (event.ctrlKey || event.metaKey) {event.preventDefault(); selectAll();} break;
 
         // Transform controls:
         case 't': // Toggle translate
@@ -51,7 +51,7 @@ canvas.addEventListener("keydown", event =>{
             break;
 
         case 'o':
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 Metro.dialog.open('#openFileDialog');
                 break;
@@ -60,7 +60,7 @@ canvas.addEventListener("keydown", event =>{
 
         case 's':
             // Save output
-            if (event.ctrlKey) {
+            if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 Metro.dialog.open('#exportOxdnaDialog');
                 document.getElementById('gidUpdateWarning').hidden = !topologyEdited;
@@ -83,12 +83,12 @@ canvas.addEventListener("keydown", event =>{
     let stepAngle = Math.PI/12;
     switch (event.code) {
         case 'Numpad1':
-            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(-1,0,0)); break;}
+            if (event.ctrlKey || event.metaKey) {controls.setToAxis(new THREE.Vector3(-1,0,0)); break;}
             else {controls.setToAxis(new THREE.Vector3(1,0,0)); break;}
         case 'Numpad2':
             controls.stepAroundAxis(new THREE.Vector3(-1,0,0), stepAngle); break;
         case 'Numpad3':
-            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,-1,0)); break;}
+            if (event.ctrlKey || event.metaKey) {controls.setToAxis(new THREE.Vector3(0,-1,0)); break;}
             else {controls.setToAxis(new THREE.Vector3(0,1,0)); break;}
         case 'Numpad4':
             controls.stepAroundAxis(new THREE.Vector3(0,1,0), stepAngle); break;
@@ -97,12 +97,12 @@ canvas.addEventListener("keydown", event =>{
         case 'Numpad6':
             controls.stepAroundAxis(new THREE.Vector3(0,-1,0), stepAngle); break;
         case 'Numpad7':
-            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,0,-1)); break;}
+            if (event.ctrlKey || event.metaKey) {controls.setToAxis(new THREE.Vector3(0,0,-1)); break;}
             else {controls.setToAxis(new THREE.Vector3(0,0,1)); break;}
         case 'Numpad8':
             controls.stepAroundAxis(new THREE.Vector3(1,0,0), stepAngle); break;
         case 'Numpad9':
-            if (event.ctrlKey) {controls.setToAxis(new THREE.Vector3(0,0,1)); break;}
+            if (event.ctrlKey || event.metaKey) {controls.setToAxis(new THREE.Vector3(0,0,1)); break;}
             else {controls.setToAxis(new THREE.Vector3(0,0,-1)); break;}
     }
 });

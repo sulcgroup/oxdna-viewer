@@ -26,20 +26,20 @@
 				<tr><td>d</td><td>Toggle dragging mode</td></tr>
                 <tr><td>Right arrow</td><td>Next configuration</td></tr>
 				<tr><td>Left arrow</td><td>Previous configuration</td></tr>
-				<tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
-				<tr><td>ctrl-z</td><td>Undo edit</td></tr>
-				<tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
-				<tr><td>ctrl-a</td><td>Select all elements</td></tr>
-				<tr><td>ctrl-i</td><td>Invert selection</td></tr>
-				<tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
+				<tr><td>ctrl/⌘-s</td><td>Save topology and configuration</td></tr>
+				<tr><td>ctrl/⌘-z</td><td>Undo edit</td></tr>
+				<tr><td>ctrl/⌘-shift-z (or ctrl/⌘-y)</td><td>Redo edit</td></tr>
+				<tr><td>ctrl/⌘-a</td><td>Select all elements</td></tr>
+				<tr><td>ctrl/⌘-i</td><td>Invert selection</td></tr>
+				<tr><td>ctrl/⌘-click</td><td>Select multiple elements</td></tr>
 				<tr><td>shift-click</td><td>Select intermediate monomers</td></tr>
-				<tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad1</td><td>Move camera to x-axis (ctrl/⌘ to invert)</td></tr>
 				<tr><td>Numpad2</td><td>Rotate camera down</td></tr>
-				<tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad3</td><td>Move camera to y-axis (ctrl/⌘ to invert)</td></tr>
 				<tr><td>Numpad4</td><td>Rotate camera left</td></tr>
 				<tr><td>Numpad5</td><td>Reset camera</td></tr>
 				<tr><td>Numpad6</td><td>Rotate camera right</td></tr>
-				<tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
+				<tr><td>Numpad7</td><td>Move camera to z-axis (ctrl/⌘ to invert)</td></tr>
                 <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
                 <tr><td>F1</td><td>Show this list</td></tr>
             </table>
@@ -108,7 +108,7 @@
             <fieldset>
                 <legend onclick="toggleFieldSet(this)">Select</legend>
                 <div hidden="true">
-                    <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Enable selection
+                    <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl/⌘ for multiple selection"> Enable selection
                     <fieldset>
                         <legend onclick="toggleFieldSet(this)">Selection mode:</legend>
                         <div>
@@ -133,8 +133,8 @@
                 <legend onclick="toggleFieldSet(this)">Edit</legend>
                 <div hidden="true">
                     <div style="text-align: center;">
-                        <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl-z)">undo</i>
-                        <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl-shift-z)">redo</i>
+                        <i class="material-icons" onclick="editHistory.undo()" title="Undo edit (ctrl/⌘-z)">undo</i>
+                        <i class="material-icons" onclick="editHistory.redo()" title="Redo edit (ctrl/⌘-shift-z)">redo</i>
                     </div>
                     <fieldset>
                         <legend onclick="toggleFieldSet(this)">Mouse transformation</legend>
@@ -191,7 +191,7 @@
                         </div>
                     </fieldset>
                 </div>
-                <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl for multiple selection"> Select
+                <input type="checkbox" name="action" id="selectToggle" value="Select" checked title="Hold down ctrl/⌘ for multiple selection"> Select
                 <input type="checkbox" name="action" id="transformToggle" value="Transform" onchange="showTransformControl(this)"> Transform<br>
                 <fieldset>
                     <legend>Selection mode:</legend>
@@ -375,16 +375,16 @@
 
     <!-- Context menu-->
     <ul class="jctx jctx-id-canvas jctx-white jctx-white-shadow">
-        <li data-action="undo">Undo (ctrl+Z)</li>
-        <li data-action="redo">Redo (ctrl+Y)</li>
+        <li data-action="undo">Undo (ctrl/⌘+Z)</li>
+        <li data-action="redo">Redo (ctrl/⌘+Y)</li>
         <hr>
         <li data-action="del">Delete (del)</li>
-        <li data-action="cut">Cut (ctrl+X)</li>
-        <li data-action="copy">Copy (ctrl+C)</li>
-        <li data-action="paste">Paste (ctrl+V)</li>
+        <li data-action="cut">Cut (ctrl/⌘+X)</li>
+        <li data-action="copy">Copy (ctrl/⌘+C)</li>
+        <li data-action="paste">Paste (ctrl/⌘+V)</li>
         <hr>
-        <li data-action="all">Select all (ctrl+A)</li>
-        <li data-action="invert">Invert selection (ctrl+I)</li>
+        <li data-action="all">Select all (ctrl/⌘+A)</li>
+        <li data-action="invert">Invert selection (ctrl/⌘+I)</li>
         <li data-action="clear">Clear selection</li>
     </ul>
 

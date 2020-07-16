@@ -60,24 +60,24 @@
             <tr><td>r</td><td>Rotate mode</td></tr>
             <tr><td>Right arrow</td><td>Next configuration</td></tr>
             <tr><td>Left arrow</td><td>Previous configuration</td></tr>
-            <tr><td>ctrl-s</td><td>Save topology and configuration</td></tr>
-            <tr><td>ctrl-z</td><td>Undo edit</td></tr>
-            <tr><td>ctrl-shift-z (or ctrl-y)</td><td>Redo edit</td></tr>
-            <tr><td>ctrl-a</td><td>Select all elements</td></tr>
-            <tr><td>ctrl-i</td><td>Invert selection</td></tr>
-            <tr><td>ctrl-click</td><td>Select multiple elements</td></tr>
+            <tr><td>ctrl/⌘-s</td><td>Save topology and configuration</td></tr>
+            <tr><td>ctrl/⌘-z</td><td>Undo edit</td></tr>
+            <tr><td>ctrl/⌘-shift-z (or ctrl/⌘-y)</td><td>Redo edit</td></tr>
+            <tr><td>ctrl/⌘-a</td><td>Select all elements</td></tr>
+            <tr><td>ctrl/⌘-i</td><td>Invert selection</td></tr>
+            <tr><td>ctrl/⌘-click</td><td>Select multiple elements</td></tr>
             <tr><td>shift-click</td><td>Select intermediate by gid</td></tr>
             <tr><td>shift-alt-click</td><td>Select intermediate by shortest path</td></tr>
-            <tr><td>ctrl-c</td><td>Copy selection</td></tr>
-            <tr><td>ctrl-v</td><td>Paste selection</td></tr>
-            <tr><td>ctrl-shift-v</td><td>Paste selection in-place</td></tr>
-            <tr><td>Numpad1</td><td>Move camera to x-axis (ctrl to invert)</td></tr>
+            <tr><td>ctrl/⌘-c</td><td>Copy selection</td></tr>
+            <tr><td>ctrl/⌘-v</td><td>Paste selection</td></tr>
+            <tr><td>ctrl/⌘-shift-v</td><td>Paste selection in-place</td></tr>
+            <tr><td>Numpad1</td><td>Move camera to x-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad2</td><td>Rotate camera down</td></tr>
-            <tr><td>Numpad3</td><td>Move camera to y-axis (ctrl to invert)</td></tr>
+            <tr><td>Numpad3</td><td>Move camera to y-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad4</td><td>Rotate camera left</td></tr>
             <tr><td>Numpad5</td><td>Reset camera</td></tr>
             <tr><td>Numpad6</td><td>Rotate camera right</td></tr>
-            <tr><td>Numpad7</td><td>Move camera to z-axis (ctrl to invert)</td></tr>
+            <tr><td>Numpad7</td><td>Move camera to z-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
             <tr><td>F1</td><td>Show this list</td></tr>
         </table>
@@ -171,8 +171,8 @@
 
         <div class="content-holder">
             <div class="section" id="section-file">
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (ctrl-o)"
-                    title="Open files (ctrl-o)">
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (ctrl/⌘-o)"
+                    title="Open files (ctrl/⌘-o)">
                     <span class="mif-folder-open mif-3x"></span>
                     <span class="caption">Open</span>
                 </button>
@@ -184,7 +184,7 @@
                 <div class="group">
                     <button class="ribbon-button"
                         onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited"
-                        title="Downloading the current scene as oxDNA files (ctrl-s)">
+                        title="Downloading the current scene as oxDNA files (ctrl/⌘-s)">
                         <span class="mif-floppy-disk mif-2x"></span>
                         <span class="caption">Simulation files</span>
                     </button>
@@ -272,11 +272,11 @@
                     <input type="checkbox" id="selectPairs" data-role="switch" title="Automatically select basepairs">
                 </div>
                 <div class="tight group flex-column">
-                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (ctrl-a)">
+                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (ctrl/⌘-a)">
                         <span class="mif-done_all mif-1x"></span>
                         <span class="caption">Select all</span>
                     </button>
-                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (ctrl-i)">
+                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (ctrl/⌘-i)">
                         <span class="mif-contrast mif-1x"></span>
                         <span class="caption">Invert selection</span>
                     </button>
@@ -305,25 +305,25 @@
             <!--Edit-->
             <div class="section" id="section-edit">
                 <div class="tight group">
-                    <button class="ribbon-button" title="Undo (ctrl-z)" onclick="editHistory.undo()">
+                    <button class="ribbon-button" title="Undo (ctrl/⌘-z)" onclick="editHistory.undo()">
                         <span class="mif-undo mif-2x"></span>
                         <span class="caption">Undo</span>
                     </button>
-                    <button class="ribbon-button" title="Redo (ctrl-y)" onclick="editHistory.redo()">
+                    <button class="ribbon-button" title="Redo (ctrl/⌘-y)" onclick="editHistory.redo()">
                         <span class="mif-redo mif-2x"></span>
                         <span class="caption">Redo</span>
                     </button>
                 </div>
                 <div class="tight group">
-                    <button class="ribbon-button" title="Cut selection (ctrl-x)" onclick="cutWrapper()">
+                    <button class="ribbon-button" title="Cut selection (ctrl/⌘-x)" onclick="cutWrapper()">
                         <span class="mif-cut mif-2x"></span>
                         <span class="caption">Cut</span>
                     </button>
-                    <button class="ribbon-button" title="Copy selection (ctrl-c)" onclick="copyWrapper()">
+                    <button class="ribbon-button" title="Copy selection (ctrl/⌘-c)" onclick="copyWrapper()">
                         <span class="mif-copy mif-2x"></span>
                         <span class="caption">Copy</span>
                     </button>
-                    <button class="ribbon-button" title="Paste (ctrl-p)" onclick="pasteWrapper()">
+                    <button class="ribbon-button" title="Paste (ctrl/⌘-p)" onclick="pasteWrapper()">
                         <span class="mif-paste mif-2x"></span>
                         <span class="caption">Paste</span>
                     </button>
