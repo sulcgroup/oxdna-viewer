@@ -161,7 +161,7 @@
     </div>
 
     <nav id="menu" data-role="ribbonmenu" class="shifted-content">
-        <ul class="tabs-holder">
+        <ul class="tabs-holder flex-wrap">
             <li id='sidebar-toggle' class="static"><a href="#">oxView</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-file">File</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-select">Select</a></li>
@@ -218,7 +218,7 @@
             </div>
 
             <!--Select-->
-            <div class="section" id="section-select">
+            <div class="section" id="section-select"><div class="d-flex flex-wrap">
                 <div class="group">
                     <div class="ribbon-toggle-group toggleGroup_w2" id="selectionScope">
                         <button class="ribbon-icon-button">
@@ -302,10 +302,10 @@
                     <span class="mif-file-download mif-2x"></span>
                     <span class="caption">Selected base<br>trap file</span>
                 </button>
-            </div>
+            </div></div>
 
             <!--Edit-->
-            <div class="section" id="section-edit">
+            <div class="section" id="section-edit"><div class="d-flex flex-wrap">
                 <div class="tight group">
                     <button class="ribbon-button" title="Undo (ctrl/⌘-z)" onclick="editHistory.undo()">
                         <span class="mif-undo mif-2x"></span>
@@ -402,10 +402,10 @@
                         style="text-transform: uppercase;"
                         oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
                 </div>
-            </div>
+            </div></div>
 
             <!-- View -->
-            <div class="section" id="section-view">
+            <div class="section" id="section-view"><div class="d-flex flex-wrap-r">
                 <div class="tight group">
                     <div class="group">
                         <div id="inboxing" class="ribbon-toggle-group toggleGroup_w1">
@@ -535,7 +535,7 @@
                     </div>
                     <span class="title">Colors</span>
                 </div>
-                <div class="tight group">
+                <div class="tight group flex-wrap">
                     <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
                         <span class="mif-image mif-3x"></span>
                         <span class="caption">Background</span>
@@ -564,7 +564,7 @@
                         <span class="caption">Reset camera</span>
                     </button>
                 </div>
-            </div>
+            </div></div>
 
             <!--Trajectory-->
             <div class="section" id="section-trajectory">
