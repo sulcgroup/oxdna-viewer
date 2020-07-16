@@ -47,12 +47,14 @@
         </ul>
     </aside>
 
-    <div id="keybindingsDialog" class="dialog" data-role="dialog">
-        <table>
+    <div id="keybindingsDialog" class="dialog" data-role="dialog" style="overflow-y: auto; overflow-x: hidden;">
+        <table data-role="table" class="table striped">
+            <thead>
             <tr>
                 <th>Key</th>
                 <th>Action</th>
             </tr>
+            </thead>
             <tr><td>p</td><td>Save image</td></tr>
             <tr><td>s</td><td>Toggle selection</td></tr>
             <tr><td>d</td><td>Toggle transformation</td></tr>
@@ -71,15 +73,15 @@
             <tr><td>ctrl/⌘-c</td><td>Copy selection</td></tr>
             <tr><td>ctrl/⌘-v</td><td>Paste selection</td></tr>
             <tr><td>ctrl/⌘-shift-v</td><td>Paste selection in-place</td></tr>
+            <tr><td>Numpad0</td><td>Reset camera</td></tr>
             <tr><td>Numpad1</td><td>Move camera to x-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad2</td><td>Rotate camera down</td></tr>
             <tr><td>Numpad3</td><td>Move camera to y-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad4</td><td>Rotate camera left</td></tr>
-            <tr><td>Numpad5</td><td>Reset camera</td></tr>
+            <tr><td>Numpad5</td><td>Toggle orthographic/perspective</td></tr>
             <tr><td>Numpad6</td><td>Rotate camera right</td></tr>
             <tr><td>Numpad7</td><td>Move camera to z-axis (ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
-            <tr><td>F1</td><td>Show this list</td></tr>
         </table>
     </div>
 
@@ -552,9 +554,15 @@
                     </button>
                     <button class="ribbon-button" onclick="Metro.dialog.open('#keybindingsDialog')"
                         title="Show the available keyboard shortcuts">
-                    <span class="mif-keyboard mif-3x"></span>
-                    <span class="caption">Keyboard shortcuts</span>
-                </button>
+                        <span class="mif-keyboard mif-3x"></span>
+                        <span class="caption">Keyboard shortcuts</span>
+                    </button>
+                    <button class="ribbon-button" onclick="controls.reset();"
+                        title="Reset the camera view">
+                        <span class="mif-video-camera mif-2x"></span>
+                        <span class="mif-undo mif-2x"></span>
+                        <span class="caption">Reset camera</span>
+                    </button>
                 </div>
             </div>
 

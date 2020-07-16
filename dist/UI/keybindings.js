@@ -114,6 +114,9 @@ canvas.addEventListener("keydown", event => {
     // the specific key, e.g. 'Numpad1'.
     let stepAngle = Math.PI / 12;
     switch (event.code) {
+        case 'Numpad0':
+            controls.reset();
+            break;
         case 'Numpad1':
             if (event.ctrlKey || event.metaKey) {
                 controls.setToAxis(new THREE.Vector3(-1, 0, 0));
@@ -139,7 +142,7 @@ canvas.addEventListener("keydown", event => {
             controls.stepAroundAxis(new THREE.Vector3(0, 1, 0), stepAngle);
             break;
         case 'Numpad5':
-            controls.reset();
+            api.switchCamera();
             break;
         case 'Numpad6':
             controls.stepAroundAxis(new THREE.Vector3(0, -1, 0), stepAngle);
