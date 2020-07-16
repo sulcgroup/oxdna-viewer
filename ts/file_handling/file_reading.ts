@@ -248,7 +248,7 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
 
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements);
-        topReader.read();
+        topReader.readAsText(topReader.topFile)
 
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
