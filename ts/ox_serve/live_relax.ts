@@ -145,7 +145,7 @@ class OXServeSocket extends WebSocket{
         //forces.forEach(force=>{
         //    force.clearDrawn();
         //})
-        forceHandler.clearDrawn();
+        if (forceHandler) forceHandler.clearDrawn();
 
         let reorganized, counts, conf = {};
         {

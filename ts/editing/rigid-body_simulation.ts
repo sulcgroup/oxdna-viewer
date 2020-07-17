@@ -19,7 +19,7 @@ function toggleClusterSim() {
             return;
         }
     }
-    forceHandler.clearDrawn();
+    if(forceHandler) forceHandler.clearDrawn();
     rigidClusterSimulator.simulate();
 }
 
