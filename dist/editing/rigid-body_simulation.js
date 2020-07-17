@@ -18,6 +18,7 @@ function toggleClusterSim() {
             return;
         }
     }
+    forceHandler.clearDrawn();
     rigidClusterSimulator.simulate();
 }
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf

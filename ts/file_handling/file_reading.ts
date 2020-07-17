@@ -182,14 +182,16 @@ function readTrap(system, trapReader) {
         switch(trap.type){
             case "mutual_trap":
                 let mutTrap = new MutualTrap(trap, system);
+                mutTrap.update();
                 forces.push(mutTrap);
-                mutTrap.draw();
+                
                 break;
             default:
                 notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
         }
     });
+   forceHandler =  new ForceHandler(forces);
     
 }
 

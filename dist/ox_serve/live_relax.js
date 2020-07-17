@@ -108,9 +108,12 @@ class OXServeSocket extends WebSocket {
             this.send("abort");
         };
         this.start_simulation = () => {
-            forces.forEach(force => {
-                force.clearDrawn();
-            });
+            // TEMPORARY  
+            // TODO: Add update code 
+            //forces.forEach(force=>{
+            //    force.clearDrawn();
+            //})
+            forceHandler.clearDrawn();
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);
