@@ -9,6 +9,7 @@ class System {
         this.systemID = id;
         this.globalStartId = startID;
         this.lutCols = [];
+        this.customCols = [];
     }
     ;
     systemLength() {

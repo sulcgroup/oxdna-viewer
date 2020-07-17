@@ -90,7 +90,7 @@ var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
 var xbblast: number, ybblast:number, zbblast:number;
 
-var lut, devs: number[]; //need for Lut coloring
+var lut, customLut; //need for Lut coloring
 
 const DNA: number = 0;
 const RNA: number = 1;

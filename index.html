@@ -64,7 +64,7 @@
             <tr><td>Left arrow</td><td>Previous configuration</td></tr>
             <tr><td>ctrl/⌘-s</td><td>Save topology and configuration</td></tr>
             <tr><td>ctrl/⌘-z</td><td>Undo edit</td></tr>
-            <tr><td>ctrl/⌘-shift-z (or ctrl/⌘-y)</td><td>Redo edit</td></tr>
+            <tr><td>ctrl/⌘-shift-z, ctrl/⌘-y</td><td>Redo edit</td></tr>
             <tr><td>ctrl/⌘-a</td><td>Select all elements</td></tr>
             <tr><td>ctrl/⌘-i</td><td>Invert selection</td></tr>
             <tr><td>ctrl/⌘-click</td><td>Select multiple elements</td></tr>
@@ -512,6 +512,13 @@
                                 <span class="mif-chart-dots"></span>
                             </span>
                             <span class="caption">Overlay</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="updateColoring('Custom')">
+                            <span class="icon">
+                                <span class="mif-eyedropper"></span>
+                            </span>
+                            <span class="caption">Custom</span>
                         </button>
                     </div>
                     <button class="ribbon-button" onclick="view.toggleWindow('colorPaletteWindow', updateColorPalette)">

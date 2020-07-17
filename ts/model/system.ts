@@ -10,6 +10,7 @@ class System {
     datFile;
     colormapFile;
     lutCols: THREE.Color[];
+    customCols: THREE.Color[];
     strands: Strand[] = [];
     label: string;
 
@@ -51,6 +52,7 @@ class System {
         this.systemID = id;
         this.globalStartId = startID;
         this.lutCols = [];
+        this.customCols = [];
     };
 
     systemLength(): number {

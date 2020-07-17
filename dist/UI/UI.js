@@ -171,22 +171,21 @@ function updateColorPalette() {
     }
 }
 ;
-function initLutCols(systems) {
+function initCustomCols(systems) {
     for (let i = 0; i < systems.length; i++) {
         const system = systems[i];
         for (let j = 0; j < system.bbColors.length; j += 3) {
             const r = system.bbColors[j];
             const g = system.bbColors[j + 1];
             const b = system.bbColors[j + 2];
-            system.lutCols[j / 3] = new THREE.Color(r, g, b);
+            system.customCols[j / 3] = new THREE.Color(r, g, b);
         }
     }
 }
 function resetCustomColoring() {
     view.coloringMode.set("Strand");
-    initLutCols(systems);
-    initLutCols(tmpSystems);
-    clearSelection();
+    initCustomCols(systems);
+    initCustomCols(tmpSystems);
 }
 // create color map with selected color
 function colorElements(color, elems) {
@@ -200,39 +199,33 @@ function colorElements(color, elems) {
     if (elems.length == 0) {
         notify("Please first select the elements you wish to color");
     }
-    if (lut == undefined) {
-        lut = new THREE.Lut(defaultColormap, 512);
-        // legend needed to set 'color by' to Overlay, gets removed later
-        lut.setLegendOn();
-        lut.setLegendLabels();
+    if (customLut == undefined) {
+        customLut = new THREE.Lut(defaultColormap, 512);
     }
     else {
-        const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.lutCols.length == 0);
+        const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.customCols.length == 0);
         if (emptyTmpSystems.length > 0) {
-            console.log(emptyTmpSystems);
-            initLutCols(emptyTmpSystems);
+            initCustomCols(emptyTmpSystems);
         }
-        view.coloringMode.set("Overlay");
+        view.coloringMode.set("Custom");
     }
-    initLutCols(systems);
-    initLutCols(tmpSystems);
+    initCustomCols(systems);
+    initCustomCols(tmpSystems);
     elems.forEach(e => {
         let sid;
         if (e.dummySys) {
             sid = e["gid"] - e.dummySys.globalStartId;
-            e.dummySys.lutCols[e.sid] = color;
+            e.dummySys.customCols[e.sid] = color;
         }
         sid = e["gid"] - e.getSystem().globalStartId;
-        e.getSystem().lutCols[sid] = color;
+        e.getSystem().customCols[sid] = color;
     });
-    view.coloringMode.set("Overlay");
-    if (!systems.some(system => system.colormapFile)) {
-        api.removeColorbar();
-    }
+    view.coloringMode.set("Custom");
     clearSelection();
 }
 //toggles display of coloring by json file / structure modeled off of base selector
 function updateColoring(mode) {
+    clearSelection();
     if (!mode) {
         mode = view.coloringMode.get();
     }
@@ -241,14 +234,18 @@ function updateColoring(mode) {
     }
     if (mode === "Overlay") {
         if (lut) {
-            if (colorbarScene.children.length == 0 && systems.some(system => system.colormapFile)) {
-                api.showColorbar();
-            }
+            api.showColorbar();
         }
         else {
             notify("Please drag and drop the corresponding .json file.");
             view.coloringMode.set("Strand");
             return;
+        }
+    }
+    else if (mode === "Custom" && customLut === undefined) {
+        initCustomCols(systems);
+        if (tmpSystems.length > 0) {
+            initCustomCols(tmpSystems);
         }
     }
     else if (lut) {

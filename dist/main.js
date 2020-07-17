@@ -78,7 +78,7 @@ var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
 var xbblast, ybblast, zbblast;
-var lut, devs; //need for Lut coloring
+var lut, customLut; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;
 const AA = 2;
