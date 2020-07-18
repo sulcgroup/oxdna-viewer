@@ -351,7 +351,7 @@ module edit{
             // Calculate elems center of mass
             let com = new THREE.Vector3();
             elems.forEach(e=>{
-                let p = e.getInstanceParameter3("cmOffsets");
+                let p = e.getPos();
                 com.add(p);
             });
             com.divideScalar(elems.length);
@@ -910,7 +910,7 @@ module edit{
         elem.pair = e;
         strand.addMonomer(e);
         
-        const cm = elem.getInstanceParameter3("cmOffsets");
+        const cm = elem.getPos();
         const a1 = elem.getA1();
         const a3 = elem.getA3();
 
@@ -927,7 +927,7 @@ module edit{
         // Add to history, but we only want this if it is a atomic edit
         if (undoable) {
             const instanceCopy = [new InstanceCopy(e)];
-            const newCm = e.getInstanceParameter3("cmOffsets");
+            const newCm = e.getPos();
             const position = new THREE.Vector3(newCm.x, newCm.y, newCm.z);
             editHistory.add(new RevertableAddition(instanceCopy, [e], position));
         }

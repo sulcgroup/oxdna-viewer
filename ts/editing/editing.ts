@@ -130,7 +130,7 @@ function extendWrapper(double: boolean) {
     let elems = extendDuplex ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
-    elems.forEach(e=>pos.add(e.getInstanceParameter3("cmOffsets")));
+    elems.forEach(e=>pos.add(e.getPos()));
     pos.divideScalar(elems.length);
 
     // Add to history
@@ -149,7 +149,7 @@ function createWrapper() {
 
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
-    elems.forEach(e=>pos.add(e.getInstanceParameter3("cmOffsets")));
+    elems.forEach(e=>pos.add(e.getPos()));
     pos.divideScalar(elems.length);
 
     // Add to history

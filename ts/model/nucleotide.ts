@@ -298,7 +298,7 @@ abstract class Nucleotide extends BasicElement {
 
     getDatFileOutput(): string {
         let dat: string = "";
-        let tempVec = this.getInstanceParameter3("cmOffsets"); //nucleotide's center of mass in world
+        let tempVec = this.getPos(); //nucleotide's center of mass in world
         const x: number = tempVec.x;
         const y: number = tempVec.y;
         const z: number = tempVec.z;
@@ -384,7 +384,7 @@ abstract class Nucleotide extends BasicElement {
     }
 
     getA1 () {
-        const cm = this.getInstanceParameter3("cmOffsets");
+        const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
         return ns.clone().sub(cm).divideScalar(0.4);
     }

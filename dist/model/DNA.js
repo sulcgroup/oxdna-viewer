@@ -13,7 +13,7 @@ class DNANucleotide extends Nucleotide {
     }
     ;
     getA2() {
-        const cm = this.getInstanceParameter3("cmOffsets");
+        const cm = this.getPos();
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
         return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408);
@@ -29,7 +29,7 @@ class DNANucleotide extends Nucleotide {
     extendStrand(len, direction, double) {
         const rot = 35.9 * Math.PI / 180; // 0.68940505
         let rise = 0.3897628551303122;
-        const startPos = this.getInstanceParameter3("cmOffsets");
+        const startPos = this.getPos();
         const oldA1 = this.getA1();
         let dir = this.getA3();
         // normalize dir

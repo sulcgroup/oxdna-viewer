@@ -203,7 +203,7 @@ class AminoAcid extends BasicElement {
 
     getDatFileOutput(): string {
         let dat: string = "";
-        const tempVec = this.getInstanceParameter3("cmOffsets");
+        const tempVec = this.getPos();
         const x: number = tempVec.x;
         const y: number = tempVec.y;
         const z: number = tempVec.z;

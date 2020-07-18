@@ -216,7 +216,7 @@ class Nucleotide extends BasicElement {
     ;
     getDatFileOutput() {
         let dat = "";
-        let tempVec = this.getInstanceParameter3("cmOffsets"); //nucleotide's center of mass in world
+        let tempVec = this.getPos(); //nucleotide's center of mass in world
         const x = tempVec.x;
         const y = tempVec.y;
         const z = tempVec.z;

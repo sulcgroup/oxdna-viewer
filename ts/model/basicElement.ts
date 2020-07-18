@@ -164,6 +164,11 @@ abstract class BasicElement {
         }
     }
 
+    // Get center of mass position
+    getPos(): THREE.Vector3 {
+        return this.getInstanceParameter3('cmOffsets');
+    }
+
     isAminoAcid() {
         return false;
     }

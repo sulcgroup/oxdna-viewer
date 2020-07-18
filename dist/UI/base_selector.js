@@ -417,7 +417,7 @@ class BoxSelector {
         elements.forEach(element => {
             // check if element is visible, before adding to selection
             if (element.getInstanceParameter3('visibility').x) {
-                let cmPos = element.getInstanceParameter3("cmOffsets");
+                let cmPos = element.getPos();
                 if (this.frustum.containsPoint(cmPos)) {
                     this.collection.push(element);
                 }

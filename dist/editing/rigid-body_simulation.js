@@ -121,7 +121,7 @@ class Cluster {
         this.calculateCenter();
         this.radius = 0;
         clusterElements.forEach((e) => {
-            let p = e.getInstanceParameter3("cmOffsets");
+            let p = e.getPos();
             this.radius = Math.max(this.radius, p.distanceTo(this.position));
         });
         // http://scienceworld.wolfram.com/physics/MomentofInertiaSphere.html
@@ -154,7 +154,7 @@ class Cluster {
     calculateCenter() {
         this.position = new THREE.Vector3();
         this.clusterElements.forEach((e) => {
-            this.position.add(e.getInstanceParameter3("cmOffsets"));
+            this.position.add(e.getPos());
         });
         this.position.divideScalar(this.clusterElements.size);
     }
@@ -246,10 +246,10 @@ class ClusterConnectionPoint {
     }
     ;
     getFromPos() {
-        return this.from.getInstanceParameter3("cmOffsets").clone();
+        return this.from.getPos().clone();
     }
     getToPos() {
-        return this.to.getInstanceParameter3("cmOffsets").clone();
+        return this.to.getPos().clone();
     }
     getDist() {
         return this.getFromPos().distanceTo(this.getToPos());

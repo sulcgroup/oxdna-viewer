@@ -107,6 +107,10 @@ class BasicElement {
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
     }
+    // Get center of mass position
+    getPos() {
+        return this.getInstanceParameter3('cmOffsets');
+    }
     isAminoAcid() {
         return false;
     }
