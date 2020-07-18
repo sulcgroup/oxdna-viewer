@@ -20,11 +20,16 @@ canvas.addEventListener('click', event => { //if mouse is pressed down
 
 	// If double click, zoom in on element
 	if(event.detail == 2) {
-		let id = gpuPicker(event);
-		if (id > -1 && !transformControls.isHovered()) {
-			api.findElement(elements.get(id));
-			event.preventDefault();
+		if(!transformControls.isHovered()) {
+			let id = gpuPicker(event);
+			if (id > -1) {
+				api.findElement(elements.get(id));
+				event.preventDefault();
+			} else {
+				clearSelection();
+			}
 		}
+		
 		return;
 	}
 
