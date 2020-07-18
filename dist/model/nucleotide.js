@@ -7,7 +7,7 @@ class Nucleotide extends BasicElement {
         super(gid, strand);
     }
     ;
-    calculatePositions(l) {
+    calcPositionsFromConfLine(l) {
         let sys = this.getSystem();
         let sid = this.gid - sys.globalStartId;
         if (this.dummySys) {
@@ -19,10 +19,10 @@ class Nucleotide extends BasicElement {
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
         let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
-        this.calcPositionsFromVectors(p, a1, a3);
+        this.calcPositions(p, a1, a3);
     }
     ;
-    calcPositionsFromVectors(p, a1, a3) {
+    calcPositions(p, a1, a3) {
         let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys;
@@ -47,7 +47,7 @@ class Nucleotide extends BasicElement {
         }
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
-        if (this.neighbor3 != null && (this.neighbor3.lid < this.lid || this.dummySys !== null)) {
+        if (this.neighbor3 && (this.neighbor3.lid < this.lid || this.dummySys)) {
             sp = new THREE.Vector3((bb.x + bbLast.x) / 2, (bb.y + bbLast.y) / 2, (bb.z + bbLast.z) / 2);
             spLen = bb.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize());

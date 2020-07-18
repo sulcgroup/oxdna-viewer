@@ -95,7 +95,7 @@ class BasicElement {
         sys.fillVec('visibility', 3, sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
     }
     handleCircularStrands(sys, sid, bb) {
-        if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
+        if (this.neighbor5 && this.neighbor5.lid < this.lid) { //handle circular strands
             this.strand.circular = true;
             const bbLast = new THREE.Vector3(sys.bbOffsets[this.neighbor5.gid * 3], sys.bbOffsets[this.neighbor5.gid * 3 + 1], sys.bbOffsets[this.neighbor5.gid * 3 + 2]);
             const sp = bb.clone().add(bbLast).divideScalar(2);

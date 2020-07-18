@@ -263,7 +263,7 @@ function readDat(datReader, system) {
         currentNucleotide = elements.get(i + system.globalStartId);
         // consume a new line from the file
         l = lines[i].split(" ");
-        currentNucleotide.calculatePositions(l);
+        currentNucleotide.calcPositionsFromConfLine(l);
         //when a strand is finished, add it to the system
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
             system.addStrand(currentStrand); // add strand to system

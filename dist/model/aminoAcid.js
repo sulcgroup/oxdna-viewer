@@ -15,13 +15,16 @@ class AminoAcid extends BasicElement {
         return nucleosideColors[elem];
     }
     ;
-    calculatePositions(l) {
-        const sys = this.getSystem(), sid = this.gid - sys.globalStartId;
+    calcPositionsFromConfLine(l) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
+        this.calcPositions(p);
+    }
+    calcPositions(p) {
+        const sys = this.getSystem(), sid = this.gid - sys.globalStartId;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp, spLen, spRotation;
-        if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
+        if (this.neighbor3 && this.neighbor3.lid < this.lid) {
             sp = p.clone().add(bbLast).divideScalar(2);
             spLen = p.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize());

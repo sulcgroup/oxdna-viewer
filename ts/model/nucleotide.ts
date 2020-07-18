@@ -11,7 +11,7 @@ abstract class Nucleotide extends BasicElement {
         super(gid, strand);
     };
 
-    calculatePositions(l: string[]) {
+    calcPositionsFromConfLine(l: string[]) {
         let sys = this.getSystem();
         let sid = this.gid - sys.globalStartId;
 
@@ -37,10 +37,10 @@ abstract class Nucleotide extends BasicElement {
             parseFloat(l[7]),
             parseFloat(l[8])
         );
-        this.calcPositionsFromVectors(p, a1, a3)
+        this.calcPositions(p, a1, a3)
     };
 
-    calcPositionsFromVectors(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3) {
+    calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3) {
         let sys = this.getSystem(),
             sid = this.gid - sys.globalStartId;
         if (this.dummySys !== null) {
@@ -79,7 +79,7 @@ abstract class Nucleotide extends BasicElement {
 
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp: THREE.Vector3, spLen: number, spRotation;
-        if (this.neighbor3 != null && (this.neighbor3.lid < this.lid || this.dummySys !== null)) {
+        if (this.neighbor3 && (this.neighbor3.lid < this.lid || this.dummySys)) {
             sp = new THREE.Vector3(
                 (bb.x + bbLast.x) / 2,
                 (bb.y + bbLast.y) / 2,
