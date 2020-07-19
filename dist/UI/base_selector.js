@@ -8,9 +8,11 @@ canvas.addEventListener('mousemove', event => {
     let id = gpuPicker(event);
     if (id > -1) {
         canvas.style.cursor = 'pointer';
+        view.showHoverInfo(new THREE.Vector2(event.clientX, event.clientY), elements.get(id));
     }
     else {
         canvas.style.cursor = 'auto';
+        view.hideHoverInfo();
     }
 });
 canvas.addEventListener('click', event => {

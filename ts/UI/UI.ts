@@ -465,6 +465,18 @@ class View {
         );
     }
 
+    public showHoverInfo(pos: THREE.Vector2, e: BasicElement) {
+        let hoverInfo = document.getElementById('hoverInfo');
+        let color = e.elemToColor(e.type).getHexString();
+        hoverInfo.innerHTML = `<span style="background:#${color}4f; padding: 5px">${e.type} gid:${e.gid}</span>`;
+        hoverInfo.style.left = pos.x  + 'px';
+        hoverInfo.style.top =  pos.y + 20 + 'px';
+        hoverInfo.hidden = false;
+    }
+    public hideHoverInfo() {
+        document.getElementById('hoverInfo').hidden = true;
+    }
+
     public selectPairs(): boolean {
         return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
     }
