@@ -18,6 +18,14 @@ canvas {
     z-index: 1;
 }
 
+#hoverInfo {
+    background-color: #ffffffa4;
+	position: absolute;
+	text-align: center;
+	z-index: 100;
+	display:block;
+}
+
 #container {
     position: relative;
 }

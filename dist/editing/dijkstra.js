@@ -54,23 +54,23 @@ class Dijkstra {
     //	}
     constructor(vertices, crossPairs) {
         this.infinity = 1 / 0;
-        this.vertices = vertices.map(e => e.gid);
+        this.vertices = vertices.map(e => e.id);
         this.crossPairs = crossPairs;
     }
     ;
-    getNeigbors(gid) {
-        let e = elements.get(gid);
+    getNeigbors(id) {
+        let e = elements.get(id);
         let n = [];
-        if (e.neighbor3) {
-            n.push(e.neighbor3.gid);
+        if (e.n3) {
+            n.push(e.n3.id);
         }
-        if (e.neighbor5) {
-            n.push(e.neighbor5.gid);
+        if (e.n5) {
+            n.push(e.n5.id);
         }
         if (this.crossPairs && e instanceof Nucleotide) {
             let pair = e.pair;
             if (pair) {
-                n.push(pair.gid);
+                n.push(pair.id);
             }
         }
         return n;
@@ -83,11 +83,11 @@ class Dijkstra {
     shortestPath(start, goals) {
         let nodes = new PriorityQueue(), distances = {}, previous = {}, path = [], smallest, vertex, neighbors, alt, goalLasts = [];
         goals.forEach(e => {
-            goalLasts.push(e.gid);
+            goalLasts.push(e.id);
         });
         // Init the distances and queues variables
         this.vertices.forEach(vertex => {
-            if (vertex === start.gid) {
+            if (vertex === start.id) {
                 distances[vertex] = 0;
                 nodes.enqueue(0, vertex);
             }
@@ -109,7 +109,7 @@ class Dijkstra {
             if (goalLasts.length == 0) {
                 //Compute the paths
                 goals.forEach(e => {
-                    let curr = e.gid;
+                    let curr = e.id;
                     while (previous[curr]) {
                         path.push(curr);
                         curr = previous[curr];
@@ -134,6 +134,6 @@ class Dijkstra {
         }
         // The starting point isn't in the solution &
         // the solution is from end to start.
-        return path.concat(start.gid).reverse().map(i => elements.get(i));
+        return path.concat(start.id).reverse().map(i => elements.get(i));
     }
 }
