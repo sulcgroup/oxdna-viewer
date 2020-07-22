@@ -24,52 +24,52 @@ If you have any questions, feel free to open an issue on the GitHub page.
 
 
 class ElementMap extends Map<number, BasicElement>{
-    idCounter: number;
+    gidCounter: number;
 
     constructor(){
         super();
-        this.idCounter = 0;
+        this.gidCounter = 0;
     }
 
     // Avoid using this unless you really need to set
-    // a specific id.
-    set(id: number, element: BasicElement): this {
-        if(this.idCounter < id+1){
-            this.idCounter = id+1;
+    // a specific gid.
+    set(gid: number, element: BasicElement): this {
+        if(this.gidCounter < gid+1){
+            this.gidCounter = gid+1;
         }
         // Reading oxDNA files we set elements as undefined for
         // concurrency issues
         if (element) {
-            element.id = id;
+            element.gid = gid;
         }
-        return super.set(id, element);
+        return super.set(gid, element);
     }
 
     /**
      * Add an element, keeping track of
      * global id
      * @param element
-     * @returns id
+     * @returns gid
      */
     push(e: BasicElement): number {
-        e.id = this.idCounter++;
-        super.set(e.id, e);
-        return e.id;
+        e.gid = this.gidCounter++;
+        super.set(e.gid, e);
+        return e.gid;
     }
     /**
      * Remove element
-     * @param id
+     * @param gid
      */
-    delete(id: number): boolean {
-        // If we delete the last added, we can decrease the id counter.
-        if(this.idCounter == id+1){
-            this.idCounter = id;
+    delete(gid: number): boolean {
+        // If we delete the last added, we can decrease the gid counter.
+        if(this.gidCounter == gid+1){
+            this.gidCounter = gid;
         }
-        return super.delete(id);
+        return super.delete(gid);
     }
 
     getNextId(): number {
-        return this.idCounter;
+        return this.gidCounter;
     }
 }
 

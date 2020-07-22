@@ -56,24 +56,25 @@ canvas.addEventListener('click', event => { //if mouse is pressed down
 			switch(view.selectionMode.get()){
 				case "System" :
 					sys.strands.forEach(strand=>{
-						strand.forEach(e=>{
+						strand.monomers.forEach(e=>{
                             e.toggle();
 						});
 					});
 					updateView(sys);
 					break;
 				case "Strand" :
-					nucleotide.strand.forEach(e=>{
-						e.toggle();
+					let strandLength = nucleotide.strand.monomers.length;
+					for (let i= 0; i < strandLength; i++) { //for every nucleotide in strand
+						nucleotide.strand.monomers[i].toggle();
 						if(view.selectPairs()) {
 							if (!nucleotide.isPaired()) {
 								view.longCalculation(findBasepairs, view.basepairMessage,
-								()=>{selectPaired(e);updateView(sys);});
+								()=>{selectPaired(nucleotide.strand.monomers[i]);updateView(sys);});
 							} else {
-								selectPaired(e);
+								selectPaired(nucleotide.strand.monomers[i]);
 							}
 						}
-					});
+					}
 					updateView(sys);
 					break;
 				case "Monomer":
@@ -107,11 +108,17 @@ canvas.addEventListener('click', event => { //if mouse is pressed down
 					if (typeof elements.values().next().value.clusterId == 'undefined') {
 						document.getElementById("clusterOptions").hidden = false;
 					} else {
-						sys.strands.forEach(strand=>strand.forEach(e=>{
-							if(e.clusterId == nucleotide.clusterId) {
-								e.toggle()
+						for (let i = 0; i < strandCount; i++){
+							let strand = sys.strands[i];
+							let nucCount = strand.monomers.length;
+							// for every nucleotide on the Strand in the System
+							for (let j = 0; j < nucCount; j++) {
+								let n: BasicElement = strand.monomers[j];
+								if(n.clusterId == nucleotide.clusterId) {
+									n.toggle();
+								}
 							}
-						}));
+						}
 						updateView(sys);
 					}
 					break;
@@ -150,10 +157,10 @@ function updateView(sys: System) {
 	selectedBases.forEach(
 		(base) => {
 			//store global ids for BaseList view
-			listBases.push(base.id);
+			listBases.push(base.gid);
 
 			//assign each of the selected bases to a strand
-			let strandID = base.strand.id;
+			let strandID = base.strand.strandID;
 			if(strandID in baseInfoStrands)
 				baseInfoStrands[strandID].push(base);
 			else
@@ -168,8 +175,8 @@ function updateView(sys: System) {
 	if (view.isWindowOpen('systemHierarchyWindow')) {
 		let recheck = ()=> {
 			let hierarchy = $('#hierarchyContent');
-			hierarchy.data('checkboxMap').forEach((checkbox, id)=>{
-				checkbox.checked = selectedBases.has(elements.get(id));
+			hierarchy.data('checkboxMap').forEach((checkbox, gid)=>{
+				checkbox.checked = selectedBases.has(elements.get(gid));
 			})
 			hierarchy.data('treeview')._recheck(hierarchy);
 		};
@@ -189,7 +196,7 @@ function updateView(sys: System) {
 		//fish out all the required base info
 		//one could also sort it if neaded ...
 		for(let i = 0; i < sBases.length; i++){
-			baseInfoLines.push([sBases[i].type, "|", "id:", sBases[i].id].join(" "));
+			baseInfoLines.push([sBases[i].type, "|", "gid:", sBases[i].gid, "|", "lID:", sBases[i].lid].join(" "));
 		}
 	}
 	makeTextArea(baseInfoLines.join("\n"), "BaseInfo"); //insert basesInfo into "BaseInfo" text area
@@ -208,7 +215,7 @@ function updateView(sys: System) {
 		for(let i = 0; i < sBases.length; i++){
 			let color = sBases[i].elemToColor(sBases[i].type).getHexString();
 			table.add(strand, {
-				caption: `id: ${sBases[i].id} | lID:  ${sBases[i].lid}`,
+				caption: `gid: ${sBases[i].gid} | lID:  ${sBases[i].lid}`,
 				icon: `<span style="background:#${color}4f">${sBases[i].type}</span>`
 			});
 		}

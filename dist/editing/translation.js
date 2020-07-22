@@ -17,7 +17,7 @@ function rotateElementsByQuaternion(elements, q, about) {
     q2.y *= -1;
     elements.forEach((base) => {
         let sys = base.getSystem();
-        let sid = base.id - sys.globalStartId;
+        let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys;
             sid = base.sid;
@@ -68,11 +68,11 @@ function rotateElementsByQuaternion(elements, q, about) {
     });
     // Update backbone connections for bases with neigbours outside the selection set
     elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
-            calcsp(base); //calculate sp between current and n3
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined && !elements.has(base.neighbor3)) {
+            calcsp(base); //calculate sp between current and neighbor3
         }
-        if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
-            calcsp(base.n5); //calculate sp between current and n5
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined && !elements.has(base.neighbor5)) {
+            calcsp(base.neighbor5); //calculate sp between current and neighbor5
         }
     });
     for (let i = 0; i < systems.length; i++) {
@@ -91,10 +91,10 @@ function calcsp(currentNuc) {
     }
     let temp;
     try {
-        temp = currentNuc.n3.getInstanceParameter3("bbOffsets");
+        temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
     }
     catch (error) {
-        notify("Can't calculate backbone connection for particle " + currentNuc.id + " because there is no upstream connection");
+        notify("Can't calculate backbone connection for particle " + currentNuc.gid + " because there is no upstream connection");
         return;
     }
     let xbbLast = temp.x, ybbLast = temp.y, zbbLast = temp.z;
@@ -116,7 +116,7 @@ function calcsp(currentNuc) {
 function translateElements(elements, v) {
     elements.forEach((base) => {
         let sys = base.getSystem();
-        let sid = base.id - sys.globalStartId;
+        let sid = base.gid - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys;
             sid = base.sid;
@@ -141,11 +141,11 @@ function translateElements(elements, v) {
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
     elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined) {
-            calcsp(base); //calculate sp between current and n3
+        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
+            calcsp(base); //calculate sp between current and neighbor3
         }
-        if (base.n5 !== null && base.n5 !== undefined) {
-            calcsp(base.n5); //calculate sp between current and n5
+        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
+            calcsp(base.neighbor5); //calculate sp between current and neighbor5
         }
     });
     for (let i = 0; i < systems.length; i++) {

@@ -165,11 +165,11 @@ class Cluster {
         let traps = forces.filter(f=>f.type == 'mutual_trap');
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
-            if (e.n3 && e.n3.clusterId !== e.clusterId) {
-                this.conPoints.push(new ClusterConnectionPoint(e, e.n3));
+            if (e.neighbor3 && e.neighbor3.clusterId !== e.clusterId) {
+                this.conPoints.push(new ClusterConnectionPoint(e, e.neighbor3));
             }
-            if (e.n5 && e.n5.clusterId !== e.clusterId) {
-                this.conPoints.push(new ClusterConnectionPoint(e, e.n5));
+            if (e.neighbor5 && e.neighbor5.clusterId !== e.clusterId) {
+                this.conPoints.push(new ClusterConnectionPoint(e, e.neighbor5));
             }
             // Pull together inter-cluster traps
             traps.forEach((t: MutualTrap)=>{

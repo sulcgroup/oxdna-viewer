@@ -3,7 +3,7 @@
  */
 module edit{
 /**
-     * Split the element's strand at the element provided
+     * Split the elemnt's strand at the element provided
      * @param element Element to split at
      * @returns new strand created in split
      */
@@ -11,46 +11,56 @@ module edit{
         const strand = element.strand,
               sys = strand.system;
 
-        // Splitting a circular strand doesn't make more strands.
-        // We only need to update endpoints.
-        if(strand.isCircular()) {
-            strand.end3 = element;
-            strand.end5 = element.n3;
+        // Splitting a circular strand doesn't make
+        // more strands, but it will then no longer
+        // be circular.
+        if(strand.circular) {
+            strand.circular = false;
             return;
         }
 
         // No need to split if one half will be empty
-        if(!element.n5) {
+        if(!element.neighbor5) {
             return;
         }
 
+        // Nucleotides which are after the nick
+        const orphans : BasicElement[] = api.trace35(element);
+
+        strand.excludeElements(orphans);
+
         // Create, fill and deploy new strand
         let newStrand: Strand;
-        if (strand.isPeptide()) {
-            newStrand = strand.system.addNewPeptideStrand();
+        if (strand.getType() == "Peptide") {
+            newStrand = strand.system.createStrand(-strand.system.strands.length)
         }
         else {
-            newStrand = strand.system.addNewNucleicAcidStrand();
+            newStrand = strand.system.createStrand(strand.system.strands.length);
         }
-
-        // Fix endpoints
-        // 3'--strand--e--newStrand--5'
-        newStrand.end3 = element;
-        newStrand.end5 = strand.end5;
-        strand.end5 = element.n3;
-        [strand, newStrand].forEach(s=>{
-            s.end3.n3 = null;
-            s.end5.n5 = null;
-        });
-
-        newStrand.forEach((e) => {
-            e.strand = newStrand;
-            e.updateColor();
-        });
+        strand.system.addStrand(newStrand);
+        let lidCounter = 0
+        orphans.forEach(
+            (e) => {
+                newStrand.addMonomer(e);
+                e.lid = lidCounter;
+                lidCounter += 1;
+                e.updateColor();
+            }
+        );
 
         if (strand.label) {
             newStrand.label = `${strand.label}_2`;
             strand.label = `${strand.label}_1`;
+        }
+
+        // Update local ids in the remnant strand
+        // If there are dummy systems, you need to rebuild
+        // anyway and they need static local IDs
+        if (tmpSystems.length == 0) {
+            let i = 0;
+            strand.monomers.forEach ((n) => {
+                n.lid = i++;
+            });
         }
 
         sys.callUpdates(['instanceColor']);
@@ -62,7 +72,7 @@ module edit{
         let edits = [];
 
         let end5 = e;
-        let end3 = e.n3;
+        let end3 = e.neighbor3;
         if (!end3) {
             notify("Cannot insert at the end of a strand, use extend instead");
             return;
@@ -109,14 +119,14 @@ module edit{
     export function skip(elems: BasicElement[]) {
         let edits = [];
         elems.forEach(e=>{
-            let e3 = e.n3;
-            let e5 = e.n5;
+            let e3 = e.neighbor3;
+            let e5 = e.neighbor5;
 
             let deletion = new RevertableDeletion([e])
             edits.push(deletion);
             deletion.do();
 
-            // Only ligate if it has both neighbors
+            // Only ligate if it has both neigbors
             if (e3 && e5) {
                 let ligation = new RevertableLigation(e3, e5);
                 edits.push(ligation);
@@ -128,18 +138,16 @@ module edit{
 
     export function nick(element: BasicElement){
         let sys = element.getSystem(),
-            sid = element.id - sys.globalStartId;
+            sid = element.gid - sys.globalStartId;
         if (element.dummySys !== null) {
             sys = element.dummySys
             sid = element.sid;
         }
-
-        let neighbor = element.n3;
-        splitStrand(element);
-
         // we break connection to the 3' neighbor 
-        element.n3 = null;
-        neighbor.n5 = null;
+        let neighbor =  element.neighbor3;
+        element.neighbor3 = null;
+        neighbor.neighbor5 = null;
+        splitStrand(element);
 
         sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
         sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
@@ -150,11 +158,11 @@ module edit{
         let end5: BasicElement,
             end3: BasicElement;
         //find out which is the 5' end and which is 3'
-        if (element1.n5 == null && element2.n3 == null) {
+        if (element1.neighbor5 == null && element2.neighbor3 == null) {
             end5 = element1;
             end3 = element2;
         }
-        else if (element1.n3 == null && element2.n5 == null) {
+        else if (element1.neighbor3 == null && element2.neighbor5 == null) {
             end5 = element2;
             end3 = element1;
         }
@@ -173,48 +181,56 @@ module edit{
         // handle strand1 and strand2 not being in the same system
         if (sys5 !== sys3) {
             let tmpSys = new System(tmpSystems.length, 0);
-            tmpSys.initInstances(strand2.getLength());
+            tmpSys.initInstances(strand2.monomers.length);
 
-            strand2.forEach((e, i)=>{
-                copyInstances(e, i, tmpSys)
-                e.setInstanceParameter('visibility', [0,0,0])
-                e.dummySys = tmpSys;
-            })
-
+            for (let i = 0, len = strand2.monomers.length; i < len; i++) {
+                copyInstances(strand2.monomers[i], i, tmpSys)
+                strand2.monomers[i].setInstanceParameter('visibility', [0,0,0])
+                strand2.monomers[i].dummySys = tmpSys;
+                strand2.monomers[i].sid = i;
+            }
             sys3.callUpdates(['instanceVisibility'])
             addSystemToScene(tmpSys);
             tmpSystems.push(tmpSys);
         }
+
+        // lets orphan strand2 element
+        let bases2 = [...strand2.monomers]; // clone the references to the elements
+        strand2.excludeElements(strand2.monomers);
         
         //check that it is not the same strand
         if (strand1 !== strand2) {
-            // Transfer elements
-            strand2.forEach(e=>{e.strand = strand1});
-
             //remove strand2 object 
             strand2.system.removeStrand(strand2);
+        }
+        else {
+            strand1.circular = true;
+        }
 
-            // Update 5' end to include the new elements
-            strand1.end5 = strand2.end5;
-
-            // Strand id update
-            strand1.id = Math.min(strand1.id, strand2.id)
-
-            //since strand IDs were updated, we also need to update the coloring
-            updateColoring();
-            }
-
-        /*
+        // Strand id update
         let strID = 1; 
         sys5.strands.forEach((strand) =>strand.strandID = strID++);
         if (sys3 !== sys5) {
             sys3.strands.forEach((strand) =>strand.strandID = strID++);
         }
-        */
+
+        // and add them back into strand1 
+        //create fill and deploy new strand 
+        let i = end5.lid+1;
+        bases2.forEach(
+            (n) => {
+                strand1.addMonomer(n);
+                n.lid = i;
+                i++;
+            }
+        );
+
+        //since strand IDs were updated, we also need to update the coloring
+        updateColoring();
 
         //connect the 2 element objects 
-        end5.n5 = end3;
-        end3.n3 = end5;
+        end5.neighbor5 = end3;
+        end3.neighbor3 = end5;
 
         //last, add the sugar-phosphate bond
         let p2 = end3.getInstanceParameter3("bbOffsets");
@@ -245,9 +261,11 @@ module edit{
         sys5.callUpdates(["instanceOffset", "instanceScale", "instanceColor", "instanceRotation", "instanceVisibility"]);
         sys3.callUpdates(["instanceOffset", "instanceScale", "instanceColor", "instanceRotation", "instanceVisibility"]);
 
-        tmpSystems.forEach((s) => {
-            s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility'])
-        });
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility'])
+            });
+        }
         render();
     }
 
@@ -269,34 +287,28 @@ module edit{
             needsUpdateList.add(sys);
 
             let newStrand: Strand;
-            // Split strand if we won't also delete further upstream
-            if(e.n5 && !victims.includes(e.n5)) {
+            // Split strand if we won't also delete further downstream
+            if(e.neighbor3 && !victims.includes(e.neighbor3)) {
                 newStrand = splitStrand(e);
             }
 
-            if (e.n3){
-                e.n3.strand.end5 = e.n3;
-                e.n3.n5 = null;
-                e.n3 = null;
+            if (e.neighbor3){
+                e.neighbor3.neighbor5 = null;
+                e.neighbor3 = null;
             }
-            if (e.n5) {
+            if (e.neighbor5) {
                 // If different systems, we need to update both
-                let n5sys = e.n5.dummySys ? e.n5.dummySys : e.n5.getSystem();
+                let n5sys = e.neighbor5.dummySys ? e.neighbor5.dummySys : e.neighbor5.getSystem();
                 needsUpdateList.add(n5sys);
 
-                e.n5.strand.end3 = e.n5;
-                e.n5.n3 = null;
-                e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
-                e.n5 = null;
+                e.neighbor5.neighbor3 = null;
+                e.neighbor5.setInstanceParameter("bbconScales", [0, 0, 0]);
+                e.neighbor5 = null;
             }
 
             e.toggleVisibility();
-
-            // Shorten strand end if e
-            //if(e.strand.end3 == e) e.strand.end3 = e.n5;
-            //if(e.strand.end5 == e) e.strand.end5 = e.n3;
-
-            elements.delete(e.id);
+            e.strand.excludeElements([e])
+            elements.delete(e.gid);
             selectedBases.delete(e);
 
             // Remove strand(s) if empty
@@ -359,14 +371,14 @@ module edit{
         tmpSys.initInstances(instCopies.length);
         tmpSystems.push(tmpSys);
 
-        let oldids = instCopies.map(c=>{return c.id});
+        let oldgids = instCopies.map(c=>{return c.gid});
         let elems = instCopies.map((c,sid)=>{
             // Create new element
             let e: BasicElement = new c.elemType(undefined, undefined);
-            // Give back the old copied id if it's not already in use,
+            // Give back the old copied gid if it's not already in use,
             // otherwise, create a new one
-            if(!elements.has(c.id)) {
-                elements.set(c.id, e);
+            if(!elements.has(c.gid)) {
+                elements.set(c.gid, e);
             } else {
                 elements.push(e);
             }
@@ -377,7 +389,7 @@ module edit{
 
             // Assign a picking color
             let idColor = new THREE.Color();
-            idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
+            idColor.setHex(e.gid + 1); //has to be +1 or you can't grab nucleotide 0
             tmpSys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
 
             return e;
@@ -392,49 +404,49 @@ module edit{
             let c = instCopies[sid];
             // Add neighbors to new copies in list, or to existing elements
             // if they don't already have neighbors
-            if(c.n3id >= 0) { // If we have a 3' neighbor
-                let i3 = oldids.findIndex(id=>{return id == c.n3id});
+            if(c.n3gid >= 0) { // If we have a 3' neighbor
+                let i3 = oldgids.findIndex(gid=>{return gid == c.n3gid});
                 // If the 3' neighbor is also about to be added, we link to
                 // the new object instead
                 if (i3 >= 0) {
-                    e.n3 = elems[i3];
-                    elems[i3].n5 = e;
+                    e.neighbor3 = elems[i3];
+                    elems[i3].neighbor5 = e;
                 // Otherwise, if the indicated neighbor exists and we can link
                 // the new element to it without overwriting anything
                 } else if (
-                    elements.has(c.n3id) &&
-                    elements.get(c.n3id) &&
-                    !elements.get(c.n3id).n5)
+                    elements.has(c.n3gid) &&
+                    elements.get(c.n3gid) &&
+                    !elements.get(c.n3gid).neighbor5)
                 {
-                    e.n3 = null;
-                    toLigate.push([e, elements.get(c.n3id)]);
-                    //e.neighbor3 = elements.get(c.n3id);
+                    e.neighbor3 = null;
+                    toLigate.push([e, elements.get(c.n3gid)]);
+                    //e.neighbor3 = elements.get(c.n3gid);
                     //e.neighbor3.neighbor5 = e;
                 // If not, we don't set any neighbor
                 } else {
-                    e.n3 = null;
+                    e.neighbor3 = null;
                 }
             }
             // Same as above, but for 5'
-            if(c.n5id >= 0) { // If we have a 5' neighbor
-                let i5 = oldids.findIndex(id=>{return id == c.n5id});
+            if(c.n5gid >= 0) { // If we have a 5' neighbor
+                let i5 = oldgids.findIndex(gid=>{return gid == c.n5gid});
                 // If the 5' neighbor is also about to be added, we link to
                 // the new object instead
                 if (i5 >= 0) {
-                    e.n5 = elems[i5];
-                    elems[i5].n3 = e;
+                    e.neighbor5 = elems[i5];
+                    elems[i5].neighbor3 = e;
                 // Otherwise, if the indicated neighbor exists and we can link
                 // the new element to it without overwriting anything
                 } else if (
-                    elements.has(c.n5id) &&
-                    elements.get(c.n5id) &&
-                    !elements.get(c.n5id).n3)
+                    elements.has(c.n5gid) &&
+                    elements.get(c.n5gid) &&
+                    !elements.get(c.n5gid).neighbor3)
                 {
-                    e.n5 = null;
-                    toLigate.push([e, elements.get(c.n5id)]);
+                    e.neighbor5 = null;
+                    toLigate.push([e, elements.get(c.n5gid)]);
                 // If not, we don't set any neighbor
                 } else {
-                    e.n5 = null;
+                    e.neighbor5 = null;
                 }
             }
         });
@@ -443,46 +455,58 @@ module edit{
         elems.forEach((e, sid)=>{
             let c = instCopies[sid];
             let sys = c.system;
+            let circular: boolean;
             // Do we have a strand assigned already?
             if(!e.strand) {
                 // Does any of our neighbors know what strand this is?
                 let i = e;
                 while(!i.strand) { // Look in 3' dir
-                    if (e === i.n3) {
+                    if (e === i.neighbor3) {
+                        circular = true;
                         break
                     }
-                    if (i.n3) i = i.n3;
+                    if (i.neighbor3) i = i.neighbor3;
                     else break;
                 }
                 if(!i.strand) { // If nothing, look in 5' dir
                     i = e;
                     while(!i.strand) {
-                        if (e === i.n5) {
+                        if (e === i.neighbor5) {
+                            circular = true;
                             break
                         }
-                        if (i.n5) i = i.n5;
+                        if (i.neighbor5) i = i.neighbor5;
                         else break;
                     }
                 }
                 // If we found something
                 if (i.strand) {
                     // Add us to the strand
-                    e.strand = i.strand;
-                    // And update endpoints
-                    e.strand.updateEnds();
-                    //if (e.strand.end3 == e.n5) e.strand.end3 = e;
-                    //if (e.strand.end5 == e.n3) e.strand.end5 = e;
+                    i.strand.addMonomer(e);
                 } else {
                     // Create a new strand
-                    let strand: Strand;
+
+                    // This is ugly, but we need to find the next available
+                    // strand ID and we can't do sys.strands.length because
+                    // of proteins
+                    let sMin = 1;
+                    let sMax = -1
+                    sys.strands.forEach(s=>{
+                        sMin = Math.min(sMin, s.strandID);
+                        sMax = Math.max(sMax, s.strandID);
+                    })
+                    let newStrandID: number;
                     if (e.isAminoAcid()) {
-                        strand = sys.addNewPeptideStrand();
+                        newStrandID = sMin - 1;
                     } else {
-                        strand = sys.addNewNucleicAcidStrand();
+                        newStrandID = sMax + 1;
                     }
-                    e.strand = strand;
-                    strand.end3 = strand.end5 = e;
-                    console.log(`Created a new strand with id ${strand.id}`);
+                    let strand = sys.createStrand(newStrandID);
+                    sys.addStrand(strand);
+                    strand.addMonomer(e);
+                }
+                if (circular) {
+                    e.strand.circular = true;
                 }
             }
             // If the whole system has been removed we have to add it back again
@@ -494,20 +518,20 @@ module edit{
         // Update bonds
         elems.forEach(e=>{
             // Do we still have a 3' neighbor?
-            if(e.n3) {
+            if(e.neighbor3) {
                 // Update backbone bond
                 calcsp(e);
             } else {
                 // Set explicitly to null
-                e.n3 = null;
+                e.neighbor3 = null;
                 // Remove backbone bond
                 tmpSys.fillVec('bbconScales', 3, e.sid, [0, 0, 0]);
                 tmpSys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
                 render();
             }
-            if(!e.n5) {
+            if(!e.neighbor5) {
                 // Set explicitly to null
-                e.n5 = null;
+                e.neighbor5 = null;
             }
             e.updateColor();
         });
@@ -521,42 +545,37 @@ module edit{
         return elems;
     }
 
-    function addElementsBySeq (end: BasicElement, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addElementsBySeq (end, sequence, tmpSys, direction, inverse, lidCounter): BasicElement[] {
         // add monomers to the strand
         const strand: Strand = end.strand;
-        const positions = end.extendStrand(sequence.length, direction, false);
+        const lines = end.extendStrand(sequence.length, direction, false);
         let last = end;
 
         let addedElems = [];
         //create topology
         for (let i = 0, len = sequence.length; i < len; i++) {
             let e = strand.createBasicElement();
-            elements.push(e); // Add element and assign id
-            e.sid = sidCounter; //You're always adding to a tmpSys so this is needed
+            elements.push(e); // Add element and assign gid
+            e.lid = lidCounter;
+            e.sid = lidCounter; //You're always adding to a tmpSys so this is needed
             e.dummySys = tmpSys;
             last[direction] = e;
             e[inverse] = last;
             e.type = sequence[i];
-            e.strand = strand;
+            strand.addMonomer(e);
             last = e;
-            sidCounter++;
+            lidCounter++;
             addedElems.push(e);
         }
         // Make last element end of strand
         last[direction] = null;
-        if (direction == 'n3') {
-            strand.end3 = last;
-        } else if (direction == 'n5') {
-            strand.end5 = last;
-        }
-
         let e: BasicElement = end[direction];
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
-            let [p, a1, a3] = positions[i]
-            e.calcPositions(p, a1, a3);
+            e.calcPositionsFromConfLine(lines[i]);
             e = e[direction];
         }
+        strand.circular = false
 
         addSystemToScene(tmpSys);
         //putting this in one loop would slow down loading systems
@@ -566,8 +585,8 @@ module edit{
         e = end;
         while (e && e[direction]) {
             // Backbone must be drawn from 5' end
-            if (direction == "n5") {
-                calcsp(e.n5);
+            if (direction == "neighbor5") {
+                calcsp(e.neighbor5);
             } else {
                 calcsp(e);
             }
@@ -577,14 +596,14 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addDuplexBySeq (end, sequence, tmpSys, direction, inverse, lidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
         let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
         const l = sequence.length
         
-        const positions = end.extendStrand(l, direction, true); // true = double strand
+        const lines = end.extendStrand(l, direction, true); // true = double strand
 
         let last1 = end;
         let last2 = end2;
@@ -593,12 +612,13 @@ module edit{
         for (let i = 0; i < l; i++) {
             let e1 = strand.createBasicElement();
             elements.push(e1);
-            e1.sid = sidCounter + i;
+            e1.lid = lidCounter + i;
+            e1.sid = lidCounter + i;
             e1.dummySys = tmpSys;
             last1[direction] = e1;
             e1[inverse] = last1;
             e1.type = sequence[i];
-            e1.strand = strand;
+            strand.addMonomer(e1);
             last1 = e1;
             addedElems.push(e1);
         }
@@ -607,12 +627,13 @@ module edit{
             let e1 = addedElems[i] as Nucleotide;
             let e2 = strand2.createBasicElement() as Nucleotide;
             elements.push(e2);
-            e2.sid = sidCounter + l + i;
+            e2.lid = lidCounter + i;
+            e2.sid = lidCounter + l + i;
             e2.dummySys = tmpSys;
             last2[inverse] = e2;
             e2[direction] = last2;
             e2.type = e1.getComplementaryType();
-            e2.strand = strand2;
+            strand2.addMonomer(e2);
             last2 = e2;
             addedElems.push(e2);
 
@@ -626,34 +647,32 @@ module edit{
         let e2: BasicElement = end2[inverse];
 
         for (let i = 0; i < l; i++) {
-            let [p, a1, a3] = positions[i]
-            e1.calcPositions(p, a1, a3);
+            e1.calcPositionsFromConfLine(lines[i]);
             e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
         for (let i = l * 2 - 1; i >= l; i--) {
-            let [p, a1, a3] = positions[i];
-            e2.calcPositions(p, a1, a3);
+            e2.calcPositionsFromConfLine(lines[i]);
             e2 = e2[inverse];
         }
 
-        strand.updateEnds();
-        strand2.updateEnds();
+        strand.circular = false;
+        strand2.circular = false;
 
         addSystemToScene(tmpSys);
         e1 = end;
         e2 = end2;
         while (e1 && e1[direction]) {
-            if (direction == "n5") {
-                calcsp(e1.n5);
+            if (direction == "neighbor5") {
+                calcsp(e1.neighbor5);
             } else {
                 calcsp(e1);
             }
             e1 = e1[direction];
         }
         while (e2 && e2[inverse]) {
-            if (inverse == "n5") {
-                calcsp(e2.n5);
+            if (inverse == "neighbor5") {
+                calcsp(e2.neighbor5);
             } else {
                 calcsp(e2);
             }
@@ -674,13 +693,13 @@ module edit{
         let direction: string;
         let inverse: string;
 
-        if (end.n3 == null) {
-            direction = "n3";
-            inverse = "n5";
+        if (end.neighbor3 == null) {
+            direction = "neighbor3";
+            inverse = "neighbor5";
         }
-        else if (end.n5 == null) {
-            direction = "n5";
-            inverse = "n3";
+        else if (end.neighbor5 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
         }
         else {
             notify("Please select a monomer that has an open neighbor");
@@ -713,13 +732,13 @@ module edit{
         }
         let direction: string;
         let inverse: string;
-        if (end.n5 == null && end2.n3 == null) {
-            direction = "n5";
-            inverse = "n3";
+        if (end.neighbor5 == null && end2.neighbor3 == null) {
+            direction = "neighbor5";
+            inverse = "neighbor3";
         }
-        else if (end.n3 == null && end2.n5 == null) {
-            direction = "n3";
-            inverse = "n5";
+        else if (end.neighbor3 == null && end2.neighbor5 == null) {
+            direction = "neighbor3";
+            inverse = "neighbor5";
         }
         else {
             notify("Please select a monomer that has an open neighbor");
@@ -737,43 +756,24 @@ module edit{
         return addedElems;
     }
 
-
-    export function getSequence(elems: Set<BasicElement>) : string {
-        // Sort elements in 5' to 3' order
-        let strands = new Set<Strand>();
-        elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[];
-        Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
-            orderedElems.concat(strand.filter(e=>elems.has(e)));
-        });
-
-        return orderedElems.map(e=>{return e.type}).join('');
-    };
-
-    export function setSequence(elems: Set<BasicElement>, sequence: string, setComplementaryBases?: boolean) {
+    export function setSequence(elems: Nucleotide[], sequence: string, setComplementaryBases?: boolean) {
         setComplementaryBases = setComplementaryBases || false;
-        if (elems.size != sequence.length) {
-            notify(`You have ${elems.size} particles selected and ${sequence.length} letters in the sequence...doing my best`);
+        if (elems.length != sequence.length) {
+            notify(`You have ${elems.length} particles selected and ${sequence.length} letters in the sequence...doing my best`);
         }
 
-        // Sort elements in 5' to 3' order
-        let strands = new Set<Strand>();
-        elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[];
-        Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
-            orderedElems.concat(strand.filter(e=>elems.has(e)));
-        });
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a,b)=>{return a.lid<b.lid ? 1:-1});
 
         // Define a function to satisfy view.longCalculation callback
         let set = function(){
-            let len = Math.min(orderedElems.length, sequence.length);
+            let len = Math.min(elems.length, sequence.length);
             for(let i=0; i<len; i++) {
-                let e = orderedElems[i];
-                e.changeType(sequence[i]);
+                elems[i].changeType(sequence[i]);
                 if (setComplementaryBases) {
-                    if(e.isPaired()) {
-                        let n = e as Nucleotide;
-                        n.pair.changeType(n.getComplementaryType());
+                    let paired = elems[i].pair;
+                    if(paired) {
+                        paired.changeType(elems[i].getComplementaryType());
                     }
                 }
             }
@@ -815,13 +815,11 @@ module edit{
 
         // The strand gets added to the last-added system.
         // Or make a new system if you're crazy and trying to build something from scratch
-        let realSys: System;
-        let blank = false;
+        let realSys;
         if (systems.length > 0) {
             realSys = systems.slice(-1)[0];
         }
         else {
-            blank = true;
             realSys = new System(sysCount++, elements.getNextId())
             realSys.initInstances(0);
             systems.push(realSys);
@@ -842,31 +840,25 @@ module edit{
 
         let addedElems = [];
 
-        elements.push(e); // Add element and assign id
+        elements.push(e); // Add element and assign gid
         e.dummySys = tmpSys;
+        e.lid = 0;
         e.sid = 0;
         e.type = sequence[0];
-        e.n3 = null;
-        e.strand = strand;
-        strand.end3 = strand.end5 = e;
-
+        e.neighbor3 = null;
+        strand.addMonomer(e);
         addedElems.push(e);
 
-        let pos:THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3;
-        if (blank) {
-            // Place new strand at origin if the scene is empty
-            pos = new THREE.Vector3();
-            a3 = new THREE.Vector3(0,0,-1);
-            a1 = new THREE.Vector3(0,1,0);
-        } else {
-            // Otherwise, place the new strand 10 units in front of the camera
-            // with its a1 vector parallel to the camera heading
-            // and a3 the cross product of the a1 vector and the camera's up vector
-            a1 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            pos = camera.position.clone().add(a1.clone().multiplyScalar(20));
-            a3 = a1.clone().cross(camera.up);
-        }
-        e.calcPositions(pos, a1, a3);
+        // Place the new strand 10 units in front of the camera
+        // with its a1 vector parallel to the camera heading
+        // and a3 the cross product of the a1 vector and the camera's up vector
+        let cameraHeading = new THREE.Vector3(0, 0, -1);
+        cameraHeading.applyQuaternion(camera.quaternion);
+        let pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20))
+        let a3 = new THREE.Vector3;
+        a3.crossVectors(cameraHeading, camera.up)
+        let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z] as unknown as string[]
+        e.calcPositionsFromConfLine(line);
         e.dummySys = tmpSys;
 
         // Extends the strand 3'->5' with the rest of the sequence
@@ -878,11 +870,10 @@ module edit{
                 e.pair = createBP(e);
                 addedElems.push(e.pair);
             }
-            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "neighbor5", "neighbor3", 1));
         } else {
-            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "neighbor5", "neighbor3", 1));
         }
-        strand.updateEnds();
 
         return addedElems;
     }
@@ -902,20 +893,22 @@ module edit{
         tmpSys.initInstances(1);
         tmpSystems.push(tmpSys);
         
-        const strand = elem.getSystem().addNewNucleicAcidStrand();
+        const realSys = systems.slice(-1)[0];
+        const strand = realSys.createStrand(realSys.strands.length);
+        realSys.addStrand(strand);
 
-        // Add element and assign id
+        // Add element and assign gid
         const e = new DNANucleotide(undefined, strand);
         elements.push(e);
         e.dummySys = tmpSys;
+        e.lid = 0;
         e.sid = 0;
         e.type = elem.getComplementaryType();
-        e.n3 = null;
-        e.n5 = null;
+        e.neighbor3 = null;
+        e.neighbor5 = null;
         e.pair = elem;
         elem.pair = e;
-        e.strand = strand;
-        strand.end5 = strand.end3 = e;
+        strand.addMonomer(e);
         
         const cm = elem.getPos();
         const a1 = elem.getA1();
@@ -925,7 +918,8 @@ module edit{
         a1.negate();
         a3.negate();
         const pos: THREE.Vector3 = cm.clone().sub(a1.clone().multiplyScalar(1.2));
-        e.calcPositions(pos, a1, a3);
+        const line = [pos.x, pos.y, pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z] as unknown as string[];
+        e.calcPositionsFromConfLine(line);
         e.dummySys = tmpSys;
 
         addSystemToScene(tmpSys);

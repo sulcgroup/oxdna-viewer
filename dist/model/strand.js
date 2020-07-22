@@ -6,136 +6,100 @@
  */
 class Strand {
     constructor(id, system) {
-        this.id = id;
+        this.monomers = [];
+        this.strandID = id;
         this.system = system;
+        this.circular = false;
     }
     ;
-    isCircular() {
-        return this.end3.n3 != null && this.end3.n3 == this.end5;
+    addMonomer(elem) {
+        this.monomers.push(elem);
+        elem.strand = this;
     }
-    createBasicElement(id) {
+    ;
+    createBasicElement(gid) {
         throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc.";
     }
-    getSequence() {
-        return this.map(e => e.type).join('');
+    excludeElements(elements) {
+        // detach from strand
+        elements.forEach(e => {
+            e.strand = null;
+        });
+        // create a new list of strand elements  
+        this.monomers = this.monomers.filter(e => {
+            return !elements.includes(e);
+        });
     }
-    getLength() {
-        let e = this.end3;
-        let i = 0;
-        while (e) {
-            e = e.n5;
-            i++;
-            if (e === this.end3)
-                break;
+    ;
+    get3prime() {
+        let start = this.monomers[0];
+        let i = start;
+        // Rewind until to 3' end or back to start (if circular)
+        while (i.neighbor3) {
+            if (i.neighbor3 === start) {
+                // Back to start, circular
+                this.circular = true;
+                return start;
+            }
+            i = i.neighbor3;
         }
         return i;
     }
-    updateEnds() {
-        let start = this.end3;
-        while (this.end3.n3 && this.end3.n3 != this.end5) {
-            this.end3 = this.end3.n3;
-            // Avoid infinite loop on circular strand
-            if (this.end3 == start) {
-                this.end5 = this.end3.n3;
-                return;
+    get5prime() {
+        let start = this.monomers[this.monomers.length];
+        let i = start;
+        // Rewind until to 5' end or back to start (if circular)
+        while (i.neighbor5) {
+            if (i.neighbor5 === start) {
+                // Back to start, circular
+                this.circular = true;
+                return start;
             }
+            i = i.neighbor5;
         }
-        ;
-        start = this.end5;
-        while (this.end5.n5 && this.end3.n5 != this.end3) {
-            this.end5 = this.end5.n5;
-            // Avoid infinite loop on circular strand
-            if (this.end5 == start) {
-                this.end3 = this.end5.n5;
-                return;
-            }
-        }
-        ;
+        return i;
     }
-    /**
-     * Return a list of all monomers in strand, in 5' to 3' order
-     * @param reverse If set to true, return list in 3' to 5' order instead
-     */
-    getMonomers(reverse) {
-        return this.map(e => e, reverse);
-    }
-    /**
-     * Performs the specified action for each element in an array.
-     * @param callbackfn A function that accepts up to two arguments
-     * @param reverse Iterate in 3' to 5' direction, instead of the default 5' to 3'
-     * @param condition If provided, only continue looping while condition is true
-     */
-    forEach(callbackfn, reverse, condition) {
-        const start = reverse ? this.end3 : this.end5;
-        let e = start;
-        let i = 0;
-        while (e && (!condition || condition(e, i))) {
-            callbackfn(e, i);
-            e = reverse ? e.n5 : e.n3;
-            i++;
-            if (e === start)
+    getOrderedMonomers() {
+        let ordered = [];
+        let start = this.get3prime();
+        let i = start;
+        while (i) {
+            ordered.push(i);
+            i = i.neighbor5;
+            if (i === start) {
                 break;
-        }
-    }
-    /**
-     * Calls a defined callback function on each monomer of the strand, and returns an array that contains the results
-     * @param callbackfn A function that accepts up to two arguments
-     * @param reverse Iterate in 3' to 5' direction, instead of the default 5' to 3'
-     */
-    map(callbackfn, reverse) {
-        let list = [];
-        this.forEach((e, i) => { list.push(callbackfn(e, i)); }, reverse);
-        return list;
-    }
-    /**
-     * Returns the monomers of the strand that meet the condition specified in a callback function.
-     * @param callbackfn — A function that accepts up to two arguments, returning a boolean
-     * @param reverse Retur filtered list in 3' to 5' direction, instead of the default 5' to 3'
-     */
-    filter(callbackfn, reverse) {
-        let list = [];
-        this.forEach((e, i) => {
-            if (callbackfn(e, i)) {
-                list.push(e);
             }
-        }, reverse);
-        return list;
+        }
+        console.assert(ordered.length == this.monomers.length);
+        return ordered;
     }
     toggleMonomers() {
-        this.forEach(e => e.toggle());
+        this.monomers.forEach(e => e.toggle());
     }
     select() {
-        this.forEach(e => e.select());
+        this.monomers.forEach(e => e.select());
     }
     deselect() {
-        this.forEach(e => e.deselect());
+        this.monomers.forEach(e => e.deselect());
     }
     isEmpty() {
-        return !this.end3;
+        return this.monomers.length == 0;
     }
-    getPos() {
-        let com = new THREE.Vector3();
-        let length = 0;
-        this.forEach(e => {
-            com.add(e.getPos());
-            length++;
-        });
-        return com.divideScalar(length);
+    getCom() {
+        const com = new THREE.Vector3(0, 0, 0);
+        const l = this.monomers.length;
+        const cmOffs = this.system.cmOffsets;
+        for (let i = (this.monomers[0].gid - this.system.globalStartId) * 3; i <= (this.monomers[l - 1].gid - this.system.globalStartId) * 3; i += 3) {
+            com.add(new THREE.Vector3(cmOffs[i], cmOffs[i + 1], cmOffs[i + 2]));
+        }
+        return (com.multiplyScalar(1 / l));
     }
     ;
-    isPeptide() {
-        return false;
-    }
-    isNucleicAcid() {
-        return false;
-    }
     toJSON() {
         // Specify required attributes
         let json = {
-            id: this.id,
-            monomers: this.getMonomers(),
-            end3: this.end3,
-            end5: this.end5
+            id: this.strandID,
+            monomers: this.monomers
         };
         // Specify optional attributes
         if (this.label)
@@ -143,6 +107,10 @@ class Strand {
         return json;
     }
     ;
+    //this is so dirty...
+    getType() {
+        return this.__proto__.constructor.name;
+    }
 }
 ;
 class NucleicAcidStrand extends Strand {
@@ -150,17 +118,16 @@ class NucleicAcidStrand extends Strand {
         super(id, system);
     }
     ;
-    createBasicElement(id) {
+    createBasicElement(gid) {
         if (RNA_MODE)
-            return new RNANucleotide(id, this);
+            return new RNANucleotide(gid, this);
         else
-            return new DNANucleotide(id, this);
+            return new DNANucleotide(gid, this);
     }
     ;
     translateStrand(amount) {
         const s = this.system;
-        const monomers = this.getMonomers();
-        for (let i = (monomers[0].id - s.globalStartId) * 3; i <= (monomers[monomers.length - 1].id - s.globalStartId) * 3; i += 3) {
+        for (let i = (this.monomers[0].gid - s.globalStartId) * 3; i <= (this.monomers[this.monomers.length - 1].gid - s.globalStartId) * 3; i += 3) {
             s.bbOffsets[i] += amount.x;
             s.bbOffsets[i + 1] += amount.y;
             s.bbOffsets[i + 2] += amount.z;
@@ -184,9 +151,6 @@ class NucleicAcidStrand extends Strand {
             });
         }
     }
-    isNucleicAcid() {
-        return true;
-    }
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -200,14 +164,13 @@ class Peptide extends Strand {
         super(id, system);
     }
     ;
-    createBasicElement(id) {
-        return new AminoAcid(id, this);
+    createBasicElement(gid) {
+        return new AminoAcid(gid, this);
     }
     ;
     translateStrand(amount) {
         const s = this.system;
-        const monomers = this.getMonomers();
-        for (let i = (monomers[0].id - s.globalStartId) * 3; i <= (monomers[monomers.length - 1].id - s.globalStartId) * 3; i += 3) {
+        for (let i = (this.monomers[0].gid - s.globalStartId) * 3; i <= (this.monomers[this.monomers.length - 1].gid - s.globalStartId) * 3; i += 3) {
             s.nsOffsets[i] += amount.x;
             s.nsOffsets[i + 1] += amount.y;
             s.nsOffsets[i + 2] += amount.z;
@@ -229,9 +192,6 @@ class Peptide extends Strand {
         }
     }
     ;
-    isPeptide() {
-        return true;
-    }
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();

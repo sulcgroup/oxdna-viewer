@@ -69,18 +69,18 @@ class Dijkstra{
 //	}
 
 	constructor(vertices: BasicElement[], crossPairs: boolean) {
-		this.vertices = vertices.map(e=>e.id);
+		this.vertices = vertices.map(e=>e.gid);
 		this.crossPairs = crossPairs;
 	};
 
-	getNeigbors(id: number): number[] {
-		let e = elements.get(id);
+	getNeigbors(gid: number): number[] {
+		let e = elements.get(gid);
 		let n = [];
-		if(e.n3) {n.push(e.n3.id);}
-		if(e.n5) {n.push(e.n5.id);}
+		if(e.neighbor3) {n.push(e.neighbor3.gid);}
+		if(e.neighbor5) {n.push(e.neighbor5.gid);}
 		if(this.crossPairs && e instanceof Nucleotide) {
 			let pair = (<Nucleotide>e).pair;
-			if(pair) {n.push(pair.id);}
+			if(pair) {n.push(pair.gid);}
 		}
 		return n;
 	}
@@ -103,12 +103,12 @@ class Dijkstra{
 		goalLasts = [];
 
 		goals.forEach(e=>{
-			goalLasts.push(e.id);
+			goalLasts.push(e.gid);
 		});
 
 		// Init the distances and queues variables
 		this.vertices.forEach(vertex=>{
-			if(vertex === start.id){
+			if(vertex === start.gid){
 				distances[vertex] = 0;
 				nodes.enqueue(0, vertex);
 			} else{
@@ -132,7 +132,7 @@ class Dijkstra{
 			if (goalLasts.length == 0) {
 				//Compute the paths
 				goals.forEach(e=>{
-					let curr = e.id;
+					let curr = e.gid;
 					while(previous[curr]){
 						path.push(curr);
 						curr = previous[curr];
@@ -160,6 +160,6 @@ class Dijkstra{
 		}
 		// The starting point isn't in the solution &
 		// the solution is from end to start.
-		return path.concat(start.id).reverse().map(i=>elements.get(i));
+		return path.concat(start.gid).reverse().map(i=>elements.get(i));
 	}
 }

@@ -2,8 +2,8 @@
  * Extends Nuculeotide with RNA-specific properties such as base position relative to backbone, and A-form helix creation
  */
 class RNANucleotide extends Nucleotide {
-    constructor(id, strand) {
-        super(id, strand);
+    constructor(gid, strand) {
+        super(gid, strand);
         this.elementType = RNA;
         this.bbnsDist = 0.8246211;
     }
@@ -38,7 +38,7 @@ class RNANucleotide extends Nucleotide {
         //We just set the direction the the orientation of the a3 vector
         const start_pos = this.getPos();
         let dir = this.getA3();
-        if (direction == "n5") {
+        if (direction == "neighbor5") {
             dir.multiplyScalar(-1);
         }
         const dir_norm = Math.sqrt(dir.dot(dir));
@@ -70,8 +70,7 @@ class RNANucleotide extends Nucleotide {
             a1proj.divideScalar(a1projnorm);
             a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).multiplyScalar(-1).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
             RNA_fudge = a1.clone().multiplyScalar(0.6);
-            let p = r1.clone().add(start_pos).add(RNA_fudge);
-            out.push([p, a1, a3]); //r1 needs to have a fudge factor from the RNA model added
+            out.push([r1.x + start_pos.x + RNA_fudge.x, r1.y + start_pos.y + RNA_fudge.y, r1.z + start_pos.z + RNA_fudge.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]); //r1 needs to have a fudge factor from the RNA model added
         }
         return out;
     }

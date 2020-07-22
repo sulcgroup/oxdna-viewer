@@ -3,34 +3,47 @@
  */
 module api{
     export function toggleStrand(strand: Strand): Strand{
-        strand.map( 
+        let sys = strand.system;
+        let nucleotides = strand.monomers; 
+        nucleotides.map( 
             (n:Nucleotide) => n.toggleVisibility());
 
-        strand.system.callUpdates(['instanceVisibility'])
+        sys.callUpdates(['instanceVisibility'])
         if (tmpSystems.length > 0) {
-            tmpSystems.forEach(s => s.callUpdates(['instanceVisibility']));
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceVisibility'])
+            });
         }
 
         render();
         return strand;
     }
 
+    // TODO: integrate with the selection mechanism 
+    export function markStrand(strand: Strand): Strand{
+        let nucleotides = strand.monomers;
+        nucleotides.map((n: Nucleotide) => n.toggle());
+        render();
+        return strand;
+    };
+
     // get a dictionary with every strand length : [strand] listed   
     export function countStrandLength(system = systems[0]) {
         let strandLength : { [index: number]: [Strand] } = {};
         system.strands.map((strand: Strand) => {
-            let l = strand.getLength();
-            if (l in strandLength) 
+            let l = strand.monomers.length;
+            if( l in strandLength) 
                 strandLength[l].push(strand);
             else
                 strandLength[l] = [strand];
         });
         return strandLength;  
     };
-
     //highlight
     export function highlight5ps(system = systems[0]){
-        system.strands.forEach(strand=>strand.end5.select());
+        system.strands.map((strand) => {
+            strand.monomers[strand.monomers.length - 1].toggle();
+        });
         updateView(system);
         render();
     }
@@ -51,7 +64,11 @@ module api{
     }
 
     export function toggleAll(system = systems[0]){
-        system.strands.forEach(strand=>strand.forEach(n => n.toggleVisibility()));
+        system.strands.map((strand: Strand)=>{
+            let nucleotides = strand.monomers; 
+            nucleotides.map( 
+                (n:Nucleotide) => n.toggleVisibility());
+        });
         system.callUpdates(['instanceVisibility'])
         if (tmpSystems.length > 0) {
             tmpSystems.forEach ((s) => {
@@ -67,7 +84,7 @@ module api{
             (e: BasicElement) => {
                 if (e.strand == null) return
                 let sys = e.getSystem();
-                let sid = e.id - sys.globalStartId
+                let sid = e.gid - sys.globalStartId
                 if (e.dummySys !== null) {
                     sys = e.dummySys
                     sid = e.sid;
@@ -102,7 +119,7 @@ module api{
         let c : BasicElement = element; 
         while(c){
             elems.push(c);
-            c = c.n3;
+            c = c.neighbor3;
         }
         return elems;
     }
@@ -112,7 +129,7 @@ module api{
         let c : BasicElement = element; 
         while(c){
             elems.push(c);
-            c = c.n5;
+            c = c.neighbor5;
         }
         return elems;
     }
@@ -161,6 +178,16 @@ module api{
             transformControls.show();
         }
     }
+    
+
+    export function getSequence(elems: BasicElement[]) : string {
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a,b)=>{return a.lid<b.lid ? 1:-1});
+
+        let seq = "";
+        elems.forEach(e => seq += e.type);
+        return seq;
+    };
     
     //there's probably a less blunt way to do this...
     export function removeColorbar() {

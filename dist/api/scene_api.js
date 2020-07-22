@@ -4,20 +4,33 @@
 var api;
 (function (api) {
     function toggleStrand(strand) {
-        strand.map((n) => n.toggleVisibility());
-        strand.system.callUpdates(['instanceVisibility']);
+        let sys = strand.system;
+        let nucleotides = strand.monomers;
+        nucleotides.map((n) => n.toggleVisibility());
+        sys.callUpdates(['instanceVisibility']);
         if (tmpSystems.length > 0) {
-            tmpSystems.forEach(s => s.callUpdates(['instanceVisibility']));
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceVisibility']);
+            });
         }
         render();
         return strand;
     }
     api.toggleStrand = toggleStrand;
+    // TODO: integrate with the selection mechanism 
+    function markStrand(strand) {
+        let nucleotides = strand.monomers;
+        nucleotides.map((n) => n.toggle());
+        render();
+        return strand;
+    }
+    api.markStrand = markStrand;
+    ;
     // get a dictionary with every strand length : [strand] listed   
     function countStrandLength(system = systems[0]) {
         let strandLength = {};
         system.strands.map((strand) => {
-            let l = strand.getLength();
+            let l = strand.monomers.length;
             if (l in strandLength)
                 strandLength[l].push(strand);
             else
@@ -29,7 +42,9 @@ var api;
     ;
     //highlight
     function highlight5ps(system = systems[0]) {
-        system.strands.forEach(strand => strand.end5.select());
+        system.strands.map((strand) => {
+            strand.monomers[strand.monomers.length - 1].toggle();
+        });
         updateView(system);
         render();
     }
@@ -50,7 +65,10 @@ var api;
     }
     api.toggleElements = toggleElements;
     function toggleAll(system = systems[0]) {
-        system.strands.forEach(strand => strand.forEach(n => n.toggleVisibility()));
+        system.strands.map((strand) => {
+            let nucleotides = strand.monomers;
+            nucleotides.map((n) => n.toggleVisibility());
+        });
         system.callUpdates(['instanceVisibility']);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
@@ -66,7 +84,7 @@ var api;
             if (e.strand == null)
                 return;
             let sys = e.getSystem();
-            let sid = e.id - sys.globalStartId;
+            let sid = e.gid - sys.globalStartId;
             if (e.dummySys !== null) {
                 sys = e.dummySys;
                 sid = e.sid;
@@ -100,7 +118,7 @@ var api;
         let c = element;
         while (c) {
             elems.push(c);
-            c = c.n3;
+            c = c.neighbor3;
         }
         return elems;
     }
@@ -110,7 +128,7 @@ var api;
         let c = element;
         while (c) {
             elems.push(c);
-            c = c.n5;
+            c = c.neighbor5;
         }
         return elems;
     }
@@ -158,6 +176,15 @@ var api;
         }
     }
     api.selectElements = selectElements;
+    function getSequence(elems) {
+        // Sort elements by their id, in 5' to 3' order
+        elems.sort((a, b) => { return a.lid < b.lid ? 1 : -1; });
+        let seq = "";
+        elems.forEach(e => seq += e.type);
+        return seq;
+    }
+    api.getSequence = getSequence;
+    ;
     //there's probably a less blunt way to do this...
     function removeColorbar() {
         let l = colorbarScene.children.length;

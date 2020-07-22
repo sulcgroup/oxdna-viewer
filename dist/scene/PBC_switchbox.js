@@ -17,7 +17,7 @@ function centerAndPBC(elems) {
     centerElements(elems);
     bringInBox(getInboxingMode());
     // Update instances
-    elements.forEach(e => { if (e.n3)
+    elements.forEach(e => { if (e.neighbor3)
         calcsp(e); });
     systems.forEach(s => s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
@@ -89,7 +89,7 @@ function bringInBox(boxOption) {
     else if (boxOption == "Strand") {
         systems.forEach(system => {
             system.strands.forEach(strand => {
-                let pOld = strand.getPos();
+                let pOld = strand.getCom();
                 ;
                 let pNew = coordInBox(pOld);
                 strand.translateStrand(pNew.sub(pOld));

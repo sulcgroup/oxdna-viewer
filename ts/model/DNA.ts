@@ -3,8 +3,8 @@
  */
 
 class DNANucleotide extends Nucleotide {
-    constructor(id: number, strand: Strand) {
-        super(id, strand);
+    constructor(gid: number, strand: Strand) {
+        super(gid, strand);
         this.elementType = DNA;
         this.bbnsDist = 0.8147053;
     };
@@ -48,11 +48,11 @@ class DNANucleotide extends Nucleotide {
         
         // create rotational matrix
         let R = new THREE.Matrix4;
-        if (direction == "n3") {
+        if (direction == "neighbor3") {
             R.makeRotationAxis(dir.clone().negate(), rot);
             rise = -rise;
         }
-        else { // n5
+        else { // neighbor5
             R.makeRotationAxis(dir, rot);
         }
 
@@ -65,8 +65,7 @@ class DNANucleotide extends Nucleotide {
         for (let i = 0; i < len; i++) {
             a1.applyMatrix4(R);
             rb.add(rbShift);
-            let p = rb.clone().add(center).sub(a1.clone().multiplyScalar(0.6));
-            out.push([p, a1.clone(), a3.clone()]);
+            out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
         }
 
         // add complementary strand in the opposite direction
@@ -75,13 +74,11 @@ class DNANucleotide extends Nucleotide {
             a3.negate();
             rbShift.negate();
             R.transpose();
-            let p1 = rb.clone().add(center).sub(a1.clone().multiplyScalar(0.6));
-            out.push([p1, a1.clone(), a3.clone()]);
+            out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
             for (let i = 0; i < len - 1; i++) {
                 a1.applyMatrix4(R);
                 rb.add(rbShift);
-                let p2 = rb.clone().add(center).sub(a1.clone().multiplyScalar(0.6));
-                out.push([p2, a1.clone(), a3.clone()]);
+                out.push([rb.x + center.x - (a1.x * 0.6), rb.y + center.y - (a1.y * 0.6), rb.z + center.z - (a1.z * 0.6), a1.x, a1.y, a1.z, a3.x, a3.y, a3.z]);
             }
         }
         return out;
