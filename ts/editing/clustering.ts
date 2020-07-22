@@ -34,7 +34,7 @@ function dbscan(minPts: number, eps: number) {
     clearClusters(); // Remove any previous clusters and reset counter
     const noise = -1; // Label for noise
     const getPos = (element: BasicElement) => {
-        return element.getInstanceParameter3("cmOffsets");
+        return element.getPos();
     }
     const findNeigbours = (p: BasicElement, eps: number) => {
         const neigbours: BasicElement[] = [];

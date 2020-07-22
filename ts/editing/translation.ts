@@ -27,7 +27,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         }
 
         //get current positions
-        let cmPos = base.getInstanceParameter3("cmOffsets");
+        let cmPos = base.getPos();
         let bbPos = base.getInstanceParameter3("bbOffsets");
         let nsPos = base.getInstanceParameter3("nsOffsets");
         let conPos = base.getInstanceParameter3("conOffsets");
@@ -144,7 +144,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
             sid = base.sid;
         }
 
-        let cmPos = base.getInstanceParameter3("cmOffsets");
+        let cmPos = base.getPos();
         let bbPos = base.getInstanceParameter3("bbOffsets");
         let nsPos = base.getInstanceParameter3("nsOffsets");
         let conPos = base.getInstanceParameter3("conOffsets");

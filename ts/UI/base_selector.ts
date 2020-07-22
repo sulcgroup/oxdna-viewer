@@ -9,9 +9,11 @@ canvas.addEventListener('mousemove', event => {
 	let id = gpuPicker(event)
 	if (id > -1) {
 		canvas.style.cursor = 'pointer';
+		view.showHoverInfo(new THREE.Vector2(event.clientX, event.clientY), elements.get(id));
 	}
 	else {
 		canvas.style.cursor = 'auto';
+		view.hideHoverInfo();
 	}
 });
 
@@ -20,11 +22,16 @@ canvas.addEventListener('click', event => { //if mouse is pressed down
 
 	// If double click, zoom in on element
 	if(event.detail == 2) {
-		let id = gpuPicker(event);
-		if (id > -1 && !transformControls.isHovered()) {
-			api.findElement(elements.get(id));
-			event.preventDefault();
+		if(!transformControls.isHovered()) {
+			let id = gpuPicker(event);
+			if (id > -1) {
+				api.findElement(elements.get(id));
+				event.preventDefault();
+			} else {
+				clearSelection();
+			}
 		}
+		
 		return;
 	}
 
@@ -473,7 +480,7 @@ class BoxSelector {
 		elements.forEach(element => {
 			// check if element is visible, before adding to selection
  			if (element.getInstanceParameter3('visibility').x){
-				let cmPos = element.getInstanceParameter3("cmOffsets");
+				let cmPos = element.getPos();
 				if (this.frustum.containsPoint(cmPos)) {
 					this.collection.push(element);
 				}

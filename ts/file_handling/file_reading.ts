@@ -182,14 +182,16 @@ function readTrap(system, trapReader) {
         switch(trap.type){
             case "mutual_trap":
                 let mutTrap = new MutualTrap(trap, system);
+                mutTrap.update();
                 forces.push(mutTrap);
-                mutTrap.draw();
+                
                 break;
             default:
                 notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
         }
     });
+   forceHandler =  new ForceHandler(forces);
     
 }
 
@@ -305,7 +307,7 @@ function readDat(datReader, system) {
 
         // consume a new line from the file
         l = lines[i].split(" ");
-        currentNucleotide.calculatePositions(l);
+        currentNucleotide.calcPositionsFromConfLine(l);
 
         //when a strand is finished, add it to the system
         if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand

@@ -92,7 +92,7 @@ function bringInBox(boxOption: string) {
     // Apply to either monomers, or whole strands
     if (boxOption == "Monomer") {
         elements.forEach(e=>{
-            let pOld = e.getInstanceParameter3("cmOffsets");
+            let pOld = e.getPos();
             let pNew = coordInBox(pOld);
             e.translatePosition(pNew.sub(pOld));
         });
@@ -141,7 +141,7 @@ function calcCOM(elems: BasicElement[]): THREE.Vector3 {
         cm_z = new THREE.Vector2();
 
     elems.forEach((e: BasicElement)=>{
-        let p = e.getInstanceParameter3("cmOffsets");
+        let p = e.getPos();
 
         // Calculate positions on unit circle for each dimension and that to the
         // sum.

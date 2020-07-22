@@ -287,7 +287,7 @@ var edit;
             // Calculate elems center of mass
             let com = new THREE.Vector3();
             elems.forEach(e => {
-                let p = e.getInstanceParameter3("cmOffsets");
+                let p = e.getPos();
                 com.add(p);
             });
             com.divideScalar(elems.length);
@@ -503,7 +503,7 @@ var edit;
         let e = end[direction];
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
-            e.calculatePositions(lines[i]);
+            e.calcPositionsFromConfLine(lines[i]);
             e = e[direction];
         }
         strand.circular = false;
@@ -569,12 +569,12 @@ var edit;
         let e1 = end[direction];
         let e2 = end2[inverse];
         for (let i = 0; i < l; i++) {
-            e1.calculatePositions(lines[i]);
+            e1.calcPositionsFromConfLine(lines[i]);
             e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
         for (let i = l * 2 - 1; i >= l; i--) {
-            e2.calculatePositions(lines[i]);
+            e2.calcPositionsFromConfLine(lines[i]);
             e2 = e2[inverse];
         }
         strand.circular = false;
@@ -762,7 +762,7 @@ var edit;
         let a3 = new THREE.Vector3;
         a3.crossVectors(cameraHeading, camera.up);
         let line = [pos.x, pos.y, pos.z, cameraHeading.x, cameraHeading.y, cameraHeading.z, a3.x, a3.y, a3.z];
-        e.calculatePositions(line);
+        e.calcPositionsFromConfLine(line);
         e.dummySys = tmpSys;
         // Extends the strand 3'->5' with the rest of the sequence
         // and return all added elements.
@@ -809,7 +809,7 @@ var edit;
         e.pair = elem;
         elem.pair = e;
         strand.addMonomer(e);
-        const cm = elem.getInstanceParameter3("cmOffsets");
+        const cm = elem.getPos();
         const a1 = elem.getA1();
         const a3 = elem.getA3();
         // calculate position of base pair
@@ -817,13 +817,13 @@ var edit;
         a3.negate();
         const pos = cm.clone().sub(a1.clone().multiplyScalar(1.2));
         const line = [pos.x, pos.y, pos.z, a1.x, a1.y, a1.z, a3.x, a3.y, a3.z];
-        e.calculatePositions(line);
+        e.calcPositionsFromConfLine(line);
         e.dummySys = tmpSys;
         addSystemToScene(tmpSys);
         // Add to history, but we only want this if it is a atomic edit
         if (undoable) {
             const instanceCopy = [new InstanceCopy(e)];
-            const newCm = e.getInstanceParameter3("cmOffsets");
+            const newCm = e.getPos();
             const position = new THREE.Vector3(newCm.x, newCm.y, newCm.z);
             editHistory.add(new RevertableAddition(instanceCopy, [e], position));
         }

@@ -19,6 +19,7 @@ function toggleClusterSim() {
             return;
         }
     }
+    if(forceHandler) forceHandler.clearDrawn();
     rigidClusterSimulator.simulate();
 }
 
@@ -151,7 +152,7 @@ class Cluster {
 
         this.radius = 0;
         clusterElements.forEach((e) => {
-            let p = e.getInstanceParameter3("cmOffsets");
+            let p = e.getPos();
             this.radius = Math.max(this.radius, p.distanceTo(this.position));
         });
 
@@ -189,7 +190,7 @@ class Cluster {
     private calculateCenter() {
         this.position = new THREE.Vector3();
         this.clusterElements.forEach((e) => {
-            this.position.add(e.getInstanceParameter3("cmOffsets"));
+            this.position.add(e.getPos());
         });
         this.position.divideScalar(this.clusterElements.size);
     }
@@ -299,11 +300,11 @@ class ClusterConnectionPoint {
     };
 
     public getFromPos(): THREE.Vector3 {
-        return this.from.getInstanceParameter3("cmOffsets").clone();
+        return this.from.getPos().clone();
     }
 
     public getToPos(): THREE.Vector3 {
-        return this.to.getInstanceParameter3("cmOffsets").clone();
+        return this.to.getPos().clone();
     }
 
     public getDist(): number {

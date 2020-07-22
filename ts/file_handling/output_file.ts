@@ -192,7 +192,7 @@ function makeDatFile(name, altNumbering=undefined) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => { //for all elements
-        let p = e.getInstanceParameter3("cmOffsets");
+        let p = e.getPos();
         maxCoord = Math.max(maxCoord, Math.max(
             Math.abs(p.x),
             Math.abs(p.y),

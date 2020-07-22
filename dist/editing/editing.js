@@ -101,7 +101,7 @@ function extendWrapper(double) {
     let elems = extendDuplex ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
     let pos = new THREE.Vector3();
-    elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));
+    elems.forEach(e => pos.add(e.getPos()));
     pos.divideScalar(elems.length);
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
@@ -117,7 +117,7 @@ function createWrapper() {
     let elems = edit.createStrand(seq, createDuplex);
     let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
     let pos = new THREE.Vector3();
-    elems.forEach(e => pos.add(e.getInstanceParameter3("cmOffsets")));
+    elems.forEach(e => pos.add(e.getPos()));
     pos.divideScalar(elems.length);
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));

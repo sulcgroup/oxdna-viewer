@@ -23,7 +23,7 @@ function rotateElementsByQuaternion(elements, q, about) {
             sid = base.sid;
         }
         //get current positions
-        let cmPos = base.getInstanceParameter3("cmOffsets");
+        let cmPos = base.getPos();
         let bbPos = base.getInstanceParameter3("bbOffsets");
         let nsPos = base.getInstanceParameter3("nsOffsets");
         let conPos = base.getInstanceParameter3("conOffsets");
@@ -121,7 +121,7 @@ function translateElements(elements, v) {
             sys = base.dummySys;
             sid = base.sid;
         }
-        let cmPos = base.getInstanceParameter3("cmOffsets");
+        let cmPos = base.getPos();
         let bbPos = base.getInstanceParameter3("bbOffsets");
         let nsPos = base.getInstanceParameter3("nsOffsets");
         let conPos = base.getInstanceParameter3("conOffsets");

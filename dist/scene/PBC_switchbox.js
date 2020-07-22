@@ -81,7 +81,7 @@ function bringInBox(boxOption) {
     // Apply to either monomers, or whole strands
     if (boxOption == "Monomer") {
         elements.forEach(e => {
-            let pOld = e.getInstanceParameter3("cmOffsets");
+            let pOld = e.getPos();
             let pNew = coordInBox(pOld);
             e.translatePosition(pNew.sub(pOld));
         });
@@ -126,7 +126,7 @@ function calcCOM(elems) {
     // bounding box side length)
     let cm_x = new THREE.Vector2(), cm_y = new THREE.Vector2(), cm_z = new THREE.Vector2();
     elems.forEach((e) => {
-        let p = e.getInstanceParameter3("cmOffsets");
+        let p = e.getPos();
         // Calculate positions on unit circle for each dimension and that to the
         // sum.
         let angle = new THREE.Vector3((p.x * 2 * Math.PI) / box.x, (p.y * 2 * Math.PI) / box.y, (p.z * 2 * Math.PI) / box.z);

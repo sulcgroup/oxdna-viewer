@@ -26,7 +26,8 @@ abstract class BasicElement {
         this.dummySys = null;
     };
 
-    abstract calculatePositions(l: string[]): void;
+    abstract calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3)
+    abstract calcPositionsFromConfLine(l: string[]): void;
     abstract calculateNewConfigPositions(l: string[]): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
@@ -140,7 +141,7 @@ abstract class BasicElement {
     }
 
     handleCircularStrands(sys: System, sid: number, bb: THREE.Vector3) {
-        if (this.neighbor5 != null && this.neighbor5.lid < this.lid) { //handle circular strands
+        if (this.neighbor5 && this.neighbor5.lid < this.lid) { //handle circular strands
             this.strand.circular = true;
             const bbLast = new THREE.Vector3(
                 sys.bbOffsets[this.neighbor5.gid * 3],
@@ -162,6 +163,11 @@ abstract class BasicElement {
             sys.fillVec('bbconRotation', 4, sid5, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
             sys.fillVec('bbconScales', 3, sid5, [1, spLen, 1]);
         }
+    }
+
+    // Get center of mass position
+    getPos(): THREE.Vector3 {
+        return this.getInstanceParameter3('cmOffsets');
     }
 
     isAminoAcid() {

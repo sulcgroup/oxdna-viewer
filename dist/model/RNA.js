@@ -19,7 +19,7 @@ class RNANucleotide extends Nucleotide {
         return a2;
     }
     getA3() {
-        const cm = this.getInstanceParameter3("cmOffsets");
+        const cm = this.getPos();
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
         const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(-0.2);
@@ -36,7 +36,7 @@ class RNANucleotide extends Nucleotide {
         const cord = Math.cos(inclination) * bp_backbone_distance;
         const center_to_cord = Math.sqrt(Math.pow(diameter / 2, 2) - Math.pow(cord / 2, 2));
         //We just set the direction the the orientation of the a3 vector
-        const start_pos = this.getInstanceParameter3("cmOffsets");
+        const start_pos = this.getPos();
         let dir = this.getA3();
         if (direction == "neighbor5") {
             dir.multiplyScalar(-1);
