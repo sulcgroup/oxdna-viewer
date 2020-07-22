@@ -8,9 +8,9 @@ const instanceParams = new Map([
 
 class InstanceCopy {
     type: string;
-    gid: number;
-    n3gid: number;
-    n5gid: number;
+    id: number;
+    n3id: number;
+    n5id: number;
     elemType: any;
     system: System;
 
@@ -33,9 +33,9 @@ class InstanceCopy {
             }
         });
         this.type = e.type;
-        this.gid = e.gid;
-        this.n3gid = e.neighbor3 ? e.neighbor3.gid : -1;
-        this.n5gid = e.neighbor5 ? e.neighbor5.gid : -1;
+        this.id = e.id;
+        this.n3id = e.n3 ? e.n3.id : -1;
+        this.n5id = e.n5 ? e.n5.id : -1;
         this.elemType = e.constructor;
         this.system = e.getSystem();
     }
@@ -54,7 +54,7 @@ function copyWrapper() {
         notify("Please select monomers to copy");
         return;
     }
-    let toCopy = Array.from(selectedBases).map(e=>e.gid); // Save so that we can clear the selection
+    let toCopy = Array.from(selectedBases).map(e=>e.id); // Save so that we can clear the selection
     clearSelection();
     copied = toCopy.map(i => new InstanceCopy(elements.get(i)));
 }
@@ -202,21 +202,15 @@ function setSeqWrapper() {
         notify("Please type a sequence into the box");
         return;
     }
-    let e: BasicElement[] = Array.from(selectedBases);
-    let n: Nucleotide[] = [];
-    e.forEach(elem => {
-        if (elem instanceof Nucleotide) {
-            n.push(<Nucleotide> elem);
-        }
-    });
-    if (n.length == 0) {
+  
+    if (selectedBases.size == 0) {
         notify("Please select nucleotides to apply sequence to");
         return;
     }
-    if (n.length > seq.length) {
+    if (selectedBases.size > seq.length) {
         notify("Sequence is shorter than the selection");
         return;
     }
-    editHistory.do(new RevertableSequenceEdit(n, seq, setCompl));
+    editHistory.do(new RevertableSequenceEdit(selectedBases, seq, setCompl));
     topologyEdited = true;
 }

@@ -63,7 +63,7 @@ canvas.addEventListener("keydown", event =>{
             if (event.ctrlKey || event.metaKey) {
                 event.preventDefault();
                 Metro.dialog.open('#exportOxdnaDialog');
-                document.getElementById('gidUpdateWarning').hidden = !topologyEdited;
+                document.getElementById('idUpdateWarning').hidden = !topologyEdited;
                 break;
             }
 

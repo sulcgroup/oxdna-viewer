@@ -20,7 +20,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
     elements.forEach((base) => {
         let sys = base.getSystem();
-        let sid = base.gid - sys.globalStartId;
+        let sid = base.id - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
             sid = base.sid;
@@ -80,11 +80,11 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
 
     // Update backbone connections for bases with neigbours outside the selection set
     elements.forEach((base) => {
-        if (base.neighbor3 !== null && base.neighbor3 !== undefined && !elements.has(base.neighbor3)) {
-            calcsp(base); //calculate sp between current and neighbor3
+        if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
+            calcsp(base); //calculate sp between current and n3
         }
-        if (base.neighbor5 !== null && base.neighbor5 !== undefined && !elements.has(base.neighbor5)) {
-            calcsp(base.neighbor5); //calculate sp between current and neighbor5
+        if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
+            calcsp(base.n5); //calculate sp between current and n5
         }
     });
 
@@ -105,9 +105,9 @@ function calcsp(currentNuc) {
     }
     let temp: THREE.Vector3
     try {
-        temp = currentNuc.neighbor3.getInstanceParameter3("bbOffsets");
+        temp = currentNuc.n3.getInstanceParameter3("bbOffsets");
     } catch (error) {
-        notify("Can't calculate backbone connection for particle " + currentNuc.gid + " because there is no upstream connection");
+        notify("Can't calculate backbone connection for particle " + currentNuc.id + " because there is no upstream connection");
         return
     }
     
@@ -138,7 +138,7 @@ function calcsp(currentNuc) {
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     elements.forEach((base) => {
         let sys = base.getSystem();
-        let sid = base.gid - sys.globalStartId;
+        let sid = base.id - sys.globalStartId;
         if (base.dummySys !== null) {
             sys = base.dummySys
             sid = base.sid;
@@ -167,11 +167,11 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
     elements.forEach((base) => {
-        if (base.neighbor3 !== null && base.neighbor3 !== undefined) {
-            calcsp(base); //calculate sp between current and neighbor3
+        if (base.n3 !== null && base.n3 !== undefined) {
+            calcsp(base); //calculate sp between current and n3
         }
-        if (base.neighbor5 !== null && base.neighbor5 !== undefined) {
-            calcsp(base.neighbor5); //calculate sp between current and neighbor5
+        if (base.n5 !== null && base.n5 !== undefined) {
+            calcsp(base.n5); //calculate sp between current and n5
         }
     });
 

@@ -1,17 +1,16 @@
 /**
  * The abstract class that all drawn monomers inherit from
- * @param gid - The global id of the element.  Also its key in the elements map
+ * @param id - The global id of the element.  Also its key in the elements map
  * @param strand - The parent Strand of the monomer
  * @param dummySys - If created during editing, the data arrays for instancing are stored in a dummy system
  */
 
 abstract class BasicElement {
-    lid: number;
-    gid: number; //location in world - all systems
+    id: number; //location in world - all systems
     sid: number; //in-system ID, only used if in a temporary system
     label: string;
-    neighbor3: BasicElement | null;
-    neighbor5: BasicElement | null;
+    n3: BasicElement | null;
+    n5: BasicElement | null;
     connections: ANMConnection[] = [];
     strand: Strand;
     bbnsDist : number;
@@ -20,9 +19,12 @@ abstract class BasicElement {
     clusterId: number;
     dummySys: System;
 
-    constructor(gid: number, strand: Strand) {
-        this.gid = gid;
+    constructor(id: number, strand: Strand) {
+        this.id = id;
         this.strand = strand;
+        if (strand && strand.isEmpty()) {
+            strand.end3 = strand.end5 = this;
+        }
         this.dummySys = null;
     };
 
@@ -66,7 +68,7 @@ abstract class BasicElement {
     }
 
     strandToColor(strandIndex: number) {
-        return backboneColors[(Math.abs(strandIndex) + this.getSystem().systemID) % backboneColors.length];
+        return backboneColors[(Math.abs(strandIndex) + this.getSystem().id) % backboneColors.length];
     };
 
     elemToColor(type: number | string): THREE.Color {
@@ -77,11 +79,24 @@ abstract class BasicElement {
         return false;
     }
 
+    changeType(type: string) {
+        this.type = type;
+        // Get the dummy system if it exists, otherwise get the real system
+        let sys = this.getSystem();
+        let sid = this.id - sys.globalStartId
+        if (this.dummySys) {
+            sys = this.dummySys
+            sid = this.sid;
+        }
+        let newC = this.elemToColor(type);
+        sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b])
+    }
+
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name: string) {
         let sys = this.getSystem(),
-            sid = this.gid - sys.globalStartId;
+            sid = this.id - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
             sid = this.sid;
@@ -98,7 +113,7 @@ abstract class BasicElement {
     //only rotations
     getInstanceParameter4(name: string) {
         let sys = this.getSystem(),
-            sid = this.gid - sys.globalStartId;
+            sid = this.id - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
             sid = this.sid;
@@ -116,7 +131,7 @@ abstract class BasicElement {
     //doing this is slower than sys.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name:string, data) {
         let sys = this.getSystem(),
-            sid = this.gid - sys.globalStartId;
+            sid = this.id - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
             sid = this.sid;
@@ -128,7 +143,7 @@ abstract class BasicElement {
     //poof
     toggleVisibility() {
         let sys = this.getSystem(),
-            sid = this.gid - sys.globalStartId;
+            sid = this.id - sys.globalStartId;
         if (this.dummySys !== null) {
             sys = this.dummySys
             sid = this.sid;
@@ -141,12 +156,11 @@ abstract class BasicElement {
     }
 
     handleCircularStrands(sys: System, sid: number, bb: THREE.Vector3) {
-        if (this.neighbor5 && this.neighbor5.lid < this.lid) { //handle circular strands
-            this.strand.circular = true;
+        if (this.n5 == this.strand.end5 && this.strand.isCircular()) { //handle circular strands
             const bbLast = new THREE.Vector3(
-                sys.bbOffsets[this.neighbor5.gid * 3],
-                sys.bbOffsets[this.neighbor5.gid * 3 + 1],
-                sys.bbOffsets[this.neighbor5.gid * 3 + 2]
+                sys.bbOffsets[this.n5.id * 3],
+                sys.bbOffsets[this.n5.id * 3 + 1],
+                sys.bbOffsets[this.n5.id * 3 + 2]
             );
 
             const sp = bb.clone().add(bbLast).divideScalar(2);
@@ -157,7 +171,7 @@ abstract class BasicElement {
                 sp.clone().sub(bb).normalize()
             );
 
-            const sid5 = this.neighbor5.gid - sys.globalStartId
+            const sid5 = this.n5.id - sys.globalStartId
 
             sys.fillVec('bbconOffsets', 3, sid5, sp.toArray());
             sys.fillVec('bbconRotation', 4, sid5, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
@@ -177,28 +191,21 @@ abstract class BasicElement {
     toJSON() {
         // Specify required attributes
         let json = {
-            id: this.gid,
+            id: this.id,
             type: this.type,
-            class: 'monomer'
+            class: 'monomer',
+            p: this.getPos().toArray()
         };
         // Specify optional attributes
-        if (this.neighbor3) json['n3'] = this.neighbor3.gid;
-        if (this.neighbor5) json['n5'] = this.neighbor5.gid;
+        if (this.n3) json['n3'] = this.n3.id;
+        if (this.n5) json['n5'] = this.n5.id;
         if (this.label) json['label'] = this.label;
         if (this.clusterId) json['cluster'] = this.clusterId;
 
-        json['conf'] = {};
-        instanceParams.forEach((size, attr)=>{
-            if (size == 3){
-                json['conf'][attr] = this.getInstanceParameter3(attr).toArray();
-            } else { // 4
-                json['conf'][attr] = this.getInstanceParameter4(attr).toArray();
-            }
-        });
-
         return json;
     }
+
     getTypeNumber(): number {
-        return(0)
+        return 0;
     }
 };
