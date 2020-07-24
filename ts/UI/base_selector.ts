@@ -5,19 +5,25 @@ let raycaster = new THREE.Raycaster();;
 let intersects;
 
 canvas.addEventListener('mousemove', event => {
-	// Change the cursor if you're hovering over something selectable
-	let id = gpuPicker(event)
-	if (id > -1) {
-		canvas.style.cursor = 'pointer';
-		view.showHoverInfo(new THREE.Vector2(event.clientX, event.clientY), elements.get(id));
-	}
-	else {
-		canvas.style.cursor = 'auto';
-		view.hideHoverInfo();
-	}
+	if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
+		// Box selection
+		event.preventDefault();
+		boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
+	} else {
+		// Change the cursor if you're hovering over something selectable
+		let id = gpuPicker(event)
+		if (id > -1) {
+			canvas.style.cursor = 'pointer';
+			view.showHoverInfo(new THREE.Vector2(event.clientX, event.clientY), elements.get(id));
+		}
+		else {
+			canvas.style.cursor = 'auto';
+			view.hideHoverInfo();
+		}
+	}	
 });
 
-canvas.addEventListener('click', event => { //if mouse is pressed down
+canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 	canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
 
 	// If double click, zoom in on element
@@ -318,15 +324,6 @@ function makeTextArea(bases: string, id) { //insert "bases" string into text are
 }
 
 let boxSelector;
-canvas.addEventListener('mousemove', event => {
-	if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
-		// Box selection
-		event.preventDefault();
-		boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
-	}
-}, false);
-
-
 canvas.addEventListener('mousedown', event => {
 	if (view.selectionMode.enabled() && view.selectionMode.get() === "Box" && !transformControls.isHovered()) {
 		// Box selection
