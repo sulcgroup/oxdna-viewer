@@ -348,20 +348,20 @@ function readOxViewJsonFile(file) {
                 sysData.strands.forEach(strandData => {
                     let strand;
                     // Create strand of correct class
-                    let constr;
+                    let strandClass;
                     switch (strandData.class) {
                         case 'NucleicAcidStrand':
-                            constr = NucleicAcidStrand;
+                            strandClass = NucleicAcidStrand;
                             break;
                         case 'Peptide':
-                            constr = Peptide;
+                            strandClass = Peptide;
                             break;
                         default:
                             let error = `Unrecognised type of strand:  ${strandData.class}`;
                             notify(error, "alert");
                             throw error;
                     }
-                    strand = new constr(strandData.id, sys);
+                    strand = new strandClass(strandData.id, sys);
                     if (strandData.end3)
                         strand.end3 = strandData.end3;
                     if (strandData.end5)
@@ -371,7 +371,7 @@ function readOxViewJsonFile(file) {
                     // Go through and add each monomer element
                     strandData.monomers.forEach(elementData => {
                         // Create element of correct class
-                        let element;
+                        let e;
                         let elementClass;
                         switch (elementData.class) {
                             case 'DNA':
@@ -388,28 +388,28 @@ function readOxViewJsonFile(file) {
                                 notify(error);
                                 throw error;
                         }
-                        element = new elementClass(undefined, strand);
+                        e = new elementClass(undefined, strand);
                         // Preserve ID when possible, keep track of new IDs if not
                         if (elements.has(elementData.id)) {
-                            elements.push(element); // Create new ID
+                            elements.push(e); // Create new ID
                         }
                         else {
-                            elements.set(elementData.id, element); // Reuse old ID
+                            elements.set(elementData.id, e); // Reuse old ID
                         }
-                        newElementIds.set(elementData.id, element.id);
-                        element.strand = strand;
+                        newElementIds.set(elementData.id, e.id);
+                        e.strand = strand;
                         if (strand.end3 && !elementData.n3) {
-                            strand.end3 = element; // Set strand 3' end
+                            strand.end3 = e; // Set strand 3' end
                         }
                         if (strand.end5 && !elementData.n5) {
-                            strand.end5 = element; // Set strand 3' end
+                            strand.end5 = e; // Set strand 3' end
                         }
                         // Set misc attributes
-                        element.label = elementData.label;
-                        element.type = elementData.type;
-                        element.clusterId = elementData.cluster;
-                        element.sid = sidCounter++;
-                        elementData.createdElement = element;
+                        e.label = elementData.label;
+                        e.type = elementData.type;
+                        e.clusterId = elementData.cluster;
+                        e.sid = sidCounter++;
+                        elementData.createdElement = e;
                     });
                 });
                 sysData.createdSystem = sys;
@@ -443,13 +443,10 @@ function readOxViewJsonFile(file) {
                     strandData.monomers.forEach(d => {
                         let e = d.createdElement;
                         // If we have a position, use that
-                        if ('p' in d) {
+                        if (d.p && d.a1 && d.a3) {
                             let p = new THREE.Vector3().fromArray(d.p);
-                            let a1, a3;
-                            if (d.a1 && d.a3) {
-                                a1 = new THREE.Vector3().fromArray(d.a1);
-                                a3 = new THREE.Vector3().fromArray(d.a3);
-                            }
+                            let a1 = new THREE.Vector3().fromArray(d.a1);
+                            let a3 = new THREE.Vector3().fromArray(d.a3);
                             e.calcPositions(p, a1, a3);
                             // Otherwise fallback to reading instance parameters
                         }
@@ -458,13 +455,13 @@ function readOxViewJsonFile(file) {
                             // Populate instances
                             for (let attr in d.conf) {
                                 let v = d.conf[attr];
-                                sys.fillVec(attr, v.length, e.sid, v);
+                                sys.fillVec(attr, v.length, e.id, v); // Should really use e.sid, but that doesn't work
                             }
                             // Re-assign a picking color if ID has changed
                             if (d.id !== e.id) {
                                 let idColor = new THREE.Color();
                                 idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-                                sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
+                                sys.fillVec('bbLabels', 3, e.id, [idColor.r, idColor.g, idColor.b]); // Should really use e.sid, but that doesn't work
                             }
                         }
                     });

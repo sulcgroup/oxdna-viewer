@@ -21,7 +21,7 @@ canvas.addEventListener('mousemove', event => {
             view.hideHoverInfo();
         }
     }
-}, false);
+});
 canvas.addEventListener('mousedown', event => {
     canvas.focus(); // Make sure canvas has focus (to capture any keyboard events)
     // If double click, zoom in on element
