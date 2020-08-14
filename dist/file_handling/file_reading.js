@@ -82,7 +82,7 @@ function handleFiles(files) {
             topFile = files[i];
         else if (ext === "json")
             jsonFile = files[i];
-        else if (ext === "txt" && fileName.includes("trap"))
+        else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.");

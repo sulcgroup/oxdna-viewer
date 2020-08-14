@@ -297,7 +297,7 @@ class Nucleotide extends BasicElement {
         return this.pair ? true : false;
     }
     getA1() {
-        const cm = this.getInstanceParameter3("cmOffsets");
+        const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
         return ns.clone().sub(cm).divideScalar(0.4);
     }
