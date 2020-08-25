@@ -452,16 +452,17 @@ function readOxViewJsonFile(file) {
                         }
                         else if ('conf' in d) {
                             notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
+                            e.sid = e.id; // Why is this needed?
                             // Populate instances
                             for (let attr in d.conf) {
                                 let v = d.conf[attr];
-                                sys.fillVec(attr, v.length, e.id, v); // Should really use e.sid, but that doesn't work
+                                sys.fillVec(attr, v.length, e.sid, v);
                             }
                             // Re-assign a picking color if ID has changed
                             if (d.id !== e.id) {
                                 let idColor = new THREE.Color();
                                 idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-                                sys.fillVec('bbLabels', 3, e.id, [idColor.r, idColor.g, idColor.b]); // Should really use e.sid, but that doesn't work
+                                sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
                             }
                         }
                     });

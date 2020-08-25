@@ -258,6 +258,7 @@ module edit{
     export function deleteElements (victims: BasicElement[]) {
         let needsUpdateList = new Set<System>();
         victims.forEach((e) => {
+            e = elements.get(e.id); // If we add element, then remove it, then undo both edits
             let sys: System
             let strand = e.strand;
             if (e.dummySys !== null) {
@@ -268,9 +269,11 @@ module edit{
             }
             needsUpdateList.add(sys);
 
+            e.toggleVisibility();
+
             let newStrand: Strand;
             // Split strand if we won't also delete further upstream
-            if(e.n5 && !victims.includes(e.n5)) {
+            if(e.n5 && !victims.map(e=>e.id).includes(e.n5.id)) {
                 newStrand = splitStrand(e);
             }
 
@@ -289,8 +292,6 @@ module edit{
                 e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
                 e.n5 = null;
             }
-
-            e.toggleVisibility();
 
             // Shorten strand if deleting an end
             if(e.strand.end3 == e) e.strand.end3 = e.n5;
