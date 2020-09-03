@@ -479,6 +479,7 @@ function readOxViewJsonFile(file: File) {
             // Since we now have the topology setup, let's set the configuration
             data.systems.forEach(sysData => {
                 let sys: System = sysData.createdSystem;
+                let deprecated: boolean = false;
                 sysData.strands.forEach(strandData => {
                     strandData.monomers.forEach(d => {
                         let e = d.createdElement;
@@ -490,8 +491,10 @@ function readOxViewJsonFile(file: File) {
                             e.calcPositions(p, a1, a3);
                         // Otherwise fallback to reading instance parameters
                         } else if('conf' in d) {
-                            notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn')
-                            e.sid = e.id // Why is this needed?
+                            //make sure warning shows up only once 
+                            if(!deprecated) notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
+                            deprecated = true; 
+                            e.sid = e.id; // Why is this needed?
                             // Populate instances
                             for (let attr in d.conf) {
                                 let v = d.conf[attr];
