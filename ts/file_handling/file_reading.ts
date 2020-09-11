@@ -350,7 +350,7 @@ function readJson(system, jsonReader) {
                     const vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
                     const len = vec.length();
                     vec.normalize();
-                    const arrowHelper = new THREE.ArrowHelper(vec, elements.get(i).getInstanceParameter3("bbOffsets"), len/5, 0x000000);
+                    const arrowHelper = new THREE.ArrowHelper(vec, elements.get(i).getInstanceParameter3("bbOffsets"), len, 0x000000);
                     arrowHelper.name = i + "disp";
                     scene.add(arrowHelper);
                 }
