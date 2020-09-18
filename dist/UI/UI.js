@@ -218,13 +218,11 @@ function colorElements(color, elems) {
     initLutCols(systems);
     initLutCols(tmpSystems);
     elems.forEach(e => {
-        let sid;
+        let sys = e.getSystem();
         if (e.dummySys) {
-            sid = e["id"] - e.dummySys.globalStartId;
-            e.dummySys.lutCols[e.sid] = color;
+            sys = e.dummySys;
         }
-        sid = e["id"] - e.getSystem().globalStartId;
-        e.getSystem().lutCols[sid] = color;
+        sys.lutCols[e.sid] = color;
     });
     view.coloringMode.set("Overlay");
     if (!systems.some(system => system.colormapFile)) {

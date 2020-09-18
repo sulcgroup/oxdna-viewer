@@ -67,7 +67,7 @@ module api{
             (e: BasicElement) => {
                 if (e.strand == null) return
                 let sys = e.getSystem();
-                let sid = e.id - sys.globalStartId
+                let sid = e.sid;
                 if (e.dummySys !== null) {
                     sys = e.dummySys
                     sid = e.sid;

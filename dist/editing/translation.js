@@ -15,19 +15,18 @@ function rotateElementsByQuaternion(elements, q, about) {
     // around an axis with inverted y-value...
     let q2 = q.clone();
     q2.y *= -1;
-    elements.forEach((base) => {
-        let sys = base.getSystem();
-        let sid = base.id - sys.globalStartId;
-        if (base.dummySys !== null) {
-            sys = base.dummySys;
-            sid = base.sid;
+    elements.forEach((e) => {
+        let sys = e.getSystem();
+        let sid = e.sid;
+        if (e.dummySys !== null) {
+            sys = e.dummySys;
         }
         //get current positions
-        let cmPos = base.getPos();
-        let bbPos = base.getInstanceParameter3("bbOffsets");
-        let nsPos = base.getInstanceParameter3("nsOffsets");
-        let conPos = base.getInstanceParameter3("conOffsets");
-        let bbconPos = base.getInstanceParameter3("bbconOffsets");
+        let cmPos = e.getPos();
+        let bbPos = e.getInstanceParameter3("bbOffsets");
+        let nsPos = e.getInstanceParameter3("nsOffsets");
+        let conPos = e.getInstanceParameter3("conOffsets");
+        let bbconPos = e.getInstanceParameter3("bbconOffsets");
         //the rotation center needs to be (0,0,0)
         cmPos.sub(about);
         bbPos.sub(about);
@@ -40,11 +39,11 @@ function rotateElementsByQuaternion(elements, q, about) {
         conPos.applyQuaternion(q);
         bbconPos.applyQuaternion(q);
         //get current rotations and convert to THREE coordinates
-        let nsRotationV = base.getInstanceParameter4("nsRotation");
+        let nsRotationV = e.getInstanceParameter4("nsRotation");
         let nsRotation = glsl2three(nsRotationV);
-        let conRotationV = base.getInstanceParameter4("conRotation");
+        let conRotationV = e.getInstanceParameter4("conRotation");
         let conRotation = glsl2three(conRotationV);
-        let bbconRotationV = base.getInstanceParameter4("bbconRotation");
+        let bbconRotationV = e.getInstanceParameter4("bbconRotation");
         let bbconRotation = glsl2three(bbconRotationV);
         //apply individual object rotation
         nsRotation.multiply(q2);
@@ -114,18 +113,17 @@ function calcsp(currentNuc) {
     sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 function translateElements(elements, v) {
-    elements.forEach((base) => {
-        let sys = base.getSystem();
-        let sid = base.id - sys.globalStartId;
-        if (base.dummySys !== null) {
-            sys = base.dummySys;
-            sid = base.sid;
+    elements.forEach((e) => {
+        let sys = e.getSystem();
+        let sid = e.sid;
+        if (e.dummySys !== null) {
+            sys = e.dummySys;
         }
-        let cmPos = base.getPos();
-        let bbPos = base.getInstanceParameter3("bbOffsets");
-        let nsPos = base.getInstanceParameter3("nsOffsets");
-        let conPos = base.getInstanceParameter3("conOffsets");
-        let bbconPos = base.getInstanceParameter3("bbconOffsets");
+        let cmPos = e.getPos();
+        let bbPos = e.getInstanceParameter3("bbOffsets");
+        let nsPos = e.getInstanceParameter3("nsOffsets");
+        let conPos = e.getInstanceParameter3("conOffsets");
+        let bbconPos = e.getInstanceParameter3("bbconOffsets");
         cmPos.add(v);
         bbPos.add(v);
         nsPos.add(v);

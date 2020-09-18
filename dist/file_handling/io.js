@@ -2,6 +2,7 @@
 class TopReader extends FileReader {
     constructor(topFile, system, elems) {
         super();
+        this.sidCounter = 0;
         this.nucLocalID = 0;
         this.onload = ((f) => {
             return () => {
@@ -39,6 +40,8 @@ class TopReader extends FileReader {
                     if (!this.elems.get(nucCount + i))
                         this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
                     let nuc = this.elems.get(nucCount + i);
+                    // Set systemID
+                    nuc.sid = this.sidCounter++;
                     //create neighbor 3 element if it doesn't exist
                     let n3 = parseInt(l[2]);
                     if (n3 != -1) {

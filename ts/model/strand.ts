@@ -158,8 +158,8 @@ abstract class Strand {
         let json = {
             id: this.id,
             monomers: this.getMonomers(),
-            end3: this.end3,
-            end5: this.end5
+            end3: this.end3.id,
+            end5: this.end5.id
         };
         // Specify optional attributes
         if (this.label) json['label'] = this.label;
@@ -184,8 +184,8 @@ class NucleicAcidStrand extends Strand {
         const s = this.system;
         const monomers = this.getMonomers();
         for (
-            let i = ((monomers[0] as Nucleotide).id - s.globalStartId) * 3;
-            i <= ((monomers[monomers.length-1] as Nucleotide).id - s.globalStartId) * 3;
+            let i = monomers[0].sid * 3;
+            i <= monomers[monomers.length-1].sid * 3;
             i+=3)
         {
             s.bbOffsets[i] += amount.x;
@@ -238,8 +238,8 @@ class Peptide extends Strand {
         const s = this.system;
         const monomers = this.getMonomers();
         for (
-            let i = ((monomers[0] as AminoAcid).id - s.globalStartId) * 3;
-            i <= ((monomers[monomers.length-1] as AminoAcid).id - s.globalStartId) * 3;
+            let i = monomers[0].sid * 3;
+            i <= monomers[monomers.length-1].sid * 3;
             i+=3)
         {
 

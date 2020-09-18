@@ -229,7 +229,6 @@ function readFiles(topFile, datFile, jsonFile) {
         notify("Please drop one topology and one configuration/trajectory file");
     }
 }
-let xbbLast, ybbLast, zbbLast;
 function readDat(datReader, system) {
     let currentStrand = system.strands[0];
     let numNuc = system.systemLength();
@@ -362,10 +361,6 @@ function readOxViewJsonFile(file) {
                             throw error;
                     }
                     strand = new strandClass(strandData.id, sys);
-                    if (strandData.end3)
-                        strand.end3 = strandData.end3;
-                    if (strandData.end5)
-                        strand.end5 = strandData.end5;
                     // Add strand to system
                     sys.addStrand(strand);
                     // Go through and add each monomer element
@@ -398,10 +393,10 @@ function readOxViewJsonFile(file) {
                         }
                         newElementIds.set(elementData.id, e.id);
                         e.strand = strand;
-                        if (strand.end3 && !elementData.n3) {
+                        if (strandData.end3 == elementData.id || !elementData.n3) {
                             strand.end3 = e; // Set strand 3' end
                         }
-                        if (strand.end5 && !elementData.n5) {
+                        if (strandData.end5 == elementData.id || !elementData.n5) {
                             strand.end5 = e; // Set strand 3' end
                         }
                         // Set misc attributes
@@ -441,14 +436,19 @@ function readOxViewJsonFile(file) {
                 let sys = sysData.createdSystem;
                 let deprecated = false;
                 sysData.strands.forEach(strandData => {
-                    strandData.monomers.forEach(d => {
+                    strandData.monomers.slice().reverse().forEach(d => {
                         let e = d.createdElement;
                         // If we have a position, use that
-                        if (d.p && d.a1 && d.a3) {
+                        if (d.p) {
                             let p = new THREE.Vector3().fromArray(d.p);
-                            let a1 = new THREE.Vector3().fromArray(d.a1);
-                            let a3 = new THREE.Vector3().fromArray(d.a3);
-                            e.calcPositions(p, a1, a3);
+                            if (d.a1 && d.a3) {
+                                let a1 = new THREE.Vector3().fromArray(d.a1);
+                                let a3 = new THREE.Vector3().fromArray(d.a3);
+                                e.calcPositions(p, a1, a3);
+                            }
+                            else {
+                                e.calcPositions(p); // Amino acid
+                            }
                             // Otherwise fallback to reading instance parameters
                         }
                         else if ('conf' in d) {
@@ -473,15 +473,17 @@ function readOxViewJsonFile(file) {
                 });
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
-                // Redraw sp connectors
-                sys.strands.forEach(s => {
-                    s.forEach(e => {
-                        if (e.n3) {
-                            calcsp(e);
-                        }
-                    });
-                    s.updateEnds();
-                });
+                /*
+                                // Redraw sp connectors
+                                sys.strands.forEach(s=>{
+                                    s.forEach(e=>{
+                                        if(e.n3) {
+                                            calcsp(e);
+                                        }
+                                    });
+                                    s.updateEnds();
+                                });
+                */
             });
         }
     };

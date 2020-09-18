@@ -88,7 +88,6 @@ var forceHandler;
 var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
-var bbLast: THREE.Vector3;
 
 var lut, devs: number[]; //need for Lut coloring
 

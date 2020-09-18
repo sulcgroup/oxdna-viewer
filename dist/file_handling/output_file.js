@@ -119,20 +119,20 @@ function makeTopFile(name) {
         peptides.forEach(strand => {
             newStrandIds.set(strand, sidCounter--);
             totPeptide += 1;
-            totParticles += strand.monomers.length;
-            totAA += strand.monomers.length;
             strand.forEach(e => {
                 newElementIds.set(e, idCounter++);
+                totParticles++;
+                totAA++;
             });
         });
         sidCounter = 1;
         nas.forEach(strand => {
             newStrandIds.set(strand, sidCounter++);
             totNucleic += 1;
-            totParticles += strand.monomers.length;
-            totNuc += strand.monomers.length;
             strand.forEach(e => {
                 newElementIds.set(e, idCounter++);
+                totParticles++;
+                totNuc++;
             });
         });
         totParticles = totNuc + totAA;

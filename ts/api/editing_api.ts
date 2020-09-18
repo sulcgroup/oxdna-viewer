@@ -127,11 +127,10 @@ module edit{
     }
 
     export function nick(element: BasicElement){
-        let sys = element.getSystem(),
-            sid = element.id - sys.globalStartId;
+        let sys = element.getSystem();
+        let sid = element.sid;
         if (element.dummySys !== null) {
-            sys = element.dummySys
-            sid = element.sid;
+            sys = element.dummySys;
         }
 
         let neighbor = element.n3;

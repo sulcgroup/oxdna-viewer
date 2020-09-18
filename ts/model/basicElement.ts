@@ -83,23 +83,20 @@ abstract class BasicElement {
         this.type = type;
         // Get the dummy system if it exists, otherwise get the real system
         let sys = this.getSystem();
-        let sid = this.id - sys.globalStartId
         if (this.dummySys) {
             sys = this.dummySys
-            sid = this.sid;
         }
         let newC = this.elemToColor(type);
-        sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b])
+        sys.fillVec('nsColors', 3, this.sid, [newC.r, newC.g, newC.b])
     }
 
     //retrieve this element's values in a 3-parameter instance array
     //positions, scales, colors
     getInstanceParameter3(name: string) {
         let sys = this.getSystem(),
-            sid = this.id - sys.globalStartId;
-        if (this.dummySys !== null) {
-            sys = this.dummySys
             sid = this.sid;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
         }
 
         const x: number = sys[name][sid * 3],
@@ -113,10 +110,9 @@ abstract class BasicElement {
     //only rotations
     getInstanceParameter4(name: string) {
         let sys = this.getSystem(),
-            sid = this.id - sys.globalStartId;
-        if (this.dummySys !== null) {
-            sys = this.dummySys
             sid = this.sid;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
         }
 
         const x: number = sys[name][sid * 4],
@@ -130,29 +126,24 @@ abstract class BasicElement {
     //set this element's parameters in the system's instance arrays
     //doing this is slower than sys.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name:string, data) {
-        let sys = this.getSystem(),
-            sid = this.id - sys.globalStartId;
+        let sys = this.getSystem();
         if (this.dummySys !== null) {
-            sys = this.dummySys
-            sid = this.sid;
-        }
-        
-        sys.fillVec(name, data.length, sid, data);
+            sys = this.dummySys;
+        } 
+        sys.fillVec(name, data.length, this.sid, data);
     }
 
     //poof
     toggleVisibility() {
-        let sys = this.getSystem(),
-            sid = this.id - sys.globalStartId;
+        let sys = this.getSystem();
         if (this.dummySys !== null) {
-            sys = this.dummySys
-            sid = this.sid;
+            sys = this.dummySys;
         }
 
         const visibility = this.getInstanceParameter3('visibility');
         visibility.addScalar(-1);
 
-        sys.fillVec('visibility', 3, sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
+        sys.fillVec('visibility', 3, this.sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
     }
 
     handleCircularStrands(sys: System, sid: number, bb: THREE.Vector3) {
@@ -171,7 +162,7 @@ abstract class BasicElement {
                 sp.clone().sub(bb).normalize()
             );
 
-            const sid5 = this.n5.id - sys.globalStartId
+            const sid5 = this.n5.sid;
 
             sys.fillVec('bbconOffsets', 3, sid5, sp.toArray());
             sys.fillVec('bbconRotation', 4, sid5, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);

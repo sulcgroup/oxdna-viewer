@@ -107,10 +107,10 @@ var edit;
     }
     edit.skip = skip;
     function nick(element) {
-        let sys = element.getSystem(), sid = element.id - sys.globalStartId;
+        let sys = element.getSystem();
+        let sid = element.sid;
         if (element.dummySys !== null) {
             sys = element.dummySys;
-            sid = element.sid;
         }
         let neighbor = element.n3;
         splitStrand(element);

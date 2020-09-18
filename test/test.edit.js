@@ -28,6 +28,7 @@ describe('Editing', function () {
     });
     it('should have correct endpoints', function () {
       let strand = oxview.getElements().get(0).strand;
+      assert(strand.end3);
       assert(!strand.end3.n3);
       assert(!strand.end5.n5);
     });
@@ -60,6 +61,8 @@ describe('Editing', function () {
       let strand1 = oxview.getSystems()[0].strands[0];
       let strand2 = oxview.getSystems()[0].strands[1];
       [strand1, strand2].forEach(strand=>{
+        assert(strand.end3);
+        assert(strand.end5);
         assert(!strand.end3.n3);
         assert(!strand.end5.n5);
       });
@@ -87,6 +90,14 @@ describe('Editing', function () {
       oxview.edit.nick(strand.end5);
       assert(!strand.isCircular());
     });
+    it('should have correct endpoints', function () {
+      let strand = oxview.getSystems()[0].strands[0];
+      assert(strand.end3);
+      assert(strand.end5);
+      assert(!strand.end3.n3);
+      assert(!strand.end5.n5);
+    });
+
     after(function () {
       let elems = Array.from(oxview.getElements().values());
       oxview.edit.deleteElements(elems);
@@ -108,6 +119,13 @@ describe('Editing', function () {
     it('should have the combinded sequence of the two strands', function () {
       let strand = oxview.getSystems()[0].strands[0];
       assert(strand.getSequence() == seq+complseq);
+    });
+    it('should have correct endpoints', function () {
+      let strand = oxview.getSystems()[0].strands[0];
+      assert(strand.end3);
+      assert(strand.end5);
+      assert(!strand.end3.n3);
+      assert(!strand.end5.n5);
     });
     after(function () {
       let elems = Array.from(oxview.getElements().values());
@@ -134,6 +152,16 @@ describe('Editing', function () {
       let i = Math.round(seq.length/2) + 1;
       assert(strand1.getSequence() == seq.substr(i));
       assert(strand2.getSequence() == seq.substr(0,i));
+    });
+    it('should have correct endpoints', function () {
+      let strand1 = oxview.getSystems()[0].strands[0];
+      let strand2 = oxview.getSystems()[0].strands[1];
+      [strand1, strand2].forEach(strand=>{
+        assert(strand.end3);
+        assert(strand.end5);
+        assert(!strand.end3.n3);
+        assert(!strand.end5.n5);
+      });
     });
     after(function () {
       let elems = Array.from(oxview.getElements().values());

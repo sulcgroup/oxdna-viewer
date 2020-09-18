@@ -21,10 +21,12 @@ class AminoAcid extends BasicElement {
         this.calcPositions(p);
     }
     calcPositions(p) {
-        const sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        const sys = this.getSystem();
+        let sid = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp, spLen, spRotation;
         if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = p.clone().add(bbLast).divideScalar(2);
             spLen = p.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize());
@@ -65,17 +67,19 @@ class AminoAcid extends BasicElement {
         sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = p.clone();
+        //bbLast = p.clone();
     }
     ;
     calculateNewConfigPositions(l) {
-        const sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        const sys = this.getSystem();
+        let sid = this.sid;
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         //calculate new backbone connector position/rotation
         let sp, spLen, spRotation;
         if (this.n3 && this.n3 != this.strand.end5) {
-            sp = new THREE.Vector3((p.x + xbbLast) / 2, (p.y + ybbLast) / 2, (p.z + zbbLast) / 2);
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
+            sp = p.clone().add(bbLast).divideScalar(2);
             spLen = p.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize());
         }
@@ -96,11 +100,11 @@ class AminoAcid extends BasicElement {
         else {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
-        bbLast = p.clone();
+        //bbLast = p.clone();
     }
     ;
     translatePosition(amount) {
-        const sys = this.getSystem(), id = (this.id - sys.globalStartId) * 3;
+        const sys = this.getSystem(), id = (this.sid) * 3;
         sys.bbOffsets[id] += amount.x;
         sys.bbOffsets[id + 1] += amount.y;
         sys.bbOffsets[id + 2] += amount.z;
@@ -115,10 +119,9 @@ class AminoAcid extends BasicElement {
         sys.cmOffsets[id + 2] += amount.z;
     }
     updateColor() {
-        let sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         let bbColor;
         let aaColor;

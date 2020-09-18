@@ -5,6 +5,7 @@ class TopReader extends FileReader{
     system: System;
     elems: ElementMap;
 
+    sidCounter = 0;
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     n3: number;
@@ -55,6 +56,9 @@ class TopReader extends FileReader{
                 if (!this.elems.get(nucCount + i))
                     this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
                 let nuc = this.elems.get(nucCount + i);
+
+                // Set systemID
+                nuc.sid = this.sidCounter++;
                     
                 //create neighbor 3 element if it doesn't exist
                 let n3 = parseInt(l[2]);

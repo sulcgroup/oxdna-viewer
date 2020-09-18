@@ -9,10 +9,8 @@ class Nucleotide extends BasicElement {
     ;
     calcPositionsFromConfLine(l) {
         let sys = this.getSystem();
-        let sid = this.id - sys.globalStartId;
         if (this.dummySys) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         //extract position
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
@@ -23,10 +21,9 @@ class Nucleotide extends BasicElement {
     }
     ;
     calcPositions(p, a1, a3) {
-        let sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         // according to base.py a2 is the cross of a1 and a3
         let a2 = a1.clone().cross(a3);
@@ -47,8 +44,9 @@ class Nucleotide extends BasicElement {
         }
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
-        if (bbLast && this.n3 && (this.n3 != this.strand.end5 || this.dummySys)) {
-            sp = new THREE.Vector3((bb.x + bbLast.x) / 2, (bb.y + bbLast.y) / 2, (bb.z + bbLast.z) / 2);
+        if (this.n3 && (this.n3 != this.strand.end5 || this.dummySys)) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
+            sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize());
         }
@@ -88,14 +86,14 @@ class Nucleotide extends BasicElement {
         sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = bb;
+        //bbLast = bb;
     }
     ;
     translatePosition(amount) {
-        let sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        let sys = this.getSystem();
+        let sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         sys.bbOffsets[sid * 3] += amount.x;
         sys.bbOffsets[sid * 3 + 1] += amount.y;
@@ -119,10 +117,10 @@ class Nucleotide extends BasicElement {
     }
     ;
     calculateNewConfigPositions(l) {
-        let sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        let sys = this.getSystem();
+        let sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
@@ -144,6 +142,7 @@ class Nucleotide extends BasicElement {
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
         if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize());
@@ -170,14 +169,13 @@ class Nucleotide extends BasicElement {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = bb.clone();
+        //bbLast = bb.clone();
     }
     ;
     updateColor() {
-        let sys = this.getSystem(), sid = this.id - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         let color;
         if (selectedBases.has(this)) {
