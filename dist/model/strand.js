@@ -10,6 +10,22 @@ class Strand {
         this.system = system;
     }
     ;
+    setEnd3(end3) {
+        if (end3) {
+            this.end3 = end3;
+        }
+        else {
+            throw new Error("Cannot set empty strand end (3')");
+        }
+    }
+    setEnd5(end5) {
+        if (end5) {
+            this.end5 = end5;
+        }
+        else {
+            throw new Error("Cannot set empty strand end (5')");
+        }
+    }
     isCircular() {
         return this.end3.n3 != null && this.end3.n3 == this.end5;
     }
@@ -33,20 +49,20 @@ class Strand {
     updateEnds() {
         let start = this.end3;
         while (this.end3.n3 && this.end3.n3 != this.end5) {
-            this.end3 = this.end3.n3;
+            this.setEnd3(this.end3.n3);
             // Avoid infinite loop on circular strand
             if (this.end3 == start) {
-                this.end5 = this.end3.n3;
+                this.setEnd5(this.end3.n3);
                 return;
             }
         }
         ;
         start = this.end5;
         while (this.end5.n5 && this.end3.n5 != this.end3) {
-            this.end5 = this.end5.n5;
+            this.setEnd5(this.end5.n5);
             // Avoid infinite loop on circular strand
             if (this.end5 == start) {
-                this.end3 = this.end5.n5;
+                this.setEnd3(this.end5.n5);
                 return;
             }
         }

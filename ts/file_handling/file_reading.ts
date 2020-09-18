@@ -308,7 +308,7 @@ function readDat(datReader, system) {
         //when a strand is finished, add it to the system
         if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
             if (currentNucleotide.n5 == currentStrand.end3) {
-                currentStrand.end5 = currentNucleotide;
+                currentStrand.setEnd5(currentNucleotide);
             }
             system.addStrand(currentStrand); // add strand to system
             currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
@@ -436,10 +436,10 @@ function readOxViewJsonFile(file: File) {
 
                         e.strand = strand;
                         if(strandData.end3 == elementData.id || !elementData.n3) {
-                            strand.end3 = e; // Set strand 3' end
+                            strand.setEnd3(e); // Set strand 3' end
                         }
                         if(strandData.end5 == elementData.id || !elementData.n5) {
-                            strand.end5 = e; // Set strand 3' end
+                            strand.setEnd5(e); // Set strand 3' end
                         }
 
                         // Set misc attributes

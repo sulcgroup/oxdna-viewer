@@ -11,7 +11,8 @@ class BasicElement {
         this.id = id;
         this.strand = strand;
         if (strand && strand.isEmpty()) {
-            strand.end3 = strand.end5 = this;
+            strand.setEnd3(this);
+            strand.setEnd5(this);
         }
         this.dummySys = null;
     }
