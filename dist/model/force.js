@@ -62,7 +62,7 @@ class ForceHandler {
             v2.push(f.equilibrium_distances[1].x, f.equilibrium_distances[1].y, f.equilibrium_distances[1].z);
         });
         force_geometry.addAttribute('position', new THREE.Float32BufferAttribute(v1, 3));
-        let material = new THREE.LineBasicMaterial({ color: 0xC0C0C0, opacity: .5, linewidth: 10 });
+        let material = new THREE.LineBasicMaterial({ color: 0x050505 });
         let force_lines = new THREE.LineSegments(force_geometry, material);
         scene.add(force_lines);
         this.sceneObjects.push(force_lines);
