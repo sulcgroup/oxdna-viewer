@@ -14,8 +14,7 @@ module edit{
         // Splitting a circular strand doesn't make more strands.
         // We only need to update endpoints.
         if(strand.isCircular()) {
-            strand.setEnd3(element);
-            strand.setEnd5(element.n3);
+            strand.setEndsFrom(element);
             return;
         }
 
@@ -35,9 +34,14 @@ module edit{
 
         // Fix endpoints
         // 3'--strand--e--newStrand--5'
-        newStrand.setEnd3(element);
-        newStrand.setEnd5(strand.end5);
-        strand.setEnd5(element.n3);
+        if (element.n3) {
+            element.n3.n5 = null;
+            element.n3 = null;
+        }
+
+        newStrand.setEndsFrom(element);
+        strand.setEndsFrom(strand.end3);
+
         [strand, newStrand].forEach(s=>{
             s.end3.n3 = null;
             s.end5.n5 = null;
@@ -194,7 +198,8 @@ module edit{
             strand2.system.removeStrand(strand2);
 
             // Update 5' end to include the new elements
-            strand1.setEnd5(strand2.end5);
+            strand1.updateEnds();
+            //strand1.setEnd5(strand2.end5);
 
             // Strand id update
             strand1.id = Math.min(strand1.id, strand2.id)
@@ -256,7 +261,7 @@ module edit{
      */
     export function deleteElements (victims: BasicElement[]) {
         let needsUpdateList = new Set<System>();
-        let vicimIds = new Set(victims.map(e=>e.id));
+        let victimIds = new Set(victims.map(e=>e.id));
         victims.forEach((e) => {
             e = elements.get(e.id); // If we add element, then remove it, then undo both edits
             let sys: System
@@ -273,30 +278,30 @@ module edit{
 
             let newStrand: Strand;
             // Split strand if we won't also delete further upstream
-            if(e.n5 && !vicimIds.has(e.n5.id)) {
+            if(e.n5 && !victimIds.has(e.n5.id)) {
                 newStrand = splitStrand(e);
             }
 
-            // Unlink neigbhours unless we are going to delete them too
-            if (e.n3 && !vicimIds.has(e.n3.id)){
-                e.n3.strand.setEnd5(e.n3);
+            // Unlink neigbhours
+            if (e.n3 && !victimIds.has(e.n3.id)) {
                 e.n3.n5 = null;
-                //e.n3 = null;
+                e.n3.strand.setEndsFrom(e.n3);
+                e.n3 = null;
             }
-            if (e.n5 && !vicimIds.has(e.n5.id)){
+
+            if (e.n5) {
                 // If different systems, we need to update both
                 let n5sys = e.n5.dummySys ? e.n5.dummySys : e.n5.getSystem();
                 needsUpdateList.add(n5sys);
-
-                e.n5.strand.end3 = e.n5;
-                e.n5.n3 = null;
                 e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
-                //e.n5 = null;
-            }
 
-            // Shorten strand if deleting an end
-            if(e.strand.end3 == e) e.strand.setEnd3(e.n5);
-            if(e.strand.end5 == e) e.strand.setEnd5(e.n3);
+                if (!victimIds.has(e.n5.id)) {
+                    e.n5.n3 = null;
+                    e.n5.strand.setEndsFrom(e.n5);
+                    e.n5 = null;
+                }
+
+            }
 
             elements.delete(e.id);
             selectedBases.delete(e);
@@ -481,8 +486,7 @@ module edit{
                         strand = sys.addNewNucleicAcidStrand();
                     }
                     e.strand = strand;
-                    strand.setEnd3(e);
-                    strand.setEnd5(e);
+                    strand.setEndsFrom(e);
                 }
             }
             // If the whole system has been removed we have to add it back again
@@ -544,11 +548,7 @@ module edit{
         }
         // Make last element end of strand
         last[direction] = null;
-        if (direction == 'n3') {
-            strand.setEnd3(last);
-        } else if (direction == 'n5') {
-            strand.setEnd5(last);
-        }
+        strand.setEndsFrom(last);
 
         let e: BasicElement = end[direction];
         //position new monomers
@@ -848,8 +848,7 @@ module edit{
         e.type = sequence[0];
         e.n3 = null;
         e.strand = strand;
-        strand.setEnd3(e);
-        strand.setEnd5(e);
+        strand.setEndsFrom(e);
 
         addedElems.push(e);
 
@@ -916,8 +915,7 @@ module edit{
         e.pair = elem;
         elem.pair = e;
         e.strand = strand;
-        strand.setEnd3(e);
-        strand.setEnd5(e);
+        strand.setEndsFrom(e);
         
         const cm = elem.getPos();
         const a1 = elem.getA1();

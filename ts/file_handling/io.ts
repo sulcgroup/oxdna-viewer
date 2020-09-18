@@ -83,7 +83,7 @@ class TopReader extends FileReader{
                 }
                 else {
                     nuc.n5 = null;
-                    currentStrand.setEnd5(nuc);
+                    currentStrand.end5 = nuc;
                 }
 
                 let base = l[1]; // get base id

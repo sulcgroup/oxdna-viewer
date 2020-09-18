@@ -23,8 +23,7 @@ abstract class BasicElement {
         this.id = id;
         this.strand = strand;
         if (strand && strand.isEmpty()) {
-            strand.setEnd3(this);
-            strand.setEnd5(this);
+            strand.setEndsFrom(this);
         }
         this.dummySys = null;
     };

@@ -20,19 +20,12 @@ abstract class Strand {
         this.system = system;
     };
 
-    setEnd3(end3: BasicElement) {
-        if (end3) {
-            this.end3 = end3;
+    setEndsFrom(e: BasicElement) {
+        if (e) {
+            this.end3 = this.end5 = e;
+            this.updateEnds();
         } else {
-            throw new Error("Cannot set empty strand end (3')");
-        }
-    }
-
-    setEnd5(end5: BasicElement) {
-        if (end5) {
-            this.end5 = end5;
-        } else {
-            throw new Error("Cannot set empty strand end (5')");
+            throw new Error("Cannot set empty strand end");
         }
     }
 
@@ -62,19 +55,19 @@ abstract class Strand {
     updateEnds() {
         let start = this.end3;
         while(this.end3.n3 && this.end3.n3 != this.end5) {
-            this.setEnd3(this.end3.n3);
+            this.end3 = this.end3.n3;
             // Avoid infinite loop on circular strand
             if (this.end3 == start) {
-                this.setEnd5(this.end3.n3);
+                this.end5 = this.end3.n3;
                 return;
             }
         };
         start = this.end5;
         while(this.end5.n5  && this.end3.n5 != this.end3) {
-            this.setEnd5(this.end5.n5);
+            this.end5 = this.end5.n5;
             // Avoid infinite loop on circular strand
             if (this.end5 == start) {
-                this.setEnd3(this.end5.n5);
+                this.end3 = this.end5.n5;
                 return;
             }
         };
