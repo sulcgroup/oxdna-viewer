@@ -201,7 +201,7 @@ function makeParFile(name, altNumbering, counts) {
             const curCon = anm.children[i];
             const p1ID = altNumbering.get(curCon.p1);
             const p2ID = altNumbering.get(curCon.p2);
-            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength];
+            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
             par.push(line.join(" "));
         }
     });

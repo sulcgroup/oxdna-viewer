@@ -23,8 +23,8 @@ class ANM {
         }
     }
     ;
-    createConnection(p1, p2, eqDist, type, strength) {
-        const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength);
+    createConnection(p1, p2, eqDist, type, strength, extraParams) {
+        const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength, extraParams);
         con.init();
         this.children.push(con);
         p1.connections.push(con);
@@ -33,7 +33,7 @@ class ANM {
     }
 }
 class ANMConnection {
-    constructor(parent, id, p1, p2, eqDist, type, strength) {
+    constructor(parent, id, p1, p2, eqDist, type, strength, extraParams) {
         this.parent = parent;
         this.id = id;
         this.p1 = p1;
@@ -41,6 +41,7 @@ class ANMConnection {
         this.eqDist = eqDist;
         this.type = type;
         this.strength = strength;
+        this.extraParams = extraParams; //the ANMT model sometimes has additional torsional terms in the parfile
     }
     init() {
         //calculate the center of the connection
@@ -77,7 +78,7 @@ class ANMConnection {
         const x = anm[name][this.id * 4], y = anm[name][this.id * 4 + 1], z = anm[name][this.id * 4 + 2], w = anm[name][this.id * 4 + 3];
         return new THREE.Vector4(x, y, z, w);
     }
-    //set this element's parameters in the anmtem's instance arrays
+    //set this element's parameters in the anm's instance arrays
     //doing this is slower than anm.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name, data) {
         let anm = this.getParent();

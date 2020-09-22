@@ -518,13 +518,21 @@ function readParFile(file) {
                 type = l[3],
                 strength = parseFloat(l[4]);
 
+            // if its a torsional ANM then there are additional parameters on some lines
+            let extraParams = []
+            if (l.length > 5) {
+                for (let i = 5; i < l.length; i++) {
+                    extraParams.push(l[i])
+                }
+            }
+
             //dereference p and q into particle positions from the system
             const particle1 = system.getElementBySID(p),
                   particle2 = system.getElementBySID(q);  
 
             if (particle1 == undefined) console.log(i)
 
-            const connection = anm.createConnection(particle1, particle2, eqDist, type, strength);
+            anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
         };
         addANMToScene(anm);
         system.strands.forEach((s) => {

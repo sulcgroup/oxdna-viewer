@@ -237,11 +237,11 @@ function makeParFile(name: string, altNumbering, counts) {
             const p1ID: number = altNumbering.get(curCon.p1);
             const p2ID: number = altNumbering.get(curCon.p2);
 
-            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength];
+            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
             par.push(line.join(" "));
         } 
     });
-    return {file_name :name+".par", file : par.join('\n') };
+    return {file_name: name+".par", file: par.join('\n') };
 }
 
 function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file

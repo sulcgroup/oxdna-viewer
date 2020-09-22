@@ -39,8 +39,8 @@ class ANM {
         }
     };
 
-    createConnection(p1: BasicElement, p2: BasicElement, eqDist: number, type: string, strength: number): ANMConnection {
-        const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength)
+    createConnection(p1: BasicElement, p2: BasicElement, eqDist: number, type: string, strength: number, extraParams:any[]): ANMConnection {
+        const con = new ANMConnection(this, this.children.length, p1, p2, eqDist, type, strength, extraParams)
         con.init();
         this.children.push(con);
         p1.connections.push(con)
@@ -58,15 +58,17 @@ class ANMConnection {
     eqDist: number;
     type: string;
     strength: number;
+    extraParams: any[]
 
-    constructor(parent: ANM, id: number, p1: BasicElement, p2: BasicElement, eqDist: number, type: string, strength: number) {
+    constructor(parent: ANM, id: number, p1: BasicElement, p2: BasicElement, eqDist: number, type: string, strength: number, extraParams: any[]) {
         this.parent = parent;  
         this.id = id;
         this.p1 = p1; 
         this.p2 = p2;
         this.eqDist = eqDist;
         this.type = type;
-        this.strength = strength;  
+        this.strength = strength;
+        this.extraParams = extraParams //the ANMT model sometimes has additional torsional terms in the parfile
     }
 
     init() {
@@ -131,7 +133,7 @@ class ANMConnection {
         return new THREE.Vector4(x, y, z, w);
     }
 
-    //set this element's parameters in the anmtem's instance arrays
+    //set this element's parameters in the anm's instance arrays
     //doing this is slower than anm.fillVec(), but makes cleaner code sometimes
     setInstanceParameter(name:string, data) {
         let anm = this.getParent();
