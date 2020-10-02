@@ -162,6 +162,9 @@ It is assumed that the [ox-serve](https://github.com/sulcgroup/ox-serve) server 
 
 ---
 
+## Known issues
+oxView relies on WebGL hardware acceleration, if you have turned this feature off, oxView will run very slowly.  [Here's an example](https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/) of how to check if you have hardware acceleration disabled and how to enable it on Chrome.
+
 ## Updates and writing your own extensions
 This software is still in active development, so features remain in high flux.  If you would like to make a feature request or to report a bug, please let us know in the Issues tab!  Remember to pull often if you're running the viewer locally to get the newest features.
 
