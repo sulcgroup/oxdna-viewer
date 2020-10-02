@@ -22,6 +22,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
   * [Rigid Body Simulations](#rigid-body-simulations)
   * [3D Printing Export](#3d-printing-export)
   * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
+  * [Known issues](#known-issues)
   * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions)
   * [Citation](#citation)
 
