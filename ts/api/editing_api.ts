@@ -4,22 +4,22 @@
 module edit{
 /**
      * Split the element's strand at the element provided
-     * @param element Element to split at
+     * @param e Element to split at
      * @returns new strand created in split
      */
-    function splitStrand(element: BasicElement): Strand {
-        const strand = element.strand,
-              sys = strand.system;
+    function splitStrand(e: BasicElement): Strand {
+        const strand = e.strand;
 
         // Splitting a circular strand doesn't make more strands.
         // We only need to update endpoints.
         if(strand.isCircular()) {
-            strand.setEndsFrom(element);
+            strand.setFrom(e);
             return;
         }
 
         // No need to split if one half will be empty
-        if(!element.n5) {
+        if(!e.n3) {
+            console.assert(e == e.strand.end3, "Incorrect endpoint");
             return;
         }
 
@@ -32,24 +32,24 @@ module edit{
             newStrand = strand.system.addNewNucleicAcidStrand();
         }
 
-        // Fix endpoints
-        // 3'--strand--e--newStrand--5'
-        if (element.n3) {
-            element.n3.n5 = null;
-            element.n3 = null;
-        }
+        let tmpn3 = e.n3; // Save 3' neighbour temporarly.
 
-        newStrand.setEndsFrom(element);
-        strand.setEndsFrom(strand.end3);
+        // Fix endpoints
+        // 3'--strand--e.n3 | e--newStrand--5'
+        e.n3.n5 = null;
+        e.n3 = null;
+
+        strand.setFrom(e);
+        newStrand.setFrom(tmpn3);
 
         [strand, newStrand].forEach(s=>{
-            s.end3.n3 = null;
-            s.end5.n5 = null;
+            console.assert(!s.end3.n3, "Incorrect endpoint after split")
+            console.assert(!s.end5.n5, "Incorrect endpoint after split")
         });
 
-        newStrand.forEach((e) => {
-            e.strand = newStrand;
-            e.updateColor();
+        newStrand.forEach(i=>{
+            console.assert(i.strand == newStrand, "Incorrect strand reference");
+            i.updateColor();
         });
 
         if (strand.label) {
@@ -57,7 +57,11 @@ module edit{
             strand.label = `${strand.label}_1`;
         }
 
-        sys.callUpdates(['instanceColor']);
+        // Remove connector geometry.
+        // If different systems, we need to update both
+        e.setInstanceParameter("bbconScales", [0, 0, 0]);
+        let sys = e.dummySys ? e.dummySys : e.getSystem();
+        sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
 
         return newStrand;
     }
@@ -131,35 +135,21 @@ module edit{
     }
 
     export function nick(element: BasicElement){
-        let sys = element.getSystem();
-        let sid = element.sid;
-        if (element.dummySys !== null) {
-            sys = element.dummySys;
-        }
-
-        let neighbor = element.n3;
         splitStrand(element);
-
-        // we break connection to the 3' neighbor 
-        element.n3 = null;
-        neighbor.n5 = null;
-
-        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
         render(); 
     }
 
-    export function ligate(element1 :BasicElement, element2: BasicElement) {
+    export function ligate(a :BasicElement, b: BasicElement) {
         let end5: BasicElement,
             end3: BasicElement;
         //find out which is the 5' end and which is 3'
-        if (element1.n5 == null && element2.n3 == null) {
-            end5 = element1;
-            end3 = element2;
+        if (!a.n5 && !b.n3) {
+            end5 = a;
+            end3 = b;
         }
-        else if (element1.n3 == null && element2.n5 == null) {
-            end5 = element2;
-            end3 = element1;
+        else if (!a.n3 && !b.n5) {
+            end5 = b;
+            end3 = a;
         }
         else {
             notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
@@ -170,15 +160,15 @@ module edit{
         // strand2 will be merged into strand1
         let sys5 = end5.getSystem(),
         sys3 = end3.getSystem(),
-        strand1 = end5.strand,
-        strand2 = end3.strand;
+        strand5 = end5.strand,
+        strand3 = end3.strand;
 
         // handle strand1 and strand2 not being in the same system
         if (sys5 !== sys3) {
             let tmpSys = new System(tmpSystems.length, 0);
-            tmpSys.initInstances(strand2.getLength());
+            tmpSys.initInstances(strand3.getLength());
 
-            strand2.forEach((e, i)=>{
+            strand3.forEach((e, i)=>{
                 copyInstances(e, i, tmpSys)
                 e.setInstanceParameter('visibility', [0,0,0])
                 e.dummySys = tmpSys;
@@ -188,61 +178,41 @@ module edit{
             addSystemToScene(tmpSys);
             tmpSystems.push(tmpSys);
         }
-        
-        //check that it is not the same strand
-        if (strand1 !== strand2) {
-            // Transfer elements
-            strand2.forEach(e=>{e.strand = strand1});
-
-            //remove strand2 object 
-            strand2.system.removeStrand(strand2);
-
-            // Update 5' end to include the new elements
-            strand1.updateEnds();
-            //strand1.setEnd5(strand2.end5);
-
-            // Strand id update
-            strand1.id = Math.min(strand1.id, strand2.id)
-
-            //since strand IDs were updated, we also need to update the coloring
-            updateColoring();
-            }
-
-        /*
-        let strID = 1; 
-        sys5.strands.forEach((strand) =>strand.strandID = strID++);
-        if (sys3 !== sys5) {
-            sys3.strands.forEach((strand) =>strand.strandID = strID++);
-        }
-        */
 
         //connect the 2 element objects 
         end5.n5 = end3;
         end3.n3 = end5;
 
+        // Update 5' end to include the new elements
+        strand5.updateEnds();
+        strand5.forEach(e=>{
+            e.strand = strand5;
+        })
+        
+        //check that it is not the same strand
+        if (strand5 !== strand3) {
+            //remove strand3 object 
+            strand3.system.removeStrand(strand3);
+
+            // Strand id update
+            strand5.id = Math.min(strand5.id, strand3.id)
+
+            //since strand IDs were updated, we also need to update the coloring
+            updateColoring();
+        }
+
         //last, add the sugar-phosphate bond
         let p2 = end3.getInstanceParameter3("bbOffsets");
-        let xbb = p2.x,
-            ybb = p2.y,
-            zbb = p2.z;
-
         let p1 = end5.getInstanceParameter3("bbOffsets");
-        let xbbLast = p1.x,
-            ybbLast = p1.y,
-            zbbLast = p1.z;
 
-
-        let xsp = (xbb + xbbLast) / 2,
-            ysp = (ybb + ybbLast) / 2,
-            zsp = (zbb + zbbLast) / 2;
-
-        let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
+        let sp = p2.clone().add(p1).divideScalar(2);
+        let spLen = p2.distanceTo(p1);
 
         let spRotation = new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize()
+            new THREE.Vector3(0, 1, 0), sp.clone().sub(p2).normalize()
         );
 
-        end3.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+        end3.setInstanceParameter('bbconOffsets', sp.toArray());
         end3.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         end3.setInstanceParameter('bbconScales', [1, spLen, 1]);
 
@@ -274,40 +244,30 @@ module edit{
             }
             needsUpdateList.add(sys);
 
+            // Hide element
             e.toggleVisibility();
+            // Remove connector geometry.
+            if(e.n5) {
+                e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
+            }
 
             let newStrand: Strand;
-            // Split strand if we won't also delete further upstream
-            if(e.n5 && !victimIds.has(e.n5.id)) {
+            // Split strand if we won't also delete further downstream
+            if(e.n3 && !victimIds.has(e.n3.id)) {
                 newStrand = splitStrand(e);
             }
 
-            // Unlink neigbhours
-            if (e.n3 && !victimIds.has(e.n3.id)) {
-                e.n3.n5 = null;
-                e.n3.strand.setEndsFrom(e.n3);
-                e.n3 = null;
-            }
+            // Remove e from strand
+            console.assert(strand.end3 == e, "Incorrect strand split");
+            strand.end3 = strand.end3.n5;
+            strand.end3.n3 = null;
 
-            if (e.n5) {
-                // If different systems, we need to update both
-                let n5sys = e.n5.dummySys ? e.n5.dummySys : e.n5.getSystem();
-                needsUpdateList.add(n5sys);
-                e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
-
-                if (!victimIds.has(e.n5.id)) {
-                    e.n5.n3 = null;
-                    e.n5.strand.setEndsFrom(e.n5);
-                    e.n5 = null;
-                }
-
-            }
-
+            // Remove e from element map and selection
             elements.delete(e.id);
             selectedBases.delete(e);
 
             // Remove strand(s) if empty
-            if(strand.isEmpty()) {
+            if(e == strand.end3 && e == strand.end5) {
                 let s = strand.system;
                 s.removeStrand(strand);
                 // Remove system if empty
@@ -316,7 +276,7 @@ module edit{
                     sysCount--;
                 }
             }
-            if(newStrand && newStrand != strand && newStrand && newStrand.isEmpty()) {
+            if(newStrand && newStrand != strand && newStrand && (e == newStrand.end3 && e == newStrand.end5)) {
                 let s = newStrand.system;
                 s.removeStrand(newStrand);
                 // Remove system if empty
@@ -486,7 +446,7 @@ module edit{
                         strand = sys.addNewNucleicAcidStrand();
                     }
                     e.strand = strand;
-                    strand.setEndsFrom(e);
+                    strand.setFrom(e);
                 }
             }
             // If the whole system has been removed we have to add it back again
@@ -548,7 +508,7 @@ module edit{
         }
         // Make last element end of strand
         last[direction] = null;
-        strand.setEndsFrom(last);
+        strand.setFrom(last);
 
         let e: BasicElement = end[direction];
         //position new monomers
@@ -848,7 +808,7 @@ module edit{
         e.type = sequence[0];
         e.n3 = null;
         e.strand = strand;
-        strand.setEndsFrom(e);
+        strand.setFrom(e);
 
         addedElems.push(e);
 
@@ -915,7 +875,7 @@ module edit{
         e.pair = elem;
         elem.pair = e;
         e.strand = strand;
-        strand.setEndsFrom(e);
+        strand.setFrom(e);
         
         const cm = elem.getPos();
         const a1 = elem.getA1();

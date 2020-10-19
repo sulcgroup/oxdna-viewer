@@ -10,10 +10,13 @@ class Strand {
         this.system = system;
     }
     ;
-    setEndsFrom(e) {
+    setFrom(e) {
         if (e) {
             this.end3 = this.end5 = e;
             this.updateEnds();
+            this.forEach(e => {
+                e.strand = this;
+            });
         }
         else {
             throw new Error("Cannot set empty strand end");

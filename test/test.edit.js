@@ -41,10 +41,10 @@ describe('Editing', function () {
     before(function () {
       oxview.edit.createStrand(seq, true);
     });
-    it('should create one strand', function () {
+    it('should create two strands', function () {
       let systems = oxview.getSystems();
       assert(systems.length == 1);
-      assert(systems[0].strands.length == 2);
+      assert(systems[0].strands.length == 2, `${systems[0].strands.length} strands instead of 2`);
     });
     it('should have the correct lengths', function () {
       assert(oxview.getSystems()[0].strands[0].getLength() == seq.length)
@@ -142,16 +142,16 @@ describe('Editing', function () {
     it('should be two strands after nicking', function () {
       let strand = oxview.getSystems()[0].strands[0];
       let monomers = strand.getMonomers();
-      let middle = monomers[Math.round(monomers.length/2)];
+      let middle = monomers[Math.round(monomers.length/2) - 1];
       oxview.edit.nick(middle);
       assert(oxview.getSystems()[0].strands.length == 2);
     });
     it('should have each half of the sequence', function () {
-      let strand1 = oxview.getSystems()[0].strands[0];
-      let strand2 = oxview.getSystems()[0].strands[1];
-      let i = Math.round(seq.length/2) + 1;
-      assert(strand1.getSequence() == seq.substr(i));
-      assert(strand2.getSequence() == seq.substr(0,i));
+      let strand1 = oxview.getSystems()[0].strands[1];
+      let strand2 = oxview.getSystems()[0].strands[0];
+      let i = Math.round(seq.length/2);
+      assert(strand1.getSequence() == seq.substr(i), `${strand1.getSequence()} is not ${seq.substr(i)}`);
+      assert(strand2.getSequence() == seq.substr(0,i), `${strand1.getSequence()} is not ${seq.substr(0,i)}`);
     });
     it('should have correct endpoints', function () {
       let strand1 = oxview.getSystems()[0].strands[0];
