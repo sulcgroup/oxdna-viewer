@@ -5,9 +5,10 @@ class TopReader extends FileReader{
     system: System;
     elems: ElementMap;
 
+    sidCounter = 0;
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
-    neighbor3: number;
+    n3: number;
 
     constructor(topFile: File, system: System, elems: ElementMap){
         super();
@@ -55,28 +56,35 @@ class TopReader extends FileReader{
                 if (!this.elems.get(nucCount + i))
                     this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
                 let nuc = this.elems.get(nucCount + i);
-                nuc.lid = this.nucLocalID;
+
+                // Set systemID
+                nuc.sid = this.sidCounter++;
                     
                 //create neighbor 3 element if it doesn't exist
-                let neighbor3 = parseInt(l[2]);
-                if (neighbor3 != -1) {
-                    if (!this.elems.get(nucCount + neighbor3)) {
-                        this.elems.set(nucCount + neighbor3, currentStrand.createBasicElement(nucCount + neighbor3));
+                let n3 = parseInt(l[2]);
+                if (n3 != -1) {
+                    if (!this.elems.get(nucCount + n3)) {
+                        this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
                     }
-                    nuc.neighbor3 = this.elems.get(nucCount + neighbor3);
+                    nuc.n3 = this.elems.get(nucCount + n3);
                 }
-                else 
-                    nuc.neighbor3 = null;
-        
+                else {
+                    nuc.n3 = null;
+                    currentStrand.end3 = nuc;
+                }
+
                 //create neighbor 5 element if it doesn't exist
-                let neighbor5 = parseInt(l[3]);
-                if (neighbor5 != -1) {
-                    if (!this.elems.get(nucCount + neighbor5)) {
-                        this.elems.set(nucCount + neighbor5, currentStrand.createBasicElement(nucCount + neighbor5));
+                let n5 = parseInt(l[3]);
+                if (n5 != -1) {
+                    if (!this.elems.get(nucCount + n5)) {
+                        this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
                     }
-                    nuc.neighbor5 = this.elems.get(nucCount + neighbor5);
+                    nuc.n5 = this.elems.get(nucCount + n5);
                 }
-                else nuc.neighbor5 = null;
+                else {
+                    nuc.n5 = null;
+                    currentStrand.end5 = nuc;
+                }
 
                 let base = l[1]; // get base id
                 nuc.type = base;
@@ -84,7 +92,6 @@ class TopReader extends FileReader{
                 //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                 if (base === "U") RNA_MODE = true;
                     
-                currentStrand.addMonomer(nuc);
                 this.nucLocalID += 1;
                 this.lastStrand = strID;
             });

@@ -266,10 +266,6 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     }
 }
 
-let xbbLast,
-    ybbLast,
-    zbbLast;
-
 function readDat(datReader, system) {
     let currentStrand = system.strands[0];
     let numNuc = system.systemLength();
@@ -310,11 +306,14 @@ function readDat(datReader, system) {
         currentNucleotide.calcPositionsFromConfLine(l);
 
         //when a strand is finished, add it to the system
-        if ((currentNucleotide.neighbor5 == undefined || currentNucleotide.neighbor5 == null) || (currentNucleotide.neighbor5.lid < currentNucleotide.lid)) { //if last nucleotide in straight strand
+        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+            if (currentNucleotide.n5 == currentStrand.end3) {
+                currentStrand.end5 = currentNucleotide;
+            }
             system.addStrand(currentStrand); // add strand to system
             currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements.get(currentNucleotide.gid+1) != undefined) {
-                currentStrand = elements.get(currentNucleotide.gid+1).strand;
+            if (elements.get(currentNucleotide.id+1)) {
+                currentStrand = elements.get(currentNucleotide.id+1).strand;
             }
         }
 
@@ -397,16 +396,16 @@ function readOxViewJsonFile(file: File) {
                     let strand: Strand;
 
                     // Create strand of correct class
-                    let constr;
+                    let strandClass;
                     switch (strandData.class) {
-                        case 'NucleicAcidStrand': constr = NucleicAcidStrand; break;
-                        case 'Peptide': constr = Peptide; break;
+                        case 'NucleicAcidStrand': strandClass = NucleicAcidStrand; break;
+                        case 'Peptide': strandClass = Peptide; break;
                         default:
                             let error = `Unrecognised type of strand:  ${strandData.class}`;
                             notify(error, "alert");
                             throw error;
                     }
-                    strand = new constr(strandData.id, sys);
+                    strand = new strandClass(strandData.id, sys);
 
                     // Add strand to system
                     sys.addStrand(strand);
@@ -414,37 +413,42 @@ function readOxViewJsonFile(file: File) {
                     // Go through and add each monomer element
                     strandData.monomers.forEach(elementData => {
                         // Create element of correct class
-                        let element: BasicElement;
-                        let constr;
+                        let e: BasicElement;
+                        let elementClass;
                         switch (elementData.class) {
-                            case 'DNA': constr = DNANucleotide; break;
-                            case 'RNA': constr = RNANucleotide; break;
-                            case 'AA': constr = AminoAcid; break;
+                            case 'DNA': elementClass = DNANucleotide; break;
+                            case 'RNA': elementClass = RNANucleotide; break;
+                            case 'AA': elementClass = AminoAcid; break;
                             default:
                                 let error = `Unrecognised type of element:  ${elementData.class}`;
                                 notify(error);
                                 throw error;
                         }
-                        element = new constr(undefined, strand);
+                        e = new elementClass(undefined, strand);
 
                         // Preserve ID when possible, keep track of new IDs if not
                         if (elements.has(elementData.id)) {
-                            elements.push(element);
+                            elements.push(e); // Create new ID
                         } else {
-                            elements.set(elementData.id, element)
+                            elements.set(elementData.id, e) // Reuse old ID
                         }
-                        newElementIds.set(elementData.id, element.gid);
+                        newElementIds.set(elementData.id, e.id);
+
+                        e.strand = strand;
+                        if(strandData.end3 == elementData.id || !elementData.n3) {
+                            strand.end3 = e; // Set strand 3' end
+                        }
+                        if(strandData.end5 == elementData.id || !elementData.n5) {
+                            strand.end5 = e; // Set strand 3' end
+                        }
 
                         // Set misc attributes
-                        element.label = elementData.label;
-                        element.type = elementData.type;
-                        element.clusterId = elementData.cluster;
-                        element.sid = sidCounter++;
+                        e.label = elementData.label;
+                        e.type = elementData.type;
+                        e.clusterId = elementData.cluster;
+                        e.sid = sidCounter++;
 
-                        // Add monomer element to strand
-                        strand.addMonomer(element);
-
-                        elementData.createdElement = element;
+                        elementData.createdElement = e;
                     });
                 });
                 sysData.createdSystem = sys;
@@ -452,41 +456,70 @@ function readOxViewJsonFile(file: File) {
                 systems.push(sys);
                 sysCount++;
             });
-            // Let's do this one more time...
-            // Since we now have instances initialised and updated IDs
-            // Go through each system
+            // Loop through another time to connect elements, since we now have updated IDs
             data.systems.forEach(sysData => {
-                let sys = sysData.createdSystem;
-                // Go through each strand
                 sysData.strands.forEach(strandData => {
-                    // Go through each monomer element
-                    strandData.monomers.forEach(elementData => {
-                        let element = elementData.createdElement;
+                    strandData.monomers.forEach(d => {
+                        let e = d.createdElement;
                         // Set references to any connected elements
-                        if ('n5' in elementData) {
-                            element.neighbor5 = elements.get(newElementIds.get(elementData.n5));
-                        }
-                        if ('n3' in elementData) {
-                            element.neighbor3 = elements.get(newElementIds.get(elementData.n3));
-                        }
-                        if ('bp' in elementData) {
-                            element.pair = elements.get(newElementIds.get(elementData.bp));
-                        }
-                        // Populate instances
-                        for (let attr in elementData.conf) {
-                            let v = elementData.conf[attr];
-                            sys.fillVec(attr, v.length, element.sid, v);
-                        }
-                        // Re-assign a picking color if ID has changed
-                        if (elementData.id !== element.gid) {
-                            let idColor = new THREE.Color();
-                            idColor.setHex(element.gid + 1); //has to be +1 or you can't grab nucleotide 0
-                            sys.fillVec('bbLabels', 3, element.sid, [idColor.r, idColor.g, idColor.b]);
+                        if ('n5' in d) {e.n5 = elements.get(newElementIds.get(d.n5));}
+                        if ('n3' in d) {e.n3 = elements.get(newElementIds.get(d.n3));}
+                        if ('bp' in d) {e.pair = elements.get(newElementIds.get(d.bp));}
+                    });
+                });
+            });
+            // Let's do this one more time...
+            // Since we now have the topology setup, let's set the configuration
+            data.systems.forEach(sysData => {
+                let sys: System = sysData.createdSystem;
+                let deprecated: boolean = false;
+                sysData.strands.forEach(strandData => {
+                    strandData.monomers.slice().reverse().forEach(d => {
+                        let e = d.createdElement;
+                        // If we have a position, use that
+                        if (d.p) {
+                            let p = new THREE.Vector3().fromArray(d.p);
+                            if (d.a1 && d.a3) {
+                                let a1 = new THREE.Vector3().fromArray(d.a1);
+                                let a3 = new THREE.Vector3().fromArray(d.a3);
+                                e.calcPositions(p, a1, a3);
+                            } else {
+                                e.calcPositions(p); // Amino acid
+                            }
+
+                        // Otherwise fallback to reading instance parameters
+                        } else if('conf' in d) {
+                            //make sure warning shows up only once 
+                            if(!deprecated) notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
+                            deprecated = true; 
+                            e.sid = e.id; // Why is this needed?
+                            // Populate instances
+                            for (let attr in d.conf) {
+                                let v = d.conf[attr];
+                                sys.fillVec(attr, v.length, e.sid, v);
+                            }
+                            // Re-assign a picking color if ID has changed
+                            if (d.id !== e.id) {
+                                let idColor = new THREE.Color();
+                                idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
+                                sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
+                            }
                         }
                     });
                 });
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
+/*
+                // Redraw sp connectors
+                sys.strands.forEach(s=>{
+                    s.forEach(e=>{
+                        if(e.n3) {
+                            calcsp(e);
+                        }
+                    });
+                    s.updateEnds();
+                });
+*/
             });
         }
     };
@@ -536,7 +569,7 @@ function readParFile(file) {
         };
         addANMToScene(anm);
         system.strands.forEach((s) => {
-            if (s.getType() == "Peptide") {
+            if (s.isPeptide()) {
                 api.toggleStrand(s);
             }
         })

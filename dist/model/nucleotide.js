@@ -3,16 +3,14 @@
  * This also specifies the visual structure of a nucleotide.
  */
 class Nucleotide extends BasicElement {
-    constructor(gid, strand) {
-        super(gid, strand);
+    constructor(id, strand) {
+        super(id, strand);
     }
     ;
     calcPositionsFromConfLine(l) {
         let sys = this.getSystem();
-        let sid = this.gid - sys.globalStartId;
         if (this.dummySys) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         //extract position
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
@@ -23,10 +21,9 @@ class Nucleotide extends BasicElement {
     }
     ;
     calcPositions(p, a1, a3) {
-        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         // according to base.py a2 is the cross of a1 and a3
         let a2 = a1.clone().cross(a3);
@@ -47,8 +44,9 @@ class Nucleotide extends BasicElement {
         }
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
-        if (this.neighbor3 && (this.neighbor3.lid < this.lid || this.dummySys)) {
-            sp = new THREE.Vector3((bb.x + bbLast.x) / 2, (bb.y + bbLast.y) / 2, (bb.z + bbLast.z) / 2);
+        if (this.n3 && (this.n3 != this.strand.end5 || this.dummySys)) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
+            sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize());
         }
@@ -60,9 +58,9 @@ class Nucleotide extends BasicElement {
         this.handleCircularStrands(sys, sid, bb);
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color;
-        color = this.strandToColor(this.strand.strandID);
+        color = this.strandToColor(this.strand.id);
         let idColor = new THREE.Color();
-        idColor.setHex(this.gid + 1); //has to be +1 or you can't grab nucleotide 0
+        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         //fill the instance matrices with data
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, bb.toArray());
@@ -88,14 +86,14 @@ class Nucleotide extends BasicElement {
         sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = bb;
+        //bbLast = bb;
     }
     ;
     translatePosition(amount) {
-        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem();
+        let sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         sys.bbOffsets[sid * 3] += amount.x;
         sys.bbOffsets[sid * 3 + 1] += amount.y;
@@ -119,10 +117,10 @@ class Nucleotide extends BasicElement {
     }
     ;
     calculateNewConfigPositions(l) {
-        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem();
+        let sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
@@ -143,7 +141,8 @@ class Nucleotide extends BasicElement {
         const rotationCon = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), bb.clone().sub(ns).normalize());
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
-        if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
+        if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
             spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize());
@@ -170,14 +169,13 @@ class Nucleotide extends BasicElement {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = bb.clone();
+        //bbLast = bb.clone();
     }
     ;
     updateColor() {
-        let sys = this.getSystem(), sid = this.gid - sys.globalStartId;
+        let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;
-            sid = this.sid;
         }
         let color;
         if (selectedBases.has(this)) {
@@ -186,10 +184,10 @@ class Nucleotide extends BasicElement {
         else {
             switch (view.coloringMode.get()) {
                 case "Strand":
-                    color = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length];
+                    color = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length];
                     break;
                 case "System":
-                    color = backboneColors[this.getSystem().systemID % backboneColors.length];
+                    color = backboneColors[this.getSystem().id % backboneColors.length];
                     break;
                 case "Cluster":
                     if (!this.clusterId || this.clusterId < 0) {
@@ -257,18 +255,6 @@ class Nucleotide extends BasicElement {
             return parseInt(c);
         }
     }
-    changeType(type) {
-        this.type = type;
-        // Get the dummy system if it exists, otherwise get the real system
-        let sys = this.getSystem();
-        let sid = this.gid - sys.globalStartId;
-        if (this.dummySys) {
-            sys = this.dummySys;
-            sid = this.sid;
-        }
-        let newC = this.elemToColor(type);
-        sys.fillVec('nsColors', 3, sid, [newC.r, newC.g, newC.b]);
-    }
     findPair() {
         let bestCandidate = null;
         let bestDist = 0.6;
@@ -277,10 +263,8 @@ class Nucleotide extends BasicElement {
         let strandCount = sys.strands.length;
         for (let i = 0; i < strandCount; i++) { //for every strand in the System
             let strand = sys.strands[i];
-            let nucCount = strand.monomers.length;
-            for (let j = 0; j < nucCount; j++) { // for every nucleotide on the Strand
-                let e = strand.monomers[j];
-                if (this.neighbor3 != e && this.neighbor5 != e &&
+            strand.forEach(e => {
+                if (this.n3 != e && this.n5 != e &&
                     this.getTypeNumber() != e.getTypeNumber() &&
                     (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0) {
                     let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
@@ -289,7 +273,7 @@ class Nucleotide extends BasicElement {
                         bestDist = dist;
                     }
                 }
-            }
+            });
         }
         return bestCandidate;
     }
@@ -304,8 +288,10 @@ class Nucleotide extends BasicElement {
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
+        json['a1'] = this.getA1().toArray();
+        json['a3'] = this.getA3().toArray();
         if (this.isPaired())
-            json['bp'] = this['pair'].gid;
+            json['bp'] = this['pair'].id;
         json['class'] = 'nucleotide';
         return json;
     }

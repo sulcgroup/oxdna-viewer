@@ -72,7 +72,7 @@ function makeTopFile(name) {
     //figure out if there are any proteins in the system
     systems.forEach(system => {
         system.strands.forEach(strand => {
-            if (strand.getType() == Peptide.name) {
+            if (strand.isPeptide()) {
                 proteinMode = true;
                 peptides.push(strand);
             }
@@ -93,15 +93,16 @@ function makeTopFile(name) {
         let totNuc = 0; //total # of elements
         let totNucleic = 0; //total # of strands
         let sidCounter = 1;
-        let gidCounter = 0;
+        let idCounter = 0;
         systems.forEach(system => {
             totNucleic += system.strands.length; // Count strands
             system.strands.forEach((strand) => {
                 newStrandIds.set(strand, sidCounter++); //Assign new strandID
-                totNuc += strand.monomers.length; // Count elements
-                strand.getOrderedMonomers().forEach(e => {
-                    newElementIds.set(e, gidCounter++); //Assign new elementID
-                });
+                strand.forEach(e => {
+                    newElementIds.set(e, idCounter++); //Assign new elementID
+                    totNuc++; // Count elements
+                }, true // Iterate in 3' to 5' direction, per oxDNA convention
+                );
             });
         });
         totParticles = totNuc;
@@ -114,24 +115,24 @@ function makeTopFile(name) {
         let totNucleic = 0;
         let totPeptide = 0;
         let sidCounter = -1;
-        let gidCounter = 0;
+        let idCounter = 0;
         peptides.forEach(strand => {
             newStrandIds.set(strand, sidCounter--);
             totPeptide += 1;
-            totParticles += strand.monomers.length;
-            totAA += strand.monomers.length;
-            strand.monomers.forEach(e => {
-                newElementIds.set(e, gidCounter++);
+            strand.forEach(e => {
+                newElementIds.set(e, idCounter++);
+                totParticles++;
+                totAA++;
             });
         });
         sidCounter = 1;
         nas.forEach(strand => {
             newStrandIds.set(strand, sidCounter++);
             totNucleic += 1;
-            totParticles += strand.monomers.length;
-            totNuc += strand.monomers.length;
-            strand.monomers.forEach(e => {
-                newElementIds.set(e, gidCounter++);
+            strand.forEach(e => {
+                newElementIds.set(e, idCounter++);
+                totParticles++;
+                totNuc++;
             });
         });
         totParticles = totNuc + totAA;
@@ -142,19 +143,19 @@ function makeTopFile(name) {
     if (totParticles != elements.size) {
         notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
     }
-    newElementIds.forEach((_gid, e) => {
-        let neighbor3 = e.neighbor3 ? newElementIds.get(e.neighbor3) : -1;
-        let neighbor5 = e.neighbor5 ? newElementIds.get(e.neighbor5) : -1;
+    newElementIds.forEach((_id, e) => {
+        let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
+        let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
         let cons = [];
         if (proteinMode) {
             for (let i = 0; i < e.connections.length; i++) {
                 let c = e.connections[i];
-                if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != neighbor5) {
+                if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != n5) {
                     cons.push(newElementIds.get(c.p2));
                 }
             }
         }
-        top.push([newStrandIds.get(e.strand), e.type, neighbor3, neighbor5, ...cons].join(' '));
+        top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
     });
     //makeTextFile(name+".top", top.join("\n")); //make .top 
     //this is absolute abuse of ES6 and I feel a little bad about it
@@ -176,14 +177,14 @@ function makeDatFile(name, altNumbering = undefined) {
     ].join('\n');
     // get coordinates for all elements, in the correct order
     if (altNumbering) {
-        altNumbering.forEach((_gid, e) => {
+        altNumbering.forEach((_id, e) => {
             dat += e.getDatFileOutput();
         });
     }
     else {
         systems.forEach(system => {
             system.strands.forEach((strand) => {
-                strand.monomers.forEach(e => {
+                strand.forEach(e => {
                     dat += e.getDatFileOutput();
                 });
             });
@@ -217,7 +218,7 @@ function writeMutTrapText(base1, base2) {
 }
 function makeMutualTrapFile() {
     let mutTrapText = "";
-    let listBases = Array.from(selectedBases).map(e => e.gid);
+    let listBases = Array.from(selectedBases).map(e => e.id);
     for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
         if (listBases[x + 1] !== undefined) { //if there is another nucleotide in the pair
             mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
@@ -234,7 +235,7 @@ function makePairTrapFile() {
         elements.forEach(e => {
             // If element is paired, add a trap
             if (e.isPaired()) {
-                mutTrapText += writeMutTrapText(e.gid, e.pair.gid);
+                mutTrapText += writeMutTrapText(e.id, e.pair.id);
             }
         });
         makeTextFile("basepair_trap.txt", mutTrapText); //after addding all mutual trap data, make mutual trap file
@@ -255,14 +256,14 @@ function makePairTrapFile() {
     }
 }
 function makeSelectedBasesFile() {
-    makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.gid).join(" "));
+    makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));
 }
 function makeSequenceFile() {
     let seqTxts = [];
     systems.forEach((sys) => {
         sys.strands.forEach((strand) => {
-            let label = strand.label ? strand.label : `strand_${strand.strandID}`;
-            seqTxts.push(`${label}, ${api.getSequence(strand.monomers)}`);
+            let label = strand.label ? strand.label : `strand_${strand.id}`;
+            seqTxts.push(`${label}, ${strand.getSequence()}`);
         });
     });
     makeTextFile("sequences.csv", seqTxts.join("\n"));

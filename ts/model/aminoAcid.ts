@@ -4,8 +4,8 @@
  */
 
 class AminoAcid extends BasicElement {
-    constructor(gid: number, strand: Strand) {
-        super(gid, strand);
+    constructor(id: number, strand: Strand) {
+        super(id, strand);
         this.elementType = AA;
         
     };
@@ -27,11 +27,12 @@ class AminoAcid extends BasicElement {
     }
 
     calcPositions(p: THREE.Vector3) {
-        const sys = this.getSystem(),
-        sid = this.gid - sys.globalStartId;
+        const sys = this.getSystem();
+        let sid = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
-        if (this.neighbor3 && this.neighbor3.lid < this.lid) {
+        if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = p.clone().add(bbLast).divideScalar(2);
             spLen = p.distanceTo(bbLast)
 
@@ -50,9 +51,9 @@ class AminoAcid extends BasicElement {
 
         // determine the mesh color, either from a supplied colormap json or by the strand ID.
         let color = new THREE.Color();
-        color = this.strandToColor(this.strand.strandID);
+        color = this.strandToColor(this.strand.id);
         let idColor = new THREE.Color();
-        idColor.setHex(this.gid+1); //has to be +1 or you can't grab nucleotide 0
+        idColor.setHex(this.id+1); //has to be +1 or you can't grab nucleotide 0
 
         // fill in the instancing matrices
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
@@ -81,12 +82,12 @@ class AminoAcid extends BasicElement {
         sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
 
         // keep track of last backbone for sugar-phosphate positioning
-        bbLast = p.clone();
+        //bbLast = p.clone();
     };
 
     calculateNewConfigPositions(l: string[]) {
-        const sys = this.getSystem(),
-        sid = this.gid - sys.globalStartId;
+        const sys = this.getSystem();
+        let sid = this.sid;
 
         //extract position
         const p = new THREE.Vector3(
@@ -97,12 +98,9 @@ class AminoAcid extends BasicElement {
 
         //calculate new backbone connector position/rotation
         let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
-        if (this.neighbor3 != null && this.neighbor3.lid < this.lid) {
-            sp = new THREE.Vector3(
-                (p.x + xbbLast) / 2,
-                (p.y + ybbLast) / 2,
-                (p.z + zbbLast) / 2
-            );
+        if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
+            sp = p.clone().add(bbLast).divideScalar(2);
             spLen = p.distanceTo(bbLast);
 
             spRotation = new THREE.Quaternion().setFromUnitVectors(
@@ -128,12 +126,12 @@ class AminoAcid extends BasicElement {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
         
-        bbLast = p.clone();
+        //bbLast = p.clone();
     };
 
     translatePosition(amount: THREE.Vector3) {
         const sys = this.getSystem(),
-            id = (this.gid - sys.globalStartId)*3;
+            id = (this.sid)*3;
 
         sys.bbOffsets[id] += amount.x;
         sys.bbOffsets[id + 1] += amount.y;
@@ -154,10 +152,9 @@ class AminoAcid extends BasicElement {
 
     updateColor() {
         let sys = this.getSystem(),
-            sid = this.gid - sys.globalStartId;
-        if (this.dummySys !== null) {
-            sys = this.dummySys
             sid = this.sid;
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
         }
         let bbColor: THREE.Color;
         let aaColor: THREE.Color;
@@ -167,11 +164,11 @@ class AminoAcid extends BasicElement {
         } else {
             switch (view.coloringMode.get()) {
                 case "Strand": 
-                    bbColor = backboneColors[(Math.abs(this.strand.strandID) + this.getSystem().systemID) % backboneColors.length]; 
+                    bbColor = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length]; 
                     aaColor = this.elemToColor(this.type);
                     break;
                 case "System": 
-                    bbColor = backboneColors[this.getSystem().systemID % backboneColors.length]; 
+                    bbColor = backboneColors[this.getSystem().id % backboneColors.length]; 
                     aaColor = this.elemToColor(this.type);
                     break;
                 case "Cluster":

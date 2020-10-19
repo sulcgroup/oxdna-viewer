@@ -6,7 +6,7 @@
 class System {
     constructor(id, startID) {
         this.strands = [];
-        this.systemID = id;
+        this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];
     }
@@ -14,7 +14,7 @@ class System {
     systemLength() {
         let count = 0;
         for (let i = 0; i < this.strands.length; i++) {
-            count += this.strands[i].monomers.length;
+            count += this.strands[i].getLength();
         }
         return count;
     }
@@ -74,8 +74,22 @@ class System {
      */
     getMonomers() {
         return [].concat.apply([], this.strands.map(s => {
-            return s.monomers;
+            return s.getMonomers();
         }));
+    }
+    getNextPeptideStrandID() {
+        let id = -1;
+        let currentIDs = new Set(this.strands.filter(s => s.isPeptide()).map(s => s.id));
+        while (currentIDs.has(id))
+            id--;
+        return id;
+    }
+    getNextNucleicAcidStrandID() {
+        let id = 0;
+        let currentIDs = new Set(this.strands.filter(s => s.isNucleicAcid()).map(s => s.id));
+        while (currentIDs.has(id))
+            id++;
+        return id;
     }
     createStrand(strID) {
         if (strID < 0)
@@ -84,6 +98,20 @@ class System {
             return new NucleicAcidStrand(strID, this);
     }
     ;
+    addNewNucleicAcidStrand() {
+        let id = this.getNextNucleicAcidStrandID();
+        let strand = new NucleicAcidStrand(id, this);
+        strand.system = this;
+        this.strands.push(strand);
+        return strand;
+    }
+    addNewPeptideStrand() {
+        let id = this.getNextPeptideStrandID();
+        let strand = new Peptide(id, this);
+        strand.system = this;
+        this.strands.push(strand);
+        return strand;
+    }
     addStrand(strand) {
         if (!this.strands.includes(strand)) {
             this.strands.push(strand);
@@ -158,7 +186,7 @@ class System {
     toJSON() {
         // Specify required attributes
         let json = {
-            id: this.systemID,
+            id: this.id,
         };
         // Specify optional attributes
         if (this.label)

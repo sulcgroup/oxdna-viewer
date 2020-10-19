@@ -1,7 +1,6 @@
 function drawSystemHierarchy() {
     let checkboxhtml = (label) => `<input data-role="checkbox" data-caption="${label}">`;
     const includeMonomers = document.getElementById("hierarchyMonomers").checked;
-    var frag = document.createDocumentFragment();
     const content = document.getElementById("hierarchyContent");
     content.innerText = '';
     let hierarchy = Metro.makePlugin(content, "treeview", {
@@ -48,40 +47,42 @@ function drawSystemHierarchy() {
     // Add checkbox nodes for, systems, strands and monomers
     for (const system of systems) {
         let systemNode = treeview.addTo(null, {
-            html: checkboxhtml(system.label ? system.label : `System ${system.systemID}`)
+            html: checkboxhtml(system.label ? system.label : `System ${system.id}`)
         });
         systemNode.data('system', system);
         for (const strand of system.strands) {
+            let monomers = strand.getMonomers();
             let strandNode = treeview.addTo(systemNode, {
-                html: checkboxhtml(strand.label ? strand.label : `Strand ${strand.strandID} (${strand.monomers.length})`)
+                html: checkboxhtml(strand.label ? strand.label : `Strand ${strand.id}` +
+                    ` (${monomers.length}${strand.isCircular() ? ' circular' : ''})`)
             });
             strandNode.data('strand', strand);
             if (includeMonomers) {
                 let addMonomer = (monomer) => {
                     let color = monomer.elemToColor(monomer.type).getHexString();
                     let monomerNode = treeview.addTo(strandNode, {
-                        html: checkboxhtml(`gid: ${monomer.gid}`.concat(monomer.label ? ` (${monomer.label})` : "")) +
+                        html: checkboxhtml(`id: ${monomer.id}`.concat(monomer.label ? ` (${monomer.label})` : "")) +
                             `<span style="background:#${color}4f; padding: 5px">${monomer.type}</span>`
                     });
                     monomerNode.data('monomer', monomer);
                     // Save reference for checbox in map:
                     let checkbox = monomerNode.find("input")[0];
                     checkbox.checked = selectedBases.has(monomer);
-                    checkboxMap.set(monomer.gid, checkbox);
+                    checkboxMap.set(monomer.id, checkbox);
                 };
-                for (const [i, monomer] of strand.monomers.entries()) {
+                for (const [i, monomer] of monomers.entries()) {
                     if (i < 20) {
                         addMonomer(monomer);
                     }
                     else {
                         let moreNode = treeview.addTo(strandNode, {
-                            caption: `View remaining ${strand.monomers.length - i} monomers`,
+                            caption: `View remaining ${monomers.length - i} monomers`,
                             icon: '<span class="mif-plus"></span>'
                         });
                         moreNode[0].onclick = () => {
                             treeview.del(moreNode);
-                            for (let j = i; j < strand.monomers.length; j++) {
-                                addMonomer(strand.monomers[j]);
+                            for (let j = i; j < monomers.length; j++) {
+                                addMonomer(monomers[j]);
                             }
                         };
                         break;
@@ -96,7 +97,7 @@ function drawSystemHierarchy() {
     /*
     // Add listeners for if an element is toggled
     document.addEventListener('elementSelectionEvent', event=>{
-        checkboxMap.get(event['element'].gid).checked = event['selected'];
+        checkboxMap.get(event['element'].id).checked = event['selected'];
         //treeview._recheck(tv);
     });
     */
@@ -217,13 +218,11 @@ function colorElements(color, elems) {
     initLutCols(systems);
     initLutCols(tmpSystems);
     elems.forEach(e => {
-        let sid;
+        let sys = e.getSystem();
         if (e.dummySys) {
-            sid = e["gid"] - e.dummySys.globalStartId;
-            e.dummySys.lutCols[e.sid] = color;
+            sys = e.dummySys;
         }
-        sid = e["gid"] - e.getSystem().globalStartId;
-        e.getSystem().lutCols[sid] = color;
+        sys.lutCols[e.sid] = color;
     });
     view.coloringMode.set("Overlay");
     if (!systems.some(system => system.colormapFile)) {
@@ -267,7 +266,7 @@ function toggleVisArbitrary() {
     if (selectedBases.size == 0) {
         systems.forEach(system => {
             system.strands.forEach(strand => {
-                strand.monomers.forEach(monomer => {
+                strand.forEach(monomer => {
                     if (monomer.getInstanceParameter3("visibility").x == 0)
                         monomer.toggleVisibility();
                 });
@@ -434,7 +433,7 @@ class View {
     showHoverInfo(pos, e) {
         let hoverInfo = document.getElementById('hoverInfo');
         let color = e.elemToColor(e.type).getHexString();
-        hoverInfo.innerHTML = `<span style="background:#${color}4f; padding: 5px">${e.type} gid:${e.gid}</span>`;
+        hoverInfo.innerHTML = `<span style="background:#${color}4f; padding: 5px">${e.type} ${e.getSystem().id}:${e.strand.id}:${e.id}</span>`;
         hoverInfo.style.left = pos.x + 'px';
         hoverInfo.style.top = pos.y + 20 + 'px';
         hoverInfo.hidden = false;
