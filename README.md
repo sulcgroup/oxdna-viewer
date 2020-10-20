@@ -34,11 +34,13 @@ You can find a set of example structures and tutorials in the [example directory
 ---
 
 ## Editing Features  
-The viewer can load multiple structures at the same time. You can then select (`S`) and transform (`D`) components using the "Select" and "Transform" options in the sidebar. Press `R` on your keyboard to toggle rotation and `T` to toggle translation. Hold down the `shift` key to snap to grid. Selected components can also be rotated around the x,y and z axis through the sidebar. Selections can be copied and pasted using `ctrl+C` and `ctrl+V`, `ctrl+shift+V` pastes in-place. Strands can be created, extended, nicked, or ligated. Edits can be undone and redone using `ctrl+Z`/`ctrl+Y` or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer.
+The viewer can load multiple structures at the same time. You can then select (`S`) and transform (`D`) components using the "Select" and "Transform" options in the sidebar. Press `R` on your keyboard to toggle rotation and `T` to toggle translation. Hold down the `shift` key to snap to grid. Selections can be copied and pasted using `ctrl+C` and `ctrl+V` (`ctrl+shift+V` pastes in-place). Strands can be created, extended, nicked, or ligated. Edits can be undone and redone using `ctrl+Z`/`ctrl+Y` or the ![undo](https://fonts.gstatic.com/s/i/materialicons/undo/v1/24px.svg) and ![redo](https://fonts.gstatic.com/s/i/materialicons/redo/v1/24px.svg) buttons. To download your edited and now perfectly assembled structure, click the "Download Output Files" button.  Note that this new file now represents a single structure and will behave as a single system if re-loaded into the viewer. There is also an experimental .oxview format which you can download to save cluster and base-pairing information, but make sure to also save your designs as oxdna files.
 
 Please provide feedback if you encounter any bugs or have suggestions for how to make the editing features better.
 
 Edited strands can also be exported for ordering purposes in CSV format by clicking the "Download Sequences" button.
+
+See a tutorial [here](https://www.youtube.com/watch?v=arhmT0LStUQ).
 
 ---
 
@@ -52,7 +54,7 @@ You can also watch the tutorial: [Creating oxDNA videos in oxView](https://www.y
 **Lemniscate**: The camera will make a figure-8 around the structure at the current distance, creating a 360° view of the currently loaded configuration.
 
 ### Output Formats
-**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software (note that this will not work in Firefox).  
+**Webm**: The preferred type for most modern video players, though note that older versions of PowerPoint do not play nice with it. If this is an issue, either save a Gif or convert the Webm to a different format using other software, such as ffmpeg (note that webm export will not work in Firefox).  
 **Gif**: Larger file size, but highly portable (note that this will not work in Chrome while running locally).  
 **PNG/JPEG**: Will download a .zip file with every frame saved as a image of the specified type.  Can be converted to video formats using other software such as ffmpeg or ImageJ.
 
@@ -62,7 +64,7 @@ The topology and trajectory/configuration have to be in oxDNA format. You can co
 ---
 
 ## Console Commands
-In addition to the visualization and editing features highlighted in the sidebar, oxView is scriptable through the browser console.  To facilitate use, there are two APIs containing useful functions for changing visuals and for editing.
+In addition to the visualization and editing features highlighted in the menu, oxView is scriptable through the browser console.  To facilitate use, there are two APIs containing useful functions for changing visuals and for editing.
 
 ### Scene API  
 The scene API can be accessed by typing `api.<command>(<arguments>)` in the browser console.  The following functions are currently available:  
@@ -94,7 +96,7 @@ The edit API can be accessed by typing `edit.<command>(<arguments>)` in the brow
  * `extendDuplex(<monomer object> <string>)`: Similar to extendStrand—extends the parent strand of a given monomer and creates a complement strand. If the given monomer does not have a base pair, it will create one and extend from it. Hooked up to the "Extend" button on the sidebar while "Duplex mode" is selected.
  * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button on the sidebar.
 
-Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems are made of strands which are made of elements. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].monomers[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999).
+Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems contain strands which contain elements. The elements are organised as a double-linked lists within the strands and can be iterated: `strand.forEach` or listed: `strand.getMonomers()`. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].getMonomers()[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999). If you hover above an element, you will see its system ID, its strand ID and its element ID respectively.
 
 ### Observable API
 The observable API can be accessed by typing `api.observable.(observable)` in the browser console.
@@ -139,8 +141,8 @@ For more information, watch the tutorial: [Arranging a tetrahedron from caDNAno 
 
 ---
 
-## 3D Printing Export 
-The viewer supports scene export in the common 3D printing STL format. To use click on the "STL EXPORT" button. 
+## 3D Export 
+The viewer supports scene export in both the modern gltf format and the the common 3D printing format STL. To use click file > 3D Export. 
 For memory reasons one has the option to include just parts of the oxDNA model into the output mesh file,
 choosing from:
 * `Backbone mesh` 
@@ -151,7 +153,9 @@ choosing from:
 The smoothness of the exported model is controlled via the `faces multiplier` setting. Note that additional smoothness results in very large STL files which not every browser can handle. 
 By increasing the `scaling` of the model objects can be made to overlap, which is benefitial for sturdy printed models.  
 To 3D print the exported STL, the file has to be imported in a processing program such as Autodesk NetFab.
-The resulting STL can than be imported into the 3D printer software. 
+The resulting STL can than be imported into the 3D printer software.
+
+The exported gltf can be imported in software such as Blender to create photorealistic illustrations. See a tutorial [here](https://www.youtube.com/watch?v=nkKSbeOm0N8).
 
 ---
 
@@ -159,7 +163,8 @@ The resulting STL can than be imported into the 3D printer software.
 The viewer supports live relaxation of loaded configurations using [ox-serve](https://github.com/sulcgroup/ox-serve) nodes.
 To connect to an existing node open the `Connect` menu in the `OX-Serve` tab and input the url and port of the respective 
 server. Note that communication between the server and ox-view is established via web sockets, so a typical url looks like: `ws://127.0.0.1:8888`. Further on one can open the `Settings` menu and run the relaxation simulations. 
-It is assumed that the [ox-serve](https://github.com/sulcgroup/ox-serve) server runs on a machine with cuda support. 
+It is assumed that the [ox-serve](https://github.com/sulcgroup/ox-serve) server runs on a machine with cuda support.
+See a tutorial [here](https://www.youtube.com/watch?v=FtU-Sr3aLdI).
 
 ---
 
