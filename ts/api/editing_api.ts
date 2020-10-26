@@ -66,6 +66,18 @@ module edit{
         return newStrand;
     }
 
+    export function move_to(e:BasicElement, to_displace: BasicElement[]){
+        //displace a list of elements tovards the position of e
+        let origin= to_displace[0].getPos();
+        let displace_by = e.getPos().sub(origin);
+        to_displace.forEach(p=>{
+           p.translatePosition(displace_by);
+        });
+        systems.forEach((s) => s.callUpdates(['instanceOffset']));
+        tmpSystems.forEach((s) => s.callUpdates(['instanceOffset']));
+        render();
+    }
+
     export function insert(e :BasicElement, sequence: string): BasicElement[] {
         let edits = [];
 

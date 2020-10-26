@@ -214,3 +214,10 @@ function setSeqWrapper() {
     editHistory.do(new RevertableSequenceEdit(selectedBases, seq, setCompl));
     topologyEdited = true;
 }
+
+function moveToWrapper(){
+    // assuming last element of the selection is the move to position
+    let bases = Array.from(selectedBases);
+    let e = bases.pop();
+    edit.move_to(e, bases);
+}

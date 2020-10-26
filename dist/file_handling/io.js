@@ -2,6 +2,7 @@
 class TopReader extends FileReader {
     constructor(topFile, system, elems) {
         super();
+        this.topFile = null;
         this.sidCounter = 0;
         this.nucLocalID = 0;
         this.onload = ((f) => {

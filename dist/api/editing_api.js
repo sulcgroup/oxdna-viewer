@@ -13,13 +13,7 @@ var edit;
         // Splitting a circular strand doesn't make more strands.
         // We only need to update endpoints.
         if (strand.isCircular()) {
-            e.n3.n5 = null;
-            e.n3 = null;
             strand.setFrom(e);
-            // Remove connector geometry.
-            e.setInstanceParameter("bbconScales", [0, 0, 0]);
-            let sys = e.dummySys ? e.dummySys : e.getSystem();
-            sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
             return;
         }
         // No need to split if one half will be empty
@@ -61,6 +55,18 @@ var edit;
         sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
         return newStrand;
     }
+    function move_to(e, to_displace) {
+        //displace a list of elements tovards the position of e
+        let origin = to_displace[0].getPos();
+        let displace_by = e.getPos().sub(origin);
+        to_displace.forEach(p => {
+            p.translatePosition(displace_by);
+        });
+        systems.forEach((s) => s.callUpdates(['instanceOffset']));
+        tmpSystems.forEach((s) => s.callUpdates(['instanceOffset']));
+        render();
+    }
+    edit.move_to = move_to;
     function insert(e, sequence) {
         let edits = [];
         let end5 = e;
@@ -197,45 +203,52 @@ var edit;
         let victimIds = new Set(victims.map(e => e.id));
         victims.forEach((e) => {
             e = elements.get(e.id); // If we add element, then remove it, then undo both edits
-            let sys = e.dummySys ? e.dummySys : e.getSystem();
+            let sys;
             let strand = e.strand;
-            let n3 = e.n3;
-            let n5 = e.n5;
+            if (e.dummySys !== null) {
+                sys = e.dummySys;
+            }
+            else {
+                sys = e.getSystem();
+            }
             needsUpdateList.add(sys);
             // Hide element
             e.toggleVisibility();
             // Remove connector geometry.
-            if (n5) {
-                n5.setInstanceParameter("bbconScales", [0, 0, 0]);
+            if (e.n5) {
+                e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
             }
-
-            let strand3, strand5;
+            let newStrand;
             // Split strand if we won't also delete further downstream
-            if (n3) { //&& !victimIds.has(n3.id)) {
-                strand3 = splitStrand(e);
+            if (e.n3 && !victimIds.has(e.n3.id)) {
+                newStrand = splitStrand(e);
             }
-            // Split strand if we won't also delete further downstream
-            if (n5) { //} && !victimIds.has(n5.id)) {
-                strand5 = splitStrand(n5);
-            }
-
+            // Remove e from strand
+            console.assert(strand.end3 == e, "Incorrect strand split");
+            strand.end3 = strand.end3.n5;
+            strand.end3.n3 = null;
             // Remove e from element map and selection
             elements.delete(e.id);
             selectedBases.delete(e);
-
-            // Strand 5 should now contain e (and any other neighbours to delete).
-            // Remove the strand it only contains e.
-            [strand, strand3, strand5].forEach(s=>{
-                if (s && e == s.end3 && e == s.end5) {
-                    let system = s.system;
-                    system.removeStrand(s);
-                    // Remove system if empty
-                    if (system.isEmpty()) {
-                        systems.splice(systems.indexOf(system), 1);
-                        sysCount--;
-                    }
+            // Remove strand(s) if empty
+            if (e == strand.end3 && e == strand.end5) {
+                let s = strand.system;
+                s.removeStrand(strand);
+                // Remove system if empty
+                if (s.isEmpty()) {
+                    systems.splice(systems.indexOf(s), 1);
+                    sysCount--;
                 }
-            });   
+            }
+            if (newStrand && newStrand != strand && newStrand && (e == newStrand.end3 && e == newStrand.end5)) {
+                let s = newStrand.system;
+                s.removeStrand(newStrand);
+                // Remove system if empty
+                if (s.isEmpty()) {
+                    systems.splice(systems.indexOf(s), 1);
+                    sysCount--;
+                }
+            }
         });
         needsUpdateList.forEach((s) => {
             s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);

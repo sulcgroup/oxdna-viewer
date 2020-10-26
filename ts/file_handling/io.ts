@@ -1,7 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 class TopReader extends FileReader{
-    topFile: File;
+    topFile: File = null;
     system: System;
     elems: ElementMap;
 
