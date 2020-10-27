@@ -12,8 +12,14 @@ module edit{
 
         // Splitting a circular strand doesn't make more strands.
         // We only need to update endpoints.
-        if(strand.isCircular()) {
+        if (strand.isCircular()) {
+            e.n3.n5 = null;
+            e.n3 = null;
             strand.setFrom(e);
+            // Remove connector geometry.
+            e.setInstanceParameter("bbconScales", [0, 0, 0]);
+            let sys = e.dummySys ? e.dummySys : e.getSystem();
+            sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
             return;
         }
 
@@ -243,64 +249,50 @@ module edit{
      */
     export function deleteElements (victims: BasicElement[]) {
         let needsUpdateList = new Set<System>();
-        let victimIds = new Set(victims.map(e=>e.id));
         victims.forEach((e) => {
             e = elements.get(e.id); // If we add element, then remove it, then undo both edits
-            let sys: System
+            let sys = e.dummySys ? e.dummySys : e.getSystem();
             let strand = e.strand;
-            if (e.dummySys !== null) {
-                sys = e.dummySys;
-            }
-            else {
-                sys = e.getSystem();
-            }
+            let n3 = e.n3;
+            let n5 = e.n5;
             needsUpdateList.add(sys);
-
             // Hide element
             e.toggleVisibility();
             // Remove connector geometry.
-            if(e.n5) {
-                e.n5.setInstanceParameter("bbconScales", [0, 0, 0]);
+            if (n5) {
+                n5.setInstanceParameter("bbconScales", [0, 0, 0]);
             }
 
-            let newStrand: Strand;
+            let strand3, strand5;
             // Split strand if we won't also delete further downstream
-            if(e.n3 && !victimIds.has(e.n3.id)) {
-                newStrand = splitStrand(e);
+            if (n3) {
+                strand3 = splitStrand(e);
             }
-
-            // Remove e from strand
-            console.assert(strand.end3 == e, "Incorrect strand split");
-            strand.end3 = strand.end3.n5;
-            strand.end3.n3 = null;
+            // Split strand if we won't also delete further downstream
+            if (n5) {
+                strand5 = splitStrand(n5);
+            }
 
             // Remove e from element map and selection
             elements.delete(e.id);
             selectedBases.delete(e);
 
-            // Remove strand(s) if empty
-            if(e == strand.end3 && e == strand.end5) {
-                let s = strand.system;
-                s.removeStrand(strand);
-                // Remove system if empty
-                if(s.isEmpty()) {
-                    systems.splice(systems.indexOf(s), 1);
-                    sysCount--;
+            // Strand 5 should now contain e (and any other neighbours to delete).
+            // Remove the strand it only contains e.
+            [strand, strand3, strand5].forEach(s=>{
+                if (s && e == s.end3 && e == s.end5) {
+                    let system = s.system;
+                    system.removeStrand(s);
+                    // Remove system if empty
+                    if (system.isEmpty()) {
+                        systems.splice(systems.indexOf(system), 1);
+                        sysCount--;
+                    }
                 }
-            }
-            if(newStrand && newStrand != strand && newStrand && (e == newStrand.end3 && e == newStrand.end5)) {
-                let s = newStrand.system;
-                s.removeStrand(newStrand);
-                // Remove system if empty
-                if(s.isEmpty()) {
-                    systems.splice(systems.indexOf(s), 1);
-                    sysCount--;
-                }
-            }
+            });
         });
-
-        needsUpdateList.forEach((s:System) => {
-            s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor'])
+        needsUpdateList.forEach((s) => {
+            s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
         });
         render();
     }
