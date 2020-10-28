@@ -403,6 +403,9 @@ function readOxViewJsonFile(file) {
                         e.label = elementData.label;
                         e.type = elementData.type;
                         e.clusterId = elementData.cluster;
+                        if (elementData.color) {
+                            e.color = new THREE.Color(elementData.color);
+                        }
                         e.sid = sidCounter++;
                         elementData.createdElement = e;
                     });

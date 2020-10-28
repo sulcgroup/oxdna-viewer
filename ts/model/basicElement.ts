@@ -18,6 +18,7 @@ abstract class BasicElement {
     elementType: number = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
     clusterId: number;
     dummySys: System;
+    color: THREE.Color;
 
     constructor(id: number, strand: Strand) {
         this.id = id;
@@ -192,6 +193,7 @@ abstract class BasicElement {
         if (this.n5) json['n5'] = this.n5.id;
         if (this.label) json['label'] = this.label;
         if (this.clusterId) json['cluster'] = this.clusterId;
+        if (this.color) json['color'] = this.color.getHex();
 
         return json;
     }

@@ -201,33 +201,10 @@ function colorElements(color, elems) {
     if (elems.length == 0) {
         notify("Please first select the elements you wish to color");
     }
-    if (lut == undefined) {
-        lut = new THREE.Lut(defaultColormap, 512);
-        // legend needed to set 'color by' to Overlay, gets removed later
-        lut.setLegendOn();
-        lut.setLegendLabels();
-    }
-    else {
-        const emptyTmpSystems = tmpSystems.filter(tmpSys => tmpSys.lutCols.length == 0);
-        if (emptyTmpSystems.length > 0) {
-            console.log(emptyTmpSystems);
-            initLutCols(emptyTmpSystems);
-        }
-        view.coloringMode.set("Overlay");
-    }
-    initLutCols(systems);
-    initLutCols(tmpSystems);
     elems.forEach(e => {
-        let sys = e.getSystem();
-        if (e.dummySys) {
-            sys = e.dummySys;
-        }
-        sys.lutCols[e.sid] = color;
+        e.color = color;
     });
-    view.coloringMode.set("Overlay");
-    if (!systems.some(system => system.colormapFile)) {
-        api.removeColorbar();
-    }
+    view.coloringMode.set("Custom");
     clearSelection();
 }
 //toggles display of coloring by json file / structure modeled off of base selector
