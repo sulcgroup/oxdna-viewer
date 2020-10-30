@@ -139,6 +139,8 @@ class BasicElement {
             json['label'] = this.label;
         if (this.clusterId)
             json['cluster'] = this.clusterId;
+        if (this.color)
+            json['color'] = this.color.getHex();
         return json;
     }
     getTypeNumber() {

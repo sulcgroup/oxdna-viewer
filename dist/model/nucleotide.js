@@ -200,6 +200,14 @@ class Nucleotide extends BasicElement {
                 case "Overlay":
                     color = sys.lutCols[sid];
                     break;
+                case "Custom":
+                    if (!this.color) {
+                        color = new THREE.Color(0x888888);
+                    }
+                    else {
+                        color = this.color;
+                    }
+                    break;
             }
         }
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);

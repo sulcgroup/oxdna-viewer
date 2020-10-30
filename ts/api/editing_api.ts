@@ -706,7 +706,7 @@ module edit{
         // Sort elements in 5' to 3' order
         let strands = new Set<Strand>();
         elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[] = [];
+        let orderedElems = [];
         Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
             orderedElems.push(...strand.filter(e=>elems.has(e)));
         });
@@ -723,7 +723,7 @@ module edit{
         // Sort elements in 5' to 3' order
         let strands = new Set<Strand>();
         elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[] = [];
+        let orderedElems = [];
         Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
             orderedElems.push(...strand.filter(e=>elems.has(e)));
         });
@@ -753,7 +753,7 @@ module edit{
         // If we need to find basepairs, do that first and wait
         // for the calculation to finish. Otherwise, set the
         // sequence immediately.
-        if (setComplementaryBases && !elems[0].isPaired()) {
+        if (setComplementaryBases && ![...elems][0].isPaired()) {
             view.longCalculation(findBasepairs, view.basepairMessage, set);
         } else {
             set();

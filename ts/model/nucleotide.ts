@@ -269,11 +269,18 @@ abstract class Nucleotide extends BasicElement {
                 case "System": color = backboneColors[this.getSystem().id % backboneColors.length]; break;
                 case "Cluster":
                     if(!this.clusterId || this.clusterId < 0) {
-                        color = new THREE.Color(0xE60A0A)
+                        color = new THREE.Color(0xE60A0A);
                     } else {
                         color = backboneColors[this.clusterId % backboneColors.length];
                     } break;
                 case "Overlay": color = sys.lutCols[sid]; break;
+                case "Custom":
+                    if (!this.color) {
+                        color = new THREE.Color(0x888888);
+                    } else {
+                        color = this.color;
+                    }
+                    break;
             }
         }
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);

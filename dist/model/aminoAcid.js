@@ -153,6 +153,14 @@ class AminoAcid extends BasicElement {
                     bbColor = sys.lutCols[sid];
                     aaColor = bbColor.clone();
                     break;
+                case "Custom":
+                    if (!this.color) {
+                        bbColor = new THREE.Color(0x888888);
+                    }
+                    else {
+                        bbColor = this.color;
+                    }
+                    break;
             }
         }
         sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
