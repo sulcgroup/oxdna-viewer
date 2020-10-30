@@ -706,9 +706,9 @@ module edit{
         // Sort elements in 5' to 3' order
         let strands = new Set<Strand>();
         elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[];
+        let orderedElems: BasicElement[] = [];
         Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
-            orderedElems.concat(strand.filter(e=>elems.has(e)));
+            orderedElems.push(...strand.filter(e=>elems.has(e)));
         });
 
         return orderedElems.map(e=>{return e.type}).join('');
@@ -723,10 +723,12 @@ module edit{
         // Sort elements in 5' to 3' order
         let strands = new Set<Strand>();
         elems.forEach(e=>{strands.add(e.strand)});
-        let orderedElems: BasicElement[];
+        let orderedElems: BasicElement[] = [];
         Array.from(strands).sort((a,b)=>{return a.id<b.id ? 1:-1}).forEach(strand=>{
-            orderedElems.concat(strand.filter(e=>elems.has(e)));
+            orderedElems.push(...strand.filter(e=>elems.has(e)));
         });
+
+        console.log("set", orderedElems)
 
         // Define a function to satisfy view.longCalculation callback
         let set = function(){

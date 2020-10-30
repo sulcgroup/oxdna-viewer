@@ -55,13 +55,12 @@ canvas.addEventListener('mousedown', event => {
             switch (view.selectionMode.get()) {
                 case "System":
                     sys.strands.forEach(strand => {
-                        strand.forEach(e => {
-                            e.toggle();
-                        });
+                        strand.toggleMonomers();
                     });
                     updateView(sys);
                     break;
                 case "Strand":
+                    let orderFlag = true ? nucleotide.strand.isNucleicAcid() : false;
                     nucleotide.strand.forEach(e => {
                         e.toggle();
                         if (view.selectPairs()) {
@@ -72,7 +71,7 @@ canvas.addEventListener('mousedown', event => {
                                 selectPaired(e);
                             }
                         }
-                    });
+                    }, orderFlag);
                     updateView(sys);
                     break;
                 case "Monomer":

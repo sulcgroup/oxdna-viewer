@@ -128,16 +128,17 @@ abstract class Strand {
         return list;
     }
 
+    //reverse is set to true so things select in standard oxDNA d3'-5' order
     toggleMonomers() {
-        this.forEach(e=>e.toggle());
+        this.forEach(e=>e.toggle(), true);
     }
 
     select() {
-        this.forEach(e=>e.select());
+        this.forEach(e=>e.select(), true);
     }
 
     deselect() {
-        this.forEach(e=>e.deselect());
+        this.forEach(e=>e.deselect(), true);
     }
 
     isEmpty(): Boolean {
@@ -289,4 +290,34 @@ class Peptide extends Strand {
         json['class'] = 'Peptide';
         return json;
     };
+
+    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
+    getMonomers(reverse?:boolean): BasicElement[] {
+        return super.getMonomers(!reverse)
+    }
+
+    forEach(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean, condition?: (value: BasicElement, index: number)=>boolean) {
+        super.forEach(callbackfn, !reverse, condition);
+    }
+
+    map(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean) {
+        return super.map(callbackfn, !reverse);
+    }
+
+    filter(callbackfn: (value: BasicElement, index: number)=>boolean, reverse?:boolean) {
+        return super.filter(callbackfn, !reverse)
+    }
+
+    toggleMonomers() {
+        this.forEach(e=>e.toggle());
+    }
+
+    select() {
+        this.forEach(e=>e.select());
+    }
+
+    deselect() {
+        this.forEach(e=>e.deselect());
+    }
+
 }
