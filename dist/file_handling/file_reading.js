@@ -53,13 +53,67 @@ let confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile sto
 box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
 var toggleFailure = false, defaultColormap = "cooltowarm";
+let files = [];
+function traverseDirectory(entry) {
+    //https://stackoverflow.com/questions/18815197/javascript-file-dropping-and-reading-directories-asynchronous-recursion
+    //
+    const reader = entry.createReader();
+    // Resolved when the entire directory is traversed
+    return new Promise((resolve, reject) => {
+        const iterationAttempts = [];
+        function readEntries() {
+            // According to the FileSystem API spec, readEntries() must be called until
+            // it calls the callback with an empty array.  Seriously??
+            reader.readEntries((entries) => {
+                if (!entries.length) {
+                    // Done iterating this particular directory
+                    resolve(Promise.all(iterationAttempts));
+                }
+                else {
+                    // Add a list of promises for each directory entry.  If the entry is itself
+                    // a directory, then that promise won't resolve until it is fully traversed.
+                    iterationAttempts.push(Promise.all(entries.map((ientry) => {
+                        if (ientry.isFile) {
+                            // DO SOMETHING WITH FILES
+                            ientry.file(file => {
+                                //TODO:find a way to syncronize this thing...
+                                //currently this "gets handled" by the sleep call
+                                files.push(file);
+                            });
+                            return ientry;
+                        }
+                        // DO SOMETHING WITH DIRECTORIES
+                        return traverseDirectory(ientry);
+                    })));
+                    // Try calling readEntries() again for the same dir, according to spec
+                    readEntries();
+                }
+            }, error => reject(error));
+        }
+        readEntries();
+    });
+}
 // What to do if a file is dropped
 target.addEventListener("drop", function (event) {
+    function sleep(ms) {
+        //https://stackoverflow.com/questions/951021/what-is-the-javascript-version-of-sleep
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
     // cancel default actions
     event.preventDefault();
-    const files = event.dataTransfer.files;
-    handleFiles(files);
+    const data = event.dataTransfer.items;
+    for (let i = 0; i < data.length; i += 1) {
+        const item = data[i];
+        const entry = item.webkitGetAsEntry();
+        traverseDirectory(entry).then((async (result) => {
+            console.log(files);
+            await sleep(100);
+            handleFiles(files);
+            files = [];
+        }));
+    }
 }, false);
+// function handleFiles(files: FileList) {
 function handleFiles(files) {
     const filesLen = files.length;
     let topFile, jsonFile, trapFile;
