@@ -182,3 +182,5 @@ function moveToWrapper() {
     let e = bases.pop();
     edit.move_to(e, bases);
 }
+
+function testNetwork()

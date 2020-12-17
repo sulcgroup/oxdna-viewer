@@ -605,3 +605,101 @@ function addSystemToScene(system) {
     renderer.domElement.style.cursor = "auto";
     canvas.focus();
 }
+
+function addPDBToScene(strands){
+    // Parses PDB Data and Intializes System, Errors go to the Console
+
+    //PDB Parsing
+    // Members of the Recongized arrays cannot have overlapping Members
+    const recongizedDNAResidues = ["DG","DT","DA","DC", "DU", "DI", "DN"];
+    const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
+        "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
+        "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
+    const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
+
+    // Intialize bookkeeping Members and Boolean Checks
+    let checker = {
+        DNAPresent : false,
+        proteinPresent : false,
+        RNAPresent : false,
+        mutantStrand : false
+    };
+
+    //Classify Residue Types
+    strands.forEach(strand => {
+        // Reset Bookkeeping Members for each Strand
+        for (var key in checker){
+            checker[key] = false;
+        }
+        // Loop over all Residues in each Strand
+        strand.residues.forEach(res => {
+            // Sort PDB Info and set Flags for System Initialization at Residue Level
+
+            //Check if Residue from PDB is in recongized
+            if (recongizedDNAResidues.indexOf(res.restype) > -1) {
+                // Deal with Special Cases Here
+                if (res.restype === 'DN') {
+                    notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
+                    notify("Visualizing as 'A'"); //lol maybe
+                }
+                if (res.restype === 'DI') {
+                    notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
+                    return 1;
+                }
+                // Sets which Nucleic Acids are Intialized
+                res.type = 'dna';
+                // Bookkeeping
+                checker.DNAPresent = true;
+            } else if (recongizedProteinResidues.indexOf(res.restype) > -1) {
+                // Deal with Special Cases Here
+                if (res.restype === 'UNK') {
+                    notify("Amino Acid blank is Unknown, Intializing as Dummy?")
+                }
+                // Sets which Residues are Intialized
+                res.type = 'pro';
+                // Bookkeeping
+                checker.proteinPresent = true;
+            } else if (recongizedRNAResidues.indexOf(res.restype) > -1) {
+                // Deal with Special Cases Here
+                if (res.restype === 'N') {
+                    notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
+                    notify("Visualizing as 'A'"); //lol maybe
+                }
+                if (res.restype === 'I') {
+                    notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
+                    return 1;
+                }
+                // Sets which Nucleic Acids are Intialized
+                res.type = 'rna';
+                // Bookkeeping
+                checker.RNAPresent = true;
+            } else {
+                notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
+                    "It will not be Intialized in the Viewer.");
+            }
+        });
+
+        // Check for strands with inconsistent Residue Types
+        checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
+        if(checker.mutantStrand) {
+            notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
+            strand.type = 'bastard';
+        } else {
+            if (checker.proteinPresent) strand.type = 'pro';
+            if (checker.DNAPresent) strand.type = 'dna';
+            if (checker.RNAPresent) strand.type = 'rna';
+        }
+
+    });
+
+    // Intialize Sorted Strands
+
+
+
+
+
+
+    strands.foreach()
+
+
+}
