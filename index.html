@@ -169,6 +169,7 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-view">View</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-trajectory">Trajectory</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
+            <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
         </ul>
 
         <div class="content-holder">
@@ -653,6 +654,18 @@
                         <span class="caption">Settings</span>
                     </button>
                     <span class="title">Ox-Serve</span>
+                </div>
+            </div>
+            <!-- Added by Jonah Makes a separate Protein section--> >
+            <div class="section" id="section-protein">
+                <div class="group">
+                    <div class="tight group flex-column">
+                        <button class="ribbon-button" onclick="testNetworkWrapper()"
+                                title="Build ANM Network">
+                            <span class="mif-lightning5 mif-2x"></span>
+                            <span class="caption">Build ANM Network</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

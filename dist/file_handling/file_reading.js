@@ -62,7 +62,7 @@ target.addEventListener("drop", function (event) {
 }, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let topFile, jsonFile, trapFile;
+    let topFile, jsonFile, trapFile, pdbFile;
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -82,6 +82,10 @@ function handleFiles(files) {
             topFile = files[i];
         else if (ext === "json")
             jsonFile = files[i];
+        else if (ext === "pdb") {
+            pdbFile = files[i];
+            readPdbFile(pdbFile);
+        }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
         else {
@@ -606,6 +610,80 @@ function addSystemToScene(system) {
     canvas.focus();
 }
 
+function readPdbFile(file) {
+    let reader = new FileReader();
+    reader.onload = () => {
+
+        const pdbLines = (reader.result as string).split("\n");
+        //or
+        let lines = reader.result.split(/[\n]+/g);
+
+        const atoms = [];
+        const residues = []; // individual residue data parsed from SEQRES
+        const chains = []; // individual rchaindata parsed from SEQRES
+
+        // Iterate each line looking for atoms
+        pdbLines.forEach((pdbLine) => {
+            if (pdbLine.substr(0, 4) === 'ATOM') {
+                let prevChainId = " "
+                let prevResId = " "
+                // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+                atoms.push({
+                    indx: parseInt(pdbLine.substring(6, 11)),
+                    atomType: pdbLine.substring(12, 16).trim(),
+                    altLoc: pdbLine.substring(16, 17).trim(),
+                    resType: pdbLine.substring(17, 20).trim(),
+                    chainID: pdbLine.substring(21, 22).trim(),
+                    pdbResNum: parseInt(pdbLine.substring(22, 26)),
+                    iCode: pdbLine.substring(26, 27).trim(),
+                    x: parseFloat(pdbLine.substring(30, 38)),
+                    y: parseFloat(pdbLine.substring(38, 46)),
+                    z: parseFloat(pdbLine.substring(46, 54)),
+                    occupancy: parseFloat(pdbLine.substring(54, 60)),
+                    tempFactor: parseFloat(pdbLine.substring(60, 66)),
+                    element: pdbLine.substring(76, 78).trim(),
+                    charge: pdbLine.substring(78, 80).trim(),
+                });
+
+                //checks if last read atom belongs to a different chain than the one before it
+                if (prevResId !== atoms[-1].pdbResNum) {
+                    residues.push({
+                        resType: atoms[-1].resType,
+                        pdbResNum: atoms[-1].pdbResNum,
+                        chainID: atoms[-1].chainID,
+                        atoms: [],
+                    })
+                    //set previous chain id to that of last read atom
+                    prevResId = atoms[-1].pdbResNum;
+                }
+
+                if (prevChainId !== atoms[-1].chainID) {
+                    chains.push({
+                        chainID: atoms[-1].chainID,
+                        residues: [],
+                    })
+                    //set previous chain id to that of last read atom
+                    prevChainId = atoms[-1].chainID;
+                }
+            }
+        });
+
+        residues.forEach((res) =>
+            res.atoms = atoms.filter(atom => atom.pdbResNum == res.pdbResNum)
+        );
+
+        chains.forEach((chain) =>
+            chain.residues = residues.filter(res => res.chainID == chain.chainID)
+        );
+
+        return {
+            atoms, // Array of all atoms
+            residues, // Array of residue objects
+            chains, // Array of chains
+        };
+    }
+}
+
 function addPDBToScene(strands){
     // Parses PDB Data and Intializes System, Errors go to the Console
 
@@ -693,12 +771,6 @@ function addPDBToScene(strands){
     });
 
     // Intialize Sorted Strands
-
-
-
-
-
-
     strands.foreach()
 
 

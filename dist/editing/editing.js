@@ -183,4 +183,8 @@ function moveToWrapper() {
     edit.move_to(e, bases);
 }
 
-function testNetwork()
+function testNetworkWrapper() {
+    // Kinda just a place holder for now
+    let bases = Array.from(selectedBases);
+    let e = bases.pop();
+}
