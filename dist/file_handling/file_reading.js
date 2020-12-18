@@ -623,10 +623,11 @@ function readPdbFile(file) {
         const chains = []; // individual rchaindata parsed from SEQRES
 
         // Iterate each line looking for atoms
+        // bookkeeping
+        let prevChainId = " "
+        let prevResId = " "
         pdbLines.forEach((pdbLine) => {
             if (pdbLine.substr(0, 4) === 'ATOM') {
-                let prevChainId = " "
-                let prevResId = " "
                 // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
                 atoms.push({
                     indx: parseInt(pdbLine.substring(6, 11)),
@@ -651,6 +652,7 @@ function readPdbFile(file) {
                         resType: atoms[-1].resType,
                         pdbResNum: atoms[-1].pdbResNum,
                         chainID: atoms[-1].chainID,
+                        type : "",
                         atoms: [],
                     })
                     //set previous chain id to that of last read atom
@@ -661,6 +663,7 @@ function readPdbFile(file) {
                     chains.push({
                         chainID: atoms[-1].chainID,
                         residues: [],
+                        strandtype: "",
                     })
                     //set previous chain id to that of last read atom
                     prevChainId = atoms[-1].chainID;
@@ -669,11 +672,11 @@ function readPdbFile(file) {
         });
 
         residues.forEach((res) =>
-            res.atoms = atoms.filter(atom => atom.pdbResNum == res.pdbResNum)
+            res.atoms = atoms.filter(atom => atom.pdbResNum === res.pdbResNum)
         );
 
         chains.forEach((chain) =>
-            chain.residues = residues.filter(res => res.chainID == chain.chainID)
+            chain.residues = residues.filter(res => res.chainID === chain.chainID)
         );
 
         return {
@@ -754,6 +757,7 @@ function addPDBToScene(strands){
             } else {
                 notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
                     "It will not be Intialized in the Viewer.");
+                res.type = 'unworthy'
             }
         });
 
@@ -761,11 +765,11 @@ function addPDBToScene(strands){
         checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
         if(checker.mutantStrand) {
             notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
-            strand.type = 'bastard';
+            strand.strandtype = 'bastard';
         } else {
-            if (checker.proteinPresent) strand.type = 'pro';
-            if (checker.DNAPresent) strand.type = 'dna';
-            if (checker.RNAPresent) strand.type = 'rna';
+            if (checker.proteinPresent) strand.strandtype = 'pro';
+            if (checker.DNAPresent) strand.strandtype = 'dna';
+            if (checker.RNAPresent) strand.strandtype = 'rna';
         }
 
     });

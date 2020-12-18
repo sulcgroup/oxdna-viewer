@@ -662,9 +662,22 @@
                     <div class="tight group flex-column">
                         <button class="ribbon-button" onclick="testNetworkWrapper()"
                                 title="Build ANM Network">
-                            <span class="mif-lightning5 mif-2x"></span>
+                            <span class="mif-lightning5 mif-1x"></span>
                             <span class="caption">Build ANM Network</span>
                         </button>
+                    </div>
+                    <div class="tight group flex-column">
+                        <button class="ribbon-button" onclick="discretizeMassWrapper()"
+                                title="Discretize DNA masses">
+                            <span class="mif-lightning2 mif-1x"></span>
+                            <span class="caption">Discretize Mass Distribution</span>
+                        </button>
+                        <input type="text" data-role="input" id="cellSize" class="mb-1"
+                               data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
+                               data-history="true" data-prevent-submit="true"
+                               placeholder="Input Cell Size in Angstroms"
+                               style="text-transform: uppercase;"
+                               oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
                     </div>
                 </div>
             </div>
