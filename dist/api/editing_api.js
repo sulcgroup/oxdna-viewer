@@ -770,6 +770,51 @@ var edit;
         return addedElems;
     }
     edit.createStrand = createStrand;
+
+    /**
+     * Experimental Function that Discretizes Mass of system (every particle has same mass currently 1)
+     */
+    function discretizeMass(elems, cellsize) {
+        // get positions from Three Vector returned from getPos()
+        let positions = {
+            xPositions : elems.map(e => e.getPos().x),
+            yPositions : elems.map(e => e.getPos().y),
+            zPositions : elems.map(e => e.getPos().z),
+            xmax : 0,
+            xmin : 0,
+            ymax : 0,
+            ymin : 0,
+            zmax : 0,
+            zmin : 0
+        }
+        // Useful for building 3d Grid
+        positions.xmax = Math.max(positions.xPositions);
+        positions.xmin = Math.min(positions.xPositions);
+        positions.ymax = Math.max(positions.yPositions);
+        positions.ymin = Math.min(positions.yPositions);
+        positions.zmax = Math.max(positions.zPositions);
+        positions.zmin = Math.min(positions.zPositions);
+
+        let xSpan = positions.xmax - positions.xmin;
+        let ySpan = positions.ymax - positions.ymin;
+        let zSpan = positions.zmax - positions.zmin;
+
+        // 3D Grid of cubic
+        let xGridNum = Math.ceil(xSpan/cellsize);
+        let yGridNum = Math.ceil(ySpan/cellsize);
+        let zGridNum = Math.ceil(zSpan/cellsize);
+
+        // Assign boxids
+        let boxids;
+
+
+
+
+
+    }
+
+
+
     /**
      * Creates complementary base pair for an element.
      * @param elem

@@ -97,6 +97,29 @@ class RevertableDeletion extends RevertableEdit {
     }
     ;
 }
+
+class RevertableMassDiscretization extends RevertableEdit {
+    constructor(system, cellsize) {
+        // save original system
+        const originalSys = system.map(e => new InstanceCopy(e));
+        // construct and save discretizedMassSystem
+        const massSys = edit.discretizeMass(system, cellsize);
+        let undo = function () {
+            // delete added mass particles
+            this.system = edit.deleteElements(massSys);
+            // add original system back
+            this.system = edit.addElements(originalSys);
+        }
+        let redo = function () {
+            this.system = edit.deleteElements(originalSys);
+            this.system = edit.addElements(massSys);
+        }
+        super(undo, redo);
+        this.system = system;
+    }
+    ;
+}
+
 class RevertableNick extends RevertableEdit {
     constructor(element) {
         const end3 = element.id;

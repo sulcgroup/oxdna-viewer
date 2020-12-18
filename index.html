@@ -656,7 +656,7 @@
                     <span class="title">Ox-Serve</span>
                 </div>
             </div>
-            <!-- Added by Jonah Makes a separate Protein section--> >
+            <!-- Added by Jonah Makes a separate Protein section-->
             <div class="section" id="section-protein">
                 <div class="group">
                     <div class="tight group flex-column">
@@ -673,11 +673,11 @@
                             <span class="caption">Discretize Mass Distribution</span>
                         </button>
                         <input type="text" data-role="input" id="cellSize" class="mb-1"
-                               data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
+                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
                                data-history="true" data-prevent-submit="true"
-                               placeholder="Input Cell Size in Angstroms"
-                               style="text-transform: uppercase;"
-                               oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
+                               placeholder="Input Cell Size"
+                               onchange="{massDiscretizer.cellSize = this.value;}">
+
                     </div>
                 </div>
             </div>
