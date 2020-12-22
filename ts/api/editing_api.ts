@@ -174,8 +174,8 @@ module edit{
             return;
         }
 
-        // strand1 will have an open 5' and strand2 will have an open 3' end
-        // strand2 will be merged into strand1
+        // strand5 will have an open 5' and strand3 will have an open 3' end
+        // strand3 will be merged into strand5
         let sys5 = end5.getSystem(),
         sys3 = end3.getSystem(),
         strand5 = end5.strand,
@@ -190,7 +190,7 @@ module edit{
                 copyInstances(e, i, tmpSys)
                 e.setInstanceParameter('visibility', [0,0,0])
                 e.dummySys = tmpSys;
-            })
+            }, true)
 
             sys3.callUpdates(['instanceVisibility'])
             addSystemToScene(tmpSys);
@@ -203,7 +203,7 @@ module edit{
 
         // Update 5' end to include the new elements
         strand5.updateEnds();
-        strand5.forEach(e=>{
+        strand3.forEach(e=>{
             e.strand = strand5;
         })
         
@@ -211,9 +211,6 @@ module edit{
         if (strand5 !== strand3) {
             //remove strand3 object 
             strand3.system.removeStrand(strand3);
-
-            // Strand id update
-            strand5.id = Math.min(strand5.id, strand3.id)
 
             //since strand IDs were updated, we also need to update the coloring
             updateColoring();
