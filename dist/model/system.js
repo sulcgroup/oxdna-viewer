@@ -196,5 +196,13 @@ class System {
         return json;
     }
     ;
+    // I will add network information at the system level maybe also par file attributes, update the ANM?
+    // Yes let's get it
+    toNetworkJSON() {
+        let json = {
+            id: this.id,
+        };
+
+    }
 }
 ;
