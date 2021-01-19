@@ -677,3 +677,11 @@ function addSystemToScene(system: System) {
     renderer.domElement.style.cursor = "auto";
     canvas.focus();
 }
+
+// Receive files from Nanobase
+window.addEventListener("message", (event) => {
+    if (!event.origin.startsWith("http://localhost:9000") && !event.origin.startsWith("http://nanobase.org")) {
+      return;
+    }
+    handleFiles(event.data.files);
+}, false);
