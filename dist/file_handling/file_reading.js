@@ -613,14 +613,14 @@ function addSystemToScene(system) {
 function readPdbFile(file) {
     let reader = new FileReader();
     reader.onload = () => {
-
-        const pdbLines = (reader.result as string).split("\n");
+        reader.result.split(/[\n]+/g);
+        const pdbLines = reader.result.split(/[\n]+/g);
         //or
         let lines = reader.result.split(/[\n]+/g);
 
         const atoms = [];
-        const residues = []; // individual residue data parsed from SEQRES
-        const chains = []; // individual rchaindata parsed from SEQRES
+        const residues = []; // individual residue data parsed from Atomic Info
+        const chains = []; // chain objects are stored here
 
         // Iterate each line looking for atoms
         // bookkeeping
@@ -659,6 +659,7 @@ function readPdbFile(file) {
                     prevResId = atoms[-1].pdbResNum;
                 }
 
+                //checks if last read atom belongs to a different chain than the one before it
                 if (prevChainId !== atoms[-1].chainID) {
                     chains.push({
                         chainID: atoms[-1].chainID,
@@ -671,10 +672,12 @@ function readPdbFile(file) {
             }
         });
 
+        // Assigns Atoms to their corresponding Residues
         residues.forEach((res) =>
             res.atoms = atoms.filter(atom => atom.pdbResNum === res.pdbResNum)
         );
 
+        // Assigns Residues to their corresponding Chain
         chains.forEach((chain) =>
             chain.residues = residues.filter(res => res.chainID === chain.chainID)
         );
@@ -688,6 +691,7 @@ function readPdbFile(file) {
 }
 
 function addPDBToScene(strands){
+    // strands is meant to be the chain object from the PDB Parser
     // Parses PDB Data and Intializes System, Errors go to the Console
 
     //PDB Parsing
@@ -698,7 +702,7 @@ function addPDBToScene(strands){
         "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
     const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
 
-    // Intialize bookkeeping Members and Boolean Checks
+    // Intialize bookkeeping Members for Boolean Checks
     let checker = {
         DNAPresent : false,
         proteinPresent : false,
@@ -727,10 +731,12 @@ function addPDBToScene(strands){
                     notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
                     return 1;
                 }
+
                 // Sets which Nucleic Acids are Intialized
                 res.type = 'dna';
                 // Bookkeeping
                 checker.DNAPresent = true;
+
             } else if (recongizedProteinResidues.indexOf(res.restype) > -1) {
                 // Deal with Special Cases Here
                 if (res.restype === 'UNK') {
@@ -740,6 +746,7 @@ function addPDBToScene(strands){
                 res.type = 'pro';
                 // Bookkeeping
                 checker.proteinPresent = true;
+
             } else if (recongizedRNAResidues.indexOf(res.restype) > -1) {
                 // Deal with Special Cases Here
                 if (res.restype === 'N') {
@@ -754,6 +761,7 @@ function addPDBToScene(strands){
                 res.type = 'rna';
                 // Bookkeeping
                 checker.RNAPresent = true;
+
             } else {
                 notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
                     "It will not be Intialized in the Viewer.");
@@ -775,7 +783,16 @@ function addPDBToScene(strands){
     });
 
     // Intialize Sorted Strands
-    strands.foreach()
+    // Parse Thro
+    let pdbsystem = new systems;
+    pdbsystem.addStrand
+    strands.foreach(strand => {
+        if(strand.strandtype == 'pro'){
+            pdbsystem.addNewPeptideStrand();
+        } else {
+            pdbsystem.addNewNucleicAcidStrand();
+        }
+    })
 
 
 }

@@ -5,7 +5,7 @@
 class GenericSphere extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
-        this.elementType = GS;
+        this.elementType = "GS";
     }
     ;
     elemToColor(elem) {
@@ -20,7 +20,7 @@ class GenericSphere extends BasicElement {
     calcPositions(p) {
         const sys = this.getSystem();
         let sid = this.sid;
-        // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
+        // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.0
         let sp, spLen, spRotation;
         if (this.n3 && this.n3 != this.strand.end5) {
             let bbLast = this.n3.getInstanceParameter3('bbOffsets');
@@ -186,7 +186,7 @@ class GenericSphere extends BasicElement {
     extendStrand(len, direction) {
     }
     isAminoAcid() {
-        return true;
+        return false;
     }
     getTypeNumber() {
         let c = this.type;

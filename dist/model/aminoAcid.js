@@ -6,6 +6,8 @@ class AminoAcid extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
         this.elementType = AA;
+        this.a1 = new THREE.Vector3(0.,0.,0.);
+        this.a3 = new THREE.Vector3(0.,0.,0.);
     }
     ;
     elemToColor(elem) {
@@ -18,6 +20,8 @@ class AminoAcid extends BasicElement {
     calcPositionsFromConfLine(l) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
+        this.a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
+        this.a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
         this.calcPositions(p);
     }
     calcPositions(p) {
@@ -182,7 +186,14 @@ class AminoAcid extends BasicElement {
         const x = tempVec.x;
         const y = tempVec.y;
         const z = tempVec.z;
-        dat = x + " " + y + " " + z + " 1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
+        let xA1 = this.a1.x;
+        let yA1 = this.a1.y;
+        let zA1 = this.a1.z;
+        let xA3 = this.a3.x;
+        let yA3 = this.a3.y;
+        let zA3 = this.a3.z;
+        dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
+            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
         return dat;
     }
     ;
