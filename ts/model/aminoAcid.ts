@@ -186,9 +186,11 @@ class AminoAcid extends BasicElement {
                     break;
                 case "Custom":
                     if (!this.color) {
-                        bbColor = new THREE.Color(0x888888);
+                        bbColor = GREY;
+                        aaColor = GREY;
                     } else {
                         bbColor = this.color;
+                        aaColor = this.color;
                     }
                     break;
             }
