@@ -182,26 +182,3 @@ function moveToWrapper() {
     let e = bases.pop();
     edit.move_to(e, bases);
 }
-
-function testNetworkWrapper() {
-    // Kinda just a place holder for now
-    let bases = Array.from(selectedBases);
-    let e = bases.pop();
-}
-
-function discretizeMassWrapper(){
-    let cellSize = view.getInputNumber("cellSize");
-    if (cellsize <= 0) {
-        notify("Please Enter Valid Cell Size into the box");
-        return;
-    }
-    if (selectedBases.size == 0) {
-        notify("Please select Bases");
-        return;
-    }
-    let elems = Array.from(selectedBases); // Save so that we can clear the selection
-    clearSelection();
-    copied = elems.map(e => new InstanceCopy(e));
-    editHistory.do(new RevertableMassDiscretization(elems, cellSize));
-    topologyEdited = true;
-}

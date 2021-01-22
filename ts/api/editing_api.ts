@@ -854,6 +854,81 @@ module edit{
     }
 
     /**
+     * Experimental Function that Discretizes Mass of system (every particle has same mass currently 1)
+     */
+    function discretizeMass(elems, cellsize) {
+        // get positions from Three Vector returned from getPos()
+        let positions = {
+            xPositions : elems.map(e => e.getPos().x),
+            yPositions : elems.map(e => e.getPos().y),
+            zPositions : elems.map(e => e.getPos().z),
+            xmax : 0,
+            xmin : 0,
+            ymax : 0,
+            ymin : 0,
+            zmax : 0,
+            zmin : 0
+        }
+        // Useful for building 3d Grid
+        positions.xmax = Math.max(positions.xPositions);
+        positions.xmin = Math.min(positions.xPositions);
+        positions.ymax = Math.max(positions.yPositions);
+        positions.ymin = Math.min(positions.yPositions);
+        positions.zmax = Math.max(positions.zPositions);
+        positions.zmin = Math.min(positions.zPositions);
+
+        // Assign boxids based off position in the grid
+        let boxids = [];
+
+        let elemIndx = 0;
+        elems.forEach(elem => {
+                let xbid = Math.floor((elem.getPos().x - positions.xmin)/cellsize);
+                let ybid = Math.floor((elem.getPos().y - positions.ymin)/cellsize);
+                let zbid = Math.floor((elem.getPos().z - positions.zmin)/cellsize);
+                let bid = {xbid, ybid, zbid, elemIndx};
+                boxids.push(bid);
+                elemIndx +=1;
+            }
+        )
+
+        // Numbers for looping through boxids
+        let xGridNum = Math.ceil((positions.xmax - positions.xmin)/cellsize);
+        let yGridNum = Math.ceil((positions.ymax - positions.ymin)/cellsize);
+        let zGridNum = Math.ceil((positions.zmax - positions.zmin)/cellsize);
+
+        // New Particle Arrays
+        let newParticles = {
+            positions: [],
+            masses: []
+        }
+
+        //Sort through boxids and generate array for intialization of new particles
+        for (let i = 0; i < xGridNum; i+=1) {
+            for (let j = 0; j < yGridNum; j += 1) {
+                for (let k = 0; k < zGridNum; k += 1) {
+                    //returns only boxid entries matching the current i, j, k
+                    let indBox = boxids.filter(bid => {
+                        return bid[0] === i && bid[1] === j && bid[2] === k;
+                    })
+                    //If any particle in this section of the grid
+                    if (len(indBox > 0)) {
+                        let m = len(indBox);
+                        let com = [0, 0, 0];
+                        for (let l = 0; l < m; l += 1) {
+                            com += elems[indBox[l][3]].getPos();
+                        }
+                        com /= m;
+                        newParticles.positions.push(com);
+                        newParticles.masses.push(m);
+                    }
+                }
+            }
+        }
+
+        // Now I need to Return the New System
+    }
+
+    /**
      * Creates complementary base pair for an element.
      * @param elem
      */
