@@ -16,6 +16,7 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
     let dat = view.getInputBool("datDownload");
 
     if (dat) {
+        console.log(reorganized)
         let {file_name, file} = makeDatFile(name, reorganized);
         makeTextFile(file_name, file);	
     }
@@ -201,7 +202,7 @@ function makeDatFile(name, altNumbering=undefined) {
         ))
     });
     let dat: string = "";
-    let box: number = Math.ceil(6 * maxCoord);
+    let box: number = Math.ceil(3 * maxCoord);
     dat = [
         `t = 0`,
         `b = ${box} ${box} ${box}`,
@@ -218,8 +219,9 @@ function makeDatFile(name, altNumbering=undefined) {
         systems.forEach(system =>{
             system.strands.forEach((strand: Strand) => {
                 strand.forEach(e => {
+                    console.log(e.id)
                     dat += e.getDatFileOutput();
-                });
+                }, true); //oxDNA runs 3'-5'
             });
         });
     }

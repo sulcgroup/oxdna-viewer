@@ -14,6 +14,7 @@ function makeOutputFiles() {
     }
     let dat = view.getInputBool("datDownload");
     if (dat) {
+        console.log(reorganized);
         let { file_name, file } = makeDatFile(name, reorganized);
         makeTextFile(file_name, file);
     }
@@ -169,7 +170,7 @@ function makeDatFile(name, altNumbering = undefined) {
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     });
     let dat = "";
-    let box = Math.ceil(6 * maxCoord);
+    let box = Math.ceil(3 * maxCoord);
     dat = [
         `t = 0`,
         `b = ${box} ${box} ${box}`,
@@ -185,8 +186,9 @@ function makeDatFile(name, altNumbering = undefined) {
         systems.forEach(system => {
             system.strands.forEach((strand) => {
                 strand.forEach(e => {
+                    console.log(e.id);
                     dat += e.getDatFileOutput();
-                });
+                }, true); //oxDNA runs 3'-5'
             });
         });
     }
