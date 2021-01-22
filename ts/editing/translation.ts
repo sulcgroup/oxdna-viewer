@@ -128,7 +128,12 @@ function calcsp(currentNuc) {
 
     currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
     currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-    currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
+    //introduce distance based cutoff of the backbone connectors
+    if (spLen>=box.x*.9 ||spLen>=box.y*.9 ||spLen>=box.z*.9 ){
+        currentNuc.setInstanceParameter('bbconScales', [0, 0, 0]);
+    }else{
+        currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
+    }
     sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
     sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
     sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;

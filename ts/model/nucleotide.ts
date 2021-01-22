@@ -80,7 +80,8 @@ abstract class Nucleotide extends BasicElement {
             let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
-        
+            //introduce distance based cutoff of the backbone connectors
+            if (spLen>=box.x*.9 ||spLen>=box.y*.9 || spLen>=box.z*.9 ) spLen = 0; 
             spRotation = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize()
             );
