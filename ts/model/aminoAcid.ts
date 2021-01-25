@@ -34,8 +34,8 @@ class AminoAcid extends BasicElement {
     }
 
     calcPositions(p: THREE.Vector3) {
-        const sys = this.getSystem();
-        let sid = this.sid;
+        const sys: System = this.getSystem();
+        let sid: number = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
         if (this.n3 && this.n3 != this.strand.end5) {

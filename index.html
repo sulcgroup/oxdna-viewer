@@ -668,16 +668,14 @@
                     </div>
                     <div class="tight group flex-column">
                         <button class="ribbon-button" onclick="discretizeMassWrapper()"
-                                title="Discretize DNA masses">
+                                title="Discretize Selected Masses">
                             <span class="mif-lightning2 mif-1x"></span>
                             <span class="caption">Discretize Mass Distribution</span>
                         </button>
-                        <input type="text" data-role="input" id="cellSize" class="mb-1"
-                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
-                               data-history="true" data-prevent-submit="true"
-                               placeholder="Input Cell Size"
-                               onchange="{massDiscretizer.cellSize = this.value;}">
-
+                        <input type="text" data-role="input" title="cellSize" class="mb-1"
+                             data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
+                             data-history="true" data-prevent-submit="true"
+                             placeholder="Input Cell Size">
                     </div>
                 </div>
             </div>

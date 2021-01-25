@@ -143,6 +143,9 @@ class Strand {
     isNucleicAcid() {
         return false;
     }
+    isGS() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {
@@ -276,7 +279,7 @@ class Peptide extends Strand {
         this.forEach(e => e.deselect());
     }
 }
-
+// Meant to hold multi-sized generic spheres
 class Generic extends Strand {
     constructor(id, system) {
         super(id, system);
@@ -311,16 +314,16 @@ class Generic extends Strand {
         }
     }
     ;
-    isPeptide() {
-        return false;
+    // is Generic Sphere method
+    isGS() {
+        return true;
     }
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
-        json['class'] = 'Generic';
+        json['class'] = 'GS';
         return json;
     }
-    ;
     //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
     getMonomers(reverse) {
         return super.getMonomers(!reverse);
@@ -344,4 +347,3 @@ class Generic extends Strand {
         this.forEach(e => e.deselect());
     }
 }
-

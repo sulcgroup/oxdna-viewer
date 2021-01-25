@@ -6,8 +6,8 @@ class AminoAcid extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
         this.elementType = AA;
-        this.a1 = new THREE.Vector3(0.,0.,0.);
-        this.a3 = new THREE.Vector3(0.,0.,0.);
+        this.a1 = new THREE.Vector3(0., 0., 0.);
+        this.a3 = new THREE.Vector3(0., 0., 0.);
     }
     ;
     elemToColor(elem) {
@@ -193,7 +193,7 @@ class AminoAcid extends BasicElement {
         let yA3 = this.a3.y;
         let zA3 = this.a3.z;
         dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
-            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
+            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string //add all locations to dat file string
         return dat;
     }
     ;

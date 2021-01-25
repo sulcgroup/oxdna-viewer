@@ -3,21 +3,23 @@
  * This class is incomplete and only supports visualization right now.  Editing will not work.
  */
 class GenericSphere extends BasicElement {
-    constructor(id, strand) {
+    mass:number;
+    constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.elementType = "GS";
+        this.elementType = GS;
+        this.mass = 1.0;
     }
     ;
-    elemToColor(elem) {
+    elemToColor(elem: number | string) {
         return GREY;
     }
     ;
-    calcPositionsFromConfLine(l) {
+    calcPositionsFromConfLine(l: string[]) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
     }
-    calcPositions(p) {
+    calcPositions(p: THREE.Vector3) {
         const sys = this.getSystem();
         let sid = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.0
@@ -188,20 +190,12 @@ class GenericSphere extends BasicElement {
     isAminoAcid() {
         return false;
     }
+    ;
+    /*
     getTypeNumber() {
-        let c = this.type;
-        let i = ['X', 'A', 'R', 'N', 'D', 'C',
-            'E', 'Q', 'G', 'H', 'I',
-            'L', 'K', 'M', 'F',
-            'P', 'S', 'T', 'W',
-            'Y', 'V', 'Z'].indexOf(c);
-        if (i >= 0) {
-            return -i;
-        }
-        else {
-            return parseInt(c);
-        }
+        // Will Probably need this for Patchy Particles?
     }
+    */
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -209,4 +203,3 @@ class GenericSphere extends BasicElement {
         return json;
     }
 }
-;

@@ -228,8 +228,8 @@ function testNetworkWrapper() {
 }
 function discretizeMassWrapper(){
     let cellSize = view.getInputNumber("cellSize");
-    if (cellsize <= 0) {
-        notify("Please Enter Valid Cell Size into the box");
+    if (cellSize <= 0) {
+        notify("Please Enter Valid Cell Size into the Cell Size Box");
         return;
     }
     if (selectedBases.size == 0) {

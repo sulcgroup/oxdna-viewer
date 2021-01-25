@@ -5,7 +5,8 @@
 class GenericSphere extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
-        this.elementType = "GS";
+        this.elementType = GS;
+        this.mass = 1.0;
     }
     ;
     elemToColor(elem) {
@@ -188,20 +189,12 @@ class GenericSphere extends BasicElement {
     isAminoAcid() {
         return false;
     }
+    ;
+    /*
     getTypeNumber() {
-        let c = this.type;
-        let i = ['X', 'A', 'R', 'N', 'D', 'C',
-            'E', 'Q', 'G', 'H', 'I',
-            'L', 'K', 'M', 'F',
-            'P', 'S', 'T', 'W',
-            'Y', 'V', 'Z'].indexOf(c);
-        if (i >= 0) {
-            return -i;
-        }
-        else {
-            return parseInt(c);
-        }
+        // Will Probably need this for Patchy Particles?
     }
+    */
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -209,4 +202,3 @@ class GenericSphere extends BasicElement {
         return json;
     }
 }
-;

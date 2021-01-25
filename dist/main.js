@@ -81,6 +81,7 @@ var lut, devs; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;
 const AA = 2;
+const GS = 3;
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //to keep track of if the topology was edited at any point.
@@ -100,7 +101,6 @@ function findBasepairs() {
         }
     });
 }
-;
 // Ugly hacks for testing
 function getElements() {
     return elements;
