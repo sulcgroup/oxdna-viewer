@@ -84,8 +84,12 @@ function handleFiles(files) {
             jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
+        else if (ext === "pdb") {
+            pdbfile = files[i];
+            readPdbFile(pdbfile);
+        }
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.");
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.");
             return;
         }
     }
@@ -94,7 +98,10 @@ function handleFiles(files) {
         if (jsonFile && !topFile)
             jsonAlone = true;
         if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
-            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+            if (pdbfile)
+                notify("Reading PDB File...");
+            else
+                notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return;
         }
         //read a topology/configuration pair and maybe a json file
@@ -605,70 +612,118 @@ function addSystemToScene(system) {
     renderer.domElement.style.cursor = "auto";
     canvas.focus();
 }
+// Helper Objects for pdb parsing
+class pdbatom {
+    constructor() {
+        this.indx = -1;
+        this.atomType = 'X';
+        this.altLoc = "";
+        this.resType = "";
+        this.chainID = "";
+        this.pdbResNum = -1;
+        this.iCode = "";
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
+        this.occupancy = 0;
+        this.tempFactor = 0;
+        this.element = "";
+        this.charge = "";
+    }
+}
+class pdbresidue {
+    constructor() {
+        this.resType = "";
+        this.pdbResNum = -1;
+        this.chainID = "";
+        this.type = "";
+        this.atoms = [];
+    }
+}
+class pdbchain {
+    constructor() {
+        this.chainID = "";
+        this.residues = [];
+        this.strandtype = "";
+    }
+}
 function readPdbFile(file) {
     let reader = new FileReader();
     reader.onload = () => {
-        const atoms = [];
-        const residues = []; // individual residue data parsed from Atomic Info
-        const chains = []; // chain objects are stored here
         const pdbLines = reader.result.split(/[\n]+/g);
-        // Iterate each line looking for atoms
+        let atoms = [];
+        let residues = []; // individual residue data parsed from Atomic Info
+        let chains = [];
+        let na = new pdbatom();
+        let nr = new pdbresidue();
+        let nc = new pdbchain();
         // bookkeeping
         let prevChainId = " ";
-        let prevResId = " ";
-        pdbLines.forEach((pdbLine) => {
-            if (pdbLine.substr(0, 4) === 'ATOM') {
+        let prevResId = -1;
+        // Iterate each line looking for atoms
+        for (let i = 0; i < pdbLines.length; i++) {
+            if (pdbLines[i].substr(0, 4) === 'ATOM') {
+                let pdbLine = pdbLines[i];
+                //notify("atom found");
                 // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
-                atoms.push({
-                    indx: parseInt(pdbLine.substring(6, 11)),
-                    atomType: pdbLine.substring(12, 16).trim(),
-                    altLoc: pdbLine.substring(16, 17).trim(),
-                    resType: pdbLine.substring(17, 20).trim(),
-                    chainID: pdbLine.substring(21, 22).trim(),
-                    pdbResNum: parseInt(pdbLine.substring(22, 26)),
-                    iCode: pdbLine.substring(26, 27).trim(),
-                    x: parseFloat(pdbLine.substring(30, 38)),
-                    y: parseFloat(pdbLine.substring(38, 46)),
-                    z: parseFloat(pdbLine.substring(46, 54)),
-                    occupancy: parseFloat(pdbLine.substring(54, 60)),
-                    tempFactor: parseFloat(pdbLine.substring(60, 66)),
-                    element: pdbLine.substring(76, 78).trim(),
-                    charge: pdbLine.substring(78, 80).trim(),
-                });
+                na.indx = parseInt(pdbLine.substring(6, 11));
+                na.atomType = pdbLine.substring(12, 16).trim();
+                na.altLoc = pdbLine.substring(16, 17).trim();
+                na.resType = pdbLine.substring(17, 20).trim();
+                na.chainID = pdbLine.substring(21, 22).trim();
+                na.pdbResNum = parseInt(pdbLine.substring(22, 26).trim());
+                na.iCode = pdbLine.substring(26, 27).trim();
+                na.x = parseFloat(pdbLine.substring(30, 38));
+                na.y = parseFloat(pdbLine.substring(38, 46));
+                na.z = parseFloat(pdbLine.substring(46, 54));
+                na.occupancy = parseFloat(pdbLine.substring(54, 60).trim());
+                na.tempFactor = parseFloat(pdbLine.substring(60, 66).trim());
+                na.element = pdbLine.substring(76, 78).trim();
+                na.charge = pdbLine.substring(78, 80).trim();
+                let nac = {
+                    ...na
+                };
+                atoms.push(nac);
                 //checks if last read atom belongs to a different chain than the one before it
-                if (prevResId !== atoms[-1].pdbResNum) {
-                    residues.push({
-                        resType: atoms[-1].resType,
-                        pdbResNum: atoms[-1].pdbResNum,
-                        chainID: atoms[-1].chainID,
-                        type: "",
-                        atoms: [],
-                    });
+                if (prevResId !== na.pdbResNum) {
+                    //notify("residue created");
+                    nr.resType = na.resType;
+                    nr.pdbResNum = na.pdbResNum;
+                    nr.chainID = na.chainID;
+                    let nrc = {
+                        ...nr
+                    };
+                    residues.push(nrc);
                     //set previous chain id to that of last read atom
-                    prevResId = atoms[-1].pdbResNum;
+                    prevResId = na.pdbResNum;
                 }
                 //checks if last read atom belongs to a different chain than the one before it
-                if (prevChainId !== atoms[-1].chainID) {
-                    chains.push({
-                        chainID: atoms[-1].chainID,
-                        residues: [],
-                        strandtype: "",
-                    });
+                if (prevChainId !== na.chainID) {
+                    //notify("chain created");
+                    nc.chainID = na.chainID;
+                    let ncc = {
+                        ...nc
+                    };
+                    chains.push(ncc);
                     //set previous chain id to that of last read atom
-                    prevChainId = atoms[-1].chainID;
+                    prevChainId = na.chainID;
                 }
             }
-        });
+        }
         // Assigns Atoms to their corresponding Residues
-        residues.forEach((res) => res.atoms = atoms.filter(atom => atom.pdbResNum === res.pdbResNum));
+        residues.forEach((res) => res.atoms = atoms.filter(atom => atom.pdbResNum == res.pdbResNum));
         // Assigns Residues to their corresponding Chain
-        chains.forEach((chain) => chain.residues = residues.filter(res => res.chainID === chain.chainID));
-        return {
-            atoms,
-            residues,
-            chains,
-        };
+        chains.forEach((chain) => chain.residues = residues.filter(res => res.chainID == chain.chainID));
+        if (chains === undefined || chains.length == 0) {
+            notify("No Chains Found in PDB File");
+        }
+        if (atoms === undefined || atoms.length == 0) {
+            notify("No Atoms Found in PDB File");
+        }
+        chains.forEach((chain) => notify("Chain ".concat(chain.chainID, " loaded with ", chain.residues.length.toString(), " residues")));
+        addPDBToScene(chains);
     };
+    reader.readAsText(file);
 }
 function addPDBToScene(strands) {
     // Looking back at this the strands name probably wasn't the most unique choice
@@ -689,7 +744,8 @@ function addPDBToScene(strands) {
         mutantStrand: false
     };
     //Classify Residue Types
-    strands.forEach(strand => {
+    for (let i = 0; i < strands.length; i++) {
+        let strand = strands[i];
         // Reset Bookkeeping Members for each Strand
         for (let key in checker)
             checker[key] = false;
@@ -697,13 +753,13 @@ function addPDBToScene(strands) {
         strand.residues.forEach(res => {
             // Sort PDB Info and set Flags for System Initialization at Residue Level
             //Check if Residue from PDB is in recongized
-            if (recongizedDNAResidues.indexOf(res.restype) > -1) {
+            if (recongizedDNAResidues.indexOf(res.resType) > -1) {
                 // Deal with Special Cases Here
-                if (res.restype === 'DN') {
+                if (res.resType === 'DN') {
                     notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
-                    notify("Visualizing as 'A'"); //lol maybe
+                    return 1;
                 }
-                if (res.restype === 'DI') {
+                if (res.resType === 'DI') {
                     notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
                     return 1;
                 }
@@ -712,9 +768,9 @@ function addPDBToScene(strands) {
                 // Bookkeeping
                 checker.DNAPresent = true;
             }
-            else if (recongizedProteinResidues.indexOf(res.restype) > -1) {
+            else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                 // Deal with Special Cases Here
-                if (res.restype === 'UNK') {
+                if (res.resType === 'UNK') {
                     notify("Amino Acid blank is Unknown, Intializing as Dummy?");
                 }
                 // Sets which Residues are Intialized
@@ -722,13 +778,13 @@ function addPDBToScene(strands) {
                 // Bookkeeping
                 checker.proteinPresent = true;
             }
-            else if (recongizedRNAResidues.indexOf(res.restype) > -1) {
+            else if (recongizedRNAResidues.indexOf(res.resType) > -1) {
                 // Deal with Special Cases Here
-                if (res.restype === 'N') {
+                if (res.resType === 'N') {
                     notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
-                    notify("Visualizing as 'A'"); //lol maybe
+                    return 1;
                 }
-                if (res.restype === 'I') {
+                if (res.resType === 'I') {
                     notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
                     return 1;
                 }
@@ -757,18 +813,17 @@ function addPDBToScene(strands) {
             if (checker.RNAPresent)
                 strand.strandtype = 'rna';
         }
-    });
-    // Intialize Sorted Strands
-    // Parse Thro
-    // Create Parents First
-    const pdbsystem = new System(sysCount, elements.getNextId());
-    let tmpid = 0;
-    strands.foreach(strand => {
+    }
+    let nextElementId = elements.getNextId();
+    const pdbsystem = new System(sysCount++, nextElementId);
+    for (let i = 0; i < strands.length; i++) {
+        let strand = strands[i];
         if (strand.strandtype == 'pro') {
             let currentStrand = pdbsystem.addNewPeptideStrand();
             strand.residues.forEach(res => {
-                if (res.resType == 'pro') {
-                    let initRes = currentStrand.createBasicElement();
+                if (res.type == 'pro') {
+                    let initRes = currentStrand.createBasicElement(nextElementId);
+                    nextElementId++;
                     // a1 Vector
                     let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
                     res.atoms.forEach(a => {
@@ -781,11 +836,12 @@ function addPDBToScene(strands) {
                     if (scHAcom.length() == 0)
                         scHAcom.x = 1;
                     scHAcom.normalize();
-                    let CA = res.atoms.filter(a => a.atomType == 'CA');
-                    let pos = new THREE.Vector3;
-                    pos.set(CA.x, CA.y, CA.z);
-                    initRes.calcPositions(pos);
-                    initRes.a1 = scHAcom.clone().sub(CA).normalize();
+                    let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
+                    notify(CA.x.toString().concat(" ", CA.y.toString(), " ", CA.z.toString()));
+                    notify(initRes.id.toString());
+                    let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
+                    initRes.calcPositions(CApos);
+                    initRes.a1 = scHAcom.clone().sub(CApos).normalize();
                     let bv1 = new THREE.Vector3(1, 0, 0);
                     let bv2 = new THREE.Vector3(0, 1, 0);
                     let bv3 = new THREE.Vector3(0, 1, 1);
@@ -805,9 +861,10 @@ function addPDBToScene(strands) {
             let currentStrand = pdbsystem.addNewNucleicAcidStrand();
             strand.residues.forEach(res => {
                 if (res.resType == 'dna' || res.resType == 'rna') {
-                    let initNuc = currentStrand.createBasicElement();
+                    let initNuc = currentStrand.createBasicElement(nextElementId);
+                    nextElementId++;
                     //Calculate Base atoms Center of Mass
-                    let base_atoms = res.atoms.filter(a => a.atomType.contains("'") || a.atomType.contains("*"));
+                    let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
                     let baseCom = new THREE.Vector3;
                     baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
                     baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
@@ -816,7 +873,7 @@ function addPDBToScene(strands) {
                     baseCom.x /= bl;
                     baseCom.y /= bl;
                     baseCom.z /= bl;
-                    let o4atom = res.atoms.filter(a => a.atomType == "O4'");
+                    let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
                     let parallel_to = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
                     parallel_to.x -= baseCom.x;
                     parallel_to.y -= baseCom.y;
@@ -854,9 +911,9 @@ function addPDBToScene(strands) {
                     let a3 = new THREE.Vector3;
                     for (let i = 0; i < ring_poss.length; i++) {
                         let types = ring_poss[i];
-                        let p = res.atoms.filter(a => a.atomType == types[0]);
-                        let q = res.atoms.filter(a => a.atomType == types[1]);
-                        let r = res.atoms.filter(a => a.atomType == types[2]);
+                        let p = res.atoms.filter(a => a.atomType == types[0])[0];
+                        let q = res.atoms.filter(a => a.atomType == types[1])[0];
+                        let r = res.atoms.filter(a => a.atomType == types[2])[0];
                         let v1 = new THREE.Vector3;
                         let v2 = new THREE.Vector3;
                         v1.x = p.x - q.x;
@@ -899,8 +956,8 @@ function addPDBToScene(strands) {
                     }
                     let a1 = new THREE.Vector3(0, 0, 0);
                     for (let i = 0; i < pairs.length; i++) {
-                        let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0]);
-                        let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1]);
+                        let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
+                        let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
                         let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
                         a1.x += diff.x;
                         a1.y += diff.y;
@@ -912,9 +969,12 @@ function addPDBToScene(strands) {
                 }
             });
         }
-        //System is set Up just needs to be added to the system now I believe
-        addSystemToScene(pdbsystem);
-        centerAndPBC(pdbsystem.getMonomers());
-        sysCount++;
-    });
+    }
+    notify(pdbsystem.getMonomers().length.toString());
+    //System is set Up just needs to be added to the system now I believe
+    pdbsystem.initInstances(pdbsystem.getMonomers().length);
+    systems.push(pdbsystem);
+    sysCount++;
+    addSystemToScene(pdbsystem);
+    centerAndPBC(pdbsystem.getMonomers());
 }

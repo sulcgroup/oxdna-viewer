@@ -6,13 +6,23 @@
 class AminoAcid extends BasicElement {
     a1: THREE.Vector3;
     a3: THREE.Vector3;
+    pdbid: number;
+    chainposition: number;
+
+
 
 
     constructor(id: number, strand: Strand) {
         super(id, strand);
+        this.chainposition = id;
         this.elementType = AA;
+        this.pdbid= -1;
         this.a1 = new THREE.Vector3(0.,0.,0.);
         this.a3 = new THREE.Vector3(0.,0.,0.);
+    };
+
+    setPDBid(pid: number){ //Only Set if read from PDBfile
+        this.pdbid = pid;
     };
 
     elemToColor(elem: number | string): THREE.Color {
