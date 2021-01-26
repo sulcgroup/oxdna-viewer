@@ -5,9 +5,15 @@
 class AminoAcid extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
+        this.chainposition = id;
         this.elementType = AA;
+        this.pdbid = -1;
         this.a1 = new THREE.Vector3(0., 0., 0.);
         this.a3 = new THREE.Vector3(0., 0., 0.);
+    }
+    ;
+    setPDBid(pid) {
+        this.pdbid = pid;
     }
     ;
     elemToColor(elem) {

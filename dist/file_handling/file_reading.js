@@ -752,7 +752,7 @@ function addPDBToScene(strands) {
         // Loop over all Residues in each Strand
         strand.residues.forEach(res => {
             // Sort PDB Info and set Flags for System Initialization at Residue Level
-            //Check if Residue from PDB is in recongized
+            //Check if Residue from PDB is in recongized array
             if (recongizedDNAResidues.indexOf(res.resType) > -1) {
                 // Deal with Special Cases Here
                 if (res.resType === 'DN') {
@@ -771,7 +771,8 @@ function addPDBToScene(strands) {
             else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                 // Deal with Special Cases Here
                 if (res.resType === 'UNK') {
-                    notify("Amino Acid blank is Unknown, Intializing as Dummy?");
+                    notify("Amino Acid blank is Unknown");
+                    return 1;
                 }
                 // Sets which Residues are Intialized
                 res.type = 'pro';
@@ -815,16 +816,49 @@ function addPDBToScene(strands) {
         }
     }
     let nextElementId = elements.getNextId();
-    const pdbsystem = new System(sysCount++, nextElementId);
-    for (let i = 0; i < strands.length; i++) {
+    let oldElementId = nextElementId;
+    let pdbsystem = new System(sysCount++, nextElementId);
+    let strandnum = strands.length;
+    // First Loop to Map Out the System
+    for (let i = 0; i < strandnum; i++) {
         let strand = strands[i];
         if (strand.strandtype == 'pro') {
             let currentStrand = pdbsystem.addNewPeptideStrand();
             strand.residues.forEach(res => {
                 if (res.type == 'pro') {
-                    let initRes = currentStrand.createBasicElement(nextElementId);
+                    notify("Attempting to add element");
+                    let aa = currentStrand.createBasicElement(nextElementId);
+                    elements.push(aa);
                     nextElementId++;
-                    // a1 Vector
+                }
+            });
+        }
+        else if (strand.strandtype == 'rna' || strand.strandtype == 'dna') {
+            let currentStrand = pdbsystem.addNewNucleicAcidStrand();
+            strand.residues.forEach(res => {
+                if (res.resType == 'dna' || res.resType == 'rna') {
+                    let nc = currentStrand.createBasicElement(nextElementId);
+                    elements.push(nc);
+                    nextElementId++;
+                }
+            });
+        }
+    }
+    // Now We can Init Instances on all System elements
+    notify("Initializing ".concat(pdbsystem.getMonomers().length.toString(), " Monomers"));
+    pdbsystem.initInstances(pdbsystem.getMonomers().length);
+    notify(pdbsystem.getMonomers().length.toString());
+    // Second Loop Going through Exactly the same way
+    // Just a little more math to set up initial positions
+    nextElementId = oldElementId; //Reset
+    for (let i = 0; i < strandnum; i++) {
+        let pdbstrand = strands[i];
+        let strand = pdbsystem.strands[i];
+        if (strand.isPeptide()) {
+            pdbstrand.residues.forEach(res => {
+                if (res.type == 'pro') {
+                    let AA = strand.getMonomers()[nextElementId];
+                    nextElementId++;
                     let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
                     res.atoms.forEach(a => {
                         if (['N', 'C', 'O', 'H'].indexOf(a.atomType) == -1) {
@@ -838,143 +872,208 @@ function addPDBToScene(strands) {
                     scHAcom.normalize();
                     let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
                     notify(CA.x.toString().concat(" ", CA.y.toString(), " ", CA.z.toString()));
-                    notify(initRes.id.toString());
+                    notify(AA.id.toString());
                     let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
-                    initRes.calcPositions(CApos);
-                    initRes.a1 = scHAcom.clone().sub(CApos).normalize();
+                    AA.calcPositions(CApos);
+                    AA.a1 = scHAcom.clone().sub(CApos).normalize();
                     let bv1 = new THREE.Vector3(1, 0, 0);
                     let bv2 = new THREE.Vector3(0, 1, 0);
                     let bv3 = new THREE.Vector3(0, 1, 1);
-                    if (initRes.a1.dot(bv1) < 0.99) {
-                        initRes.a3 = initRes.a1.clone().cross(bv1);
+                    if (AA.a1.dot(bv1) < 0.99) {
+                        AA.a3 = AA.a1.clone().cross(bv1);
                     }
-                    else if (initRes.a1.dot(bv2) < 0.99) {
-                        initRes.a3 = initRes.a1.clone().cross(bv2);
+                    else if (AA.a1.dot(bv2) < 0.99) {
+                        AA.a3 = AA.a1.clone().cross(bv2);
                     }
-                    else if (initRes.a1.dot(bv3) < 0.99) {
-                        initRes.a3 = initRes.a1.clone().cross(bv3);
+                    else if (AA.a1.dot(bv3) < 0.99) {
+                        AA.a3 = AA.a1.clone().cross(bv3);
                     }
                 }
             });
         }
-        else if (['rna', 'dna'].indexOf(strand.strandtype) > -1) {
-            let currentStrand = pdbsystem.addNewNucleicAcidStrand();
-            strand.residues.forEach(res => {
-                if (res.resType == 'dna' || res.resType == 'rna') {
-                    let initNuc = currentStrand.createBasicElement(nextElementId);
-                    nextElementId++;
-                    //Calculate Base atoms Center of Mass
-                    let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
-                    let baseCom = new THREE.Vector3;
-                    baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
-                    baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
-                    baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
-                    let bl = base_atoms.length;
-                    baseCom.x /= bl;
-                    baseCom.y /= bl;
-                    baseCom.z /= bl;
-                    let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
-                    let parallel_to = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
-                    parallel_to.x -= baseCom.x;
-                    parallel_to.y -= baseCom.y;
-                    parallel_to.z -= baseCom.z;
-                    //Calculate Center of Mass
-                    let com = new THREE.Vector3;
-                    com.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
-                    com.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
-                    com.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
-                    let l = res.atoms.length;
-                    com.x /= l;
-                    com.y /= l;
-                    com.z /= l;
-                    //Calculate a3 Vector Helper Function
-                    // Stack Overflow<3 Permutator
-                    const permutator = (inputArr) => {
-                        let result = [];
-                        const permute = (arr, m = []) => {
-                            if (arr.length === 0) {
-                                result.push(m);
-                            }
-                            else {
-                                for (let i = 0; i < arr.length; i++) {
-                                    let curr = arr.slice();
-                                    let next = curr.splice(i, 1);
-                                    permute(curr.slice(), m.concat(next));
-                                }
-                            }
-                        };
-                        permute(inputArr);
-                        return result;
-                    };
-                    let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
-                    let ring_poss = permutator(ring_names);
-                    let a3 = new THREE.Vector3;
-                    for (let i = 0; i < ring_poss.length; i++) {
-                        let types = ring_poss[i];
-                        let p = res.atoms.filter(a => a.atomType == types[0])[0];
-                        let q = res.atoms.filter(a => a.atomType == types[1])[0];
-                        let r = res.atoms.filter(a => a.atomType == types[2])[0];
-                        let v1 = new THREE.Vector3;
-                        let v2 = new THREE.Vector3;
-                        v1.x = p.x - q.x;
-                        v1.y = p.y - q.y;
-                        v1.z = p.z - q.z;
-                        v2.x = p.x - r.x;
-                        v2.y = p.y - r.y;
-                        v2.z = p.z - r.z;
-                        let nv1 = new THREE.Vector3;
-                        let nv2 = new THREE.Vector3;
-                        nv1.x = v1.x / Math.sqrt(v1.dot(v1));
-                        nv1.y = v1.y / Math.sqrt(v1.dot(v1));
-                        nv1.z = v1.z / Math.sqrt(v1.dot(v1));
-                        nv2.x = v2.x / Math.sqrt(v2.dot(v2));
-                        nv2.y = v2.y / Math.sqrt(v2.dot(v2));
-                        nv2.z = v2.z / Math.sqrt(v2.dot(v2));
-                        if (Math.abs(nv1.dot(nv2)) > 0.01) {
-                            let tmpa3 = nv1.cross(nv2);
-                            let norm = Math.sqrt(tmpa3.dot(tmpa3));
-                            tmpa3.x /= norm;
-                            tmpa3.y /= norm;
-                            tmpa3.z /= norm;
-                            if (tmpa3.dot(baseCom) < 0) {
-                                tmpa3.x *= -1;
-                                tmpa3.y *= -1;
-                                tmpa3.z *= -1;
-                            }
-                            a3.x += tmpa3.x;
-                            a3.y += tmpa3.y;
-                            a3.z += tmpa3.z;
-                        }
-                    }
-                    // Compute a1 Vector
-                    let pairs;
-                    if (["DC", "DT", "DU", "C", "T", "U"].indexOf(res.resType) > -1) {
-                        pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
-                    }
-                    else {
-                        pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
-                    }
-                    let a1 = new THREE.Vector3(0, 0, 0);
-                    for (let i = 0; i < pairs.length; i++) {
-                        let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
-                        let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
-                        let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
-                        a1.x += diff.x;
-                        a1.y += diff.y;
-                        a1.z += diff.z;
-                    }
-                    a1.normalize();
-                    // Now that we finally have all of that info we can initialize each nucleotide
-                    initNuc.calcPositions(com, a1, a3);
-                }
-            });
+        else if (strand.isNucleicAcid()) {
+            // let currentStrand = pdbsystem.addNewNucleicAcidStrand();
+            // strand.residues.forEach(res => {
+            //     if (res.resType == 'dna' || res.resType == 'rna') {
+            //         let initNuc = currentStrand.createBasicElement(nextElementId);
+            //         nextElementId++;
+            //     }
+            // })
         }
     }
-    notify(pdbsystem.getMonomers().length.toString());
     //System is set Up just needs to be added to the system now I believe
-    pdbsystem.initInstances(pdbsystem.getMonomers().length);
     systems.push(pdbsystem);
     sysCount++;
     addSystemToScene(pdbsystem);
     centerAndPBC(pdbsystem.getMonomers());
 }
+//
+//
+//
+// pdbsystem.strands.forEach(str => {
+//     if (str.isPeptide()) {
+//         let currentStrand = pdbsystem.addNewPeptideStrand();
+//         currentStrand.getMonomers().forEach(res => {
+//             if (res.type == 'pro') {
+//                 let initRes = res;
+//                 let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
+//                 res.atoms.forEach(a => {
+//                     if (['N', 'C', 'O', 'H'].indexOf(a.atomType) == -1) {
+//                         scHAcom.x += a.x;
+//                         scHAcom.y += a.y;
+//                         scHAcom.z += a.z;
+//                     }
+//                 })
+//                 if (scHAcom.length() == 0) scHAcom.x = 1;
+//                 scHAcom.normalize();
+//                 let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
+//                 notify(CA.x.toString().concat(" ", CA.y.toString(), " ", CA.z.toString()));
+//                 notify(initRes.id.toString());
+//                 let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
+//                 initRes.calcPositions(CApos);
+//                 initRes.a1 = scHAcom.clone().sub(CApos).normalize();
+//                 let bv1 = new THREE.Vector3(1, 0, 0);
+//                 let bv2 = new THREE.Vector3(0, 1, 0);
+//                 let bv3 = new THREE.Vector3(0, 1, 1);
+//                 if (initRes.a1.dot(bv1) < 0.99) {
+//                     initRes.a3 = initRes.a1.clone().cross(bv1);
+//                 } else if (initRes.a1.dot(bv2) < 0.99) {
+//                     initRes.a3 = initRes.a1.clone().cross(bv2);
+//                 } else if (initRes.a1.dot(bv3) < 0.99) {
+//                     initRes.a3 = initRes.a1.clone().cross(bv3);
+//                 }
+//
+//
+//             }
+//         })
+//
+//     } else if (['rna', 'dna'].indexOf(strand.strandtype) > -1) {
+//         let currentStrand = pdbsystem.addNewNucleicAcidStrand();
+//         strand.residues.forEach(res => {
+//             if (res.resType == 'dna' || res.resType == 'rna') {
+//                 let initNuc = currentStrand.createBasicElement(nextElementId);
+//                 nextElementId++;
+//
+//                 //Calculate Base atoms Center of Mass
+//                 let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
+//                 let baseCom = new THREE.Vector3;
+//                 baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
+//                 baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
+//                 baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
+//                 let bl = base_atoms.length;
+//                 baseCom.x /= bl;
+//                 baseCom.y /= bl;
+//                 baseCom.z /= bl;
+//
+//                 let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
+//                 let parallel_to = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
+//                 parallel_to.x -= baseCom.x;
+//                 parallel_to.y -= baseCom.y;
+//                 parallel_to.z -= baseCom.z;
+//
+//
+//                 //Calculate Center of Mass
+//                 let com = new THREE.Vector3;
+//                 com.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
+//                 com.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
+//                 com.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
+//                 let l = res.atoms.length;
+//                 com.x /= l;
+//                 com.y /= l;
+//                 com.z /= l;
+//
+//                 //Calculate a3 Vector Helper Function
+//                 // Stack Overflow<3 Permutator
+//                 const permutator = (inputArr) => {
+//                     let result = [];
+//                     const permute = (arr, m = []) => {
+//                         if (arr.length === 0) {
+//                             result.push(m)
+//                         } else {
+//                             for (let i = 0; i < arr.length; i++) {
+//                                 let curr = arr.slice();
+//                                 let next = curr.splice(i, 1);
+//                                 permute(curr.slice(), m.concat(next))
+//                             }
+//                         }
+//                     }
+//                     permute(inputArr)
+//                     return result;
+//                 }
+//
+//                 let ring_names: string[] = ["C2", "C4", "C5", "C6", "N1", "N3"];
+//                 let ring_poss = permutator(ring_names);
+//                 let a3 = new THREE.Vector3;
+//                 for (let i: number = 0; i < ring_poss.length; i++) {
+//                     let types = ring_poss[i];
+//                     let p = res.atoms.filter(a => a.atomType == types[0])[0]
+//                     let q = res.atoms.filter(a => a.atomType == types[1])[0]
+//                     let r = res.atoms.filter(a => a.atomType == types[2])[0]
+//                     let v1 = new THREE.Vector3;
+//                     let v2 = new THREE.Vector3;
+//                     v1.x = p.x - q.x;
+//                     v1.y = p.y - q.y;
+//                     v1.z = p.z - q.z;
+//                     v2.x = p.x - r.x;
+//                     v2.y = p.y - r.y;
+//                     v2.z = p.z - r.z;
+//                     let nv1 = new THREE.Vector3;
+//                     let nv2 = new THREE.Vector3;
+//                     nv1.x = v1.x / Math.sqrt(v1.dot(v1));
+//                     nv1.y = v1.y / Math.sqrt(v1.dot(v1));
+//                     nv1.z = v1.z / Math.sqrt(v1.dot(v1));
+//                     nv2.x = v2.x / Math.sqrt(v2.dot(v2));
+//                     nv2.y = v2.y / Math.sqrt(v2.dot(v2));
+//                     nv2.z = v2.z / Math.sqrt(v2.dot(v2));
+//
+//
+//                     if (Math.abs(nv1.dot(nv2)) > 0.01) {
+//                         let tmpa3 = nv1.cross(nv2);
+//                         let norm = Math.sqrt(tmpa3.dot(tmpa3));
+//                         tmpa3.x /= norm;
+//                         tmpa3.y /= norm;
+//                         tmpa3.z /= norm;
+//                         if (tmpa3.dot(baseCom) < 0) {
+//                             tmpa3.x *= -1;
+//                             tmpa3.y *= -1;
+//                             tmpa3.z *= -1;
+//                         }
+//                         a3.x += tmpa3.x;
+//                         a3.y += tmpa3.y;
+//                         a3.z += tmpa3.z;
+//                     }
+//                 }
+//
+//                 // Compute a1 Vector
+//                 let pairs: [string, string][];
+//
+//                 if (["DC", "DT", "DU", "C", "T", "U"].indexOf(res.resType) > -1) {
+//                     pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
+//                 } else {
+//                     pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
+//                 }
+//
+//                 let a1 = new THREE.Vector3(0, 0, 0);
+//                 for (let i = 0; i < pairs.length; i++) {
+//                     let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
+//                     let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
+//                     let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
+//                     a1.x += diff.x;
+//                     a1.y += diff.y;
+//                     a1.z += diff.z;
+//                 }
+//                 a1.normalize();
+//
+//                 // Now that we finally have all of that info we can initialize each nucleotide
+//                 initNuc.calcPositions(com, a1, a3);
+//             }
+//         })
+//
+//     }
+// }
+/*
+sysData.createdSystem = sys;
+sys.initInstances(sidCounter);
+systems.push(sys);
+sysCount++;
+*/
