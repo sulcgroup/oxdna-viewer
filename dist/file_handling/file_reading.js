@@ -940,19 +940,15 @@ function addPDBToScene(strands, bounds) {
         baseCom.y /= bl;
         baseCom.z /= bl;
         let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
-        let parallel_to = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
-        parallel_to.x -= baseCom.x;
-        parallel_to.y -= baseCom.y;
-        parallel_to.z -= baseCom.z;
+        let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
+        let parallel_to = o4pos.sub(baseCom);
         //Calculate Center of Mass
         let com = new THREE.Vector3;
         com.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
         com.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
         com.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
         let l = res.atoms.length;
-        com.x /= l;
-        com.y /= l;
-        com.z /= l;
+        com.divideScalar(l);
         //Calculate a3 Vector Helper Function
         // Stack Overflow<3 Permutator
         const permutator = (inputArr) => {
@@ -989,28 +985,15 @@ function addPDBToScene(strands, bounds) {
             v2.x = p.x - r.x;
             v2.y = p.y - r.y;
             v2.z = p.z - r.z;
-            let nv1 = new THREE.Vector3;
-            let nv2 = new THREE.Vector3;
-            nv1.x = v1.x / Math.sqrt(v1.dot(v1));
-            nv1.y = v1.y / Math.sqrt(v1.dot(v1));
-            nv1.z = v1.z / Math.sqrt(v1.dot(v1));
-            nv2.x = v2.x / Math.sqrt(v2.dot(v2));
-            nv2.y = v2.y / Math.sqrt(v2.dot(v2));
-            nv2.z = v2.z / Math.sqrt(v2.dot(v2));
+            let nv1 = v1.clone().normalize();
+            let nv2 = v2.clone().normalize();
             if (Math.abs(nv1.dot(nv2)) > 0.01) {
                 let tmpa3 = nv1.cross(nv2);
-                let norm = Math.sqrt(tmpa3.dot(tmpa3));
-                tmpa3.x /= norm;
-                tmpa3.y /= norm;
-                tmpa3.z /= norm;
+                tmpa3.normalize();
                 if (tmpa3.dot(baseCom) < 0) {
-                    tmpa3.x *= -1;
-                    tmpa3.y *= -1;
-                    tmpa3.z *= -1;
+                    tmpa3.negate();
                 }
-                a3.x += tmpa3.x;
-                a3.y += tmpa3.y;
-                a3.z += tmpa3.z;
+                a3.add(tmpa3);
             }
         }
         a3.normalize();
@@ -1027,16 +1010,14 @@ function addPDBToScene(strands, bounds) {
             let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
             let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
             let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
-            a1.x += diff.x;
-            a1.y += diff.y;
-            a1.z += diff.z;
+            a1.add(diff);
         }
         a1.normalize();
         // Now that we finally have all of that info we can initialize each nucleotide
         NC.calcPositions(com, a1, a3);
     };
     // Second Loop Going through Exactly the same way
-    // Just a little more math to set up initial positions
+    // Fill Info Functions called on each element to initialize type specific
     let Amino;
     let NC;
     nextElementId = oldElementId; //Reset
@@ -1061,6 +1042,6 @@ function addPDBToScene(strands, bounds) {
     //System is set Up just needs to be added to the systems array now I believe
     systems.push(sys);
     sysCount++;
-    addSystemToScene(sys);
     centerAndPBC(sys.getMonomers());
+    addSystemToScene(sys);
 }
