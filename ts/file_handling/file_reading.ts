@@ -755,7 +755,7 @@ function readPdbFile(file) {
         let na = new pdbatom();
         let nr = new pdbresidue();
         let nc = new pdbchain();
-        let boxBounds = [[0, 0], [0, 0], [0, 0]]; // [[xmin, xmax], [ymin, ymax], [zmin, zmax]
+        let boxBounds = [[1000, -1000], [1000, -1000], [1000, -1000]]; // [[xmin, xmax], [ymin, ymax], [zmin, zmax]
 
         // bookkeeping
         let prevChainId = " ";
@@ -949,6 +949,7 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
     box.z = Math.ceil((bounds[2][1] - bounds[2][0])*2);
     redrawBox();
 
+
     let nextElementId = elements.getNextId();
     let oldElementId = nextElementId;
 
@@ -960,10 +961,10 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
 
         if (nstrand.strandtype == 'pro') {
             let currentStrand: Peptide = sys.addNewPeptideStrand();
-            currentStrand.system = sys;
+            // currentStrand.system = sys;
             for(let j = 0; j < nstrand.residues.length; j++){
                 let aa = currentStrand.createBasicElement(nextElementId);
-
+                aa.sid = j;
                 // Amino Acids are intialized from N-terminus to C-terminus
                 // Same as PDB format
                 // Neighbors must be filled for correct initialization
@@ -981,12 +982,13 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
 
         } else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
             let currentStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand();
-            sys.addStrand(currentStrand);
+            // sys.addStrand(currentStrand);
 
             //PDB entries typically list from 5' to 3'
             //Neighbors must be filled for correct initialization
             for(let j = 0; j < nstrand.residues.length; j++){
                 let nc = currentStrand.createBasicElement(nextElementId);
+                nc.sid = j;
                 if(j != 0){
                     let prevnc = elements.get(nextElementId-1); //Get previous Element
                     nc.n5 = prevnc;
@@ -998,18 +1000,19 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
                 elements.push(nc);
                 nextElementId++;
             }
+            currentStrand.updateEnds();
+
         }
     }
 
     sys.initInstances(sys.systemLength())
-    notify("Init Instances ".concat(sys.systemLength().toString()));
-
-    notify(sys.cmOffsets[0].toString());
     // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
     let FillInfoAA = (res: pdbresidue, AM: AminoAcid) => {
         if (res.type == 'pro') {
             //notify('Got here');
-
+            //Set Type
+            let elem = {"LYS": "K",  "CYS":"C" , "ALA":"A", "THR":"T", "GLU":"E", "GLN":"Q", "SER":"S", "ASP":"D", "ASN":"N", "HIS":"H", "GLY":"G", "PRO":"P", "ARG":"R", "VAL":"V", "ILE":"I", "LEU":"L", "MET":"M", "PHE":"F", "TYR":"Y", "TRP":"W"};
+            AM.type = elem[res.resType]; //Set Type Based Off Three Letter Codes
             let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
             res.atoms.forEach(a => {
                 if (['N', 'C', 'O', 'H'].indexOf(a.atomType) == -1) {
@@ -1022,10 +1025,10 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
             if (scHAcom.length() == 0) scHAcom.x = 1;
             scHAcom.normalize();
             let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
-            notify(CA.x.toString().concat(" ", CA.y.toString(), " ", CA.z.toString()));
             let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
             AM.calcPositions(CApos.clone());
-            notify(AM.getPos().x.toString().concat(AM.getPos().y.toString(), AM.getPos().z.toString()));
+            AM.pdbid = res.pdbResNum;
+            // notify(AM.getPos().x.toString().concat(AM.getPos().y.toString(), AM.getPos().z.toString()));
             AM.a1 = scHAcom.clone().sub(CApos).normalize();
             let bv1 = new THREE.Vector3(1, 0, 0);
             let bv2 = new THREE.Vector3(0, 1, 0);
@@ -1042,6 +1045,7 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
 
     // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
     let FillInfoNC = (res: pdbresidue, NC: Nucleotide) => {
+        NC.pdbid = res.pdbResNum;
         //Calculate Base atoms Center of Mass
         let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
         let baseCom = new THREE.Vector3;
@@ -1157,12 +1161,6 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
         NC.calcPositions(com, a1, a3);
     }
 
-    systems.push(sys);
-    sysCount++;
-
-
-
-
     // Second Loop Going through Exactly the same way
     // Just a little more math to set up initial positions
     let Amino: AminoAcid;
@@ -1174,9 +1172,7 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
 
         if (strand.isPeptide()) {
             for(let i =0; i < strand.getLength(); i++){
-                Amino = systems[0].getElementBySID(nextElementId-oldElementId) as AminoAcid;
-                    //elements.get(nextElementId) as AminoAcid;
-                notify("Amino ".concat(Amino.id.toString()))
+                Amino = elements.get(nextElementId) as AminoAcid;
                 FillInfoAA(pdbstrand.residues[i], Amino);
                 nextElementId++;
             }
@@ -1188,11 +1184,12 @@ function addPDBToScene(strands: pdbchain[], bounds: number[][]) {
             }
         }
     }
-    notify('got here?');
 
     //System is set Up just needs to be added to the systems array now I believe
-
+    systems.push(sys);
+    sysCount++;
     addSystemToScene(sys);
     centerAndPBC(sys.getMonomers());
+
 }
 

@@ -5,15 +5,9 @@
 class AminoAcid extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
-        this.chainposition = id;
         this.elementType = AA;
-        this.pdbid = -1;
         this.a1 = new THREE.Vector3(0., 0., 0.);
         this.a3 = new THREE.Vector3(0., 0., 0.);
-    }
-    ;
-    setPDBid(pid) {
-        this.pdbid = pid;
     }
     ;
     elemToColor(elem) {
@@ -53,7 +47,6 @@ class AminoAcid extends BasicElement {
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
-        notify(p.toArray().toString());
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);

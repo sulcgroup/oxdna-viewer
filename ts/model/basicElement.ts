@@ -19,6 +19,7 @@ abstract class BasicElement {
     clusterId: number;
     dummySys: System;
     color: THREE.Color;
+    pdbid: number; //Only Intialized if loaded from a PDB structure
 
     constructor(id: number, strand: Strand) {
         this.id = id;
