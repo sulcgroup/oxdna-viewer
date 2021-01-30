@@ -26,7 +26,8 @@ canvas.addEventListener("keydown", event => {
             break;
         case 'v':
             if (event.ctrlKey || event.metaKey) {
-                pasteWrapper(event.shiftKey);
+                pasteWrapper(!event.shiftKey); // Hold down shift to paste in front of camera
+                view.transformMode.set('Translate'); // Show translate gizmo
             }
             break;
         case 'delete':

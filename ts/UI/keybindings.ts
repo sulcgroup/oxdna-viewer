@@ -13,7 +13,10 @@ canvas.addEventListener("keydown", event =>{
         // Copy, cut, paste and delete. Holding shift pastes with preserved location
         case 'c': if (event.ctrlKey || event.metaKey) {copyWrapper();} break;
         case 'x': if (event.ctrlKey || event.metaKey) {cutWrapper();} break;
-        case 'v': if (event.ctrlKey || event.metaKey) {pasteWrapper(event.shiftKey);} break;
+        case 'v': if (event.ctrlKey || event.metaKey) {
+            pasteWrapper(!event.shiftKey); // Hold down shift to paste in front of camera
+            view.transformMode.set('Translate'); // Show translate gizmo
+        } break;
         case 'delete': deleteWrapper(); break;
 
         // Undo: ctrl-z, cmd-z
