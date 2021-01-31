@@ -512,17 +512,13 @@ function readOxViewJsonFile(file: File) {
                 });
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
-/*
-                // Redraw sp connectors
+
+                // Redraw sp connectors for circlular strands
                 sys.strands.forEach(s=>{
-                    s.forEach(e=>{
-                        if(e.n3) {
-                            calcsp(e);
-                        }
-                    });
-                    s.updateEnds();
+                    if (s.isCircular()) {
+                        calcsp(s.end3);
+                    }
                 });
-*/
             });
         }
     };

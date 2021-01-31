@@ -76,7 +76,7 @@ abstract class Nucleotide extends BasicElement {
 
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp: THREE.Vector3, spLen: number, spRotation;
-        if (this.n3 && (this.n3 != this.strand.end5 || this.dummySys)) {
+        if (this.n3) {
             let bbLast = this.n3.getInstanceParameter3('bbOffsets');
             sp = bb.clone().add(bbLast).divideScalar(2);
             spLen = bb.distanceTo(bbLast);
