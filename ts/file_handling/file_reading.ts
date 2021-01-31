@@ -117,6 +117,10 @@ function handleFiles(files: FileList) {
             notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return
         }
+        if (datAlone && systems.length === 0) {
+            notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
+            return
+        }
 
         //read a topology/configuration pair and maybe a json file
         if (!jsonAlone) {
