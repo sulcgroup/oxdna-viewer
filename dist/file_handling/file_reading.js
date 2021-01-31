@@ -91,9 +91,10 @@ function handleFiles(files) {
     }
     let jsonAlone = false;
     if (!trapFile) {
+        let datAlone = datFile && !topFile;
         if (jsonFile && !topFile)
             jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
+        if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
             notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return;
         }
@@ -225,9 +226,32 @@ function readFiles(topFile, datFile, jsonFile) {
             renderer.domElement.style.cursor = "auto";
         }
     }
+    else if (datFile) {
+        const r = new FileReader();
+        r.onload = () => updateConfFromFile(r.result);
+        r.readAsText(datFile);
+    }
     else {
         notify("Please drop one topology and one configuration/trajectory file");
     }
+}
+function updateConfFromFile(dat_file) {
+    let lines = dat_file.split("\n");
+    lines = lines.slice(3); // discard the header
+    systems.forEach(system => {
+        system.strands.forEach((strand) => {
+            strand.forEach(e => {
+                let line = lines.shift().split(' ');
+                e.calcPositionsFromConfLine(line);
+            }, true); //oxDNA runs 3'-5'
+        });
+        system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+    });
+    tmpSystems.forEach(system => {
+        system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+    });
+    centerAndPBC();
+    render();
 }
 function readDat(datReader, system) {
     let currentStrand = system.strands[0];
