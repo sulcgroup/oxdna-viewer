@@ -15,12 +15,12 @@ class AminoAcid extends BasicElement {
         return nucleosideColors[elem];
     }
     ;
-    calcPositionsFromConfLine(l) {
+    calcPositionsFromConfLine(l, colorUpdate) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
-        this.calcPositions(p);
+        this.calcPositions(p, undefined, undefined, colorUpdate);
     }
-    calcPositions(p) {
+    calcPositions(p, a1, a3, colorUpdate) {
         const sys = this.getSystem();
         let sid = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
@@ -37,11 +37,16 @@ class AminoAcid extends BasicElement {
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
         this.handleCircularStrands(sys, sid, p);
-        // determine the mesh color, either from a supplied colormap json or by the strand ID.
-        let color = new THREE.Color();
-        color = this.strandToColor(this.strand.id);
-        let idColor = new THREE.Color();
-        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
+        if (colorUpdate) {
+            // determine the mesh color, either from a supplied colormap json or by the strand ID.
+            const bbColor = this.strandToColor(this.strand.id);
+            sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
+            const nsColor = this.elemToColor(this.type);
+            sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
+            let idColor = new THREE.Color();
+            idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
+            sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+        }
         // fill in the instancing matrices
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
@@ -61,46 +66,7 @@ class AminoAcid extends BasicElement {
         else {
             sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
         }
-        sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('visibility', 3, sid, [1, 1, 1]);
-        color = this.elemToColor(this.type);
-        sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
-        sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
-        // keep track of last backbone for sugar-phosphate positioning
-        //bbLast = p.clone();
-    }
-    ;
-    calculateNewConfigPositions(l) {
-        const sys = this.getSystem();
-        let sid = this.sid;
-        //extract position
-        const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
-        //calculate new backbone connector position/rotation
-        let sp, spLen, spRotation;
-        if (this.n3 && this.n3 != this.strand.end5) {
-            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
-            sp = p.clone().add(bbLast).divideScalar(2);
-            spLen = p.distanceTo(bbLast);
-            spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize());
-        }
-        else {
-            sp = new THREE.Vector3();
-            spLen = 0;
-            spRotation = new THREE.Quaternion(0, 0, 0, 0);
-        }
-        this.handleCircularStrands(sys, sid, p);
-        sys.fillVec('cmOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbOffsets', 3, sid, p.toArray());
-        sys.fillVec('nsOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
-        sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-        if (spLen == 0) {
-            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        }
-        else {
-            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
-        }
-        //bbLast = p.clone();
     }
     ;
     translatePosition(amount) {

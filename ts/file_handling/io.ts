@@ -419,7 +419,7 @@ class TrajectoryReader {
                 currentNucleotide = elements.get(systems[i].globalStartId+lineNum);
                 // consume a new line
                 l = lines[lineNum].split(" ");
-                currentNucleotide.calculateNewConfigPositions(l);
+                currentNucleotide.calcPositionsFromConfLine(l);
             }
     
             system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;

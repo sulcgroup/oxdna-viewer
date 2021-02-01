@@ -515,7 +515,7 @@ module edit{
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
             let [p, a1, a3] = positions[i]
-            e.calcPositions(p, a1, a3);
+            e.calcPositions(p, a1, a3, true);
             e = e[direction];
         }
 
@@ -588,13 +588,13 @@ module edit{
 
         for (let i = 0; i < l; i++) {
             let [p, a1, a3] = positions[i]
-            e1.calcPositions(p, a1, a3);
+            e1.calcPositions(p, a1, a3, true);
             e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
         for (let i = l * 2 - 1; i >= l; i--) {
             let [p, a1, a3] = positions[i];
-            e2.calcPositions(p, a1, a3);
+            e2.calcPositions(p, a1, a3, true);
             e2 = e2[inverse];
         }
 
@@ -829,7 +829,7 @@ module edit{
             pos = camera.position.clone().add(a1.clone().multiplyScalar(20));
             a3 = a1.clone().cross(camera.up);
         }
-        e.calcPositions(pos, a1, a3);
+        e.calcPositions(pos, a1, a3, true);
         e.dummySys = tmpSys;
 
         // Extends the strand 3'->5' with the rest of the sequence
@@ -888,7 +888,7 @@ module edit{
         a1.negate();
         a3.negate();
         const pos: THREE.Vector3 = cm.clone().sub(a1.clone().multiplyScalar(1.2));
-        e.calcPositions(pos, a1, a3);
+        e.calcPositions(pos, a1, a3, true);
         e.dummySys = tmpSys;
 
         addSystemToScene(tmpSys);

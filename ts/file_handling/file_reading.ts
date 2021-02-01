@@ -333,7 +333,7 @@ function readDat(datReader, system) {
 
         // consume a new line from the file
         l = lines[i].split(" ");
-        currentNucleotide.calcPositionsFromConfLine(l);
+        currentNucleotide.calcPositionsFromConfLine(l, true);
 
         //when a strand is finished, add it to the system
         if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
@@ -515,9 +515,9 @@ function readOxViewJsonFile(file: File) {
                             if (d.a1 && d.a3) {
                                 let a1 = new THREE.Vector3().fromArray(d.a1);
                                 let a3 = new THREE.Vector3().fromArray(d.a3);
-                                e.calcPositions(p, a1, a3);
+                                e.calcPositions(p, a1, a3, true);
                             } else {
-                                e.calcPositions(p); // Amino acid
+                                e.calcPositions(p, undefined, undefined, true); // Amino acid
                             }
 
                         // Otherwise fallback to reading instance parameters
