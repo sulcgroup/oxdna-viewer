@@ -7,7 +7,6 @@
 class Edges {
     constructor() {
         this.total = 0;
-        this.nid = 0;
     }
     addEdge(id1, id2, k = 1) {
         if (id1 < id2) {
@@ -44,7 +43,6 @@ class Network {
         this.particles = selectedMonomers.map(mon => { return mon.id; });
         this.nid = nid; // Separate Indexing for network objects?
         this.reducedEdges = new Edges();
-        this.reducedEdges.nid = this.nid;
         this.masses = [];
     }
     ;
@@ -69,7 +67,7 @@ class Network {
                 return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
             }
         };
-        let simCutoffValue = cutoffValueAngstroms / 8.518;
+        let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
         for (let i = 0; i < elemcoords.xI.length; i++) {
             for (let j = 1; j < elemcoords.xI.length; j++) {
                 if (i >= j)

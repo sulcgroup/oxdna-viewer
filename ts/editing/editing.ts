@@ -226,7 +226,7 @@ function createNetworkWrapper() {
     // Makes a Network
     let bases = Array.from(selectedBases);
     copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
-    editHistory.add(new RevertableNetworkCreation(bases));
+    editHistory.do(new RevertableNetworkCreation(bases));
 }
 function deleteNetworkWrapper(nid: number) {
     networks.splice(nid-1);
@@ -235,6 +235,8 @@ function deleteNetworkWrapper(nid: number) {
 
 function visualizeNetworkWrapper(nid: number) {
     // To be written later
+    nid + 1;
+    nid - 1;
 }
 
 function selectNetworkWrapper(nid: number) {
@@ -248,7 +250,7 @@ function discretizeMassWrapper(){
         notify("Please select Bases");
         return;
     }
-    let cellSize = $("div[title=\"cellSize\"]").val();
+    let cellSize = view.getInputNumber("cellSize");
     if (cellSize <= 0 || typeof cellSize != "number") {
         notify("Please Enter Valid Cell Size into the Cell Size Box");
         return;
