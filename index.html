@@ -660,10 +660,17 @@
             <div class="section" id="section-protein">
                 <div class="group">
                     <div class="tight group flex-column">
-                        <button class="ribbon-button" onclick="testNetworkWrapper()"
-                                title="Build ANM Network">
+                        <button class="ribbon-button" onclick="createNetworkWrapper()"
+                                title="Create Network">
                             <span class="mif-lightning5 mif-1x"></span>
-                            <span class="caption">Build ANM Network</span>
+                            <span class="caption">Create Network</span>
+                        </button>
+                    </div>
+                    <div class="tight group flex-column">
+                        <button class="ribbon-button" onclick="deleteNetworkWrapper(selectednetwork)"
+                                title="Delete Network">
+                            <span class="mif-lightning5 mif-1x"></span>
+                            <span class="caption">Delete Network</span>
                         </button>
                     </div>
                     <div class="tight group flex-column">
@@ -687,12 +694,11 @@
 <!--                    </div>-->
                     <div class="pos-relative">
                         <button class="button square dropdown-toggle">
-                            <span class="mif-apps"></span>
+                            <label>Networks</label>
+                            <span class="mif-apps mif-2x"></span>
                         </button>
-                        <ul class="d-menu" data-role="dropdown">
-                            <li><a href="#">One</a></li>
-                            <li><a href="#">Two</a></li>
-                            <li><a href="#">Three</a></li>
+                        <ul class="d-menu" data-role="dropdown" title="Networks">
+                            <li><label onclick="selectednetwork=1">Network 1</label></li>
                         </ul>
                     </div>
                 </div>
@@ -739,6 +745,8 @@
         <script src="./dist/model/system.js"></script>
         <script src="./dist/model/anm.js"></script>
         <script src="./dist/model/force.js"></script>
+        <script src="./dist/model/network.js"></script>
+        <script src="./dist/model/genericSphere.js"></script>
         <script src="./dist/UI/base_selector.js"></script>
         <script src="./dist/UI/keybindings.js"></script>
         <script src="./dist/file_handling/output_file.js"></script>

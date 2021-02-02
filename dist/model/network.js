@@ -40,7 +40,7 @@ class Edges {
     ;
 }
 class Network {
-    constructor(nid, startID, selectedMonomers) {
+    constructor(nid, selectedMonomers) {
         this.particles = selectedMonomers.map(mon => { return mon.id; });
         this.nid = nid; // Separate Indexing for network objects?
         this.reducedEdges = new Edges();

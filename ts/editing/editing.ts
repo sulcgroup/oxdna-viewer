@@ -221,24 +221,47 @@ function moveToWrapper(){
     let e = bases.pop();
     edit.move_to(e, bases);
 }
-function testNetworkWrapper() {
-    // Kinda just a place holder for now
+
+function createNetworkWrapper() {
+    // Makes a Network
     let bases = Array.from(selectedBases);
-    let e = bases.pop();
+    copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
+    editHistory.add(new RevertableNetworkCreation(bases));
 }
+function deleteNetworkWrapper(nid: number) {
+    networks.splice(nid-1);
+    if(selectednetwork == nid-1) selectednetwork = -1;
+}
+
+function visualizeNetworkWrapper(nid: number) {
+    // To be written later
+}
+
+function selectNetworkWrapper(nid: number) {
+    clearSelection();
+    let net = networks[nid-1];
+    net.selectNetwork();
+}
+
 function discretizeMassWrapper(){
-    let cellSize = view.getInputNumber("cellSize");
-    if (cellSize <= 0) {
-        notify("Please Enter Valid Cell Size into the Cell Size Box");
-        return;
-    }
     if (selectedBases.size == 0) {
         notify("Please select Bases");
         return;
     }
-    let elems = Array.from(selectedBases); // Save so that we can clear the selection
-    clearSelection();
-    copied = elems.map(e => new InstanceCopy(e));
-    editHistory.do(new RevertableMassDiscretization(elems, cellSize));
-    topologyEdited = true;
+    let cellSize = $("div[title=\"cellSize\"]").val();
+    if (cellSize <= 0 || typeof cellSize != "number") {
+        notify("Please Enter Valid Cell Size into the Cell Size Box");
+        return;
+    } else {
+        let elems = Array.from(selectedBases); // Save so that we can clear the selection
+        clearSelection();
+        copied = elems.map(e => new InstanceCopy(e));
+        editHistory.do(new RevertableMassDiscretization(elems, cellSize/8.518)); //Sim Unit Conversion
+        topologyEdited = true;
+    }
+}
+function testNetworkWrapper() {
+    // Kinda just a place holder for now
+    let bases = Array.from(selectedBases);
+    let e = bases.pop();
 }

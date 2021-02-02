@@ -89,6 +89,9 @@ var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
 
+var selectednetwork: number = 0;
+const networks: Network[] = [];
+
 var lut, devs: number[]; //need for Lut coloring
 
 const DNA: number = 0;

@@ -141,6 +141,26 @@ class RevertableMassDiscretization extends RevertableEdit {
     ;
 }
 
+class RevertableNetworkCreation extends RevertableEdit {
+    constructor(elems){
+        // construct network
+        let lastsel = selectednetwork;
+        let nid = networks.length;
+        const network = new Network(nid, elems);
+        let undo = function () {
+            //Remove Network from networks array
+            networks.splice(nid, 1);
+            selectednetwork = lastsel;
+        }
+        let redo = function () {
+            //Add network to networks array
+            networks.push(network);
+            selectednetwork = network.nid;
+        }
+        super(undo, redo);
+    };
+}
+
 class RevertableNick extends RevertableEdit {
     constructor(element: BasicElement) {
         const end3 = element.id;

@@ -77,6 +77,8 @@ var forceHandler;
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
+var selectednetwork = 0;
+const networks = [];
 var lut, devs; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;
