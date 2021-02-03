@@ -89,4 +89,34 @@ class Network {
             }
         }
     }
+    ;
+    solveANM(){
+        let hessian : number[] = [];
+        if(this.reducedEdges.total==0){
+            notify("Network must be filled prior to solving ANM");
+        } else {
+            //Initialize Empty Hessian (3Nx3N)
+            for(let i=0; i<3*this.particles.length; i++){
+                for(let j=0; j<3*this.particles.length; j++){
+                    hessian.push(0);
+                }
+            }
+
+            //Hessian Calc
+            for(let l=0; l<this.reducedEdges.total; l++){
+                let i = this.reducedEdges.p1[l], j = this.reducedEdges[l], k = this.reducedEdges[l];
+                let ip = api.getElements([this.particles[i]])[0].getPos(); //Particle i Position
+                let jp = api.getElements([this.particles[j]])[0].getPos(); //Particle j Position
+                let d = ip.distanceTo(jp);
+                let d2 = d*d;
+                let diff = jp.sub(ip);
+                let xy = k * (diff.x * diff.y)/d2;
+                let xz = k * (diff.x * diff.z)/d2;
+                let yz = k * (diff.y * diff.z)/d2;
+                let flatarr = [];
+            }
+
+        }
+    }
+
 }
