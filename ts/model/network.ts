@@ -5,7 +5,6 @@
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
 class Edges {
-    nid: number;
     p1: number[];
     p2: number[];
     ks: number[];
@@ -62,7 +61,6 @@ class Network {
         this.particles = selectedMonomers.map(mon => {return mon.id;})
         this.nid = nid; // Separate Indexing for network objects?
         this.reducedEdges = new Edges();
-        this.reducedEdges.nid = this.nid;
         this.masses = [];
     }
     ;
@@ -91,7 +89,7 @@ class Network {
             }
         };
 
-        let simCutoffValue = cutoffValueAngstroms/8.518;
+        let simCutoffValue = cutoffValueAngstroms/8.518; //sim unit conversion
         for(let i = 0; i < elemcoords.xI.length; i++){
             for(let j = 1; j < elemcoords.xI.length; j++){
                 if(i >= j) continue;

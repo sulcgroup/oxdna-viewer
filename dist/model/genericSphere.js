@@ -41,6 +41,13 @@ class GenericSphere extends BasicElement {
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
+        let scale;
+        if (this.mass > 4) { //More than 4 particles
+            scale = this.mass / 4;
+        }
+        else {
+            scale = 1;
+        }
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
@@ -51,7 +58,7 @@ class GenericSphere extends BasicElement {
         sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         sys.fillVec('scales', 3, sid, [0, 0, 0]);
-        sys.fillVec('nsScales', 3, sid, [1, 1, 1]);
+        sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
         sys.fillVec('conScales', 3, sid, [0, 0, 0]);
         if (spLen == 0) {
             sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);

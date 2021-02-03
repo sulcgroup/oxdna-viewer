@@ -226,6 +226,7 @@ function createNetworkWrapper() {
     // Makes a Network
     let bases = Array.from(selectedBases);
     copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
+    editHistory.do(new RevertableNetworkCreation(bases));
     let nid = networks.length;
     editHistory.do(new RevertableNetworkCreation(bases, nid));
     view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
