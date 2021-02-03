@@ -226,11 +226,28 @@ function createNetworkWrapper() {
     // Makes a Network
     let bases = Array.from(selectedBases);
     copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
-    editHistory.add(new RevertableNetworkCreation(bases));
+    let nid = networks.length;
+    editHistory.do(new RevertableNetworkCreation(bases, nid));
+    view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
 }
 function deleteNetworkWrapper(nid: number) {
-    networks.splice(nid-1);
-    if(selectednetwork == nid-1) selectednetwork = -1;
+    networks.splice(nid);
+    if(selectednetwork == nid) selectednetwork = -1;
+    view.removeNetwork(nid);
+}
+
+function fillEdgesWrapper(nid: number, edgecase: number) {
+    // Easy expansion for other edge methods
+    let net = networks[nid];
+    switch(edgecase){
+        case 0:
+            let cutoff = view.getInputNumber("edgeCutoff");
+            if(typeof cutoff != "number" || cutoff > 1000 || cutoff < 0){
+                notify("Please enter recongized value into 'Edge Cutoff' box")
+            } else {
+                net.edgesByCutoff(cutoff);
+            }
+    }
 }
 
 function visualizeNetworkWrapper(nid: number) {
@@ -248,7 +265,7 @@ function discretizeMassWrapper(){
         notify("Please select Bases");
         return;
     }
-    let cellSize = $("div[title=\"cellSize\"]").val();
+    let cellSize = view.getInputNumber("cellSize");
     if (cellSize <= 0 || typeof cellSize != "number") {
         notify("Please Enter Valid Cell Size into the Cell Size Box");
         return;

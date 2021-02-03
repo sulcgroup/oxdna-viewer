@@ -674,17 +674,41 @@
                         </button>
                     </div>
                     <div class="tight group flex-column">
+                        <div class="pos-relative">
+                            <button class="button square dropdown-toggle">
+                                <span class="mif-apps mif-2x"></span>
+                            </button>
+                            <label>Network Selector</label>
+                            <ul class="d-menu" data-role="dropdown" id="networks">
+                                <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
+                            </ul>
+                        </div>
+                        <div class="pos-relative">
+                            <button class="button square dropdown-toggle">
+                                <span class="mif-apps mif-2x"></span>
+                            </button>
+                            <label>Fill Edges</label>
+                            <ul class="d-menu" data-role="dropdown" id="edges">
+                                <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="tight group flex-column">
+                        <input type="text" data-role="input" title="cellSize" class="mb-1" id="cellSize"
+                             data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
+                             data-history="true" data-prevent-submit="true"
+                             placeholder="Input Cell Size">
+                        <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"
+                               data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
+                               data-history="true" data-prevent-submit="true"
+                               placeholder="Input Cutoff Value">
+                    </div>
+                    <div class="tight group flex-column">
                         <button class="ribbon-button" onclick="discretizeMassWrapper()"
                                 title="Discretize Selected Masses">
                             <span class="mif-lightning2 mif-1x"></span>
                             <span class="caption">Discretize Mass Distribution</span>
                         </button>
-                    </div>
-                    <div class="tight group flex-column">
-                        <input type="text" data-role="input" title="cellSize" class="mb-1"
-                             data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
-                             data-history="true" data-prevent-submit="true"
-                             placeholder="Input Cell Size">
                     </div>
 <!--                    <div class="tight group flex-column">-->
 <!--                        <input type="text" data-role="input" title="cellSize" class="mb-1"-->
@@ -692,15 +716,6 @@
 <!--                               data-history="true" data-prevent-submit="true"-->
 <!--                               placeholder="Input Cell Size">-->
 <!--                    </div>-->
-                    <div class="pos-relative">
-                        <button class="button square dropdown-toggle">
-                            <label>Networks</label>
-                            <span class="mif-apps mif-2x"></span>
-                        </button>
-                        <ul class="d-menu" data-role="dropdown" title="Networks">
-                            <li><label onclick="selectednetwork=1">Network 1</label></li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

@@ -1,6 +1,6 @@
 /**
  * A simple class meant for easy generation AND deletion of networks
- * As proof of concept, the network
+ *
  *
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
@@ -8,6 +8,9 @@ class Edges {
     constructor() {
         this.total = 0;
         this.nid = 0;
+        this.p1 = [];
+        this.p2 = [];
+        this.ks = [];
     }
     addEdge(id1, id2, k = 1) {
         if (id1 < id2) {
@@ -38,6 +41,13 @@ class Edges {
         }
     }
     ;
+    clearAll() {
+        this.p1 = [];
+        this.p2 = [];
+        this.ks = [];
+        this.total = 0;
+    }
+    ;
 }
 class Network {
     constructor(nid, selectedMonomers) {
@@ -59,6 +69,7 @@ class Network {
     // Functions above are meant to be more universal
     // Functions below are specific to generating each network
     edgesByCutoff(cutoffValueAngstroms) {
+        this.reducedEdges.clearAll();
         this.selectNetwork();
         let elems = Array.from(selectedBases);
         let elemcoords = {
@@ -76,7 +87,7 @@ class Network {
                     continue;
                 let dij = elemcoords.distance(i, j);
                 if (dij <= simCutoffValue) {
-                    this.reducedEdges.addEdge(i, j);
+                    this.reducedEdges.addEdge(i, j, 1);
                 }
             }
         }

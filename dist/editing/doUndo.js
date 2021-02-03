@@ -119,10 +119,9 @@ class RevertableMassDiscretization extends RevertableEdit {
     ;
 }
 class RevertableNetworkCreation extends RevertableEdit {
-    constructor(elems) {
+    constructor(elems, nid) {
         // construct network
         let lastsel = selectednetwork;
-        let nid = networks.length;
         const network = new Network(nid, elems);
         let undo = function () {
             //Remove Network from networks array

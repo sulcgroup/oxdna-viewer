@@ -507,6 +507,23 @@ class View {
     }));
     }
 
+    public addNetwork(nid : number){
+        let ul = document.getElementById("networks")
+        let li = document.createElement("li");
+        let name = "Network " + (nid+1).toString();
+        li.setAttribute('id', name);
+        li.appendChild(document.createTextNode(name));
+        li.setAttribute("onclick", String(selectednetwork = nid));
+        ul.appendChild(li);
+    }
+
+    public removeNetwork(nid: number){
+        let ul = document.getElementById("networks");
+        let name = "Network " + (nid+1).toString();
+        let item = document.getElementById(name);
+        ul.removeChild(item);
+    }
+
 }
 
 let view = new View(document);
