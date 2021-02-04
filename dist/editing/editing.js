@@ -210,6 +210,17 @@ function fillEdgesWrapper(nid, edgecase) {
             }
     }
 }
+function solveFluctuationsWrapper(nid, edgecase) {
+    // Easy expansion for other edge methods
+    let net = networks[nid];
+    switch (edgecase) {
+        case 0:
+            // Classic ANM
+            let h = net.generateHessian();
+            let i = net.invertHessian(h);
+            let rmsfs = net.getRMSF(i, 300);
+    }
+}
 function visualizeNetworkWrapper(nid) {
     // To be written later
 }
@@ -223,7 +234,7 @@ function discretizeMassWrapper() {
         notify("Please select Bases");
         return;
     }
-    let cellSize = $("div[title=\"cellSize\"]").val();
+    let cellSize = view.getInputNumber("cellSize");
     if (cellSize <= 0 || typeof cellSize != "number") {
         notify("Please Enter Valid Cell Size into the Cell Size Box");
         return;

@@ -8,6 +8,7 @@ class GenericSphere extends BasicElement {
         super(id, strand);
         this.elementType = GS;
         this.mass = 1.0;
+        this.type = 'gs';
     }
     ;
     elemToColor(elem: number | string) {

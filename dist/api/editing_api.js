@@ -837,13 +837,27 @@ var edit;
             }
         }
         // Now I need to Return the New System
-        let genericSys = new System(sysCount++, elements.size);
+        let currentelemsize = elements.size;
+        let genericSys = new System(sysCount++, currentelemsize);
         let gstrand = genericSys.addNewGenericSphereStrand();
         for (let i = 0; i < gPositions.length; i++) {
-            let be = gstrand.createBasicElement();
+            let be = gstrand.createBasicElement(currentelemsize + i);
+            be.sid = i;
+            if (i != 0) {
+                let prev = elements.get(currentelemsize + i - 1);
+                be.n3 = prev;
+                prev.n5 = be;
+            }
+            elements.push(be);
+        }
+        gstrand.updateEnds();
+        genericSys.initInstances(gPositions.length);
+        for (let i = 0; i < gPositions.length; i++) {
+            let be = gstrand.getMonomers()[i];
             be.calcPositions(gPositions[i]);
             be.mass = gMasses[i];
         }
+        systems.push(genericSys); //this feels like a bad idea
         return genericSys;
     }
     edit.discretizeMass = discretizeMass;

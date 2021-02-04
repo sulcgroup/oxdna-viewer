@@ -7,7 +7,6 @@
 class Edges {
     constructor() {
         this.total = 0;
-        this.nid = 0;
         this.p1 = [];
         this.p2 = [];
         this.ks = [];
@@ -52,10 +51,13 @@ class Edges {
 class Network {
     constructor(nid, selectedMonomers) {
         this.particles = selectedMonomers.map(mon => { return mon.id; });
+        this.types = selectedMonomers.map(mon => { return mon.type; });
+        this.masses = [];
+        this.fillMasses(selectedMonomers);
         this.nid = nid; // Separate Indexing for network objects?
         this.reducedEdges = new Edges();
-        this.reducedEdges.nid = this.nid;
-        this.masses = [];
+        this.simFC = 0.05709; // gamma_sim
+        this.kb = 0.00138064852; //Boltzmann Constant in pN/A
     }
     ;
     toJson() {
@@ -66,8 +68,21 @@ class Network {
         api.selectElementIDs(this.particles, false);
     }
     ;
+    fillMasses(mon) {
+        this.masses = [];
+        mon.forEach(t => {
+            if (t.type == 'gs') {
+                let g = t;
+                this.masses.push(g.mass);
+            }
+            else {
+                this.masses.push(1);
+            }
+        });
+    }
+    ;
     // Functions above are meant to be more universal
-    // Functions below are specific to generating each network
+    // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms) {
         this.reducedEdges.clearAll();
         this.selectNetwork();
@@ -80,7 +95,7 @@ class Network {
                 return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
             }
         };
-        let simCutoffValue = cutoffValueAngstroms / 8.518;
+        let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
         for (let i = 0; i < elemcoords.xI.length; i++) {
             for (let j = 1; j < elemcoords.xI.length; j++) {
                 if (i >= j)
@@ -92,4 +107,119 @@ class Network {
             }
         }
     }
+    ;
+    generateHessian() {
+        let hessian = [];
+        if (this.reducedEdges.total == 0) {
+            notify("Network must be filled prior to solving ANM");
+        }
+        else {
+            //Initialize Empty Hessian (3Nx3N)
+            for (let i = 0; i < 3 * this.particles.length; i++) { //3N x
+                let tmp = new Array(3 * this.particles.length); //3N
+                for (let j = 0; j < 3 * this.particles.length; j++) {
+                    tmp[j] = 0;
+                }
+                hessian.push(tmp);
+            }
+            //Hessian Calc w/ Masses
+            for (let l = 0; l < this.reducedEdges.total; l++) {
+                let i = this.reducedEdges.p1[l], j = this.reducedEdges[l], k = this.reducedEdges[l];
+                let ip = api.getElements([this.particles[i]])[0].getPos(); //Particle i Position
+                let jp = api.getElements([this.particles[j]])[0].getPos(); //Particle j Position
+                let mi = this.masses[i];
+                let mj = this.masses[j];
+                let mij = Math.sqrt(mi * mj); //masses
+                let mi2 = mi * mi;
+                let mj2 = mj * mj;
+                let d = ip.distanceTo(jp); //distances
+                let d2 = d * d;
+                let diff = jp.sub(ip);
+                let diag = diff.multiply(diff).multiplyScalar(k).divideScalar(d2);
+                let xy = k * (diff.x * diff.y) / d2;
+                let xz = k * (diff.x * diff.z) / d2;
+                let yz = k * (diff.y * diff.z) / d2;
+                // Couldn't find a more pleasant way to do this
+                // Fills 1 element in hij, hji, hii, hjj on each line
+                hessian[3 * i][3 * j] -= diag.x / mij;
+                hessian[3 * j][3 * i] -= diag.x / mij;
+                hessian[3 * i][3 * i] += diag.x / mi2;
+                hessian[3 * j][3 * j] += diag.x / mj2;
+                hessian[3 * i][3 * j + 1] -= xy;
+                hessian[3 * j][3 * i + 1] -= xy / mij;
+                hessian[3 * i][3 * i + 1] += xy / mi2;
+                hessian[3 * j][3 * j + 1] += xy / mj2;
+                hessian[3 * i][3 * j + 2] -= xz;
+                hessian[3 * j][3 * i + 2] -= xz / mij;
+                hessian[3 * i][3 * i + 2] += xz / mi2;
+                hessian[3 * j][3 * j + 2] += xz / mj2;
+                hessian[3 * i + 1][3 * j] -= xy / mij;
+                hessian[3 * j + 1][3 * i] -= xy / mij;
+                hessian[3 * i + 1][3 * i] += xy / mi2;
+                hessian[3 * j + 1][3 * j] += xy / mj2;
+                hessian[3 * i + 1][3 * j + 1] -= diag.y / mij;
+                hessian[3 * j + 1][3 * i + 1] -= diag.y / mij;
+                hessian[3 * i + 1][3 * i + 1] += diag.y / mi2;
+                hessian[3 * j + 1][3 * j + 1] += diag.y / mj2;
+                hessian[3 * i + 1][3 * j + 2] -= yz / mij;
+                hessian[3 * j + 1][3 * i + 2] -= yz / mij;
+                hessian[3 * i + 1][3 * i + 2] += yz / mi2;
+                hessian[3 * j + 1][3 * j + 2] += yz / mj2;
+                hessian[3 * i + 2][3 * j] -= xz / mij;
+                hessian[3 * j + 2][3 * i] -= xz / mij;
+                hessian[3 * i + 2][3 * i] += xz / mi2;
+                hessian[3 * j + 2][3 * j] += xz / mj2;
+                hessian[3 * i + 2][3 * j + 1] -= yz / mij;
+                hessian[3 * j + 2][3 * i + 1] -= yz / mij;
+                hessian[3 * i + 2][3 * i + 1] += yz / mi2;
+                hessian[3 * j + 2][3 * j + 1] += yz / mj2;
+                hessian[3 * i + 2][3 * j + 2] -= diag.z / mij;
+                hessian[3 * j + 2][3 * i + 2] -= diag.z / mij;
+                hessian[3 * i + 2][3 * i + 2] += diag.z / mi2;
+                hessian[3 * j + 2][3 * j + 2] += diag.z / mj2;
+            }
+            return hessian;
+        }
+    }
+    ;
+    invertHessian(hessian) {
+        let r = SVD(hessian, true, true, 0.0001);
+        let u = r[0], q = r[1], v = r[2];
+        let tol = 0.00001;
+        //Calculate U q+
+        for (let i = 0; i < q.length; i++) {
+            let qval = q[i];
+            if (qval < tol)
+                u[i] *= 0;
+            else
+                u[i] *= 1 / qval;
+        }
+        // thanks stack overflow
+        function multiplyMatrices(m1, m2) {
+            let result = [];
+            for (let i = 0; i < m1.length; i++) {
+                result[i] = [];
+                for (let j = 0; j < m2[0].length; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < m1[0].length; k++) {
+                        sum += m1[i][k] * m2[k][j];
+                    }
+                    result[i][j] = sum;
+                }
+            }
+            return result;
+        }
+        // Calculate U q+ V+ (Psuedo-Inverse)
+        return multiplyMatrices(u, v); //return Inverse
+    }
+    ;
+    getRMSF(inverse, temp) {
+        let RMSF = [];
+        for (let i = 0; i < inverse.length / 3; i++) { //for each particle
+            let r = this.kb * temp * (inverse[3 * i][3 * i] + inverse[3 * i + 1][3 * i + 1] + inverse[3 * i + 2][3 * i + 2]); //A^2
+            RMSF.push(r);
+        }
+        return RMSF;
+    }
+    ;
 }

@@ -226,7 +226,6 @@ function createNetworkWrapper() {
     // Makes a Network
     let bases = Array.from(selectedBases);
     copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
-    editHistory.do(new RevertableNetworkCreation(bases));
     let nid = networks.length;
     editHistory.do(new RevertableNetworkCreation(bases, nid));
     view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
@@ -248,6 +247,18 @@ function fillEdgesWrapper(nid: number, edgecase: number) {
             } else {
                 net.edgesByCutoff(cutoff);
             }
+    }
+}
+
+function solveFluctuationsWrapper(nid: number, edgecase: number) {
+    // Easy expansion for other edge methods
+    let net = networks[nid];
+    switch(edgecase){
+        case 0:
+            // Classic ANM
+            let h = net.generateHessian();
+            let i = net.invertHessian(h);
+            let rmsfs = net.getRMSF(i, 300);
     }
 }
 

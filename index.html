@@ -679,7 +679,7 @@
                                 <span class="mif-apps mif-2x"></span>
                             </button>
                             <label>Network Selector</label>
-                            <ul class="d-menu" data-role="dropdown" id="networks">
+                            <ul class="d-menu" data-role="dropdown" id="networks" title="Select A Created Network">
                                 <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
                             </ul>
                         </div>
@@ -688,7 +688,7 @@
                                 <span class="mif-apps mif-2x"></span>
                             </button>
                             <label>Fill Edges</label>
-                            <ul class="d-menu" data-role="dropdown" id="edges">
+                            <ul class="d-menu" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
                                 <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
                             </ul>
                         </div>
@@ -710,12 +710,13 @@
                             <span class="caption">Discretize Mass Distribution</span>
                         </button>
                     </div>
-<!--                    <div class="tight group flex-column">-->
-<!--                        <input type="text" data-role="input" title="cellSize" class="mb-1"-->
-<!--                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"-->
-<!--                               data-history="true" data-prevent-submit="true"-->
-<!--                               placeholder="Input Cell Size">-->
-<!--                    </div>-->
+                    <div class="tight group flex-column">
+                        <button class="ribbon-button" onclick="discretizeMassWrapper()"
+                                title="Preview expected fluctuations of ">
+                            <span class="mif-lightning2 mif-1x"></span>
+                            <span class="caption">Fluctuation Solver</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
