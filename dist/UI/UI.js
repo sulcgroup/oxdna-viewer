@@ -484,3 +484,12 @@ class View {
     }
 }
 let view = new View(document);
+// function drawFluctuationGraph(net : Network, data : number[]) {
+//     let ctx = document.getElementById('Fluctuations').getContext('2d');
+//     var fluctuations = new Chart
+//         type: 'line',
+//         data: {
+//             labels:
+//         }
+//     })
+// }
