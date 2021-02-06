@@ -441,6 +441,7 @@ class TrajectoryReader {
             return;
         }
         this.getNewConfig(1);
+        if (forceHandler) forceHandler.update();
     };
     
     previousConfig() {
@@ -448,6 +449,7 @@ class TrajectoryReader {
             return;
         }
         this.getNewConfig(-1);
+        if (forceHandler) forceHandler.update();
     };
 
     /**

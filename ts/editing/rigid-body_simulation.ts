@@ -19,7 +19,6 @@ function toggleClusterSim() {
             return;
         }
     }
-    if(forceHandler) forceHandler.clearDrawn();
     rigidClusterSimulator.simulate();
 }
 
@@ -109,6 +108,7 @@ class RigidClusterSimulator {
      */
     public simulate() {
         this.integrate(this.dt);
+        if(forceHandler) forceHandler.update();
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));

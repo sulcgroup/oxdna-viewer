@@ -67,9 +67,28 @@ class OXServeSocket extends WebSocket {
                 console.log(message["console_log"]);
             }
             if ("dat_file" in message) {
-                updateConfFromFile(message["dat_file"]);
-                if (forceHandler)
-                    forceHandler.update();
+                let lines = message["dat_file"].split("\n");
+                lines = lines.slice(3); // discard the header
+                let system = systems[systems.length - 1];
+                let numNuc = system.systemLength(); //gets # of nuc in system
+                let currentNucleotide, l;
+                for (let lineNum = 0; lineNum < numNuc; lineNum++) {
+                    currentNucleotide = elements.get(systems[systems.length - 1].globalStartId + lineNum);
+                    // consume a new line
+                    l = lines[lineNum].split(" ");
+                    currentNucleotide.calculateNewConfigPositions(l);
+                }
+                system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+                system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+                system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+                system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+                system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+                system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+                system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+                system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+                centerAndPBC();
+                render();
             }
         };
         this.onopen = (resonse) => {
@@ -89,6 +108,13 @@ class OXServeSocket extends WebSocket {
             this.send("abort");
         };
         this.start_simulation = () => {
+            // TEMPORARY  
+            // TODO: Add update code 
+            //forces.forEach(force=>{
+            //    force.clearDrawn();
+            //})
+            if (forceHandler)
+                forceHandler.clearDrawn();
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);

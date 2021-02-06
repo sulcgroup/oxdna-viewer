@@ -370,7 +370,7 @@ class TrajectoryReader {
                 currentNucleotide = elements.get(systems[i].globalStartId + lineNum);
                 // consume a new line
                 l = lines[lineNum].split(" ");
-                currentNucleotide.calcPositionsFromConfLine(l);
+                currentNucleotide.calculateNewConfigPositions(l);
             }
             system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
@@ -391,8 +391,6 @@ class TrajectoryReader {
             return;
         }
         this.getNewConfig(1);
-        if (forceHandler)
-            forceHandler.update();
     }
     ;
     previousConfig() {
@@ -400,8 +398,6 @@ class TrajectoryReader {
             return;
         }
         this.getNewConfig(-1);
-        if (forceHandler)
-            forceHandler.update();
     }
     ;
     /**

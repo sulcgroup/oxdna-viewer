@@ -91,6 +91,7 @@ class OXServeSocket extends WebSocket{
         }
         if ("dat_file" in message) {
             updateConfFromFile(message["dat_file"]);
+            if (forceHandler) forceHandler.update();
         }
     };
 
@@ -116,12 +117,6 @@ class OXServeSocket extends WebSocket{
     }
 
     start_simulation = () => {
-        // TEMPORARY  
-        // TODO: Add update code 
-        //forces.forEach(force=>{
-        //    force.clearDrawn();
-        //})
-        if (forceHandler) forceHandler.clearDrawn();
 
         let reorganized, counts, conf = {};
         {
