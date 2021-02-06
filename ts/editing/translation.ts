@@ -9,7 +9,8 @@ function glsl2three(input: THREE.Vector4) {
 function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
-    rotateElementsByQuaternion(elements, q, about)
+    rotateElementsByQuaternion(elements, q, about);
+    if(forceHandler) forceHandler.update();
 }
 
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3) {
@@ -184,6 +185,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset'])
     }
+    if(forceHandler) forceHandler.update();
     render();
 }
 

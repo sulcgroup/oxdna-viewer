@@ -9,6 +9,8 @@ function rotateElements(elements, axis, angle, about) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
+    if (forceHandler)
+        forceHandler.update();
 }
 function rotateElementsByQuaternion(elements, q, about) {
     // For some reason, we have to rotate the orientations
@@ -158,6 +160,8 @@ function translateElements(elements, v) {
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset']);
     }
+    if (forceHandler)
+        forceHandler.update();
     render();
 }
 //dragControls.activate();
