@@ -524,6 +524,45 @@ class View {
         ul.removeChild(item);
     }
 
+    public toggleDataset(GD: graphData){
+        let cid = currentDatasets.indexOf(GD);
+        if(cid > 0) {
+            currentDatasets.splice(cid, 1);
+        } else {
+            currentDatasets.push(GD);
+        }
+    }
+
+    public addGraphData(GD :graphData){ //Generates HTML Tile Element in Fluctuation Window
+        graphDatasets.push(GD);
+        let tileg = document.getElementById("tileg");
+        let tile = document.createElement("div");
+        tile.setAttribute("id", GD.label);
+        tile.setAttribute("data-role", "tile");
+        tile.setAttribute("data-size", "small");
+        tile.setAttribute("onclick", String(this.toggleDataset(GD)));
+        let closebutton = document.createElement("button");
+        closebutton.setAttribute("class", "badge-top")
+        closebutton.setAttribute("onclick", String(this.removeGraphData(GD)))
+        let span = document.createElement("span");
+        span.setAttribute("branding-label", GD.label);
+        tile.appendChild(span);
+        tile.append(closebutton);
+        tileg.appendChild(tile);
+    }
+
+    public removeGraphData(GD: graphData){
+        let gid = graphDatasets.indexOf(GD);
+        graphDatasets.splice(gid, 1);
+        let cid = currentDatasets.indexOf(GD);
+        if(cid > 0) {
+            currentDatasets.splice(cid, 1);
+        }
+        let tileg = document.getElementById("tileg");
+        let tile = document.getElementById(GD.label);
+        tileg.removeChild(tile);
+    }
+
 }
 
 let view = new View(document);
@@ -540,7 +579,7 @@ class graphData {
     }
 }
 
-function drawFluctuationGraph(graphDataArr :graphData[]) { //
+function drawFluctuationGraph(graphDataArr :graphData[]) { //Feed currentDatasets to draw all selected
     let colors = {
         red: 'rgb(255, 99, 132)',
         orange: 'rgb(255, 159, 64)',
@@ -553,7 +592,7 @@ function drawFluctuationGraph(graphDataArr :graphData[]) { //
 
     let datasets = [];
 
-    // Get Graph Type
+    // Get Graph Type still need to make this
 
 
 
@@ -570,8 +609,6 @@ function drawFluctuationGraph(graphDataArr :graphData[]) { //
     }
 
     let labels = datasets.map(d => d.label)
-
-
 
     let title = "Comparison";
     let xaxislabel = 'hi';

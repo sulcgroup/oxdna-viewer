@@ -89,8 +89,11 @@ var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
 
-var selectednetwork: number = 0;
-const networks: Network[] = [];
+var selectednetwork: number = 0; // Only used for networks
+const networks: Network[] = []; // Only used for networks
+const graphDatasets: graphData[] = []; // Only used for graph
+const currentDatasets: graphData[] = []; // Only used for graph
+const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
 
 var lut, devs: number[]; //need for Lut coloring
 
