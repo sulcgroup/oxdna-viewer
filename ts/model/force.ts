@@ -120,5 +120,10 @@ class ForceHandler{
         render ();
     };
 
+    destruct(){
+        scene.remove(this.equilibrium_distances_lines);
+        scene.remove(this.force_lines);
+    }
+
 
 }

@@ -86,4 +86,8 @@ class ForceHandler {
         //trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, this.update);
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
+    destruct() {
+        scene.remove(this.equilibrium_distances_lines);
+        scene.remove(this.force_lines);
+    }
 }

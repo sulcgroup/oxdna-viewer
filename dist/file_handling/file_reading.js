@@ -172,6 +172,8 @@ function readTrap(system, trapReader) {
                 break;
         }
     });
+    if (forceHandler)
+        forceHandler.destruct();
     forceHandler = new ForceHandler(forces);
 }
 // Files can also be retrieved from a path

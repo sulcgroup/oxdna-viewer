@@ -196,7 +196,8 @@ function readTrap(system, trapReader) {
                 break;
         }
     });
-   forceHandler =  new ForceHandler(forces);
+    if (forceHandler) forceHandler.destruct();
+    forceHandler =  new ForceHandler(forces);
     
 }
 
