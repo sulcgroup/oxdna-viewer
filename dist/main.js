@@ -77,8 +77,11 @@ var forceHandler;
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
-var selectednetwork = 0;
-const networks = [];
+var selectednetwork = 0; // Only used for networks
+const networks = []; // Only used for networks
+const graphDatasets = []; // Only used for graph
+const currentDatasets = []; // Only used for graph
+const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring
 const DNA = 0;
 const RNA = 1;

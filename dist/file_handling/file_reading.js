@@ -647,6 +647,14 @@ class pdbchain {
         this.strandtype = "";
     }
 }
+;
+class pdbinfowrapper {
+    constructor(pi, sys, chains) {
+        this.pdbfilename = pi;
+        this.sysdim = sys;
+        this.pdbsysinfo = chains;
+    }
+}
 function readPdbFile(file) {
     let reader = new FileReader();
     reader.onload = () => {
@@ -661,8 +669,18 @@ function readPdbFile(file) {
         // bookkeeping
         let prevChainId = " ";
         let prevResId = -1;
+        let label = "pdb";
         // Iterate each line looking for atoms
         for (let i = 0; i < pdbLines.length; i++) {
+            if (i < 10 && pdbLines[i].substr(0, 6) === 'HEADER') {
+                let head = pdbLines[i].match(/\S+/g); //header info, search
+                head.forEach(i => {
+                    let si = i.split('');
+                    if (si.length == 4 && (!isNaN(parseFloat(si[0])) && isFinite(parseFloat(si[0])))) { //PDB IDs are 4 characters 1st character is always an integer checks for that
+                        label = i;
+                    }
+                });
+            }
             if (pdbLines[i].substr(0, 4) === 'ATOM') {
                 let pdbLine = pdbLines[i];
                 //notify("atom found");
@@ -732,350 +750,399 @@ function readPdbFile(file) {
         }));
         // Assigns Residues to their corresponding Chain
         chains.forEach((chain) => chain.residues = residues.filter(res => res.chainID == chain.chainID));
-        if (chains === undefined || chains.length == 0) {
+        if (chains.length == 0) {
             notify("No Chains Found in PDB File");
+            return;
         }
-        if (atoms === undefined || atoms.length == 0) {
+        if (atoms.length == 0) {
             notify("No Atoms Found in PDB File");
+            return;
         }
         chains.forEach((chain) => notify("Chain ".concat(chain.chainID, " loaded with ", chain.residues.length.toString(), " residues")));
-        addPDBToScene(chains, boxBounds);
-    };
-    reader.readAsText(file);
-}
-function addPDBToScene(strands, bounds) {
-    // Looking back at this the strands name probably wasn't the most unique choice
-    // strands is meant to be the chain object from the PDB Parser
-    // Parses PDB Data and Intializes System, Errors go to the Console
-    //PDB Parsing
-    // Members of the Recongized arrays cannot have overlapping Members
-    const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
-    const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
-    const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
-        "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
-        "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
-    const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
-    // Intialize bookkeeping Members for Boolean Checks
-    let checker = {
-        DNAPresent: false,
-        proteinPresent: false,
-        RNAPresent: false,
-        mutantStrand: false
-    };
-    //Classify Residue Types
-    for (let i = 0; i < strands.length; i++) {
-        let strand = strands[i];
-        // Reset Bookkeeping Members for each Strand
-        for (let key in checker)
-            checker[key] = false;
-        // Loop over all Residues in each Strand
-        strand.residues.forEach(res => {
-            // Sort PDB Info and set Flags for System Initialization at Residue Level
-            //Check if Residue from PDB is in recongized array
-            if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
-                // Deal with Special Cases Here
-                if (res.resType === 'DN') {
-                    notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
-                    return 1;
-                }
-                if (res.resType === 'DI') {
-                    notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
-                    return 1;
-                }
-                // Sets which Nucleic Acids are Intialized
-                res.type = 'dna';
-                // Bookkeeping
-                checker.DNAPresent = true;
-            }
-            else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
-                // Deal with Special Cases Here
-                if (res.resType === 'UNK') {
-                    notify("Amino Acid blank is Unknown");
-                    return 1;
-                }
-                // Sets which Residues are Intialized
-                res.type = 'pro';
-                // Bookkeeping
-                checker.proteinPresent = true;
-            }
-            else if (recongizedRNAResidues.indexOf(res.resType) > -1) {
-                // Deal with Special Cases Here
-                if (res.resType === 'N') {
-                    notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
-                    return 1;
-                }
-                if (res.resType === 'I') {
-                    notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
-                    return 1;
-                }
-                // Sets which Nucleic Acids are Intialized
-                res.type = 'rna';
-                // Bookkeeping
-                checker.RNAPresent = true;
-            }
-            else {
-                notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
-                    "It will not be Intialized in the Viewer.");
-                res.type = 'unworthy';
+        let pdbinfo = new pdbinfowrapper(label, boxBounds, chains);
+        pdbFileInfo.push(pdbinfo);
+        let fileRead = new Promise(function (resolve) {
+            if (pdbFileInfo.length > 1) {
+                resolve("done");
             }
         });
-        // Check for strands with inconsistent Residue Types
-        checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
-        if (checker.mutantStrand) {
-            notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
-            strand.strandtype = 'bastard';
-        }
-        else {
-            if (checker.proteinPresent)
-                strand.strandtype = 'pro';
-            if (checker.DNAPresent)
-                strand.strandtype = 'dna';
-            if (checker.RNAPresent)
-                strand.strandtype = 'rna';
-        }
-    }
-    // Set Box Size
-    box.x = Math.ceil((bounds[0][1] - bounds[0][0]) * 2);
-    box.y = Math.ceil((bounds[1][1] - bounds[1][0]) * 2);
-    box.z = Math.ceil((bounds[2][1] - bounds[2][0]) * 2);
-    redrawBox();
-    let CalcInfoAA = (res) => {
-        if (res.type == 'pro') {
-            let type;
-            let pdbid;
-            //Set Type
-            let elem = { "LYS": "K", "CYS": "C", "ALA": "A", "THR": "T", "GLU": "E", "GLN": "Q", "SER": "S", "ASP": "D", "ASN": "N", "HIS": "H", "GLY": "G", "PRO": "P", "ARG": "R", "VAL": "V", "ILE": "I", "LEU": "L", "MET": "M", "PHE": "F", "TYR": "Y", "TRP": "W" };
-            type = elem[res.resType]; //Set Type Based Off Three Letter Codes
-            pdbid = res.pdbResNum;
-            let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
-            res.atoms.forEach(a => {
-                if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
-                    scHAcom.x += a.x;
-                    scHAcom.y += a.y;
-                    scHAcom.z += a.z;
-                }
-            });
-            // if null vector (glycine) a1 is 1, 0, 0
-            if (scHAcom.length() == 0)
-                scHAcom.x = 1;
-            scHAcom.normalize();
-            let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
-            let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
-            // notify(AM.getPos().x.toString().concat(AM.getPos().y.toString(), AM.getPos().z.toString()));
-            let a1 = scHAcom.clone().sub(CApos).normalize();
-            let a3 = new THREE.Vector3();
-            let bv1 = new THREE.Vector3(1, 0, 0);
-            let bv2 = new THREE.Vector3(0, 1, 0);
-            let bv3 = new THREE.Vector3(0, 1, 1);
-            if (a1.dot(bv1) < 0.99) {
-                a3 = a1.clone().cross(bv1);
-            }
-            else if (a1.dot(bv2) < 0.99) {
-                a3 = a1.clone().cross(bv2);
-            }
-            else if (a1.dot(bv3) < 0.99) {
-                a3 = a1.clone().cross(bv3);
-            }
-            return [pdbid, type, CApos, a1, a3];
-        }
+        return fileRead;
     };
-    // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
-    let CalcInfoNC = (res) => {
-        // Info we want from PDB
-        let pdbid;
-        let type;
-        //Residue Number in PDB File
-        pdbid = res.pdbResNum;
-        if (res.resType.includes('A'))
-            type = 'A';
-        if (res.resType.includes('C'))
-            type = 'C';
-        if (res.resType.includes('G'))
-            type = 'G';
-        if (res.resType.includes('T'))
-            type = 'T';
-        if (res.resType.includes('U'))
-            type = 'U';
-        //Calculate Base atoms Center of Mass
-        let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
-        let baseCom = new THREE.Vector3;
-        baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
-        baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
-        baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
-        baseCom.divideScalar(base_atoms.length);
-        let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
-        let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
-        let parallel_to = o4pos.sub(baseCom);
-        //Calculate Center of Mass
-        let nuccom = new THREE.Vector3;
-        nuccom.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
-        nuccom.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
-        nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
-        let l = res.atoms.length;
-        let p = nuccom.divideScalar(l);
-        //Calculate a3 Vector Helper Function
-        // Stack Overflow<3 Permutator
-        const permutator = (inputArr) => {
-            let result = [];
-            const permute = (arr, m = []) => {
-                if (arr.length === 0) {
-                    result.push(m);
+    reader.onloadend = () => {
+        addPDBToScene();
+    };
+    reader.readAsText(file); // Executes Loading reads file etc.
+    // when it ends triggers addPDBtoScene
+}
+function addPDBToScene() {
+    // Adds last added pdb info object in pdbFile Info
+    if (pdbFileInfo.length > 0) {
+        let pdata = pdbFileInfo.slice(-1)[0];
+        let strands = pdata.pdbsysinfo;
+        let bounds = pdata.sysdim;
+        let label = pdata.pdbfilename;
+        // Looking back at this the strands name probably wasn't the most unique choice
+        // strands is meant to be the chain object from the PDB Parser
+        // Parses PDB Data and Intializes System, Errors go to the Console
+        //PDB Parsing
+        // Members of the Recongized arrays cannot have overlapping Members
+        const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
+        const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
+        const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
+            "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
+            "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
+        const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
+        // Intialize bookkeeping Members for Boolean Checks
+        let checker = {
+            DNAPresent: false,
+            proteinPresent: false,
+            RNAPresent: false,
+            mutantStrand: false
+        };
+        //Classify Residue Types
+        for (let i = 0; i < strands.length; i++) {
+            let strand = strands[i];
+            // Reset Bookkeeping Members for each Strand
+            for (let key in checker)
+                checker[key] = false;
+            // Loop over all Residues in each Strand
+            strand.residues.forEach(res => {
+                // Sort PDB Info and set Flags for System Initialization at Residue Level
+                //Check if Residue from PDB is in recongized array
+                if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'DN') {
+                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
+                        return 1;
+                    }
+                    if (res.resType === 'DI') {
+                        notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
+                        return 1;
+                    }
+                    // Sets which Nucleic Acids are Intialized
+                    res.type = 'dna';
+                    // Bookkeeping
+                    checker.DNAPresent = true;
+                }
+                else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'UNK') {
+                        notify("Amino Acid blank is Unknown");
+                        return 1;
+                    }
+                    // Sets which Residues are Intialized
+                    res.type = 'pro';
+                    // Bookkeeping
+                    checker.proteinPresent = true;
+                }
+                else if (recongizedRNAResidues.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'N') {
+                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
+                        return 1;
+                    }
+                    if (res.resType === 'I') {
+                        notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
+                        return 1;
+                    }
+                    // Sets which Nucleic Acids are Intialized
+                    res.type = 'rna';
+                    // Bookkeeping
+                    checker.RNAPresent = true;
                 }
                 else {
-                    for (let i = 0; i < arr.length; i++) {
-                        let curr = arr.slice();
-                        let next = curr.splice(i, 1);
-                        permute(curr.slice(), m.concat(next));
+                    notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
+                        "It will not be Intialized in the Viewer.");
+                    res.type = 'unworthy';
+                }
+            });
+            // Check for strands with inconsistent Residue Types
+            checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
+            if (checker.mutantStrand) {
+                notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
+                strand.strandtype = 'bastard';
+            }
+            else {
+                if (checker.proteinPresent)
+                    strand.strandtype = 'pro';
+                if (checker.DNAPresent)
+                    strand.strandtype = 'dna';
+                if (checker.RNAPresent)
+                    strand.strandtype = 'rna';
+            }
+        }
+        // Set Box Size
+        box.x = Math.ceil((bounds[0][1] - bounds[0][0]) * 2);
+        box.y = Math.ceil((bounds[1][1] - bounds[1][0]) * 2);
+        box.z = Math.ceil((bounds[2][1] - bounds[2][0]) * 2);
+        redrawBox();
+        let CalcInfoAA = (res) => {
+            if (res.type == 'pro') {
+                let type;
+                let pdbid;
+                //Set Type
+                let elem = {
+                    "LYS": "K",
+                    "CYS": "C",
+                    "ALA": "A",
+                    "THR": "T",
+                    "GLU": "E",
+                    "GLN": "Q",
+                    "SER": "S",
+                    "ASP": "D",
+                    "ASN": "N",
+                    "HIS": "H",
+                    "GLY": "G",
+                    "PRO": "P",
+                    "ARG": "R",
+                    "VAL": "V",
+                    "ILE": "I",
+                    "LEU": "L",
+                    "MET": "M",
+                    "PHE": "F",
+                    "TYR": "Y",
+                    "TRP": "W"
+                };
+                type = elem[res.resType]; //Set Type Based Off Three Letter Codes
+                pdbid = res.pdbResNum;
+                let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
+                res.atoms.forEach(a => {
+                    if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
+                        scHAcom.x += a.x;
+                        scHAcom.y += a.y;
+                        scHAcom.z += a.z;
                     }
+                });
+                // if null vector (glycine) a1 is 1, 0, 0
+                if (scHAcom.length() == 0)
+                    scHAcom.x = 1;
+                scHAcom.normalize();
+                let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
+                let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
+                let CABfactor = CA.tempFactor;
+                // notify(AM.getPos().x.toString().concat(AM.getPos().y.toString(), AM.getPos().z.toString()));
+                let a1 = scHAcom.clone().sub(CApos).normalize();
+                let a3 = new THREE.Vector3();
+                let bv1 = new THREE.Vector3(1, 0, 0);
+                let bv2 = new THREE.Vector3(0, 1, 0);
+                let bv3 = new THREE.Vector3(0, 1, 1);
+                if (a1.dot(bv1) < 0.99) {
+                    a3 = a1.clone().cross(bv1);
                 }
-            };
-            permute(inputArr);
-            return result;
+                else if (a1.dot(bv2) < 0.99) {
+                    a3 = a1.clone().cross(bv2);
+                }
+                else if (a1.dot(bv3) < 0.99) {
+                    a3 = a1.clone().cross(bv3);
+                }
+                return [pdbid, type, CApos, a1, a3, CABfactor];
+            }
         };
-        // Compute a1 Vector
-        let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
-        let ring_poss = permutator(ring_names);
-        let a3 = new THREE.Vector3;
-        for (let i = 0; i < ring_poss.length; i++) {
-            let types = ring_poss[i];
-            let p = res.atoms.filter(a => a.atomType == types[0])[0];
-            let q = res.atoms.filter(a => a.atomType == types[1])[0];
-            let r = res.atoms.filter(a => a.atomType == types[2])[0];
-            let v1 = new THREE.Vector3;
-            let v2 = new THREE.Vector3;
-            v1.x = p.x - q.x;
-            v1.y = p.y - q.y;
-            v1.z = p.z - q.z;
-            v2.x = p.x - r.x;
-            v2.y = p.y - r.y;
-            v2.z = p.z - r.z;
-            let nv1 = v1.clone().normalize();
-            let nv2 = v2.clone().normalize();
-            if (Math.abs(nv1.dot(nv2)) > 0.01) {
-                let tmpa3 = nv1.cross(nv2);
-                tmpa3.normalize();
-                if (tmpa3.dot(parallel_to) < 0) {
-                    tmpa3.negate();
+        // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
+        let CalcInfoNC = (res) => {
+            // Info we want from PDB
+            let pdbid;
+            let type;
+            //Residue Number in PDB File
+            pdbid = res.pdbResNum;
+            if (res.resType.includes('A'))
+                type = 'A';
+            if (res.resType.includes('C'))
+                type = 'C';
+            if (res.resType.includes('G'))
+                type = 'G';
+            if (res.resType.includes('T'))
+                type = 'T';
+            if (res.resType.includes('U'))
+                type = 'U';
+            //Calculate Base atoms Center of Mass
+            let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
+            let baseCom = new THREE.Vector3;
+            baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
+            baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
+            baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
+            baseCom.divideScalar(base_atoms.length);
+            let Bfact = res.atoms.map(a => a.tempFactor).reduce((a, b) => a + b); //sum bfactors of ind atoms
+            Bfact /= res.atoms.length;
+            let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
+            let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
+            let parallel_to = o4pos.sub(baseCom);
+            //Calculate Center of Mass
+            let nuccom = new THREE.Vector3;
+            nuccom.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
+            nuccom.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
+            nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
+            let l = res.atoms.length;
+            let p = nuccom.divideScalar(l);
+            //Calculate a3 Vector Helper Function
+            // Stack Overflow<3 Permutator
+            const permutator = (inputArr) => {
+                let result = [];
+                const permute = (arr, m = []) => {
+                    if (arr.length === 0) {
+                        result.push(m);
+                    }
+                    else {
+                        for (let i = 0; i < arr.length; i++) {
+                            let curr = arr.slice();
+                            let next = curr.splice(i, 1);
+                            permute(curr.slice(), m.concat(next));
+                        }
+                    }
+                };
+                permute(inputArr);
+                return result;
+            };
+            // Compute a1 Vector
+            let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
+            let ring_poss = permutator(ring_names);
+            let a3 = new THREE.Vector3;
+            for (let i = 0; i < ring_poss.length; i++) {
+                let types = ring_poss[i];
+                let p = res.atoms.filter(a => a.atomType == types[0])[0];
+                let q = res.atoms.filter(a => a.atomType == types[1])[0];
+                let r = res.atoms.filter(a => a.atomType == types[2])[0];
+                let v1 = new THREE.Vector3;
+                let v2 = new THREE.Vector3;
+                v1.x = p.x - q.x;
+                v1.y = p.y - q.y;
+                v1.z = p.z - q.z;
+                v2.x = p.x - r.x;
+                v2.y = p.y - r.y;
+                v2.z = p.z - r.z;
+                let nv1 = v1.clone().normalize();
+                let nv2 = v2.clone().normalize();
+                if (Math.abs(nv1.dot(nv2)) > 0.01) {
+                    let tmpa3 = nv1.cross(nv2);
+                    tmpa3.normalize();
+                    if (tmpa3.dot(parallel_to) < 0) {
+                        tmpa3.negate();
+                    }
+                    a3.add(tmpa3);
                 }
-                a3.add(tmpa3);
+            }
+            a3.normalize();
+            // Compute a1 Vector
+            let pairs;
+            if (["DC", "DT", "DU", "C", "T", "U", "DC5", "DC3", "DT5", "DT3", "DU3", "DU5", "C3", "T3", "U3", "C5", "T5", "U5"].indexOf(res.resType) > -1) {
+                pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
+            }
+            else {
+                pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
+            }
+            let a1 = new THREE.Vector3(0, 0, 0);
+            for (let i = 0; i < pairs.length; i++) {
+                let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
+                let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
+                let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
+                a1.add(diff);
+            }
+            a1.normalize();
+            return [pdbid, type, p, a1, a3, Bfact];
+        };
+        let nextElementId = elements.getNextId();
+        let oldElementId = nextElementId;
+        let initInfo = [];
+        //Make System From the PDB Information
+        let sys = new System(sysCount, nextElementId);
+        // First Loop to Map Out the System
+        let com = new THREE.Vector3();
+        // Store B-factor Information Here
+        let bFactors = [];
+        for (let i = 0; i < strands.length; i++) {
+            let nstrand = strands[i];
+            if (nstrand.strandtype == 'pro') {
+                let currentStrand = sys.addNewPeptideStrand();
+                // currentStrand.system = sys;
+                for (let j = 0; j < nstrand.residues.length; j++) {
+                    let aa = currentStrand.createBasicElement(nextElementId);
+                    aa.sid = nextElementId - oldElementId;
+                    let info = CalcInfoAA(nstrand.residues[j]);
+                    initInfo.push(info);
+                    bFactors.push(info[5]);
+                    com.add(info[2]); //Add position to COM calc
+                    // Amino Acids are intialized from N-terminus to C-terminus
+                    // Same as PDB format
+                    // Neighbors must be filled for correct initialization
+                    if (j != 0) {
+                        let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                        aa.n3 = prevaa;
+                        prevaa.n5 = aa;
+                    }
+                    elements.push(aa);
+                    nextElementId++;
+                }
+                currentStrand.updateEnds();
+            }
+            else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
+                let currentStrand = sys.addNewNucleicAcidStrand();
+                //PDB entries typically list from 5' to 3'
+                //Neighbors must be filled for correct initialization
+                let pdbres3to5 = nstrand.residues.reverse(); // Flipped Order so it reads 3'  to 5'
+                for (let j = 0; j < nstrand.residues.length; j++) {
+                    //For getting center of mass
+                    let info = CalcInfoNC(pdbres3to5[j]);
+                    initInfo.push(info);
+                    com.add(info[2]); //Add position to COM calc
+                    let nc = currentStrand.createBasicElement(nextElementId);
+                    nc.sid = nextElementId - oldElementId;
+                    if (j != 0) {
+                        let prevnc = elements.get(nextElementId - 1); //Get previous Element
+                        nc.n3 = prevnc;
+                        prevnc.n5 = nc;
+                    }
+                    elements.push(nc);
+                    nextElementId++;
+                }
+                currentStrand.updateEnds();
             }
         }
-        a3.normalize();
-        // Compute a1 Vector
-        let pairs;
-        if (["DC", "DT", "DU", "C", "T", "U", "DC5", "DC3", "DT5", "DT3", "DU3", "DU5", "C3", "T3", "U3", "C5", "T5", "U5"].indexOf(res.resType) > -1) {
-            pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
-        }
-        else {
-            pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
-        }
-        let a1 = new THREE.Vector3(0, 0, 0);
-        for (let i = 0; i < pairs.length; i++) {
-            let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
-            let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
-            let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
-            a1.add(diff);
-        }
-        a1.normalize();
-        return [pdbid, type, p, a1, a3];
-    };
-    let nextElementId = elements.getNextId();
-    let oldElementId = nextElementId;
-    let initInfo = [];
-    //Make System From the PDB Information
-    let sys = new System(sysCount, nextElementId);
-    // First Loop to Map Out the System
-    let com = new THREE.Vector3();
-    for (let i = 0; i < strands.length; i++) {
-        let nstrand = strands[i];
-        if (nstrand.strandtype == 'pro') {
-            let currentStrand = sys.addNewPeptideStrand();
-            // currentStrand.system = sys;
-            for (let j = 0; j < nstrand.residues.length; j++) {
-                let aa = currentStrand.createBasicElement(nextElementId);
-                aa.sid = nextElementId - oldElementId;
-                let info = CalcInfoAA(nstrand.residues[j]);
-                initInfo.push(info);
-                com.add(info[2]); //Add position to COM calc
-                // Amino Acids are intialized from N-terminus to C-terminus
-                // Same as PDB format
-                // Neighbors must be filled for correct initialization
-                if (j != 0) {
-                    let prevaa = elements.get(nextElementId - 1); //Get previous Element
-                    aa.n3 = prevaa;
-                    prevaa.n5 = aa;
+        com.divideScalar(sys.systemLength());
+        let pdbBfactors = new graphData(label, bFactors, "bfactor");
+        graphDatasets.push(pdbBfactors);
+        sys.initInstances(sys.systemLength());
+        // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
+        let FillInfoAA = (info, AM, CM) => {
+            AM.pdbid = info[0];
+            AM.type = info[1];
+            let center = info[2].sub(CM);
+            AM.calcPositions(center);
+            AM.a1 = info[3];
+            AM.a3 = info[4];
+        };
+        // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
+        let FillInfoNC = (info, NC, CM) => {
+            NC.pdbid = info[0];
+            NC.type = info[1];
+            let center = info[2].sub(CM);
+            NC.calcPositions(center, info[3], info[4]);
+        };
+        // Second Loop Going through Exactly the same way
+        // Fill Info Functions called on each element to initialize type specific
+        let Amino;
+        let Nuc;
+        nextElementId = oldElementId; //Reset
+        for (let i = 0; i < strands.length; i++) {
+            let strand = sys.strands[i];
+            if (strand.isPeptide()) {
+                for (let k = 0; k < strand.getLength(); k++) {
+                    Amino = elements.get(nextElementId);
+                    FillInfoAA(initInfo[nextElementId], Amino, com);
+                    nextElementId++;
                 }
-                elements.push(aa);
-                nextElementId++;
             }
-            currentStrand.updateEnds();
-        }
-        else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
-            let currentStrand = sys.addNewNucleicAcidStrand();
-            //PDB entries typically list from 5' to 3'
-            //Neighbors must be filled for correct initialization
-            let pdbres3to5 = nstrand.residues.reverse(); // Flipped Order so it reads 3'  to 5'
-            for (let j = 0; j < nstrand.residues.length; j++) {
-                //For getting center of mass
-                let info = CalcInfoNC(pdbres3to5[j]);
-                initInfo.push(info);
-                com.add(info[2]); //Add position to COM calc
-                let nc = currentStrand.createBasicElement(nextElementId);
-                nc.sid = nextElementId - oldElementId;
-                if (j != 0) {
-                    let prevnc = elements.get(nextElementId - 1); //Get previous Element
-                    nc.n3 = prevnc;
-                    prevnc.n5 = nc;
+            else if (strand.isNucleicAcid()) {
+                for (let k = 0; k < strand.getLength(); k++) {
+                    Nuc = elements.get(nextElementId);
+                    FillInfoNC(initInfo[nextElementId], Nuc, com);
+                    nextElementId++;
                 }
-                elements.push(nc);
-                nextElementId++;
             }
-            currentStrand.updateEnds();
         }
+        //System is set Up just needs to be added to the systems array now I believe
+        addSystemToScene(sys);
+        systems.push(sys);
+        sysCount++;
+        //centerAndPBC(sys.getMonomers());
     }
-    com.divideScalar(sys.systemLength());
-    sys.initInstances(sys.systemLength());
-    // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
-    let FillInfoAA = (info, AM, CM) => {
-        AM.pdbid = info[0];
-        AM.type = info[1];
-        let center = info[2].sub(CM);
-        AM.calcPositions(center);
-        AM.a1 = info[3];
-        AM.a3 = info[4];
-    };
-    // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
-    let FillInfoNC = (info, NC, CM) => {
-        NC.pdbid = info[0];
-        NC.type = info[1];
-        let center = info[2].sub(CM);
-        NC.calcPositions(center, info[3], info[4]);
-    };
-    // Second Loop Going through Exactly the same way
-    // Fill Info Functions called on each element to initialize type specific
-    let Amino;
-    let Nuc;
-    nextElementId = oldElementId; //Reset
-    for (let i = 0; i < strands.length; i++) {
-        let strand = sys.strands[i];
-        if (strand.isPeptide()) {
-            for (let k = 0; k < strand.getLength(); k++) {
-                Amino = elements.get(nextElementId);
-                FillInfoAA(initInfo[nextElementId], Amino, com);
-                nextElementId++;
-            }
-        }
-        else if (strand.isNucleicAcid()) {
-            for (let k = 0; k < strand.getLength(); k++) {
-                Nuc = elements.get(nextElementId);
-                FillInfoNC(initInfo[nextElementId], Nuc, com);
-                nextElementId++;
-            }
-        }
-    }
-    //System is set Up just needs to be added to the systems array now I believe
-    addSystemToScene(sys);
-    systems.push(sys);
-    sysCount++;
-    //centerAndPBC(sys.getMonomers());
 }

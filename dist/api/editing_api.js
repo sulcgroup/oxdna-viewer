@@ -838,7 +838,7 @@ var edit;
         }
         // Now I need to Return the New System
         let currentelemsize = elements.size;
-        let genericSys = new System(sysCount++, currentelemsize);
+        let genericSys = new System(sysCount, currentelemsize);
         let gstrand = genericSys.addNewGenericSphereStrand();
         for (let i = 0; i < gPositions.length; i++) {
             let be = gstrand.createBasicElement(currentelemsize + i);

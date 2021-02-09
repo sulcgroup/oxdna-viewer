@@ -482,14 +482,120 @@ class View {
         let item = document.getElementById(name);
         ul.removeChild(item);
     }
+    toggleDataset(GD) {
+        let cid = currentDatasets.indexOf(GD);
+        if (cid > 0) {
+            currentDatasets.splice(cid, 1);
+        }
+        else {
+            currentDatasets.push(GD);
+        }
+    }
+    addGraphData(GD) {
+        graphDatasets.push(GD);
+        let tileg = document.getElementById("tileg");
+        let tile = document.createElement("div");
+        tile.setAttribute("id", GD.label);
+        tile.setAttribute("data-role", "tile");
+        tile.setAttribute("data-size", "small");
+        tile.setAttribute("onclick", String(this.toggleDataset(GD)));
+        let closebutton = document.createElement("button");
+        closebutton.setAttribute("class", "badge-top");
+        closebutton.setAttribute("onclick", String(this.removeGraphData(GD)));
+        let span = document.createElement("span");
+        span.setAttribute("branding-label", GD.label);
+        tile.appendChild(span);
+        tile.append(closebutton);
+        tileg.appendChild(tile);
+    }
+    removeGraphData(GD) {
+        let gid = graphDatasets.indexOf(GD);
+        graphDatasets.splice(gid, 1);
+        let cid = currentDatasets.indexOf(GD);
+        if (cid > 0) {
+            currentDatasets.splice(cid, 1);
+        }
+        let tileg = document.getElementById("tileg");
+        let tile = document.getElementById(GD.label);
+        tileg.removeChild(tile);
+    }
 }
 let view = new View(document);
-// function drawFluctuationGraph(net : Network, data : number[]) {
-//     let ctx = document.getElementById('Fluctuations').getContext('2d');
-//     var fluctuations = new Chart
-//         type: 'line',
-//         data: {
-//             labels:
-//         }
-//     })
-// }
+class graphData {
+    constructor(l, d, dt) {
+        this.label = l;
+        this.data = d;
+        this.datatype = dt;
+    }
+}
+function drawFluctuationGraph(graphDataArr) {
+    let colors = {
+        red: 'rgb(255, 99, 132)',
+        orange: 'rgb(255, 159, 64)',
+        yellow: 'rgb(255, 205, 86)',
+        green: 'rgb(75, 192, 192)',
+        blue: 'rgb(54, 162, 235)',
+        purple: 'rgb(153, 102, 255)',
+        grey: 'rgb(201, 203, 207)'
+    };
+    let datasets = [];
+    // Get Graph Type still need to make this
+    for (var i = 0; i < graphDataArr.length; i++) {
+        // Per Dataset
+        let adjdata = [];
+        if (graphDataArr[i].datatype == 'bfactor')
+            adjdata = graphDataArr[i].data;
+        let data = {
+            label: graphDataArr[i].label,
+            fill: false,
+            backgroundColor: colors[i % 7],
+            borderColor: colors[i % 7],
+            data: graphDataArr[i].data,
+        };
+        datasets.push(data);
+    }
+    let labels = datasets.map(d => d.label);
+    let title = "Comparison";
+    let xaxislabel = 'hi';
+    let yaxislabel = 'bye';
+    let GraphSettings = {
+        type: 'line',
+        data: {
+            labels: ["Predicted", "Experimental"],
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            title: {
+                display: true,
+                text: title
+            },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+            },
+            hover: {
+                mode: 'nearest',
+                intersect: true
+            },
+            scales: {
+                xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: xaxislabel
+                        }
+                    }],
+                yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: yaxislabel
+                        }
+                    }]
+            }
+        }
+    };
+    let ctx = document.getElementById('Fluctuations');
+    let fluctuationChart = new Chart(ctx, GraphSettings);
+}

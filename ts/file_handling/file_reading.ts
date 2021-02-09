@@ -106,7 +106,7 @@ function handleFiles(files: FileList) {
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "pdb") {
             pdbfile = files[i];
-            pdbAsync(pdbfile, addPDBToScene());
+            readPdbFile(pdbfile);
         }
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
@@ -755,7 +755,7 @@ class pdbinfowrapper { //Transfers Necessary Data from readPdbFile to addPDBtoSc
     }
 }
 
-function readPdbFile(file) {
+function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain identifiers in pdb files 2) centering of system will need a little work
     let reader = new FileReader();
 
     reader.onload = () => {
@@ -873,11 +873,23 @@ function readPdbFile(file) {
 
         let pdbinfo = new pdbinfowrapper(label, boxBounds, chains);
         pdbFileInfo.push(pdbinfo);
+        let fileRead = new Promise(function (resolve) {
+            if(pdbFileInfo.length > 1){
+                resolve("done");
+            }
+        });
+        return fileRead;
     }
-    reader.readAsText(file);
+    reader.onloadend = () => {
+        addPDBToScene();
+    }
+
+
+    reader.readAsText(file); // Executes Loading reads file etc.
+                             // when it ends triggers addPDBtoScene
 }
 
-function addPDBToScene() {
+function addPDBToScene () {
     // Adds last added pdb info object in pdbFile Info
     if(pdbFileInfo.length > 0) {
         let pdata = pdbFileInfo.slice(-1)[0];
@@ -1271,10 +1283,4 @@ function addPDBToScene() {
         sysCount++;
         //centerAndPBC(sys.getMonomers());
     }
-}
-
-
-function pdbAsync(file, loadpdb) {
-    readPdbFile(file);
-    loadpdb();
 }
