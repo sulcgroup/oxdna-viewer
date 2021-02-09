@@ -9,12 +9,14 @@ class TopReader extends FileReader{
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     n3: number;
+    callback : Function;
 
-    constructor(topFile: File, system: System, elems: ElementMap){
+    constructor(topFile: File, system: System, elems: ElementMap, callback : Function){
         super();
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
+        this.callback = callback;
     }
     onload = ((f) => {
         return () => {
@@ -95,31 +97,8 @@ class TopReader extends FileReader{
                 this.nucLocalID += 1;
                 this.lastStrand = strID;
             });
-
-            this.system.setDatFile(datFile); //store datFile in current System object
-            systems.push(this.system); //add system to Systems[]
             nucCount = this.elems.getNextId();
-
-            //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-
-            //anonymous functions to handle fileReader outputs
-            datReader.onload = () => {
-                // Find out if what you're reading is a single configuration or a trajectory
-                let isTraj = readDat(datReader, this.system);
-                document.dispatchEvent(new Event('nextConfigLoaded'));
-                //if its a trajectory, create the other readers
-                if (isTraj) {
-                    trajReader = new TrajectoryReader(datFile, this.system, approxDatLen, datReader.result);
-                }
-            };
-
-            let approxDatLen = this.topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-            // read the first chunk
-            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
-            datReader.readAsText(firstChunkBlob);
-
-            //set up instancing data arrays
-            this.system.initInstances(this.system.systemLength());
+            this.callback();
 
         }})(this.topFile);
     
@@ -127,6 +106,39 @@ class TopReader extends FileReader{
         this.readAsText(this.topFile);
     }
 }
+
+class FileChunker{
+    file:Blob;
+    current_chunk : number;
+    chunk_size : number;
+    constructor(file: Blob, chunk_size: number){
+        this.file = file;
+        this.chunk_size = chunk_size;
+        this.current_chunk = 0;
+    }
+    get_next_chunk(){
+        if(!this.is_last())
+            this.current_chunk++;
+        return this.get_chunk();
+    }
+    get_prev_chunk(){
+        this.current_chunk--;
+        if(this.current_chunk <= 0) this.current_chunk = 0;
+        return this.get_chunk();
+    }
+    is_last(){
+        if(this.current_chunk * this.chunk_size + this.chunk_size >= this.file.size)
+            return true;
+        return false;
+    }
+    private get_chunk(){
+        return this.file.slice(
+            this.current_chunk * this.chunk_size,
+            this.current_chunk * this.chunk_size + this.chunk_size
+        );
+    }
+ }
+
 
 class TrajectoryReader {
     datFile: File;

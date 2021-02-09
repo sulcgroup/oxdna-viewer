@@ -221,8 +221,28 @@ function readFiles(topFile, datFile, jsonFile) {
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-        const topReader = new TopReader(topFile, system, elements);
-        topReader.readAsText(topReader.topFile);
+        const topReader = new TopReader(topFile, system, elements, () => {
+            system.setDatFile(datFile); //store datFile in current System object
+            systems.push(system); //add system to Systems[]
+            //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+            //anonymous functions to handle fileReader outputs
+            datReader.onload = () => {
+                // Find out if what you're reading is a single configuration or a trajectory
+                let isTraj = readDat(datReader, system);
+                document.dispatchEvent(new Event('nextConfigLoaded'));
+                //if its a trajectory, create the other readers
+                if (isTraj) {
+                    trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
+                }
+            };
+            let approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
+            // read the first chunk
+            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
+            datReader.readAsText(firstChunkBlob);
+            //set up instancing data arrays
+            system.initInstances(system.systemLength());
+        });
+        topReader.read(); //readAsText(topReader.topFile)
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {
