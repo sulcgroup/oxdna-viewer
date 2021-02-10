@@ -533,6 +533,27 @@ class View {
         }
     }
 
+    public addGraphData(GD : graphData){
+        let ul = document.getElementById("datalist") //In fluctuation Window
+        let li = document.createElement("li");
+        let name = "Dataset: " + GD.label + " Format: " + GD.datatype
+        li.setAttribute('id', name);
+        li.appendChild(document.createTextNode(name));
+        li.setAttribute("onclick", String(fluxGraph.setTargetData())); //Draw on Graph
+        ul.appendChild(li);
+    }
+
+    public removeGraphData(nid : number){
+        let ul = document.getElementById("networks")
+        let li = document.createElement("li");
+        let name = "Network " + (nid+1).toString();
+        li.setAttribute('id', name);
+        li.appendChild(document.createTextNode(name));
+        li.setAttribute("onclick", String(selectednetwork = nid));
+        ul.appendChild(li);
+    }
+
+
     public addGraphData(GD :graphData){ //Generates HTML Tile Element in Fluctuation Window
         graphDatasets.push(GD);
         let tileg = document.getElementById("tileg");
@@ -549,7 +570,7 @@ class View {
         tile.appendChild(span);
         tile.append(closebutton);
         tileg.appendChild(tile);
-    }
+    }document.getElementById('fluxbar').toggle()
 
     public removeGraphData(GD: graphData){ //Removes HTML Tile Element in Fluctuation Window
         let gid = graphDatasets.indexOf(GD);
@@ -579,84 +600,251 @@ class graphData {
     }
 }
 
-function drawFluctuationGraph(graphDataArr :graphData[]) { //Feed currentDatasets to draw all selected
-    let colors = {
-        red: 'rgb(255, 99, 132)',
-        orange: 'rgb(255, 159, 64)',
-        yellow: 'rgb(255, 205, 86)',
-        green: 'rgb(75, 192, 192)',
-        blue: 'rgb(54, 162, 235)',
-        purple: 'rgb(153, 102, 255)',
-        grey: 'rgb(201, 203, 207)'
-    }
+// function drawFluctuationGraph(graphDataArr :graphData[]) { // Initializes Graph
+//     let colors = {
+//         red: 'rgb(255, 99, 132)',
+//         orange: 'rgb(255, 159, 64)',
+//         yellow: 'rgb(255, 205, 86)',
+//         green: 'rgb(75, 192, 192)',
+//         blue: 'rgb(54, 162, 235)',
+//         purple: 'rgb(153, 102, 255)',
+//         grey: 'rgb(201, 203, 207)'
+//     }
+//
+//     let datasets = [];
+//
+//     // Get Graph Type still need to make this
+//
+//
+//
+//
+//     // for (var i = 0; i < graphDataArr.length; i++) {
+//     //     // Per Dataset
+//     //     let adjdata = [];
+//     //     if (graphDataArr[i].datatype == 'bfactor') adjdata = graphDataArr[i].data;
+//     //     let data = {
+//     //         label: graphDataArr[i].label,
+//     //         fill: false,
+//     //         backgroundColor: colors[i%7],
+//     //         borderColor: colors[i%7],
+//     //         data: graphDataArr[i].data,
+//     //     }
+//     //     datasets.push(data);
+//     // }
+//
+//     // let labels = datasets.map(d => d.label);
+//
+//     let title = "Comparison";
+//     let xaxislabel = 'hi';
+//     let yaxislabel = 'bye';
+//
+//     let GraphSettings = {
+//         type: 'line',
+//         data: {},
+//         options: {
+//             responsive: true,
+//             title: {
+//                 display: true,
+//                 text: title
+//             },
+//             tooltips: {
+//                 mode: 'y',
+//                 intersect: false
+//             },
+//             hover: {
+//                 mode: 'y',
+//                 intersect: false
+//             },
+//             scales: {
+//                 xAxes: [{
+//                     display: true,
+//                     scaleLabel: {
+//                         display: true,
+//                         labelString: xaxislabel
+//                     }
+//                 }],
+//                 yAxes: [{
+//                     display: true,
+//                     scaleLabel: {
+//                         display: true,
+//                         labelString: yaxislabel
+//                     }
+//                 }]
+//             }
+//         }
+//     };
+//
+//     let canvas = <HTMLCanvasElement> document.getElementById('fluctuations');
+//     let ctx = canvas.getContext("2d");
+//     let fluctuationChart = new Chart(ctx, GraphSettings);
+// }
 
-    let datasets = [];
-
-    // Get Graph Type still need to make this
-
-
-
-
-    for (var i = 0; i < graphDataArr.length; i++) {
-        // Per Dataset
-        let adjdata = [];
-        if (graphDataArr[i].datatype == 'bfactor') adjdata = graphDataArr[i].data;
-        let data = {
-            label: graphDataArr[i].label,
-            fill: false,
-            backgroundColor: colors[i%7],
-            borderColor: colors[i%7],
-            data: graphDataArr[i].data,
-        }
-        datasets.push(data);
-    }
-
-    let labels = datasets.map(d => d.label)
-
-    let title = "Comparison";
-    let xaxislabel = 'hi';
-    let yaxislabel = 'bye';
-
-    let GraphSettings = {
-        type: 'line',
-        data: {
-            labels: ["Predicted", "Experimental"],
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            title: {
-                display: true,
-                text: title
-            },
-            tooltips: {
-                mode: 'index',
-                intersect: false,
-            },
-            hover: {
-                mode: 'nearest',
-                intersect: true
-            },
-            scales: {
-                xAxes: [{
-                    display: true,
-                    scaleLabel: {
-                        display: true,
-                        labelString: xaxislabel
-                    }
-                }],
-                yAxes: [{
-                    display: true,
-                    scaleLabel: {
-                        display: true,
-                        labelString: yaxislabel
-                    }
-                }]
-            }
-        }
-    };
-
-    let ctx = document.getElementById('Fluctuations');
-    let fluctuationChart = new Chart(ctx, GraphSettings);
+let colors = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
 }
 
+// Get Graph Type still need to make this
+
+// for (var i = 0; i < graphDataArr.length; i++) {
+//     // Per Dataset
+//     let adjdata = [];
+//     if (graphDataArr[i].datatype == 'bfactor') adjdata = graphDataArr[i].data;
+//     let data = {
+//         label: graphDataArr[i].label,
+//         fill: false,
+//         backgroundColor: colors[i%7],
+//         borderColor: colors[i%7],
+//         data: graphDataArr[i].data,
+//     }
+//     datasets.push(data);
+// }
+
+// let labels = datasets.map(d => d.label);
+class fluxGraph {
+    title: string;
+    xaxislabel: string;
+    yaxislabel: string;
+    data: graphData[];
+    type: string;
+    temp: number;
+    chart: Chart;
+    targetdata: string;
+
+    constructor(config, type) {
+        this.title = 'fluxgraph';
+        this.xaxislabel = 'x-axis';
+        this.yaxislabel = 'y-axis';
+        this.type = type;
+        this.temp = 0;
+        let ctx = (document.getElementById('fluctuations') as HTMLCanvasElement).getContext('2d');
+        this.chart = new Chart(ctx, config);
+    };
+
+    setType(type: string) { //type can be bfactor or rmsf
+        this.type = type;
+    };
+
+    setTemp(temp: number) { // Kelvin
+        this.temp = temp;
+    };
+
+    setTargetData(GD: graphData) {
+        let newData = [GD];
+        ///DFSDKFKSDJFKSDJ
+        this.addDatatoGraph(newData);
+    };
+
+    addDatatoGraph(GD: graphData){
+
+    }
+
+    writeConfig() {
+
+    };
+
+    toggleSidebar() {
+        let sb = document.getElementById('fluxbar');
+        // sb.toggle
+    }
+}
+
+let fluxconfig = {
+    type: 'line',
+    data: {},
+    options: {
+        responsive: true,
+        title: {
+            display: true,
+            text: this.title
+        },
+        tooltips: {
+            mode: 'y',
+            intersect: false
+        },
+        hover: {
+            mode: 'y',
+            intersect: false
+        },
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: this.xaxislabel
+                }
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: this.yaxislabel
+                }
+            }]
+        }
+    }
+}
+let tmp = {};
+const emptyfluxconfig = Object.assign(tmp, fluxconfig);
+
+var config = {
+    type: 'line',
+    data: {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [{
+            backgroundColor: colors.red,
+            borderColor: colors.red,
+            data: [
+                50,
+                45,
+                40,
+                12,
+                0,
+                87,
+                38
+            ],
+            fill: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        title: {
+            display: true,
+            text: 'Chart.js Line Chart'
+        },
+        tooltips: {
+            mode: 'index',
+            intersect: false,
+        },
+        hover: {
+            mode: 'nearest',
+            intersect: true
+        },
+        scales: {
+            xAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Month'
+                }
+            }],
+            yAxes: [{
+                display: true,
+                scaleLabel: {
+                    display: true,
+                    labelString: 'Value'
+                }
+            }]
+        }
+    }
+};
+
+function drawChart(){
+    let ctx = (document.getElementById('fluctuations') as HTMLCanvasElement).getContext('2d');
+    new Chart(ctx, config);
+}

@@ -528,74 +528,222 @@ class graphData {
         this.datatype = dt;
     }
 }
-function drawFluctuationGraph(graphDataArr) {
-    let colors = {
-        red: 'rgb(255, 99, 132)',
-        orange: 'rgb(255, 159, 64)',
-        yellow: 'rgb(255, 205, 86)',
-        green: 'rgb(75, 192, 192)',
-        blue: 'rgb(54, 162, 235)',
-        purple: 'rgb(153, 102, 255)',
-        grey: 'rgb(201, 203, 207)'
-    };
-    let datasets = [];
-    // Get Graph Type still need to make this
-    for (var i = 0; i < graphDataArr.length; i++) {
-        // Per Dataset
-        let adjdata = [];
-        if (graphDataArr[i].datatype == 'bfactor')
-            adjdata = graphDataArr[i].data;
-        let data = {
-            label: graphDataArr[i].label,
-            fill: false,
-            backgroundColor: colors[i % 7],
-            borderColor: colors[i % 7],
-            data: graphDataArr[i].data,
-        };
-        datasets.push(data);
+// function drawFluctuationGraph(graphDataArr :graphData[]) { // Initializes Graph
+//     let colors = {
+//         red: 'rgb(255, 99, 132)',
+//         orange: 'rgb(255, 159, 64)',
+//         yellow: 'rgb(255, 205, 86)',
+//         green: 'rgb(75, 192, 192)',
+//         blue: 'rgb(54, 162, 235)',
+//         purple: 'rgb(153, 102, 255)',
+//         grey: 'rgb(201, 203, 207)'
+//     }
+//
+//     let datasets = [];
+//
+//     // Get Graph Type still need to make this
+//
+//
+//
+//
+//     // for (var i = 0; i < graphDataArr.length; i++) {
+//     //     // Per Dataset
+//     //     let adjdata = [];
+//     //     if (graphDataArr[i].datatype == 'bfactor') adjdata = graphDataArr[i].data;
+//     //     let data = {
+//     //         label: graphDataArr[i].label,
+//     //         fill: false,
+//     //         backgroundColor: colors[i%7],
+//     //         borderColor: colors[i%7],
+//     //         data: graphDataArr[i].data,
+//     //     }
+//     //     datasets.push(data);
+//     // }
+//
+//     // let labels = datasets.map(d => d.label);
+//
+//     let title = "Comparison";
+//     let xaxislabel = 'hi';
+//     let yaxislabel = 'bye';
+//
+//     let GraphSettings = {
+//         type: 'line',
+//         data: {},
+//         options: {
+//             responsive: true,
+//             title: {
+//                 display: true,
+//                 text: title
+//             },
+//             tooltips: {
+//                 mode: 'y',
+//                 intersect: false
+//             },
+//             hover: {
+//                 mode: 'y',
+//                 intersect: false
+//             },
+//             scales: {
+//                 xAxes: [{
+//                     display: true,
+//                     scaleLabel: {
+//                         display: true,
+//                         labelString: xaxislabel
+//                     }
+//                 }],
+//                 yAxes: [{
+//                     display: true,
+//                     scaleLabel: {
+//                         display: true,
+//                         labelString: yaxislabel
+//                     }
+//                 }]
+//             }
+//         }
+//     };
+//
+//     let canvas = <HTMLCanvasElement> document.getElementById('fluctuations');
+//     let ctx = canvas.getContext("2d");
+//     let fluctuationChart = new Chart(ctx, GraphSettings);
+// }
+let colors = {
+    red: 'rgb(255, 99, 132)',
+    orange: 'rgb(255, 159, 64)',
+    yellow: 'rgb(255, 205, 86)',
+    green: 'rgb(75, 192, 192)',
+    blue: 'rgb(54, 162, 235)',
+    purple: 'rgb(153, 102, 255)',
+    grey: 'rgb(201, 203, 207)'
+};
+// Get Graph Type still need to make this
+// for (var i = 0; i < graphDataArr.length; i++) {
+//     // Per Dataset
+//     let adjdata = [];
+//     if (graphDataArr[i].datatype == 'bfactor') adjdata = graphDataArr[i].data;
+//     let data = {
+//         label: graphDataArr[i].label,
+//         fill: false,
+//         backgroundColor: colors[i%7],
+//         borderColor: colors[i%7],
+//         data: graphDataArr[i].data,
+//     }
+//     datasets.push(data);
+// }
+// let labels = datasets.map(d => d.label);
+class fluxGraph {
+    constructor(config, type) {
+        this.title = 'fluxgraph';
+        this.xaxislabel = 'x-axis';
+        this.yaxislabel = 'y-axis';
+        this.type = type;
+        this.temp = 0;
+        let ctx = document.getElementById('fluctuations').getContext('2d');
+        this.chart = new Chart(ctx, config);
     }
-    let labels = datasets.map(d => d.label);
-    let title = "Comparison";
-    let xaxislabel = 'hi';
-    let yaxislabel = 'bye';
-    let GraphSettings = {
-        type: 'line',
-        data: {
-            labels: ["Predicted", "Experimental"],
-            datasets: datasets
+    ;
+    setType(type) {
+        this.type = type;
+    }
+    ;
+    setTemp(temp) {
+        this.temp = temp;
+    }
+    ;
+    writeConfig() {
+    }
+    ;
+    toggleSidebar() {
+        let sb = document.getElementById('fluxbar');
+        // sb.toggle
+    }
+}
+let fluxconfig = {
+    type: 'line',
+    data: {},
+    options: {
+        responsive: true,
+        title: {
+            display: true,
+            text: this.title
         },
-        options: {
-            responsive: true,
-            title: {
-                display: true,
-                text: title
-            },
-            tooltips: {
-                mode: 'index',
-                intersect: false,
-            },
-            hover: {
-                mode: 'nearest',
-                intersect: true
-            },
-            scales: {
-                xAxes: [{
+        tooltips: {
+            mode: 'y',
+            intersect: false
+        },
+        hover: {
+            mode: 'y',
+            intersect: false
+        },
+        scales: {
+            xAxes: [{
+                    display: true,
+                    scaleLabel: {
                         display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: xaxislabel
-                        }
-                    }],
-                yAxes: [{
+                        labelString: this.xaxislabel
+                    }
+                }],
+            yAxes: [{
+                    display: true,
+                    scaleLabel: {
                         display: true,
-                        scaleLabel: {
-                            display: true,
-                            labelString: yaxislabel
-                        }
-                    }]
-            }
+                        labelString: this.yaxislabel
+                    }
+                }]
         }
-    };
-    let ctx = document.getElementById('Fluctuations');
-    let fluctuationChart = new Chart(ctx, GraphSettings);
+    }
+};
+var config = {
+    type: 'line',
+    data: {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [{
+                backgroundColor: colors.red,
+                borderColor: colors.red,
+                data: [
+                    50,
+                    45,
+                    40,
+                    12,
+                    0,
+                    87,
+                    38
+                ],
+                fill: false,
+            }]
+    },
+    options: {
+        responsive: true,
+        title: {
+            display: true,
+            text: 'Chart.js Line Chart'
+        },
+        tooltips: {
+            mode: 'index',
+            intersect: false,
+        },
+        hover: {
+            mode: 'nearest',
+            intersect: true
+        },
+        scales: {
+            xAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Month'
+                    }
+                }],
+            yAxes: [{
+                    display: true,
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Value'
+                    }
+                }]
+        }
+    }
+};
+function drawChart() {
+    let ctx = document.getElementById('fluctuations').getContext('2d');
+    new Chart(ctx, config);
 }

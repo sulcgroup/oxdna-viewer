@@ -1,17 +1,36 @@
 <div>
-    <div class="toolbar vertical" > <!-- TOOLBAR -->
-        <button class="tool-button">B</button>
-        <button class="tool-button">RMSF</button>
-        <button class="tool-button"><span class="mif-floppy-disk"></span></button>
-        <button class="tool-button">Open</button>
-    </div>
-    <div class="tiles-group" id="tileg">
-        <div data-role="tile" data-size="small">
-            <span class="branding-bar">Add Data</span>
-        </div>
-
-
-    </div>
-
-    <canvas id="Fluctuations" width="400" height="400"></canvas> <!-- Graph -->
+    <button class="button primary outline" id="sidetoggle" >Options</button>
+    <button class="button primary outline">B</button>
+    <button class="button primary outline">RMSF</button>
+    <button class="button secondary"><span class="mif-floppy-disk"></span></button>
+    <button class="button dark">Open</button>
 </div>
+
+<aside id="fluxbar" class="sidebar" data-role="sidebar" data-toggle="#sidetoggle">
+    <div class="sidebar-header">
+
+    </div>
+    <div class="sidebar-content">
+        <div class="title" >Select or Load Target Data</div>
+<!--        dynamically List Data Here -->
+        <ul class="group-list" id="datalist">
+            <li>Add Data... (.json (RMSF (nm))<</li>
+        </ul>
+        <button class="button primary outline">B</button>
+    </div>
+</aside>
+
+<!--<div class="tiles-group" id="tileg">-->
+<!--    <div data-role="tile" data-size="small">-->
+<!--        <span class="branding-bar">Add Data</span>-->
+<!--    </div>-->
+<!--</div>-->
+<div>
+    <canvas id="fluctuations" style="display: block; width: 869px; height: 434px;" width="869" height="434" class="chartjs-render-monitor"></canvas>
+<!--    <canvas id="fluctuations"></canvas>-->
+</div>
+
+
+<script src="../ts/lib/chart.min.js">
+
+</script>

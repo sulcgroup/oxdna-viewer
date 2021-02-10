@@ -1,6 +1,7 @@
 {
     "resizable": true,
-    "place": "bottom",
+    "place": "bottom-right",
     "title": "Fluctuation Window",
-    "width": 600
+    "width": 900,
+    "height": 400
 }
