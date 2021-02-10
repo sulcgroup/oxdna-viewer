@@ -1049,6 +1049,7 @@ function addPDBToScene() {
         let com = new THREE.Vector3();
         // Store B-factor Information Here
         let bFactors = [];
+        let xdata = [];
         for (let i = 0; i < strands.length; i++) {
             let nstrand = strands[i];
             if (nstrand.strandtype == 'pro') {
@@ -1060,6 +1061,7 @@ function addPDBToScene() {
                     let info = CalcInfoAA(nstrand.residues[j]);
                     initInfo.push(info);
                     bFactors.push(info[5]);
+                    xdata.push(aa.sid);
                     com.add(info[2]); //Add position to COM calc
                     // Amino Acids are intialized from N-terminus to C-terminus
                     // Same as PDB format
@@ -1086,6 +1088,8 @@ function addPDBToScene() {
                     com.add(info[2]); //Add position to COM calc
                     let nc = currentStrand.createBasicElement(nextElementId);
                     nc.sid = nextElementId - oldElementId;
+                    bFactors.push(info[5]);
+                    xdata.push(nc.sid);
                     if (j != 0) {
                         let prevnc = elements.get(nextElementId - 1); //Get previous Element
                         nc.n3 = prevnc;
@@ -1098,7 +1102,7 @@ function addPDBToScene() {
             }
         }
         com.divideScalar(sys.systemLength());
-        let pdbBfactors = new graphData(label, bFactors, "bfactor");
+        let pdbBfactors = new graphData(label, bFactors, xdata, "bfactor", "A_sqr");
         graphDatasets.push(pdbBfactors);
         sys.initInstances(sys.systemLength());
         // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system

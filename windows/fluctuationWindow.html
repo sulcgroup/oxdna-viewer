@@ -14,7 +14,7 @@
         <div class="title" >Select or Load Target Data</div>
 <!--        dynamically List Data Here -->
         <ul class="group-list" id="datalist">
-            <li>Add Data... (.json (RMSF (nm))<</li>
+            <li><span onclick="flux.addTestSet()" style="color:#0000ff">Add Data... (.json (RMSF (nm))</span></li>
         </ul>
         <button class="button primary outline">B</button>
     </div>
@@ -26,11 +26,5 @@
 <!--    </div>-->
 <!--</div>-->
 <div>
-    <canvas id="fluctuations" style="display: block; width: 869px; height: 434px;" width="869" height="434" class="chartjs-render-monitor"></canvas>
-<!--    <canvas id="fluctuations"></canvas>-->
+    <canvas id="flux" style="display: block; width: 850px; height: 300px;" class="chartjs-render-monitor"></canvas>
 </div>
-
-
-<script src="../ts/lib/chart.min.js">
-
-</script>
