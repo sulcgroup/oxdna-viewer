@@ -524,13 +524,17 @@ class View {
         ul.removeChild(item);
     }
 
-    public toggleDataset(GD: graphData){
-        let cid = currentDatasets.indexOf(GD);
-        if(cid > 0) {
-            currentDatasets.splice(cid, 1);
+    public toggleDataset(gid: number){
+        let GD = graphDatasets[gid];
+        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
+        let x = document.getElementById(name);
+        if(typeof(x) != 'undefined' && x != null){
+            //exists
+            this.removeGraphData(gid);
         } else {
-            currentDatasets.push(GD);
+            this.addGraphData(gid);
         }
+
     }
 
     public toggleSpanColor(sp: HTMLElement){
@@ -539,7 +543,8 @@ class View {
         if(currentcolor == "color:black") sp.setAttribute("style", "color:red");
     }
 
-    public addGraphData(GD : graphData){
+    public addGraphData(gid : number){
+        let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist") //In fluctuation Window
         let li = document.createElement("li");
         let sp = document.createElement("span");
@@ -547,12 +552,14 @@ class View {
         sp.appendChild(document.createTextNode(name));
         sp.setAttribute("style", "color:black");
         li.setAttribute('id', name);
+        li.setAttribute('value', String(gid));
         li.appendChild(sp);
-        li.setAttribute("onclick", String(flux.toggleData(GD)+ "; "+ view.toggleSpanColor(sp) + ";")); //Draw on Graph and toggle button
+        li.onclick = function() {flux.toggleData(li.value)};
         ul.appendChild(li);
     }
 
-    public removeGraphData(GD : graphData){
+    public removeGraphData(gid : number){
+        let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist");
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
         let li = document.getElementById(name);
@@ -585,7 +592,7 @@ class graphData {
         } else if (this.datatype == 'bfactor' && format == 'rmsf'){
             this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
         }
-        this.datatype == format; // assumes successful conversion
+        this.datatype = format; // assumes successful conversion
     };
     convertUnits(units:string) {
         if(['A_sqr', 'nm_sqr'].indexOf(units) < 0) return;
@@ -614,12 +621,16 @@ class fluxGraph {
     chartdata;
     chartoptions;
     chartconfig;
+    datasetCount: number;
+    gids: number[];
 
     constructor(type, units) {
-        this.title = 'fluxgraph';
+        this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
         this.units = units;
         this.yaxislabel = this.getYaxis(units); // A2 or nm2
+        this.datasetCount =  0;
+        this.gids = [];
         this.colors = {
             red: 'rgb(255, 99, 132)',
             orange: 'rgb(255, 159, 64)',
@@ -646,11 +657,11 @@ class fluxGraph {
                 text: this.title
             },
             tooltips: {
-                mode: 'y',
+                mode: 'x',
                 intersect: false
             },
             hover: {
-                mode: 'y',
+                mode: 'x',
                 intersect: false
             },
             scales: {
@@ -687,14 +698,26 @@ class fluxGraph {
         return {'A_sqr': "A^2", "nm_sqr" : "nm^2"}[units]; //quick conversion key
     }
 
+    loadPDBData(){
+        if(graphDatasets.length == 0){
+            notify("No PDB Data found");
+        } else {
+            for(let i = 0; i < graphDatasets.length; i++){
+                view.addGraphData(i);
+            }
+        }
+    }
+
     initializeGraph(){
         if(view.isWindowOpen('fluctuationWindow')){
             try {
                 let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
-                this.chart = new Chart(ctx).Line(this.chartdata, this.chartoptions);
+                this.chart = new Chart(ctx, this.chartconfig);
             } catch {
                 notify("Graph could not be Initialized");
             }
+
+            this.loadPDBData();
         }
     }
 
@@ -713,23 +736,28 @@ class fluxGraph {
         let xdata = [0, 1, 2, 3, 4, 5];
         let ydata = [10, 23, 18, 5, 11, 35];
         let gdata = new graphData(label, ydata, xdata, datatype, units);
-        this.addDatatoGraph(gdata);
+        graphDatasets.push(gdata);
+        let gid = graphDatasets.indexOf(gdata);
+        this.addDatatoGraph(gid);
     }
 
-    setTargetData(GD: graphData) {
+    setTargetData(gid) {
         this.chart.data = {
             labels: [],
             datasets: []
         };
 
-        this.addDatatoGraph(GD);
+        this.addDatatoGraph(gid);
     };
 
-    addDatatoGraph(GD: graphData){
+    addDatatoGraph(gid: number){
+        let GD = graphDatasets[gid];
         if(this.chart == null){
             this.initializeGraph();
         }
-        this.chart.data.labels.push(GD.xdata);
+        if(GD.xdata.length > this.chart.data.labels.length){
+            this.chart.data.labels = [...Array(GD.xdata.length).keys()]; // Rewrites x data to always start from 0 and go up
+        } // else just use the current sized container, will be indexed off largest dataset in array
         if(GD.units != this.units) GD.convertUnits(this.units);
         if(GD.datatype != this.type) GD.convertType(this.type);
 
@@ -740,25 +768,33 @@ class fluxGraph {
             data: GD.data,
             fill: false,
         })
-
+        this.datasetCount += 1;
         this.chart.update();
+        this.gids.push(gid);
         //Still Need a chart update call to see changes
     };
 
-    removeDatafromGraph(GD: graphData){
-        let lid = this.chart.data.labels.indexOf(GD.label); //label index and dataset index must be identical
+    removeDatafromGraph(gid: number){
+        let GD = graphDatasets[gid];
+        let chartlabels = this.chart.data.datasets.map(d => d.label);
+        let lid = chartlabels.indexOf(GD.label); //label index and dataset index must be identical
         if(lid > -1) {
             this.chart.data.labels.splice(lid, 1);
             this.chart.data.datasets.splice(lid, 1);
         }
+        this.datasetCount -= 1;
         this.chart.update();
+        let gindx = this.gids.indexOf(gid);
+        this.gids.splice(gindx, 1);
     };
 
-    toggleData(GD: graphData){ // Simple function for buttons to call
-        if(this.chart.data.labels.indexOf(GD.label) < 0){
-            this.addDatatoGraph(GD);
+    toggleData(gid: number){ // Simple function for buttons to call
+        let GD = graphDatasets[gid];
+        let chartlabels = this.chart.data.datasets.map(d => d.label);
+        if(chartlabels.indexOf(GD.label) < 0){
+            this.addDatatoGraph(gid);
         } else {
-            this.removeDatafromGraph(GD);
+            this.removeDatafromGraph(gid);
         }
     };
 
@@ -770,6 +806,13 @@ class fluxGraph {
         let sb = document.getElementById('fluxbar');
         // sb.toggle
     }
+
+    changeType(newunits: string){
+
+    }
+
+
+
 }
 
 

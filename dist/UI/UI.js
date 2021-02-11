@@ -482,13 +482,16 @@ class View {
         let item = document.getElementById(name);
         ul.removeChild(item);
     }
-    toggleDataset(GD) {
-        let cid = currentDatasets.indexOf(GD);
-        if (cid > 0) {
-            currentDatasets.splice(cid, 1);
+    toggleDataset(gid) {
+        let GD = graphDatasets[gid];
+        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
+        let x = document.getElementById(name);
+        if (typeof (x) != 'undefined' && x != null) {
+            //exists
+            this.removeGraphData(gid);
         }
         else {
-            currentDatasets.push(GD);
+            this.addGraphData(gid);
         }
     }
     toggleSpanColor(sp) {
@@ -498,7 +501,8 @@ class View {
         if (currentcolor == "color:black")
             sp.setAttribute("style", "color:red");
     }
-    addGraphData(GD) {
+    addGraphData(gid) {
+        let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist"); //In fluctuation Window
         let li = document.createElement("li");
         let sp = document.createElement("span");
@@ -506,11 +510,13 @@ class View {
         sp.appendChild(document.createTextNode(name));
         sp.setAttribute("style", "color:black");
         li.setAttribute('id', name);
+        li.setAttribute('value', String(gid));
         li.appendChild(sp);
-        li.setAttribute("onclick", String(flux.toggleData(GD) + "; " + view.toggleSpanColor(sp) + ";")); //Draw on Graph and toggle button
+        li.onclick = function () { flux.toggleData(li.value); };
         ul.appendChild(li);
     }
-    removeGraphData(GD) {
+    removeGraphData(gid) {
+        let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist");
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
         let li = document.getElementById(name);
@@ -539,7 +545,7 @@ class graphData {
         else if (this.datatype == 'bfactor' && format == 'rmsf') {
             this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
         }
-        this.datatype == format; // assumes successful conversion
+        this.datatype = format; // assumes successful conversion
     }
     ;
     convertUnits(units) {
@@ -558,10 +564,11 @@ class graphData {
 // let labels = datasets.map(d => d.label);
 class fluxGraph {
     constructor(type, units) {
-        this.title = 'fluxgraph';
+        this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
         this.units = units;
         this.yaxislabel = this.getYaxis(units); // A2 or nm2
+        this.datasetCount = 0;
         this.colors = {
             red: 'rgb(255, 99, 132)',
             orange: 'rgb(255, 159, 64)',
@@ -587,11 +594,11 @@ class fluxGraph {
                 text: this.title
             },
             tooltips: {
-                mode: 'y',
+                mode: 'x',
                 intersect: false
             },
             hover: {
-                mode: 'y',
+                mode: 'x',
                 intersect: false
             },
             scales: {
@@ -626,15 +633,26 @@ class fluxGraph {
     getYaxis(units) {
         return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
     }
+    loadPDBData() {
+        if (graphDatasets.length == 0) {
+            notify("No PDB Data found");
+        }
+        else {
+            for (let i = 0; i < graphDatasets.length; i++) {
+                view.addGraphData(i);
+            }
+        }
+    }
     initializeGraph() {
         if (view.isWindowOpen('fluctuationWindow')) {
             try {
                 let ctx = document.getElementById("flux").getContext('2d');
-                this.chart = new Chart(ctx).Line(this.chartdata, this.chartoptions);
+                this.chart = new Chart(ctx, this.chartconfig);
             }
             catch {
                 notify("Graph could not be Initialized");
             }
+            this.loadPDBData();
         }
     }
     setType(type) {
@@ -652,21 +670,26 @@ class fluxGraph {
         let xdata = [0, 1, 2, 3, 4, 5];
         let ydata = [10, 23, 18, 5, 11, 35];
         let gdata = new graphData(label, ydata, xdata, datatype, units);
-        this.addDatatoGraph(gdata);
+        graphDatasets.push(gdata);
+        let gid = graphDatasets.indexOf(gdata);
+        this.addDatatoGraph(gid);
     }
-    setTargetData(GD) {
+    setTargetData(gid) {
         this.chart.data = {
             labels: [],
             datasets: []
         };
-        this.addDatatoGraph(GD);
+        this.addDatatoGraph(gid);
     }
     ;
-    addDatatoGraph(GD) {
+    addDatatoGraph(gid) {
+        let GD = graphDatasets[gid];
         if (this.chart == null) {
             this.initializeGraph();
         }
-        this.chart.data.labels.push(GD.xdata);
+        if (GD.xdata.length > this.chart.data.labels.length) {
+            this.chart.data.labels = [...Array(GD.xdata.length).keys()]; // Rewrites x data to always start from 0 and go up
+        } // else just use the current sized container, will be indexed off largest dataset in array
         if (GD.units != this.units)
             GD.convertUnits(this.units);
         if (GD.datatype != this.type)
@@ -678,25 +701,31 @@ class fluxGraph {
             data: GD.data,
             fill: false,
         });
+        this.datasetCount += 1;
         this.chart.update();
         //Still Need a chart update call to see changes
     }
     ;
-    removeDatafromGraph(GD) {
-        let lid = this.chart.data.labels.indexOf(GD.label); //label index and dataset index must be identical
+    removeDatafromGraph(gid) {
+        let GD = graphDatasets[gid];
+        let chartlabels = this.chart.data.datasets.map(d => d.label);
+        let lid = chartlabels.indexOf(GD.label); //label index and dataset index must be identical
         if (lid > -1) {
             this.chart.data.labels.splice(lid, 1);
             this.chart.data.datasets.splice(lid, 1);
         }
+        this.datasetCount -= 1;
         this.chart.update();
     }
     ;
-    toggleData(GD) {
-        if (this.chart.data.labels.indexOf(GD.label) < 0) {
-            this.addDatatoGraph(GD);
+    toggleData(gid) {
+        let GD = graphDatasets[gid];
+        let chartlabels = this.chart.data.datasets.map(d => d.label);
+        if (chartlabels.indexOf(GD.label) < 0) {
+            this.addDatatoGraph(gid);
         }
         else {
-            this.removeDatafromGraph(GD);
+            this.removeDatafromGraph(gid);
         }
     }
     ;
