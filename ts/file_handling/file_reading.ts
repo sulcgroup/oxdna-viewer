@@ -6,11 +6,7 @@ function datChunker(datFile: Blob, currentChunk: number, chunkSize: number) {
     return sliced;
 }
 
-//markers are used by the trajectory reader to keep track of configuration start/ends
-class marker {
-    chunk: String;
-    lineID: number;
-}
+
 
 // Creates color overlays
 function makeLut(data, key) {
@@ -253,34 +249,19 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
 
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
+        systems.push(system); //add system to Systems[]
+        //TODO: is this really neaded? 
+        system.setDatFile(datFile); //store datFile in current System object
 
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements,()=>{
-            system.setDatFile(datFile); //store datFile in current System object
-            systems.push(system); //add system to Systems[]
-
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-
-            //anonymous functions to handle fileReader outputs
-            datReader.onload = () => {
-                // Find out if what you're reading is a single configuration or a trajectory
-                let isTraj = readDat(datReader, system);
-                document.dispatchEvent(new Event('nextConfigLoaded'));
-                //if its a trajectory, create the other readers
-                if (isTraj) {
-                    trajReader = new TrajectoryReader(datFile, system, approxDatLen, datReader.result);
-                }
-            };
-            let approxDatLen = topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-            // read the first chunk
-            const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
-            datReader.readAsText(firstChunkBlob);
-
+            let dr = new DatReader(datFile,topReader,system,elements);
+            dr.get_next_conf();
             //set up instancing data arrays
             system.initInstances(system.systemLength());
         });
-
-        topReader.read();//readAsText(topReader.topFile)
+        topReader.read();
 
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
@@ -321,67 +302,6 @@ function updateConfFromFile(dat_file) {
 }
 
 
-function readDat(datReader, system) {
-    let currentStrand = system.strands[0];
-    let numNuc = system.systemLength();
-    // parse file into lines
-    let lines = datReader.result.split(/[\n]+/g);
-    if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-        notify(".dat and .top files incompatible", "alert");
-        return
-    }
-    // Increase the simulation box size if larger than current
-    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
-    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
-    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
-    redrawBox();
-
-    const time = parseInt(lines[0].split(" ")[2]);
-    confNum += 1
-    console.log(confNum, "t =", time);
-    let timedisp = document.getElementById("trajTimestep");
-    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
-    timedisp.hidden = false;
-    // discard the header
-    lines = lines.slice(3);
-    
-    let currentNucleotide: BasicElement,
-        l: string[];
-
-    //for each line in the current configuration, read the line and calculate positions
-    for (let i = 0; i < numNuc; i++) {
-        if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-            break
-        };
-        // get the nucleotide associated with the line
-        currentNucleotide = elements.get(i+system.globalStartId);
-
-        // consume a new line from the file
-        l = lines[i].split(" ");
-        currentNucleotide.calcPositionsFromConfLine(l, true);
-
-        //when a strand is finished, add it to the system
-        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
-            if (currentNucleotide.n5 == currentStrand.end3) {
-                currentStrand.end5 = currentNucleotide;
-            }
-            system.addStrand(currentStrand); // add strand to system
-            currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements.get(currentNucleotide.id+1)) {
-                currentStrand = elements.get(currentNucleotide.id+1).strand;
-            }
-        }
-
-    }
-    addSystemToScene(system);
-    centerAndPBC(system.getMonomers());
-    sysCount++;
-
-    //if there's another time line after the first configuration is loaded, its a trajectory
-    if (lines[numNuc].slice(0, 1) == 't')
-        return true
-    return false
-}
 
 function readJson(system, jsonReader) {
     const file = jsonReader.result as string;

@@ -10,6 +10,7 @@ class TopReader extends FileReader{
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     n3: number;
     callback : Function;
+    configurationLength : number;
 
     constructor(topFile: File, system: System, elems: ElementMap, callback : Function){
         super();
@@ -17,6 +18,7 @@ class TopReader extends FileReader{
         this.system = system;
         this.elems = elems;
         this.callback = callback;
+
     }
     onload = ((f) => {
         return () => {
@@ -24,7 +26,8 @@ class TopReader extends FileReader{
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
             lines = lines.slice(1); // discard the header
-            
+            this.configurationLength = lines.length;
+
             let l0 = lines[0].split(" "); 
             let strID = parseInt(l0[0]); //proteins are negative indexed
             this.lastStrand = strID;
@@ -98,8 +101,8 @@ class TopReader extends FileReader{
                 this.lastStrand = strID;
             });
             nucCount = this.elems.getNextId();
+            // usually the place where the DatReader gets fired
             this.callback();
-
         }})(this.topFile);
     
     read(){
@@ -138,6 +141,198 @@ class FileChunker{
         );
     }
  }
+
+ //markers are used by the trajectory reader to keep track of configuration start/ends
+class marker {
+    chunk: String;
+    lineID: number;
+}
+
+class DatReader extends FileReader {
+    topReader : TopReader;
+    system : System;
+    elems : ElementMap;
+    chunker : FileChunker;
+    datFile: File;
+    confLength : number;
+    curConf : string[];
+    leftoverConf : string[];
+
+    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
+        super();
+        this.topReader = topReader;
+        this.system = system;
+        this.elems = elems;
+        this.datFile = datFile;
+        this.chunker = new FileChunker(datFile, topReader.topFile.size * 30);
+        this.confLength = this.topReader.configurationLength +3; //TODO: messed up, figure out 
+        this.leftoverConf = [];
+        this.curConf= [];
+    }
+
+    onload = ((f)=>{
+        return () => {
+            let file = this.result as string
+
+            if (file == "") {
+                document.dispatchEvent(new Event('finalConfig'));
+                return;
+            }
+            let lines = file.split(/[\n]+/g);
+            this.curConf.push(...lines);
+            //console.log("bla:",lines.length)
+
+            // we have to little, need to get more 
+            if(this.curConf.length < this.confLength){
+                this.readAsText(this.chunker.get_next_chunk());
+                return; // do the game again ;0)
+            }
+            // now make sure we have the right ammount of stuff in curConf
+            this.leftoverConf = this.curConf.slice(this.confLength);
+            //now fire off parsing 
+            this.parse_conf();
+        }
+    })();
+
+
+    parse_conf(){
+        let system = this.system;
+        let currentStrand = system.strands[0];
+        let numNuc = system.systemLength();
+        // parse file into lines
+        let lines = this.curConf;
+        if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+            notify(".dat and .top files incompatible", "alert");
+            return
+        }
+        // Increase the simulation box size if larger than current
+        box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
+        box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
+        box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
+        redrawBox();
+    
+        const time = parseInt(lines[0].split(" ")[2]);
+        confNum += 1
+        console.log(confNum, "t =", time);
+        let timedisp = document.getElementById("trajTimestep");
+        timedisp.innerHTML = `t = ${time.toLocaleString()}`;
+        timedisp.hidden = false;
+        // discard the header
+        lines = lines.slice(3);
+        
+        let currentNucleotide: BasicElement,
+            l: string[];
+        //for each line in the current configuration, read the line and calculate positions
+        for (let i = 0; i < numNuc; i++) {
+            if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+                break
+            };
+            // get the nucleotide associated with the line
+            currentNucleotide = elements.get(i+system.globalStartId);
+    
+            // consume a new line from the file
+            l = lines[i].split(" ");
+            currentNucleotide.calcPositionsFromConfLine(l, true);
+    
+            //when a strand is finished, add it to the system
+            if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                if (currentNucleotide.n5 == currentStrand.end3) {
+                    currentStrand.end5 = currentNucleotide;
+                }
+                system.addStrand(currentStrand); // add strand to system
+                currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
+                if (elements.get(currentNucleotide.id+1)) {
+                    currentStrand = elements.get(currentNucleotide.id+1).strand;
+                }
+            }
+    
+        }
+        addSystemToScene(system);
+        centerAndPBC(system.getMonomers());
+        sysCount++;
+    
+        //if there's another time line after the first configuration is loaded, its a trajectory
+        if (lines[numNuc].slice(0, 1) == 't')
+            return true;
+        return false;
+    }
+    //onload = ((f) => {
+    //    return () => {
+    //    //let's rewrite the logic a bit...
+//
+    //    let system = this.system;
+    //    let currentStrand = system.strands[0];
+    //    let numNuc = system.systemLength();
+    //    // parse file into lines
+    //    let lines = (<string> this.result).split(/[\n]+/g);
+    //    if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+    //        notify(".dat and .top files incompatible", "alert");
+    //        return
+    //    }
+    //    // Increase the simulation box size if larger than current
+    //    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
+    //    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
+    //    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
+    //    redrawBox();
+    //
+    //    const time = parseInt(lines[0].split(" ")[2]);
+    //    confNum += 1
+    //    console.log(confNum, "t =", time);
+    //    let timedisp = document.getElementById("trajTimestep");
+    //    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
+    //    timedisp.hidden = false;
+    //    // discard the header
+    //    lines = lines.slice(3);
+    //    
+    //    let currentNucleotide: BasicElement,
+    //        l: string[];
+    //
+    //    //for each line in the current configuration, read the line and calculate positions
+    //    for (let i = 0; i < numNuc; i++) {
+    //        if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+    //            break
+    //        };
+    //        // get the nucleotide associated with the line
+    //        currentNucleotide = elements.get(i+system.globalStartId);
+    //
+    //        // consume a new line from the file
+    //        l = lines[i].split(" ");
+    //        currentNucleotide.calcPositionsFromConfLine(l, true);
+    //
+    //        //when a strand is finished, add it to the system
+    //        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+    //            if (currentNucleotide.n5 == currentStrand.end3) {
+    //                currentStrand.end5 = currentNucleotide;
+    //            }
+    //            system.addStrand(currentStrand); // add strand to system
+    //            currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
+    //            if (elements.get(currentNucleotide.id+1)) {
+    //                currentStrand = elements.get(currentNucleotide.id+1).strand;
+    //            }
+    //        }
+    //
+    //    }
+    //    addSystemToScene(system);
+    //    centerAndPBC(system.getMonomers());
+    //    sysCount++;
+    //
+    //    //if there's another time line after the first configuration is loaded, its a trajectory
+    //    if (lines[numNuc].slice(0, 1) == 't')
+    //        return true;
+    //    return false;
+    //}})();
+
+    get_next_conf(){
+        this.readAsText(
+            this.chunker.get_next_chunk()
+        );
+    }
+
+}
+
+
+
+
 
 
 class TrajectoryReader {
