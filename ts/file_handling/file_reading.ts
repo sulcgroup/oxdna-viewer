@@ -466,10 +466,10 @@ function readOxViewJsonFile(file: File) {
                         newElementIds.set(elementData.id, e.id);
 
                         e.strand = strand;
-                        if(strandData.end3 == elementData.id || !elementData.n3) {
+                        if(strandData.end3 == elementData.id || !('n3' in elementData)) {
                             strand.end3 = e; // Set strand 3' end
                         }
-                        if(strandData.end5 == elementData.id || !elementData.n5) {
+                        if(strandData.end5 == elementData.id || !('n5' in elementData)) {
                             strand.end5 = e; // Set strand 3' end
                         }
 
@@ -544,12 +544,7 @@ function readOxViewJsonFile(file: File) {
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
 
-                // Redraw sp connectors for circlular strands
-                sys.strands.forEach(s=>{
-                    if (s.isCircular()) {
-                        calcsp(s.end3);
-                    }
-                });
+                centerAndPBC();
             });
         }
     };
