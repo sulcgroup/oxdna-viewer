@@ -58,6 +58,7 @@ class Network {
         this.reducedEdges = new Edges();
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
+        this.networktype = 'empty';
     }
     ;
     toJson() {
@@ -66,6 +67,24 @@ class Network {
     ;
     selectNetwork() {
         api.selectElementIDs(this.particles, false);
+    }
+    ;
+    sendtoUI() {
+        let ul = document.getElementById("readynetlist"); //In fluctuation Window
+        let li = document.createElement("li");
+        let sp1 = document.createElement("span");
+        let sp2 = document.createElement("span");
+        sp1.setAttribute('class', 'label');
+        sp2.setAttribute('class', 'second-label');
+        let name = "Network " + this.nid.toString();
+        sp1.appendChild(document.createTextNode(name));
+        sp2.appendChild(document.createTextNode(this.networktype));
+        li.setAttribute('id', name);
+        li.setAttribute('value', String(this.nid));
+        li.appendChild(sp1);
+        li.appendChild(sp2);
+        li.onclick = function () { flux.fitData(li.value); };
+        ul.appendChild(li);
     }
     ;
     fillMasses(mon) {
@@ -106,6 +125,9 @@ class Network {
                 }
             }
         }
+        // network is ready for solving
+        this.networktype = "ANM";
+        this.sendtoUI();
     }
     ;
     generateHessian() {
@@ -124,7 +146,7 @@ class Network {
             }
             //Hessian Calc w/ Masses
             for (let l = 0; l < this.reducedEdges.total; l++) {
-                let i = this.reducedEdges.p1[l], j = this.reducedEdges[l], k = this.reducedEdges[l];
+                let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l];
                 let ip = api.getElements([this.particles[i]])[0].getPos(); //Particle i Position
                 let jp = api.getElements([this.particles[j]])[0].getPos(); //Particle j Position
                 let mi = this.masses[i];
@@ -184,7 +206,7 @@ class Network {
     ;
     invertHessian(hessian) {
         let r = SVD(hessian, true, true, 0.0001);
-        let u = r[0], q = r[1], v = r[2];
+        let u = r['u'], q = r['q'], v = r['v'];
         let tol = 0.00001;
         //Calculate U q+
         for (let i = 0; i < q.length; i++) {

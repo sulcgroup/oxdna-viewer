@@ -547,14 +547,19 @@ class View {
         let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist") //In fluctuation Window
         let li = document.createElement("li");
-        let sp = document.createElement("span");
+        let sp1 = document.createElement("span");
+        let sp2 = document.createElement("span")
+        sp1.setAttribute('class', 'label');
+        sp2.setAttribute('class', 'second-label');
+        sp1.appendChild(document.createTextNode(GD.label));
+        sp2.appendChild(document.createTextNode(GD.datatype));
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        sp.appendChild(document.createTextNode(name));
-        sp.setAttribute("style", "color:black");
         li.setAttribute('id', name);
         li.setAttribute('value', String(gid));
-        li.appendChild(sp);
+        li.appendChild(sp1);
+        li.appendChild(sp2);
         li.onclick = function() {flux.toggleData(li.value)};
+
         ul.appendChild(li);
     }
 
@@ -576,12 +581,14 @@ class graphData {
     xdata: number[];
     datatype: string;
     units: string;
+    gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
     constructor(l, d, x, dt, u){
         this.label = l;
         this.data = d;
         this.xdata = x;
         this.datatype = dt;
         this.units = u;
+        this.gammaSim = 0;
     };
     convertType(format:string) {
         if(['rmsf', 'bfactor'].indexOf(format) < 0) return; // TODO: Add error throw here and convertUnits
@@ -629,7 +636,7 @@ class fluxGraph {
         this.xaxislabel = 'Particle ID';
         this.units = units;
         this.yaxislabel = this.getYaxis(units); // A2 or nm2
-        this.datasetCount =  0;
+        this.datasetCount = 0;
         this.gids = [];
         this.colors = {
             red: 'rgb(255, 99, 132)',
@@ -654,7 +661,7 @@ class fluxGraph {
             responsive: true,
             title: {
                 display: true,
-                text: this.title
+                text: [this.title, this.type]
             },
             tooltips: {
                 mode: 'x',
@@ -688,28 +695,32 @@ class fluxGraph {
         }
     };
 
-    toggleGraph(){
-        if(this.chart == null){
+    toggleGraph() {
+        if (this.chart == null) {
             this.initializeGraph();
         }
     }
 
-    getYaxis(units: string){
-        return {'A_sqr': "A^2", "nm_sqr" : "nm^2"}[units]; //quick conversion key
+    clearGraph() {
+        if(this.gids.length != 0) this.gids.forEach(g => this.toggleData(g));
     }
 
-    loadPDBData(){
-        if(graphDatasets.length == 0){
+    getYaxis(units: string) {
+        return {'A_sqr': "A^2", "nm_sqr": "nm^2"}[units]; //quick conversion key
+    }
+
+    loadPDBData() {
+        if (graphDatasets.length == 0) {
             notify("No PDB Data found");
         } else {
-            for(let i = 0; i < graphDatasets.length; i++){
+            for (let i = 0; i < graphDatasets.length; i++) {
                 view.addGraphData(i);
             }
         }
     }
 
-    initializeGraph(){
-        if(view.isWindowOpen('fluctuationWindow')){
+    initializeGraph() {
+        if (view.isWindowOpen('fluctuationWindow')) {
             try {
                 let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
                 this.chart = new Chart(ctx, this.chartconfig);
@@ -729,7 +740,7 @@ class fluxGraph {
         this.temp = temp;
     };
 
-    addTestSet(){
+    addTestSet() {
         let label = 'test';
         let units = "A_sqr";
         let datatype = "bfactor";
@@ -750,16 +761,16 @@ class fluxGraph {
         this.addDatatoGraph(gid);
     };
 
-    addDatatoGraph(gid: number){
+    addDatatoGraph(gid: number) {
         let GD = graphDatasets[gid];
-        if(this.chart == null){
+        if (this.chart == null) {
             this.initializeGraph();
         }
-        if(GD.xdata.length > this.chart.data.labels.length){
+        if (GD.xdata.length > this.chart.data.labels.length) {
             this.chart.data.labels = [...Array(GD.xdata.length).keys()]; // Rewrites x data to always start from 0 and go up
         } // else just use the current sized container, will be indexed off largest dataset in array
-        if(GD.units != this.units) GD.convertUnits(this.units);
-        if(GD.datatype != this.type) GD.convertType(this.type);
+        if (GD.units != this.units) GD.convertUnits(this.units);
+        if (GD.datatype != this.type) GD.convertType(this.type);
 
         this.chart.data.datasets.push({
             label: GD.label,
@@ -774,11 +785,11 @@ class fluxGraph {
         //Still Need a chart update call to see changes
     };
 
-    removeDatafromGraph(gid: number){
+    removeDatafromGraph(gid: number) {
         let GD = graphDatasets[gid];
         let chartlabels = this.chart.data.datasets.map(d => d.label);
         let lid = chartlabels.indexOf(GD.label); //label index and dataset index must be identical
-        if(lid > -1) {
+        if (lid > -1) {
             this.chart.data.labels.splice(lid, 1);
             this.chart.data.datasets.splice(lid, 1);
         }
@@ -788,10 +799,10 @@ class fluxGraph {
         this.gids.splice(gindx, 1);
     };
 
-    toggleData(gid: number){ // Simple function for buttons to call
+    toggleData(gid: number) { // Simple function for buttons to call
         let GD = graphDatasets[gid];
         let chartlabels = this.chart.data.datasets.map(d => d.label);
-        if(chartlabels.indexOf(GD.label) < 0){
+        if (chartlabels.indexOf(GD.label) < 0) {
             this.addDatatoGraph(gid);
         } else {
             this.removeDatafromGraph(gid);
@@ -805,14 +816,89 @@ class fluxGraph {
     toggleSidebar() {
         let sb = document.getElementById('fluxbar');
         // sb.toggle
-    }
+    };
 
-    changeType(newunits: string){
+    changeUnits(newunits: string) {
+        if (this.gids.length > 0) {
+            let copyids = this.gids.slice();
+            copyids.forEach(g => this.toggleData(g)); // turn off
+            this.units = newunits;
+            this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.getYaxis(this.units); //set y axes text
+            copyids.forEach(g => this.toggleData(g)); // re- added, will automatically convert units
+        } else {
+            this.units = newunits;
+            this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.getYaxis(this.units); //set y axes text
+        }
+    };
 
-    }
+    changeType(newtype: string) {
+        if (this.gids.length > 0) {
+            let copyids = this.gids.slice(); //currently loaded datasets
+            copyids.forEach(g => this.toggleData(g)); // turn off
+            this.chart.options.title.text[1] = newtype; // set sub title which is the graph type
+            this.type = newtype;
+            copyids.forEach(g => this.toggleData(g)); // re- added, will automatically convert types
+        } else {
+            this.chart.options.title.text[1] = newtype; // set sub title which is the graph type
+            this.type = newtype;
+        }
+    };
 
+    fitData(nid: number) {
+        if(this.gids.length != 1){
+            notify("Please Select only One Dataset to Begin Fitting");
+            return;
+        }
 
+        // get that one and only graph dataset
+        let gid = this.gids[0];
+        let GD = graphDatasets[gid];
 
+        // make format rmsf for fitting
+        let Targetrmsf;
+        if(GD.datatype == "bfactor") {
+            Targetrmsf = GD.data.slice().map(b => b*(3/(8*Math.pow(Math.PI, 2))));
+        } else {
+            Targetrmsf = GD.data.slice(); //must be rmsf
+        }
+
+        // get network, make sure edges are there, otherwise nothing to calculate
+        let net = networks[nid];
+        if(net.reducedEdges.total == 0) {
+            notify("Network's Edges must be filled prior to Fitting");
+            return;
+        }
+
+        // checks data you are fitting is exact same length, might need to make changes to this later
+        if(net.particles.length != Targetrmsf.length) {
+            notify("Target Data is a different length than network, will not Fit");
+            return;
+        }
+
+        // ANM Solving, only one for a little bit
+        if(net.networktype == 'ANM'){
+            let hess = net.generateHessian();
+            let invH = net.invertHessian(hess);
+            let temp = view.getInputNumber('temp');
+            let rmsf = net.getRMSF(invH, temp);
+
+            let fit = findLineByLeastSquaresNoIntercept(Targetrmsf, rmsf);
+            let xvals = fit[0];
+            let fitval = fit[1];
+            let m = <number> fit[2];
+            let k = 1/m; //pN/A
+            let sim_k = k/net.simFC;
+
+            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+            gendata.gammaSim = sim_k;
+            let ngid = graphDatasets.length;
+            graphDatasets.push(gendata);
+            view.addGraphData(ngid);
+            this.clearGraph();
+            this.toggleData(ngid);
+            this.toggleData(gid);
+        }
+    };
 }
 
 

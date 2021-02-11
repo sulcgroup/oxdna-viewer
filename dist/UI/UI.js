@@ -505,13 +505,17 @@ class View {
         let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist"); //In fluctuation Window
         let li = document.createElement("li");
-        let sp = document.createElement("span");
+        let sp1 = document.createElement("span");
+        let sp2 = document.createElement("span");
+        sp1.setAttribute('class', 'label');
+        sp2.setAttribute('class', 'second-label');
+        sp1.appendChild(document.createTextNode(GD.label));
+        sp2.appendChild(document.createTextNode(GD.datatype));
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        sp.appendChild(document.createTextNode(name));
-        sp.setAttribute("style", "color:black");
         li.setAttribute('id', name);
         li.setAttribute('value', String(gid));
-        li.appendChild(sp);
+        li.appendChild(sp1);
+        li.appendChild(sp2);
         li.onclick = function () { flux.toggleData(li.value); };
         ul.appendChild(li);
     }
@@ -531,6 +535,7 @@ class graphData {
         this.xdata = x;
         this.datatype = dt;
         this.units = u;
+        this.gammaSim = 0;
     }
     ;
     convertType(format) {
@@ -569,6 +574,7 @@ class fluxGraph {
         this.units = units;
         this.yaxislabel = this.getYaxis(units); // A2 or nm2
         this.datasetCount = 0;
+        this.gids = [];
         this.colors = {
             red: 'rgb(255, 99, 132)',
             orange: 'rgb(255, 159, 64)',
@@ -591,7 +597,7 @@ class fluxGraph {
             responsive: true,
             title: {
                 display: true,
-                text: this.title
+                text: [this.title, this.type]
             },
             tooltips: {
                 mode: 'x',
@@ -629,6 +635,10 @@ class fluxGraph {
         if (this.chart == null) {
             this.initializeGraph();
         }
+    }
+    clearGraph() {
+        if (this.gids.length != 0)
+            this.gids.forEach(g => this.toggleData(g));
     }
     getYaxis(units) {
         return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
@@ -703,6 +713,7 @@ class fluxGraph {
         });
         this.datasetCount += 1;
         this.chart.update();
+        this.gids.push(gid);
         //Still Need a chart update call to see changes
     }
     ;
@@ -716,6 +727,8 @@ class fluxGraph {
         }
         this.datasetCount -= 1;
         this.chart.update();
+        let gindx = this.gids.indexOf(gid);
+        this.gids.splice(gindx, 1);
     }
     ;
     toggleData(gid) {
@@ -736,5 +749,84 @@ class fluxGraph {
         let sb = document.getElementById('fluxbar');
         // sb.toggle
     }
+    ;
+    changeUnits(newunits) {
+        if (this.gids.length > 0) {
+            let copyids = this.gids.slice();
+            copyids.forEach(g => this.toggleData(g)); // turn off
+            this.units = newunits;
+            this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.getYaxis(this.units); //set y axes text
+            copyids.forEach(g => this.toggleData(g)); // re- added, will automatically convert units
+        }
+        else {
+            this.units = newunits;
+            this.chart.options.scales.yAxes[0].scaleLabel.labelString = this.getYaxis(this.units); //set y axes text
+        }
+    }
+    ;
+    changeType(newtype) {
+        if (this.gids.length > 0) {
+            let copyids = this.gids.slice(); //currently loaded datasets
+            copyids.forEach(g => this.toggleData(g)); // turn off
+            this.chart.options.title.text[1] = newtype; // set sub title which is the graph type
+            this.type = newtype;
+            copyids.forEach(g => this.toggleData(g)); // re- added, will automatically convert types
+        }
+        else {
+            this.chart.options.title.text[1] = newtype; // set sub title which is the graph type
+            this.type = newtype;
+        }
+    }
+    ;
+    fitData(nid) {
+        if (this.gids.length != 1) {
+            notify("Please Select only One Dataset to Begin Fitting");
+            return;
+        }
+        // get that one and only graph dataset
+        let gid = this.gids[0];
+        let GD = graphDatasets[gid];
+        // make format rmsf for fitting
+        let Targetrmsf;
+        if (GD.datatype == "bfactor") {
+            Targetrmsf = GD.data.slice().map(b => b * (3 / (8 * Math.pow(Math.PI, 2))));
+        }
+        else {
+            Targetrmsf = GD.data.slice(); //must be rmsf
+        }
+        // get network, make sure edges are there, otherwise nothing to calculate
+        let net = networks[nid];
+        if (net.reducedEdges.total == 0) {
+            notify("Network's Edges must be filled prior to Fitting");
+            return;
+        }
+        // checks data you are fitting is exact same length, might need to make changes to this later
+        if (net.particles.length != Targetrmsf.length) {
+            notify("Target Data is a different length than network, will not Fit");
+            return;
+        }
+        // ANM Solving, only one for a little bit
+        if (net.networktype == 'ANM') {
+            let hess = net.generateHessian();
+            let invH = net.invertHessian(hess);
+            let temp = view.getInputNumber('temp');
+            let rmsf = net.getRMSF(invH, temp);
+            let fit = findLineByLeastSquaresNoIntercept(Targetrmsf, rmsf);
+            let xvals = fit[0];
+            let fitval = fit[1];
+            let m = fit[2];
+            let k = 1 / m; //pN/A
+            let sim_k = k / net.simFC;
+            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+            gendata.gammaSim = sim_k;
+            let ngid = graphDatasets.length;
+            graphDatasets.push(gendata);
+            view.addGraphData(ngid);
+            this.clearGraph();
+            this.toggleData(ngid);
+            this.toggleData(gid);
+        }
+    }
+    ;
 }
 const flux = new fluxGraph("rmsf", "A_sqr");

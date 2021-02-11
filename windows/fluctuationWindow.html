@@ -1,22 +1,53 @@
 <div>
-    <button class="button primary outline" id="sidetoggle" >Options</button>
-    <button class="button primary outline">B</button>
-    <button class="button primary outline">RMSF</button>
+    <div class="dropdown-button">
+        <button class="button dropdown-toggle">Graph Type</button>
+        <ul class="d-menu put-left" data-role="dropdown">
+            <li onclick="flux.changeType('bfactor')">B-factor</li>
+            <li onclick="flux.changeType('rmsf')">RMSF</li>
+        </ul>
+    </div>
+    <div class="dropdown-button">
+        <button class="button dropdown-toggle">Units</button>
+        <ul class="d-menu put-left" data-role="dropdown">
+            <li onclick="flux.changeUnits('A_sqr')">A^2</li>
+            <li onclick="flux.changeUnits('nm_sqr')">nm^2</li>
+        </ul>
+    </div>
+    <button class="button primary outline" id="sidetoggle" >Fitting</button>
+
     <button class="button secondary"><span class="mif-floppy-disk"></span></button>
     <button class="button dark">Open</button>
 </div>
 
 <aside id="fluxbar" class="sidebar" data-role="sidebar" data-toggle="#sidetoggle">
     <div class="sidebar-header">
+        <div class="title">Network Fluctuation Solver</div>
+<!--        <div class="caption">First Select a Data Source to fit to then a network to fit to</div>-->
+        <div>
+<!--            <div class="caption">Temperature at which fluctuation data was obtained is mandatory</div>-->
+            <label for="temp">Temperature (K)</label><input id="temp" type="text" data-role="input" data-default-value="300" onclick="flux.setTemp(view.getInputNumber('temp'))">
+        </div>
 
     </div>
     <div class="sidebar-content">
         <div class="title" >Select or Load Target Data</div>
 <!--        dynamically List Data Here -->
-        <ul class="group-list" id="datalist">
-            <li><span onclick="flux.addTestSet()" style="color:#0000ff">Add Data... (.json (RMSF (nm))</span></li>
+        <ul class="items-list" id="datalist">
+            <li onclick="flux.addTestSet()">
+                <span style="color:#0000ff" class="label" >Add Data... </span>
+                <span class="second-label" >Formats: 1) (.json (RMSF (nm))</span>
+            </li>
         </ul>
-        <button class="button primary outline">B</button>
+        <div class="title" >Select Available Network</div>
+        <div class="subtitle" >(edges must be filled first)</div>
+<!--        networks will add themselves when they are ready for fitting-->
+        <ul class="items-list" id="readynetlist">
+            <li onclick="flux.addTestSet()">
+                <span style="color:#0000ff" class="label" >Add Data... </span>
+                <span class="second-label" >Formats: 1) (.json (RMSF (nm))</span>
+            </li>
+        </ul>
+
     </div>
 </aside>
 
