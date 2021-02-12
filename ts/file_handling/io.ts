@@ -110,6 +110,11 @@ class TopReader extends FileReader{
     }
 }
 
+
+function datChunker(datFile: Blob, currentChunk: number, chunkSize: number) {
+    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
+    return sliced;
+}
 class FileChunker{
     file:Blob;
     current_chunk : number;
@@ -117,7 +122,7 @@ class FileChunker{
     constructor(file: Blob, chunk_size: number){
         this.file = file;
         this.chunk_size = chunk_size;
-        this.current_chunk = 0;
+        this.current_chunk = -1;
     }
     get_next_chunk(){
         if(!this.is_last())
@@ -142,11 +147,14 @@ class FileChunker{
     }
  }
 
+
  //markers are used by the trajectory reader to keep track of configuration start/ends
 class marker {
     chunk: String;
     lineID: number;
 }
+
+const byteSize = str => new Blob([str]).size;
 
 class DatReader extends FileReader {
     topReader : TopReader;
@@ -156,7 +164,12 @@ class DatReader extends FileReader {
     datFile: File;
     confLength : number;
     curConf : string[];
-    leftoverConf : string[];
+    //leftoverConf : string[];
+    firstConf :boolean;
+    numNuc : number;
+    StrBuff : string;
+    configsBuffer : string[];
+    get_next:Function;
 
     constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
         super();
@@ -164,43 +177,79 @@ class DatReader extends FileReader {
         this.system = system;
         this.elems = elems;
         this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, topReader.topFile.size * 30);
+        this.chunker = new FileChunker(datFile, topReader.topFile.size * 1);
         this.confLength = this.topReader.configurationLength +3; //TODO: messed up, figure out 
-        this.leftoverConf = [];
+        //this.leftoverConf = [];
         this.curConf= [];
+        this.firstConf = true;
+        this.numNuc = system.systemLength();
+        this.StrBuff ="";
+        this.configsBuffer = [];
     }
 
-    onload = ((f)=>{
-        return () => {
-            let file = this.result as string
+    private forward_read = ((evt) =>{ // extract configuration
+        return () =>{
+        let file = this.result as string;
+        this.StrBuff = this.StrBuff.concat(file);
+        //now we can populate the configs buffer 
+        this.configsBuffer = this.StrBuff.split(/[t]+/g);
+        //an artifact of this is that a single conf gets splitted into "" and the rest
+        this.configsBuffer.shift(); // so we can discard the first entry
+        // now the current conf to process is 1st in configsBuffer
+        let cur_conf = this.configsBuffer.shift();
+        let lines = cur_conf.split(/[\n]+/g);
 
-            if (file == "") {
-                document.dispatchEvent(new Event('finalConfig'));
+        if (lines.length < this.confLength){ // we need more as configuration is too small
+            //there should be no conf in the buffer
+            this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
+            if (!this.chunker.is_last()){
+                this.readAsText(    //so we ask the chunker to spit out more
+                    this.chunker.get_next_chunk()
+                );
+            }
+            return;
+        }
+        // we need to empty the StringBuffer
+        this.StrBuff = "";
+        // and can attempt to parse the extracted conf
+        this.parse_conf(lines);
+    }})();
+
+    get_next_conf(){
+        // defines direction of the configuration extraction
+        this.onload = this.forward_read; 
+        if (this.configsBuffer.length > 0){
+            //handle the stuff we have or request more
+            let cur_conf = this.configsBuffer.shift();
+            let lines = cur_conf.split(/[\n]+/g);
+
+            if (lines.length < this.confLength){ // we need more as configuration is too small
+                this.StrBuff = "t" + cur_conf;
+                if (!this.chunker.is_last()){
+                    this.readAsText(    //so we ask the chunker to spit out more
+                        this.chunker.get_next_chunk()
+                    );
+                }
                 return;
             }
-            let lines = file.split(/[\n]+/g);
-            this.curConf.push(...lines);
-            //console.log("bla:",lines.length)
-
-            // we have to little, need to get more 
-            if(this.curConf.length < this.confLength){
-                this.readAsText(this.chunker.get_next_chunk());
-                return; // do the game again ;0)
-            }
-            // now make sure we have the right ammount of stuff in curConf
-            this.leftoverConf = this.curConf.slice(this.confLength);
-            //now fire off parsing 
-            this.parse_conf();
+            this.parse_conf(lines);
         }
-    })();
+        else{
+            // we don't have anything to process, fetch some
+            console.log("buffer empty, populate")
+            if(this.firstConf || !this.chunker.is_last()) // no difference between a single conf and a trajectory
+                this.readAsText(
+                    this.chunker.get_next_chunk()
+                );
+        }
+    }
 
-
-    parse_conf(){
+    parse_conf(lines :string[]){
         let system = this.system;
         let currentStrand = system.strands[0];
-        let numNuc = system.systemLength();
+        let numNuc = this.numNuc;
         // parse file into lines
-        let lines = this.curConf;
+        //let lines = this.curConf;
         if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return
@@ -222,114 +271,64 @@ class DatReader extends FileReader {
         
         let currentNucleotide: BasicElement,
             l: string[];
-        //for each line in the current configuration, read the line and calculate positions
-        for (let i = 0; i < numNuc; i++) {
-            if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-                break
-            };
-            // get the nucleotide associated with the line
-            currentNucleotide = elements.get(i+system.globalStartId);
-    
-            // consume a new line from the file
-            l = lines[i].split(" ");
-            currentNucleotide.calcPositionsFromConfLine(l, true);
-    
-            //when a strand is finished, add it to the system
-            if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
-                if (currentNucleotide.n5 == currentStrand.end3) {
-                    currentStrand.end5 = currentNucleotide;
+        
+        if (this.firstConf){
+            this.firstConf = false;
+            //for each line in the current configuration, read the line and calculate positions
+            for (let i = 0; i < numNuc; i++) {
+                if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+                    break
+                };
+                // get the nucleotide associated with the line
+                currentNucleotide = elements.get(i+system.globalStartId);
+            
+                // consume a new line from the file
+                l = lines[i].split(" ");
+                currentNucleotide.calcPositionsFromConfLine(l, true);
+            
+                //when a strand is finished, add it to the system
+                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                    if (currentNucleotide.n5 == currentStrand.end3) {
+                        currentStrand.end5 = currentNucleotide;
+                    }
+                    system.addStrand(currentStrand); // add strand to system
+                    currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
+                    if (elements.get(currentNucleotide.id+1)) {
+                        currentStrand = elements.get(currentNucleotide.id+1).strand;
+                    }
                 }
-                system.addStrand(currentStrand); // add strand to system
-                currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
-                if (elements.get(currentNucleotide.id+1)) {
-                    currentStrand = elements.get(currentNucleotide.id+1).strand;
-                }
+            
             }
-    
+            addSystemToScene(system);
+            sysCount++;
         }
-        addSystemToScene(system);
+        else{
+            // here goes update logic in theory ?
+            for (let lineNum = 0; lineNum < numNuc; lineNum++) {
+                if (lines[lineNum] == "") {
+                    notify("There's an empty line in the middle of your configuration!")
+                    break
+                };
+                currentNucleotide = elements.get(system.globalStartId+lineNum);
+                // consume a new line
+                l = lines[lineNum].split(" ");
+                currentNucleotide.calcPositionsFromConfLine(l);
+            }
+            system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
+            system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
+            system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+            system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+            system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+        }
         centerAndPBC(system.getMonomers());
-        sysCount++;
-    
-        //if there's another time line after the first configuration is loaded, its a trajectory
-        if (lines[numNuc].slice(0, 1) == 't')
-            return true;
-        return false;
-    }
-    //onload = ((f) => {
-    //    return () => {
-    //    //let's rewrite the logic a bit...
-//
-    //    let system = this.system;
-    //    let currentStrand = system.strands[0];
-    //    let numNuc = system.systemLength();
-    //    // parse file into lines
-    //    let lines = (<string> this.result).split(/[\n]+/g);
-    //    if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-    //        notify(".dat and .top files incompatible", "alert");
-    //        return
-    //    }
-    //    // Increase the simulation box size if larger than current
-    //    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
-    //    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
-    //    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
-    //    redrawBox();
-    //
-    //    const time = parseInt(lines[0].split(" ")[2]);
-    //    confNum += 1
-    //    console.log(confNum, "t =", time);
-    //    let timedisp = document.getElementById("trajTimestep");
-    //    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
-    //    timedisp.hidden = false;
-    //    // discard the header
-    //    lines = lines.slice(3);
-    //    
-    //    let currentNucleotide: BasicElement,
-    //        l: string[];
-    //
-    //    //for each line in the current configuration, read the line and calculate positions
-    //    for (let i = 0; i < numNuc; i++) {
-    //        if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-    //            break
-    //        };
-    //        // get the nucleotide associated with the line
-    //        currentNucleotide = elements.get(i+system.globalStartId);
-    //
-    //        // consume a new line from the file
-    //        l = lines[i].split(" ");
-    //        currentNucleotide.calcPositionsFromConfLine(l, true);
-    //
-    //        //when a strand is finished, add it to the system
-    //        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
-    //            if (currentNucleotide.n5 == currentStrand.end3) {
-    //                currentStrand.end5 = currentNucleotide;
-    //            }
-    //            system.addStrand(currentStrand); // add strand to system
-    //            currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
-    //            if (elements.get(currentNucleotide.id+1)) {
-    //                currentStrand = elements.get(currentNucleotide.id+1).strand;
-    //            }
-    //        }
-    //
-    //    }
-    //    addSystemToScene(system);
-    //    centerAndPBC(system.getMonomers());
-    //    sysCount++;
-    //
-    //    //if there's another time line after the first configuration is loaded, its a trajectory
-    //    if (lines[numNuc].slice(0, 1) == 't')
-    //        return true;
-    //    return false;
-    //}})();
 
-    get_next_conf(){
-        this.readAsText(
-            this.chunker.get_next_chunk()
-        );
     }
 
 }
-
 
 
 

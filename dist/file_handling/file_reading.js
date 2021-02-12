@@ -1,9 +1,4 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-// chunk .dat file so its not trying to read the entire thing at once
-function datChunker(datFile, currentChunk, chunkSize) {
-    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
-    return sliced;
-}
 // Creates color overlays
 function makeLut(data, key) {
     const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
@@ -211,6 +206,7 @@ function readFilesFromURLParams() {
     const overlayPath = url.searchParams.get("overlay");
     readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
+let dr;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, jsonFile) {
     if (topFile && datFile) {
@@ -223,7 +219,7 @@ function readFiles(topFile, datFile, jsonFile) {
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements, () => {
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-            let dr = new DatReader(datFile, topReader, system, elements);
+            dr = new DatReader(datFile, topReader, system, elements);
             dr.get_next_conf();
             //set up instancing data arrays
             system.initInstances(system.systemLength());
