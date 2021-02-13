@@ -39,8 +39,8 @@ target.addEventListener("dragexit", function (event) {
 }, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
-const datReader = new FileReader();
-var trajReader;
+//const datReader = new FileReader();
+//var trajReader: TrajectoryReader;
 let confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
 box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
@@ -206,7 +206,7 @@ function readFilesFromURLParams() {
     const overlayPath = url.searchParams.get("overlay");
     readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
-let dr;
+var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, jsonFile) {
     if (topFile && datFile) {
@@ -219,8 +219,8 @@ function readFiles(topFile, datFile, jsonFile) {
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements, () => {
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-            dr = new DatReader(datFile, topReader, system, elements);
-            dr.get_next_conf();
+            trajReader = new DatReader(datFile, topReader, system, elements);
+            trajReader.nextConfig();
             //set up instancing data arrays
             system.initInstances(system.systemLength());
         });
