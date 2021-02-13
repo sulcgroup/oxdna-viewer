@@ -127,16 +127,11 @@ class FileChunker {
 //markers are used by the trajectory reader to keep track of configuration start/ends
 class marker {
 }
-const byteSize = str => new Blob([str]).size;
-class DatReader extends FileReader {
-    constructor(datFile, topReader, system, elems) {
+class ForwardReader extends FileReader {
+    constructor(chunker, confLength, callback) {
         super();
-        this.headStrBuffer = "";
-        this.headConfigsBuffer = [];
-        this.offset = 0;
-        this.position_lookup = []; // store offset and size
-        this.idx = 0; // store index in the file 
-        this.last_idx = 0; // store last read index
+        this.firstConf = true;
+        this.byteSize = str => new Blob([str]).size;
         this.onload = ((evt) => {
             return () => {
                 let file = this.result;
@@ -155,41 +150,21 @@ class DatReader extends FileReader {
                     this.chunker.get_next_chunk());
                     return;
                 }
+                this.idx++; // we are moving forward
                 // we need to empty the StringBuffer
                 this.StrBuff = "";
-                // record the newly found conf
-                if (this.idx == this.last_idx)
-                    this.idx++; // we are moving forward
-                if (this.idx > this.last_idx)
-                    this.last_idx++; // shift last index 
-                let size = byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
-                this.position_lookup.push([this.offset, size]); // create the lookup table 
-                this.offset += size; // update offset
-                // and can attempt to parse the extracted conf
-                this.parse_conf(lines);
+                let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+                this.callback(this.idx, lines, size);
             };
         })();
-        this.topReader = topReader;
-        this.system = system;
-        this.elems = elems;
-        this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, topReader.topFile.size * 1);
-        this.confLength = this.topReader.configurationLength + 3; //TODO: messed up, figure out 
-        //this.leftoverConf = [];
-        this.curConf = [];
-        this.firstConf = true;
-        this.numNuc = system.systemLength();
-        this.StrBuff = "";
+        this.chunker = chunker;
+        this.confLength = confLength;
+        this.callback = callback;
+        this.idx = -1;
         this.configsBuffer = [];
+        this.StrBuff = "";
     }
     get_next_conf() {
-        this.idx++; // we are moving forward
-        if (this.idx < this.last_idx) {
-            this.StrBuff = "";
-            this.configsBuffer = [];
-            this.readAsText(this.chunker.get_chunk_at_pos(this.position_lookup[this.idx - 1][0], this.position_lookup[this.idx - 1][1]));
-            return;
-        }
         if (this.configsBuffer.length > 0) {
             //handle the stuff we have or request more
             let cur_conf = this.configsBuffer.shift();
@@ -202,12 +177,10 @@ class DatReader extends FileReader {
                 }
                 return;
             }
-            if (this.idx > this.last_idx)
-                this.last_idx++; // shift last index    
-            let size = byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
-            this.position_lookup.push([this.offset, size]); // create the lookup table 
-            this.offset += size; // update offset
-            this.parse_conf(lines);
+            this.idx++; // we are moving forward   
+            let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+            //this.offset += size;                           // update offset
+            this.callback(this.idx, lines, size);
         }
         else {
             // we don't have anything to process, fetch some
@@ -216,18 +189,79 @@ class DatReader extends FileReader {
                 this.readAsText(this.chunker.get_next_chunk());
         }
     }
-    get_prev_conf() {
-        //let us rely on a table build by forward read
-        this.idx--;
-        if (this.idx < 0) {
+}
+class LookupReader extends FileReader {
+    constructor(chunker, confLength, callback) {
+        super();
+        this.position_lookup = []; // store offset and size
+        this.last_idx = 0; // store last read index
+        this.idx = 0;
+        this.onload = ((evt) => {
+            return () => {
+                let file = this.result;
+                let lines = file.split(/[\n]+/g);
+                this.callback(this.idx, lines, this.size);
+            };
+        })();
+        this.chunker = chunker;
+        this.confLength = confLength;
+        this.callback = callback;
+    }
+    add_index(offset, size) {
+        this.last_idx++;
+        this.position_lookup.push([offset, size]);
+    }
+    get_conf(idx) {
+        console.log(idx);
+        this.idx = idx;
+        if (idx >= this.last_idx)
+            this.idx = this.last_idx - 1;
+        if (idx <= 0)
             this.idx = 0;
-            return; // we are at the first conf
+        let offset = this.position_lookup[this.idx][0];
+        this.size = this.position_lookup[this.idx][1];
+        this.readAsText(this.chunker.get_chunk_at_pos(offset, this.size));
+    }
+}
+class DatReader {
+    constructor(datFile, topReader, system, elems) {
+        this.firstConf = true;
+        this.idx = -1;
+        this.offset = 0;
+        this.topReader = topReader;
+        this.system = system;
+        this.elems = elems;
+        this.datFile = datFile;
+        this.chunker = new FileChunker(datFile, topReader.topFile.size * 1);
+        this.confLength = this.topReader.configurationLength + 3;
+        this.numNuc = system.systemLength();
+        this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
+            this.idx = idx;
+            //try display the retrieved conf
+            this.parse_conf(lines);
+        });
+        this.forwardReader = new ForwardReader(this.chunker, this.confLength, (idx, lines, size) => {
+            //record the retrieved conf
+            this.lookupReader.add_index(this.offset, size);
+            this.offset += size;
+            //update idx
+            this.idx = idx;
+            //try display the retrieved conf
+            this.parse_conf(lines);
+        });
+    }
+    get_next_conf() {
+        this.idx++; // idx is also set by the callback of the reader
+        if (this.idx >= this.lookupReader.last_idx && !this.chunker.is_last())
+            this.forwardReader.get_next_conf();
+        else {
+            console.log("fired ", this.idx);
+            this.lookupReader.get_conf(this.idx);
         }
-        this.headStrBuffer = this.StrBuff;
-        this.headConfigsBuffer = this.configsBuffer;
-        this.StrBuff = "";
-        this.configsBuffer = [];
-        this.readAsText(this.chunker.get_chunk_at_pos(this.position_lookup[this.idx - 1][0], this.position_lookup[this.idx - 1][1]));
+    }
+    get_prev_conf() {
+        this.idx--; // idx is also set by the callback of the reader
+        this.lookupReader.get_conf(this.idx);
     }
     parse_conf(lines) {
         let system = this.system;
@@ -307,6 +341,28 @@ class DatReader extends FileReader {
         centerAndPBC(system.getMonomers());
     }
 }
+//get_prev_conf(){
+//    //let us rely on a table build by forward read
+//    this.idx--;
+//    if(this.idx<0) {
+//        this.idx=0;
+//        return; // we are at the first conf
+//    }
+//    
+//    this.headStrBuffer = this.StrBuff;
+//    this.headConfigsBuffer = this.configsBuffer;
+//
+//
+//    this.StrBuff="";
+//    this.configsBuffer=[];
+//
+//    this.readAsText(
+//        this.chunker.get_chunk_at_pos(
+//            this.position_lookup[this.idx-1][0],  
+//            this.position_lookup[this.idx-1][1]
+//        )
+//    );
+//   }
 class TrajectoryReader {
     // Create the readers and read the second chunk
     constructor(datFile, system, approxDatLen, currentChunk) {

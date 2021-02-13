@@ -159,44 +159,27 @@ class marker {
     lineID: number;
 }
 
-const byteSize = str => new Blob([str]).size;
 
-class DatReader extends FileReader {
-    topReader : TopReader;
-    system : System;
-    elems : ElementMap;
+
+class ForwardReader extends FileReader
+{
     chunker : FileChunker;
-    datFile: File;
-    confLength : number;
-    curConf : string[];
-    firstConf :boolean;
-    numNuc : number;
     StrBuff : string;
     configsBuffer : string[];
-    get_next:Function;
+    confLength :number;
+    idx : number;
+    callback : Function;
+    firstConf = true;
+    private byteSize = str => new Blob([str]).size;
 
-    headStrBuffer = "";
-    headConfigsBuffer = [];
-
-    offset = 0;
-    position_lookup = []; // store offset and size
-    idx = 0;              // store index in the file 
-    last_idx = 0;         // store last read index
-
-    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
+    constructor(chunker, confLength, callback){
         super();
-        this.topReader = topReader;
-        this.system = system;
-        this.elems = elems;
-        this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, topReader.topFile.size * 1);
-        this.confLength = this.topReader.configurationLength +3; //TODO: messed up, figure out 
-        //this.leftoverConf = [];
-        this.curConf= [];
-        this.firstConf = true;
-        this.numNuc = system.systemLength();
-        this.StrBuff ="";
-        this.configsBuffer = [];
+        this.chunker = chunker;
+        this.confLength = confLength;
+        this.callback = callback;
+        this.idx = -1;
+        this.configsBuffer=[];
+        this.StrBuff="";
     }
 
     onload = ((evt) =>{ // extract configuration
@@ -218,36 +201,14 @@ class DatReader extends FileReader {
             );
             return;
         }
+        this.idx++;                                      // we are moving forward
         // we need to empty the StringBuffer
         this.StrBuff = "";
-        // record the newly found conf
-        
-        if(this.idx == this.last_idx)
-            this.idx++;                                // we are moving forward
-        if(this.idx>this.last_idx) this.last_idx++;    // shift last index 
-        let size = byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
-        this.position_lookup.push([this.offset,size]); // create the lookup table 
-        this.offset += size;                           // update offset
-        // and can attempt to parse the extracted conf
-        this.parse_conf(lines);
+        let size = this.byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
+        this.callback(this.idx, lines, size);
     }})();
 
     get_next_conf(){
-        this.idx++;                                    // we are moving forward
-        if(this.idx < this.last_idx)
-        {
-            this.StrBuff="";
-            this.configsBuffer=[];
-    
-            this.readAsText(
-                this.chunker.get_chunk_at_pos(
-                    this.position_lookup[this.idx-1][0],  
-                    this.position_lookup[this.idx-1][1]
-                )
-            );
-            return;
-        }
-
         if (this.configsBuffer.length > 0){
             //handle the stuff we have or request more
             let cur_conf = this.configsBuffer.shift();
@@ -262,12 +223,10 @@ class DatReader extends FileReader {
                 }
                 return;
             }
-            
-            if(this.idx>this.last_idx) this.last_idx++;    // shift last index    
-            let size = byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
-            this.position_lookup.push([this.offset,size]); // create the lookup table 
-            this.offset += size;                           // update offset
-            this.parse_conf(lines);
+            this.idx++;                                      // we are moving forward   
+            let size = this.byteSize("t" + cur_conf);        // as we are missing a t which is 1 in byteSize
+            //this.offset += size;                           // update offset
+            this.callback(this.idx, lines, size);
         }
         else{
             // we don't have anything to process, fetch some
@@ -278,28 +237,114 @@ class DatReader extends FileReader {
                 );
         }
     }
+}
+class  LookupReader extends FileReader {
+    chunker : FileChunker;
+    position_lookup = []; // store offset and size
+    last_idx = 0;         // store last read index
+    idx = 0;
+    confLength : number;
+    callback : Function;
+    size :number;
 
-    get_prev_conf(){
-        //let us rely on a table build by forward read
-        this.idx--;
-        if(this.idx<0) {
-            this.idx=0;
-            return; // we are at the first conf
-        }
+    constructor(chunker, confLength, callback) {
+        super();
+        this.chunker = chunker;
+        this.confLength = confLength;
+        this.callback = callback;
+    }
+
+    add_index(offset,size){
+        this.last_idx++;
+        this.position_lookup.push(
+            [offset,size]
+        );
+    }
+    
+    get_conf(idx:number){
+        console.log(idx);
+        this.idx = idx;
+        if(idx >= this.last_idx) 
+            this.idx = this.last_idx-1;
         
-        this.headStrBuffer = this.StrBuff;
-        this.headConfigsBuffer = this.configsBuffer;
+        if(idx <= 0)
+            this.idx = 0;
 
+        let offset = this.position_lookup[this.idx][0];
+        this.size  = this.position_lookup[this.idx][1];
         
-        this.StrBuff="";
-        this.configsBuffer=[];
-
         this.readAsText(
             this.chunker.get_chunk_at_pos(
-                this.position_lookup[this.idx-1][0],  
-                this.position_lookup[this.idx-1][1]
+                offset,
+                this.size
             )
         );
+    }
+
+    onload = ((evt) =>{ // extract configuration
+        return () =>{
+        let file = this.result as string;
+        let lines = file.split(/[\n]+/g);
+        this.callback(this.idx, lines, this.size);
+    }})();
+}
+
+
+
+class DatReader {
+    topReader : TopReader;
+    system : System;
+    elems : ElementMap;
+    chunker : FileChunker;
+    datFile: File;
+    confLength : number;
+    firstConf = true;
+    numNuc : number;
+    forwardReader : ForwardReader;
+    lookupReader : LookupReader;
+    idx = -1;
+    offset : number = 0;
+
+    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
+        this.topReader = topReader;
+        this.system = system;
+        this.elems = elems;
+        this.datFile = datFile;
+        this.chunker = new FileChunker(datFile, topReader.topFile.size * 1);
+        this.confLength = this.topReader.configurationLength +3; 
+        this.numNuc = system.systemLength();
+        this.lookupReader = new LookupReader(this.chunker,this.confLength,
+            (idx, lines, size)=>{
+                this.idx = idx;
+                //try display the retrieved conf
+                this.parse_conf(lines);
+            });
+        this.forwardReader = new ForwardReader(this.chunker,this.confLength,
+            (idx, lines, size)=>{
+                //record the retrieved conf
+                this.lookupReader.add_index(this.offset,size);
+                this.offset+=size;
+                //update idx
+                this.idx = idx;
+                //try display the retrieved conf
+                this.parse_conf(lines);
+            });
+    }
+
+    get_next_conf(){
+        this.idx++; // idx is also set by the callback of the reader
+        if(this.idx >= this.lookupReader.last_idx && !this.chunker.is_last())
+            this.forwardReader.get_next_conf();
+        else
+        { 
+            console.log("fired ", this.idx);
+            this.lookupReader.get_conf( this.idx );
+        }
+    }
+
+    get_prev_conf(){
+        this.idx--; // idx is also set by the callback of the reader
+        this.lookupReader.get_conf(this.idx);
     }
 
     parse_conf(lines :string[]){
@@ -388,7 +433,28 @@ class DatReader extends FileReader {
 
 }
 
-
+//get_prev_conf(){
+    //    //let us rely on a table build by forward read
+    //    this.idx--;
+    //    if(this.idx<0) {
+    //        this.idx=0;
+    //        return; // we are at the first conf
+    //    }
+    //    
+    //    this.headStrBuffer = this.StrBuff;
+    //    this.headConfigsBuffer = this.configsBuffer;
+    //
+    //
+    //    this.StrBuff="";
+    //    this.configsBuffer=[];
+    //
+    //    this.readAsText(
+    //        this.chunker.get_chunk_at_pos(
+    //            this.position_lookup[this.idx-1][0],  
+    //            this.position_lookup[this.idx-1][1]
+    //        )
+    //    );
+//   }
 
 
 
