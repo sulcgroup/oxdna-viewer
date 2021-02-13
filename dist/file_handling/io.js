@@ -117,6 +117,9 @@ class FileChunker {
             return true;
         return false;
     }
+    get_chunk_at_pos(start, size) {
+        return this.file.slice(start, start + size);
+    }
     get_chunk() {
         return this.file.slice(this.current_chunk * this.chunk_size, this.current_chunk * this.chunk_size + this.chunk_size);
     }
@@ -128,7 +131,13 @@ const byteSize = str => new Blob([str]).size;
 class DatReader extends FileReader {
     constructor(datFile, topReader, system, elems) {
         super();
-        this.forward_read = ((evt) => {
+        this.headStrBuffer = "";
+        this.headConfigsBuffer = [];
+        this.offset = 0;
+        this.position_lookup = []; // store offset and size
+        this.idx = 0; // store index in the file 
+        this.last_idx = 0; // store last read index
+        this.onload = ((evt) => {
             return () => {
                 let file = this.result;
                 this.StrBuff = this.StrBuff.concat(file);
@@ -142,14 +151,20 @@ class DatReader extends FileReader {
                 if (lines.length < this.confLength) { // we need more as configuration is too small
                     //there should be no conf in the buffer
                     this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
-                    if (!this.chunker.is_last()) {
-                        this.readAsText(//so we ask the chunker to spit out more
-                        this.chunker.get_next_chunk());
-                    }
+                    this.readAsText(//so we ask the chunker to spit out more
+                    this.chunker.get_next_chunk());
                     return;
                 }
                 // we need to empty the StringBuffer
                 this.StrBuff = "";
+                // record the newly found conf
+                if (this.idx == this.last_idx)
+                    this.idx++; // we are moving forward
+                if (this.idx > this.last_idx)
+                    this.last_idx++; // shift last index 
+                let size = byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+                this.position_lookup.push([this.offset, size]); // create the lookup table 
+                this.offset += size; // update offset
                 // and can attempt to parse the extracted conf
                 this.parse_conf(lines);
             };
@@ -168,8 +183,13 @@ class DatReader extends FileReader {
         this.configsBuffer = [];
     }
     get_next_conf() {
-        // defines direction of the configuration extraction
-        this.onload = this.forward_read;
+        this.idx++; // we are moving forward
+        if (this.idx < this.last_idx) {
+            this.StrBuff = "";
+            this.configsBuffer = [];
+            this.readAsText(this.chunker.get_chunk_at_pos(this.position_lookup[this.idx - 1][0], this.position_lookup[this.idx - 1][1]));
+            return;
+        }
         if (this.configsBuffer.length > 0) {
             //handle the stuff we have or request more
             let cur_conf = this.configsBuffer.shift();
@@ -182,6 +202,11 @@ class DatReader extends FileReader {
                 }
                 return;
             }
+            if (this.idx > this.last_idx)
+                this.last_idx++; // shift last index    
+            let size = byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+            this.position_lookup.push([this.offset, size]); // create the lookup table 
+            this.offset += size; // update offset
             this.parse_conf(lines);
         }
         else {
@@ -190,6 +215,19 @@ class DatReader extends FileReader {
             if (this.firstConf || !this.chunker.is_last()) // no difference between a single conf and a trajectory
                 this.readAsText(this.chunker.get_next_chunk());
         }
+    }
+    get_prev_conf() {
+        //let us rely on a table build by forward read
+        this.idx--;
+        if (this.idx < 0) {
+            this.idx = 0;
+            return; // we are at the first conf
+        }
+        this.headStrBuffer = this.StrBuff;
+        this.headConfigsBuffer = this.configsBuffer;
+        this.StrBuff = "";
+        this.configsBuffer = [];
+        this.readAsText(this.chunker.get_chunk_at_pos(this.position_lookup[this.idx - 1][0], this.position_lookup[this.idx - 1][1]));
     }
     parse_conf(lines) {
         let system = this.system;

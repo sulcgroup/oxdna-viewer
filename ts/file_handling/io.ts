@@ -139,6 +139,11 @@ class FileChunker{
             return true;
         return false;
     }
+    get_chunk_at_pos(start, size){
+        return this.file.slice(
+            start,  start + size
+        );
+    }
     private get_chunk(){
         return this.file.slice(
             this.current_chunk * this.chunk_size,
@@ -164,12 +169,19 @@ class DatReader extends FileReader {
     datFile: File;
     confLength : number;
     curConf : string[];
-    //leftoverConf : string[];
     firstConf :boolean;
     numNuc : number;
     StrBuff : string;
     configsBuffer : string[];
     get_next:Function;
+
+    headStrBuffer = "";
+    headConfigsBuffer = [];
+
+    offset = 0;
+    position_lookup = []; // store offset and size
+    idx = 0;              // store index in the file 
+    last_idx = 0;         // store last read index
 
     constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
         super();
@@ -187,7 +199,7 @@ class DatReader extends FileReader {
         this.configsBuffer = [];
     }
 
-    private forward_read = ((evt) =>{ // extract configuration
+    onload = ((evt) =>{ // extract configuration
         return () =>{
         let file = this.result as string;
         this.StrBuff = this.StrBuff.concat(file);
@@ -198,26 +210,44 @@ class DatReader extends FileReader {
         // now the current conf to process is 1st in configsBuffer
         let cur_conf = this.configsBuffer.shift();
         let lines = cur_conf.split(/[\n]+/g);
-
         if (lines.length < this.confLength){ // we need more as configuration is too small
             //there should be no conf in the buffer
             this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
-            if (!this.chunker.is_last()){
-                this.readAsText(    //so we ask the chunker to spit out more
+            this.readAsText(    //so we ask the chunker to spit out more
                     this.chunker.get_next_chunk()
-                );
-            }
+            );
             return;
         }
         // we need to empty the StringBuffer
         this.StrBuff = "";
+        // record the newly found conf
+        
+        if(this.idx == this.last_idx)
+            this.idx++;                                // we are moving forward
+        if(this.idx>this.last_idx) this.last_idx++;    // shift last index 
+        let size = byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
+        this.position_lookup.push([this.offset,size]); // create the lookup table 
+        this.offset += size;                           // update offset
         // and can attempt to parse the extracted conf
         this.parse_conf(lines);
     }})();
 
     get_next_conf(){
-        // defines direction of the configuration extraction
-        this.onload = this.forward_read; 
+        this.idx++;                                    // we are moving forward
+        if(this.idx < this.last_idx)
+        {
+            this.StrBuff="";
+            this.configsBuffer=[];
+    
+            this.readAsText(
+                this.chunker.get_chunk_at_pos(
+                    this.position_lookup[this.idx-1][0],  
+                    this.position_lookup[this.idx-1][1]
+                )
+            );
+            return;
+        }
+
         if (this.configsBuffer.length > 0){
             //handle the stuff we have or request more
             let cur_conf = this.configsBuffer.shift();
@@ -232,6 +262,11 @@ class DatReader extends FileReader {
                 }
                 return;
             }
+            
+            if(this.idx>this.last_idx) this.last_idx++;    // shift last index    
+            let size = byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
+            this.position_lookup.push([this.offset,size]); // create the lookup table 
+            this.offset += size;                           // update offset
             this.parse_conf(lines);
         }
         else{
@@ -242,6 +277,29 @@ class DatReader extends FileReader {
                     this.chunker.get_next_chunk()
                 );
         }
+    }
+
+    get_prev_conf(){
+        //let us rely on a table build by forward read
+        this.idx--;
+        if(this.idx<0) {
+            this.idx=0;
+            return; // we are at the first conf
+        }
+        
+        this.headStrBuffer = this.StrBuff;
+        this.headConfigsBuffer = this.configsBuffer;
+
+        
+        this.StrBuff="";
+        this.configsBuffer=[];
+
+        this.readAsText(
+            this.chunker.get_chunk_at_pos(
+                this.position_lookup[this.idx-1][0],  
+                this.position_lookup[this.idx-1][1]
+            )
+        );
     }
 
     parse_conf(lines :string[]){
