@@ -889,7 +889,8 @@ class fluxGraph {
             let k = 1/m; //pN/A
             let sim_k = k/net.simFC;
 
-            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+            // rmsf is returned currently to check the Hessian inversion process
+            let gendata = new graphData(GD.label + " Fit", rmsf, GD.xdata, "rmsf", "A_sqr");
             gendata.gammaSim = sim_k;
             let ngid = graphDatasets.length;
             graphDatasets.push(gendata);

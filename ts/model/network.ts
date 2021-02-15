@@ -171,23 +171,68 @@ class Network {
                 let d = ip.distanceTo(jp); //distances
                 let d2 = d*d;
                 let diff = jp.sub(ip);
-                let diag = diff.multiply(diff).multiplyScalar(k).divideScalar(d2);
+                let diag = diff.clone().multiply(diff).multiplyScalar(k).divideScalar(d2);
                 let xy = k * (diff.x * diff.y)/d2;
                 let xz = k * (diff.x * diff.z)/d2;
                 let yz = k * (diff.y * diff.z)/d2;
                 // Couldn't find a more pleasant way to do this
                 // Fills 1 element in hij, hji, hii, hjj on each line
-                hessian[3*i][3*j] -= diag.x/mij; hessian[3*j][3*i] -= diag.x/mij; hessian[3*i][3*i] += diag.x/mi2; hessian[3*j][3*j] += diag.x/mj2;
-                hessian[3*i][3*j+1] -= xy; hessian[3*j][3*i+1] -= xy/mij; hessian[3*i][3*i+1] += xy/mi2; hessian[3*j][3*j+1] += xy/mj2;
-                hessian[3*i][3*j+2] -= xz; hessian[3*j][3*i+2] -= xz/mij; hessian[3*i][3*i+2] += xz/mi2; hessian[3*j][3*j+2] += xz/mj2;
+                // Verified this returns correct Hessian
+                hessian[3*i][3*j] -= diag.x/mij;
+                hessian[3*j][3*i] -= diag.x/mij;
 
-                hessian[3*i+1][3*j] -= xy/mij; hessian[3*j+1][3*i] -= xy/mij; hessian[3*i+1][3*i] += xy/mi2; hessian[3*j+1][3*j] += xy/mj2;
-                hessian[3*i+1][3*j+1] -= diag.y/mij; hessian[3*j+1][3*i+1] -= diag.y/mij; hessian[3*i+1][3*i+1] += diag.y/mi2; hessian[3*j+1][3*j+1] += diag.y/mj2;
-                hessian[3*i+1][3*j+2] -= yz/mij; hessian[3*j+1][3*i+2] -= yz/mij; hessian[3*i+1][3*i+2] += yz/mi2; hessian[3*j+1][3*j+2] += yz/mj2;
+                hessian[3*i][3*i] += diag.x/mi2;
+                hessian[3*j][3*j] += diag.x/mj2;
 
-                hessian[3*i+2][3*j] -= xz/mij; hessian[3*j+2][3*i] -= xz/mij; hessian[3*i+2][3*i] += xz/mi2; hessian[3*j+2][3*j] += xz/mj2;
-                hessian[3*i+2][3*j+1] -= yz/mij; hessian[3*j+2][3*i+1] -= yz/mij; hessian[3*i+2][3*i+1] += yz/mi2; hessian[3*j+2][3*j+1] += yz/mj2;
-                hessian[3*i+2][3*j+2] -= diag.z/mij; hessian[3*j+2][3*i+2] -= diag.z/mij; hessian[3*i+2][3*i+2] += diag.z/mi2; hessian[3*j+2][3*j+2] += diag.z/mj2;
+                hessian[3*i][3*j+1] -= xy/mij;
+                hessian[3*j+1][3*i] -= xy/mij;
+
+                hessian[3*i][3*i+1] += xy/mi2;
+                hessian[3*j+1][3*j] += xy/mj2;
+
+                hessian[3*i][3*j+2] -= xz/mij;
+                hessian[3*j+2][3*i] -= xz/mij;
+
+                hessian[3*i][3*i+2] += xz/mi2;
+                hessian[3*j+2][3*j] += xz/mj2;
+
+                hessian[3*i+1][3*j] -= xy/mij;
+                hessian[3*j][3*i+1] -= xy/mij;
+
+                hessian[3*i+1][3*i] += xy/mi2;
+                hessian[3*j][3*j+1] += xy/mj2;
+
+                //fine
+                hessian[3*i+1][3*j+1] -= diag.y/mij;
+                hessian[3*j+1][3*i+1] -= diag.y/mij;
+
+                hessian[3*i+1][3*i+1] += diag.y/mi2;
+                hessian[3*j+1][3*j+1] += diag.y/mj2;
+
+                hessian[3*i+1][3*j+2] -= yz/mij;
+                hessian[3*j+2][3*i+1] -= yz/mij;
+
+                hessian[3*i+1][3*i+2] += yz/mi2;
+                hessian[3*j+2][3*j+1] += yz/mj2;
+
+                hessian[3*i+2][3*j] -= xz/mij;
+                hessian[3*j][3*i+2] -= xz/mij;
+
+                hessian[3*i+2][3*i] += xz/mi2;
+                hessian[3*j][3*j+2] += xz/mj2;
+
+                hessian[3*i+2][3*j+1] -= yz/mij;
+                hessian[3*j+1][3*i+2] -= yz/mij;
+
+                hessian[3*i+2][3*i+1] += yz/mi2;
+                hessian[3*j+1][3*j+2] += yz/mj2;
+
+                //fine
+                hessian[3*i+2][3*j+2] -= diag.z/mij;
+                hessian[3*j+2][3*i+2] -= diag.z/mij;
+
+                hessian[3*i+2][3*i+2] += diag.z/mi2;
+                hessian[3*j+2][3*j+2] += diag.z/mj2;
             }
         return hessian;
 
@@ -196,36 +241,79 @@ class Network {
     ;
 
     invertHessian(hessian: number[][]): number[][]{
-        let r = SVD(hessian, true, true, 0.0001);
-        let u = r['u'], q = r['q'], v=r['v'];
+        let r = SVD(hessian, true, true, 1e-10);
+        let u = r['orderu'], q = r['q'], v=r['orderv']; //v needs to be transposed
 
-        let tol = 0.00001;
+        let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
 
-        //Calculate U q+
+        let tol = 0.000001;
+
+        // Make diagonal of inverse eigenvalues
+        let invq: number[][]= [];
+        for(let i=0; i<3*this.particles.length; i++){ //3N x
+            let tmp = new Array(3*this.particles.length) //3N
+            for(let j=0; j<3*this.particles.length; j++){
+                tmp[j] = 0;
+            }
+            invq.push(tmp);
+        }
+
+        //make diagonal
         for(let i = 0; i < q.length; i++){
             let qval = q[i];
-            if(qval < tol) u[i] *= 0;
-            else u[i] *= 1/qval;
+            if(qval < tol) invq[i][i] = 0;
+            else invq[i][i] = 1/qval;
         }
 
-        // thanks stack overflow
-        function multiplyMatrices(m1: number[][], m2: number[][]): number[][] {
-            let result = [];
-            for (let i = 0; i < m1.length; i++) {
-                result[i] = [];
-                for (let j = 0; j < m2[0].length; j++) {
-                    let sum = 0;
-                    for (let k = 0; k < m1[0].length; k++) {
-                        sum += m1[i][k] * m2[k][j];
-                    }
-                    result[i][j] = sum;
+        // multiply
+
+        // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
+        function matrixDot (A, B) {
+            var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
+
+            return result.map((row, i) => {
+                return row.map((val, j) => {
+                    return A[i].reduce((sum, elm, k) => sum + (elm*B[k][j]) ,0)
+                })
+            })
+        }
+        function signflip(x: number[][]):number[][]{
+            let newx: number[][]= [];
+            for(let i=0; i<x.length; i++){
+                let tmp = new Array(x.length)
+                for(let j=0; j< x[0].length; j++){
+                    tmp[j] = 0;
+                }
+                newx[i] =tmp;
+            }
+            for(let i = 0; i < x.length; i++){
+                for(let j = 0; j < x[0].length; j++){
+                    newx[i][j] = x[i][j] * -1;
                 }
             }
-            return result;
+            return newx;
         }
 
+
+        let fir = matrixDot(signflip(u), invq); // Matches uw exactly from python implementation comparison
+        let nf = matrixDot(u, invq);
+        let nftry = matrixDot(nf, v);
+        let nf2 = matrixDot(nf, vt);
+        let nf3 = matrixDot(nf, signflip(v));
+        let nf4 = matrixDot(nf, signflip(vt));
+
+        let sec = matrixDot(signflip(vt), fir);
+        let thir = matrixDot(vt, fir);
+        let four = matrixDot(fir, vt);
+        let five = matrixDot(fir, signflip(vt));
+        let six = matrixDot(fir, signflip(v));
+        let sev = matrixDot(fir, v);
+        let eig = matrixDot(v, fir);
+        let nin = matrixDot(signflip(v), fir);
+
+        let x = 5;
         // Calculate U q+ V+ (Psuedo-Inverse)
-        return multiplyMatrices(u, v); //return Inverse
+        return sec;
     }
     ;
 

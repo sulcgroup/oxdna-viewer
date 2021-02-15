@@ -26,7 +26,8 @@ const SVD = (a: number[][], withu: boolean, withv: boolean, eps: number) => {
     withu = withu !== undefined ? withu : true
     withv = withv !== undefined ? withv : true
     eps = eps || Math.pow(2, -52)
-    let tol = 1e-64 / eps
+    // let tol = 1e-64 / eps
+    let tol = 1e-10;
 
     // throw error if a is not defined
     if (!a) {
@@ -309,10 +310,23 @@ const SVD = (a: number[][], withu: boolean, withv: boolean, eps: number) => {
         }
     }
 
-    // Number below eps should be zero
-    for (i = 0; i < n; i++) {
-        if (q[i] < eps) q[i] = 0
+    let key = JSON.parse(JSON.stringify(q));
+
+    q.sort((a,b) => b-a); //Re-order
+    let order = q.map(x => key.indexOf(x)); // get index order to apply same sorting to u and v
+    let orderv = JSON.parse(JSON.stringify(v)); //deepcopy
+    let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
+
+    //lets reorder
+    for(let i = 0; i < order.length; i++){
+        orderu[i] = JSON.parse(JSON.stringify(u[order[i]])); //replace new array in correct order
+        orderv[i] = JSON.parse(JSON.stringify(v[order[i]])); //replace new array in correct order
     }
 
-    return { u, q, v }
+    // Number below eps should be zero
+    for (i = 0; i < n; i++) {
+        if (q[i] < eps) q[i] = 0;
+    }
+
+    return { orderu, q, orderv }
 }
