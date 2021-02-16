@@ -25,9 +25,10 @@ const SVD = (a, withu, withv, eps) => {
     // Define default parameters
     withu = withu !== undefined ? withu : true;
     withv = withv !== undefined ? withv : true;
-    eps = eps || Math.pow(2, -52);
+    // eps = eps || Math.pow(2, -52)
+    eps = Math.pow(2, -52);
     // let tol = 1e-64 / eps
-    let tol = 1e-10;
+    let tol = 2e-12;
     // throw error if a is not defined
     if (!a) {
         throw new TypeError('Matrix a is not defined');
@@ -147,13 +148,11 @@ const SVD = (a, withu, withv, eps) => {
     }
     // TODO: LOOk here for problem
     // Accumulation of left-hand transformations
-    if (withu === false) {
-        for (i = n; i < m; i++) {
-            for (j = n; j < m; j++) {
-                u[i][j] = 0;
-            }
-            u[i][i] = 1;
+    for (i = n; i < m; i++) {
+        for (j = n; j < m; j++) {
+            u[i][j] = 0;
         }
+        u[i][i] = 1;
     }
     if (withu) {
         for (i = n - 1; i >= 0; i--) {
@@ -293,16 +292,38 @@ const SVD = (a, withu, withv, eps) => {
             q[k] = x;
         }
     }
-    let key = JSON.parse(JSON.stringify(q));
+    console.table(q);
+    while (q.indexOf(0) != -1) {
+        let ind = q.indexOf(0);
+        q[ind] = (q.length - ind) * 10 ** -15;
+    }
+    // for(let z = 0; z < q.length; z++){
+    //     if(q[z] < 0 || q[z] == 0){
+    //         console.log('GOT HERE');
+    //         q[z] = (q.length - z) * 10^-18; //ugh don't get me started
+    //     }
+    // }
+    console.table(q);
+    let key = q.slice();
+    console.table(key);
     q.sort((a, b) => b - a); //Re-order
+    // Some values of q are zero, Replacing with values that will be below tolerance but unique for full sorting
     let order = q.map(x => key.indexOf(x)); // get index order to apply same sorting to u and v
     let orderv = JSON.parse(JSON.stringify(v)); //deepcopy
     let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
+    let ordervector = function (vec, order) {
+        let nvec = vec.slice(); //shallow copy
+        for (let j = 0; j < vec.length; j++) {
+            nvec[j] = vec[order[j]];
+        }
+        return nvec;
+    };
     //lets reorder
-    for (let i = 0; i < order.length; i++) {
-        orderu[i] = JSON.parse(JSON.stringify(u[order[i]])); //replace new array in correct order
-        orderv[i] = JSON.parse(JSON.stringify(v[order[i]])); //replace new array in correct order
+    for (i = 0; i < order.length; i++) {
+        orderu[i] = JSON.parse(JSON.stringify(ordervector(u[order[i]], order))); //replace new array in correct order
+        orderv[i] = JSON.parse(JSON.stringify(ordervector(v[order[i]], order))); //replace new array in correct order
     }
+    //let ut = u[0].map((_, colIndex) => u.map(row => row[colIndex])); //transpose u
     // Number below eps should be zero
     for (i = 0; i < n; i++) {
         if (q[i] < eps)

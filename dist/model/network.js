@@ -209,7 +209,7 @@ class Network {
     ;
     invertHessian(hessian) {
         let r = SVD(hessian, true, true, 1e-10);
-        let u = r['orderu'], q = r['q'], v = r['orderv']; //v needs to be transposed
+        let u = r['ut'], q = r['q'], v = r['orderv']; //v needs to be transposed
         let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
         let tol = 0.000001;
         // Make diagonal of inverse eigenvalues
@@ -271,7 +271,7 @@ class Network {
         let nin = matrixDot(signflip(v), fir);
         let x = 5;
         // Calculate U q+ V+ (Psuedo-Inverse)
-        return sec;
+        return five;
     }
     ;
     getRMSF(inverse, temp) {
