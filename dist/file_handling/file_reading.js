@@ -219,7 +219,7 @@ function readFiles(topFile, datFile, jsonFile) {
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements, () => {
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-            trajReader = new DatReader(datFile, topReader, system, elements);
+            trajReader = new TrajectoryReader(datFile, topReader, system, elements);
             trajReader.nextConfig();
             //set up instancing data arrays
             system.initInstances(system.systemLength());

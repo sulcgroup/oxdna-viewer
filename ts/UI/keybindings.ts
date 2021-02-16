@@ -7,8 +7,12 @@ canvas.addEventListener("keydown", event =>{
         case 'p' : view.saveCanvasImage(); break;
 
         // Mapping the next and prev to the arrow keys
-        case 'arrowright': trajReader.nextConfig(); break;
-        case 'arrowleft': trajReader.previousConfig(); break;
+        case 'arrowright': 
+            if (trajReader.forwardReader.readyState != 1) trajReader.nextConfig(); 
+            break;
+        case 'arrowleft':
+            if (trajReader.forwardReader.readyState != 1) trajReader.previousConfig(); 
+            break;
 
         // Copy, cut, paste and delete. Holding shift pastes with preserved location
         case 'c': if (event.ctrlKey || event.metaKey) {copyWrapper();} break;

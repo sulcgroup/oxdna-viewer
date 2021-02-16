@@ -142,6 +142,11 @@ class ForwardReader extends FileReader {
                 this.configsBuffer.shift(); // so we can discard the first entry
                 // now the current conf to process is 1st in configsBuffer
                 let cur_conf = this.configsBuffer.shift();
+                if (!cur_conf) {
+                    notify("No more confs to load!");
+                    document.dispatchEvent(new Event('finalConfig'));
+                    return;
+                }
                 let lines = cur_conf.split(/[\n]+/g);
                 if (lines.length < this.confLength) { // we need more as configuration is too small
                     //there should be no conf in the buffer
@@ -172,7 +177,8 @@ class ForwardReader extends FileReader {
             //handle the stuff we have or request more
             let cur_conf = this.configsBuffer.shift();
             let lines = cur_conf.split(/[\n]+/g);
-            if (lines.length < this.confLength) { // we need more as configuration is too small
+            // NOTE: this.confLength-1 fixes last line being empty
+            if (lines.length < this.confLength - 1) { // we need more as configuration is too small
                 this.StrBuff = "t" + cur_conf;
                 if (!this.chunker.is_last()) {
                     this.readAsText(//so we ask the chunker to spit out more
@@ -182,14 +188,11 @@ class ForwardReader extends FileReader {
             }
             this.idx++; // we are moving forward   
             let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
-            //this.offset += size;                           // update offset
             this.callback(this.idx, lines, size);
         }
         else {
             // we don't have anything to process, fetch some
-            console.log("buffer empty, populate");
-            if (this.firstConf || !this.chunker.is_last()) // no difference between a single conf and a trajectory
-                this.readAsText(this.chunker.get_next_chunk());
+            this.readAsText(this.chunker.get_next_chunk());
         }
     }
 }
@@ -197,12 +200,12 @@ class LookupReader extends FileReader {
     constructor(chunker, confLength, callback) {
         super();
         this.position_lookup = []; // store offset and size
-        this.last_idx = 0; // store last read index
-        this.idx = 0;
+        this.idx = -1;
         this.onload = ((evt) => {
             return () => {
                 let file = this.result;
                 let lines = file.split(/[\n]+/g);
+                // we need to pass down idx to sync with the DatReader
                 this.callback(this.idx, lines, this.size);
             };
         })();
@@ -211,22 +214,21 @@ class LookupReader extends FileReader {
         this.callback = callback;
     }
     add_index(offset, size) {
-        this.last_idx++;
         this.position_lookup.push([offset, size]);
     }
+    index_not_loaded(idx) {
+        let l = this.position_lookup.length;
+        return l == 0 || idx >= l;
+    }
     get_conf(idx) {
-        console.log(idx);
-        this.idx = idx;
-        if (idx >= this.last_idx)
-            this.idx = this.last_idx - 1;
-        if (idx <= 0)
-            this.idx = 0;
-        let offset = this.position_lookup[this.idx][0];
-        this.size = this.position_lookup[this.idx][1];
+        let offset = this.position_lookup[idx][0];
+        this.size = this.position_lookup[idx][1];
+        this.idx = idx; // as we are successful in retrieving
+        // we can update 
         this.readAsText(this.chunker.get_chunk_at_pos(offset, this.size));
     }
 }
-class DatReader {
+class TrajectoryReader {
     constructor(datFile, topReader, system, elems) {
         this.firstConf = true;
         this.idx = -1;
@@ -254,16 +256,22 @@ class DatReader {
         });
     }
     nextConfig() {
-        this.idx++; // idx is also set by the callback of the reader
-        if (this.idx >= this.lookupReader.last_idx) // && !this.chunker.is_last())
-            this.forwardReader.get_next_conf();
-        else {
-            console.log("fired ", this.idx);
-            this.lookupReader.get_conf(this.idx);
+        if (systems.length > 1) {
+            notify("Only one file at a time can be read as a trajectory, sorry...");
+            return;
         }
+        this.idx++; // idx is also set by the callback of the reader
+        if (this.lookupReader.index_not_loaded(this.idx))
+            this.forwardReader.get_next_conf();
+        else
+            this.lookupReader.get_conf(this.idx);
     }
     previousConfig() {
-        this.idx--; // idx is also set by the callback of the reader
+        this.idx--; // ! idx is also set by the callback of the reader
+        if (this.idx < 0) {
+            notify("Can't step past the initial conf!");
+            this.idx = 0;
+        }
         this.lookupReader.get_conf(this.idx);
     }
     parse_conf(lines) {
@@ -282,6 +290,7 @@ class DatReader {
         box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
         redrawBox();
         const time = parseInt(lines[0].split(" ")[2]);
+        this.time = time; //update our notion of time
         confNum += 1;
         console.log(confNum, "t =", time);
         let timedisp = document.getElementById("trajTimestep");
@@ -348,6 +357,31 @@ class DatReader {
         // Signal that config has been loaded
         // block the nextConfig loaded to prevent the video loader from continuing after the chunk
         document.dispatchEvent(new Event('nextConfigLoaded'));
+    }
+    /**
+     * Step through trajectory until a specified timestep
+     * is found
+     * @param timeLim Timestep to stop at
+     * @param backwards Step backwards
+     */
+    stepUntil(timeLim, backwards) {
+        //TODO: Need to implement
+        //let q=0;
+        //let loop = () => {
+        //    console.log(dr.forwardReader.readyState);
+        //    
+        //    if (q<3 && dr.forwardReader.readyState != 1 )
+        //               //dr.chunker.ready
+        //    {
+        //    
+        //       dr.get_next_conf();
+        //      //requestAnimationFrame(loop);
+        //      q++;
+        //    } 
+        //    if(q==3) return; 
+        //    else requestAnimationFrame(loop);
+        //}
+        //loop(); // Actually call the function
     }
 }
 //{ // stepping working

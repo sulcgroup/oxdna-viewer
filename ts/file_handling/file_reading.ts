@@ -236,7 +236,7 @@ function readFilesFromURLParams() {
 
     readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
-var trajReader :DatReader;
+var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, jsonFile?: File) {
     if (topFile && datFile) {
@@ -251,7 +251,7 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
         //read topology file, the configuration file is read once the topology is loaded to avoid async errors
         const topReader = new TopReader(topFile, system, elements,()=>{
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-            trajReader = new DatReader(datFile,topReader,system,elements);
+            trajReader = new TrajectoryReader(datFile,topReader,system,elements);
             trajReader.nextConfig();
             //set up instancing data arrays
             system.initInstances(system.systemLength());
