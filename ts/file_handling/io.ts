@@ -358,10 +358,8 @@ class TrajectoryReader {
         }
         this.idx++; // idx is also set by the callback of the reader
         if(this.lookupReader.index_not_loaded(this.idx))
-           if (this.forwardReader.readyState != 1) // make sure reader is capable to read
             this.forwardReader.get_next_conf();
         else
-            if (this.lookupReader.readyState !=1) // make sure reader is capable to read
             this.lookupReader.get_conf( this.idx );
     }
 
