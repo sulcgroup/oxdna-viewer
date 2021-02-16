@@ -254,6 +254,13 @@ class TrajectoryReader {
             //try display the retrieved conf
             this.parse_conf(lines);
         });
+        this.indexingReader = new ForwardReader(this.chunker, this.confLength, (idx, lines, size) => {
+            //record the retrieved conf
+            this.lookupReader.add_index(this.offset, size);
+            this.offset += size;
+            console.log("another one fetched");
+            document.dispatchEvent(new Event('nextConfigIndexed'));
+        });
     }
     nextConfig() {
         if (systems.length > 1) {
@@ -265,6 +272,26 @@ class TrajectoryReader {
             this.forwardReader.get_next_conf();
         else
             this.lookupReader.get_conf(this.idx);
+    }
+    indexTrajectory() {
+        function _load(e) {
+            e.preventDefault(); // cancel default actions
+            if (trajReader.indexingReader.readyState == 1)
+                _load(e); // try untill can actually read
+            trajReader.indexingReader.get_next_conf();
+        }
+        ;
+        // Listen for last configuration event
+        function _done(e) {
+            document.removeEventListener('nextConfigIndexed', _load);
+            document.removeEventListener('finalConfig', _done);
+        }
+        ;
+        document.addEventListener('nextConfigIndexed', _load);
+        document.addEventListener('finalConfig', _done);
+        this.indexingReader.StrBuff = this.forwardReader.StrBuff;
+        this.indexingReader.configsBuffer = this.forwardReader.configsBuffer;
+        trajReader.indexingReader.get_next_conf();
     }
     previousConfig() {
         this.idx--; // ! idx is also set by the callback of the reader
@@ -358,31 +385,6 @@ class TrajectoryReader {
         // block the nextConfig loaded to prevent the video loader from continuing after the chunk
         document.dispatchEvent(new Event('nextConfigLoaded'));
     }
-    /**
-     * Step through trajectory until a specified timestep
-     * is found
-     * @param timeLim Timestep to stop at
-     * @param backwards Step backwards
-     */
-    stepUntil(timeLim, backwards) {
-        //TODO: Need to implement
-        //let q=0;
-        //let loop = () => {
-        //    console.log(dr.forwardReader.readyState);
-        //    
-        //    if (q<3 && dr.forwardReader.readyState != 1 )
-        //               //dr.chunker.ready
-        //    {
-        //    
-        //       dr.get_next_conf();
-        //      //requestAnimationFrame(loop);
-        //      q++;
-        //    } 
-        //    if(q==3) return; 
-        //    else requestAnimationFrame(loop);
-        //}
-        //loop(); // Actually call the function
-    }
 }
 //{ // stepping working
 //let q=0;
@@ -402,3 +404,19 @@ class TrajectoryReader {
 //}
 //loop(); // Actually call the function
 //}
+//let q=0;
+//let loop = () => {
+//    console.log(trajReader.forwardReader.readyState);
+//    
+//    if (q<12753 && trajReader.forwardReader.readyState != 1 )
+//               //dr.chunker.ready
+//    {
+//    
+//        trajReader.nextConfig();
+//      //requestAnimationFrame(loop);
+//      q++;
+//    } 
+//    if(q==12753) return; 
+//    else requestAnimationFrame(loop);
+//}
+//loop(); // Actually call the function
