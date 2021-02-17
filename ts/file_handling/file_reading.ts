@@ -253,6 +253,7 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
             //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
             trajReader = new TrajectoryReader(datFile,topReader,system,elements);
             trajReader.nextConfig();
+            
             //set up instancing data arrays
             system.initInstances(system.systemLength());
         });
