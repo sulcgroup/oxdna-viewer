@@ -360,6 +360,7 @@ class View {
     inboxingMode: ToggleGroupWithDisable;
     selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
+    fluxSideBarDisplayed: boolean;
 
     basepairMessage = "Locating basepairs, please be patient...";
 
@@ -373,6 +374,7 @@ class View {
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
+        this.fluxSideBarDisplayed = false; //
             // If we should show something
             if (g.enabled()) {
                 // Make sure something is selected
@@ -507,6 +509,7 @@ class View {
     }));
     }
 
+    //Network Selector Methods
     public addNetwork(nid : number){
         let ul = document.getElementById("networks")
         let li = document.createElement("li");
@@ -534,13 +537,33 @@ class View {
         } else {
             this.addGraphData(gid);
         }
-
     }
 
+        // NOT USED WILL PROBABLY REMOVE
     public toggleSpanColor(sp: HTMLElement){
         let currentcolor = sp.getAttribute("style");
         if(currentcolor == "color:red") sp.setAttribute("style", "color:black");
         if(currentcolor == "color:black") sp.setAttribute("style", "color:red");
+    }
+
+    public toggleSideBarDatasets(){
+        if(this.fluxSideBarDisplayed){
+            for(let i = 0; i< graphDatasets.length; i++){
+                this.removeGraphData(i);
+            }
+            for(let i = 0; i< networks.length; i++){
+                this.removeNetworkData(i);
+            }
+            this.fluxSideBarDisplayed = false;
+        } else {
+            for(let i = 0; i < networks.length; i++){
+                this.addNetworkData(i);
+            }
+            for(let i = 0; i < graphDatasets.length; i++){
+                this.addGraphData(i);
+            }
+            this.fluxSideBarDisplayed = true;
+        }
     }
 
     public addGraphData(gid : number){
@@ -563,6 +586,24 @@ class View {
         ul.appendChild(li);
     }
 
+    public addNetworkData(nid: number){
+        let ul = document.getElementById("readynetlist") //In fluctuation Window
+        let li = document.createElement("li");
+        let sp1 = document.createElement("span");
+        let sp2 = document.createElement("span")
+        sp1.setAttribute('class', 'label');
+        sp2.setAttribute('class', 'second-label');
+        let name = "Network " + (nid+1).toString();
+        sp1.appendChild(document.createTextNode(name));
+        sp2.appendChild(document.createTextNode(networks[nid].networktype));
+        li.setAttribute('id', name);
+        li.setAttribute('value', String(nid));
+        li.appendChild(sp1);
+        li.appendChild(sp2);
+        li.onclick = function() {flux.fitData(li.value)};
+        ul.appendChild(li);
+    }
+
     public removeGraphData(gid : number){
         let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist");
@@ -570,6 +611,16 @@ class View {
         let li = document.getElementById(name);
         ul.removeChild(li);
     }
+
+    public removeNetworkData(nid : number){
+        let ul = document.getElementById("readynetlist");
+        let name = "Network " + (nid+1).toString();
+        let li = document.getElementById(name);
+        ul.removeChild(li);
+    }
+
+
+
 }
 
 let view = new View(document);
@@ -582,6 +633,7 @@ class graphData {
     datatype: string;
     units: string;
     gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
+    cutoff: number; // Cutoff (A) for edges, only used if graphData is generated as a Fit
     constructor(l, d, x, dt, u){
         this.label = l;
         this.data = d;
@@ -589,13 +641,14 @@ class graphData {
         this.datatype = dt;
         this.units = u;
         this.gammaSim = 0;
+        this.cutoff = 0;
     };
     convertType(format:string) {
         if(['rmsf', 'bfactor'].indexOf(format) < 0) return; // TODO: Add error throw here and convertUnits
         if (this.datatype == format) return; //Already in the right format gang gang
         // Conversion needs to know both formats and direction to do anything useful
         if (this.datatype == 'rmsf' && format == 'bfactor'){
-            this.data = this.data.map(e => e * (8 * Math.pow(Math.PI, 2) / 3));
+            this.data = this.data.map(e => e * ((8 * Math.pow(Math.PI, 2)) / 3));
         } else if (this.datatype == 'bfactor' && format == 'rmsf'){
             this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
         }
@@ -608,11 +661,11 @@ class graphData {
         } else if(this.units == 'nm_sqr' && units == "A_sqr"){
             this.data = this.data.map(e => e * 100);
         }
-        this.units = units;
+        this.units = units; // assumes successful conversion
     };
 }
 
-// let labels = datasets.map(d => d.label);
+// This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
     title: string;
     xaxislabel: string;
@@ -624,6 +677,7 @@ class fluxGraph {
     targetdata: string;
     units: string;
     colors;
+    colorarr;
     charttype: string;
     chartdata;
     chartoptions;
@@ -640,13 +694,22 @@ class fluxGraph {
         this.gids = [];
         this.colors = {
             red: 'rgb(255, 99, 132)',
-            orange: 'rgb(255, 159, 64)',
-            yellow: 'rgb(255, 205, 86)',
             green: 'rgb(75, 192, 192)',
+            yellow: 'rgb(255, 205, 86)',
             blue: 'rgb(54, 162, 235)',
             purple: 'rgb(153, 102, 255)',
-            grey: 'rgb(201, 203, 207)'
+            hotpink: 'rgb(255, 0, 127)',
+            grey: 'rgb(201, 203, 207)',
+            lightgreen: 'rgb(204, 255, 204)',
+            lavender: 'rgb(229, 204, 255)',
+            lightblue: 'rgb(153, 255, 255)',
+            orange: 'rgb(255, 159, 64)',
+            armygreen: 'rgb(135, 156, 102)',
+            flatblue: 'rgb(102, 131, 156)',
         }
+        this.colorarr = [this.colors.red, this.colors.green, this.colors.yellow, this.colors.blue,
+            this.colors.purple, this.colors.hotpink, this.colors.grey, this.colors.lightgreen,
+            this.colors.lavender, this.colors.lightblue, this.colors.armygreen, this.colors.flatblue];
         this.type = type;
         this.temp = 0;
         this.chart = null;
@@ -709,26 +772,12 @@ class fluxGraph {
         return {'A_sqr': "A^2", "nm_sqr": "nm^2"}[units]; //quick conversion key
     }
 
-    loadPDBData() {
-        if (graphDatasets.length == 0) {
-            notify("No PDB Data found");
-        } else {
-            for (let i = 0; i < graphDatasets.length; i++) {
-                view.addGraphData(i);
-            }
-        }
-    }
-
     initializeGraph() {
-        if (view.isWindowOpen('fluctuationWindow')) {
-            try {
-                let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
-                this.chart = new Chart(ctx, this.chartconfig);
-            } catch {
-                notify("Graph could not be Initialized");
-            }
-
-            this.loadPDBData();
+        try {
+            let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
+            this.chart = new Chart(ctx, this.chartconfig);
+        } catch {
+            notify("Graph could not be Initialized");
         }
     }
 
@@ -772,13 +821,26 @@ class fluxGraph {
         if (GD.units != this.units) GD.convertUnits(this.units);
         if (GD.datatype != this.type) GD.convertType(this.type);
 
-        this.chart.data.datasets.push({
-            label: GD.label,
-            backgroundColor: this.colors.red,
-            borderColor: this.colors.red,
-            data: GD.data,
-            fill: false,
-        })
+
+        if (GD.cutoff > 0) { // If it's data that's been fit it get's dashed
+            this.chart.data.datasets.push({
+                label: GD.label,
+                backgroundColor: this.colorarr[gid%this.colorarr.length],
+                borderColor: this.colorarr[gid%this.colorarr.length],
+                borderDash: [5, 5],
+                data: GD.data,
+                fill: false,
+            })
+        } else {
+            this.chart.data.datasets.push({
+                label: GD.label,
+                backgroundColor: this.colorarr[gid%this.colorarr.length],
+                borderColor: this.colorarr[gid%this.colorarr.length],
+                data: GD.data,
+                fill: false,
+            })
+        }
+
         this.datasetCount += 1;
         this.chart.update();
         this.gids.push(gid);
@@ -882,15 +944,15 @@ class fluxGraph {
             let temp = view.getInputNumber('temp');
             let rmsf = net.getRMSF(invH, temp);
 
-            let fit = findLineByLeastSquaresNoIntercept(Targetrmsf, rmsf);
+            let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
             let xvals = fit[0];
             let fitval = fit[1];
             let m = <number> fit[2];
-            let k = 1/m; //pN/A
-            let sim_k = k/net.simFC;
+            let k = 1/m; //N*10^-10/A (k*100 = pN/A)
+            let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
 
             // rmsf is returned currently to check the Hessian inversion process
-            let gendata = new graphData(GD.label + " Fit", rmsf, GD.xdata, "rmsf", "A_sqr");
+            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
             gendata.gammaSim = sim_k;
             let ngid = graphDatasets.length;
             graphDatasets.push(gendata);

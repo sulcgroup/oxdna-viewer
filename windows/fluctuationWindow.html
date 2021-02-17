@@ -13,7 +13,7 @@
             <li onclick="flux.changeUnits('nm_sqr')">nm^2</li>
         </ul>
     </div>
-    <button class="button primary outline" id="sidetoggle" >Fitting</button>
+    <button class="button primary outline" id="sidetoggle" onclick="view.toggleSideBarDatasets()">Fitting</button>
 
     <button class="button secondary"><span class="mif-floppy-disk"></span></button>
     <button class="button dark">Open</button>
@@ -33,20 +33,16 @@
         <div class="title" >Select or Load Target Data</div>
 <!--        dynamically List Data Here -->
         <ul class="items-list" id="datalist">
-            <li onclick="flux.addTestSet()">
+            <li>
+<!--                need to add way to import a dataset-->
                 <span style="color:#0000ff" class="label" >Add Data... </span>
                 <span class="second-label" >Formats: 1) (.json (RMSF (nm))</span>
             </li>
         </ul>
         <div class="title" >Select Available Network</div>
         <div class="subtitle" >(edges must be filled first)</div>
-<!--        networks will add themselves when they are ready for fitting-->
-        <ul class="items-list" id="readynetlist">
-            <li onclick="flux.addTestSet()">
-                <span style="color:#0000ff" class="label" >Add Data... </span>
-                <span class="second-label" >Formats: 1) (.json (RMSF (nm))</span>
-            </li>
-        </ul>
+<!--        networks Added in view.toggleSideBarDatasets-->
+        <ul class="items-list" id="readynetlist"></ul>
 
     </div>
 </aside>

@@ -1,5 +1,7 @@
 /** SVD procedure as explained in "Singular Value Decomposition and Least Squares Solutions. By G.H. Golub et al."
  *
+ * Edited by Jonah Procyk 2/16/21, Major edits to properly sort the eigenvalues and eigenvectors
+ *
  * This procedure computes the singular values and complete orthogonal decomposition of a real rectangular matrix A:
  *    A = U * diag(q) * V(t), U(t) * U = V(t) * V = I
  * where the arrays a, u, v, q represent A, U, V, q respectively. The actual parameters corresponding to a, u, v may
@@ -7,18 +9,18 @@
  * differ. m >= n is assumed (with m = a.length and n = a[0].length)
  *
  *  @param a {Array} Represents the matrix A to be decomposed
- *  @param [withu] {bool} {true} if U is desired {false} otherwise
- *  @param [withv] {bool} {true} if U is desired {false} otherwise
+ *  @param [withu] {bool} {true} if U is desired {false} otherwise (MUST ALWAYS BE TRUE)
+ *  @param [withv] {bool} {true} if U is desired {false} otherwise (MUST ALWAYS BE TRUE)
  *  @param [eps] {Number} A constant used in the test for convergence; should not be smaller than the machine precision
- *  @param [tol] {Number} A machine dependent constant which should be set equal to B/eps0 where B is the smallest
- *    positive number representable in the computer
+ *                      Hard Coded to be 2 ** -52
+ *  [tol] {Number} Hard Coded to be 2e-12
  *
- *  @returns {Object} An object containing:
+ *  @returns {Object} An object containing THE SORTED VALUES AND VECTORS:
  *    q: A vector holding the singular values of A; they are non-negative but not necessarily ordered in
  *      decreasing sequence
  *    u: Represents the matrix U with orthonormalized columns (if withu is {true} otherwise u is used as
  *      a working storage)
- *    v: Represents the orthogonal matrix V (if withv is {true}, otherwise v is not used)
+ *    vt: Represents the orthogonal matrix Vt (if withv is {true}, otherwise v is not used)
  *
  */
 const SVD = (a, withu, withv, eps) => {
@@ -292,25 +294,21 @@ const SVD = (a, withu, withv, eps) => {
             q[k] = x;
         }
     }
-    console.table(q);
+    // Must replace zeroes by unique identifier that will be set to 0 later
+    // why? so sorting the vectors using indexOf doesn't return the same element multiple times
     while (q.indexOf(0) != -1) {
         let ind = q.indexOf(0);
         q[ind] = (q.length - ind) * 10 ** -15;
     }
-    // for(let z = 0; z < q.length; z++){
-    //     if(q[z] < 0 || q[z] == 0){
-    //         console.log('GOT HERE');
-    //         q[z] = (q.length - z) * 10^-18; //ugh don't get me started
-    //     }
-    // }
-    console.table(q);
     let key = q.slice();
-    console.table(key);
-    q.sort((a, b) => b - a); //Re-order
     // Some values of q are zero, Replacing with values that will be below tolerance but unique for full sorting
+    // To return in order by singular value,
+    // you have to resort u and vt's individual vectors and the vector order of the matrix
+    let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
     let order = q.map(x => key.indexOf(x)); // get index order to apply same sorting to u and v
-    let orderv = JSON.parse(JSON.stringify(v)); //deepcopy
+    let ordervt = JSON.parse(JSON.stringify(vt)); //deepcopy
     let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
+    // guess what this function does
     let ordervector = function (vec, order) {
         let nvec = vec.slice(); //shallow copy
         for (let j = 0; j < vec.length; j++) {
@@ -321,13 +319,12 @@ const SVD = (a, withu, withv, eps) => {
     //lets reorder
     for (i = 0; i < order.length; i++) {
         orderu[i] = JSON.parse(JSON.stringify(ordervector(u[order[i]], order))); //replace new array in correct order
-        orderv[i] = JSON.parse(JSON.stringify(ordervector(v[order[i]], order))); //replace new array in correct order
+        ordervt[i] = JSON.parse(JSON.stringify(ordervector(vt[order[i]], order))); //replace new array in correct order
     }
-    //let ut = u[0].map((_, colIndex) => u.map(row => row[colIndex])); //transpose u
     // Number below eps should be zero
     for (i = 0; i < n; i++) {
         if (q[i] < eps)
             q[i] = 0;
     }
-    return { orderu, q, orderv };
+    return { orderu, q, ordervt };
 };

@@ -70,21 +70,7 @@ class Network {
     }
     ;
     sendtoUI() {
-        let ul = document.getElementById("readynetlist"); //In fluctuation Window
-        let li = document.createElement("li");
-        let sp1 = document.createElement("span");
-        let sp2 = document.createElement("span");
-        sp1.setAttribute('class', 'label');
-        sp2.setAttribute('class', 'second-label');
-        let name = "Network " + this.nid.toString();
-        sp1.appendChild(document.createTextNode(name));
-        sp2.appendChild(document.createTextNode(this.networktype));
-        li.setAttribute('id', name);
-        li.setAttribute('value', String(this.nid));
-        li.appendChild(sp1);
-        li.appendChild(sp2);
-        li.onclick = function () { flux.fitData(li.value); };
-        ul.appendChild(li);
+        this.fittingReady = true;
     }
     ;
     fillMasses(mon) {
@@ -209,8 +195,7 @@ class Network {
     ;
     invertHessian(hessian) {
         let r = SVD(hessian, true, true, 1e-10);
-        let u = r['ut'], q = r['q'], v = r['orderv']; //v needs to be transposed
-        let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
+        let u = r['orderu'], q = r['q'], vt = r['ordervt']; //v needs to be transposed
         let tol = 0.000001;
         // Make diagonal of inverse eigenvalues
         let invq = [];
@@ -229,7 +214,6 @@ class Network {
             else
                 invq[i][i] = 1 / qval;
         }
-        // multiply
         // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
         function matrixDot(A, B) {
             var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
@@ -239,39 +223,10 @@ class Network {
                 });
             });
         }
-        function signflip(x) {
-            let newx = [];
-            for (let i = 0; i < x.length; i++) {
-                let tmp = new Array(x.length);
-                for (let j = 0; j < x[0].length; j++) {
-                    tmp[j] = 0;
-                }
-                newx[i] = tmp;
-            }
-            for (let i = 0; i < x.length; i++) {
-                for (let j = 0; j < x[0].length; j++) {
-                    newx[i][j] = x[i][j] * -1;
-                }
-            }
-            return newx;
-        }
-        let fir = matrixDot(signflip(u), invq); // Matches uw exactly from python implementation comparison
-        let nf = matrixDot(u, invq);
-        let nftry = matrixDot(nf, v);
-        let nf2 = matrixDot(nf, vt);
-        let nf3 = matrixDot(nf, signflip(v));
-        let nf4 = matrixDot(nf, signflip(vt));
-        let sec = matrixDot(signflip(vt), fir);
-        let thir = matrixDot(vt, fir);
-        let four = matrixDot(fir, vt);
-        let five = matrixDot(fir, signflip(vt));
-        let six = matrixDot(fir, signflip(v));
-        let sev = matrixDot(fir, v);
-        let eig = matrixDot(v, fir);
-        let nin = matrixDot(signflip(v), fir);
-        let x = 5;
+        // multiply
+        let nf = matrixDot(u, invq); //  U*q
         // Calculate U q+ V+ (Psuedo-Inverse)
-        return five;
+        return matrixDot(nf, vt); // U*q*Vt
     }
     ;
     getRMSF(inverse, temp) {
