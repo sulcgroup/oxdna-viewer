@@ -82,7 +82,7 @@ class Network {
     }
     ;
 
-    sendtoUI(){ //doesn't work if fluctuation window hasn't been opened, fix with a queue of some sort maybe?
+    sendtoUI(){
         this.fittingReady = true;
     };
 
@@ -226,7 +226,6 @@ class Network {
         }
     }
     ;
-
     invertHessian(hessian: number[][]): number[][]{
         let r = SVD(hessian, true, true, 1e-10);
         let u = r['orderu'], q = r['q'], vt=r['ordervt']; //v needs to be transposed
@@ -249,8 +248,6 @@ class Network {
             if(qval < tol) invq[i][i] = 0;
             else invq[i][i] = 1/qval;
         }
-
-
 
         // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
         function matrixDot (A, B) {

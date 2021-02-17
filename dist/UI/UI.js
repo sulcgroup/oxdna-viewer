@@ -468,6 +468,7 @@ class View {
             }
         }));
     }
+    //Network Selector Methods
     addNetwork(nid) {
         let ul = document.getElementById("networks");
         let li = document.createElement("li");
@@ -495,6 +496,7 @@ class View {
             this.addGraphData(gid);
         }
     }
+    // NOT USED WILL PROBABLY REMOVE
     toggleSpanColor(sp) {
         let currentcolor = sp.getAttribute("style");
         if (currentcolor == "color:red")
@@ -648,6 +650,11 @@ class fluxGraph {
             datasets: []
         };
         this.chartoptions = {
+            animation: {
+                onComplete: function () {
+                    this.chart.toBase64Image();
+                }
+            },
             responsive: true,
             title: {
                 display: true,
@@ -698,13 +705,21 @@ class fluxGraph {
         return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
     }
     initializeGraph() {
-        try {
-            let ctx = document.getElementById("flux").getContext('2d');
-            this.chart = new Chart(ctx, this.chartconfig);
-        }
-        catch {
-            notify("Graph could not be Initialized");
-        }
+        // onCreate parameter of toggleWindow won't initialize this correctly
+        // taken from https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
+        // wait 50 ms then initialize chart
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = async () => {
+            await delay(50);
+            try {
+                let ctx = document.getElementById("flux").getContext('2d');
+                this.chart = new Chart(ctx, this.chartconfig);
+            }
+            catch {
+                notify("Graph could not be Initialized");
+            }
+        };
+        wait();
     }
     setType(type) {
         this.type = type;
@@ -876,11 +891,17 @@ class fluxGraph {
             let ngid = graphDatasets.length;
             graphDatasets.push(gendata);
             view.addGraphData(ngid);
-            this.clearGraph();
-            this.toggleData(ngid);
-            this.toggleData(gid);
         }
     }
     ;
+    downloadChart() {
+        var a = document.createElement('a');
+        a.href = this.chart.toBase64Image(); //declared in chart.options.animate
+        a.download = 'fluxchart.png';
+        // Trigger the download
+        a.click();
+    }
+    ;
 }
+// Fluctuation Chart Manager
 const flux = new fluxGraph("rmsf", "A_sqr");

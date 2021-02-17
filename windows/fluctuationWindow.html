@@ -13,10 +13,11 @@
             <li onclick="flux.changeUnits('nm_sqr')">nm^2</li>
         </ul>
     </div>
-    <button class="button primary outline" id="sidetoggle" onclick="view.toggleSideBarDatasets()">Fitting</button>
+    <button class="button primary outline" id="sidetoggle" onclick="view.toggleSideBarDatasets()">Data & Options</button>
 
-    <button class="button secondary"><span class="mif-floppy-disk"></span></button>
-    <button class="button dark">Open</button>
+    <button class="button secondary" onclick="flux.downloadChart()" ><span class="mif-floppy-disk"></span></button>
+    <button class="button dark" onclick="networks[selectednetwork].">Generate Par </button>
+
 </div>
 
 <aside id="fluxbar" class="sidebar" data-role="sidebar" data-toggle="#sidetoggle">
@@ -31,19 +32,38 @@
     </div>
     <div class="sidebar-content">
         <div class="title" >Select or Load Target Data</div>
-<!--        dynamically List Data Here -->
-        <ul class="items-list" id="datalist">
-            <li>
-<!--                need to add way to import a dataset-->
-                <span style="color:#0000ff" class="label" >Add Data... </span>
-                <span class="second-label" >Formats: 1) (.json (RMSF (nm))</span>
-            </li>
-        </ul>
-        <div class="title" >Select Available Network</div>
-        <div class="subtitle" >(edges must be filled first)</div>
+        <button class="button" id="collapse_toggle_3">Available Datasets</button>
+        <div data-role="collapse" data-toggle-element="#collapse_toggle_3">
+            <!--        dynamically List Data Here -->
+            <ul class="items-list" id="datalist"></ul>
+        </div>
 <!--        networks Added in view.toggleSideBarDatasets-->
-        <ul class="items-list" id="readynetlist"></ul>
+        <button class="button" id="collapse_toggle_1">Available Networks</button>
+        <div class="subtitle" >(edges must be filled first)</div>
+        <div class="pos-relative">
+            <ul class="items-list" id="readynetlist" data-role="collapse" data-toggle-element="#collapse_toggle_1"></ul>
+        </div>
 
+        <button class="button" id="collapse_toggle_2">Options</button>
+        <div class="pos-relative">
+            <div data-role="collapse" data-toggle-element="#collapse_toggle_2">
+            <ul class="items-list" id="options">
+                <li><label>
+                    <input type="text" placeholder="set chart title">
+                </label></li>
+                <li><label>
+                    <input type="text" placeholder="particle id offset">
+                </label></li>
+                <li><label>
+                    <input type="text" placeholder="something">
+                </label></li>
+            </ul>
+            </div>
+        </div>
+<!--        <div class="input-control file" data-role="input">-->
+<!--            <input type="file">-->
+<!--            <button class="button"><span class="mif-folder"></span></button>-->
+<!--        </div>-->
     </div>
 </aside>
 
