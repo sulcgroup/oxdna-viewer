@@ -226,7 +226,7 @@ class ForwardReader extends FileReader
             let lines = cur_conf.split(/[\n]+/g);
 
             // NOTE: this.confLength-1 fixes last line being empty
-            if (lines.length < this.confLength){ // we need more as configuration is too small
+            if (lines.length < this.confLength - 1){ // we need more as configuration is too small
                 this.StrBuff = "t" + cur_conf;
                 if (!this.chunker.is_last()){
                     this.readAsText(    //so we ask the chunker to spit out more
@@ -388,6 +388,11 @@ class TrajectoryReader {
             if(trajReader.indexingReader.readyState == 1)
                 setTimeout(_load,3); // try untill can actually read
             trajReader.indexingReader.get_next_conf();
+            //TODO:find out why this is happening
+            let state = trajReader.chunker.get_estimated_state(trajReader.lookupReader.position_lookup);
+            console.log(state);
+            if (state[1]>=state[0])
+                document.dispatchEvent(new Event('finalConfig'));     
         };
 
         // Listen for last configuration event
