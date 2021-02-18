@@ -249,6 +249,7 @@ class TrajectoryReader {
         this.trajectorySlider = document.getElementById("trajectorySlider");
         this.indexProgressControls = document.getElementById("trajIndexingProgressControls");
         this.indexProgress = document.getElementById("trajIndexingProgress");
+        this.trajControls = document.getElementById("trajControls");
         this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
             this.idx = idx;
             //try display the retrieved conf
@@ -257,8 +258,10 @@ class TrajectoryReader {
         if (indexes) { // use index file
             this.lookupReader.position_lookup = indexes;
             // enable traj control
-            let trajControls = document.getElementById("trajControls");
-            trajControls.hidden = false;
+            this.trajControls.hidden = false;
+            //enable video creation during indexing
+            let videoControls = document.getElementById("videoCreateButton");
+            videoControls.disabled = false;
             //notify("finished indexing");
             this.trajectorySlider.setAttribute("max", (this.lookupReader.position_lookup.length - 1).toString());
             let timedisp = document.getElementById("trajTimestep");
@@ -280,6 +283,8 @@ class TrajectoryReader {
     }
     nextConfig() {
         this.idx++; // idx is also set by the callback of the reader
+        if (this.idx == this.lookupReader.position_lookup.length)
+            document.dispatchEvent(new Event('finalConfig'));
         if (!this.lookupReader.index_not_loaded(this.idx))
             this.lookupReader.get_conf(this.idx);
         //    this.indexingReader.get_next_conf();
@@ -301,15 +306,15 @@ class TrajectoryReader {
             trajReader.indexProgress.value = Math.round((state[1] / state[0]) * 100);
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
             if (state[1] >= state[0]) {
-                document.dispatchEvent(new Event('finalConfig'));
+                document.dispatchEvent(new Event('finalConfigIndexed'));
             }
-            if (trajReader.lookupReader.position_lookup.length > 1) {
+            if (trajReader.lookupReader.position_lookup.length > 1 && trajReader.trajControls.hidden) {
                 //enable video creation during indexing
                 let videoControls = document.getElementById("videoCreateButton");
                 videoControls.disabled = false;
                 // enable traj control
-                let trajControls = document.getElementById("trajControls");
-                trajControls.hidden = false;
+                //let trajControls = document.getElementById("trajControls");
+                trajReader.trajControls.hidden = false;
                 document.getElementById('trajControlsLink').click();
             }
         }
@@ -317,7 +322,7 @@ class TrajectoryReader {
         // Listen for last configuration event
         function _done(e) {
             document.removeEventListener('nextConfigIndexed', _load);
-            document.removeEventListener('finalConfig', _done);
+            document.removeEventListener('finalConfigIndexed', _done);
             //notify("finished indexing");
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
             let timedisp = document.getElementById("trajTimestep");
@@ -328,7 +333,7 @@ class TrajectoryReader {
         }
         ;
         document.addEventListener('nextConfigIndexed', _load);
-        document.addEventListener('finalConfig', _done);
+        document.addEventListener('finalConfigIndexed', _done);
         trajReader.indexingReader.get_next_conf();
     }
     retrieveByIdx(idx) {

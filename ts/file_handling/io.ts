@@ -319,6 +319,7 @@ class TrajectoryReader {
     trajectorySlider :HTMLInputElement;
     indexProgressControls :HTMLDivElement;
     indexProgress :HTMLProgressElement;
+    trajControls:HTMLElement;
 
     constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap,indexes?:[]){
         this.topReader = topReader;
@@ -331,6 +332,7 @@ class TrajectoryReader {
         this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
         this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
         this.indexProgress=<HTMLProgressElement>document.getElementById("trajIndexingProgress");
+        this.trajControls = document.getElementById("trajControls");
         this.lookupReader = new LookupReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
                 this.idx = idx;
@@ -341,8 +343,10 @@ class TrajectoryReader {
         if (indexes) {// use index file
             this.lookupReader.position_lookup=indexes;
             // enable traj control
-            let trajControls = document.getElementById("trajControls");
-            trajControls.hidden = false;
+            this.trajControls.hidden = false;
+            //enable video creation during indexing
+            let videoControls = <HTMLButtonElement>document.getElementById("videoCreateButton");
+            videoControls.disabled = false;
             //notify("finished indexing");
             this.trajectorySlider.setAttribute("max" ,
                 (this.lookupReader.position_lookup.length-1).toString()
@@ -368,12 +372,15 @@ class TrajectoryReader {
 
     nextConfig(){
         this.idx++; // idx is also set by the callback of the reader
+        if(this.idx==this.lookupReader.position_lookup.length)
+            document.dispatchEvent(new Event('finalConfig');
         if(!this.lookupReader.index_not_loaded(this.idx))
             this.lookupReader.get_conf( this.idx );
         //    this.indexingReader.get_next_conf();
         else
             this.idx--;
         this.trajectorySlider.setAttribute("value",this.idx.toString());
+        
     }
 
     indexTrajectory(){
@@ -395,16 +402,16 @@ class TrajectoryReader {
 
 
             if (state[1]>=state[0]){
-                document.dispatchEvent(new Event('finalConfig')); 
+                document.dispatchEvent(new Event('finalConfigIndexed')); 
             }  
-            if(trajReader.lookupReader.position_lookup.length>1){
+            if(trajReader.lookupReader.position_lookup.length>1 && trajReader.trajControls.hidden){
                 //enable video creation during indexing
                 let videoControls = <HTMLButtonElement>document.getElementById("videoCreateButton");
                 videoControls.disabled = false;
                 
                 // enable traj control
-                let trajControls = document.getElementById("trajControls");
-                trajControls.hidden = false;
+                //let trajControls = document.getElementById("trajControls");
+                trajReader.trajControls.hidden = false;
 
                 document.getElementById('trajControlsLink').click();
             }  
@@ -414,7 +421,7 @@ class TrajectoryReader {
         // Listen for last configuration event
         function _done(e) {
             document.removeEventListener('nextConfigIndexed', _load);
-            document.removeEventListener('finalConfig', _done);
+            document.removeEventListener('finalConfigIndexed', _done);
 
             //notify("finished indexing");
             trajReader.trajectorySlider.setAttribute("max" ,
@@ -428,7 +435,7 @@ class TrajectoryReader {
 
         };
         document.addEventListener('nextConfigIndexed', _load);
-        document.addEventListener('finalConfig', _done);
+        document.addEventListener('finalConfigIndexed', _done);
         trajReader.indexingReader.get_next_conf();
     }
 
