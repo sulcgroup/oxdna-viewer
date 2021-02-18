@@ -373,7 +373,7 @@ class TrajectoryReader {
     nextConfig(){
         this.idx++; // idx is also set by the callback of the reader
         if(this.idx==this.lookupReader.position_lookup.length)
-            document.dispatchEvent(new Event('finalConfig');
+            document.dispatchEvent(new Event('finalConfig'));
         if(!this.lookupReader.index_not_loaded(this.idx))
             this.lookupReader.get_conf( this.idx );
         //    this.indexingReader.get_next_conf();
@@ -445,7 +445,10 @@ class TrajectoryReader {
                 setTimeout(()=>{
                     this.retrieveByIdx(idx);
                 },30); // try untill can actually read
-        else this.lookupReader.get_conf(idx)
+        else {
+            this.idx=idx;
+            this.lookupReader.get_conf(idx);
+        }
     }
 
     previousConfig(){

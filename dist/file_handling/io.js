@@ -342,8 +342,10 @@ class TrajectoryReader {
             setTimeout(() => {
                 this.retrieveByIdx(idx);
             }, 30); // try untill can actually read
-        else
+        else {
+            this.idx = idx;
             this.lookupReader.get_conf(idx);
+        }
     }
     previousConfig() {
         this.idx--; // ! idx is also set by the callback of the reader
