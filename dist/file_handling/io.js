@@ -276,23 +276,11 @@ class TrajectoryReader {
         });
     }
     nextConfig() {
-        //if (systems.length > 1) {
-        //    notify("Only one file at a time can be read as a trajectory, sorry...");
-        //    return;
-        //}
         this.idx++; // idx is also set by the callback of the reader
         if (this.lookupReader.index_not_loaded(this.idx))
             this.forwardReader.get_next_conf();
         else
             this.lookupReader.get_conf(this.idx);
-    }
-    retrieveByIdx(idx) {
-        if (this.lookupReader.readyState == 1)
-            setTimeout(() => {
-                this.retrieveByIdx(idx);
-            }, 30); // try untill can actually read
-        else
-            this.lookupReader.get_conf(idx);
     }
     indexTrajectory() {
         function _load(e) {
@@ -303,8 +291,9 @@ class TrajectoryReader {
             //TODO:find out why this is happening
             let state = trajReader.chunker.get_estimated_state(trajReader.lookupReader.position_lookup);
             console.log(state);
-            if (state[1] >= state[0])
+            if (state[1] >= state[0]) {
                 document.dispatchEvent(new Event('finalConfig'));
+            }
         }
         ;
         // Listen for last configuration event
@@ -317,7 +306,7 @@ class TrajectoryReader {
             notify("finished indexing");
             //let state = this.chunker.get_estimated_state(this.lookupReader.position_lookup);
             let trajectorySlider = document.getElementById("trajectorySlider");
-            trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length).toString());
+            trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
         }
         ;
         document.addEventListener('nextConfigIndexed', _load);
