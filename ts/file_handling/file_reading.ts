@@ -76,6 +76,7 @@ function handleFiles(files: FileList) {
     const filesLen = files.length;
 
     let topFile, jsonFile, trapFile;
+    let idxFile = null;
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
@@ -95,6 +96,7 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
+        else if (ext === "idx") idxFile = files[i];
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
             return
@@ -115,7 +117,7 @@ function handleFiles(files: FileList) {
 
         //read a topology/configuration pair and maybe a json file
         if (!jsonAlone) {
-            readFiles(topFile, datFile, jsonFile);
+            readFiles(topFile, datFile, idxFile, jsonFile);
         }
 
         //read just a json file to generate an overlay on an existing scene
@@ -219,7 +221,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             datReq.responseType = "blob";
             datReq.onload = () => {
                 datFile = datReq.response;
-                readFiles(topFile, datFile, overlayFile);
+                readFiles(topFile, datFile, null, overlayFile);
             }
             datReq.send();
         }
@@ -238,7 +240,7 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, jsonFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -247,17 +249,37 @@ function readFiles(topFile: File, datFile: File, jsonFile?: File) {
         systems.push(system); //add system to Systems[]
         //TODO: is this really neaded? 
         system.setDatFile(datFile); //store datFile in current System object
+        if(idxFile===null){
+            //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+            const topReader = new TopReader(topFile, system, elements,()=>{
+                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                trajReader = new TrajectoryReader(datFile,topReader,system,elements);
+                trajReader.indexTrajectory();
+                
+                //set up instancing data arrays
+                system.initInstances(system.systemLength());
+            });
+            topReader.read();
+        }
+        else{
+            console.log("index provided");
+            const idxReader = new FileReader(); //read .json
+            idxReader.onload = () => {
+                let file = idxReader.result as string;
+                let indexes = JSON.parse(file);
 
-        //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-        const topReader = new TopReader(topFile, system, elements,()=>{
-            //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-            trajReader = new TrajectoryReader(datFile,topReader,system,elements);
-            trajReader.indexTrajectory();
-            
-            //set up instancing data arrays
-            system.initInstances(system.systemLength());
-        });
-        topReader.read();
+                const topReader = new TopReader(topFile, system, elements,()=>{
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile,topReader,system,elements,indexes);
+                    trajReader.nextConfig();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                topReader.read();
+            };
+            idxReader.readAsText(idxFile);
+        }
+        
 
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json

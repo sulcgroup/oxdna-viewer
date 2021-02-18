@@ -316,9 +316,11 @@ class TrajectoryReader {
     offset : number = 0;
     time:number;
     firstRead:boolean=true;
+    trajectorySlider :HTMLInputElement;
+    indexProgressControls :HTMLDivElement;
+    indexProgress :HTMLProgressElement;
 
-
-    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap){
+    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap,indexes?:[]){
         this.topReader = topReader;
         this.system = system;
         this.elems = elems;
@@ -326,15 +328,28 @@ class TrajectoryReader {
         this.chunker = new FileChunker(datFile, topReader.topFile.size * 30);
         this.confLength = this.topReader.configurationLength +3; 
         this.numNuc = system.systemLength();
-
+        this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
+        this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
+        this.indexProgress=<HTMLProgressElement>document.getElementById("trajIndexingProgress");
         this.lookupReader = new LookupReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
                 this.idx = idx;
                 //try display the retrieved conf
                 this.parse_conf(lines);
             });
-            
 
+        if (indexes) {// use index file
+            this.lookupReader.position_lookup=indexes;
+            // enable traj control
+            let trajControls = document.getElementById("trajControls");
+            trajControls.hidden = false;
+            //notify("finished indexing");
+            this.trajectorySlider.setAttribute("max" ,
+                (this.lookupReader.position_lookup.length-1).toString()
+            );
+            let timedisp = document.getElementById("trajTimestep");
+            timedisp.hidden = false;
+        }
         this.indexingReader = new ForwardReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
                 if (size>0){
@@ -358,6 +373,7 @@ class TrajectoryReader {
         //    this.indexingReader.get_next_conf();
         else
             this.idx--;
+        this.trajectorySlider.setAttribute("value",this.idx.toString());
     }
 
     indexTrajectory(){
@@ -368,10 +384,31 @@ class TrajectoryReader {
             trajReader.indexingReader.get_next_conf();
             //TODO:find out why this is happening
             let state = trajReader.chunker.get_estimated_state(trajReader.lookupReader.position_lookup);
-            console.log(state);
+            //console.log(state);
+            if(trajReader.indexProgressControls.hidden)
+                trajReader.indexProgressControls.hidden=false;
+            
+            trajReader.indexProgress.value=Math.round((state[1]/state[0]) * 100);
+            trajReader.trajectorySlider.setAttribute("max" ,
+                (trajReader.lookupReader.position_lookup.length-1).toString()
+            );
+
+
             if (state[1]>=state[0]){
                 document.dispatchEvent(new Event('finalConfig')); 
-            }    
+            }  
+            if(trajReader.lookupReader.position_lookup.length>1){
+                //enable video creation during indexing
+                let videoControls = <HTMLButtonElement>document.getElementById("videoCreateButton");
+                videoControls.disabled = false;
+                
+                // enable traj control
+                let trajControls = document.getElementById("trajControls");
+                trajControls.hidden = false;
+
+                document.getElementById('trajControlsLink').click();
+            }  
+
         };
 
         // Listen for last configuration event
@@ -379,16 +416,15 @@ class TrajectoryReader {
             document.removeEventListener('nextConfigIndexed', _load);
             document.removeEventListener('finalConfig', _done);
 
-            // enable traj control
-            let trajControls = document.getElementById("trajControls");
-            trajControls.hidden = false;
-
-            notify("finished indexing");
-            //let state = this.chunker.get_estimated_state(this.lookupReader.position_lookup);
-            let trajectorySlider = document.getElementById("trajectorySlider");
-            trajectorySlider.setAttribute("max" ,
+            //notify("finished indexing");
+            trajReader.trajectorySlider.setAttribute("max" ,
                 (trajReader.lookupReader.position_lookup.length-1).toString()
             );
+            let timedisp = document.getElementById("trajTimestep");
+            timedisp.hidden = false;
+            //save index file
+            if(trajReader.lookupReader.position_lookup.length>1)
+            makeTextFile("traj.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
 
         };
         document.addEventListener('nextConfigIndexed', _load);
@@ -397,6 +433,7 @@ class TrajectoryReader {
     }
 
     retrieveByIdx(idx){
+        //used by the slider to set the conf
         if(this.lookupReader.readyState == 1)
                 setTimeout(()=>{
                     this.retrieveByIdx(idx);
@@ -410,6 +447,7 @@ class TrajectoryReader {
             notify("Can't step past the initial conf!");
             this.idx = 0;
         }
+        this.trajectorySlider.setAttribute("value",this.idx.toString());
         this.lookupReader.get_conf(this.idx);
     }
 
@@ -434,9 +472,10 @@ class TrajectoryReader {
         confNum += 1
         console.log(confNum, "t =", time);
         
-        //let timedisp = document.getElementById("trajControls");
-        //timedisp.innerHTML = `t = ${time.toLocaleString()}`;
+        let timedisp = document.getElementById("trajTimestep");
+        timedisp.innerHTML = `t = ${time.toLocaleString()}`;
         //timedisp.hidden = false;
+
         // discard the header
         lines = lines.slice(3);
         
