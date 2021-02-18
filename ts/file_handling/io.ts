@@ -309,7 +309,7 @@ class TrajectoryReader {
     confLength : number;
     firstConf = true;
     numNuc : number;
-    forwardReader : ForwardReader;
+    //forwardReader : ForwardReader;
     indexingReader : ForwardReader;
     lookupReader : LookupReader;
     idx = -1;
@@ -334,21 +334,7 @@ class TrajectoryReader {
                 this.parse_conf(lines);
             });
             
-        this.forwardReader = new ForwardReader(this.chunker,this.confLength,
-            (idx, lines, size)=>{
-                //update idx
-                this.idx = idx;
-                if (size>0){
-                    //record the retrieved conf
-                    this.lookupReader.add_index(this.offset,size);
-                    this.offset+=size;
-                    //try display the retrieved conf
-                    this.parse_conf(lines);
-                    if(this.firstRead){
-                        this.indexTrajectory();
-                    }
-                }
-            });
+
         this.indexingReader = new ForwardReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
                 if (size>0){
@@ -356,17 +342,22 @@ class TrajectoryReader {
                     this.lookupReader.add_index(this.offset,size);
                     this.offset+=size;
                     document.dispatchEvent(new Event('nextConfigIndexed'));
-                    this.forwardReader.idx++;
+                    //this.forwardReader.idx++;
+                    if(this.firstRead){
+                        this.parse_conf(lines);
+                        this.firstRead=false;
+                    }
                 }
             });
     }
 
     nextConfig(){
         this.idx++; // idx is also set by the callback of the reader
-        if(this.lookupReader.index_not_loaded(this.idx))
-            this.forwardReader.get_next_conf();
-        else
+        if(!this.lookupReader.index_not_loaded(this.idx))
             this.lookupReader.get_conf( this.idx );
+        //    this.indexingReader.get_next_conf();
+        else
+            this.idx--;
     }
 
     indexTrajectory(){
@@ -402,15 +393,15 @@ class TrajectoryReader {
         };
         document.addEventListener('nextConfigIndexed', _load);
         document.addEventListener('finalConfig', _done);
-        this.indexingReader.StrBuff=this.forwardReader.StrBuff;
-        this.indexingReader.configsBuffer=this.forwardReader.configsBuffer;
-        if (this.forwardReader.StrBuff !=="" || this.forwardReader.configsBuffer.length>0)
-        {
-            // enable video creation
-            let videoCreateButton = <HTMLButtonElement>document.getElementById("videoCreateButton");
-            videoCreateButton.disabled = false;
-            trajReader.indexingReader.get_next_conf();
-        }
+        trajReader.indexingReader.get_next_conf();
+    }
+
+    retrieveByIdx(idx){
+        if(this.lookupReader.readyState == 1)
+                setTimeout(()=>{
+                    this.retrieveByIdx(idx);
+                },30); // try untill can actually read
+        else this.lookupReader.get_conf(idx)
     }
 
     previousConfig(){
