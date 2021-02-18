@@ -150,6 +150,7 @@ class ForwardReader extends FileReader {
                 if (!cur_conf) {
                     notify("No more confs to load!");
                     document.dispatchEvent(new Event('finalConfig'));
+                    document.dispatchEvent(new Event('finalConfigIndexed'));
                     this.callback(this.idx, 0, 0);
                     return;
                 }
