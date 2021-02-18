@@ -119,24 +119,26 @@ class RevertableDeletion extends RevertableEdit {
 }
 
 class RevertableMassDiscretization extends RevertableEdit {
-    system: System;
-    constructor(system, cellsize){
+    victims: BasicElement[];
+    newbies: BasicElement[];
+    constructor(victims: BasicElement[], newelements: BasicElement[], newinstcopies: InstanceCopy[]){
+        const saved = victims.map(e=> new InstanceCopy(e));
         let undo = function () {
             // delete added mass particles
-            this.system = edit.deleteElements(massSys.getMonomers());
+            edit.deleteElements(this.newbies);
             // add original system back
-            this.system = edit.addElements(originalSys);
+            this.victims = edit.addElements(saved);
         }
         let redo = function () {
-            this.system = edit.deleteElements(originalSys);
-            this.system = edit.addElements(massSys.getMonomers());
+            // delete original Elements
+            edit.deleteElements(this.victims);
+            // Add the new elements
+            this.newbies = edit.addElements(newinstcopies);
         }
         super(undo, redo);
-        // save original system
-        const originalSys = system.map(e => new InstanceCopy(e));
         // construct and save discretizedMassSystem
-        const massSys = edit.discretizeMass(system, cellsize);
-        this.system = system;
+        this.victims = victims;
+        this.newbies = newelements;
     }
     ;
 }

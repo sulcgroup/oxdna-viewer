@@ -210,17 +210,6 @@ function fillEdgesWrapper(nid, edgecase) {
             }
     }
 }
-function solveFluctuationsWrapper(nid, edgecase) {
-    // Easy expansion for other edge methods
-    let net = networks[nid];
-    switch (edgecase) {
-        case 0:
-            // Classic ANM
-            let h = net.generateHessian();
-            let i = net.invertHessian(h);
-            let rmsfs = net.getRMSF(i, 300);
-    }
-}
 function visualizeNetworkWrapper(nid) {
     // To be written later
 }
@@ -235,7 +224,7 @@ function discretizeMassWrapper() {
         return;
     }
     let cellSize = view.getInputNumber("cellSize");
-    if (cellSize <= 0 || typeof cellSize != "number") {
+    if (cellSize <= 0 || typeof (cellSize) != "number") {
         notify("Please Enter Valid Cell Size into the Cell Size Box");
         return;
     }
@@ -243,8 +232,12 @@ function discretizeMassWrapper() {
         let elems = Array.from(selectedBases); // Save so that we can clear the selection
         clearSelection();
         copied = elems.map(e => new InstanceCopy(e));
-        editHistory.do(new RevertableMassDiscretization(elems, cellSize / 8.518)); //Sim Unit Conversion
+        const monomers = edit.discretizeMass(elems, cellSize);
+        const InstMassSys = monomers.map(e => new InstanceCopy(e));
+        const mono2 = edit.addElements(InstMassSys);
+        editHistory.do(new RevertableAddition(InstMassSys, mono2)); //Sim Unit Conversion
         topologyEdited = true;
+        // renderer.render(pickingScene, camera); didn't do anything
     }
 }
 function testNetworkWrapper() {

@@ -399,6 +399,9 @@ var edit;
                     if (e.isAminoAcid()) {
                         strand = sys.addNewPeptideStrand();
                     }
+                    else if (e.type == 'gs') {
+                        strand = sys.addNewGenericSphereStrand();
+                    }
                     else {
                         strand = sys.addNewNucleicAcidStrand();
                     }
@@ -818,14 +821,14 @@ var edit;
                     //returns only boxid entries matching the current i, j, k
                     let currentBox = [];
                     for (let p = 0; p < xboxids.length; p++) {
-                        if (xboxids[p] == i && yboxids[p] == j && zboxids[p] == j) {
+                        if (xboxids[p] == i && yboxids[p] == j && zboxids[p] == k) {
                             currentBox.push(elemids[p]);
                         }
                     }
                     //If any particle in this section of the grid
                     if (currentBox.length > 0) {
                         let m = currentBox.length;
-                        let com = new THREE.Vector3;
+                        let com = new THREE.Vector3(0, 0, 0);
                         for (let l = 0; l < m; l += 1) {
                             com.add(elems[currentBox[l]].getPos());
                         }
@@ -836,6 +839,10 @@ var edit;
                 }
             }
         }
+        // // Initialize a dummy system to put the monomers in
+        const tmpSys = new System(tmpSystems.length, 0);
+        tmpSys.initInstances(gPositions.length);
+        tmpSystems.push(tmpSys);
         // Now I need to Return the New System
         let currentelemsize = elements.size;
         let genericSys = new System(sysCount, currentelemsize);
@@ -843,22 +850,68 @@ var edit;
         for (let i = 0; i < gPositions.length; i++) {
             let be = gstrand.createBasicElement(currentelemsize + i);
             be.sid = i;
+            be.dummySys = tmpSys;
             if (i != 0) {
                 let prev = elements.get(currentelemsize + i - 1);
                 be.n3 = prev;
                 prev.n5 = be;
             }
-            elements.push(be);
+            else {
+                gstrand.setFrom(be);
+            }
+            // elements.push(be);
+            // idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
+            // sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
         }
-        gstrand.updateEnds();
+        // gstrand.updateEnds();
         genericSys.initInstances(gPositions.length);
         for (let i = 0; i < gPositions.length; i++) {
             let be = gstrand.getMonomers()[i];
             be.calcPositions(gPositions[i]);
             be.mass = gMasses[i];
         }
-        systems.push(genericSys); //this feels like a bad idea
-        return genericSys;
+        gstrand.updateEnds();
+        // systems.push(genericSys); //this feels like a bad idea
+        // // Initialize a dummy system to put the monomers in
+        // const tmpSys = new System(tmpSystems.length, 0);
+        // tmpSys.initInstances(gPositions.length); // Need to be x2 if duplex
+        // tmpSystems.push(tmpSys);
+        //
+        //
+        // let realSys: System;
+        // realSys = new System(sysCount++, elements.getNextId())
+        // realSys.initInstances(gPositions.length);
+        // // This is ugly, but if we don't have a box, everything will be
+        // // squashed into the origin when centering.
+        // box = new THREE.Vector3(1000,1000,1000);
+        //
+        // // Create a new strand
+        // let strand = realSys.addNewGenericSphereStrand();
+        //
+        // let addedElems = [];
+        // for(let i = 0; i < gPositions.length; i++){
+        //     let e = new GenericSphere(undefined, strand);
+        //     e.sid = i;
+        //     e.type = 'gs';
+        //     if(i == 0){
+        //         e.n3 = null;
+        //         strand.setFrom(e);
+        //     } else {
+        //         let prevE = elements.get(elements.size -1);
+        //         e.n3 = prevE;
+        //         prevE.n5 = e;
+        //     }
+        //     e.strand = strand;
+        //     e.mass = gMasses[i];
+        //     e.calcPositions(gPositions[i]);
+        //     e.dummySys = tmpSys;
+        //     // elements.push(e); // Add element and assign id
+        //     addedElems.push(e);
+        // }
+        // // strand.updateEnds();
+        // systems.push(realSys);
+        // addSystemToScene(realSys);
+        return genericSys.getMonomers();
     }
     edit.discretizeMass = discretizeMass;
     /**
