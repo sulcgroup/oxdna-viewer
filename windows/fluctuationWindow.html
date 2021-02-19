@@ -16,7 +16,7 @@
     <button class="button primary outline" id="sidetoggle" onclick="view.toggleSideBarDatasets()">Data & Options</button>
 
     <button class="button secondary" onclick="flux.downloadChart()" ><span class="mif-floppy-disk"></span></button>
-    <button class="button dark" onclick="networks[selectednetwork].">Generate Par </button>
+    <button class="button dark" onclick="networks[selectednetwork]">Generate Par</button>
 
 </div>
 
@@ -31,7 +31,7 @@
 
     </div>
     <div class="sidebar-content">
-        <div class="title" >Select or Load Target Data</div>
+<!--        <div class="title" >Select or Load Target Data</div>-->
         <button class="button" id="collapse_toggle_3">Available Datasets</button>
         <div data-role="collapse" data-toggle-element="#collapse_toggle_3">
             <!--        dynamically List Data Here -->
@@ -55,10 +55,18 @@
                     <input type="text" placeholder="particle id offset">
                 </label></li>
                 <li><label>
-                    <input type="text" placeholder="something">
+                    <input type="text" placeholder="Bending Restraints?">
+                </label></li>
+                <li><label>
+                    <input type="text" placeholder="Torsional Restraints?">
                 </label></li>
             </ul>
             </div>
+            <label for="submit"></label><input class="button" id="submit" onclick="flux.loadFluxData()">
+            <input id="fluxfile"  type="file" data-role="file" data-prepend="Data Files" data-cls-caption="bg-blue fg-white"
+                   data-cls-button="bg-darkBlue fg-white">
+<!--            accept="flux/json"-->
+            <sub>* .json files as outputted by oxDNA_Analysis_tools</sub>
         </div>
 <!--        <div class="input-control file" data-role="input">-->
 <!--            <input type="file">-->

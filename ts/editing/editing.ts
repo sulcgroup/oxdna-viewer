@@ -272,8 +272,21 @@ function discretizeMassWrapper(){
     } else {
         let elems = Array.from(selectedBases); // Save so that we can clear the selection
         clearSelection();
-        copied = elems.map(e => new InstanceCopy(e));
         const monomers = edit.discretizeMass(elems, cellSize);
+        // let sys = new System(sysCount, elements.size);
+        // sys.initInstances(monomers.length);
+        // let gstrand = sys.addNewGenericSphereStrand();
+        // monomers.forEach((m, ind) => {
+        //     let be = gstrand.createBasicElement(m.id);
+        //     if(ind == 0) gstrand.setFrom(m);
+        //     else {
+        //         let pe =
+        //     }
+        //
+        //     be.
+        //     gstrand.
+        // })
+
         const InstMassSys = monomers.map(e => new InstanceCopy(e));
         const mono2 = edit.addElements(InstMassSys);
         editHistory.do(new RevertableAddition(InstMassSys, mono2)); //Sim Unit Conversion

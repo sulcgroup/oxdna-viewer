@@ -345,7 +345,7 @@ class View {
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
-            this.fluxSideBarDisplayed = false; //
+            this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
             if (g.enabled()) {
                 // Make sure something is selected
@@ -703,6 +703,12 @@ class fluxGraph {
     }
     getYaxis(units) {
         return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
+    }
+    loadFluxData() {
+        let input = document.getElementById('fluxfile');
+        let files = input.hasAttribute('files');
+        // let files = input.getAttribute('files');
+        notify(files.toString());
     }
     initializeGraph() {
         // onCreate parameter of toggleWindow won't initialize this correctly

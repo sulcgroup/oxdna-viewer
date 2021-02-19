@@ -20,7 +20,10 @@ class GenericSphere extends BasicElement {
         this.calcPositions(p);
     }
     calcPositions(p) {
-        const sys = this.getSystem();
+        let sys = this.getSystem();
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+        }
         let sid = this.sid;
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.0
         let sp, spLen, spRotation;
@@ -44,7 +47,7 @@ class GenericSphere extends BasicElement {
         // fill in the instancing matrices
         let scale;
         if (this.mass > 4) { //More than 4 particles
-            scale = this.mass / 4;
+            scale = 1 + this.mass / 16;
         }
         else {
             scale = 1;

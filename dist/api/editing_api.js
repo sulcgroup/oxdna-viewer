@@ -839,79 +839,44 @@ var edit;
                 }
             }
         }
-        // // Initialize a dummy system to put the monomers in
-        const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(gPositions.length);
-        tmpSystems.push(tmpSys);
         // Now I need to Return the New System
+        //dummy system
+        let dumb = new System(tmpSystems.length, 0);
+        dumb.initInstances(gPositions.length);
+        tmpSystems.push(dumb);
         let currentelemsize = elements.size;
-        let genericSys = new System(sysCount, currentelemsize);
-        let gstrand = genericSys.addNewGenericSphereStrand();
+        let realSys = new System(sysCount++, currentelemsize);
+        realSys.initInstances(0);
+        systems.push(realSys);
+        addSystemToScene(realSys);
+        let gstrand = realSys.addNewGenericSphereStrand();
+        let newElems = [];
+        let last;
         for (let i = 0; i < gPositions.length; i++) {
             let be = gstrand.createBasicElement(currentelemsize + i);
+            elements.push(be);
             be.sid = i;
-            be.dummySys = tmpSys;
+            be.dummySys = dumb;
+            be.type = 'gs';
             if (i != 0) {
-                let prev = elements.get(currentelemsize + i - 1);
+                let prev = newElems[i - 1];
                 be.n3 = prev;
                 prev.n5 = be;
             }
             else {
-                gstrand.setFrom(be);
+                be.n3 = null;
             }
-            // elements.push(be);
-            // idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-            // sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
-        }
-        // gstrand.updateEnds();
-        genericSys.initInstances(gPositions.length);
-        for (let i = 0; i < gPositions.length; i++) {
-            let be = gstrand.getMonomers()[i];
-            be.calcPositions(gPositions[i]);
+            be.strand = gstrand;
             be.mass = gMasses[i];
+            newElems.push(be);
+            last = be;
         }
-        gstrand.updateEnds();
-        // systems.push(genericSys); //this feels like a bad idea
-        // // Initialize a dummy system to put the monomers in
-        // const tmpSys = new System(tmpSystems.length, 0);
-        // tmpSys.initInstances(gPositions.length); // Need to be x2 if duplex
-        // tmpSystems.push(tmpSys);
-        //
-        //
-        // let realSys: System;
-        // realSys = new System(sysCount++, elements.getNextId())
-        // realSys.initInstances(gPositions.length);
-        // // This is ugly, but if we don't have a box, everything will be
-        // // squashed into the origin when centering.
-        // box = new THREE.Vector3(1000,1000,1000);
-        //
-        // // Create a new strand
-        // let strand = realSys.addNewGenericSphereStrand();
-        //
-        // let addedElems = [];
-        // for(let i = 0; i < gPositions.length; i++){
-        //     let e = new GenericSphere(undefined, strand);
-        //     e.sid = i;
-        //     e.type = 'gs';
-        //     if(i == 0){
-        //         e.n3 = null;
-        //         strand.setFrom(e);
-        //     } else {
-        //         let prevE = elements.get(elements.size -1);
-        //         e.n3 = prevE;
-        //         prevE.n5 = e;
-        //     }
-        //     e.strand = strand;
-        //     e.mass = gMasses[i];
-        //     e.calcPositions(gPositions[i]);
-        //     e.dummySys = tmpSys;
-        //     // elements.push(e); // Add element and assign id
-        //     addedElems.push(e);
-        // }
-        // // strand.updateEnds();
-        // systems.push(realSys);
-        // addSystemToScene(realSys);
-        return genericSys.getMonomers();
+        gstrand.setFrom(last);
+        newElems.forEach((e, eid) => {
+            e.calcPositions(gPositions[eid]);
+        });
+        // addSystemToScene(dumb); // add tmpSys to scene
+        return newElems;
     }
     edit.discretizeMass = discretizeMass;
     /**
