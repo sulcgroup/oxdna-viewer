@@ -231,14 +231,15 @@
                         <div class="row flex-align-center" style="width: 500px; margin: 10px;">
 
                             <input id="trajectorySlider" type="range" min="0" max="100" value="0" class="slider"
-                            oninput="trajReader.retrieveByIdx(this.value);">
+                               oninput="trajReader.retrieveByIdx(this.value);">
                             
-                            <div id="trajIndexingProgressControls"  hidden="true">
-                                <label for="trajIndexingProgress">Indexing progress:</label>
+                            <div id="trajIndexingProgressControls"  hidden="true"  >
+                                <label id="trajIndexingProgressLabel"  for="trajIndexingProgress">Indexing progress:</label>
                                 <progress id="trajIndexingProgress" value="0" max="100" > </progress>
+                                <a id="downloadIndex" onclick="trajReader.downloadIndexFile()" href="#" hidden ="true">download index file</a>
                             </div>
                         </div>
-                        <div id="trajTimestep" hidden="true"></div>
+                        <div id="trajTimestep"></div>
                         
                         
 
