@@ -149,14 +149,15 @@ class ForwardReader extends FileReader {
     }
     _handle_read() {
         //now we can populate the configs buffer 
-        this.configsBuffer = this.StrBuff.split(/[t]+/g);
+        this.configsBuffer = this.StrBuff.split("t"); //t]+/g);
         //an artifact of this is that a single conf gets splitted into "" and the rest
         if (this.configsBuffer[0] === "")
             this.configsBuffer.shift(); // so we can discard the first entry
         // now the current conf to process is 1st in configsBuffer
         let cur_conf = this.configsBuffer.shift();
+        console.log("current conf:", cur_conf);
         if (cur_conf === undefined && this.chunker.is_last()) {
-            notify("No more confs to load!");
+            notify("Finished indexing!");
             document.dispatchEvent(new Event('finalConfig'));
             document.dispatchEvent(new Event('finalConfigIndexed'));
             this.callback(this.idx, 0, 0);
@@ -165,6 +166,11 @@ class ForwardReader extends FileReader {
         if (cur_conf === undefined)
             cur_conf = "";
         let lines = cur_conf.split(/[\n]+/g);
+        //lines = lines.slice(this.confLength);
+        //this._linecheck(lines)
+        if (lines.length > this.confLength) {
+            console.log("wtf");
+        }
         if (lines.length <= this.confLength && !this.chunker.is_last()) { // we need more as configuration is too small
             //there should be no conf in the buffer
             this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
@@ -173,10 +179,19 @@ class ForwardReader extends FileReader {
             return;
         }
         this.idx++; // we are moving forward
-        let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+        let size = this.byteSize("t" + lines.join("\n")); // as we are missing a t which is 1 in byteSize
         // we need to empty the StringBuffer
         this.StrBuff = this.StrBuff.slice(size);
+        console.log("buffer contents:", this.StrBuff);
         this.callback(this.idx, lines, size);
+    }
+    _linecheck(lines) {
+        console.log(lines[lines.length - 3].split(" "));
+        console.log(lines[lines.length - 2].split(" "));
+        console.log(lines[lines.length - 1].split(" "));
+        if (lines[0].split(" ").length)
+            return true;
+        return false;
     }
     get_next_conf() {
         if (this.firstConf) {
@@ -233,7 +248,7 @@ class TrajectoryReader {
         this.system = system;
         this.elems = elems;
         this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, topReader.topFile.size * 15);
+        this.chunker = new FileChunker(datFile, topReader.topFile.size * 30); //TODO:figure out why ???
         this.confLength = this.topReader.configurationLength + 3;
         this.numNuc = system.systemLength();
         this.trajectorySlider = document.getElementById("trajectorySlider");
@@ -303,7 +318,6 @@ class TrajectoryReader {
                 let videoControls = document.getElementById("videoCreateButton");
                 videoControls.disabled = false;
                 // enable traj control
-                //let trajControls = document.getElementById("trajControls");
                 trajReader.trajControls.hidden = false;
                 document.getElementById('trajControlsLink').click();
             }
@@ -377,6 +391,8 @@ class TrajectoryReader {
             notify(".dat and .top files incompatible", "alert");
             return;
         }
+        if (box === undefined)
+            box = new THREE.Vector3(0, 0, 0);
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
         box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
