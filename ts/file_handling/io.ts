@@ -451,6 +451,32 @@ class TrajectoryReader {
         this.lookupReader.get_conf(this.idx);
     }
 
+    playFlag = false;
+    intervalId = null;
+    playTrajectory(){
+        this.playFlag = !this.playFlag;
+
+        if (this.playFlag )
+        {
+            this.intervalId = setInterval(()=>{
+                if(this.idx==trajReader.lookupReader.position_lookup.length)
+                {
+                    this.playFlag = false;
+                    clearInterval(this.intervalId);
+                    return;
+                }
+                trajReader.nextConfig();
+                trajReader.trajectorySlider.setAttribute("value",trajReader.lookupReader.idx.toString());
+            }, 100);
+        }
+        else{
+            clearInterval(this.intervalId);
+            this.playFlag = false;
+        }
+       
+    }
+
+
     parse_conf(lines :string[]){
         let system = this.system;
         let numNuc = this.numNuc;
@@ -461,9 +487,6 @@ class TrajectoryReader {
             return
         }
         
-        // list out all lines
-        console.log("ll:",lines.length-3,numNuc);
-        console.log("l:",  lines[lines.length-1]);
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
         box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
@@ -486,7 +509,6 @@ class TrajectoryReader {
             l: string[];
         
         if (this.firstConf){
-            console.log("first");
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
@@ -518,7 +540,6 @@ class TrajectoryReader {
             sysCount++;
         }
         else{
-            console.log("etc");
             // here goes update logic in theory ?
             for (let lineNum = 0; lineNum < numNuc; lineNum++) {
                 if (lines[lineNum] == "") {

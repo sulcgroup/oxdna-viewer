@@ -227,6 +227,8 @@ class TrajectoryReader {
         this.idx = 0;
         this.offset = 0;
         this.firstRead = true;
+        this.playFlag = false;
+        this.intervalId = null;
         this.topReader = topReader;
         this.system = system;
         this.elems = elems;
@@ -347,6 +349,24 @@ class TrajectoryReader {
         this.trajectorySlider.setAttribute("value", this.idx.toString());
         this.lookupReader.get_conf(this.idx);
     }
+    playTrajectory() {
+        this.playFlag = !this.playFlag;
+        if (this.playFlag) {
+            this.intervalId = setInterval(() => {
+                if (this.idx == trajReader.lookupReader.position_lookup.length) {
+                    this.playFlag = false;
+                    clearInterval(this.intervalId);
+                    return;
+                }
+                trajReader.nextConfig();
+                trajReader.trajectorySlider.setAttribute("value", trajReader.lookupReader.idx.toString());
+            }, 100);
+        }
+        else {
+            clearInterval(this.intervalId);
+            this.playFlag = false;
+        }
+    }
     parse_conf(lines) {
         let system = this.system;
         let numNuc = this.numNuc;
@@ -356,9 +376,6 @@ class TrajectoryReader {
             notify(".dat and .top files incompatible", "alert");
             return;
         }
-        // list out all lines
-        console.log("ll:", lines.length - 3, numNuc);
-        console.log("l:", lines[lines.length - 1]);
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
         box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
@@ -375,7 +392,6 @@ class TrajectoryReader {
         lines = lines.slice(3);
         let currentNucleotide, l;
         if (this.firstConf) {
-            console.log("first");
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
@@ -405,7 +421,6 @@ class TrajectoryReader {
             sysCount++;
         }
         else {
-            console.log("etc");
             // here goes update logic in theory ?
             for (let lineNum = 0; lineNum < numNuc; lineNum++) {
                 if (lines[lineNum] == "") {

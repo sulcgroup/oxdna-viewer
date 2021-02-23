@@ -219,16 +219,22 @@
 
             <!--Trajectory-->
             <div class="section" id="section-trajectory">
-                <div class=" group" style="width: 500px">
+                <div class=" group" style="width: 300px">
                     <div class="row flex-align-center">
-                        <button class="ribbon-button" onclick="trajReader.previousConfig()"
+                        <button class="button" onclick="trajReader.previousConfig()"
                             title="Previous config (left keyboard arrow)">
                             <span class="mif-previous mif-2x"></span>
-                            <span class="caption">Previous</span>
+                            <!--<span class="caption">Previous</span>-->
                         </button>
+                        <button class="button" id="playTrajectory" onclick="trajReader.playTrajectory();" title="Play current trajectory.">►</button>
                         
-                        
-                        <div class="row flex-align-center" style="width: 500px; margin: 10px;">
+                        <button class="button" onclick="trajReader.nextConfig()"
+                        title="Next config (right keyboard arrow)">
+                        <span class="mif-next mif-2x"></span>
+                        <!--<span class="caption">Next</span>-->
+                        </button>
+
+                        <div class="row flex-align-center" style="width: 300px; margin: 10px;">
 
                             <input id="trajectorySlider" type="range" min="0" max="100" value="0" class="slider"
                                oninput="trajReader.retrieveByIdx(this.value);">
@@ -241,13 +247,6 @@
                         </div>
                         <div id="trajTimestep"></div>
                         
-                        
-
-                        <button class="ribbon-button" onclick="trajReader.nextConfig()"
-                            title="Next config (right keyboard arrow)">
-                            <span class="mif-next mif-2x"></span>
-                            <span class="caption">Next</span>
-                        </button>
                     </div>
                 </div>
             </div>
