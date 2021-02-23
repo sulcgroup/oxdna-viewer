@@ -91,10 +91,6 @@ class TopReader extends FileReader {
         this.readAsText(this.topFile);
     }
 }
-function datChunker(datFile, currentChunk, chunkSize) {
-    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
-    return sliced;
-}
 class FileChunker {
     constructor(file, chunk_size) {
         this.file = file;
@@ -132,6 +128,91 @@ class FileChunker {
         return this.file.slice(this.current_chunk * this.chunk_size, this.current_chunk * this.chunk_size + this.chunk_size);
     }
 }
+//class ForwardReader extends FileReader
+//{
+//    chunker : FileChunker;
+//    StrBuff : string;
+//    configsBuffer : string[];
+//    confLength :number;
+//    idx : number;
+//    callback : Function;
+//    firstConf = true;
+//    private byteSize = str => new Blob([str]).size;
+//
+//    constructor(chunker, confLength, callback){
+//        super();
+//        this.chunker = chunker;
+//        this.confLength = confLength;
+//        this.callback = callback;
+//        this.idx = -1;
+//        this.configsBuffer=[];
+//        this.StrBuff="";
+//    }
+//
+//    onload = ((evt) =>{ // extract configuration
+//        return () =>{
+//        let file = this.result as string;
+//        this.StrBuff = this.StrBuff.concat(file);
+//        //now we can populate the configs buffer 
+//        this.configsBuffer = this.StrBuff.split(/[t]+/g);
+//        
+//        //an artifact of this is that a single conf gets splitted into "" and the rest
+//        this.configsBuffer.shift(); // so we can discard the first entry
+//        // now the current conf to process is 1st in configsBuffer
+//        let cur_conf = this.configsBuffer.shift();
+//        if (!cur_conf)
+//        {
+//            notify("No more confs to load!");
+//            document.dispatchEvent(new Event('finalConfig'));
+//            document.dispatchEvent(new Event('finalConfigIndexed')); 
+//            this.callback(this.idx, 0, 0);
+//            return;
+//        }
+//        let lines = cur_conf.split(/[\n]+/g);
+//        if (lines.length < this.confLength){ // we need more as configuration is too small
+//            //there should be no conf in the buffer
+//            this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
+//            this.readAsText(    //so we ask the chunker to spit out more
+//                    this.chunker.get_next_chunk()
+//            );
+//            return;
+//        }
+//        this.idx++;                                      // we are moving forward
+//        // we need to empty the StringBuffer
+//        this.StrBuff = "";
+//        let size = this.byteSize("t" + cur_conf);             // as we are missing a t which is 1 in byteSize
+//        this.callback(this.idx, lines, size);
+//    }})();
+//
+//    get_next_conf(){
+//       
+//        if (this.configsBuffer.length > 0){
+//            //handle the stuff we have or request more
+//            let cur_conf = this.configsBuffer.shift();
+//            let lines = cur_conf.split(/[\n]+/g);
+//
+//            // NOTE: this.confLength-1 fixes last line being empty
+//            if (lines.length < this.confLength){ // we need more as configuration is too small
+//                this.StrBuff = "t" + cur_conf;
+//                if (!this.chunker.is_last()){
+//                    this.readAsText(    //so we ask the chunker to spit out more
+//                        this.chunker.get_next_chunk()
+//                    );
+//                }
+//                return;
+//            }
+//            this.idx++;                                      // we are moving forward   
+//            let size = this.byteSize("t" + cur_conf);        // as we are missing a t which is 1 in byteSize
+//            this.callback(this.idx, lines, size);
+//        }
+//        else{
+//            // we don't have anything to process, fetch some
+//            this.readAsText(
+//                this.chunker.get_next_chunk()
+//            );
+//        }
+//    }
+//}
 class ForwardReader extends FileReader {
     constructor(chunker, confLength, callback) {
         super();
@@ -144,7 +225,8 @@ class ForwardReader extends FileReader {
                 //now we can populate the configs buffer 
                 this.configsBuffer = this.StrBuff.split(/[t]+/g);
                 //an artifact of this is that a single conf gets splitted into "" and the rest
-                this.configsBuffer.shift(); // so we can discard the first entry
+                if (this.configsBuffer[0] === "")
+                    this.configsBuffer.shift(); // so we can discard the first entry
                 // now the current conf to process is 1st in configsBuffer
                 let cur_conf = this.configsBuffer.shift();
                 if (!cur_conf) {
@@ -163,9 +245,9 @@ class ForwardReader extends FileReader {
                     return;
                 }
                 this.idx++; // we are moving forward
-                // we need to empty the StringBuffer
-                this.StrBuff = "";
                 let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
+                // we need to empty the StringBuffer
+                this.StrBuff = this.StrBuff.slice(size);
                 this.callback(this.idx, lines, size);
             };
         })();
@@ -177,27 +259,7 @@ class ForwardReader extends FileReader {
         this.StrBuff = "";
     }
     get_next_conf() {
-        if (this.configsBuffer.length > 0) {
-            //handle the stuff we have or request more
-            let cur_conf = this.configsBuffer.shift();
-            let lines = cur_conf.split(/[\n]+/g);
-            // NOTE: this.confLength-1 fixes last line being empty
-            if (lines.length < this.confLength - 1) { // we need more as configuration is too small
-                this.StrBuff = "t" + cur_conf;
-                if (!this.chunker.is_last()) {
-                    this.readAsText(//so we ask the chunker to spit out more
-                    this.chunker.get_next_chunk());
-                }
-                return;
-            }
-            this.idx++; // we are moving forward   
-            let size = this.byteSize("t" + cur_conf); // as we are missing a t which is 1 in byteSize
-            this.callback(this.idx, lines, size);
-        }
-        else {
-            // we don't have anything to process, fetch some
-            this.readAsText(this.chunker.get_next_chunk());
-        }
+        this.readAsText(this.chunker.get_next_chunk());
     }
 }
 class LookupReader extends FileReader {
@@ -237,7 +299,7 @@ class LookupReader extends FileReader {
 class TrajectoryReader {
     constructor(datFile, topReader, system, elems, indexes) {
         this.firstConf = true;
-        this.idx = -1;
+        this.idx = 0;
         this.offset = 0;
         this.firstRead = true;
         this.topReader = topReader;
@@ -274,7 +336,6 @@ class TrajectoryReader {
                 this.lookupReader.add_index(this.offset, size);
                 this.offset += size;
                 document.dispatchEvent(new Event('nextConfigIndexed'));
-                //this.forwardReader.idx++;
                 if (this.firstRead) {
                     this.parse_conf(lines);
                     this.firstRead = false;
@@ -329,8 +390,8 @@ class TrajectoryReader {
             let timedisp = document.getElementById("trajTimestep");
             timedisp.hidden = false;
             //save index file
-            if (trajReader.lookupReader.position_lookup.length > 1)
-                makeTextFile("traj.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
+            //if(trajReader.lookupReader.position_lookup.length>1)
+            //makeTextFile("traj.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
         }
         ;
         document.addEventListener('nextConfigIndexed', _load);
@@ -359,7 +420,6 @@ class TrajectoryReader {
     }
     parse_conf(lines) {
         let system = this.system;
-        let currentStrand = system.strands[0];
         let numNuc = this.numNuc;
         // parse file into lines
         //let lines = this.curConf;
@@ -367,6 +427,9 @@ class TrajectoryReader {
             notify(".dat and .top files incompatible", "alert");
             return;
         }
+        // list out all lines
+        console.log("ll:", lines.length - 3, numNuc);
+        console.log("l:", lines[lines.length - 1]);
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
         box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
@@ -383,7 +446,9 @@ class TrajectoryReader {
         lines = lines.slice(3);
         let currentNucleotide, l;
         if (this.firstConf) {
+            console.log("first");
             this.firstConf = false;
+            let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
             for (let i = 0; i < numNuc; i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
@@ -411,6 +476,7 @@ class TrajectoryReader {
             sysCount++;
         }
         else {
+            console.log("etc");
             // here goes update logic in theory ?
             for (let lineNum = 0; lineNum < numNuc; lineNum++) {
                 if (lines[lineNum] == "") {
