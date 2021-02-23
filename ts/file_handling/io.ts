@@ -438,6 +438,7 @@ class TrajectoryReader {
         else {
             this.idx=idx;
             this.lookupReader.get_conf(idx);
+            this.trajectorySlider.setAttribute("value",this.idx.toString());
         }
     }
 
@@ -459,7 +460,7 @@ class TrajectoryReader {
         if (this.playFlag )
         {
             this.intervalId = setInterval(()=>{
-                if(this.idx==trajReader.lookupReader.position_lookup.length)
+                if(trajReader.idx==trajReader.lookupReader.position_lookup.length)
                 {
                     this.playFlag = false;
                     clearInterval(this.intervalId);
