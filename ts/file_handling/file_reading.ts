@@ -1,16 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-// chunk .dat file so its not trying to read the entire thing at once
-function datChunker(datFile: Blob, currentChunk: number, chunkSize: number) {
-    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
-    return sliced;
-}
 
-//markers are used by the trajectory reader to keep track of configuration start/ends
-class marker {
-    chunk: String;
-    lineID: number;
-}
+
 
 // Creates color overlays
 function makeLut(data, key) {
@@ -59,8 +50,8 @@ target.addEventListener("dragexit", function (event) {
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
 
-const datReader = new FileReader();
-var trajReader: TrajectoryReader;
+//const datReader = new FileReader();
+//var trajReader: TrajectoryReader;
 
 let confNum: number = 0,
     datFileout: string = "",
@@ -85,6 +76,7 @@ function handleFiles(files: FileList) {
     const filesLen = files.length;
 
     let topFile, jsonFile, trapFile;
+    let idxFile = null;
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
@@ -104,6 +96,7 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
+        else if (ext === "idx") idxFile = files[i];
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
             return
@@ -124,7 +117,7 @@ function handleFiles(files: FileList) {
 
         //read a topology/configuration pair and maybe a json file
         if (!jsonAlone) {
-            readFiles(topFile, datFile, jsonFile);
+            readFiles(topFile, datFile, idxFile, jsonFile);
         }
 
         //read just a json file to generate an overlay on an existing scene
@@ -228,7 +221,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             datReq.responseType = "blob";
             datReq.onload = () => {
                 datFile = datReq.response;
-                readFiles(topFile, datFile, overlayFile);
+                readFiles(topFile, datFile, null, overlayFile);
             }
             datReq.send();
         }
@@ -245,18 +238,48 @@ function readFilesFromURLParams() {
 
     readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
-
+var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, jsonFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
+        systems.push(system); //add system to Systems[]
+        //TODO: is this really neaded? 
+        system.setDatFile(datFile); //store datFile in current System object
+        if(idxFile===null){
+            //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+            const topReader = new TopReader(topFile, system, elements,()=>{
+                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                trajReader = new TrajectoryReader(datFile,topReader,system,elements);
+                trajReader.indexTrajectory();
+                
+                //set up instancing data arrays
+                system.initInstances(system.systemLength());
+            });
+            topReader.read();
+        }
+        else{
+            console.log("index provided");
+            const idxReader = new FileReader(); //read .json
+            idxReader.onload = () => {
+                let file = idxReader.result as string;
+                let indexes = JSON.parse(file);
 
-        //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-        const topReader = new TopReader(topFile, system, elements);
-        topReader.readAsText(topReader.topFile)
+                const topReader = new TopReader(topFile, system, elements,()=>{
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile,topReader,system,elements,indexes);
+                    trajReader.nextConfig();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                topReader.read();
+            };
+            idxReader.readAsText(idxFile);
+        }
+        
 
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
@@ -297,67 +320,6 @@ function updateConfFromFile(dat_file) {
 }
 
 
-function readDat(datReader, system) {
-    let currentStrand = system.strands[0];
-    let numNuc = system.systemLength();
-    // parse file into lines
-    let lines = datReader.result.split(/[\n]+/g);
-    if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-        notify(".dat and .top files incompatible", "alert");
-        return
-    }
-    // Increase the simulation box size if larger than current
-    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
-    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
-    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
-    redrawBox();
-
-    const time = parseInt(lines[0].split(" ")[2]);
-    confNum += 1
-    console.log(confNum, "t =", time);
-    let timedisp = document.getElementById("trajTimestep");
-    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
-    timedisp.hidden = false;
-    // discard the header
-    lines = lines.slice(3);
-    
-    let currentNucleotide: BasicElement,
-        l: string[];
-
-    //for each line in the current configuration, read the line and calculate positions
-    for (let i = 0; i < numNuc; i++) {
-        if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-            break
-        };
-        // get the nucleotide associated with the line
-        currentNucleotide = elements.get(i+system.globalStartId);
-
-        // consume a new line from the file
-        l = lines[i].split(" ");
-        currentNucleotide.calcPositionsFromConfLine(l, true);
-
-        //when a strand is finished, add it to the system
-        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
-            if (currentNucleotide.n5 == currentStrand.end3) {
-                currentStrand.end5 = currentNucleotide;
-            }
-            system.addStrand(currentStrand); // add strand to system
-            currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements.get(currentNucleotide.id+1)) {
-                currentStrand = elements.get(currentNucleotide.id+1).strand;
-            }
-        }
-
-    }
-    addSystemToScene(system);
-    centerAndPBC(system.getMonomers());
-    sysCount++;
-
-    //if there's another time line after the first configuration is loaded, its a trajectory
-    if (lines[numNuc].slice(0, 1) == 't')
-        return true
-    return false
-}
 
 function readJson(system, jsonReader) {
     const file = jsonReader.result as string;
