@@ -97,26 +97,26 @@ class FileChunker {
         this.chunk_size = chunk_size;
         this.current_chunk = -1;
     }
-    get_next_chunk() {
-        if (!this.is_last())
+    getNextChunk() {
+        if (!this.isLast())
             this.current_chunk++;
-        return this.get_chunk();
+        return this.getChunk();
     }
-    get_prev_chunk() {
+    getPrevChunk() {
         this.current_chunk--;
         if (this.current_chunk <= 0)
             this.current_chunk = 0;
-        return this.get_chunk();
+        return this.getChunk();
     }
-    is_last() {
+    isLast() {
         if (this.current_chunk * this.chunk_size + this.chunk_size > this.file.size)
             return true;
         return false;
     }
-    get_chunk_at_pos(start, size) {
+    getChunkAtPos(start, size) {
         return this.file.slice(start, start + size);
     }
-    get_estimated_state(position_lookup) {
+    getEstimatedState(position_lookup) {
         // reads the current position lookup array to 
         // guestimate conf count, and how much confs are left in the file
         let l = position_lookup.length;
@@ -124,7 +124,7 @@ class FileChunker {
         let confs_in_file = Math.round(this.file.size / size);
         return [confs_in_file, l];
     }
-    get_chunk() {
+    getChunk() {
         return this.file.slice(this.current_chunk * this.chunk_size, this.current_chunk * this.chunk_size + this.chunk_size);
     }
 }
@@ -137,7 +137,7 @@ class ForwardReader extends FileReader {
             return () => {
                 let file = this.result;
                 this.StrBuff = this.StrBuff.concat(file);
-                this._handle_read();
+                this.handleRead();
             };
         })();
         this.chunker = chunker;
@@ -147,7 +147,7 @@ class ForwardReader extends FileReader {
         this.configsBuffer = [];
         this.StrBuff = "";
     }
-    _handle_read() {
+    handleRead() {
         //now we can populate the configs buffer 
         this.configsBuffer = this.StrBuff.split("t"); //t]+/g);
         //an artifact of this is that a single conf gets splitted into "" and the rest
@@ -155,10 +155,9 @@ class ForwardReader extends FileReader {
             this.configsBuffer.shift(); // so we can discard the first entry
         // now the current conf to process is 1st in configsBuffer
         let cur_conf = this.configsBuffer.shift();
-        //console.log("current conf:",cur_conf);
-        if (cur_conf === undefined && this.chunker.is_last()) {
+        if (cur_conf === undefined && this.chunker.isLast()) {
             notify("Finished indexing!");
-            document.dispatchEvent(new Event('finalConfig'));
+            //document.dispatchEvent(new Event('finalConfig'));
             document.dispatchEvent(new Event('finalConfigIndexed'));
             this.callback(this.idx, 0, 0);
             return;
@@ -166,30 +165,26 @@ class ForwardReader extends FileReader {
         if (cur_conf === undefined)
             cur_conf = "";
         let lines = cur_conf.split(/[\n]+/g);
-        //if(lines.length>this.confLength){
-        //    console.log("wtf",lines.length,this.confLength);
-        //}
-        if (lines.length < this.confLength + 1 && !this.chunker.is_last()) { // we need more as configuration is too small
+        if (lines.length < this.confLength + 1 && !this.chunker.isLast()) { // we need more as configuration is too small
             //there should be no conf in the buffer
             //this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
             this.readAsText(//so we ask the chunker to spit out more
-            this.chunker.get_next_chunk());
+            this.chunker.getNextChunk());
             return;
         }
         this.idx++; // we are moving forward
         let size = this.byteSize("t" + lines.join("\n")); // as we are missing a t which is 1 in byteSize
         // we need to empty the StringBuffer
         this.StrBuff = this.StrBuff.slice(size);
-        //console.log("buffer contents:",this.StrBuff);
         this.callback(this.idx, lines, size);
     }
-    get_next_conf() {
+    getNextConf() {
         if (this.firstConf) {
-            this.readAsText(this.chunker.get_next_chunk());
+            this.readAsText(this.chunker.getNextChunk());
             this.firstConf = false;
         }
         else
-            this._handle_read();
+            this.handleRead();
     }
 }
 class LookupReader extends FileReader {
@@ -209,20 +204,20 @@ class LookupReader extends FileReader {
         this.confLength = confLength;
         this.callback = callback;
     }
-    add_index(offset, size) {
+    addIndex(offset, size) {
         this.position_lookup.push([offset, size]);
     }
-    index_not_loaded(idx) {
+    indexNotLoaded(idx) {
         let l = this.position_lookup.length;
         return l == 0 || idx >= l;
     }
-    get_conf(idx) {
+    getConf(idx) {
         if (idx < this.position_lookup.length) {
             let offset = this.position_lookup[idx][0];
             this.size = this.position_lookup[idx][1];
             this.idx = idx; // as we are successful in retrieving
             // we can update 
-            this.readAsText(this.chunker.get_chunk_at_pos(offset, this.size));
+            this.readAsText(this.chunker.getChunkAtPos(offset, this.size));
         }
     }
 }
@@ -248,7 +243,7 @@ class TrajectoryReader {
         this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
             this.idx = idx;
             //try display the retrieved conf
-            this.parse_conf(lines);
+            this.parseConf(lines);
         });
         if (indexes) { // use index file
             this.lookupReader.position_lookup = indexes;
@@ -267,12 +262,11 @@ class TrajectoryReader {
         this.indexingReader = new ForwardReader(this.chunker, this.confLength, (idx, lines, size) => {
             if (size > 0) {
                 //record the retrieved conf
-                this.lookupReader.add_index(this.offset, size);
+                this.lookupReader.addIndex(this.offset, size);
                 this.offset += size;
                 document.dispatchEvent(new Event('nextConfigIndexed'));
-                console.log(this.firstRead);
                 if (this.firstRead) {
-                    this.parse_conf(lines);
+                    this.parseConf(lines);
                     this.firstRead = false;
                 }
             }
@@ -282,8 +276,8 @@ class TrajectoryReader {
         this.idx++; // idx is also set by the callback of the reader
         if (this.idx == this.lookupReader.position_lookup.length)
             document.dispatchEvent(new Event('finalConfig'));
-        if (!this.lookupReader.index_not_loaded(this.idx))
-            this.lookupReader.get_conf(this.idx);
+        if (!this.lookupReader.indexNotLoaded(this.idx))
+            this.lookupReader.getConf(this.idx);
         //    this.indexingReader.get_next_conf();
         else
             this.idx--;
@@ -294,17 +288,12 @@ class TrajectoryReader {
             e.preventDefault(); // cancel default actions
             if (trajReader.indexingReader.readyState == 1)
                 setTimeout(_load, 3); // try untill can actually read
-            trajReader.indexingReader.get_next_conf();
-            //TODO:find out why this is happening
-            let state = trajReader.chunker.get_estimated_state(trajReader.lookupReader.position_lookup);
+            trajReader.indexingReader.getNextConf();
+            let state = trajReader.chunker.getEstimatedState(trajReader.lookupReader.position_lookup);
             if (trajReader.indexProgressControls.hidden)
                 trajReader.indexProgressControls.hidden = false;
             trajReader.indexProgress.value = Math.round((state[1] / state[0]) * 100);
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
-            console.log("am indexing");
-            //if (state[1]>=state[0]){
-            //    document.dispatchEvent(new Event('finalConfigIndexed')); 
-            //}  
             if (trajReader.lookupReader.position_lookup.length > 1 && trajReader.trajControls.hidden) {
                 //enable video creation during indexing
                 let videoControls = document.getElementById("videoCreateButton");
@@ -331,7 +320,7 @@ class TrajectoryReader {
         ;
         document.addEventListener('nextConfigIndexed', _load);
         document.addEventListener('finalConfigIndexed', _done);
-        trajReader.indexingReader.get_next_conf();
+        trajReader.indexingReader.getNextConf();
     }
     downloadIndexFile() {
         makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
@@ -344,7 +333,7 @@ class TrajectoryReader {
             }, 30); // try untill can actually read
         else {
             this.idx = idx;
-            this.lookupReader.get_conf(idx);
+            this.lookupReader.getConf(idx);
             this.trajectorySlider.setAttribute("value", this.idx.toString());
         }
     }
@@ -355,7 +344,7 @@ class TrajectoryReader {
             this.idx = 0;
         }
         this.trajectorySlider.setAttribute("value", this.idx.toString());
-        this.lookupReader.get_conf(this.idx);
+        this.lookupReader.getConf(this.idx);
     }
     playTrajectory() {
         this.playFlag = !this.playFlag;
@@ -367,7 +356,6 @@ class TrajectoryReader {
                     return;
                 }
                 trajReader.nextConfig();
-                //trajReader.trajectorySlider.setAttribute("value",trajReader.lookupReader.idx.toString());
             }, 100);
         }
         else {
@@ -375,7 +363,7 @@ class TrajectoryReader {
             this.playFlag = false;
         }
     }
-    parse_conf(lines) {
+    parseConf(lines) {
         let system = this.system;
         let numNuc = this.numNuc;
         // parse file into lines
