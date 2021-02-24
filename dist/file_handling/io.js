@@ -166,14 +166,12 @@ class ForwardReader extends FileReader {
         if (cur_conf === undefined)
             cur_conf = "";
         let lines = cur_conf.split(/[\n]+/g);
-        //lines = lines.slice(this.confLength);
-        //this._linecheck(lines)
         if (lines.length > this.confLength) {
-            console.log("wtf");
+            console.log("wtf", lines.length, this.confLength);
         }
-        if (lines.length <= this.confLength && !this.chunker.is_last()) { // we need more as configuration is too small
+        if (lines.length < this.confLength + 1 && !this.chunker.is_last()) { // we need more as configuration is too small
             //there should be no conf in the buffer
-            this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
+            //this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
             this.readAsText(//so we ask the chunker to spit out more
             this.chunker.get_next_chunk());
             return;
@@ -184,14 +182,6 @@ class ForwardReader extends FileReader {
         this.StrBuff = this.StrBuff.slice(size);
         console.log("buffer contents:", this.StrBuff);
         this.callback(this.idx, lines, size);
-    }
-    _linecheck(lines) {
-        console.log(lines[lines.length - 3].split(" "));
-        console.log(lines[lines.length - 2].split(" "));
-        console.log(lines[lines.length - 1].split(" "));
-        if (lines[0].split(" ").length)
-            return true;
-        return false;
     }
     get_next_conf() {
         if (this.firstConf) {
@@ -310,9 +300,9 @@ class TrajectoryReader {
             trajReader.indexProgress.value = Math.round((state[1] / state[0]) * 100);
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
             console.log("am indexing");
-            if (state[1] >= state[0]) {
-                document.dispatchEvent(new Event('finalConfigIndexed'));
-            }
+            //if (state[1]>=state[0]){
+            //    document.dispatchEvent(new Event('finalConfigIndexed')); 
+            //}  
             if (trajReader.lookupReader.position_lookup.length > 1 && trajReader.trajControls.hidden) {
                 //enable video creation during indexing
                 let videoControls = document.getElementById("videoCreateButton");
