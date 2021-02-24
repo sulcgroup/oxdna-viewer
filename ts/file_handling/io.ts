@@ -198,7 +198,7 @@ class ForwardReader extends FileReader
             this.configsBuffer.shift(); // so we can discard the first entry
         // now the current conf to process is 1st in configsBuffer
         let cur_conf = this.configsBuffer.shift();
-        console.log("current conf:",cur_conf);
+        //console.log("current conf:",cur_conf);
         if (cur_conf === undefined && this.chunker.is_last())
         {
             notify("Finished indexing!");
@@ -211,9 +211,9 @@ class ForwardReader extends FileReader
             cur_conf = "";
         let lines = cur_conf.split(/[\n]+/g);
         
-        if(lines.length>this.confLength){
-            console.log("wtf",lines.length,this.confLength);
-        }
+        //if(lines.length>this.confLength){
+        //    console.log("wtf",lines.length,this.confLength);
+        //}
 
         if (lines.length < this.confLength +1  && !this.chunker.is_last()){ // we need more as configuration is too small
             //there should be no conf in the buffer
@@ -228,7 +228,7 @@ class ForwardReader extends FileReader
         
         // we need to empty the StringBuffer
         this.StrBuff =   this.StrBuff.slice(size);
-        console.log("buffer contents:",this.StrBuff);
+        //console.log("buffer contents:",this.StrBuff);
         this.callback(this.idx, lines, size);
     }
 
@@ -348,6 +348,8 @@ class TrajectoryReader {
             );
             let timedisp = document.getElementById("trajTimestep");
             timedisp.hidden = false;
+            // set focus to trajectory
+            document.getElementById('trajControlsLink').click();
         }
         this.indexingReader = new ForwardReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
@@ -407,7 +409,7 @@ class TrajectoryReader {
                 
                 // enable traj control
                 trajReader.trajControls.hidden = false;
-
+                // set focus to trajectory controls
                 document.getElementById('trajControlsLink').click();
             }  
 
@@ -478,7 +480,7 @@ class TrajectoryReader {
                     return;
                 }
                 trajReader.nextConfig();
-                trajReader.trajectorySlider.setAttribute("value",trajReader.lookupReader.idx.toString());
+                //trajReader.trajectorySlider.setAttribute("value",trajReader.lookupReader.idx.toString());
             }, 100);
         }
         else{

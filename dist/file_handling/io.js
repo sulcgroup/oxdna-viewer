@@ -155,7 +155,7 @@ class ForwardReader extends FileReader {
             this.configsBuffer.shift(); // so we can discard the first entry
         // now the current conf to process is 1st in configsBuffer
         let cur_conf = this.configsBuffer.shift();
-        console.log("current conf:", cur_conf);
+        //console.log("current conf:",cur_conf);
         if (cur_conf === undefined && this.chunker.is_last()) {
             notify("Finished indexing!");
             document.dispatchEvent(new Event('finalConfig'));
@@ -166,9 +166,9 @@ class ForwardReader extends FileReader {
         if (cur_conf === undefined)
             cur_conf = "";
         let lines = cur_conf.split(/[\n]+/g);
-        if (lines.length > this.confLength) {
-            console.log("wtf", lines.length, this.confLength);
-        }
+        //if(lines.length>this.confLength){
+        //    console.log("wtf",lines.length,this.confLength);
+        //}
         if (lines.length < this.confLength + 1 && !this.chunker.is_last()) { // we need more as configuration is too small
             //there should be no conf in the buffer
             //this.StrBuff = "t" + cur_conf; // this takes care even of cases where a line like xxx yyy zzz is read only to xxx y
@@ -180,7 +180,7 @@ class ForwardReader extends FileReader {
         let size = this.byteSize("t" + lines.join("\n")); // as we are missing a t which is 1 in byteSize
         // we need to empty the StringBuffer
         this.StrBuff = this.StrBuff.slice(size);
-        console.log("buffer contents:", this.StrBuff);
+        //console.log("buffer contents:",this.StrBuff);
         this.callback(this.idx, lines, size);
     }
     get_next_conf() {
@@ -261,6 +261,8 @@ class TrajectoryReader {
             this.trajectorySlider.setAttribute("max", (this.lookupReader.position_lookup.length - 1).toString());
             let timedisp = document.getElementById("trajTimestep");
             timedisp.hidden = false;
+            // set focus to trajectory
+            document.getElementById('trajControlsLink').click();
         }
         this.indexingReader = new ForwardReader(this.chunker, this.confLength, (idx, lines, size) => {
             if (size > 0) {
@@ -309,6 +311,7 @@ class TrajectoryReader {
                 videoControls.disabled = false;
                 // enable traj control
                 trajReader.trajControls.hidden = false;
+                // set focus to trajectory controls
                 document.getElementById('trajControlsLink').click();
             }
         }
@@ -364,7 +367,7 @@ class TrajectoryReader {
                     return;
                 }
                 trajReader.nextConfig();
-                trajReader.trajectorySlider.setAttribute("value", trajReader.lookupReader.idx.toString());
+                //trajReader.trajectorySlider.setAttribute("value",trajReader.lookupReader.idx.toString());
             }, 100);
         }
         else {
