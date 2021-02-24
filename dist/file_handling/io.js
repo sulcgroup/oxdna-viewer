@@ -350,7 +350,7 @@ class TrajectoryReader {
         this.playFlag = !this.playFlag;
         if (this.playFlag) {
             this.intervalId = setInterval(() => {
-                if (trajReader.idx == trajReader.lookupReader.position_lookup.length) {
+                if (trajReader.idx == trajReader.lookupReader.position_lookup.length - 1) {
                     this.playFlag = false;
                     clearInterval(this.intervalId);
                     return;
