@@ -539,13 +539,6 @@ class View {
         }
     }
 
-        // NOT USED WILL PROBABLY REMOVE
-    public toggleSpanColor(sp: HTMLElement){
-        let currentcolor = sp.getAttribute("style");
-        if(currentcolor == "color:red") sp.setAttribute("style", "color:black");
-        if(currentcolor == "color:black") sp.setAttribute("style", "color:red");
-    }
-
     public toggleSideBarDatasets(){
         if(this.fluxSideBarDisplayed){
             for(let i = 0; i < graphDatasets.length; i++){
@@ -632,6 +625,7 @@ class graphData {
     units: string;
     gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
     cutoff: number; // Cutoff (A) for edges, only used if graphData is generated as a Fit
+    indexfile; // Array of Arrays, each array holds the corresponding particle ids
     constructor(l, d, x, dt, u){
         this.label = l;
         this.data = d;
@@ -776,13 +770,43 @@ class fluxGraph {
     }
 
     loadFluxData(){
-        let input = document.querySelector('#fluxfile');
-        let files = input.files[0]
+        let input = <HTMLInputElement>document.querySelector('#fluxfile');
+        let files = input.files;
+        let filearr = Array.from(files)
+        filearr.reverse(); // Since we use pop to access elements
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            this.loadjson(jsonReader); //loads single dataset
+        };
+        jsonReader.onloadend = () => {
+            graphDatasets[graphDatasets.length-1].label = filearr.pop().name; //renames
+            if(view.fluxSideBarDisplayed) view.addGraphData(graphDatasets.length-1); //add to aside bar if its displayed
+        }
 
+        if(files.length == 0) notify('Please Select a File');
+        else {
+            for (let i = 0; i < files.length; i++) { //added to graphDatasets
+                jsonReader.readAsText(files[i]);
+            }
+        }
+    }
 
-        // let files = input.hasAttribute('files');
-        // let files = input.getAttribute('files');
-        notify(files.toString());
+    loadjson(jsonReader: FileReader){ //Creates Fluctuation Dataset from file
+        const file = jsonReader.result as string;
+        const data = JSON.parse(file);
+        // const data = JSON.parse(jsonfile);
+        let rmsfkey = "RMSF (nm)";
+        let fluxdata;
+        try{
+            fluxdata = data[rmsfkey];
+        }catch (e) {
+            notify('Could Not Load Json File');
+        }
+        let msddata = fluxdata.map(x => x**2) //rmsf to msf
+        let xdata = msddata.map((val, ind) => ind+1);
+
+        let GD = new graphData('tmp', msddata, xdata, 'rmsf', 'nm_sqr'); //label needs to be re written
+        graphDatasets.push(GD);
     }
 
     initializeGraph() {
@@ -987,6 +1011,15 @@ class fluxGraph {
         // Trigger the download
         a.click();
     };
+    prepIndxButton(indx){
+        // Show hidden index download button
+        let ib = document.getElementById('indxbutton');
+        ib.onclick = function(){makeIndxFile(indx)};
+        // $('indxbutton').on("click", function() {
+        //     makeIndxFile(indx);
+        // })
+    };
+
 }
 
 // Fluctuation Chart Manager

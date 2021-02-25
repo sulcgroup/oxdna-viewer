@@ -330,3 +330,27 @@ function makeTextFile(filename: string, text: string) { //take the supplied text
     document.body.removeChild(elem); //
     //window.parent.FakeDataDownload(blob, filename);
 };
+
+function makeIndxFile(indxarray) {
+    let write = () => {
+        let text: string = "";
+        indxarray.forEach(ind => {
+            ind.forEach((sub, si) => {
+                if(si != 0 && si != sub.length-1){
+                    text += " ";
+                }
+                text += sub.toString(); // Add particle id
+            })
+            // Newline between each particles array
+            text += '\n';
+        })
+        makeTextFile("index.txt", text); //after addding all mutual trap data, make mutual trap file
+    }
+
+    if(indxarray.length == 0){
+        notify("Index Data is Empty");
+        return;
+    } else {
+        write();
+    }
+}

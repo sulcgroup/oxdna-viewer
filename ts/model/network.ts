@@ -128,7 +128,7 @@ class Network {
         }
         // network is ready for solving
         this.networktype = "ANM";
-        this.sendtoUI();
+        if(this.reducedEdges.total != 0) this.sendtoUI();
     }
     ;
     generateHessian(): number[][] {
@@ -137,12 +137,12 @@ class Network {
             notify("Network must be filled prior to solving ANM");
         } else {
             //Initialize Empty Hessian (3Nx3N)
+            let tmp = new Array(3*this.particles.length) //3N
             for(let i=0; i<3*this.particles.length; i++){ //3N x
-                let tmp = new Array(3*this.particles.length) //3N
-                for(let j=0; j<3*this.particles.length; j++){
-                    tmp[j] = 0;
-                }
                 hessian.push(tmp);
+                for(let j=0; j<3*this.particles.length; j++){
+                    hessian[i][j] = 0;
+                }
             }
 
             //Hessian Calc w/ Masses

@@ -859,8 +859,9 @@ module edit{
      * Experimental Function that Discretizes Mass of system (every particle has same mass currently 1)
      */
     export function discretizeMass(elems: BasicElement[], cellsize: number) {
+        //cellsize must be in Angstroms as we convert it here
+        cellsize /= 8.518; //Angstrom to sim unit length
         // get positions from Three Vector returned from getPos()
-
         let xPositions : number[] = elems.map(e => e.getPos().x);
         let yPositions : number[] = elems.map(e => e.getPos().y);
         let zPositions : number[] = elems.map(e => e.getPos().z);
@@ -904,13 +905,15 @@ module edit{
         // New Particle Arrays
         let gPositions : THREE.Vector3[] = [];
         let gMasses: number [] = [];
+        let indexfile = [];
+        let currentBox: number[] = [];
 
         //Sort through boxids and generate array for intialization of new particles
         for (let i = 0; i < xGridNum; i+=1) {
             for (let j = 0; j < yGridNum; j += 1) {
                 for (let k = 0; k < zGridNum; k += 1) {
                     //returns only boxid entries matching the current i, j, k
-                    let currentBox: number[] = [];
+                    currentBox = [];
 
                     for(let p: number = 0; p < xboxids.length; p++){
                         if(xboxids[p]==i && yboxids[p]==j && zboxids[p]==k){
@@ -920,6 +923,7 @@ module edit{
 
                     //If any particle in this section of the grid
                     if (currentBox.length > 0) {
+                        indexfile.push(currentBox);
                         let m = currentBox.length;
                         let com = new THREE.Vector3(0, 0, 0);
                         for (let l = 0; l < m; l += 1) {
@@ -938,7 +942,6 @@ module edit{
         let dumb = new System(tmpSystems.length, 0);
         dumb.initInstances(gPositions.length);
         tmpSystems.push(dumb);
-
 
         let currentelemsize = elements.size;
         let realSys = new System(sysCount++, currentelemsize);
@@ -975,7 +978,7 @@ module edit{
 
         addSystemToScene(dumb); // add tmpSys to scene
 
-        return newElems;
+        return {elems: newElems, indx: indexfile};
     }
 
     /**

@@ -496,14 +496,6 @@ class View {
             this.addGraphData(gid);
         }
     }
-    // NOT USED WILL PROBABLY REMOVE
-    toggleSpanColor(sp) {
-        let currentcolor = sp.getAttribute("style");
-        if (currentcolor == "color:red")
-            sp.setAttribute("style", "color:black");
-        if (currentcolor == "color:black")
-            sp.setAttribute("style", "color:red");
-    }
     toggleSideBarDatasets() {
         if (this.fluxSideBarDisplayed) {
             for (let i = 0; i < graphDatasets.length; i++) {
@@ -705,10 +697,43 @@ class fluxGraph {
         return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
     }
     loadFluxData() {
-        let input = document.getElementById('fluxfile');
-        let files = input.hasAttribute('files');
-        // let files = input.getAttribute('files');
-        notify(files.toString());
+        let input = document.querySelector('#fluxfile');
+        let files = input.files;
+        let filearr = Array.from(files);
+        filearr.reverse(); // Since we use pop to access elements
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            this.loadjson(jsonReader); //loads single dataset
+        };
+        jsonReader.onloadend = () => {
+            graphDatasets[graphDatasets.length - 1].label = filearr.pop().name; //renames
+            if (view.fluxSideBarDisplayed)
+                view.addGraphData(graphDatasets.length - 1); //add to aside bar if its displayed
+        };
+        if (files.length == 0)
+            notify('Please Select a File');
+        else {
+            for (let i = 0; i < files.length; i++) { //added to graphDatasets
+                jsonReader.readAsText(files[i]);
+            }
+        }
+    }
+    loadjson(jsonReader) {
+        const file = jsonReader.result;
+        const data = JSON.parse(file);
+        // const data = JSON.parse(jsonfile);
+        let rmsfkey = "RMSF (nm)";
+        let fluxdata;
+        try {
+            fluxdata = data[rmsfkey];
+        }
+        catch (e) {
+            notify('Could Not Load Json File');
+        }
+        let msddata = fluxdata.map(x => x ** 2); //rmsf to msf
+        let xdata = msddata.map((val, ind) => ind + 1);
+        let GD = new graphData('tmp', msddata, xdata, 'rmsf', 'nm_sqr'); //label needs to be re written
+        graphDatasets.push(GD);
     }
     initializeGraph() {
         // onCreate parameter of toggleWindow won't initialize this correctly
@@ -906,6 +931,15 @@ class fluxGraph {
         a.download = 'fluxchart.png';
         // Trigger the download
         a.click();
+    }
+    ;
+    prepIndxButton(indx) {
+        // Show hidden index download button
+        let ib = document.getElementById('indxbutton');
+        ib.onclick = function () { makeIndxFile(indx); };
+        // $('indxbutton').on("click", function() {
+        //     makeIndxFile(indx);
+        // })
     }
     ;
 }

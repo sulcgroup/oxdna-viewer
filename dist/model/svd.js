@@ -148,7 +148,6 @@ const SVD = (a, withu, withv, eps) => {
             l = i;
         }
     }
-    // TODO: LOOk here for problem
     // Accumulation of left-hand transformations
     for (i = n; i < m; i++) {
         for (j = n; j < m; j++) {

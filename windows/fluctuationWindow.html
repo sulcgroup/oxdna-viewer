@@ -38,15 +38,14 @@
             <ul class="items-list" id="datalist"></ul>
         </div>
 <!--        networks Added in view.toggleSideBarDatasets-->
-        <button class="button" id="collapse_toggle_1">Available Networks</button>
-        <div class="subtitle" >(edges must be filled first)</div>
+        <button class="button" id="collapse_toggle_1">Fitting Ready Networks</button>
         <div class="pos-relative">
             <ul class="items-list" id="readynetlist" data-role="collapse" data-toggle-element="#collapse_toggle_1"></ul>
         </div>
 
         <button class="button" id="collapse_toggle_2">Options</button>
         <div class="pos-relative">
-            <div data-role="collapse" data-toggle-element="#collapse_toggle_2">
+            <div data-role="collapse" data-toggle-element="#collapse_toggle_2" data-collapsed="true">
             <ul class="items-list" id="options">
                 <li><label>
                     <input type="text" placeholder="set chart title">
@@ -62,11 +61,12 @@
                 </label></li>
             </ul>
             </div>
-            <label for="submit"></label><input class="button" id="submit" onclick="flux.loadFluxData()">
+
             <input id="fluxfile"  type="file" data-role="file" data-prepend="Data Files" data-cls-caption="bg-blue fg-white"
-                   data-cls-button="bg-darkBlue fg-white">
+                   data-cls-button="bg-darkBlue fg-white" multiple accept=".json">
+            <button class="button primary outline" id="submit" onclick="flux.loadFluxData()">Load Files</button>
 <!--            accept="flux/json"-->
-            <sub>* .json files as outputted by oxDNA_Analysis_tools</sub>
+<!--            <sub>* .json files as outputted by oxDNA_Analysis_tools</sub>-->
         </div>
 <!--        <div class="input-control file" data-role="input">-->
 <!--            <input type="file">-->

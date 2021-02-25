@@ -160,7 +160,6 @@ const SVD = (a: number[][], withu: boolean, withv: boolean, eps: number) => {
             l = i
         }
     }
-    // TODO: LOOk here for problem
     // Accumulation of left-hand transformations
 
     for (i = n; i < m; i++) {
@@ -351,5 +350,5 @@ const SVD = (a: number[][], withu: boolean, withv: boolean, eps: number) => {
         if (q[i] < eps) q[i] = 0;
     }
 
-    return { orderu, q, ordervt }
+    return {orderu, q, ordervt}
 }

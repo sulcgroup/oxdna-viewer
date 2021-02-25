@@ -660,63 +660,67 @@
             <div class="section" id="section-protein">
                 <div class="group">
                     <div class="tight group flex-column">
-                        <button class="ribbon-button" onclick="createNetworkWrapper()"
-                                title="Create Network">
-                            <span class="mif-lightning5 mif-1x"></span>
-                            <span class="caption">Create Network</span>
-                        </button>
-                    </div>
-                    <div class="tight group flex-column">
-                        <button class="ribbon-button" onclick="deleteNetworkWrapper(selectednetwork)"
-                                title="Delete Network">
-                            <span class="mif-lightning5 mif-1x"></span>
-                            <span class="caption">Delete Network</span>
-                        </button>
-                    </div>
-                    <div class="tight group flex-column">
-                        <div class="pos-relative">
-                            <button class="button square dropdown-toggle">
-                                <span class="mif-apps mif-2x"></span>
+                        <div>
+                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper()"
+                                    title="Discretize Selected Masses">
+                                <span class="mif-compass"></span>
+                                <span class="caption"> Coarse-Grain</span>
                             </button>
-                            <label>Network Selector</label>
-                            <ul class="d-menu" data-role="dropdown" id="networks" title="Select A Created Network">
-                                <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
-                            </ul>
-                        </div>
-                        <div class="pos-relative">
-                            <button class="button square dropdown-toggle">
-                                <span class="mif-apps mif-2x"></span>
+                            <button class="ribbon-icon-button" id="indxbutton"
+                                    title="Download Index File for Generated Particles">
+                                <span class="caption"> Download Index File</span>
                             </button>
-                            <label>Fill Edges</label>
-                            <ul class="d-menu" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
-                                <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
-                            </ul>
                         </div>
-                    </div>
-                    <div class="tight group flex-column">
                         <input type="text" data-role="input" title="cellSize" class="mb-1" id="cellSize"
-                             data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
-                             data-history="true" data-prevent-submit="true"
-                             placeholder="Input Cell Size">
-                        <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"
-                               data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
+                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
                                data-history="true" data-prevent-submit="true"
-                               placeholder="Input Cutoff Value">
+                               placeholder="Input Cell Size">
                     </div>
+                </div>
+
+                <div class="group">
                     <div class="tight group flex-column">
-                        <button class="ribbon-button" onclick="discretizeMassWrapper()"
-                                title="Discretize Selected Masses">
-                            <span class="mif-lightning2 mif-1x"></span>
-                            <span class="caption">Discretize Mass Distribution</span>
-                        </button>
+                        <div>
+                            <button class="ribbon-icon-button" onclick="createNetworkWrapper()"
+                                    title="Create Network">
+                                <span class="mif-lightning5 mif-1x"></span>
+                                <span class="caption">Create Network</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="deleteNetworkWrapper(selectednetwork)"
+                                    title="Delete Network">
+                                <span class="mif-lightning5 mif-1x"></span>
+                                <span class="caption">Delete Network</span>
+                            </button>
+
+                            <div class="dropdown-button">
+                                <button class="button dropdown-toggle">Network Select</button>
+                                <ul class="d-menu put-left" data-role="dropdown" id="networks" title="Select a Created Network">
+                                    <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
+                                </ul>
+                            </div>
+
+                            <div class="dropdown-button">
+                                <button class="button dropdown-toggle">Assign Edges</button>
+                                <ul class="d-menu put-left" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
+                                    <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
+                                </ul>
+                            </div>
+
+                        </div>
+                        <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"
+                           data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
+                           data-history="true" data-prevent-submit="true"
+                           placeholder="Input Cutoff Value">
                     </div>
-                    <div class="tight group flex-column">
-                        <button class="ribbon-button" onclick="view.toggleWindow('fluctuationWindow', flux.initializeGraph());"
-                                title="Preview expected fluctuations of networks">
-                            <span class="mif-flow-cascade mif-3x"></span>
-                            <span class="caption">Fluctuation Solver</span>
-                        </button>
-                    </div>
+                </div>
+
+                <div class="tight group flex-column">
+                    <button class="ribbon-button" onclick="view.toggleWindow('fluctuationWindow', flux.initializeGraph());"
+                            title="Preview expected fluctuations of networks">
+                        <span class="mif-flow-cascade mif-3x"></span>
+                        <span class="caption">Fluctuation Solver</span>
+                    </button>
                 </div>
             </div>
         </div>

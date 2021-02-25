@@ -755,6 +755,27 @@ class pdbinfowrapper { //Transfers Necessary Data from readPdbFile to addPDBtoSc
     }
 }
 
+function prep_pdb(pdblines){
+
+    //Checks for repeated chains, Biological Assemblies etc.
+    let chainDivs = [];
+    let modelDivs = [];
+    for(let i = 0; i< pdblines.length; i++){
+        if (pdblines[i].substr(0, 4) === 'TER'){
+            chainDivs.push(i);
+        } else if(pdblines[i].substr(0, 5) === 'MODEL' || pdblines[i].substr(0, 6) === 'ENDMDL'){
+            modelDivs.push(i);
+        }
+    }
+
+    let chainids = chainDivs.map(d => {pdblines[d-1].substring(21, 22).trim()});
+    chainids.forEach((chain, ind) => {
+
+    })
+
+}
+
+
 function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain identifiers in pdb files 2) centering of system will need a little work
     let reader = new FileReader();
 
@@ -772,6 +793,7 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
         let prevChainId = " ";
         let prevResId : number = -1;
         let label = "pdb";
+        let obsChains = [];
         // Iterate each line looking for atoms
         for(let i = 0; i < pdbLines.length; i++){
             if (i < 10 && pdbLines[i].substr(0, 6) === 'HEADER'){
@@ -792,6 +814,10 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
                 na.altLoc = pdbLine.substring(16, 17).trim();
                 na.resType = pdbLine.substring(17, 20).trim();
                 na.chainID = pdbLine.substring(21, 22).trim();
+                if(obsChains.indexOf(na.chainID) != -1){ // PREVIOUSLY OBSERVED
+
+                }
+
                 na.pdbResNum = parseInt(pdbLine.substring(22, 26).trim());
                 na.iCode = pdbLine.substring(26, 27).trim();
                 // Convert From Angstroms to Simulation Units
@@ -836,6 +862,7 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
                 if (prevChainId !== na.chainID) {
                     //notify("chain created");
                     nc.chainID = na.chainID;
+                    obsChains.push(nc.chainID)
                     let ncc = {
                         ...nc
                     };
