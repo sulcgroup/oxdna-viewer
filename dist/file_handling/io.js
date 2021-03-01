@@ -204,8 +204,8 @@ class LookupReader extends FileReader {
         this.confLength = confLength;
         this.callback = callback;
     }
-    addIndex(offset, size) {
-        this.position_lookup.push([offset, size]);
+    addIndex(offset, size, time, e) {
+        this.position_lookup.push([offset, size, time, e]);
     }
     indexNotLoaded(idx) {
         let l = this.position_lookup.length;
@@ -262,7 +262,7 @@ class TrajectoryReader {
         this.indexingReader = new ForwardReader(this.chunker, this.confLength, (idx, lines, size) => {
             if (size > 0) {
                 //record the retrieved conf
-                this.lookupReader.addIndex(this.offset, size);
+                this.lookupReader.addIndex(this.offset, size, lines[0].split(" ")[2], parseFloat(lines[2].split(" ")[3]));
                 this.offset += size;
                 document.dispatchEvent(new Event('nextConfigIndexed'));
                 if (this.firstRead) {

@@ -246,6 +246,12 @@
                             </div>
                         </div>
                         <div id="trajTimestep"></div>
+                        <div style="background-color: white; border: 4px dashed #cfcfcf;  margin: 10px; width:300px;height:50px;   display: flex; justify-content: center;align-content: center;flex-direction: column;"
+                        onclick="view.toggleWindow('hyperSelectWindow',loadChart)">
+                            <div style="margin: 10px;">  
+                                Place your order parameter file here.
+                            </div>  
+                        </div>
                         
                     </div>
                 </div>
@@ -663,6 +669,7 @@
     <script src="./ts/lib/metro.min.js"></script>
     <div class="main">
         <!--all files to be loaded onload of html file-->
+        <script src="./ts/lib/chart.min.js"></script>
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
