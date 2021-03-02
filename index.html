@@ -246,13 +246,12 @@
                             </div>
                         </div>
                         <div id="trajTimestep"></div>
-                        <div style="background-color: white; border: 4px dashed #cfcfcf;  margin: 10px; width:300px;height:50px;   display: flex; justify-content: center;align-content: center;flex-direction: column;"
-                        onclick="view.toggleWindow('hyperSelectWindow',loadChart)">
-                            <div style="margin: 10px;">  
-                                Place your order parameter file here.
-                            </div>  
-                        </div>
-                        
+
+                        <button class="button" onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
+                            title="Previous config (left keyboard arrow)" style="margin: 10px;">
+                            <!--<span class="mif-down mif-2x"></span>-->
+                            <span class="caption">HyperSelector</span>
+                        </button>                     
                     </div>
                 </div>
             </div>
@@ -670,7 +669,6 @@
     <div class="main">
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/chart.min.js"></script>
-        <script src="./dist/file_handling/parameter_file.js"></script>
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
@@ -712,6 +710,7 @@
         <script src="./dist/file_handling/GLTFExporter.js"></script>
         <script src="./dist/ox_serve/relax_scenarios.js"></script>
         <script src="./dist/ox_serve/live_relax.js"></script>
+        <script src="./dist/file_handling/parameter_file.js"></script>
     </div>
 </body>
 

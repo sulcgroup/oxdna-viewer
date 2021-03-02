@@ -1,7 +1,25 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 
-let loadChart = ()=>{
+let event_plug = (event) => {
+    event.preventDefault();
+}
+let myChart : Chart = null;
+let labels = [];
+let loadHyperSelector = ()=>{
+    // register drop event 
+    let target = document.getElementById("myChart");
+
+    target.addEventListener("drop", (event)=>{
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        handleParameterDrop(files);
+    }, false);
+
+    target.addEventListener("dragover", event_plug, false);
+    target.addEventListener("dragenter",event_plug, false);
+    target.addEventListener("dragexit", event_plug, false);
+
     var ctx = (<HTMLCanvasElement>document.getElementById('myChart')).getContext('2d');
     document.getElementById('myChart').onclick = function(evt){   
         var activePoints :Array<{}> = myChart.getElementsAtEvent(evt);
@@ -10,40 +28,10 @@ let loadChart = ()=>{
         if(activePoints[0])
             trajReader.retrieveByIdx(activePoints[0]["_index"])
     };
-    let data = [];
-    let labels = [];
-    let minVal = trajReader.lookupReader.position_lookup[0][3];
-    let maxVal = trajReader.lookupReader.position_lookup[0][3];
-    trajReader.lookupReader.position_lookup.forEach(p =>{
-        labels.push(p[2]);
-        data.push(p[3]);
-        if(p[3]> maxVal)
-            maxVal = p[3];
-        if(p[3]< minVal)
-            minVal = p[2];
-    });
-
-    var myChart = new Chart(ctx, {
+    if(myChart===null)
+        myChart = new Chart(ctx, {
         type: 'line',
-        data: {
-            labels : labels, 
-            datasets:[
-                {
-                    label: "E",
-                    data:data,
-                    backgroundColor:'rgba(0,0,0,0)',
-                    borderColor:'rgba(0,0,255,150)',
-                }
-            ]
-            
-        },
         options: {
-            scales: {
-                yAxes: [{
-                    //suggestedMin: minVal,
-                    //suggestedMax: maxVal
-                }]
-            },
             elements: {
                 line: {
                     tension: 0 // disables bezier curves
@@ -57,5 +45,58 @@ let loadChart = ()=>{
             },
             responsiveAnimationDuration: 0 // animation duration after a resize
         }
-    });     
+    });
 }
+let handleParameterDrop = (files)=>{
+    labels = [];
+    console.log(files);
+    
+        const parameterFileReader = new FileReader(); //read .json
+        parameterFileReader.onload = () => {
+            let file = parameterFileReader.result as string;
+
+            let parameter = JSON.parse(file);
+            let data = [];
+            trajReader.lookupReader.position_lookup.forEach((p,i) =>{
+                labels.push(p[2]);
+                console.log(
+                    p[2], i, parameter[i] 
+                )
+                data.push(parameter[i]);
+            });
+            myChart.data =  {
+                labels : labels, 
+                datasets:[
+                    {
+                        label: "Energy",
+                        data:data,
+                        backgroundColor:'rgba(0,0,0,0)',
+                        borderColor:'rgba(0,0,255,150)',
+                    }
+                ]
+            };
+            myChart.update();
+        };
+        parameterFileReader.readAsText(files[0]); 
+}
+
+    //let dummy = document.getElementById("myChart");
+    //dummy.addEventListener("drop",      event_plug, false);
+    //dummy.addEventListener("dragover",  event_plug, false);
+    //dummy.addEventListener("dragenter", event_plug, false);
+    //dummy.addEventListener("dragexit",  event_plug, false);
+    //
+    //let dummy2 = document.getElementById("chartContainer");
+    //dummy2.addEventListener("drop",      event_plug, false);
+    //dummy2.addEventListener("dragover",  event_plug, false);
+    //dummy2.addEventListener("dragenter", event_plug, false);
+    //dummy2.addEventListener("dragexit",  event_plug, false);
+    //
+    //let dummy3 =  document.getElementById("hyperSelectWindow");
+    //dummy3.addEventListener("drop",      event_plug, false);
+    //dummy3.addEventListener("dragover",  event_plug, false);
+    //dummy3.addEventListener("dragenter", event_plug, false);
+    //dummy3.addEventListener("dragexit",  event_plug, false);
+
+//
+//

@@ -252,9 +252,9 @@ class  LookupReader extends FileReader {
         this.callback = callback;
     }
 
-    addIndex(offset,size,time,e){
+    addIndex(offset,size,time){
         this.position_lookup.push(
-            [offset,size,time, e]
+            [offset,size,time]
         );
     }
     
@@ -353,7 +353,7 @@ class TrajectoryReader {
                     this.lookupReader.addIndex(
                         this.offset,
                         size,lines[0].split(" ")[2],
-                        parseFloat(lines[2].split(" ")[3])
+                        //parseFloat(lines[2].split(" ")[3])
                         );
                     this.offset+=size;
                     document.dispatchEvent(new Event('nextConfigIndexed'));
