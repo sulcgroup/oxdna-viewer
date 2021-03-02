@@ -52,6 +52,26 @@ let loadHyperSelector = ()=>{
         }
     });
 }
+
+
+class ChartColorMap{
+    colors = [
+        'rgba(253,  210,	145,200)',
+        'rgba(255,  179, 34,200)',
+        'rgba(67,  112	,146 ,200)',        
+        'rgba(110, 164,	204,200)',
+    ]
+    i = 0;
+    constructor(){
+
+    }
+    get(){
+        this.i++;
+        if (this.i >= this.colors.length) this.i = 0;
+        return this.colors[this.i] ;
+    }
+}
+let chartColorMap = new ChartColorMap();
 let handleParameterDrop = (files)=>{
     labels = [];
     console.log(files);
@@ -75,7 +95,7 @@ let handleParameterDrop = (files)=>{
                             label: files[0].name,
                             data:data,
                             backgroundColor:'rgba(0,0,0,0)',
-                            borderColor:'rgba(getRandomInt(255),getRandomInt(255),0,150)',
+                            borderColor:chartColorMap.get(),
                         }
                     ]
                 };
@@ -85,7 +105,7 @@ let handleParameterDrop = (files)=>{
                         label: files[i].name,
                         data:data,
                         backgroundColor:'rgba(0,0,0,0)',
-                        borderColor:'rgba(getRandomInt(255),getRandomInt(255),0,150)',
+                        borderColor:chartColorMap.get(),
                     }
                 );
             }
