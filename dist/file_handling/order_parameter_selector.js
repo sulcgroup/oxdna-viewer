@@ -5,49 +5,6 @@ function getRandomInt(max) {
 let event_plug = (event) => {
     event.preventDefault();
 };
-//////Hacky way to draw the current index line
-////https://repl.it/@mr_koka/WeightyExpertFlickertailsquirrel
-//var horizonalLinePlugin = {
-//    afterDraw: function(chartInstance) {
-//      
-//      var dataset = chartInstance.data.datasets[0];
-//      if(dataset.data.length > 0){
-//        var xScale = chartInstance.scales['x-axis-0'];
-//        var width = xScale.getPixelForValue(dataset, dataset.data.length - 1);
-//        var ctx = chartInstance.chart.ctx;
-//        
-//        ctx.lineWidth = 1;
-//  
-//        ctx.beginPath();
-//        ctx.moveTo(width, chartInstance.chartArea.top);
-//        ctx.lineTo(width, chartInstance.chartArea.bottom);
-//        ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
-//        ctx.stroke();
-//      }
-//    }
-//  };
-//  Chart.pluginService.register(horizonalLinePlugin);
-////https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
-//Chart["types"].Line.extend({
-//    name: "LineWithLine",
-//    draw: function () {
-//        Chart["types"].Line.prototype.draw.apply(this, arguments);
-//
-//        var point = this.datasets[0].points[this.options.lineAtIndex]
-//        var scale = this.scale
-//
-//        // draw line
-//        this.chart.ctx.beginPath();
-//        this.chart.ctx.moveTo(point.x, scale.startPoint + 24);
-//        this.chart.ctx.strokeStyle = '#ff0000';
-//        this.chart.ctx.lineTo(point.x, scale.endPoint);
-//        this.chart.ctx.stroke();
-//
-//        // write TODAY
-//        this.chart.ctx.textAlign = 'center';
-//        this.chart.ctx.fillText("TODAY", point.x, scale.startPoint + 12);
-//    }
-//});
 let myChart = null;
 let labels = [];
 let loadHyperSelector = () => {
