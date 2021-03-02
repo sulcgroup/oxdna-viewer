@@ -44,6 +44,7 @@ class TopReader extends FileReader{
             lines.forEach((line, i) => {
                 if (line == "") {
                     // Delete last element
+                    this.configurationLength -= 1;
                     this.elems.delete(this.elems.getNextId()-1);
                     return;
                 }
