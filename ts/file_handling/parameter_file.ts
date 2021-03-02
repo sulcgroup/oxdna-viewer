@@ -72,6 +72,8 @@ class ChartColorMap{
     }
 }
 let chartColorMap = new ChartColorMap();
+let axis_counter = 1; 
+
 let handleParameterDrop = (files)=>{
     labels = [];
     console.log(files);
@@ -106,8 +108,16 @@ let handleParameterDrop = (files)=>{
                         data:data,
                         backgroundColor:'rgba(0,0,0,0)',
                         borderColor:chartColorMap.get(),
+                        yAxisID: `y-axis-id${axis_counter}`,
                     }
                 );
+                myChart.options.scales.yAxes.push({
+							type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
+							display: true,
+							position: 'left',
+                            id: `y-axis-id${axis_counter}`
+						});
+                axis_counter++;
             }
                 
             myChart.update();
@@ -115,21 +125,3 @@ let handleParameterDrop = (files)=>{
         parameterFileReader.readAsText(files[i]); 
     }
 }
-
-    //let dummy = document.getElementById("myChart");
-    //dummy.addEventListener("drop",      event_plug, false);
-    //dummy.addEventListener("dragover",  event_plug, false);
-    //dummy.addEventListener("dragenter", event_plug, false);
-    //dummy.addEventListener("dragexit",  event_plug, false);
-    //
-    //let dummy2 = document.getElementById("chartContainer");
-    //dummy2.addEventListener("drop",      event_plug, false);
-    //dummy2.addEventListener("dragover",  event_plug, false);
-    //dummy2.addEventListener("dragenter", event_plug, false);
-    //dummy2.addEventListener("dragexit",  event_plug, false);
-    //
-    //let dummy3 =  document.getElementById("hyperSelectWindow");
-    //dummy3.addEventListener("drop",      event_plug, false);
-    //dummy3.addEventListener("dragover",  event_plug, false);
-    //dummy3.addEventListener("dragenter", event_plug, false);
-    //dummy3.addEventListener("dragexit",  event_plug, false);
