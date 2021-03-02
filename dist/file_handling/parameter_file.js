@@ -47,8 +47,8 @@ let handleParameterDrop = (files) => {
     console.log(files);
     const parameterFileReader = new FileReader(); //read .json
     parameterFileReader.onload = () => {
-        let file = parameterFileReader.result;
-        let parameter = JSON.parse(file);
+        let json_data = parameterFileReader.result;
+        let parameter = JSON.parse(json_data);
         let data = [];
         trajReader.lookupReader.position_lookup.forEach((p, i) => {
             labels.push(p[2]);
@@ -59,7 +59,7 @@ let handleParameterDrop = (files) => {
             labels: labels,
             datasets: [
                 {
-                    label: "Energy",
+                    label: files[0].name,
                     data: data,
                     backgroundColor: 'rgba(0,0,0,0)',
                     borderColor: 'rgba(0,0,255,150)',
