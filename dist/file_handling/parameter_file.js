@@ -1,4 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+function getRandomInt(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
 let event_plug = (event) => {
     event.preventDefault();
 };
@@ -45,30 +48,40 @@ let loadHyperSelector = () => {
 let handleParameterDrop = (files) => {
     labels = [];
     console.log(files);
-    const parameterFileReader = new FileReader(); //read .json
-    parameterFileReader.onload = () => {
-        let json_data = parameterFileReader.result;
-        let parameter = JSON.parse(json_data);
-        let data = [];
-        trajReader.lookupReader.position_lookup.forEach((p, i) => {
-            labels.push(p[2]);
-            console.log(p[2], i, parameter[i]);
-            data.push(parameter[i]);
-        });
-        myChart.data = {
-            labels: labels,
-            datasets: [
-                {
-                    label: files[0].name,
+    for (let i = 0; i < files.length; i++) {
+        const parameterFileReader = new FileReader(); //read .json
+        parameterFileReader.onload = () => {
+            let json_data = parameterFileReader.result;
+            let parameter = JSON.parse(json_data);
+            let data = [];
+            trajReader.lookupReader.position_lookup.forEach((p, i) => {
+                labels.push(p[2]);
+                data.push(parameter[i]);
+            });
+            if (myChart.data.datasets.length == 0)
+                myChart.data = {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: files[0].name,
+                            data: data,
+                            backgroundColor: 'rgba(0,0,0,0)',
+                            borderColor: 'rgba(getRandomInt(255),getRandomInt(255),0,150)',
+                        }
+                    ]
+                };
+            else {
+                myChart.data.datasets.push({
+                    label: files[i].name,
                     data: data,
                     backgroundColor: 'rgba(0,0,0,0)',
-                    borderColor: 'rgba(0,0,255,150)',
-                }
-            ]
+                    borderColor: 'rgba(getRandomInt(255),getRandomInt(255),0,150)',
+                });
+            }
+            myChart.update();
         };
-        myChart.update();
-    };
-    parameterFileReader.readAsText(files[0]);
+        parameterFileReader.readAsText(files[i]);
+    }
 };
 //let dummy = document.getElementById("myChart");
 //dummy.addEventListener("drop",      event_plug, false);
@@ -87,5 +100,3 @@ let handleParameterDrop = (files) => {
 //dummy3.addEventListener("dragover",  event_plug, false);
 //dummy3.addEventListener("dragenter", event_plug, false);
 //dummy3.addEventListener("dragexit",  event_plug, false);
-//
-//
