@@ -247,10 +247,10 @@
                         </div>
                         <div id="trajTimestep"></div>
 
-                        <button class="button" onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
+                        <button id="hyperSelectorBtnId" class="button" disabled onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
                             title="Previous config (left keyboard arrow)" style="margin: 10px;">
                             <!--<span class="mif-down mif-2x"></span>-->
-                            <span class="caption">HyperSelector</span>
+                            <span class="caption">Order parameter selector.</span>
                         </button>                     
                     </div>
                 </div>
@@ -711,7 +711,7 @@
         <script src="./dist/file_handling/GLTFExporter.js"></script>
         <script src="./dist/ox_serve/relax_scenarios.js"></script>
         <script src="./dist/ox_serve/live_relax.js"></script>
-        <script src="./dist/file_handling/parameter_file.js"></script>
+        <script src="./dist/file_handling/order_parameter_selector.js"></script>
     </div>
 </body>
 

@@ -42,6 +42,6 @@
         "./ts/UI/UI.ts",
         "ts/ox_serve/live_relax.ts",
         "ts/ox_serve/relax_scenarios.ts",
-        "./ts/file_handling/parameter_file.ts"
+        "ts/file_handling/order_parameter_selector.ts"
     ]
 }

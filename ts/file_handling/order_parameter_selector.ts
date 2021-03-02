@@ -164,7 +164,7 @@ let handleParameterDrop = (files)=>{
                     labels : labels, 
                     datasets:[
                         {
-                            label: files[0].name,
+                            label: files[0].name.split(".")[0],
                             data:data,
                             //backgroundColor:'rgba(0,0,0,0)',
                             fill: false,
@@ -176,7 +176,7 @@ let handleParameterDrop = (files)=>{
             else{
                 myChart.data.datasets.push(
                     {
-                        label: files[i].name,
+                        label: files[i].name.split(".")[0],
                         data:data,
                         fill: false,
                         //backgroundColor:'rgba(0,0,0,0)',
