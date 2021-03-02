@@ -5,6 +5,49 @@ function getRandomInt(max) {
 let event_plug = (event) => {
     event.preventDefault();
 };
+//////Hacky way to draw the current index line
+////https://repl.it/@mr_koka/WeightyExpertFlickertailsquirrel
+//var horizonalLinePlugin = {
+//    afterDraw: function(chartInstance) {
+//      
+//      var dataset = chartInstance.data.datasets[0];
+//      if(dataset.data.length > 0){
+//        var xScale = chartInstance.scales['x-axis-0'];
+//        var width = xScale.getPixelForValue(dataset, dataset.data.length - 1);
+//        var ctx = chartInstance.chart.ctx;
+//        
+//        ctx.lineWidth = 1;
+//  
+//        ctx.beginPath();
+//        ctx.moveTo(width, chartInstance.chartArea.top);
+//        ctx.lineTo(width, chartInstance.chartArea.bottom);
+//        ctx.strokeStyle = 'rgba(0, 0, 0, 0.75)';
+//        ctx.stroke();
+//      }
+//    }
+//  };
+//  Chart.pluginService.register(horizonalLinePlugin);
+////https://stackoverflow.com/questions/30256695/chart-js-drawing-an-arbitrary-vertical-line
+//Chart["types"].Line.extend({
+//    name: "LineWithLine",
+//    draw: function () {
+//        Chart["types"].Line.prototype.draw.apply(this, arguments);
+//
+//        var point = this.datasets[0].points[this.options.lineAtIndex]
+//        var scale = this.scale
+//
+//        // draw line
+//        this.chart.ctx.beginPath();
+//        this.chart.ctx.moveTo(point.x, scale.startPoint + 24);
+//        this.chart.ctx.strokeStyle = '#ff0000';
+//        this.chart.ctx.lineTo(point.x, scale.endPoint);
+//        this.chart.ctx.stroke();
+//
+//        // write TODAY
+//        this.chart.ctx.textAlign = 'center';
+//        this.chart.ctx.fillText("TODAY", point.x, scale.startPoint + 12);
+//    }
+//});
 let myChart = null;
 let labels = [];
 let loadHyperSelector = () => {
@@ -23,8 +66,10 @@ let loadHyperSelector = () => {
         var activePoints = myChart.getElementsAtEvent(evt);
         // => activePoints is an array of points on the canvas that are at the same position as the click event.
         // we should have only 1
-        if (activePoints[0])
-            trajReader.retrieveByIdx(activePoints[0]["_index"]);
+        if (activePoints[0]) {
+            let index = activePoints[0]["_index"];
+            trajReader.retrieveByIdx(index);
+        }
     };
     if (myChart === null)
         myChart = new Chart(ctx, {
@@ -41,17 +86,36 @@ let loadHyperSelector = () => {
                 hover: {
                     animationDuration: 0 // duration of animations when hovering an item
                 },
-                responsiveAnimationDuration: 0 // animation duration after a resize
+                responsiveAnimationDuration: 0,
+                scales: {
+                    xAxes: [{ display: true, scaleLabel: { display: true, labelString: 'Time' }, gridLines: { drawOnChartArea: false } }],
+                    yAxes: [{ display: true, gridLines: { drawOnChartArea: false } }],
+                },
+                annotation: {
+                    events: ["click"],
+                    annotations: [
+                        {
+                            drawTime: "afterDatasetsDraw",
+                            id: "hline",
+                            type: "line",
+                            mode: "vertical",
+                            scaleID: "x-axis-0",
+                            value: 0,
+                            borderColor: "black",
+                            borderWidth: 1
+                        }
+                    ]
+                }
             }
         });
 };
 class ChartColorMap {
     constructor() {
         this.colors = [
-            'rgba(253,  210,	145,200)',
-            'rgba(255,  179, 34,200)',
-            'rgba(67,  112	,146 ,200)',
-            'rgba(110, 164,	204,200)',
+            'rgba(253,210,145,200)',
+            'rgba(255,179,34,200)',
+            'rgba(67,112,146 ,200)',
+            'rgba(110,164,204,200)',
         ];
         this.i = 0;
     }
@@ -77,31 +141,34 @@ let handleParameterDrop = (files) => {
                 labels.push(p[2]);
                 data.push(parameter[i]);
             });
-            if (myChart.data.datasets.length == 0)
+            if (myChart.data.datasets.length == 0) {
                 myChart.data = {
                     labels: labels,
                     datasets: [
                         {
                             label: files[0].name,
                             data: data,
-                            backgroundColor: 'rgba(0,0,0,0)',
+                            //backgroundColor:'rgba(0,0,0,0)',
+                            fill: false,
                             borderColor: chartColorMap.get(),
                         }
                     ]
                 };
+            }
             else {
                 myChart.data.datasets.push({
                     label: files[i].name,
                     data: data,
-                    backgroundColor: 'rgba(0,0,0,0)',
+                    fill: false,
+                    //backgroundColor:'rgba(0,0,0,0)',
                     borderColor: chartColorMap.get(),
-                    yAxisID: `y-axis-id${axis_counter}`,
+                    yAxisID: `y-axis-id${axis_counter}`
                 });
                 myChart.options.scales.yAxes.push({
                     type: 'linear',
                     display: true,
                     position: 'left',
-                    id: `y-axis-id${axis_counter}`
+                    id: `y-axis-id${axis_counter}`,
                 });
                 axis_counter++;
             }

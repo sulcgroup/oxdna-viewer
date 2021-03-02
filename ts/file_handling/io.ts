@@ -436,14 +436,19 @@ class TrajectoryReader {
     }
     retrieveByIdx(idx){
         //used by the slider to set the conf
-        if(this.lookupReader.readyState == 1)
-                setTimeout(()=>{
-                    this.retrieveByIdx(idx);
-                },30); // try untill can actually read
-        else {
+        if(this.lookupReader.readyState != 1){
+        //        setTimeout(()=>{
+        //            this.retrieveByIdx(idx);
+        //        },30); // try untill can actually read
+        //else {
             this.idx=idx;
             this.lookupReader.getConf(idx);
             this.trajectorySlider.setAttribute("value",this.idx.toString());
+            if(myChart){
+                // hacky way to propagate the line annotation
+                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart.update();
+            }
         }
     }
 
