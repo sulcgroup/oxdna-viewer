@@ -125,15 +125,15 @@ function handleFiles(files) {
 function readTrap(system, trapReader) {
     let file = trapReader.result;
     let trap_file = file;
-    //{ can be replaced with \n to make sure no parameter is lost 
+    //{ can be replaced with \n to make sure no parameter is lost
     while (file.indexOf("{") >= 0)
         file = file.replace("{", "\n");
-    // traps can be split by } because everything between {} is one trap 
+    // traps can be split by } because everything between {} is one trap
     let traps = file.split("}");
     let trap_objs = [];
     traps.forEach((trap) => {
         let lines = trap.split('\n');
-        //empty lines and empty traps need not be processed as well as comments  
+        //empty lines and empty traps need not be processed as well as comments
         lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
         if (lines.length == 0)
             return;
@@ -154,7 +154,7 @@ function readTrap(system, trapReader) {
         if (Object.keys(trap_obj).length > 0)
             trap_objs.push(trap_obj);
     });
-    //handle the different traps 
+    //handle the different traps
     trap_objs.forEach((trap) => {
         switch (trap.type) {
             case "mutual_trap":
@@ -217,7 +217,7 @@ function readFiles(topFile, datFile, idxFile, jsonFile) {
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
         systems.push(system); //add system to Systems[]
-        //TODO: is this really neaded? 
+        //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
         if (idxFile === null) {
             //read topology file, the configuration file is read once the topology is loaded to avoid async errors
@@ -330,6 +330,8 @@ function readOxViewJsonFile(file) {
     reader.onload = () => {
         let sysStartId = sysCount;
         const newElementIds = new Map();
+        // Check if file includes custom colors
+        let customColors = false;
         // Parse json string
         const data = JSON.parse(reader.result);
         // Set box data, if provided
@@ -405,6 +407,7 @@ function readOxViewJsonFile(file) {
                         e.clusterId = elementData.cluster;
                         if (elementData.color) {
                             e.color = new THREE.Color(elementData.color);
+                            customColors = true;
                         }
                         e.sid = sidCounter++;
                         elementData.createdElement = e;
@@ -455,7 +458,7 @@ function readOxViewJsonFile(file) {
                             // Otherwise fallback to reading instance parameters
                         }
                         else if ('conf' in d) {
-                            //make sure warning shows up only once 
+                            //make sure warning shows up only once
                             if (!deprecated)
                                 notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
                             deprecated = true;
@@ -477,6 +480,9 @@ function readOxViewJsonFile(file) {
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
                 centerAndPBC();
+                if (customColors) {
+                    view.coloringMode.set("Custom");
+                }
             });
         }
     };

@@ -22,7 +22,7 @@ function makeLut(data, key) {
 
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
-    
+
     //update every system's color map
     for (let i = 0; i < systems.length; i++){
         const system = systems[i];
@@ -59,7 +59,7 @@ let confNum: number = 0,
     box = new THREE.Vector3(); //box size for system
 
 //and a couple relating to overlay files
-var toggleFailure: Boolean = false, 
+var toggleFailure: Boolean = false,
     defaultColormap: string = "cooltowarm";
 
 // What to do if a file is dropped
@@ -136,7 +136,7 @@ function handleFiles(files: FileList) {
             readTrap(systems[systems.length-1], trapReader);
         };
         trapReader.readAsText(trapFile);
-        renderer.domElement.style.cursor = "auto"; 
+        renderer.domElement.style.cursor = "auto";
     }
     render();
 }
@@ -146,16 +146,16 @@ function readTrap(system, trapReader) {
 
     let file = trapReader.result as string;
     let trap_file = file;
-    //{ can be replaced with \n to make sure no parameter is lost 
+    //{ can be replaced with \n to make sure no parameter is lost
     while(file.indexOf("{")>=0)
         file = file.replace("{","\n");
-    // traps can be split by } because everything between {} is one trap 
+    // traps can be split by } because everything between {} is one trap
     let traps = file.split("}");
 
     let trap_objs = [];
     traps.forEach((trap) =>{
         let lines = trap.split('\n');
-        //empty lines and empty traps need not be processed as well as comments  
+        //empty lines and empty traps need not be processed as well as comments
         lines = lines.filter((line)=> line !== "" && !line.startsWith("#"));
         if(lines.length == 0) return;
 
@@ -167,7 +167,7 @@ function readTrap(system, trapReader) {
             if(line.trim().length == 0) return;
             //split into option name and value
             let options = line.split("=");
-            let lft = options[0].trim(); 
+            let lft = options[0].trim();
             let rght = options[1].trim();
             trap_obj[lft] = Number.isNaN(parseFloat(rght)) ? rght : parseFloat(rght);
         });
@@ -175,14 +175,14 @@ function readTrap(system, trapReader) {
             trap_objs.push(trap_obj);
     });
 
-    //handle the different traps 
+    //handle the different traps
     trap_objs.forEach((trap)=>{
         switch(trap.type){
             case "mutual_trap":
                 let mutTrap = new MutualTrap(trap, system);
                 mutTrap.update();
                 forces.push(mutTrap);
-                
+
                 break;
             default:
                 notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
@@ -191,7 +191,7 @@ function readTrap(system, trapReader) {
     });
     if (forceHandler) forceHandler.destruct();
     forceHandler =  new ForceHandler(forces);
-    
+
 }
 
 
@@ -247,7 +247,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) 
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
         systems.push(system); //add system to Systems[]
-        //TODO: is this really neaded? 
+        //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
         if(idxFile===null){
             //read topology file, the configuration file is read once the topology is loaded to avoid async errors
@@ -255,7 +255,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) 
                 //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
                 trajReader = new TrajectoryReader(datFile,topReader,system,elements);
                 trajReader.indexTrajectory();
-                
+
                 //set up instancing data arrays
                 system.initInstances(system.systemLength());
             });
@@ -279,7 +279,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) 
             };
             idxReader.readAsText(idxFile);
         }
-        
+
 
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
@@ -369,6 +369,8 @@ function readOxViewJsonFile(file: File) {
     reader.onload = () => {
         let sysStartId = sysCount;
         const newElementIds = new Map();
+        // Check if file includes custom colors
+        let customColors = false;
         // Parse json string
         const data = JSON.parse(reader.result as string);
 
@@ -441,6 +443,7 @@ function readOxViewJsonFile(file: File) {
                         e.clusterId = elementData.cluster;
                         if (elementData.color) {
                             e.color = new THREE.Color(elementData.color);
+                            customColors = true;
                         }
                         e.sid = sidCounter++;
 
@@ -485,9 +488,9 @@ function readOxViewJsonFile(file: File) {
 
                         // Otherwise fallback to reading instance parameters
                         } else if('conf' in d) {
-                            //make sure warning shows up only once 
+                            //make sure warning shows up only once
                             if(!deprecated) notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
-                            deprecated = true; 
+                            deprecated = true;
                             e.sid = e.id; // Why is this needed?
                             // Populate instances
                             for (let attr in d.conf) {
@@ -507,6 +510,9 @@ function readOxViewJsonFile(file: File) {
                 addSystemToScene(sys);
 
                 centerAndPBC();
+                if (customColors) {
+                    view.coloringMode.set("Custom");
+                }
             });
         }
     };
@@ -548,7 +554,7 @@ function readParFile(file) {
 
             //dereference p and q into particle positions from the system
             const particle1 = system.getElementBySID(p),
-                  particle2 = system.getElementBySID(q);  
+                  particle2 = system.getElementBySID(q);
 
             if (particle1 == undefined) console.log(i)
 
@@ -569,9 +575,9 @@ function addANMToScene(anm: ANM) {
     anm.geometry = instancedConnector.clone();
 
     anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
-    anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));  
+    anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
     anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
-    anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));  
+    anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
     anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
 
     anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
@@ -594,7 +600,7 @@ function addSystemToScene(system: System) {
     system.nucleosideGeometry = instancedNucleoside.clone();
     system.connectorGeometry = instancedConnector.clone();
     system.spGeometry = instancedBBconnector.clone();
-    
+
     system.pickingGeometry = instancedBackbone.clone();
 
     // Feed data arrays to the geometries
@@ -611,15 +617,15 @@ function addSystemToScene(system: System) {
     system.nucleosideGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
 
     system.connectorGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.conOffsets, 3));
-    system.connectorGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));  
+    system.connectorGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));
     system.connectorGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-    system.connectorGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));  
+    system.connectorGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));
     system.connectorGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
 
     system.spGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbconOffsets, 3));
-    system.spGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbconRotation, 4));  
+    system.spGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbconRotation, 4));
     system.spGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-    system.spGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbconScales, 3));  
+    system.spGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbconScales, 3));
     system.spGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
 
     system.pickingGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbLabels, 3));
