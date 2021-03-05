@@ -52,7 +52,8 @@ let loadHyperSelector = ()=>{
             trajReader.retrieveByIdx(index);
         }
     };
-    if(myChart===null)
+    if(myChart===null || myChart.ctx !== ctx)
+        axis_counter = 0;
         myChart = new Chart(ctx, {
         type: 'line',
         options: {

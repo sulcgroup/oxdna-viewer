@@ -40,43 +40,44 @@ let loadHyperSelector = () => {
             trajReader.retrieveByIdx(index);
         }
     };
-    if (myChart === null)
-        myChart = new Chart(ctx, {
-            type: 'line',
-            options: {
-                elements: {
-                    line: {
-                        tension: 0 // disables bezier curves
-                    }
-                },
-                animation: {
-                    duration: 0 // general animation time
-                },
-                hover: {
-                    animationDuration: 0,
-                },
-                responsiveAnimationDuration: 0,
-                scales: {
-                    xAxes: [{ display: true, scaleLabel: { display: true, labelString: 'Time' }, gridLines: { drawOnChartArea: false } }],
-                    yAxes: [{ display: true, gridLines: { drawOnChartArea: false } }],
-                },
-                annotation: {
-                    events: ["click"],
-                    annotations: [
-                        {
-                            drawTime: "afterDatasetsDraw",
-                            id: "hline",
-                            type: "line",
-                            mode: "vertical",
-                            scaleID: "x-axis-0",
-                            value: 0,
-                            borderColor: "black",
-                            borderWidth: 1
-                        }
-                    ]
+    if (myChart === null || myChart.ctx !== ctx)
+        axis_counter = 0;
+    myChart = new Chart(ctx, {
+        type: 'line',
+        options: {
+            elements: {
+                line: {
+                    tension: 0 // disables bezier curves
                 }
+            },
+            animation: {
+                duration: 0 // general animation time
+            },
+            hover: {
+                animationDuration: 0,
+            },
+            responsiveAnimationDuration: 0,
+            scales: {
+                xAxes: [{ display: true, scaleLabel: { display: true, labelString: 'Time' }, gridLines: { drawOnChartArea: false } }],
+                yAxes: [{ display: true, gridLines: { drawOnChartArea: false } }],
+            },
+            annotation: {
+                events: ["click"],
+                annotations: [
+                    {
+                        drawTime: "afterDatasetsDraw",
+                        id: "hline",
+                        type: "line",
+                        mode: "vertical",
+                        scaleID: "x-axis-0",
+                        value: 0,
+                        borderColor: "black",
+                        borderWidth: 1
+                    }
+                ]
             }
-        });
+        }
+    });
 };
 class ChartColorMap {
     constructor() {
