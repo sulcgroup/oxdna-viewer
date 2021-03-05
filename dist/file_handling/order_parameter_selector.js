@@ -54,8 +54,6 @@ let loadHyperSelector = () => {
                 },
                 hover: {
                     animationDuration: 0,
-                    mode: "dataset",
-                    intersect: true
                 },
                 responsiveAnimationDuration: 0,
                 scales: {
@@ -101,47 +99,69 @@ let chartColorMap = new ChartColorMap();
 let axis_counter = 1;
 let handleParameterDrop = (files) => {
     labels = [];
+    trajReader.lookupReader.position_lookup.forEach((p, i) => {
+        labels.push(p[2]);
+    });
+    // populate the labels
     //console.log(files);
     for (let i = 0; i < files.length; i++) {
         const parameterFileReader = new FileReader(); //read .json
         parameterFileReader.onload = () => {
-            let json_data = parameterFileReader.result;
-            let parameter = JSON.parse(json_data);
-            let data = [];
-            trajReader.lookupReader.position_lookup.forEach((p, i) => {
-                labels.push(p[2]);
-                data.push(parameter[i]);
-            });
-            if (myChart.data.datasets.length == 0) {
-                myChart.data = {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: files[0].name.split(".")[0],
-                            data: data,
-                            fill: false,
-                            borderColor: chartColorMap.get(),
-                        }
-                    ]
-                };
-            }
+            let file_data = parameterFileReader.result;
+            let parameters = {}; // we want a dictionary in the end 
+            if (file_data.startsWith("{")) // case 1 we are json
+                parameters = JSON.parse(file_data);
             else {
-                myChart.data.datasets.push({
-                    label: files[i].name.split(".")[0],
-                    data: data,
-                    fill: false,
-                    borderColor: chartColorMap.get(),
-                    yAxisID: `y-axis-id${axis_counter}`
-                });
-                myChart.options.scales.yAxes.push({
-                    type: 'linear',
-                    display: true,
-                    position: 'left',
-                    id: `y-axis-id${axis_counter}`,
-                });
-                axis_counter++;
+                // we are probably text lets handle it in the oxdna.org 
+                // distance file spec 
+                let lines = file_data.split("\n");
+                let header = (lines.shift()).trim().split("\t");
+                // register column names  
+                for (let i = 0; i < header.length; i++)
+                    parameters[header[i]] = [];
+                //now iterate over the lines populating the parameters 
+                for (let i = 0; i < lines.length; i++) {
+                    let vals = lines[i].split("\t");
+                    for (let j = 0; j < header.length; j++)
+                        parameters[header[j]].push(vals[j]);
+                }
             }
-            myChart.update();
+            for (let parameter_name in parameters) {
+                let data = [];
+                trajReader.lookupReader.position_lookup.forEach((p, i) => {
+                    data.push(parameters[parameter_name][i]);
+                });
+                if (myChart.data.datasets.length == 0) {
+                    myChart.data = {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: parameter_name,
+                                data: data,
+                                fill: false,
+                                borderColor: chartColorMap.get(),
+                            }
+                        ]
+                    };
+                }
+                else {
+                    myChart.data.datasets.push({
+                        label: parameter_name,
+                        data: data,
+                        fill: false,
+                        borderColor: chartColorMap.get(),
+                        yAxisID: `y-axis-id${axis_counter}`
+                    });
+                    myChart.options.scales.yAxes.push({
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        id: `y-axis-id${axis_counter}`,
+                    });
+                    axis_counter++;
+                }
+                myChart.update();
+            }
         };
         parameterFileReader.readAsText(files[i]);
     }

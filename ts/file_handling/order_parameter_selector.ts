@@ -66,8 +66,8 @@ let loadHyperSelector = ()=>{
             },
             hover: {
                 animationDuration: 0, // duration of animations when hovering an item
-                mode:"dataset",
-                intersect:true
+                // mode:"dataset", // it is possible to remove the line view from the plot 
+                // intersect:true  // on hover, but i find it to distracting 
             },
             responsiveAnimationDuration: 0, // animation duration after a resize
             scales: {
@@ -116,17 +116,43 @@ let axis_counter = 1;
 
 let handleParameterDrop = (files)=>{
     labels = [];
+    
+    trajReader.lookupReader.position_lookup.forEach((p,i) =>{        
+        labels.push(p[2]);});
+    // populate the labels
+
     //console.log(files);
     for(let i = 0; i < files.length; i++){
         const parameterFileReader = new FileReader(); //read .json
         parameterFileReader.onload = () => {
-            let json_data = parameterFileReader.result as string;
+            let file_data = parameterFileReader.result as string;
 
-            let parameter = JSON.parse(json_data);
+            let parameters = {}; // we want a dictionary in the end 
+            if (file_data.startsWith("{")) // case 1 we are json
+                parameters = JSON.parse(file_data);
+            else {
+                // we are probably text lets handle it in the oxdna.org 
+                // distance file spec 
+                let lines =  file_data.split("\n");
+                let header = (lines.shift()).trim().split("\t");
+                
+                // register column names  
+                for (let i = 0; i < header.length; i++) 
+                    parameters[header[i]] = []; 
+                //now iterate over the lines populating the parameters 
+                for (let i = 0; i < lines.length; i++) {
+                    let vals = lines[i].split("\t");
+                    for (let j = 0; j < header.length; j++) 
+                        parameters[header[j]].push(vals[j]); 
+                }
+
+            }
+
+            for (let parameter_name in parameters){
             let data = [];
+
             trajReader.lookupReader.position_lookup.forEach((p,i) =>{
-                labels.push(p[2]);
-                data.push(parameter[i]);
+                data.push(parameters[parameter_name][i]);
             });
             
             if (myChart.data.datasets.length == 0 ){
@@ -134,7 +160,7 @@ let handleParameterDrop = (files)=>{
                     labels : labels, 
                     datasets:[
                         {
-                            label: files[0].name.split(".")[0],
+                            label: parameter_name,//files[0].name.split(".")[0],
                             data:data,
                             fill: false,
                             borderColor:chartColorMap.get(),
@@ -145,7 +171,7 @@ let handleParameterDrop = (files)=>{
             else{
                 myChart.data.datasets.push(
                     {
-                        label: files[i].name.split(".")[0],
+                        label: parameter_name,//files[i].name.split(".")[0],
                         data:data,
                         fill: false,
                         borderColor:chartColorMap.get(),
@@ -163,6 +189,7 @@ let handleParameterDrop = (files)=>{
             }
                 
             myChart.update();
+            }
         };
         parameterFileReader.readAsText(files[i]); 
     }
