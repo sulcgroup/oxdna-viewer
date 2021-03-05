@@ -14,6 +14,21 @@ let event_plug = (event) => {
 let myChart : Chart = null;
 let labels = [];
 let loadHyperSelector = ()=>{
+    // register 1st drop event 
+    let msg = document.getElementById("parameterDropId");
+    msg.addEventListener("drop", (event)=>{
+        event.preventDefault();
+        const files = event.dataTransfer.files;
+        handleParameterDrop(files);
+        document.getElementById("chartContainer").hidden = false;
+        msg.hidden = true;
+    }, false);
+
+    msg.addEventListener("dragover", event_plug, false);
+    msg.addEventListener("dragenter",event_plug, false);
+    msg.addEventListener("dragexit", event_plug, false);
+
+
     // register drop event 
     let target = document.getElementById("myChart");
 
