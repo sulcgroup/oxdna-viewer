@@ -1,6 +1,5 @@
 // Use Metro GUI
 declare var Metro: any;
-
 function drawSystemHierarchy() {
     let checkboxhtml = (label)=> `<input data-role="checkbox" data-caption="${label}">`;
 

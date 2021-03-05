@@ -253,9 +253,9 @@ class  LookupReader extends FileReader {
         this.callback = callback;
     }
 
-    addIndex(offset,size){
+    addIndex(offset,size,time){
         this.position_lookup.push(
-            [offset,size]
+            [offset,size,time]
         );
     }
     
@@ -329,6 +329,12 @@ class TrajectoryReader {
                 this.idx = idx;
                 //try display the retrieved conf
                 this.parseConf(lines);
+                this.trajectorySlider.setAttribute("value",this.idx.toString());
+                if(myChart){
+                    // hacky way to propagate the line annotation
+                    myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[this.idx][2];
+                    myChart.update();
+                }
             });
 
         if (indexes) {// use index file
@@ -346,12 +352,17 @@ class TrajectoryReader {
             timedisp.hidden = false;
             // set focus to trajectory
             document.getElementById('trajControlsLink').click();
+            (<HTMLButtonElement>document.getElementById("hyperSelectorBtnId")).disabled = false;
         }
         this.indexingReader = new ForwardReader(this.chunker,this.confLength,
             (idx, lines, size)=>{
                 if (size>0){
                     //record the retrieved conf
-                    this.lookupReader.addIndex(this.offset,size);
+                    this.lookupReader.addIndex(
+                        this.offset,
+                        size,lines[0].split(" ")[2],
+                        //parseFloat(lines[2].split(" ")[3])
+                        );
                     this.offset+=size;
                     document.dispatchEvent(new Event('nextConfigIndexed'));
                     if(this.firstRead){
@@ -370,9 +381,7 @@ class TrajectoryReader {
             this.lookupReader.getConf( this.idx );
         //    this.indexingReader.get_next_conf();
         else
-            this.idx--;
-        this.trajectorySlider.setAttribute("value",this.idx.toString());
-        
+            this.idx--;        
     }
 
     indexTrajectory(){
@@ -421,7 +430,7 @@ class TrajectoryReader {
             if(trajReader.lookupReader.position_lookup.length>1)
                 (<HTMLElement>document.getElementById('downloadIndex')).hidden=false;
             
-           
+            (<HTMLButtonElement>document.getElementById("hyperSelectorBtnId")).disabled = false;
 
         };
         document.addEventListener('nextConfigIndexed', _load);
@@ -433,14 +442,19 @@ class TrajectoryReader {
     }
     retrieveByIdx(idx){
         //used by the slider to set the conf
-        if(this.lookupReader.readyState == 1)
-                setTimeout(()=>{
-                    this.retrieveByIdx(idx);
-                },30); // try untill can actually read
-        else {
+        if(this.lookupReader.readyState != 1){
+        //        setTimeout(()=>{
+        //            this.retrieveByIdx(idx);
+        //        },30); // try untill can actually read
+        //else {
             this.idx=idx;
             this.lookupReader.getConf(idx);
             this.trajectorySlider.setAttribute("value",this.idx.toString());
+            if(myChart){
+                // hacky way to propagate the line annotation
+                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart.update();
+            }
         }
     }
 
