@@ -53,7 +53,9 @@ let loadHyperSelector = () => {
                     duration: 0 // general animation time
                 },
                 hover: {
-                    animationDuration: 0 // duration of animations when hovering an item
+                    animationDuration: 0,
+                    mode: "dataset",
+                    intersect: true
                 },
                 responsiveAnimationDuration: 0,
                 scales: {
@@ -99,7 +101,7 @@ let chartColorMap = new ChartColorMap();
 let axis_counter = 1;
 let handleParameterDrop = (files) => {
     labels = [];
-    console.log(files);
+    //console.log(files);
     for (let i = 0; i < files.length; i++) {
         const parameterFileReader = new FileReader(); //read .json
         parameterFileReader.onload = () => {
@@ -117,7 +119,6 @@ let handleParameterDrop = (files) => {
                         {
                             label: files[0].name.split(".")[0],
                             data: data,
-                            //backgroundColor:'rgba(0,0,0,0)',
                             fill: false,
                             borderColor: chartColorMap.get(),
                         }
@@ -129,7 +130,6 @@ let handleParameterDrop = (files) => {
                     label: files[i].name.split(".")[0],
                     data: data,
                     fill: false,
-                    //backgroundColor:'rgba(0,0,0,0)',
                     borderColor: chartColorMap.get(),
                     yAxisID: `y-axis-id${axis_counter}`
                 });
