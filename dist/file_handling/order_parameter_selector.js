@@ -96,7 +96,7 @@ class ChartColorMap {
     }
 }
 let chartColorMap = new ChartColorMap();
-let axis_counter = 1;
+let axis_counter = 0;
 let handleParameterDrop = (files) => {
     labels = [];
     trajReader.lookupReader.position_lookup.forEach((p, i) => {
@@ -126,6 +126,20 @@ let handleParameterDrop = (files) => {
                         parameters[header[j]].push(vals[j]);
                 }
             }
+            // add new axis for the datasets  
+            if (axis_counter == 0) {
+                // make sure you have at least 1 registered axis 
+                myChart.options.scales.yAxes[0].id = `y-axis-id${axis_counter}`;
+            }
+            else {
+                console.log("adding new axis");
+                myChart.options.scales.yAxes.push({
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    id: `y-axis-id${axis_counter}`,
+                });
+            }
             for (let parameter_name in parameters) {
                 let data = [];
                 trajReader.lookupReader.position_lookup.forEach((p, i) => {
@@ -140,6 +154,7 @@ let handleParameterDrop = (files) => {
                                 data: data,
                                 fill: false,
                                 borderColor: chartColorMap.get(),
+                                yAxisID: `y-axis-id${axis_counter}`
                             }
                         ]
                     };
@@ -152,16 +167,11 @@ let handleParameterDrop = (files) => {
                         borderColor: chartColorMap.get(),
                         yAxisID: `y-axis-id${axis_counter}`
                     });
-                    myChart.options.scales.yAxes.push({
-                        type: 'linear',
-                        display: true,
-                        position: 'left',
-                        id: `y-axis-id${axis_counter}`,
-                    });
-                    axis_counter++;
                 }
                 myChart.update();
             }
+            // a new axis for each new file please 
+            axis_counter++;
         };
         parameterFileReader.readAsText(files[i]);
     }

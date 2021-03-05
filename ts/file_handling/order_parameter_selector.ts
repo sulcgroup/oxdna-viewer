@@ -112,7 +112,7 @@ class ChartColorMap{
     }
 }
 let chartColorMap = new ChartColorMap();
-let axis_counter = 1; 
+let axis_counter = 0; 
 
 let handleParameterDrop = (files)=>{
     labels = [];
@@ -147,6 +147,20 @@ let handleParameterDrop = (files)=>{
                 }
 
             }
+            // add new axis for the datasets  
+            if(axis_counter == 0){
+                // make sure you have at least 1 registered axis 
+                myChart.options.scales.yAxes[0].id =  `y-axis-id${axis_counter}`;
+            }
+            else{
+                console.log("adding new axis")
+                myChart.options.scales.yAxes.push({
+                    type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
+                    display: true,
+                    position: 'left',
+                    id: `y-axis-id${axis_counter}`,
+                });
+            }
 
             for (let parameter_name in parameters){
             let data = [];
@@ -164,6 +178,7 @@ let handleParameterDrop = (files)=>{
                             data:data,
                             fill: false,
                             borderColor:chartColorMap.get(),
+                            yAxisID: `y-axis-id${axis_counter}`
                         }
                     ]
                 };
@@ -178,18 +193,13 @@ let handleParameterDrop = (files)=>{
                         yAxisID: `y-axis-id${axis_counter}`
                     }
                 );
-                myChart.options.scales.yAxes.push({
-							type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
-							display: true,
-							position: 'left',
-                            id: `y-axis-id${axis_counter}`,
-                                                        
-						});
-                axis_counter++;
+                
             }
                 
             myChart.update();
             }
+            // a new axis for each new file please 
+            axis_counter++;
         };
         parameterFileReader.readAsText(files[i]); 
     }
