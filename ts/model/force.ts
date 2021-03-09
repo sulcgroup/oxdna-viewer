@@ -59,14 +59,16 @@ class MutualTrap extends Force {
 
     toString(idMap?: Map<BasicElement, number>): string {
         if (elements.has(this.particle.id) && elements.has(this.ref_particle.id)) {
-            return `{
-                type = ${this.type}
-                particle = ${idMap ? idMap.get(this.particle) : this.particle.id}
-                ref_particle = ${idMap ? idMap.get(this.ref_particle) : this.ref_particle.id}
-                stiff = ${this.stiff}
-                r0 = ${this.r0} 
-                PBC = ${this.PBC}
-            }`
+            return (
+`{
+    type = ${this.type}
+    particle = ${idMap ? idMap.get(this.particle) : this.particle.id}
+    ref_particle = ${idMap ? idMap.get(this.ref_particle) : this.ref_particle.id}
+    stiff = ${this.stiff}
+    r0 = ${this.r0}
+    PBC = ${this.PBC}
+}`
+            )
         } else {
             notify(`${this.description()} includes a particle that no longer exists`, 'alert', true);
             return "";
