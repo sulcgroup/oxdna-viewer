@@ -10,7 +10,7 @@ function rotateElements(elements, axis, angle, about) {
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
     if (forceHandler)
-        forceHandler.update();
+        forceHandler.redraw();
 }
 function rotateElementsByQuaternion(elements, q, about) {
     // For some reason, we have to rotate the orientations
@@ -161,7 +161,7 @@ function translateElements(elements, v) {
         tmpSystems[i].callUpdates(['instanceOffset']);
     }
     if (forceHandler)
-        forceHandler.update();
+        forceHandler.redraw();
     render();
 }
 //dragControls.activate();

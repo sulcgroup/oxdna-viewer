@@ -103,34 +103,35 @@ function handleFiles(files: FileList) {
         }
     }
     let jsonAlone = false;
-    if (!trapFile){
-        let datAlone = datFile && !topFile;
-        if (jsonFile && !topFile) jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
-            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-            return
-        }
-        if (datAlone && systems.length === 0) {
-            notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
-            return
-        }
 
-        //read a topology/configuration pair and maybe a json file
-        if (!jsonAlone) {
-            readFiles(topFile, datFile, idxFile, jsonFile);
-        }
-
-        //read just a json file to generate an overlay on an existing scene
-        if (jsonFile && jsonAlone) {
-            const jsonReader = new FileReader(); //read .json
-            jsonReader.onload = () => {
-                readJson(systems[systems.length-1], jsonReader);
-            };
-            jsonReader.readAsText(jsonFile);
-            renderer.domElement.style.cursor = "auto";
-        }
+    let datAlone = datFile && !topFile;
+    let trapAlone = trapFile && !topFile;
+    if (jsonFile && !topFile) jsonAlone = true;
+    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
+        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+        return
     }
-    else{
+    if (datAlone && systems.length === 0) {
+        notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
+        return
+    }
+
+    //read a topology/configuration pair and maybe a json file
+    if (!jsonAlone) {
+        readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
+    }
+
+    //read just a json file to generate an overlay on an existing scene
+    if (jsonFile && jsonAlone) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            readJson(systems[systems.length-1], jsonReader);
+        };
+        jsonReader.readAsText(jsonFile);
+        renderer.domElement.style.cursor = "auto";
+    }
+
+    if (trapFile && trapAlone) {
         const trapReader = new FileReader(); //read .trap file
         trapReader.onload = () => {
             readTrap(systems[systems.length-1], trapReader);
@@ -176,22 +177,24 @@ function readTrap(system, trapReader) {
     });
 
     //handle the different traps
-    trap_objs.forEach((trap)=>{
-        switch(trap.type){
+    trap_objs.forEach(f=>{
+        switch(f.type){
             case "mutual_trap":
-                let mutTrap = new MutualTrap(trap, system);
+                let mutTrap = new MutualTrap();
+                mutTrap.setFromParsedJson(f);
                 mutTrap.update();
                 forces.push(mutTrap);
-
                 break;
             default:
-                notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
         }
     });
-    if (forceHandler) forceHandler.destruct();
-    forceHandler =  new ForceHandler(forces);
-
+    if (!forceHandler) {
+        forceHandler = new ForceHandler(forces);
+    } else {
+        forceHandler.set(forces);
+    }
 }
 
 
@@ -240,7 +243,7 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -287,6 +290,15 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File) 
                 readJson(system, jsonReader)
             };
             jsonReader.readAsText(jsonFile);
+            renderer.domElement.style.cursor = "auto";
+        }
+
+        if (trapFile) {
+            const trapReader = new FileReader(); //read .trap file
+            trapReader.onload = () => {
+                readTrap(systems[systems.length-1], trapReader);
+            };
+            trapReader.readAsText(trapFile);
             renderer.domElement.style.cursor = "auto";
         }
     } else if (datFile) {
@@ -514,6 +526,27 @@ function readOxViewJsonFile(file: File) {
                     view.coloringMode.set("Custom");
                 }
             });
+        }
+
+        if (data.forces) {
+            data.forces.forEach(f => {
+                switch(f.type){
+                    case "mutual_trap":
+                        let mutTrap = new MutualTrap();
+                        mutTrap.setFromParsedJson(f);
+                        mutTrap.update();
+                        forces.push(mutTrap);
+                        break;
+                    default:
+                        notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                        break;
+                }
+            });
+            if (!forceHandler) {
+                forceHandler = new ForceHandler(forces);
+            } else {
+                forceHandler.set(forces);
+            }
         }
     };
     reader.readAsText(file);

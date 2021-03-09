@@ -1,50 +1,85 @@
 function forcesToString() {
-    return forces.map(f=>f.toString()).join('\n\n');
+    let [newElementIds, , ] = getNewIds();
+    return forces.map(f=>f.toString(newElementIds)).join('\n\n');
 }
 
 abstract class Force {   
     type: string;
-    system: System;
     sceneObjects: THREE.Object3D[] = [];
-    paramKeys: string[] = [];
-    constructor(parsedjson: Object, system: System) {
-        for (var param in parsedjson) {
-            this[param] = parsedjson[param];
-            this.paramKeys.push(param);
-        }
-        this.system = system;
-    }
 
-    abstract update();
-
-
-    toString(): string {
-        return `{\n${this.paramKeys.map(i=>{return `${i} = ${this[i]}`}).join('\n')}\n}`;
-    }
+    abstract setFromParsedJson(parsedjson): void;
+    abstract update(): void;
+    abstract toString(idMap?: Map<BasicElement, number>): string;
+    abstract description(): string;
 }
 
 class MutualTrap extends Force {
     type = 'mutual_trap'
-    particle: number; // the particle on which to exert the force.
-    ref_particle: number; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
+    particle: BasicElement; // the particle on which to exert the force.
+    ref_particle: BasicElement; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
     stiff: number; // stiffness of the trap.
     r0: number; // equilibrium distance of the trap.
-    
+    PBC: number;
+
     equilibrium_distances : THREE.Vector3[];
     force: THREE.Vector3[];
-        
 
-    getParticle() {
-        return this.system.getElementBySID(this.particle);
+    set(particle: BasicElement, ref_particle: BasicElement,
+        stiff=0.09, r0=1.2, PBC=1)
+    {
+        this.particle = particle;
+        this.ref_particle = ref_particle;
+        this.stiff = stiff;
+        this.r0 = r0;
+        this.PBC = PBC;
+        this.update()
     }
 
-    getRefParticle() {
-        return this.system.getElementBySID(this.ref_particle);
+    setFromParsedJson(parsedjson) {
+        for (var param in parsedjson) {
+            if (['particle', 'ref_particle'].includes(param)) {
+                this[param] = elements.get(parsedjson[param]);
+            } else {
+                this[param] = parsedjson[param];
+            }
+        }
+        this.update();
+    }
+
+    toJSON() {
+        return {
+            type: this.type,
+            particle: this.particle.id,
+            ref_particle: this.ref_particle.id,
+            stiff: this.stiff,
+            r0: this.r0,
+            PBC: this.PBC
+        }
+    }
+
+    toString(idMap?: Map<BasicElement, number>): string {
+        if (elements.has(this.particle.id) && elements.has(this.ref_particle.id)) {
+            return `{
+                type = ${this.type}
+                particle = ${idMap ? idMap.get(this.particle) : this.particle.id}
+                ref_particle = ${idMap ? idMap.get(this.ref_particle) : this.ref_particle.id}
+                stiff = ${this.stiff}
+                r0 = ${this.r0} 
+                PBC = ${this.PBC}
+            }`
+        } else {
+            notify(`${this.description()} includes a particle that no longer exists`, 'alert', true);
+            return "";
+        }
+    }
+
+    description(): string {
+        return `Trap pulling ${this.particle.id} towards ${this.ref_particle.id}`;
     }
 
     update() {
-        const p1 = this.getParticle().getInstanceParameter3("bbOffsets"); // position from which to exert the force.
-        const p2 = this.getRefParticle().getInstanceParameter3("bbOffsets"); // position to pull towards.
+        const p1 = this.particle.getInstanceParameter3("bbOffsets"); // position from which to exert the force.
+        const p2 = this.ref_particle.getInstanceParameter3("bbOffsets"); // position to pull towards.
                  
         let dir = p2.clone().sub(p1).normalize();
         
@@ -70,8 +105,16 @@ class ForceHandler{
     force_lines: THREE.LineSegments;
     equilibrium_distances_lines: THREE.LineSegments;
 
-    constructor( mutual_traps :Force[]) {
-        this.mutual_traps = <MutualTrap[]> mutual_traps;
+    constructor(forces :Force[]) {
+        this.set(forces);
+    }
+
+    set(forces: Force[]) {
+        // Remove any old geometry (nothing happens if undefined)
+        scene.remove(this.equilibrium_distances_lines);
+        scene.remove(this.force_lines);
+        // We can only draw mutual traps so far:
+        this.mutual_traps = <MutualTrap[]> forces.filter(f=>f.type == 'mutual_trap');
         let v1 = [];
         let v2 = [];
         let force_geometry = new THREE.BufferGeometry();
@@ -84,15 +127,15 @@ class ForceHandler{
             v2.push(f.equilibrium_distances[1].x,f.equilibrium_distances[1].y,f.equilibrium_distances[1].z );
         });
 
-        force_geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( v1, 3 ) );
-        let material = new THREE.LineBasicMaterial( { color: 0x050505} );
-        this.force_lines = new THREE.LineSegments( force_geometry, material );
+        force_geometry.addAttribute('position', new THREE.Float32BufferAttribute(v1, 3));
+        let material = new THREE.LineBasicMaterial({color: 0x050505});
+        this.force_lines = new THREE.LineSegments(force_geometry, material);
         scene.add(this.force_lines);
         this.sceneObjects.push(this.force_lines);
         
-        equilibrium_distances_geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( v2, 3 ) );
-        material = new THREE.LineBasicMaterial( { color: 0x0000ff, opacity:.5 } );
-        this.equilibrium_distances_lines = new THREE.LineSegments( equilibrium_distances_geometry, material );
+        equilibrium_distances_geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        material = new THREE.LineBasicMaterial({color: 0x0000ff, opacity:.5});
+        this.equilibrium_distances_lines = new THREE.LineSegments(equilibrium_distances_geometry, material);
         scene.add(this.equilibrium_distances_lines);
         this.sceneObjects.push(this.equilibrium_distances_lines);
 
@@ -101,29 +144,64 @@ class ForceHandler{
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
 
-    update = () => {
+    redraw() {
         let v1 = [];
         let v2 = [];
 
         this.mutual_traps.forEach( f=>{
             f.update();
-            v1.push(f.force[0].x,f.force[0].y,f.force[0].z );
-            v1.push(f.force[1].x,f.force[1].y,f.force[1].z );
-            v2.push(f.equilibrium_distances[0].x,f.equilibrium_distances[0].y,f.equilibrium_distances[0].z );
-            v2.push(f.equilibrium_distances[1].x,f.equilibrium_distances[1].y,f.equilibrium_distances[1].z );
+            v1.push(f.force[0].x,f.force[0].y,f.force[0].z);
+            v1.push(f.force[1].x,f.force[1].y,f.force[1].z);
+            v2.push(f.equilibrium_distances[0].x,f.equilibrium_distances[0].y,f.equilibrium_distances[0].z);
+            v2.push(f.equilibrium_distances[1].x,f.equilibrium_distances[1].y,f.equilibrium_distances[1].z);
         });
-        this.force_lines.geometry = new  THREE.BufferGeometry();
+        this.force_lines.geometry = new THREE.BufferGeometry();
         this.equilibrium_distances_lines.geometry = new THREE.BufferGeometry();
 
-        this.force_lines.geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( v1, 3 ) );
-        this.equilibrium_distances_lines.geometry.addAttribute( 'position', new THREE.Float32BufferAttribute( v2, 3 ) );
-        render ();
-    };
-
-    destruct(){
-        scene.remove(this.equilibrium_distances_lines);
-        scene.remove(this.force_lines);
+        this.force_lines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v1, 3));
+        this.equilibrium_distances_lines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        render();
     }
+}
 
+function makeTrapsFromSelection() {
+    let selection = Array.from(selectedBases);
+    // For every other element in selection
+    for (let i = 0; i < selection.length; i+=2) {
+        // If there is another nucleotide in the pair
+        if (selection[i+1] !== undefined) {
+            //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
+            let trapA = new MutualTrap();
+            trapA.set(selection[i], selection[i + 1]);
+            forces.push(trapA);
 
+            let trapB = new MutualTrap();
+            trapB.set(selection[i + 1], selection[i]);
+            forces.push(trapB);
+        } else { 
+            //if there is no 2nd nucleotide in the pair
+            notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
+        }
+    }
+    if (!forceHandler) {
+        forceHandler = new ForceHandler(forces);
+    } else {
+        forceHandler.set(forces);
+    }
+}
+
+function makeTrapsFromPairs() {
+    elements.forEach(e=>{
+        // If element is paired, add a trap
+        if (e.isPaired()) {
+            let trap = new MutualTrap();
+            trap.set(e, (e as Nucleotide).pair);
+            forces.push(trap);
+        }
+    });
+    if (!forceHandler) {
+        forceHandler = new ForceHandler(forces);
+    } else {
+        forceHandler.set(forces);
+    }
 }

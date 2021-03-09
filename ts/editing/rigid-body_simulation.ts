@@ -108,7 +108,7 @@ class RigidClusterSimulator {
      */
     public simulate() {
         this.integrate(this.dt);
-        if(forceHandler) forceHandler.update();
+        if(forceHandler) forceHandler.redraw();
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
@@ -173,8 +173,8 @@ class Cluster {
             }
             // Pull together inter-cluster traps
             traps.forEach((t: MutualTrap)=>{
-                if (t.getParticle() == e) {
-                    this.conPoints.push(new ClusterConnectionPoint(e, t.getRefParticle()));
+                if (t.particle == e) {
+                    this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
                 }
             });
         });

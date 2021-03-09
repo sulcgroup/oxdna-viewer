@@ -69,7 +69,7 @@ class OXServeSocket extends WebSocket {
             if ("dat_file" in message) {
                 updateConfFromFile(message["dat_file"]);
                 if (forceHandler)
-                    forceHandler.update();
+                    forceHandler.redraw();
             }
         };
         this.onopen = (resonse) => {

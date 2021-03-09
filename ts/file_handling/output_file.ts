@@ -73,23 +73,26 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     }
 }
 
-
-function makeTopFile(name){
-    const top: string[] = []; //string of contents of .top file
-
-    let proteinMode: Boolean = false
-    let peptides = []
-    let nas = []
+function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
+    totParticles: number;
+    totStrands: number;
+    totNuc: number;
+    totAA: number;
+    totNucleic: number;
+}] {
+    //remove any gaps in the particle numbering
+    //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
+    let peptides = [];
+    let nas = [];
 
     //figure out if there are any proteins in the system
     systems.forEach(system => {
         system.strands.forEach(strand => {
             if (strand.isPeptide()) {
-                proteinMode = true;
                 peptides.push(strand);
             }
             else {
-                nas.push(strand)
+                nas.push(strand);
             }
         });
     });
@@ -97,84 +100,70 @@ function makeTopFile(name){
     const newStrandIds = new Map();
     const newElementIds = new Map();
 
-    let totParticles = 0;
-    let totStrands = 0;
-    let firstLine;
+    let totNuc = 0;
+    let totAA = 0;
+    let totNucleic = 0;
+    let totPeptide = 0;
 
-    //remove any gaps in the particle numbering
-    if (!proteinMode) {
-        peptides = undefined;
-        nas = undefined;
+    let sidCounter = -1;
+    let idCounter = 0;
 
-        let totNuc: number = 0; //total # of elements
-        let totNucleic: number = 0; //total # of strands
-    
-        let sidCounter = 1;    
-        let idCounter = 0;
-
-        systems.forEach(system =>{
-            totNucleic += system.strands.length; // Count strands
-            system.strands.forEach((strand: Strand) => {
-                newStrandIds.set(strand, sidCounter++); //Assign new strandID
-                strand.forEach(e => {
-                    newElementIds.set(e, idCounter++); //Assign new elementID
-                    totNuc++; // Count elements
-                }, true // Iterate in 3' to 5' direction, per oxDNA convention
-                );
-            });
+    peptides.forEach(strand =>{
+        newStrandIds.set(strand, sidCounter--);
+        totPeptide += 1;
+        strand.forEach((e: BasicElement) => {
+            newElementIds.set(e, idCounter++);
+            totAA++;
         });
-        totParticles = totNuc;
-        totStrands = totNucleic;
-        firstLine = [totParticles, totStrands]
+    });
 
-    }
-    else { //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
-        let totNuc = 0;
-        let totAA = 0;
-        let totNucleic = 0;
-        let totPeptide = 0;
-
-        let sidCounter = -1;
-        let idCounter = 0;
-
-        peptides.forEach(strand =>{
-            newStrandIds.set(strand, sidCounter--);
-            totPeptide += 1;
-            strand.forEach(e => {
-                newElementIds.set(e, idCounter++);
-                totParticles++;
-                totAA++;
-            });
+    sidCounter = 1;
+    nas.forEach(strand => {
+        newStrandIds.set(strand, sidCounter++);
+        totNucleic += 1;
+        strand.forEach((e: BasicElement) => {
+            newElementIds.set(e, idCounter++);
+            totNuc++;
         });
+    });
 
-        sidCounter = 1;
-        nas.forEach(strand => {
-            newStrandIds.set(strand, sidCounter++);
-            totNucleic += 1;
-            strand.forEach(e => {
-                newElementIds.set(e, idCounter++);
-                totParticles++;
-                totNuc++;
-            });
-        });
+    const counts = {
+        totParticles: totNuc + totAA,
+        totStrands: totPeptide + totNucleic,
+        totNuc: totNuc,
+        totAA: totAA,
+        totNucleic: totNucleic
+    };
 
-        totParticles = totNuc + totAA;
-        totStrands = totPeptide + totNucleic;
-        firstLine = [totParticles, totStrands, totNuc, totAA, totNucleic]
+    if (counts.totParticles != elements.size) {
+        notify(`Length of totNuc (${counts.totParticles}) is not equal to length of elements array (${elements.size})`);
     }
 
-    top.push(firstLine.join(" "))
+    return [newElementIds, newStrandIds, counts];
+ }
 
-    if (totParticles != elements.size) {
-        notify(`Length of totNuc (${totParticles}) is not equal to length of elements array (${elements.size})`);
+function makeTopFile(name){
+    const top: string[] = []; // string of contents of .top file
+
+    // remove any gaps in the particle numbering
+    let [newElementIds, newStrandIds, counts] = getNewIds();
+
+    let firstLine = [counts['totParticles'], counts['totStrands']];
+
+    // Add extra counts needed in protein simulation
+    if (counts['totAA'] > 0) {
+        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v=>counts[v]));
     }
+
+    top.push(firstLine.join(" "));
 
     newElementIds.forEach((_id, e) => { //for each nucleotide
         let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
         let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
         let cons: number[] = []
         
-        if (proteinMode) {
+        // Protein mode
+        if (counts['totAA'] > 0) {
             for (let i = 0; i < e.connections.length; i++) {
                 let c = e.connections[i];
                 if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != n5) {
@@ -256,6 +245,14 @@ function writeMutTrapText(base1: number, base2: number): string { //create strin
 		"PBC = 1" + "\n}\n\n";
 }
 
+function makeForceFile() {
+    if(forces.length > 0) {
+        makeTextFile("external_forces.txt", forcesToString());
+    } else {
+        notify("No forces have been added yet, please click Dynamics/Forces", "alert");
+    }
+}
+
 function makeMutualTrapFile() { //make download of mutual trap file from selected bases
     let mutTrapText: string = "";
     let listBases = Array.from(selectedBases).map(e=>e.id);
@@ -317,7 +314,8 @@ function makeOxViewJsonFile(space?: string | number) {
     makeTextFile("output.oxview", JSON.stringify({
         date: new Date(),
         box: box.toArray(),
-        systems: systems
+        systems: systems,
+        forces: forces
     }, null, space));
 }
 

@@ -579,7 +579,7 @@ class TrajectoryReader {
             system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         }
         centerAndPBC(system.getMonomers());
-        if (forceHandler) forceHandler.update();
+        if (forceHandler) forceHandler.redraw();
         render();
         // Signal that config has been loaded
         // block the nextConfig loaded to prevent the video loader from continuing after the chunk

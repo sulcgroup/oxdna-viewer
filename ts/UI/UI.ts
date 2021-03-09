@@ -1,5 +1,29 @@
 // Use Metro GUI
 declare var Metro: any;
+
+function listForces() {
+    let forceDOM = document.getElementById("forces");
+    forceDOM.innerHTML = "";
+    forces.forEach(force=>{
+        let div = document.createElement('div');
+        div.innerHTML = force.description();
+        let delButton = document.createElement('button');
+        delButton.classList.add('button', 'cycle');
+        delButton.innerHTML = '<span class="mif-cross mif-lg"></span>'
+        delButton.onclick = ()=>{
+            console.log("Removing"+force.description());
+            // Remove force
+            forces = forces.filter(f=>f !== force);
+            // Remove DOM
+            div.remove();
+
+            // Update force visualization
+            forceHandler.set(forces);
+        };
+        div.append(delButton);
+        forceDOM.append(div);
+    })
+}
 function drawSystemHierarchy() {
     let checkboxhtml = (label)=> `<input data-role="checkbox" data-caption="${label}">`;
 
@@ -258,14 +282,15 @@ function toggleVisArbitrary() {
     clearSelection();
 }
 
-function notify(message: string, type?: string, title?: string) {
+function notify(message: string, type?: string, keepOpen=false, title?: string) {
     let n = Metro.notify;
     if(!type) {
         type = "info";
     }
     n.create(message, title, {
         cls: type,
-        timeout: 5000
+        timeout: 5000,
+        keepOpen: keepOpen
     });
     console.info(`Notification: ${message}`);
 }

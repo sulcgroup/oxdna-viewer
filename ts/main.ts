@@ -83,7 +83,7 @@ let elements: ElementMap = new ElementMap(); //contains references to all BasicE
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
 const ANMs: ANM[] = [];
-const forces: Force[] = [];
+let forces: Force[] = [];
 var forceHandler;
 var sysCount: number = 0;
 var strandCount: number = 0;

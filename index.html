@@ -191,10 +191,10 @@
                         <span class="mif-floppy-disk mif-2x"></span>
                         <span class="caption">Simulation files</span>
                     </button>
-                    <button onclick="makePairTrapFile()" class="ribbon-button"
-                        title="Download a mutual trap file for all basepairs">
+                    <button onclick="makeForceFile()" class="ribbon-button"
+                        title="Download an oxDNA force file">
                         <span class="mif-file-download mif-2x"></span>
-                        <span class="caption">Pair trap</span>
+                        <span class="caption">Forces</span>
                     </button>
                     <span class="title">oxDNA files</span>
                 </div>
@@ -335,12 +335,6 @@
                     title="Download plain-text file of selected bases">
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Selected base list</span>
-                </button>
-                <button class="ribbon-button" onclick="makeMutualTrapFile()"
-                    title="Create mutual trap file pairing every two bases in the selected base list">
-                    <span class="mif-shrink2 mif-2x"></span>
-                    <span class="mif-file-download mif-2x"></span>
-                    <span class="caption">Selected base<br>trap file</span>
                 </button>
             </div></div>
 
@@ -652,6 +646,12 @@
                         <span class="caption">Settings</span>
                     </button>
                     <span class="title">Ox-Serve</span>
+                </div>
+                <div class="group">
+                    <button class="ribbon-button" id="btnConnect" onclick="view.toggleWindow('forcesWindow', listForces)" title="Live interactions.">
+                        <span class="mif-shrink2 mif-3x"></span>
+                    </button>
+                    <span class="title">Forces</span>
                 </div>
             </div>
         </div>

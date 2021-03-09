@@ -10,7 +10,7 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
-    if(forceHandler) forceHandler.update();
+    if(forceHandler) forceHandler.redraw();
 }
 
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3) {
@@ -185,7 +185,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset'])
     }
-    if(forceHandler) forceHandler.update();
+    if(forceHandler) forceHandler.redraw();
     render();
 }
 
