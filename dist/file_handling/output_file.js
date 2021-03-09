@@ -211,45 +211,6 @@ function makeForceFile() {
         notify("No forces have been added yet, please click Dynamics/Forces", "alert");
     }
 }
-function makeMutualTrapFile() {
-    let mutTrapText = "";
-    let listBases = Array.from(selectedBases).map(e => e.id);
-    for (let x = 0; x < listBases.length; x = x + 2) { //for every selected nucleotide in listBases string
-        if (listBases[x + 1] !== undefined) { //if there is another nucleotide in the pair
-            mutTrapText = mutTrapText + writeMutTrapText(listBases[x], listBases[x + 1]) + writeMutTrapText(listBases[x + 1], listBases[x]); //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
-        }
-        else { //if there is no 2nd nucleotide in the pair
-            notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
-        }
-    }
-    makeTextFile("mutual_trap.txt", mutTrapText); //after addding all mutual trap data, make mutual trap file
-}
-function makePairTrapFile() {
-    let write = () => {
-        let mutTrapText = "";
-        elements.forEach(e => {
-            // If element is paired, add a trap
-            if (e.isPaired()) {
-                mutTrapText += writeMutTrapText(e.id, e.pair.id);
-            }
-        });
-        makeTextFile("basepair_trap.txt", mutTrapText); //after addding all mutual trap data, make mutual trap file
-    };
-    // Find out if we have calculated pairs already
-    let pairsCalculated = false;
-    for (let element of elements) {
-        if (element[1].isPaired()) {
-            pairsCalculated = true;
-            break;
-        }
-    }
-    if (!pairsCalculated) {
-        view.longCalculation(findBasepairs, view.basepairMessage, write);
-    }
-    else {
-        write();
-    }
-}
 function makeSelectedBasesFile() {
     makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));
 }

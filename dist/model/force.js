@@ -155,14 +155,19 @@ function makeTrapsFromSelection() {
     }
 }
 function makeTrapsFromPairs() {
+    let nopairs = true;
     elements.forEach(e => {
         // If element is paired, add a trap
         if (e.isPaired()) {
             let trap = new MutualTrap();
             trap.set(e, e.pair);
             forces.push(trap);
+            nopairs = false;
         }
     });
+    if (nopairs) {
+        ask("No basepair info found", "Do you run an automatic basepair search?", () => { view.longCalculation(findBasepairs, view.basepairMessage); });
+    }
     if (!forceHandler) {
         forceHandler = new ForceHandler(forces);
     }

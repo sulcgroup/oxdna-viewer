@@ -280,6 +280,24 @@ function toggleVisArbitrary() {
     tmpSystems.forEach(tempSys => tempSys.callUpdates(['instanceVisibility']));
     clearSelection();
 }
+function ask(title, content, onYes, onNo) {
+    Metro.dialog.create({
+        title: title,
+        content: `<div>${content}</div>`,
+        actions: [
+            {
+                caption: "Yes",
+                cls: "js-dialog-close alert",
+                onclick: onYes
+            },
+            {
+                caption: "No",
+                cls: "js-dialog-close",
+                onclick: onNo
+            }
+        ]
+    });
+}
 function notify(message, type, keepOpen = false, title) {
     let n = Metro.notify;
     if (!type) {
