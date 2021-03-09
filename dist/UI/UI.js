@@ -17,10 +17,13 @@ function listForces() {
                 div.remove();
                 // Update force visualization
                 forceHandler.set(forces);
+                render();
             };
             div.append(delButton);
             forceDOM.append(div);
         });
+        if (forceHandler)
+            forceHandler.redraw();
     }
 }
 function drawSystemHierarchy() {
