@@ -22,13 +22,12 @@ function createTable(dataName: string, header: string[]) {
 }
 
 function listForces() {
-    if (forces.length > 0) {
-        let forceDOM = document.getElementById("forces");
-        forceDOM.innerHTML = "";
-        //forces.forEach(force=>forcesTable.push([force.description(), force.type]));
-        forcesTable = forces.map(force=>[force.description(), force.type]);
-        forceDOM.appendChild(createTable('forcesTable', ['Description', 'Type']));
-        if(forceHandler) forceHandler.redraw();
+    let forceDOM = document.getElementById("forces");
+    forceDOM.innerHTML = "";
+    forcesTable = forces.map(force=>[force.description(), force.type]);
+    forceDOM.appendChild(createTable('forcesTable', ['Description', 'Type']));
+    if (forceHandler) {
+        forceHandler.redraw();
     }
 }
 
@@ -39,6 +38,8 @@ function deleteSelectedForces() {
 
     forces = forces.filter((f,i)=>!removeIndices.includes(i));
     forcesTable = forcesTable.filter((f,i)=>!removeIndices.includes(i));
+
+    forceHandler.set(forces);
 
     listForces();
 }
