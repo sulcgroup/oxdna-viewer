@@ -405,6 +405,25 @@ module edit{
                     e.n5 = null;
                 }
             }
+            // Same but for basepairs
+            if(c.bpid >= 0) {
+                let bp = oldids.findIndex(id=>{return id == c.bpid});
+                // If the paired base is also about to be added, we link to
+                // the new object instead
+                if (bp >= 0) {
+                    e['pair'] = elems[bp];
+                    elems[bp]['pair'] = e;
+                // Otherwise, if the indicated basepair exists and we can pair
+                // the new element to it without overwriting anything
+                } else if (
+                    elements.has(c.bpid) &&
+                    elements.get(c.bpid) &&
+                    !elements.get(c.bpid).isPaired())
+                {
+                    e['pair'] = elements.get(c.bpid);
+                    elements.get(c.bpid)['pair'] = e;
+                }
+            }
         });
 
         // Sort out strands
