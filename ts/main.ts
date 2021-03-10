@@ -84,6 +84,7 @@ const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
 const ANMs: ANM[] = [];
 let forces: Force[] = [];
+var forcesTable: string[][] = [];
 var forceHandler;
 var sysCount: number = 0;
 var strandCount: number = 0;

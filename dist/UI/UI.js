@@ -1,30 +1,40 @@
+function createTable(dataName, header) {
+    let table = document.createElement("table");
+    table.id = dataName;
+    table.classList.add("table", "striped");
+    table.dataset.role = "table";
+    table.dataset.static = "false";
+    table.dataset.body = dataName;
+    table.dataset.check = 'true';
+    let thead = document.createElement("thead");
+    let tr = document.createElement("tr");
+    header.forEach(name => {
+        let th = document.createElement("th");
+        th.innerHTML = name;
+        tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    table.appendChild(thead);
+    return table;
+}
 function listForces() {
     if (forces.length > 0) {
         let forceDOM = document.getElementById("forces");
         forceDOM.innerHTML = "";
-        forces.forEach(force => {
-            let div = document.createElement('div');
-            div.innerHTML = force.description();
-            div.title = force.toString();
-            let delButton = document.createElement('button');
-            delButton.classList.add('button', 'cycle');
-            delButton.innerHTML = '<span class="mif-cross mif-lg"></span>';
-            delButton.onclick = () => {
-                console.log("Removing" + force.description());
-                // Remove force
-                forces = forces.filter(f => f !== force);
-                // Remove DOM
-                div.remove();
-                // Update force visualization
-                forceHandler.set(forces);
-                render();
-            };
-            div.append(delButton);
-            forceDOM.append(div);
-        });
+        //forces.forEach(force=>forcesTable.push([force.description(), force.type]));
+        forcesTable = forces.map(force => [force.description(), force.type]);
+        forceDOM.appendChild(createTable('forcesTable', ['Description', 'Type']));
         if (forceHandler)
             forceHandler.redraw();
     }
+}
+function deleteSelectedForces() {
+    // Remove all forces selected in the force window
+    var table = $('#forcesTable').data('table');
+    let removeIndices = table.getSelectedItems().map(s => forcesTable.indexOf(s));
+    forces = forces.filter((f, i) => !removeIndices.includes(i));
+    forcesTable = forcesTable.filter((f, i) => !removeIndices.includes(i));
+    listForces();
 }
 function drawSystemHierarchy() {
     let checkboxhtml = (label) => `<input data-role="checkbox" data-caption="${label}">`;

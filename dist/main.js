@@ -73,6 +73,7 @@ const systems = [];
 var tmpSystems = []; //used for editing
 const ANMs = [];
 let forces = [];
+var forcesTable = [];
 var forceHandler;
 var sysCount = 0;
 var strandCount = 0;
