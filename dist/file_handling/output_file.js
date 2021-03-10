@@ -104,7 +104,8 @@ function getNewIds() {
         strand.forEach((e) => {
             newElementIds.set(e, idCounter++);
             totNuc++;
-        });
+        }, true // Iterate in 3' to 5' direction, per oxDNA convention
+        );
     });
     const counts = {
         totParticles: totNuc + totAA,

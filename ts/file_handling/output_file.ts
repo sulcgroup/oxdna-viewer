@@ -124,7 +124,8 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
         strand.forEach((e: BasicElement) => {
             newElementIds.set(e, idCounter++);
             totNuc++;
-        });
+        }, true // Iterate in 3' to 5' direction, per oxDNA convention
+        );
     });
 
     const counts = {
