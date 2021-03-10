@@ -510,7 +510,10 @@ class View {
         dom['style'].cursor = "wait";
         requestAnimationFrame(() => requestAnimationFrame(() => {
             try {
+                var t0 = performance.now();
                 calc();
+                var t1 = performance.now();
+                console.log("Long calculation took " + (t1 - t0) + " milliseconds.");
             }
             catch (error) {
                 notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
