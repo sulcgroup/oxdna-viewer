@@ -793,7 +793,7 @@ function prep_pdb(pdblines: string[]){
     let chainDivs: number[] = [];
     let modelDivs: number[] = [];
     for(let i = 0; i< pdblines.length; i++){
-        if (pdblines[i].substr(0, 4) === 'TER'){
+        if (pdblines[i].substr(0, 3) === 'TER'){
             chainDivs.push(i);
         } else if(pdblines[i].substr(0, 5) === 'MODEL' || pdblines[i].substr(0, 6) === 'ENDMDL'){
             modelDivs.push(i);
@@ -908,12 +908,10 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
     reader.onload = () => {
         const pdbLines = (reader.result as string).split(/[\n]+/g);
         let initList = prep_pdb(pdbLines);
-        let atoms : pdbatom[] = [];
-        let residues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
-        let chains : pdbchain[] = [];
-        let na = new pdbatom();
-        let nr = new pdbresidue();
-        let nc = new pdbchain();
+        let uniqatoms : pdbatom[] = [];
+        let uniqresidues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
+        let uniqchains : pdbchain[] = [];
+
         let boxBounds = [[1000, -1000], [1000, -1000], [1000, -1000]]; // [[xmin, xmax], [ymin, ymax], [zmin, zmax]
 
         // bookkeeping
@@ -934,11 +932,18 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
             }
         }
 
-        let loadpdbsection = function(start, end): [boolean, THREE.Vector3[]] {
+        let loadpdbsection = function(start, end): [boolean, THREE.Vector3[], pdbatom[], pdbresidue[], pdbchain[]] {
+            notify("Load pdb section called");
             let pdbpositions = [];
             let prevChainId = " ";
             let prevResId : number = -1;
             let Amino: boolean = false;
+            let atoms : pdbatom[] = [];
+            let residues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
+            let chains : pdbchain[] = [];
+            let na = new pdbatom();
+            let nr = new pdbresidue();
+            let nc = new pdbchain();
             const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
                 "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
                 "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
@@ -969,10 +974,12 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
                     na.element = pdbLine.substring(76, 78).trim();
                     na.charge = pdbLine.substring(78, 80).trim();
 
-                    if(recongizedProteinResidues.indexOf(na.resType) > 0){ // It belongs to a protein residue
+                    if(recongizedProteinResidues.indexOf(na.resType) >= 0){ // It belongs to a protein residue
                         if(na.atomType == "CA") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                         Amino = true;
                     } else {
+                        notify("Unkown Res");
+                        notify(na.resType);
                         if(na.atomType == "N1") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                     }
 
@@ -1015,7 +1022,7 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
                     }
                 }
             }
-            return [Amino, pdbpositions];
+            return [Amino, pdbpositions, atoms, residues, chains];
         }
 
         let getpdbpositions = function(start, end, Amino?): THREE.Vector3[] {
@@ -1037,63 +1044,68 @@ function readPdbFile(file) {  //TODO: *Only* two issues. 1) repeated chain ident
             }
             return pdbpositions;
         }
-        // load all unique chains into pdbatoms, residues and chains
-        // load
+
 
         initList.uniqueIDs.forEach((id, indx) => {
             let alignTO = loadpdbsection(initList.uniqueStart[indx], initList.uniqueEnd[indx]);
+            uniqatoms = uniqatoms.concat(alignTO[2]);
+            uniqresidues = uniqresidues.concat(alignTO[3]);
+            uniqchains = uniqchains.concat(alignTO[4]);
             initList.repeatIDs.forEach((rid, rindx) => {
-                if(rid != id){ //Makes sure Chain IDs match
-                    let alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0])
+                if(rid == id){ //Makes sure Chain IDs match
+                    let alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0]);
                     if(alignME.length != alignTO[1].length) notify("PDB Chains have unequal lengths");
 
-                    let alignMEcoord = JSON.parse(JSON.stringify(alignME)) //copy our arrays
-                    let alignTOcoord = JSON.parse(JSON.stringify(alignTO[1])) //copy our arrays
+                    let alignMEcoord = alignME.map(x => {return x.clone()}); //copy our arrays
+                    let newcoords = alignME.map(x => {return x.clone()}); //copy our arrays
+                    let alignTOcoord = alignTO[1].map(x => {return x.clone()});//copy our arrays
 
-                    let uniqueCOM = alignTO[1].reduce((a,b) => a.add(b)).divideScalar(alignTO[1].length)
-                    let repeatCOM = alignME.reduce((a,b) => a.add(b)).divideScalar(alignME.length)
 
-                    let alignTOcoordADJ = alignTOcoord.map(x => x.sub(uniqueCOM)); // Centered Coordinates
-                    let alignMEcoordADJ = alignMEcoord.map(x => x.sub(repeatCOM)); // Centered Coordinates
+                    let uniqueCOM = alignTO[1].reduce((a,b) => a.add(b)).divideScalar(alignTO[1].length);
+                    let repeatCOM = alignME.reduce((a,b) => a.add(b)).divideScalar(alignME.length);
 
-                    let aME = alignMEcoordADJ[0].normalize();
-                    let aTO = alignTOcoordADJ[0].normalize();
+                    let alignTOcoordADJ = alignTOcoord.map(x => {return x.clone().sub(uniqueCOM)}); // Centered Coordinates
+                    let alignMEcoordADJ = alignMEcoord.map(x => {return x.clone().sub(repeatCOM)}); // Centered Coordinates
+
+
+                    let aME = alignMEcoordADJ[0].clone().normalize();
+                    let aTO = alignTOcoordADJ[0].clone().normalize();
 
                     //Calc quaternion rotation between vectors
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
                     //Get Rotated Adj Coordinates
-                    let newcoords = alignMEcoordADJ.map(pos => pos.applyQuaternion(rotQuat).add(repeatCOM))
-                    initList.repeatCoords[rid] = newcoords;
-                    initList.repeatQuatRots[rid] = rotQuat;
+                    // let newcoords = alignMEcoord;
+                    initList.repeatCoords[rindx] = newcoords;
+                    initList.repeatQuatRots[rindx] = rotQuat;
                 }
             })
         })
 
         // Assigns Atoms to their corresponding Residues
-        residues.forEach((res: pdbresidue) =>
-            res.atoms = atoms.filter(atom => {
+        uniqresidues.forEach((res: pdbresidue) =>
+            res.atoms = uniqatoms.filter(atom => {
                 if(atom.pdbResNum == res.pdbResNum && atom.chainID == res.chainID) return true;
             })
         );
 
         // Assigns Residues to their corresponding Chain
-        chains.forEach((chain: pdbchain) =>
-            chain.residues = residues.filter(res => res.chainID == chain.chainID)
+        uniqchains.forEach((chain: pdbchain) =>
+            chain.residues = uniqresidues.filter(res => res.chainID == chain.chainID)
         );
 
-        if (chains.length == 0){
+        if (uniqchains.length == 0){
             notify("No Chains Found in PDB File");
             return;
         }
-        if (atoms.length == 0){
+        if (uniqatoms.length == 0){
             notify("No Atoms Found in PDB File");
             return;
         }
-        chains.forEach((chain: pdbchain) =>
+        uniqchains.forEach((chain: pdbchain) =>
             notify("Chain ".concat(chain.chainID," loaded with ", chain.residues.length.toString(), " residues"))
         );
 
-        let pdbinfo = new pdbinfowrapper(label, boxBounds, chains, initList);
+        let pdbinfo = new pdbinfowrapper(label, boxBounds, uniqchains, initList);
         pdbFileInfo.push(pdbinfo);
         // let fileRead = new Promise(function (resolve) {
         //     if(pdbFileInfo.length > 1){
@@ -1215,10 +1227,10 @@ function addPDBToScene () {
         }
 
         // Set Box Size
-        box.x = Math.ceil((bounds[0][1] - bounds[0][0]) * 2);
-        box.y = Math.ceil((bounds[1][1] - bounds[1][0]) * 2);
-        box.z = Math.ceil((bounds[2][1] - bounds[2][0]) * 2);
-        redrawBox();
+        // box.x = Math.ceil((bounds[0][1] - bounds[0][0]) * 2);
+        // box.y = Math.ceil((bounds[1][1] - bounds[1][0]) * 2);
+        // box.z = Math.ceil((bounds[2][1] - bounds[2][0]) * 2);
+        // redrawBox();
 
         // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to initInfo
         let CalcInfoAA = (res: pdbresidue): [number, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number] => {
@@ -1433,17 +1445,17 @@ function addPDBToScene () {
                 currentStrand.updateEnds();
 
                 // Take car of repeats Access by Chain Identifier
-                initlist.repeatIDs.forEach((rid, indx) => {
+                initlist.repeatIDs.forEach((rid, rindx) => {
                     if(rid == nstrand.chainID){
                         let repeatStrand: Peptide = sys.addNewPeptideStrand();
-                        currentStrand.getMonomers().forEach((mon, mid) => {
+                        currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatAmino = repeatStrand.createBasicElement(nextElementId);
                             repeatAmino.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[indx];
-                            let rotquat = initlist.repeatQuatRots[rid];
+                            let rinfo = strandInfo[mid]; // Original initinfo for res in uniq chain
+                            let rotquat = initlist.repeatQuatRots[rindx];
                             rinfo[3] = rinfo[3].applyQuaternion(rotquat) // Rotate a1
                             rinfo[4] = rinfo[4].applyQuaternion(rotquat) // Rotate a3
-                            rinfo[2] = initlist.repeatCoords[rid][mid];
+                            rinfo[2] = initlist.repeatCoords[rindx][mid];
                             bFactors.push(rinfo[5]) // Assume same B factors
                             xdata.push(repeatAmino.sid)
                             com.add(rinfo[2])
@@ -1494,7 +1506,7 @@ function addPDBToScene () {
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatNuc = repeatStrand.createBasicElement(nextElementId);
                             repeatNuc.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[indx];
+                            let rinfo = strandInfo[mid];
                             let rotquat = initlist.repeatQuatRots[rid];
                             rinfo[3] = rinfo[3].applyQuaternion(rotquat) // Rotate a1
                             rinfo[4] = rinfo[4].applyQuaternion(rotquat) // Rotate a3
