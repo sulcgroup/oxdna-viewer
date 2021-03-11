@@ -234,7 +234,7 @@ class TrajectoryReader {
         this.system = system;
         this.elems = elems;
         this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, 50 * 1024 * 1024); // we read in chunks of 30 MB 
+        this.chunker = new FileChunker(datFile, 30 * this.topReader.configurationLength); // we read in chunks of 30 MB 
         this.confLength = this.topReader.configurationLength + 3;
         this.numNuc = system.systemLength();
         this.trajectorySlider = document.getElementById("trajectorySlider");
