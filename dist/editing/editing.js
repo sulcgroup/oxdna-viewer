@@ -238,9 +238,7 @@ function discretizeMassWrapper() {
         clearSelection();
         let ret = edit.discretizeMass(elems, cellSize);
         const InstMassSys = ret["elems"].map(e => new InstanceCopy(e));
-        // const mono2 = edit.addElements(InstMassSys);
-        editHistory.do(new RevertableAddition(InstMassSys, ret["elems"]));
+        editHistory.add(new RevertableAddition(InstMassSys, ret["elems"]));
         flux.prepIndxButton(ret["indx"]);
-        // topologyEdited = true;
     }
 }

@@ -958,6 +958,7 @@ module edit{
             be.sid = i;
             be.dummySys = dumb;
             be.type = 'gs';
+            be.n5 = null;
             if(i != 0) {
                 let prev = newElems[i-1];
                 be.n3 = prev;

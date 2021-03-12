@@ -647,7 +647,6 @@ class pdbchain {
         this.strandtype = "";
     }
 }
-;
 class pdbReadingList {
     constructor() {
         this.uniqueIDs = [];
@@ -661,30 +660,23 @@ class pdbReadingList {
     }
 }
 class pdbinfowrapper {
-    constructor(pi, sys, chains, initlist) {
+    constructor(pi, chains, initlist) {
         this.pdbfilename = pi;
-        this.sysdim = sys;
         this.pdbsysinfo = chains;
         this.initlist = initlist;
-    }
-}
-function alignStrandtoCoord(strand, pdbstart, pdbend) {
-    let strandPos = strand.map(n => n.getPos());
-    let strandCOM = strandPos.reduce((a, b) => a.add(b)).divideScalar(strand.length);
-    for (let i = pdbstart; i < pdbend; i++) {
     }
 }
 function prep_pdb(pdblines) {
     //Checks for repeated chains, Biological Assemblies etc.
     let chainDivs = [];
-    let modelDivs = [];
+    // let modelDivs: number[] = [];
     for (let i = 0; i < pdblines.length; i++) {
         if (pdblines[i].substr(0, 3) === 'TER') {
             chainDivs.push(i);
         }
-        else if (pdblines[i].substr(0, 5) === 'MODEL' || pdblines[i].substr(0, 6) === 'ENDMDL') {
-            modelDivs.push(i);
-        }
+        // else if(pdblines[i].substr(0, 5) === 'MODEL' || pdblines[i].substr(0, 6) === 'ENDMDL'){
+        //     modelDivs.push(i);
+        // }
     }
     //Re-Assign Chain Ids based off repeating or not
     let chainids = [];
@@ -694,7 +686,7 @@ function prep_pdb(pdblines) {
     let repeated_chainids = [];
     // let repeated_count: number[] = [];
     chainids.forEach((chain, ind) => {
-        if (chainids.indexOf(chain) != ind) { //Check for repeated
+        if (chainids.indexOf(chain) != ind && chainDivs[2 * ind]) { //Check for repeated
             repeated_chainids.push(chain);
         }
         else {
@@ -785,7 +777,6 @@ function readPdbFile(file) {
         let uniqatoms = [];
         let uniqresidues = []; // individual residue data parsed from Atomic Info
         let uniqchains = [];
-        let boxBounds = [[1000, -1000], [1000, -1000], [1000, -1000]]; // [[xmin, xmax], [ymin, ymax], [zmin, zmax]
         // bookkeeping
         let label = "pdb";
         let obsChains = [];
@@ -802,7 +793,7 @@ function readPdbFile(file) {
             }
         }
         let loadpdbsection = function (start, end) {
-            notify("Load pdb section called");
+            // Called for each unique chain found in the system
             let pdbpositions = [];
             let prevChainId = " ";
             let prevResId = -1;
@@ -830,20 +821,8 @@ function readPdbFile(file) {
                     na.iCode = pdbLine.substring(26, 27).trim();
                     // Convert From Angstroms to Simulation Units
                     na.x = parseFloat(pdbLine.substring(30, 38)) / 8.518;
-                    if (na.x < boxBounds[0][0])
-                        boxBounds[0][0] = na.x; //update x min
-                    if (na.x > boxBounds[0][1])
-                        boxBounds[0][1] = na.x; //update x max
                     na.y = parseFloat(pdbLine.substring(38, 46)) / 8.518;
-                    if (na.y < boxBounds[1][0])
-                        boxBounds[1][0] = na.y; //update y min
-                    if (na.y > boxBounds[1][1])
-                        boxBounds[1][1] = na.y; //update y max
                     na.z = parseFloat(pdbLine.substring(46, 54)) / 8.518;
-                    if (na.z < boxBounds[2][0])
-                        boxBounds[2][0] = na.z; //update z min
-                    if (na.z > boxBounds[2][1])
-                        boxBounds[2][1] = na.z; //update z max
                     na.occupancy = parseFloat(pdbLine.substring(54, 60).trim());
                     na.tempFactor = parseFloat(pdbLine.substring(60, 66).trim());
                     na.element = pdbLine.substring(76, 78).trim();
@@ -854,7 +833,7 @@ function readPdbFile(file) {
                         Amino = true;
                     }
                     else {
-                        notify("Unkown Res");
+                        notify("Unknown Res");
                         notify(na.resType);
                         if (na.atomType == "N1")
                             pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
@@ -892,12 +871,15 @@ function readPdbFile(file) {
                     }
                 }
             }
+            // info
             return [Amino, pdbpositions, atoms, residues, chains];
         };
         let getpdbpositions = function (start, end, Amino) {
+            // reads in pdb text and returns the positions b/t start and end linenumbers
             let pdbpositions = [];
             for (let j = start; j < end; j++) {
                 if (pdbLines[j].substr(0, 4) === 'ATOM') {
+                    // Align via N1 positions for DNA & CA for proteins
                     if (!Amino && pdbLines[j].substring(12, 16).trim() == "N1") {
                         let x = parseFloat(pdbLines[j].substring(30, 38)) / 8.518;
                         let y = parseFloat(pdbLines[j].substring(38, 46)) / 8.518;
@@ -929,10 +911,8 @@ function readPdbFile(file) {
                     let alignTOcoord = alignTO[1].map(x => { return x.clone(); }); //copy our arrays
                     let uniqueCOM = alignTO[1].reduce((a, b) => a.add(b)).divideScalar(alignTO[1].length);
                     let repeatCOM = alignME.reduce((a, b) => a.add(b)).divideScalar(alignME.length);
-                    let alignTOcoordADJ = alignTOcoord.map(x => { return x.clone().sub(uniqueCOM); }); // Centered Coordinates
-                    let alignMEcoordADJ = alignMEcoord.map(x => { return x.clone().sub(repeatCOM); }); // Centered Coordinates
-                    let aME = alignMEcoordADJ[0].clone().normalize();
-                    let aTO = alignTOcoordADJ[0].clone().normalize();
+                    let aME = alignMEcoord[0].sub(repeatCOM).clone().normalize();
+                    let aTO = alignTOcoord[0].sub(uniqueCOM).clone().normalize();
                     //Calc quaternion rotation between vectors
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
                     //Get Rotated Adj Coordinates
@@ -957,15 +937,9 @@ function readPdbFile(file) {
             notify("No Atoms Found in PDB File");
             return;
         }
-        uniqchains.forEach((chain) => notify("Chain ".concat(chain.chainID, " loaded with ", chain.residues.length.toString(), " residues")));
-        let pdbinfo = new pdbinfowrapper(label, boxBounds, uniqchains, initList);
-        pdbFileInfo.push(pdbinfo);
-        // let fileRead = new Promise(function (resolve) {
-        //     if(pdbFileInfo.length > 1){
-        //         resolve("done");
-        //     }
-        // });
-        // return fileRead;
+        // These hefty objects are needed to calculate the positions & a1, a3 of nucleotides and amino acids
+        let pdbinfo = new pdbinfowrapper(label, uniqchains, initList);
+        pdbFileInfo.push(pdbinfo); // Store Info in this global array so onloadend can access the info
     };
     reader.onloadend = () => {
         addPDBToScene();
@@ -978,7 +952,7 @@ function addPDBToScene() {
     if (pdbFileInfo.length > 0) {
         let pdata = pdbFileInfo.slice(-1)[0];
         let strands = pdata.pdbsysinfo;
-        let bounds = pdata.sysdim;
+        // let bounds = pdata.sysdim;
         let label = pdata.pdbfilename;
         let initlist = pdata.initlist;
         // Looking back at this the strands name probably wasn't the most unique choice
@@ -1072,11 +1046,6 @@ function addPDBToScene() {
                     strand.strandtype = 'rna';
             }
         }
-        // Set Box Size
-        // box.x = Math.ceil((bounds[0][1] - bounds[0][0]) * 2);
-        // box.y = Math.ceil((bounds[1][1] - bounds[1][0]) * 2);
-        // box.z = Math.ceil((bounds[2][1] - bounds[2][0]) * 2);
-        // redrawBox();
         // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to initInfo
         let CalcInfoAA = (res) => {
             if (res.type == 'pro') {
@@ -1263,13 +1232,15 @@ function addPDBToScene() {
                     aa.sid = nextElementId - oldElementId;
                     let info = CalcInfoAA(nstrand.residues[j]);
                     initInfo.push(info);
-                    strandInfo.push(info);
+                    strandInfo.push(info.slice());
                     bFactors.push(info[5]);
                     xdata.push(aa.sid);
                     com.add(info[2]); //Add position to COM calc
                     // Amino Acids are intialized from N-terminus to C-terminus
                     // Same as PDB format
                     // Neighbors must be filled for correct initialization
+                    aa.n3 = null;
+                    aa.n5 = null;
                     if (j != 0) {
                         let prevaa = elements.get(nextElementId - 1); //Get previous Element
                         aa.n3 = prevaa;
@@ -1280,21 +1251,23 @@ function addPDBToScene() {
                 }
                 currentStrand.updateEnds();
                 // Take car of repeats Access by Chain Identifier
-                initlist.repeatIDs.forEach((rid, rindx) => {
-                    if (rid == nstrand.chainID) {
+                initlist.repeatIDs.forEach((rid, indx) => {
+                    if (rid == nstrand.chainID) { // Repeat same chain
                         let repeatStrand = sys.addNewPeptideStrand();
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatAmino = repeatStrand.createBasicElement(nextElementId);
                             repeatAmino.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[mid]; // Original initinfo for res in uniq chain
-                            let rotquat = initlist.repeatQuatRots[rindx];
+                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                            let rotquat = initlist.repeatQuatRots[indx];
                             rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
                             rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
-                            rinfo[2] = initlist.repeatCoords[rindx][mid];
+                            rinfo[2] = initlist.repeatCoords[indx][mid];
                             bFactors.push(rinfo[5]); // Assume same B factors
                             xdata.push(repeatAmino.sid);
                             com.add(rinfo[2]);
-                            initInfo.push(rinfo);
+                            initInfo.push(rinfo.slice());
+                            repeatAmino.n3 = null;
+                            repeatAmino.n5 = null;
                             if (mid != 0) {
                                 let prevaa = elements.get(nextElementId - 1); //Get previous Element
                                 repeatAmino.n3 = prevaa;
@@ -1303,6 +1276,7 @@ function addPDBToScene() {
                             elements.push(repeatAmino);
                             nextElementId++;
                         });
+                        repeatStrand.updateEnds();
                     }
                 });
             }
@@ -1319,6 +1293,8 @@ function addPDBToScene() {
                     strandInfo.push(info);
                     com.add(info[2]); //Add position to COM calc
                     let nc = currentStrand.createBasicElement(nextElementId);
+                    nc.n3 = null;
+                    nc.n5 = null;
                     nc.sid = nextElementId - oldElementId;
                     bFactors.push(info[5]);
                     xdata.push(nc.sid);
@@ -1331,22 +1307,24 @@ function addPDBToScene() {
                     nextElementId++;
                 }
                 currentStrand.updateEnds();
-                // Take car of repeats Access by Chain Identifier
+                // Take care of repeats Access by Chain Identifier
                 initlist.repeatIDs.forEach((rid, indx) => {
                     if (rid == nstrand.chainID) {
                         let repeatStrand = sys.addNewPeptideStrand();
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatNuc = repeatStrand.createBasicElement(nextElementId);
                             repeatNuc.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[mid];
-                            let rotquat = initlist.repeatQuatRots[rid];
+                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                            let rotquat = initlist.repeatQuatRots[indx];
                             rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
                             rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
-                            rinfo[2] = initlist.repeatCoords[rid][mid]; // New Position
+                            rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
                             bFactors.push(rinfo[5]); // Assume same B factors
                             xdata.push(repeatNuc.sid);
                             com.add(rinfo[2]);
-                            initInfo.push(rinfo);
+                            initInfo.push(rinfo.slice());
+                            repeatNuc.n3 = null;
+                            repeatNuc.n5 = null;
                             if (mid != 0) {
                                 let prevaa = elements.get(nextElementId - 1); //Get previous Element
                                 repeatNuc.n3 = prevaa;
@@ -1355,6 +1333,7 @@ function addPDBToScene() {
                             elements.push(repeatNuc);
                             nextElementId++;
                         });
+                        repeatStrand.updateEnds();
                     }
                 });
             }
@@ -1384,7 +1363,7 @@ function addPDBToScene() {
         let Amino;
         let Nuc;
         nextElementId = oldElementId; //Reset
-        for (let i = 0; i < strands.length; i++) {
+        for (let i = 0; i < (initlist.uniqueIDs.length + initlist.repeatIDs.length); i++) {
             let strand = sys.strands[i];
             if (strand.isPeptide()) {
                 for (let k = 0; k < strand.getLength(); k++) {
@@ -1405,6 +1384,5 @@ function addPDBToScene() {
         addSystemToScene(sys);
         systems.push(sys);
         sysCount++;
-        //centerAndPBC(sys.getMonomers());
     }
 }
