@@ -103,6 +103,9 @@ class FileChunker {
             this.current_chunk++;
         return this.getChunk();
     }
+    getOffset() {
+        return this.current_chunk * this.chunk_size;
+    }
     getPrevChunk() {
         this.current_chunk--;
         if (this.current_chunk <= 0)
@@ -169,6 +172,8 @@ class TrajectoryReader {
         this.idx = 0;
         this.offset = 0;
         this.firstRead = true;
+        //indexes =[];
+        this.offset_id = 0;
         this.playFlag = false;
         this.intervalId = null;
         this.topReader = topReader;
@@ -219,7 +224,6 @@ class TrajectoryReader {
         else
             this.idx--;
     }
-    //indexes =[];
     indexTrajectory() {
         this.chunker.getNextChunk().arrayBuffer().then(value => {
             let buff = new Uint8Array(value);
@@ -229,11 +233,11 @@ class TrajectoryReader {
             //populate the index array by the positions of t
             while ((i = buff.indexOf(val, i + 1)) != -1) {
                 //this.indexes.push(i); 
-                this.lookupReader.addIndex(last_id, i - last_id, "0");
+                this.lookupReader.addIndex(this.chunker.getOffset() + last_id, this.chunker.getOffset() + i - last_id, "0");
                 last_id = i; // we update the last index
             }
             // what if we have just one conf
-            if (this.lookupReader.position_lookup.length == 0)
+            if (this.lookupReader.position_lookup.length == 0 && this.firstRead)
                 this.lookupReader.addIndex(0, this.chunker.file.size, "0");
             else {
                 if (!this.trajControls.hidden) {

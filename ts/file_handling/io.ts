@@ -127,6 +127,10 @@ class FileChunker{
         return this.getChunk();
     }
 
+    getOffset(){
+        return this.current_chunk*this.chunk_size;
+    }
+
     getPrevChunk(){
         this.current_chunk--;
         if(this.current_chunk <= 0) this.current_chunk = 0;
@@ -288,6 +292,7 @@ class TrajectoryReader {
     }
 
     //indexes =[];
+    offset_id = 0;
     indexTrajectory(){
         this.chunker.getNextChunk().arrayBuffer().then(
             value =>{
@@ -299,13 +304,13 @@ class TrajectoryReader {
                 while ((i = buff.indexOf(val, i+1)) != -1){
                     //this.indexes.push(i); 
                     this.lookupReader.addIndex(
-                        last_id, i - last_id, "0"
+                        this.chunker.getOffset()+last_id, this.chunker.getOffset()+ i - last_id, "0"
                     );
                     last_id = i; // we update the last index
                 }
                 
                 // what if we have just one conf
-                if(this.lookupReader.position_lookup.length==0)
+                if(this.lookupReader.position_lookup.length==0 && this.firstRead)
                     this.lookupReader.addIndex(
                         0, this.chunker.file.size, "0"
                     );
