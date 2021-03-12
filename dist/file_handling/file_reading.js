@@ -670,7 +670,13 @@ function prep_pdb(pdblines) {
     //Checks for repeated chains, Biological Assemblies etc.
     let chainDivs = [];
     // let modelDivs: number[] = [];
+    let firstatom = 0;
+    let noatom = false;
     for (let i = 0; i < pdblines.length; i++) {
+        if (pdblines[i].substr(0, 4) == 'ATOM' && noatom == false) {
+            firstatom = i;
+            noatom = true;
+        }
         if (pdblines[i].substr(0, 3) === 'TER') {
             chainDivs.push(i);
         }
@@ -686,7 +692,7 @@ function prep_pdb(pdblines) {
     let repeated_chainids = [];
     // let repeated_count: number[] = [];
     chainids.forEach((chain, ind) => {
-        if (chainids.indexOf(chain) != ind && chainDivs[2 * ind]) { //Check for repeated
+        if (chainids.indexOf(chain) != ind) { //Check for repeated
             repeated_chainids.push(chain);
         }
         else {
@@ -694,7 +700,7 @@ function prep_pdb(pdblines) {
         }
     });
     let initList = new pdbReadingList;
-    let prevend = 0;
+    let prevend = firstatom;
     for (let i = 0; i < repeated_chainids.length; i++) {
         if (repeated_chainids[i].includes("*")) {
             let id = repeated_chainids[i].replace('*', '');
@@ -911,8 +917,8 @@ function readPdbFile(file) {
                     let alignTOcoord = alignTO[1].map(x => { return x.clone(); }); //copy our arrays
                     let uniqueCOM = alignTO[1].reduce((a, b) => a.add(b)).divideScalar(alignTO[1].length);
                     let repeatCOM = alignME.reduce((a, b) => a.add(b)).divideScalar(alignME.length);
-                    let aME = alignMEcoord[0].sub(repeatCOM).clone().normalize();
-                    let aTO = alignTOcoord[0].sub(uniqueCOM).clone().normalize();
+                    let aME = alignMEcoord[0].clone().sub(repeatCOM).normalize();
+                    let aTO = alignTOcoord[0].clone().sub(uniqueCOM).normalize();
                     //Calc quaternion rotation between vectors
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
                     //Get Rotated Adj Coordinates

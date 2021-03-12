@@ -782,8 +782,8 @@ function prep_pdb(pdblines: string[]){
     let chainDivs: number[] = [];
     // let modelDivs: number[] = [];
     let firstatom = 0;
+    let noatom = false;
     for(let i = 0; i< pdblines.length; i++){
-        let noatom = false;
         if(pdblines[i].substr(0, 4) == 'ATOM' && noatom==false){
             firstatom = i;
             noatom = true;
@@ -806,7 +806,7 @@ function prep_pdb(pdblines: string[]){
     let repeated_chainids: string[] = [];
     // let repeated_count: number[] = [];
     chainids.forEach((chain, ind) => {
-        if(chainids.indexOf(chain) != ind && chainDivs[2*ind]) { //Check for repeated
+        if(chainids.indexOf(chain) != ind) { //Check for repeated
             repeated_chainids.push(chain);
         } else {
             repeated_chainids.push(chain+"*"); // not a repeat? denoted as A*
@@ -1055,8 +1055,8 @@ function readPdbFile(file) {
                     let uniqueCOM = alignTO[1].reduce((a,b) => a.add(b)).divideScalar(alignTO[1].length);
                     let repeatCOM = alignME.reduce((a,b) => a.add(b)).divideScalar(alignME.length);
 
-                    let aME = alignMEcoord[0].sub(repeatCOM).clone().normalize();
-                    let aTO = alignTOcoord[0].sub(uniqueCOM).clone().normalize();
+                    let aME = alignMEcoord[0].clone().sub(repeatCOM).normalize();
+                    let aTO = alignTOcoord[0].clone().sub(uniqueCOM).normalize();
 
                     //Calc quaternion rotation between vectors
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
