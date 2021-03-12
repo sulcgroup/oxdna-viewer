@@ -310,13 +310,15 @@ class TrajectoryReader {
                         this.lookupReader.addIndex(
                             this.offset, cur_offset - this.offset, "0"
                         );
-                    //console.log(cur_offset, this.offset);
                     this.offset = cur_offset;
-                    //if(i != last_id)
-                    
-                    //last_id = i; // we update the last index
                 }
-                
+                if(this.chunker.isLast() && this.firstRead){
+                    if (this.chunker.file.size - this.offset) // if there is stuff to fetch
+                    // handle remainder
+                    this.lookupReader.addIndex(
+                        this.offset, this.chunker.file.size - this.offset, "0"
+                    );
+                }
                 // what if we have just one conf
                 if(this.lookupReader.position_lookup.length==0 ){
                     this.lookupReader.addIndex(
@@ -343,23 +345,21 @@ class TrajectoryReader {
                 if(!this.chunker.isLast()){
                     //do update magic
                     let state = this.chunker.getEstimatedState(this.lookupReader.position_lookup);
-                    if(this.indexProgressControls.hidden){
-                        this.indexProgressControls.hidden=false;
-                        this.trajControls.hidden = false;
-                    }
-                    
                     this.indexProgress.value=Math.round((state[1]/state[0]) * 100);
-                    //console.log(Math.round((state[1]/state[0]) * 100));
-
-
+                    //process more stuff 
                     this.indexTrajectory();
                 }
                 else {
+
                     //finish up indexing
                     console.log("done");
-                    //console.log("indexes:",this.indexes);
+                    trajReader.indexProgressControls.hidden = true; // hide progress bar 
                     document.dispatchEvent(new Event('finalConfigIndexed'));
                 }
+                //update slider
+                trajReader.trajectorySlider.setAttribute("max" ,
+                    (trajReader.lookupReader.position_lookup.length-1).toString()
+                );
             },reason=>{
                 console.log(reason);
             }
