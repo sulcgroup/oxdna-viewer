@@ -223,45 +223,49 @@ class TrajectoryReader {
     }
     fetchTFromBinary(buff) {
         let eqs_idx = buff.indexOf(61); // =
-        if (eqs_idx == -1)
-            return "0";
-        //let s = "".fromCharCode.apply(buff.slice(eqs_idx, eqs_idx+ 10))
-        //let nl = buff.indexOf(10,eqs_idx);     // \n
-        let s = "";
-        for (let i = eqs_idx + 1; buff[i] != 0x0A; i++) {
-            if (buff[i] != 32) // filter out space 
-                s += String.fromCharCode(buff[i]);
-            console.log(s);
-        }
-        return s;
+        let nl = buff.indexOf(10); // \n
+        //console.log(
+        //    String.fromCharCode.apply(null, buff.slice(eqs_idx+1,nl-1)).trim()
+        //);
+        return String.fromCharCode.apply(null, buff.slice(eqs_idx + 1, nl)).trim();
     }
     indexTrajectory() {
         this.chunker.getNextChunk().arrayBuffer().then(value => {
             let buff = new Uint8Array(value);
             let val = 116; // t
             let i = -1;
+            //let last_i = -1;
             let cur_offset = 0;
+            // we know that the 1st offset is 0 as file starts with t 
             if (this.firstRead)
-                i = 0; // we know that the 1st offset is 0 as file starts with t 
+                i = 0;
             //populate the index array by the positions of t
             while ((i = buff.indexOf(val, i + 1)) != -1) {
                 cur_offset = (this.chunker.getOffset() + i);
                 if (this.offset != cur_offset)
-                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, "0"
-                    //this.fetchTFromBinary(buff.slice(  this.offset, 1024 ))
-                    );
+                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, this.fetchTFromBinary(buff.slice(this.offset - this.chunker.getOffset(), cur_offset - this.chunker.getOffset())));
+                //console.log(i);
+                //console.log(this.offset - this.chunker.getOffset(),
+                //                 cur_offset - this.chunker.getOffset());
                 this.offset = cur_offset;
             }
             // if there still stuff to fetch on first read ? NOTE: not sure why this is true
             if (this.chunker.isLast() && this.firstRead) {
                 let size = this.chunker.file.size - this.offset;
                 if (size) {
-                    this.lookupReader.addIndex(this.offset, size, "0");
+                    this.lookupReader.addIndex(this.offset, size, "-1");
+                    //this.fetchTFromBinary(
+                    //    buff.slice(this.offset - this.chunker.getOffset(), cur_offset - this.chunker.getOffset())
+                    //));
                 }
             }
             // if we have just one conf ?
             if (this.lookupReader.position_lookup.length == 0) {
-                this.lookupReader.addIndex(0, this.chunker.file.size, "0");
+                this.lookupReader.addIndex(0, this.chunker.file.size, "-2"
+                //this.fetchTFromBinary(
+                //    buff.slice(0, this.chunker.file.size)
+                //)
+                );
             }
             else { // we are reading a trajectory 
                 if (this.trajControls.hidden) {
