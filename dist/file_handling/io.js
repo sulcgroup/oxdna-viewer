@@ -172,8 +172,6 @@ class TrajectoryReader {
         this.idx = 0;
         this.offset = 0;
         this.firstRead = true;
-        this.indexes = [];
-        this.offset_id = 0;
         this.playFlag = false;
         this.intervalId = null;
         this.topReader = topReader;
@@ -205,7 +203,6 @@ class TrajectoryReader {
             //enable video creation during indexing
             let videoControls = document.getElementById("videoCreateButton");
             videoControls.disabled = false;
-            //notify("finished indexing");
             this.trajectorySlider.setAttribute("max", (this.lookupReader.position_lookup.length - 1).toString());
             let timedisp = document.getElementById("trajTimestep");
             timedisp.hidden = false;
@@ -224,33 +221,50 @@ class TrajectoryReader {
         else
             this.idx--;
     }
-    async indexTrajectory() {
-        await this.chunker.getNextChunk().arrayBuffer().then(value => {
+    fetchTFromBinary(buff) {
+        let eqs_idx = buff.indexOf(61); // =
+        if (eqs_idx == -1)
+            return "0";
+        //let s = "".fromCharCode.apply(buff.slice(eqs_idx, eqs_idx+ 10))
+        //let nl = buff.indexOf(10,eqs_idx);     // \n
+        let s = "";
+        for (let i = eqs_idx + 1; buff[i] != 0x0A; i++) {
+            if (buff[i] != 32) // filter out space 
+                s += String.fromCharCode(buff[i]);
+            console.log(s);
+        }
+        return s;
+    }
+    indexTrajectory() {
+        this.chunker.getNextChunk().arrayBuffer().then(value => {
             let buff = new Uint8Array(value);
             let val = 116; // t
-            let i = -1; // first = 0; we know that the 1st index will be a t 
+            let i = -1;
             let cur_offset = 0;
             if (this.firstRead)
-                i = 0;
+                i = 0; // we know that the 1st offset is 0 as file starts with t 
             //populate the index array by the positions of t
             while ((i = buff.indexOf(val, i + 1)) != -1) {
                 cur_offset = (this.chunker.getOffset() + i);
                 if (this.offset != cur_offset)
-                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, "0");
+                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, "0"
+                    //this.fetchTFromBinary(buff.slice(  this.offset, 1024 ))
+                    );
                 this.offset = cur_offset;
             }
+            // if there still stuff to fetch on first read ? NOTE: not sure why this is true
             if (this.chunker.isLast() && this.firstRead) {
-                if (this.chunker.file.size - this.offset) // if there is stuff to fetch
-                    // handle remainder
-                    this.lookupReader.addIndex(this.offset, this.chunker.file.size - this.offset, "0");
+                let size = this.chunker.file.size - this.offset;
+                if (size) {
+                    this.lookupReader.addIndex(this.offset, size, "0");
+                }
             }
-            // what if we have just one conf
+            // if we have just one conf ?
             if (this.lookupReader.position_lookup.length == 0) {
                 this.lookupReader.addIndex(0, this.chunker.file.size, "0");
             }
-            else {
+            else { // we are reading a trajectory 
                 if (this.trajControls.hidden) {
-                    console.log("open trajectory");
                     // enable traj control
                     this.indexProgressControls.hidden = false;
                     this.trajControls.hidden = false;
@@ -272,66 +286,22 @@ class TrajectoryReader {
             }
             else {
                 //finish up indexing
-                console.log("done");
-                trajReader.indexProgressControls.hidden = true; // hide progress bar 
-                document.dispatchEvent(new Event('finalConfigIndexed'));
+                notify("Finished indexing!");
+                // and index file saving 
+                document.getElementById('downloadIndex').hidden = false;
+                // hide progress bar 
+                document.getElementById('trajIndexingProgress').hidden = true;
+                document.getElementById('trajIndexingProgressLabel').hidden = true;
+                //enable orderparameter selector 
+                document.getElementById("hyperSelectorBtnId").disabled = false;
+                // and index file saving 
+                //(<HTMLElement>document.getElementById('downloadIndex')).hidden=false;
             }
             //update slider
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
         }, reason => {
             console.log(reason);
         });
-        //function _load(e) {
-        //    e.preventDefault(); // cancel default actions
-        //    if(trajReader.indexingReader.readyState == 1)
-        //        setTimeout(_load,3); // try untill can actually read
-        //    trajReader.indexingReader.getNextConf();
-        //
-        //    let state = trajReader.chunker.getEstimatedState(trajReader.lookupReader.position_lookup);
-        //    if(trajReader.indexProgressControls.hidden)
-        //        trajReader.indexProgressControls.hidden=false;
-        //    
-        //    trajReader.indexProgress.value=Math.round((state[1]/state[0]) * 100);
-        //    trajReader.trajectorySlider.setAttribute("max" ,
-        //        (trajReader.lookupReader.position_lookup.length-1).toString()
-        //    );
-        //
-        //    if(trajReader.lookupReader.position_lookup.length>1 && trajReader.trajControls.hidden){
-        //        //enable video creation during indexing
-        //        let videoControls = <HTMLButtonElement>document.getElementById("videoCreateButton");
-        //        videoControls.disabled = false;
-        //        
-        //        // enable traj control
-        //        trajReader.trajControls.hidden = false;
-        //        // set focus to trajectory controls
-        //        document.getElementById('trajControlsLink').click();
-        //    }  
-        //
-        //};
-        //
-        //// Listen for last configuration event
-        //function _done(e) {
-        //    document.removeEventListener('nextConfigIndexed', _load);
-        //    document.removeEventListener('finalConfigIndexed', _done);
-        //
-        //    //notify("finished indexing");
-        //    trajReader.trajectorySlider.setAttribute("max" ,
-        //        (trajReader.lookupReader.position_lookup.length-1).toString()
-        //    );
-        //
-        //    
-        //    (<HTMLElement>document.getElementById('trajIndexingProgress')).hidden=true;
-        //    (<HTMLElement>document.getElementById('trajIndexingProgressLabel')).hidden=true;
-        //    //open save index file
-        //    if(trajReader.lookupReader.position_lookup.length>1)
-        //        (<HTMLElement>document.getElementById('downloadIndex')).hidden=false;
-        //    
-        //    (<HTMLButtonElement>document.getElementById("hyperSelectorBtnId")).disabled = false;
-        //
-        //};
-        //document.addEventListener('nextConfigIndexed', _load);
-        //document.addEventListener('finalConfigIndexed', _done);
-        //trajReader.indexingReader.getNextConf();
     }
     downloadIndexFile() {
         makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
@@ -339,10 +309,6 @@ class TrajectoryReader {
     retrieveByIdx(idx) {
         //used by the slider to set the conf
         if (this.lookupReader.readyState != 1) {
-            //        setTimeout(()=>{
-            //            this.retrieveByIdx(idx);
-            //        },30); // try untill can actually read
-            //else {
             this.idx = idx;
             this.lookupReader.getConf(idx);
             this.trajectorySlider.setAttribute("value", this.idx.toString());
