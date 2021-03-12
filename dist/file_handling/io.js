@@ -172,7 +172,7 @@ class TrajectoryReader {
         this.idx = 0;
         this.offset = 0;
         this.firstRead = true;
-        //indexes =[];
+        this.indexes = [];
         this.offset_id = 0;
         this.playFlag = false;
         this.intervalId = null;
@@ -224,26 +224,34 @@ class TrajectoryReader {
         else
             this.idx--;
     }
-    indexTrajectory() {
-        this.chunker.getNextChunk().arrayBuffer().then(value => {
+    async indexTrajectory() {
+        await this.chunker.getNextChunk().arrayBuffer().then(value => {
             let buff = new Uint8Array(value);
             let val = 116; // t
-            let i = 1; // first = 0; we know that the 1st index will be a t 
-            let last_id = 0;
+            let i = -1; // first = 0; we know that the 1st index will be a t 
+            let cur_offset = 0;
+            if (this.firstRead)
+                i = 0;
             //populate the index array by the positions of t
             while ((i = buff.indexOf(val, i + 1)) != -1) {
-                //this.indexes.push(i); 
-                this.lookupReader.addIndex(this.chunker.getOffset() + last_id, this.chunker.getOffset() + i - last_id, "0");
-                last_id = i; // we update the last index
+                cur_offset = (this.chunker.getOffset() + i);
+                if (this.offset != cur_offset)
+                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, "0");
+                //console.log(cur_offset, this.offset);
+                this.offset = cur_offset;
+                //if(i != last_id)
+                //last_id = i; // we update the last index
             }
             // what if we have just one conf
-            if (this.lookupReader.position_lookup.length == 0 && this.firstRead)
+            if (this.lookupReader.position_lookup.length == 0) {
                 this.lookupReader.addIndex(0, this.chunker.file.size, "0");
+            }
             else {
-                if (!this.trajControls.hidden) {
+                if (this.trajControls.hidden) {
                     console.log("open trajectory");
                     // enable traj control
-                    trajReader.trajControls.hidden = false;
+                    this.indexProgressControls.hidden = false;
+                    this.trajControls.hidden = false;
                     // set focus to trajectory controls
                     document.getElementById('trajControlsLink').click();
                 }
@@ -261,7 +269,7 @@ class TrajectoryReader {
                     this.trajControls.hidden = false;
                 }
                 this.indexProgress.value = Math.round((state[1] / state[0]) * 100);
-                console.log(Math.round((state[1] / state[0]) * 100));
+                //console.log(Math.round((state[1]/state[0]) * 100));
                 this.indexTrajectory();
             }
             else {
