@@ -243,29 +243,19 @@ class TrajectoryReader {
             while ((i = buff.indexOf(val, i + 1)) != -1) {
                 cur_offset = (this.chunker.getOffset() + i);
                 if (this.offset != cur_offset)
-                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, this.fetchTFromBinary(buff.slice(this.offset - this.chunker.getOffset(), cur_offset - this.chunker.getOffset())));
-                //console.log(i);
-                //console.log(this.offset - this.chunker.getOffset(),
-                //                 cur_offset - this.chunker.getOffset());
+                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, this.lookupReader.position_lookup.length);
                 this.offset = cur_offset;
             }
             // if there still stuff to fetch on first read ? NOTE: not sure why this is true
-            if (this.chunker.isLast() && this.firstRead) {
+            if (this.chunker.isLast()) {
                 let size = this.chunker.file.size - this.offset;
                 if (size) {
-                    this.lookupReader.addIndex(this.offset, size, "-1");
-                    //this.fetchTFromBinary(
-                    //    buff.slice(this.offset - this.chunker.getOffset(), cur_offset - this.chunker.getOffset())
-                    //));
+                    this.lookupReader.addIndex(this.offset, size, this.lookupReader.position_lookup.length);
                 }
             }
             // if we have just one conf ?
             if (this.lookupReader.position_lookup.length == 0) {
-                this.lookupReader.addIndex(0, this.chunker.file.size, "-2"
-                //this.fetchTFromBinary(
-                //    buff.slice(0, this.chunker.file.size)
-                //)
-                );
+                this.lookupReader.addIndex(0, this.chunker.file.size, this.lookupReader.position_lookup.length);
             }
             else { // we are reading a trajectory 
                 if (this.trajControls.hidden) {
