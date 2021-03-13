@@ -620,6 +620,7 @@ class pdbatom {
         this.altLoc = "";
         this.resType = "";
         this.chainID = "";
+        this.chainIndx = -1;
         this.pdbResIdent = "";
         this.iCode = "";
         this.x = 0; // these MUST be numbers
@@ -634,6 +635,7 @@ class pdbatom {
 class pdbresidue {
     constructor() {
         this.resType = "";
+        this.chainIndx = -1;
         this.pdbResIdent = "";
         this.chainID = "";
         this.type = "";
@@ -642,6 +644,7 @@ class pdbresidue {
 }
 class pdbchain {
     constructor() {
+        this.chainIndx = -1;
         this.chainID = "";
         this.residues = [];
         this.strandtype = "";
@@ -685,6 +688,8 @@ function prep_pdb(pdblines) {
             modelDivs.push(i);
         }
     }
+    // If models are present in pdb file, Assumes that repeat chain ids are
+    // other instances of the 1st chain that has the same chain identifer
     let bioassemblyassumption = false;
     if (modelDivs.length > 0)
         bioassemblyassumption = true;
@@ -707,8 +712,8 @@ function prep_pdb(pdblines) {
     let alphabet = 'abcdefghijklmnopqrstuvwxyz123456789<>?/!@#$%^&*()_-=+'.split('');
     sorted_repeated_chainids.forEach((val, ind) => {
         if (nchainids.indexOf(val) != ind) { //same chain identifier needs to be fixed
-            if (val != "" && val.includes("*")) {
-                let nval = alphabet[0] + val;
+            if (val != "" && val.includes("*")) { //unique chain
+                let nval = val;
                 let attmpt_indx = 1;
                 while (nchainids.indexOf(nval) != -1) {
                     nval = alphabet[attmpt_indx] + val;
@@ -724,11 +729,13 @@ function prep_pdb(pdblines) {
             nchainids.push(val);
         }
     });
+    // Stores ID, start line, end line if chain is unique
+    // Stores Id, start line, end line, coordinates and Quat Rotation for a1
     let initList = new pdbReadingList;
     let prevend = firstatom;
     for (let i = 0; i < nchainids.length; i++) {
         if (nchainids[i].includes("*")) {
-            let id = nchainids[i].replace('*', '');
+            let id = nchainids[i].replace('*', ''); // remove asterisk from chain id
             initList.uniqueIDs.push(id);
             initList.uniqueStart.push(prevend);
             initList.uniqueEnd.push(chainDivs[i]);
@@ -744,23 +751,6 @@ function prep_pdb(pdblines) {
         }
     }
     return initList;
-    // Left this as I might need it later on
-    // Goes through repeated chains and assigns new chain ids
-    // let nchainids; // Store new chainids
-    // let alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    // repeated_chainids.forEach((val, ind) => {
-    //
-    //     if(val != ""){
-    //         let nval = alphabet[0]+val;
-    //         let attmpt_indx = 1;
-    //         while(nchainids.indexOf(nval) != -1){
-    //             nval = alphabet[attmpt_indx] + val;
-    //         }
-    //         nchainids.push(nval, attmpt_indx);
-    //     } else {
-    //         nchainids.push(val, 0);
-    //     }
-    // });
     // // Assign Chains by which model they belong too (Mapping out what we want)
     // let modelChainAssign : number[][] = [];
     // for(let i = 0; i < modelDivs.length/2; i++){
@@ -811,7 +801,6 @@ function readPdbFile(file) {
         let uniqchains = [];
         // bookkeeping
         let label = "pdb";
-        let obsChains = [];
         // Search Just the Header for PDB code ex. (1BU4)
         for (let i = 0; i < 10; i++) {
             if (pdbLines[i].substr(0, 6) === 'HEADER') {
@@ -827,7 +816,6 @@ function readPdbFile(file) {
         // Called for each unique chain found in the system
         let pdbpositions = [];
         let prevChainId = "";
-        let prevResId = "";
         let Amino = false;
         let atoms = [];
         let residues = []; // individual residue data parsed from Atomic Info
@@ -838,11 +826,13 @@ function readPdbFile(file) {
         const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
             "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
             "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
-        let loadpdbsection = function (start, end) {
+        let loadpdbsection = function (chainindx, start, end) {
             pdbpositions = [];
             atoms = [];
             chains = [];
             residues = [];
+            prevChainId = "";
+            let prevResId = " ";
             for (let j = start; j < end; j++) {
                 if (pdbLines[j].substr(0, 4) === 'ATOM') {
                     let pdbLine = pdbLines[j];
@@ -852,8 +842,17 @@ function readPdbFile(file) {
                     na.altLoc = pdbLine.substring(16, 17).trim();
                     na.resType = pdbLine.substring(17, 20).trim();
                     na.chainID = pdbLine.substring(21, 22).trim();
-                    na.pdbResIdent = pdbLine.substring(22, 26).trim(); // Usually the residue number
-                    na.iCode = pdbLine.substring(26, 27).trim();
+                    na.chainIndx = chainindx;
+                    let tmp = pdbLine.substring(22, 29); // Usually the residue number
+                    //check for insertion code
+                    na.iCode = "";
+                    if (isNaN(parseInt(tmp[5]))) {
+                        na.iCode = tmp[5];
+                        na.pdbResIdent = tmp.slice(0, 5).trim();
+                    }
+                    else {
+                        na.pdbResIdent = tmp.trim();
+                    }
                     // Convert From Angstroms to Simulation Units while we're at it
                     na.x = parseFloat(pdbLine.substring(30, 38)) / 8.518;
                     na.y = parseFloat(pdbLine.substring(38, 46)) / 8.518;
@@ -879,31 +878,31 @@ function readPdbFile(file) {
                     };
                     atoms.push(nac);
                     //checks if last read atom belongs to a different chain than the one before it
-                    if (prevResId !== na.pdbResIdent) {
-                        //notify("residue created");
-                        nr.resType = na.resType;
-                        nr.pdbResIdent = na.pdbResIdent;
-                        nr.chainID = na.chainID;
+                    if (prevResId != nac.pdbResIdent) {
+                        nr.resType = nac.resType;
+                        nr.pdbResIdent = nac.pdbResIdent;
+                        nr.chainID = nac.chainID;
+                        nr.chainIndx = nac.chainIndx;
                         // copy is necessary
                         let nrc = {
                             ...nr
                         };
                         residues.push(nrc);
                         //set previous chain id to that of last read atom
-                        prevResId = na.pdbResIdent;
+                        prevResId = nac.pdbResIdent;
                     }
                     //checks if last read atom belongs to a different chain than the one before it
-                    if (prevChainId !== na.chainID) {
+                    if (prevChainId !== nac.chainID) {
                         //notify("chain created");
-                        nc.chainID = na.chainID;
-                        obsChains.push(nc.chainID);
+                        nc.chainID = nac.chainID;
+                        nc.chainIndx = nac.chainIndx;
                         // copy is necessary
                         let ncc = {
                             ...nc
                         };
                         chains.push(ncc);
                         //set previous chain id to that of last read atom
-                        prevChainId = na.chainID;
+                        prevChainId = nac.chainID;
                     }
                 }
             }
@@ -932,14 +931,15 @@ function readPdbFile(file) {
             }
             return pdbpositions;
         };
+        // load all Unique Chains
         initList.uniqueIDs.forEach((id, indx) => {
-            let alignTO = loadpdbsection(initList.uniqueStart[indx], initList.uniqueEnd[indx]);
+            let alignTO = loadpdbsection(indx, initList.uniqueStart[indx], initList.uniqueEnd[indx]);
             uniqatoms = uniqatoms.concat(alignTO[2]);
             uniqresidues = uniqresidues.concat(alignTO[3]);
             uniqchains = uniqchains.concat(alignTO[4]);
-            // deal with repeats
+            // deal with repeats of each individual unique chain
             initList.repeatIDs.forEach((rid, rindx) => {
-                if (rid.includes(id)) { //Makes sure Chain IDs contain original chain identifier
+                if (id.includes(rid)) { //Makes sure Chain IDs contain original chain identifier
                     let alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0]);
                     if (alignME.length != alignTO[1].length)
                         notify("PDB Chains have unequal lengths");
@@ -960,12 +960,13 @@ function readPdbFile(file) {
             });
         });
         // Assigns Atoms to their corresponding Residues
-        uniqresidues.forEach((res) => res.atoms = uniqatoms.filter(atom => {
-            if (atom.pdbResIdent == res.pdbResIdent && atom.chainID == res.chainID)
-                return true;
-        }));
+        uniqresidues.forEach((res) => {
+            res.atoms = uniqatoms.filter(atom => atom.chainIndx == res.chainIndx && atom.pdbResIdent == res.pdbResIdent);
+        });
         // Assigns Residues to their corresponding Chain
-        uniqchains.forEach((chain) => chain.residues = uniqresidues.filter(res => res.chainID == chain.chainID));
+        uniqchains.forEach((chain) => {
+            chain.residues = uniqresidues.filter(res => res.chainIndx == chain.chainIndx);
+        });
         if (uniqchains.length == 0) {
             notify("No Chains Found in PDB File");
             return;
@@ -989,10 +990,8 @@ function addPDBToScene() {
     if (pdbFileInfo.length > 0) {
         let pdata = pdbFileInfo.slice(-1)[0];
         let strands = pdata.pdbsysinfo;
-        // let bounds = pdata.sysdim;
         let label = pdata.pdbfilename;
         let initlist = pdata.initlist;
-        // let strands = initlist.
         // Looking back at this the strands name probably wasn't the most unique choice
         // strands is meant to be the chain object from the PDB Parser
         // Parses PDB Data and Intializes System, Errors go to the Console
@@ -1013,7 +1012,7 @@ function addPDBToScene() {
             mutantStrand: false
         };
         //Classify Residue Types
-        for (let i = 0; i < strands.length; i++) {
+        for (let i = 0; i < initlist.uniqueIDs.length; i++) {
             let strand = strands[i];
             // Reset Bookkeeping Members for each Strand
             for (let key in checker)
@@ -1087,7 +1086,7 @@ function addPDBToScene() {
         //Helper values
         let bv1 = new THREE.Vector3(1, 0, 0);
         let bv2 = new THREE.Vector3(0, 1, 0);
-        let bv3 = new THREE.Vector3(0, 1, 1);
+        let bv3 = new THREE.Vector3(0, 0, 1);
         let proelem = {
             "LYS": "K",
             "CYS": "C",
@@ -1292,7 +1291,7 @@ function addPDBToScene() {
                     nextElementId++;
                 }
                 currentStrand.updateEnds();
-                // Take car of repeats Access by Chain Identifier
+                // Take care of repeats Access by Chain Identifier
                 initlist.repeatIDs.forEach((rid, indx) => {
                     if (nstrand.chainID.includes(rid)) { // Repeat same chain
                         let repeatStrand = sys.addNewPeptideStrand();
