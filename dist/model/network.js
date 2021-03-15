@@ -68,7 +68,6 @@ class Network {
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
         this.particles = selectedMonomers.map(mon => { return mon.id; });
-        this.initInstances(this.particles.length);
         this.types = selectedMonomers.map(mon => { return mon.type; });
         this.masses = [];
         this.fillMasses(selectedMonomers);
@@ -86,10 +85,10 @@ class Network {
                 return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
             },
             rotation: function (i, j) {
-                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this.xI[i] - this.xI[j], this.yI[i] - this.yI[j], this.zI[i] - this.zI[j]));
+                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this.xI[i] - this.xI[j], this.yI[i] - this.yI[j], this.zI[i] - this.zI[j]).normalize());
             },
             center: function (i, j) {
-                return new THREE.Vector3((this.xI[i] - this.xI[j]) / 2, (this.yI[i] - this.yI[j]) / 2, (this.zI[i] - this.zI[j]) / 2);
+                return new THREE.Vector3((this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2);
             }
         };
     }
@@ -164,32 +163,33 @@ class Network {
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     initEdges() {
         //init general color
-        const col = backboneColors[this.nid % backboneColors.length + 1];
+        const col = backboneColors[this.nid % backboneColors.length];
         // fill vectors for all edges in network
         for (let t = 0; t < this.reducedEdges.total; t++) {
-            let i = this.reducedEdges.p1[t];
-            let j = this.reducedEdges.p2[t];
-            let pos = this.elemcoords.center(i, j);
-            let rot = this.elemcoords.rotation(i, j);
-            let dij = this.elemcoords.distance(i, j);
-            this.fillVec('offsets', 3, this.nid, [pos.x, pos.y, pos.z]);
-            this.fillVec('rotations', 4, this.nid, [rot.w, rot.z, rot.y, rot.x]);
-            this.fillVec('colors', 3, this.nid, [col.r, col.g, col.b]);
-            this.fillVec('scales', 3, this.nid, [1, dij, 1]);
-            this.fillVec('visibility', 3, this.nid, [1, 1, 1]);
+            this.initEdge(t, col);
         }
+    }
+    ;
+    initEdge(t, col) {
+        // fill vectors for single edge in network
+        let i = this.reducedEdges.p1[t];
+        let j = this.reducedEdges.p2[t];
+        let pos = this.elemcoords.center(i, j);
+        let rot = this.elemcoords.rotation(i, j);
+        let dij = this.elemcoords.distance(i, j);
+        this.fillVec('offsets', 3, t, [pos.x, pos.y, pos.z]);
+        this.fillVec('rotations', 4, t, [rot.w, rot.z, rot.y, rot.x]);
+        this.fillVec('colors', 3, t, [col.r, col.g, col.b]);
+        this.fillVec('scales', 3, t, [1, dij, 1]);
+        this.fillVec('visibility', 3, t, [1, 1, 1]);
     }
     ;
     edgesByCutoff(cutoffValueAngstroms) {
         this.reducedEdges.clearAll();
         this.selectNetwork();
-        let elems = Array.from(selectedBases);
-        if (elems.length > 2000) {
-            notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
-            return;
-        }
-        //init general color
-        const col = backboneColors[this.nid % backboneColors.length + 1];
+        //let elems: BasicElement[] = Array.from(selectedBases);
+        // go through coordinates and assign connections if 2 particles
+        // are less than the cutoff value apart
         let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
         for (let i = 0; i < this.elemcoords.xI.length; i++) {
             for (let j = 1; j < this.elemcoords.xI.length; j++) {
@@ -198,26 +198,24 @@ class Network {
                 let dij = this.elemcoords.distance(i, j);
                 if (dij <= simCutoffValue) {
                     this.reducedEdges.addEdge(i, j, dij, 's', 1);
-                    //get network ready for viewing
-                    let pos = this.elemcoords.center(i, j);
-                    let rot = this.elemcoords.rotation(i, j);
-                    this.fillVec('offsets', 3, this.nid, [pos.x, pos.y, pos.z]);
-                    this.fillVec('rotations', 4, this.nid, [rot.w, rot.z, rot.y, rot.x]);
-                    this.fillVec('colors', 3, this.nid, [col.r, col.g, col.b]);
-                    this.fillVec('scales', 3, this.nid, [1, dij, 1]);
-                    this.fillVec('visibility', 3, this.nid, [1, 1, 1]);
                 }
             }
         }
-        // network is ready for solving
+        // network is ready for solving and visualization
         this.networktype = "ANM";
         if (this.reducedEdges.total != 0) {
+            this.initInstances(this.reducedEdges.total);
+            this.initEdges();
             this.prepVis();
             this.sendtoUI();
         }
     }
     ;
     generateHessian() {
+        if (this.particles.length > 2000) {
+            notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
+            return;
+        }
         let hessian = [];
         if (this.reducedEdges.total == 0) {
             notify("Network must be filled prior to solving ANM");

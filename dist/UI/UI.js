@@ -738,10 +738,10 @@ class fluxGraph {
     initializeGraph() {
         // onCreate parameter of toggleWindow won't initialize this correctly
         // taken from https://stackoverflow.com/questions/14226803/wait-5-seconds-before-executing-next-line
-        // wait 50 ms then initialize chart
+        // wait 75 ms then initialize chart
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(50);
+            await delay(75);
             try {
                 let ctx = document.getElementById("flux").getContext('2d');
                 this.chart = new Chart(ctx, this.chartconfig);

@@ -158,7 +158,7 @@ class OXServeSocket extends WebSocket{
             let {file_name, file} = makeDatFile(name, reorganized);
             conf["dat_file"] = file;	
         }
-        if (ANMs.length > 0) {
+        if (networks.length > 0) {
             let {file_name, file} = makeParFile(name, reorganized, counts);
             conf["par_file"] = file;
         }

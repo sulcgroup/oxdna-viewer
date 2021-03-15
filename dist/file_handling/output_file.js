@@ -17,7 +17,7 @@ function makeOutputFiles() {
         let { file_name, file } = makeDatFile(name, reorganized);
         makeTextFile(file_name, file);
     }
-    if (ANMs.length > 0) {
+    if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
         makeTextFile(file_name, file);
     }
@@ -195,18 +195,35 @@ function makeDatFile(name, altNumbering = undefined) {
 function makeParFile(name, altNumbering, counts) {
     const par = [];
     par.push(counts[3]);
-    ANMs.forEach((anm) => {
-        //ANMs can be huge so we need to use a traditional for loop here
-        const l = anm.children.length;
-        for (let i = 0; i < l; i++) {
-            const curCon = anm.children[i];
-            const p1ID = altNumbering.get(curCon.p1);
-            const p2ID = altNumbering.get(curCon.p2);
-            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
-            par.push(line.join(" "));
+    networks.forEach((net) => {
+        const t = net.reducedEdges.total;
+        if (t != 0) {
+            for (let i = 0; i < t; i++) {
+                let p1oldid = net.particles[net.reducedEdges.p1[i]]; // old element old id
+                let p2oldid = net.particles[net.reducedEdges.p2[i]];
+                let p1 = elements.get(p1oldid);
+                let p2 = elements.get(p2oldid);
+                const p1ID = altNumbering.get(p1);
+                const p2ID = altNumbering.get(p2);
+                const line = [p1ID, p2ID, net.reducedEdges.eqDist[i], net.reducedEdges.types[i], net.reducedEdges.ks[i]].concat(net.reducedEdges.extraParams[i]);
+                par.push(line.join(" "));
+            }
         }
     });
     return { file_name: name + ".par", file: par.join('\n') };
+    // ANMs.forEach ((anm: ANM) => {
+    //     //ANMs can be huge so we need to use a traditional for loop here
+    //     const l = anm.children.length
+    //     for (let i = 0; i < l; i++) {
+    //         const curCon = anm.children[i]
+    //         const p1ID: number = altNumbering.get(curCon.p1);
+    //         const p2ID: number = altNumbering.get(curCon.p2);
+    //
+    //         const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
+    //         par.push(line.join(" "));
+    //     }
+    // });
+    // return {file_name: name+".par", file: par.join('\n') };
 }
 function writeMutTrapText(base1, base2) {
     return "{\n" + "type = mutual_trap\n" +
@@ -300,7 +317,7 @@ function makeIndxFile(indxarray) {
             // Newline between each particles array
             text += '\n';
         });
-        makeTextFile("index.txt", text); //after addding all mutual trap data, make mutual trap file
+        makeTextFile("index.txt", text);
     };
     if (indxarray.length == 0) {
         notify("Index Data is Empty");

@@ -1,6 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 // chunk .dat file so its not trying to read the entire thing at once
-var toggleStrand = api.toggleStrand;
 function datChunker(datFile, currentChunk, chunkSize) {
     const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
     return sliced;
@@ -581,14 +580,13 @@ function readParFile(file) {
             net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         }
         ;
-        // Fill Vectors
+        // Create and Fill Vectors
+        net.initInstances(net.reducedEdges.total);
         net.initEdges();
         net.prepVis(); // Creates Mesh for visualization
         networks.push(net); // Any network added here shows up in UI network selector
         selectednetwork = net.nid; // auto select network just loaded
         view.addNetwork(net.nid);
-        // system.strands.forEach((s) => {toggleStrand(s)});
-        net.toggleVis();
         // addNetworktoScene()(anm);
         // system.strands.forEach((s) => {
         //     if (s.isPeptide()) {

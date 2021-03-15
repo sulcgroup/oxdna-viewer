@@ -191,6 +191,10 @@ function createNetworkWrapper() {
     view.addNetwork(nid); // don't know if it's a good idea to call this here or not?
 }
 function deleteNetworkWrapper(nid) {
+    let net = networks[nid];
+    if (net.onscreen) {
+        net.toggleVis(); // turn it off
+    }
     networks.splice(nid, 1);
     if (selectednetwork == nid)
         selectednetwork = -1;
