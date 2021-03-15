@@ -1,6 +1,8 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 // chunk .dat file so its not trying to read the entire thing at once
+import toggleStrand = api.toggleStrand;
+
 function datChunker(datFile: Blob, currentChunk: number, chunkSize: number) {
     const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
     return sliced;
@@ -535,9 +537,61 @@ function readOxViewJsonFile(file: File) {
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
+// function readParFile(file) {
+//     let system = systems[systems.length - 1]; //associate the par file with the last loaded system
+//     let reader = new FileReader();
+//     reader.onload = () => {
+//         let lines = (reader.result as string).split(/[\n]+/g);
+//
+//         //remove the header
+//         lines = lines.slice(1)
+//
+//         const size = lines.length;
+//
+//         //create an ANM object to allow visualization
+//         const anm = new ANM(system, ANMs.length, size)
+//
+//         //process connections
+//         for (let i = 0; i < size-1; i++) {
+//             let l = lines[i].split(" ")
+//             //extract values
+//             const p = parseInt(l[0]),
+//                 q = parseInt(l[1]),
+//                 eqDist = parseFloat(l[2]),
+//                 type = l[3],
+//                 strength = parseFloat(l[4]);
+//
+//             // if its a torsional ANM then there are additional parameters on some lines
+//             let extraParams = []
+//             if (l.length > 5) {
+//                 for (let i = 5; i < l.length; i++) {
+//                     extraParams.push(l[i])
+//                 }
+//             }
+//
+//             //dereference p and q into particle positions from the system
+//             const particle1 = system.getElementBySID(p),
+//                   particle2 = system.getElementBySID(q);
+//
+//             if (particle1 == undefined) console.log(i)
+//
+//             anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
+//         };
+//         addANMToScene(anm);
+//         system.strands.forEach((s) => {
+//             if (s.isPeptide()) {
+//                 api.toggleStrand(s);
+//             }
+//         })
+//         ANMs.push(anm);
+//     }
+//     reader.readAsText(file);
+// }
+
+//reads in an anm parameter file and associates it with the last loaded system.
 function readParFile(file) {
-    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
     let reader = new FileReader();
+    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
     reader.onload = () => {
         let lines = (reader.result as string).split(/[\n]+/g);
 
@@ -547,7 +601,7 @@ function readParFile(file) {
         const size = lines.length;
 
         //create an ANM object to allow visualization
-        const anm = new ANM(system, ANMs.length, size)
+        const net = new Network(networks.length, system.getMonomers());
 
         //process connections
         for (let i = 0; i < size-1; i++) {
@@ -568,42 +622,69 @@ function readParFile(file) {
             }
 
             //dereference p and q into particle positions from the system
-            const particle1 = system.getElementBySID(p),
-                  particle2 = system.getElementBySID(q);  
+            // const particle1 = system.getElementBySID(p),
+            //     particle2 = system.getElementBySID(q);
 
-            if (particle1 == undefined) console.log(i)
-
-            anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
+            // if (particle1 == undefined) console.log(i)
+            net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         };
-        addANMToScene(anm);
-        system.strands.forEach((s) => {
-            if (s.isPeptide()) {
-                api.toggleStrand(s);
-            }
-        })
-        ANMs.push(anm);
+        // Fill Vectors
+        net.initEdges();
+        net.prepVis(); // Creates Mesh for visualization
+        networks.push(net); // Any network added here shows up in UI network selector
+        selectednetwork = net.nid; // auto select network just loaded
+        view.addNetwork(net.nid);
+        // system.strands.forEach((s) => {toggleStrand(s)});
+        net.toggleVis();
+
+        // addNetworktoScene()(anm);
+        // system.strands.forEach((s) => {
+        //     if (s.isPeptide()) {
+        //         api.toggleStrand(s);
+        //     }
+        // })
+        // ANMs.push(anm);
     }
     reader.readAsText(file);
 }
 
-function addANMToScene(anm: ANM) {
-    anm.geometry = instancedConnector.clone();
+// function addNetworktoScene(nid: number){
+//     let net = networks[nid];
+//     net.geometry = instancedConnector.clone();
+//     net.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(net.offsets, 3));
+//     net.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(net.rotations, 4));
+//     net.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(net.colors, 3));
+//     net.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(net.scales, 3));
+//     net.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(net.visibility, 3 ) );
+//
+//     net.network = new THREE.Mesh(net.geometry, instanceMaterial);
+//     net.network.frustumCulled = false;
+//
+//     scene.add(net.network);;
+//
+//     render();
+//
+//     canvas.focus();
+// }
 
-    anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
-    anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));  
-    anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
-    anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));  
-    anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
-
-    anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
-    anm.network.frustumCulled = false;
-
-    scene.add(anm.network);
-
-    render();
-
-    canvas.focus();
-}
+// function addANMToScene(anm: ANM) {
+//     anm.geometry = instancedConnector.clone();
+//
+//     anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
+//     anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
+//     anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
+//     anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
+//     anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
+//
+//     anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
+//     anm.network.frustumCulled = false;
+//
+//     scene.add(anm.network);
+//
+//     render();
+//
+//     canvas.focus();
+// }
 
 function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
@@ -911,7 +992,6 @@ function prep_pdb(pdblines: string[]){
     //
     // }
 }
-
 
 function readPdbFile(file) {
     let reader = new FileReader();

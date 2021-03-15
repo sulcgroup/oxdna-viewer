@@ -225,7 +225,7 @@ function moveToWrapper(){
 function createNetworkWrapper() {
     // Makes a Network
     let bases = Array.from(selectedBases);
-    copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
+    // copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
     let nid = networks.length;
     editHistory.do(new RevertableNetworkCreation(bases, nid));
     view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
@@ -255,7 +255,12 @@ function fillEdgesWrapper(nid: number, edgecase: number) {
 }
 
 function visualizeNetworkWrapper(nid: number) {
-    // To be written later
+    let net = networks[nid];
+    if(net.reducedEdges.total == 0){
+        notify("Connections must be assigned prior to Network Visualization");
+        return;
+    }
+    net.toggleVis();
 }
 
 function selectNetworkWrapper(nid: number) {

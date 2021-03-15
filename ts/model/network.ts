@@ -8,23 +8,35 @@ class Edges {
     p1: number[];
     p2: number[];
     ks: number[];
+    types: string[];
+    eqDist: number[];
     total: number;
+    extraParams: any[];
     constructor() {
         this.total = 0;
         this.p1 = [];
         this.p2 = [];
         this.ks = [];
+        this.eqDist = [];
+        this.types = [];
+        this.extraParams = [];
     }
-    addEdge(id1: number, id2: number, k: number =1) {
+    addEdge(id1: number, id2: number, eqdist:number, type:string, k: number =1, xparams: any[] = []) {
         if (id1 < id2) {
             this.p1.push(id1);
             this.p2.push(id2);
             this.ks.push(k);
+            this.types.push(type);
+            this.eqDist.push(eqdist);
+            this.extraParams.push(xparams);
             this.total += 1;
         } else if (id2 > id1) {
             this.p1.push(id2);
             this.p2.push(id1);
             this.ks.push(k);
+            this.eqDist.push(eqdist);
+            this.extraParams.push(xparams);
+            this.types.push(type);
             this.total += 1;
         }
     }
@@ -36,6 +48,9 @@ class Edges {
                 this.p1.splice(i, 1);
                 this.p2.splice(i, 1);
                 this.ks.splice(i, 1);
+                this.types.splice(i,1);
+                this.eqDist.splice(i,1);
+                this.extraParams.splice(i, 1);
                 this.total -= 1;
                 break;
             }
@@ -45,12 +60,28 @@ class Edges {
         this.p1 = [];
         this.p2 = [];
         this.ks = [];
+        this.eqDist = [];
+        this.types = [];
+        this.extraParams = []
         this.total = 0;
     };
 }
 
 
 class Network {
+    //Added to Merge ANM and Network
+    // id: number
+    system: System;
+    INSTANCES: number;
+    offsets: Float32Array;
+    rotations: Float32Array;
+    colors: Float32Array;
+    scales: Float32Array;
+    visibility: Float32Array;
+    //removed children
+    geometry: THREE.InstancedBufferGeometry;
+    network: THREE.Mesh; // not sure what this does yet
+    // network implementation
     particles: number[];
     nid: number;
     reducedEdges: Edges;
@@ -58,11 +89,15 @@ class Network {
     types: string[];
     kb : number;
     simFC : number;
+    elemcoords;
     networktype: string; //networktype defined in any edge fill call
     fittingReady: boolean; //Tells UI whether this network is ready to be displayed
-
+    onscreen: boolean; // Tells UI whether this network is in the scene or not
+    // id is used by the visualizer as it is a system object (sorta)
+    // nid is the network identifier only
     constructor(nid, selectedMonomers) {
         this.particles = selectedMonomers.map(mon => {return mon.id;});
+        this.initInstances(this.particles.length);
         this.types = selectedMonomers.map(mon => {return mon.type;});
         this.masses = [];
         this.fillMasses(selectedMonomers);
@@ -71,6 +106,33 @@ class Network {
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
         this.networktype = 'empty';
+        this.onscreen = false;
+        this.elemcoords = {
+            xI: selectedMonomers.map(e => e.getPos().x),
+            yI: selectedMonomers.map(e => e.getPos().y),
+            zI: selectedMonomers.map(e => e.getPos().z),
+            distance: function(i: number, j: number){
+                return Math.sqrt((this.xI[i] - this.xI[j])**2 + (this.yI[i] - this.yI[j])**2 + (this.zI[i] - this.zI[j])**2)
+            },
+            rotation: function(i: number, j: number):THREE.Quaternion{
+                return new THREE.Quaternion().setFromUnitVectors(
+                    new THREE.Vector3(0, 1, 0), new THREE.Vector3(this.xI[i]-this.xI[j],this.yI[i]-this.yI[j], this.zI[i]-this.zI[j])
+                );
+            },
+            center: function(i: number, j:number){ // midpoint b/t two particles
+                return new THREE.Vector3((this.xI[i]-this.xI[j])/2, (this.yI[i]-this.yI[j])/2, (this.zI[i]-this.zI[j])/2);
+            }
+        };
+    }
+    ;
+    //The below functions are for merging the ANM and Network
+    initInstances(nInstances: number) {
+        this.INSTANCES = nInstances;
+        this.offsets = new Float32Array(this.INSTANCES * 3);
+        this.rotations = new Float32Array(this.INSTANCES * 4);
+        this.colors = new Float32Array(this.INSTANCES * 3);
+        this.scales = new Float32Array(this.INSTANCES * 3);
+        this.visibility = new Float32Array(this.INSTANCES * 3);
     }
     ;
     toJson(){
@@ -81,12 +143,16 @@ class Network {
         api.selectElementIDs(this.particles, false);
     }
     ;
-
     sendtoUI(){
         this.fittingReady = true;
-    };
-
-
+    }
+    ;
+    fillVec(vecName, unitSize, pos, vals) {
+        for (let i = 0; i < unitSize; i++) {
+            this[vecName][pos * unitSize + i] = vals[i]
+        }
+    }
+    ;
     fillMasses(mon: BasicElement[]) {
         this.masses =[];
         mon.forEach(t => {
@@ -99,36 +165,90 @@ class Network {
          })
     }
     ;
+    prepVis(){ // Call after filling edges!
+        this.geometry = instancedConnector.clone();
+        this.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(this.offsets, 3));
+        this.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(this.rotations, 4));
+        this.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(this.colors, 3));
+        this.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(this.scales, 3));
+        this.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(this.visibility, 3 ));
+
+        this.network = new THREE.Mesh(this.geometry, instanceMaterial);
+        this.network.frustumCulled = false;
+    }
+    ;
+    toggleVis(){
+        if(this.onscreen){ // if shown in canvas
+            scene.remove(this.network);
+            this.onscreen = false;
+            render();
+            canvas.focus();
+        } else {
+            scene.add(this.network);
+            this.onscreen = true;
+            render();
+            canvas.focus();
+        }
+    }
     // Functions above are meant to be more universal
 
-
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
+    initEdges(){ // Fills vectors for edges from Par File
+        //init general color
+        const col = backboneColors[this.nid % backboneColors.length+1];
+        // fill vectors for all edges in network
+        for(let t = 0; t < this.reducedEdges.total; t++){
+            let i = this.reducedEdges.p1[t];
+            let j = this.reducedEdges.p2[t];
+            let pos = this.elemcoords.center(i, j);
+            let rot = this.elemcoords.rotation(i, j);
+            let dij = this.elemcoords.distance(i, j);
+            this.fillVec('offsets', 3, this.nid, [pos.x, pos.y, pos.z]);
+            this.fillVec('rotations', 4, this.nid,[rot.w, rot.z, rot.y, rot.x]);
+            this.fillVec('colors', 3, this.nid, [col.r, col.g, col.b]);
+            this.fillVec('scales', 3, this.nid, [1, dij, 1]);
+            this.fillVec('visibility', 3, this.nid, [1, 1, 1]);
+        }
+    }
+    ;
+
     edgesByCutoff(cutoffValueAngstroms: number){
         this.reducedEdges.clearAll();
         this.selectNetwork();
         let elems: BasicElement[] = Array.from(selectedBases);
-        let elemcoords = {
-            xI: elems.map(e => e.getPos().x),
-            yI: elems.map(e => e.getPos().y),
-            zI: elems.map(e => e.getPos().z),
-            distance: function(i: number, j: number){
-                return Math.sqrt((this.xI[i] - this.xI[j])**2 + (this.yI[i] - this.yI[j])**2 + (this.zI[i] - this.zI[j])**2)
-            }
-        };
+        if(elems.length > 2000){
+            notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
+            return;
+        }
+
+        //init general color
+        const col = backboneColors[this.nid % backboneColors.length+1];
 
         let simCutoffValue = cutoffValueAngstroms/8.518; //sim unit conversion
-        for(let i = 0; i < elemcoords.xI.length; i++){
-            for(let j = 1; j < elemcoords.xI.length; j++){
+        for(let i = 0; i < this.elemcoords.xI.length; i++){
+            for(let j = 1; j < this.elemcoords.xI.length; j++){
                 if(i >= j) continue;
-                let dij = elemcoords.distance(i, j);
+                let dij = this.elemcoords.distance(i, j);
                 if(dij <= simCutoffValue){
-                    this.reducedEdges.addEdge(i, j, 1);
+                    this.reducedEdges.addEdge(i, j, dij, 's', 1);
+                    //get network ready for viewing
+                    let pos = this.elemcoords.center(i, j);
+                    let rot = this.elemcoords.rotation(i, j);
+                    this.fillVec('offsets', 3, this.nid, [pos.x, pos.y, pos.z]);
+                    this.fillVec('rotations', 4, this.nid,[rot.w, rot.z, rot.y, rot.x]);
+                    this.fillVec('colors', 3, this.nid, [col.r, col.g, col.b]);
+                    this.fillVec('scales', 3, this.nid, [1, dij, 1]);
+                    this.fillVec('visibility', 3, this.nid, [1, 1, 1]);
                 }
             }
         }
+
         // network is ready for solving
         this.networktype = "ANM";
-        if(this.reducedEdges.total != 0) this.sendtoUI();
+        if(this.reducedEdges.total != 0) {
+            this.prepVis();
+            this.sendtoUI();
+        }
     }
     ;
     generateHessian(): number[][] {
@@ -267,7 +387,6 @@ class Network {
         return matrixDot(nf, vt); // U*q*Vt
     }
     ;
-
     getRMSF(inverse : number[][], temp: number): number[] { //Root Mean Square Fluctuaction in A^2
         let RMSF = [];
         for(let i = 0; i < inverse.length/3; i++){ //for each particle
@@ -275,5 +394,7 @@ class Network {
             RMSF.push(r);
         }
         return RMSF;
-    };
+    }
+    ;
+
 }
