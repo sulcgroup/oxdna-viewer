@@ -94,8 +94,10 @@ function handleFiles(files: FileList) {
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "pdb") {
+            notify("Reading PDB File...");
             pdbfile = files[i];
             readPdbFile(pdbfile);
+            return;
         }
         else if (ext === "idx") idxFile = files[i];
         else {
@@ -119,8 +121,7 @@ function handleFiles(files: FileList) {
     if (!trapFile) {
         if (jsonFile && !topFile) jsonAlone = true;
         if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
-            if (pdbfile) notify("Reading PDB File...");
-            else notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return
         }
     }

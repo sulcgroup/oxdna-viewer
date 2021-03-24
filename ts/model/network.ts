@@ -1,7 +1,6 @@
 /**
  * Two simple classes meant for easy generation, viewing, and deletion of networks
  */
-import selectElements = api.selectElements;
 
 class Edges { //Edges connect particles, for now these represent spring potentials only
     p1: number[]; // particle 1 indices, the p1 indices are always lower than p2
@@ -142,7 +141,7 @@ class Network {
     }
     ;
     selectNetwork(){
-        selectElements(this.particles, false);
+        api.selectElements(this.particles, false);
     }
     ;
     sendtoUI(){
@@ -228,8 +227,8 @@ class Network {
         // go through coordinates and assign connections if 2 particles
         // are less than the cutoff value apart
         let simCutoffValue = cutoffValueAngstroms/8.518; //sim unit conversion
-        for(let i = 0; i < this.elemcoords.xI.length; i++){
-            for(let j = 1; j < this.elemcoords.xI.length; j++){
+        for(let i = 0; i < this.elemcoords.coords.length; i++){
+            for(let j = 1; j < this.elemcoords.coords.length; j++){
                 if(i >= j) continue;
                 let dij = this.elemcoords.distance(i, j);
                 if(dij <= simCutoffValue){
@@ -270,8 +269,8 @@ class Network {
             //Hessian Calc w/ Masses
             for(let l=0; l<this.reducedEdges.total; l++){
                 let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l];
-                let ip = this.particles[i].getPos(); //Particle i Position
-                let jp = this.particles[j].getPos(); //Particle j Position
+                let ip = this.elemcoords[i]; //Particle i Position
+                let jp = this.elemcoords[j]; //Particle j Position
                 let mi = this.masses[i];
                 let mj = this.masses[j];
                 let mij = Math.sqrt(mi*mj); //masses
