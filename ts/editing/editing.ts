@@ -11,6 +11,7 @@ class InstanceCopy {
     id: number;
     n3id: number;
     n5id: number;
+    bpid: number;
     elemType: any;
     system: System;
 
@@ -36,6 +37,9 @@ class InstanceCopy {
         this.id = e.id;
         this.n3id = e.n3 ? e.n3.id : -1;
         this.n5id = e.n5 ? e.n5.id : -1;
+        if(e.isPaired()) {
+            this.bpid = (e as Nucleotide).pair.id;
+        }
         this.elemType = e.constructor;
         this.system = e.getSystem();
     }

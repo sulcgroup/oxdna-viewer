@@ -2,6 +2,7 @@
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 
 <head>
+    <link rel="shortcut icon" type="image/png" href="favicon.png">
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"></script>
     <script>
@@ -164,10 +165,10 @@
         <ul class="tabs-holder flex-wrap">
             <li id='sidebar-toggle' class="static"><a href="#">oxView</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-file">File</a></li>
+            <li ondblclick="view.sectionClicked()" hidden="true" id="trajControls"><a id="trajControlsLink" href="#section-trajectory">Trajectory</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-select">Select</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-edit">Edit</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-view">View</a></li>
-            <li ondblclick="view.sectionClicked()"><a href="#section-trajectory">Trajectory</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
         </ul>
@@ -191,10 +192,10 @@
                         <span class="mif-floppy-disk mif-2x"></span>
                         <span class="caption">Simulation files</span>
                     </button>
-                    <button onclick="makePairTrapFile()" class="ribbon-button"
-                        title="Download a mutual trap file for all basepairs">
+                    <button onclick="makeForceFile()" class="ribbon-button"
+                        title="Download an oxDNA force file">
                         <span class="mif-file-download mif-2x"></span>
-                        <span class="caption">Pair trap</span>
+                        <span class="caption">Forces</span>
                     </button>
                     <span class="title">oxDNA files</span>
                 </div>
@@ -208,14 +209,53 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Sequence file</span>
                 </button>
-                <button class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')">
-                    <span class="mif-video-camera mif-3x"></span>
-                    <span class="caption">Create video</span>
-                </button>
                 <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('p')">
                     <span class="mif-photo-camera mif-3x"></span>
                     <span class="caption">Save image</span>
                 </button>
+                <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')">
+                    <span class="mif-video-camera mif-3x"></span>
+                    <span class="caption">Create video</span>
+                </button>
+            </div>
+
+            <!--Trajectory-->
+            <div class="section" id="section-trajectory">
+                <div class=" group" style="width: 300px">
+                    <div class="row flex-align-center">
+                        <button class="button" onclick="trajReader.previousConfig()"
+                            title="Previous config (left keyboard arrow)">
+                            <span class="mif-previous mif-2x"></span>
+                            <!--<span class="caption">Previous</span>-->
+                        </button>
+                        <button class="button" id="playTrajectory" onclick="trajReader.playTrajectory();" title="Play current trajectory.">►</button>
+                        
+                        <button class="button" onclick="trajReader.nextConfig()"
+                        title="Next config (right keyboard arrow)">
+                        <span class="mif-next mif-2x"></span>
+                        <!--<span class="caption">Next</span>-->
+                        </button>
+
+                        <div class="row flex-align-center" style="width: 300px; margin: 10px;">
+
+                            <input id="trajectorySlider" type="range" min="0" max="100" value="0" class="slider"
+                               oninput="trajReader.retrieveByIdx(this.value);">
+                            
+                            <div id="trajIndexingProgressControls"  hidden="true"  >
+                                <label id="trajIndexingProgressLabel"  for="trajIndexingProgress">Indexing progress:</label>
+                                <progress id="trajIndexingProgress" value="0" max="100" > </progress>
+                                <a id="downloadIndex" onclick="trajReader.downloadIndexFile()" href="#" hidden ="true">download index file</a>
+                            </div>
+                        </div>
+                        <div id="trajTimestep"></div>
+
+                        <button id="hyperSelectorBtnId" class="button" disabled onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
+                            title="Previous config (left keyboard arrow)" style="margin: 10px;">
+                            <!--<span class="mif-down mif-2x"></span>-->
+                            <span class="caption">Order parameter selector.</span>
+                        </button>                     
+                    </div>
+                </div>
             </div>
 
             <!--Select-->
@@ -296,12 +336,6 @@
                     title="Download plain-text file of selected bases">
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Selected base list</span>
-                </button>
-                <button class="ribbon-button" onclick="makeMutualTrapFile()"
-                    title="Create mutual trap file pairing every two bases in the selected base list">
-                    <span class="mif-shrink2 mif-2x"></span>
-                    <span class="mif-file-download mif-2x"></span>
-                    <span class="caption">Selected base<br>trap file</span>
                 </button>
             </div></div>
 
@@ -580,47 +614,6 @@
                 </div>
             </div></div>
 
-            <!--Trajectory-->
-            <div class="section" id="section-trajectory">
-                <div class="tight group">
-                    <div class="row flex-align-center">
-                        <button class="ribbon-button" onclick="trajReader.previousConfig()"
-                            title="Previous config (left keyboard arrow)">
-                            <span class="mif-previous mif-2x"></span>
-                            <span class="caption">Previous</span>
-                        </button>
-                        <div id="trajTimestep" hidden="true"></div>
-                        <button class="ribbon-button" onclick="trajReader.nextConfig()"
-                            title="Next config (right keyboard arrow)">
-                            <span class="mif-next mif-2x"></span>
-                            <span class="caption">Next</span>
-                        </button>
-                    </div>
-                </div>
-                <div class="tight group flex-column">
-                    <div class="tight group">
-                        <button
-                            class="ribbon-icon-button" 
-                            onclick="trajReader.stepUntil(parseInt(document.getElementById('trajPrevLim').value), true)"
-                            title="Click to rewind">
-                                <span id="trajPrevUntilIco" class="mif-previous mif-2x"></span>
-                                <span class="caption">until t &le;</span>
-                        </button>
-                        <input type="text" style="width: 6em;" data-role="spinner" id="trajPrevLim" class="input-small" value="0" min="0" title="Input trajectory step at which to stop rewinding.">
-                    </div>
-                    <div class="tight group">
-                        <button
-                            class="ribbon-icon-button" 
-                            onclick="trajReader.stepUntil(parseInt(document.getElementById('trajNextLim').value), false)"
-                            title="Click to play">
-                                <span id="trajNextUntilIco" class="mif-next mif-2x"></span>
-                                <span class="caption">until t &ge;</span>
-                        </button>
-                        <input type="text" style="width: 6em;" data-role="spinner" id="trajNextLim" class="input-small" value="-1" min="0" title="Input trajectory step at which to stop playback. Input a negative number to play until the end.">
-                    </div>
-                </div>
-            </div>
-
             <div class="section" id="section-dynamics">
                 <div class="group">
                     <div class="tight group flex-column">
@@ -654,6 +647,12 @@
                         <span class="caption">Settings</span>
                     </button>
                     <span class="title">Ox-Serve</span>
+                </div>
+                <div class="group">
+                    <button class="ribbon-button" id="btnConnect" onclick="view.toggleWindow('forcesWindow', listForces)" title="View and edit external forces">
+                        <span class="mif-shrink2 mif-3x"></span>
+                    </button>
+                    <span class="title">Forces</span>
                 </div>
             </div>
             <!-- Separate Protein section-->
@@ -748,6 +747,8 @@
     <script src="./ts/lib/metro.min.js"></script>
     <div class="main">
         <!--all files to be loaded onload of html file-->
+        <script src="./ts/lib/chart.min.js"></script>
+        <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
@@ -794,6 +795,7 @@
         <script src="./dist/file_handling/GLTFExporter.js"></script>
         <script src="./dist/ox_serve/relax_scenarios.js"></script>
         <script src="./dist/ox_serve/live_relax.js"></script>
+        <script src="./dist/file_handling/order_parameter_selector.js"></script>
     </div>
 </body>
 

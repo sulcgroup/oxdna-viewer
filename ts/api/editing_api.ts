@@ -174,8 +174,8 @@ module edit{
             return;
         }
 
-        // strand1 will have an open 5' and strand2 will have an open 3' end
-        // strand2 will be merged into strand1
+        // strand5 will have an open 5' and strand3 will have an open 3' end
+        // strand3 will be merged into strand5
         let sys5 = end5.getSystem(),
         sys3 = end3.getSystem(),
         strand5 = end5.strand,
@@ -190,7 +190,7 @@ module edit{
                 copyInstances(e, i, tmpSys)
                 e.setInstanceParameter('visibility', [0,0,0])
                 e.dummySys = tmpSys;
-            })
+            }, true)
 
             sys3.callUpdates(['instanceVisibility'])
             addSystemToScene(tmpSys);
@@ -203,7 +203,7 @@ module edit{
 
         // Update 5' end to include the new elements
         strand5.updateEnds();
-        strand5.forEach(e=>{
+        strand3.forEach(e=>{
             e.strand = strand5;
         })
         
@@ -211,9 +211,6 @@ module edit{
         if (strand5 !== strand3) {
             //remove strand3 object 
             strand3.system.removeStrand(strand3);
-
-            // Strand id update
-            strand5.id = Math.min(strand5.id, strand3.id)
 
             //since strand IDs were updated, we also need to update the coloring
             updateColoring();
@@ -408,6 +405,25 @@ module edit{
                     e.n5 = null;
                 }
             }
+            // Same but for basepairs
+            if(c.bpid >= 0) {
+                let bp = oldids.findIndex(id=>{return id == c.bpid});
+                // If the paired base is also about to be added, we link to
+                // the new object instead
+                if (bp >= 0) {
+                    e['pair'] = elems[bp];
+                    elems[bp]['pair'] = e;
+                // Otherwise, if the indicated basepair exists and we can pair
+                // the new element to it without overwriting anything
+                } else if (
+                    elements.has(c.bpid) &&
+                    elements.get(c.bpid) &&
+                    !elements.get(c.bpid).isPaired())
+                {
+                    e['pair'] = elements.get(c.bpid);
+                    elements.get(c.bpid)['pair'] = e;
+                }
+            }
         });
 
         // Sort out strands
@@ -520,7 +536,7 @@ module edit{
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
             let [p, a1, a3] = positions[i]
-            e.calcPositions(p, a1, a3);
+            e.calcPositions(p, a1, a3, true);
             e = e[direction];
         }
 
@@ -593,13 +609,13 @@ module edit{
 
         for (let i = 0; i < l; i++) {
             let [p, a1, a3] = positions[i]
-            e1.calcPositions(p, a1, a3);
+            e1.calcPositions(p, a1, a3, true);
             e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
         for (let i = l * 2 - 1; i >= l; i--) {
             let [p, a1, a3] = positions[i];
-            e2.calcPositions(p, a1, a3);
+            e2.calcPositions(p, a1, a3, true);
             e2 = e2[inverse];
         }
 
@@ -834,7 +850,7 @@ module edit{
             pos = camera.position.clone().add(a1.clone().multiplyScalar(20));
             a3 = a1.clone().cross(camera.up);
         }
-        e.calcPositions(pos, a1, a3);
+        e.calcPositions(pos, a1, a3, true);
         e.dummySys = tmpSys;
 
         // Extends the strand 3'->5' with the rest of the sequence
@@ -1020,7 +1036,7 @@ module edit{
         a1.negate();
         a3.negate();
         const pos: THREE.Vector3 = cm.clone().sub(a1.clone().multiplyScalar(1.2));
-        e.calcPositions(pos, a1, a3);
+        e.calcPositions(pos, a1, a3, true);
         e.dummySys = tmpSys;
 
         addSystemToScene(tmpSys);

@@ -1,6 +1,50 @@
 // Use Metro GUI
 declare var Metro: any;
 
+function createTable(dataName: string, header: string[]) {
+    let table = document.createElement("table");
+    table.id = dataName;
+    table.classList.add("table", "striped")
+    table.dataset.role = "table";
+    table.dataset.static = "false";
+    table.dataset.body = dataName;
+    table.dataset.check = 'true';
+    let thead = document.createElement("thead");
+    let tr = document.createElement("tr");
+    header.forEach(name => {
+        let th = document.createElement("th");
+        th.innerHTML = name;
+        tr.appendChild(th);
+    });
+    thead.appendChild(tr);
+    table.appendChild(thead);
+    return table;
+}
+
+function listForces() {
+    let forceDOM = document.getElementById("forces");
+    forceDOM.innerHTML = "";
+    forcesTable = forces.map(force=>[force.description(), force.type]);
+    forceDOM.appendChild(createTable('forcesTable', ['Description', 'Type']));
+    if (forceHandler) {
+        forceHandler.redraw();
+    }
+}
+
+function deleteSelectedForces() {
+    // Remove all forces selected in the force window
+    var table = $('#forcesTable').data('table');
+    let removeIndices = table.getSelectedItems().map(s=>forcesTable.indexOf(s));
+
+    forces = forces.filter((f,i)=>!removeIndices.includes(i));
+    forcesTable = forcesTable.filter((f,i)=>!removeIndices.includes(i));
+
+    forceHandler.set(forces);
+
+    listForces();
+}
+
+
 function drawSystemHierarchy() {
     let checkboxhtml = (label)=> `<input data-role="checkbox" data-caption="${label}">`;
 
@@ -259,14 +303,34 @@ function toggleVisArbitrary() {
     clearSelection();
 }
 
-function notify(message: string, type?: string, title?: string) {
+function ask(title, content, onYes?, onNo?) {
+    Metro.dialog.create({
+        title: title,
+        content: `<div>${content}</div>`,
+        actions: [
+            {
+                caption: "Yes",
+                cls: "js-dialog-close alert",
+                onclick: onYes
+            },
+            {
+                caption: "No",
+                cls: "js-dialog-close",
+                onclick: onNo
+            }
+        ]
+    });
+}
+
+function notify(message: string, type?: string, keepOpen=false, title?: string) {
     let n = Metro.notify;
     if(!type) {
         type = "info";
     }
     n.create(message, title, {
         cls: type,
-        timeout: 5000
+        timeout: 5000,
+        keepOpen: keepOpen
     });
     console.info(`Notification: ${message}`);
 }
@@ -495,7 +559,10 @@ class View {
     dom['style'].cursor = "wait";
     requestAnimationFrame(() => requestAnimationFrame(() => {
         try {
-           calc(); 
+            var t0 = performance.now();
+            calc();
+            var t1 = performance.now();
+            console.log("Long calculation took " + (t1 - t0) + " milliseconds.")
         } catch (error) {
            notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
         }

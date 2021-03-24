@@ -18,8 +18,6 @@ function toggleClusterSim() {
             return;
         }
     }
-    if (forceHandler)
-        forceHandler.clearDrawn();
     rigidClusterSimulator.simulate();
 }
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
@@ -93,6 +91,8 @@ class RigidClusterSimulator {
      */
     simulate() {
         this.integrate(this.dt);
+        if (forceHandler)
+            forceHandler.redraw();
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
@@ -138,8 +138,8 @@ class Cluster {
             }
             // Pull together inter-cluster traps
             traps.forEach((t) => {
-                if (t.getParticle() == e) {
-                    this.conPoints.push(new ClusterConnectionPoint(e, t.getRefParticle()));
+                if (t.particle == e) {
+                    this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
                 }
             });
         });

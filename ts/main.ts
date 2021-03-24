@@ -82,8 +82,9 @@ let elements: ElementMap = new ElementMap(); //contains references to all BasicE
 //initialize the space
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
-// const ANMs: ANM[] = [];
-const forces: Force[] = [];
+//const ANMs: ANM[] = [];
+let forces: Force[] = [];
+var forcesTable: string[][] = [];
 var forceHandler;
 var sysCount: number = 0;
 var strandCount: number = 0;
@@ -123,7 +124,7 @@ function findBasepairs() {
             }
         }
     });
-}
+};
 
 // Ugly hacks for testing
 function getElements(): ElementMap {

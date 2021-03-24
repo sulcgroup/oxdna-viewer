@@ -12,7 +12,7 @@ var api;
         class CMS extends THREE.Mesh {
             constructor(elements, size, color) {
                 var geometry = new THREE.SphereGeometry(size, 32, 32);
-                var material = new THREE.MeshBasicMaterial({ color: color });
+                var material = new THREE.MeshPhongMaterial({ color: color });
                 super(geometry, material);
                 this.elements = Array.from(elements);
                 this.calculate();

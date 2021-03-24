@@ -9,7 +9,8 @@ function glsl2three(input: THREE.Vector4) {
 function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
-    rotateElementsByQuaternion(elements, q, about)
+    rotateElementsByQuaternion(elements, q, about);
+    if(forceHandler) forceHandler.redraw();
 }
 
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3) {
@@ -109,7 +110,7 @@ function calcsp(currentNuc) {
         notify("Can't calculate backbone connection for particle " + currentNuc.id + " because there is no upstream connection");
         return
     }
-
+    
     let xbbLast = temp.x,
         ybbLast = temp.y,
         zbbLast = temp.z;
@@ -126,14 +127,17 @@ function calcsp(currentNuc) {
     let spRotation = new THREE.Quaternion().setFromUnitVectors(
         new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
 
-    if (!currentNuc.isGS()) {
-        currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
-        currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+    currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+    currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+    //introduce distance based cutoff of the backbone connectors
+    if (spLen>=box.x*.9 ||spLen>=box.y*.9 ||spLen>=box.z*.9 || currentNuc.isGS() ){
+        currentNuc.setInstanceParameter('bbconScales', [0, 0, 0]);
+    }else{
         currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
-        sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
     }
+    sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
@@ -181,6 +185,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset'])
     }
+    if(forceHandler) forceHandler.redraw();
     render();
 }
 

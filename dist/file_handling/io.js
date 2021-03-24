@@ -1,6 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 class TopReader extends FileReader {
-    constructor(topFile, system, elems) {
+    constructor(topFile, system, elems, callback) {
         super();
         this.topFile = null;
         this.sidCounter = 0;
@@ -11,6 +11,7 @@ class TopReader extends FileReader {
                 let file = this.result;
                 let lines = file.split(/[\n]+/g);
                 lines = lines.slice(1); // discard the header
+                this.configurationLength = lines.length;
                 let l0 = lines[0].split(" ");
                 let strID = parseInt(l0[0]); //proteins are negative indexed
                 this.lastStrand = strID;
@@ -25,6 +26,7 @@ class TopReader extends FileReader {
                 lines.forEach((line, i) => {
                     if (line == "") {
                         // Delete last element
+                        this.configurationLength -= 1;
                         this.elems.delete(this.elems.getNextId() - 1);
                         return;
                     }
@@ -69,308 +71,341 @@ class TopReader extends FileReader {
                     }
                     let base = l[1]; // get base id
                     nuc.type = base;
-                    //if we meet a U, we have an RNA (its dumb, but its all we got)
+                    //if we meet a U, we have an RNsibleA (its dumb, but its all we got)
                     //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                     if (base === "U")
                         RNA_MODE = true;
                     this.nucLocalID += 1;
                     this.lastStrand = strID;
                 });
-                this.system.setDatFile(datFile); //store datFile in current System object
-                systems.push(this.system); //add system to Systems[]
                 nucCount = this.elems.getNextId();
-                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                //anonymous functions to handle fileReader outputs
-                datReader.onload = () => {
-                    // Find out if what you're reading is a single configuration or a trajectory
-                    let isTraj = readDat(datReader, this.system);
-                    document.dispatchEvent(new Event('nextConfigLoaded'));
-                    //if its a trajectory, create the other readers
-                    if (isTraj) {
-                        trajReader = new TrajectoryReader(datFile, this.system, approxDatLen, datReader.result);
-                    }
-                };
-                let approxDatLen = this.topFile.size * 30; //the relation between .top and a single .dat size is very variable, the largest I've found is 27x, although most are around 15x
-                // read the first chunk
-                const firstChunkBlob = datChunker(datFile, 0, approxDatLen);
-                datReader.readAsText(firstChunkBlob);
-                //set up instancing data arrays
-                this.system.initInstances(this.system.systemLength());
+                // usually the place where the DatReader gets fired
+                this.callback();
             };
         })(this.topFile);
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
+        this.callback = callback;
     }
     read() {
         this.readAsText(this.topFile);
     }
 }
+class FileChunker {
+    constructor(file, chunk_size) {
+        this.file = file;
+        this.chunk_size = chunk_size;
+        this.current_chunk = -1;
+    }
+    getNextChunk() {
+        if (!this.isLast())
+            this.current_chunk++;
+        return this.getChunk();
+    }
+    getOffset() {
+        return this.current_chunk * this.chunk_size;
+    }
+    getPrevChunk() {
+        this.current_chunk--;
+        if (this.current_chunk <= 0)
+            this.current_chunk = 0;
+        return this.getChunk();
+    }
+    isLast() {
+        if (this.current_chunk * this.chunk_size + this.chunk_size > this.file.size)
+            return true;
+        return false;
+    }
+    getChunkAtPos(start, size) {
+        return this.file.slice(start, start + size);
+    }
+    getEstimatedState(position_lookup) {
+        // reads the current position lookup array to 
+        // guestimate conf count, and how much confs are left in the file
+        let l = position_lookup.length;
+        let size = position_lookup[l - 1][1];
+        let confs_in_file = Math.round(this.file.size / size);
+        return [confs_in_file, l];
+    }
+    getChunk() {
+        return this.file.slice(this.current_chunk * this.chunk_size, this.current_chunk * this.chunk_size + this.chunk_size);
+    }
+}
+class LookupReader extends FileReader {
+    constructor(chunker, confLength, callback) {
+        super();
+        this.position_lookup = []; // store offset and size
+        this.idx = -1;
+        this.onload = ((evt) => {
+            return () => {
+                let file = this.result;
+                let lines = file.split(/[\n]+/g);
+                // we need to pass down idx to sync with the DatReader
+                this.callback(this.idx, lines, this.size);
+            };
+        })();
+        this.chunker = chunker;
+        this.confLength = confLength;
+        this.callback = callback;
+    }
+    addIndex(offset, size, time) {
+        this.position_lookup.push([offset, size, time]);
+    }
+    indexNotLoaded(idx) {
+        let l = this.position_lookup.length;
+        return l == 0 || idx >= l;
+    }
+    getConf(idx) {
+        if (idx < this.position_lookup.length) {
+            let offset = this.position_lookup[idx][0];
+            this.size = this.position_lookup[idx][1];
+            this.idx = idx; // as we are successful in retrieving
+            // we can update 
+            this.readAsText(this.chunker.getChunkAtPos(offset, this.size));
+        }
+    }
+}
 class TrajectoryReader {
-    // Create the readers and read the second chunk
-    constructor(datFile, system, approxDatLen, currentChunk) {
-        this.datFile = datFile;
+    constructor(datFile, topReader, system, elems, indexes) {
+        this.firstConf = true;
+        this.idx = 0;
+        this.offset = 0;
+        this.firstRead = true;
+        this.playFlag = false;
+        this.intervalId = null;
+        this.topReader = topReader;
         this.system = system;
-        this.approxDatLen = approxDatLen;
-        this.nextReader = new FileReader();
-        this.previousReader = new FileReader();
-        this.currentChunkNumber = 0;
-        this.currentChunk = currentChunk;
-        this.confBegin = new marker;
-        this.confEnd = new marker;
-        this.createReadHandlers();
-        const nextChunkBlob = datChunker(this.datFile, 1, this.approxDatLen);
-        this.nextReader.readAsText(nextChunkBlob);
-        const numNuc = system.systemLength();
-        this.confLen = numNuc + 3;
-        this.confBegin.chunk = currentChunk;
-        this.confBegin.lineID = 0;
-        this.confEnd.chunk = currentChunk;
-        this.confEnd.lineID = numNuc + 2; //end of current configuration
+        this.elems = elems;
+        this.datFile = datFile;
+        this.chunker = new FileChunker(datFile, 1024 * 1024 * 50); // 30*this.topReader.configurationLength); // we read in chunks of 30 MB 
+        this.confLength = this.topReader.configurationLength + 3;
+        this.numNuc = system.systemLength();
+        this.trajectorySlider = document.getElementById("trajectorySlider");
+        this.indexProgressControls = document.getElementById("trajIndexingProgressControls");
+        this.indexProgress = document.getElementById("trajIndexingProgress");
+        this.trajControls = document.getElementById("trajControls");
+        this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
+            this.idx = idx;
+            //try display the retrieved conf
+            this.parseConf(lines);
+            this.trajectorySlider.setAttribute("value", this.idx.toString());
+            if (myChart) {
+                // hacky way to propagate the line annotation
+                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[this.idx][2];
+                myChart.update();
+            }
+        });
+        if (indexes) { // use index file
+            this.lookupReader.position_lookup = indexes;
+            // enable traj control
+            this.trajControls.hidden = false;
+            //enable video creation during indexing
+            let videoControls = document.getElementById("videoCreateButton");
+            videoControls.disabled = false;
+            this.trajectorySlider.setAttribute("max", (this.lookupReader.position_lookup.length - 1).toString());
+            let timedisp = document.getElementById("trajTimestep");
+            timedisp.hidden = false;
+            // set focus to trajectory
+            document.getElementById('trajControlsLink').click();
+            document.getElementById("hyperSelectorBtnId").disabled = false;
+        }
     }
-    createReadHandlers() {
-        //chunking bytewise often leaves incomplete lines, so cut off the beginning of the new chunk and append it to the chunk before
-        this.nextReader.onload = () => {
-            this.nextChunk = this.nextReader.result;
-            if (this.nextChunk == "") {
-                document.dispatchEvent(new Event('finalConfig'));
-                return;
-            }
-            this.nHangingLine = "";
-            let c = "";
-            for (c = this.nextChunk.slice(0, 1); c != '\n'; c = this.nextChunk.slice(0, 1)) {
-                this.nHangingLine += c;
-                this.nextChunk = this.nextChunk.substring(1);
-            }
-            try {
-                this.currentChunk = this.currentChunk.concat(this.nHangingLine);
-            }
-            catch (error) {
-                console.log("File readers got all topsy-turvy, traj reading may not work :( \n");
-                console.log(error);
-            }
-            this.nextChunk = this.nextChunk.substring(1);
-            this.confEnd.chunk = this.currentChunk;
-            // Signal that config has been loaded
-            // block the nextConfig loaded to prevent the video loader from continuing after the chunk
-            document.dispatchEvent(new Event('nextConfigLoaded'));
-        };
-        //same as the above declaration, but this doesn't have anywhere to put the cut string, so it just holds it.
-        this.previousReader.onload = () => {
-            this.previousPreviousChunk = this.previousReader.result;
-            if (this.previousPreviousChunk == "") {
-                return;
-            }
-            this.ppHangingLine = "";
-            let c = "";
-            for (c = this.previousPreviousChunk.slice(0, 1); c != '\n'; c = this.previousPreviousChunk.slice(0, 1)) {
-                this.ppHangingLine += c;
-                this.previousPreviousChunk = this.previousPreviousChunk.substring(1);
-            }
-            this.previousPreviousChunk = this.previousPreviousChunk.substring(1);
-            this.previousPreviousChunk = this.previousPreviousChunk.concat(this.pHangingLine);
-            this.confEnd.chunk = this.currentChunk;
-            // Signal that config has been loaded
-            document.dispatchEvent(new Event('nextConfigLoaded'));
-        };
+    nextConfig() {
+        this.idx++; // idx is also set by the callback of the reader
+        if (this.idx == this.lookupReader.position_lookup.length)
+            document.dispatchEvent(new Event('finalConfig'));
+        if (!this.lookupReader.indexNotLoaded(this.idx))
+            this.lookupReader.getConf(this.idx);
+        //    this.indexingReader.get_next_conf();
+        else
+            this.idx--;
     }
-    extractNextConf() {
-        let needNextChunk = false;
-        const currentChunkLines = this.currentChunk.split(/[\n]+/g);
-        const nextChunkLines = this.nextChunk.split(/[\n]+/g);
-        const currentChunkLength = currentChunkLines.length;
-        const nextConf = [];
-        const start = new marker;
-        if (nextChunkLines[0] == "") {
-            return undefined;
-        }
-        if (this.confEnd.lineID != currentChunkLength - 1) { //handle very rare edge case where conf ended exactly at end of chunk
-            start.chunk = this.confEnd.chunk;
-            start.lineID = this.confEnd.lineID + 1;
-        }
-        else {
-            start.chunk = this.nextChunk;
-            start.lineID = 0;
-            needNextChunk = true;
-        }
-        const end = new marker;
-        if (start.lineID + this.confLen < currentChunkLength) { //is the whole conf in a single chunk?
-            end.chunk = start.chunk;
-            end.lineID = start.lineID + this.confLen - 1;
-            for (let i = start.lineID; i < end.lineID + 1; i++) {
-                if (currentChunkLines[i] == "" || currentChunkLines == undefined) {
-                    return undefined;
-                }
-                nextConf.push(currentChunkLines[i]);
-            }
-        }
-        else {
-            end.chunk = this.nextChunk;
-            end.lineID = this.confLen - (currentChunkLength - start.lineID) - 1;
-            needNextChunk = true;
-            for (let i = start.lineID; i < currentChunkLength; i++) {
-                if (currentChunkLines[i] == "" || currentChunkLines == undefined) {
-                    return undefined;
-                }
-                nextConf.push(currentChunkLines[i]);
-            }
-            for (let i = 0; i < end.lineID + 1; i++) {
-                nextConf.push(nextChunkLines[i]);
-            }
-        }
-        this.confBegin = start;
-        this.confEnd = end;
-        if (needNextChunk) {
-            this.getNextChunk(this.currentChunkNumber + 2); //current is the old middle, so need two ahead
-        }
-        return (nextConf);
+    fetchTFromBinary(buff) {
+        let eqs_idx = buff.indexOf(61); // =
+        let nl = buff.indexOf(10); // \n
+        //console.log(
+        //    String.fromCharCode.apply(null, buff.slice(eqs_idx+1,nl-1)).trim()
+        //);
+        return String.fromCharCode.apply(null, buff.slice(eqs_idx + 1, nl)).trim();
     }
-    extractPreviousConf() {
-        let needPreviousChunk = false;
-        const previousConf = [];
-        const end = new marker;
-        let endChunkLines;
-        if (confNum == 1) { //can't go backwards from 1
-            return undefined;
-        }
-        else if (this.confBegin.lineID != 0) { //handle rare edge case where a conf began at the start of a chunk
-            end.chunk = this.confBegin.chunk;
-            if (end.chunk == this.previousChunk) {
-                needPreviousChunk = true;
+    indexTrajectory() {
+        this.chunker.getNextChunk().arrayBuffer().then(value => {
+            let buff = new Uint8Array(value);
+            let val = 116; // t
+            let i = -1;
+            //let last_i = -1;
+            let cur_offset = 0;
+            // we know that the 1st offset is 0 as file starts with t 
+            if (this.firstRead)
+                i = 0;
+            //populate the index array by the positions of t
+            while ((i = buff.indexOf(val, i + 1)) != -1) {
+                cur_offset = (this.chunker.getOffset() + i);
+                if (this.offset != cur_offset)
+                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, this.lookupReader.position_lookup.length);
+                this.offset = cur_offset;
             }
-            end.lineID = this.confBegin.lineID - 1;
-            endChunkLines = end.chunk.split(/[\n]+/g);
-        }
-        else {
-            end.chunk = this.previousChunk;
-            endChunkLines = end.chunk.split(/[\n]+/g);
-            end.lineID = endChunkLines.length - 1;
-            needPreviousChunk = true;
-        }
-        const start = new marker;
-        if (end.lineID - this.confLen >= -1) { //is the whole conf in a single chunk?
-            start.chunk = end.chunk;
-            start.lineID = end.lineID - this.confLen + 1;
-            const startChunkLines = start.chunk.split(/[\n]+/g);
-            for (let i = start.lineID; i < end.lineID + 1; i++) {
-                if (startChunkLines[i] == "" || startChunkLines == undefined) {
-                    return undefined;
+            // if there still stuff to fetch on first read ? NOTE: not sure why this is true
+            if (this.chunker.isLast()) {
+                let size = this.chunker.file.size - this.offset;
+                if (size) {
+                    this.lookupReader.addIndex(this.offset, size, this.lookupReader.position_lookup.length);
                 }
-                previousConf.push(startChunkLines[i]);
             }
-        }
-        else {
-            if (end.chunk == this.currentChunk && confNum != 2) {
-                start.chunk = this.previousChunk;
+            // if we have just one conf ?
+            if (this.lookupReader.position_lookup.length == 0) {
+                this.lookupReader.addIndex(0, this.chunker.file.size, this.lookupReader.position_lookup.length);
             }
-            else if (end.chunk == this.previousChunk && confNum != 2) {
-                start.chunk = this.previousPreviousChunk;
+            else { // we are reading a trajectory 
+                if (this.trajControls.hidden) {
+                    // enable traj control
+                    this.indexProgressControls.hidden = false;
+                    this.trajControls.hidden = false;
+                    // set focus to trajectory controls
+                    document.getElementById('trajControlsLink').click();
+                }
+            }
+            // handle first read to display some conf
+            if (this.firstRead) {
+                this.firstRead = false;
+                this.lookupReader.getConf(0); // load up first conf
+            }
+            if (!this.chunker.isLast()) {
+                //do update magic
+                let state = this.chunker.getEstimatedState(this.lookupReader.position_lookup);
+                this.indexProgress.value = Math.round((state[1] / state[0]) * 100);
+                //process more stuff 
+                this.indexTrajectory();
             }
             else {
-                start.chunk = this.previousChunk;
+                //finish up indexing
+                notify("Finished indexing!");
+                // and index file saving 
+                document.getElementById('downloadIndex').hidden = false;
+                // hide progress bar 
+                document.getElementById('trajIndexingProgress').hidden = true;
+                document.getElementById('trajIndexingProgressLabel').hidden = true;
+                //enable orderparameter selector 
+                document.getElementById("hyperSelectorBtnId").disabled = false;
+                // and index file saving 
+                //(<HTMLElement>document.getElementById('downloadIndex')).hidden=false;
             }
-            const startChunkLines = start.chunk.split(/[\n]+/g);
-            start.lineID = startChunkLines.length - (this.confLen - (end.lineID + 1));
-            for (let i = start.lineID; i < startChunkLines.length; i++) {
-                if (startChunkLines[i] == "" || startChunkLines[i] == undefined) {
-                    return undefined;
-                }
-                previousConf.push(startChunkLines[i]);
-            }
-            for (let i = 0; i < end.lineID + 1; i++) {
-                if (endChunkLines[i] == "" || endChunkLines[i] == undefined) {
-                    return undefined;
-                }
-                previousConf.push(endChunkLines[i]);
+            //update slider
+            trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
+        }, reason => {
+            console.log(reason);
+        });
+    }
+    downloadIndexFile() {
+        makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
+    }
+    retrieveByIdx(idx) {
+        //used by the slider to set the conf
+        if (this.lookupReader.readyState != 1) {
+            this.idx = idx;
+            this.lookupReader.getConf(idx);
+            this.trajectorySlider.setAttribute("value", this.idx.toString());
+            if (myChart) {
+                // hacky way to propagate the line annotation
+                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart.update();
             }
         }
-        this.confBegin = start;
-        this.confEnd = end;
-        if (needPreviousChunk) {
-            this.getPreviousChunk(this.currentChunkNumber - 3);
+    }
+    previousConfig() {
+        this.idx--; // ! idx is also set by the callback of the reader
+        if (this.idx < 0) {
+            notify("Can't step past the initial conf!");
+            this.idx = 0;
         }
-        return (previousConf);
+        this.trajectorySlider.setAttribute("value", this.idx.toString());
+        this.lookupReader.getConf(this.idx);
     }
-    getNextChunk(chunkNumber) {
-        this.previousPreviousChunk = this.previousChunk;
-        this.ppHangingLine = this.pHangingLine;
-        this.previousChunk = this.currentChunk;
-        this.pHangingLine = this.cHangingLine;
-        this.currentChunk = this.nextChunk;
-        this.cHangingLine = this.nHangingLine;
-        const nextChunkBlob = datChunker(datFile, chunkNumber, this.approxDatLen);
-        this.nextReader.readAsText(nextChunkBlob);
-        this.currentChunkNumber += 1;
+    playTrajectory() {
+        this.playFlag = !this.playFlag;
+        if (this.playFlag) {
+            this.intervalId = setInterval(() => {
+                if (trajReader.idx == trajReader.lookupReader.position_lookup.length - 1) {
+                    this.playFlag = false;
+                    clearInterval(this.intervalId);
+                    return;
+                }
+                trajReader.nextConfig();
+            }, 100);
+        }
+        else {
+            clearInterval(this.intervalId);
+            this.playFlag = false;
+        }
     }
-    getPreviousChunk(chunkNumber) {
-        this.nextChunk = this.currentChunk;
-        this.nHangingLine = this.cHangingLine;
-        this.currentChunk = this.previousChunk;
-        this.cHangingLine = this.pHangingLine;
-        this.previousChunk = this.previousPreviousChunk;
-        this.pHangingLine = this.ppHangingLine;
-        if (chunkNumber < 0) {
-            if (this.previousPreviousChunk != undefined) {
-                this.previousPreviousChunk = undefined;
-                if (this.ppHangingLine) {
-                    if (this.confBegin.chunk == this.previousChunk) {
-                        this.confBegin.chunk = this.ppHangingLine + "\n" + this.previousChunk;
-                        this.confBegin.lineID += 1;
+    parseConf(lines) {
+        let system = this.system;
+        let numNuc = this.numNuc;
+        // parse file into lines
+        //let lines = this.curConf;
+        if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+            notify(".dat and .top files incompatible", "alert");
+            return;
+        }
+        if (box === undefined)
+            box = new THREE.Vector3(0, 0, 0);
+        // Increase the simulation box size if larger than current
+        box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
+        box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
+        box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
+        redrawBox();
+        const time = parseInt(lines[0].split(" ")[2]);
+        this.time = time; //update our notion of time
+        confNum += 1;
+        console.log(confNum, "t =", time);
+        let timedisp = document.getElementById("trajTimestep");
+        timedisp.innerHTML = `t = ${time.toLocaleString()}`;
+        //timedisp.hidden = false;
+        // discard the header
+        lines = lines.slice(3);
+        let currentNucleotide, l;
+        if (this.firstConf) {
+            this.firstConf = false;
+            let currentStrand = system.strands[0];
+            //for each line in the current configuration, read the line and calculate positions
+            for (let i = 0; i < numNuc; i++) {
+                if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+                    break;
+                }
+                ;
+                // get the nucleotide associated with the line
+                currentNucleotide = elements.get(i + system.globalStartId);
+                // consume a new line from the file
+                l = lines[i].split(" ");
+                currentNucleotide.calcPositionsFromConfLine(l, true);
+                //when a strand is finished, add it to the system
+                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                    if (currentNucleotide.n5 == currentStrand.end3) {
+                        currentStrand.end5 = currentNucleotide;
                     }
-                    this.previousChunk = this.ppHangingLine + "\n" + this.previousChunk;
+                    system.addStrand(currentStrand); // add strand to system
+                    currentStrand = system.strands[currentStrand.id]; //strandID]; //don't ask, its another artifact of strands being 1-indexed
+                    if (elements.get(currentNucleotide.id + 1)) {
+                        currentStrand = elements.get(currentNucleotide.id + 1).strand;
+                    }
                 }
             }
-            //else {
-            //    this.previousChunk = undefined;
-            //}
-            this.currentChunkNumber -= 1;
-            return;
+            addSystemToScene(system);
+            sysCount++;
         }
-        const previousPreviousChunkBlob = datChunker(this.datFile, chunkNumber, this.approxDatLen);
-        this.previousReader.readAsText(previousPreviousChunkBlob);
-        this.currentChunkNumber -= 1;
-    }
-    getNewConfig(mode) {
-        if (systems.length > 1) {
-            notify("Only one file at a time can be read as a trajectory, sorry...");
-            return;
-        }
-        for (let i = 0; i < systems.length; i++) { //for each system - does not actually work for multiple systems...but maybe one day
-            const system = this.system;
-            const numNuc = system.systemLength(); //gets # of nuc in system
-            let lines;
-            if (mode == 1) {
-                lines = this.extractNextConf();
-                confNum += mode;
-            }
-            if (mode == -1) {
-                lines = this.extractPreviousConf();
-                confNum += mode;
-            }
-            if (lines == undefined || lines[0] == "" || lines[0] == undefined) {
-                notify("No more confs to load!");
-                confNum -= mode;
-                return;
-            }
-            //get the simulation box size
-            this.time = parseInt(lines[0].split(" ")[2]);
-            console.log(confNum, 't =', this.time);
-            let timedisp = document.getElementById("trajTimestep");
-            timedisp.innerHTML = `t = ${this.time.toLocaleString()}`;
-            timedisp.hidden = false;
-            // discard the header
-            lines = lines.slice(3);
-            let currentNucleotide, l;
+        else {
+            // here goes update logic in theory ?
             for (let lineNum = 0; lineNum < numNuc; lineNum++) {
                 if (lines[lineNum] == "") {
                     notify("There's an empty line in the middle of your configuration!");
                     break;
                 }
                 ;
-                currentNucleotide = elements.get(systems[i].globalStartId + lineNum);
+                currentNucleotide = elements.get(system.globalStartId + lineNum);
                 // consume a new line
                 l = lines[lineNum].split(" ");
-                currentNucleotide.calculateNewConfigPositions(l);
+                currentNucleotide.calcPositionsFromConfLine(l);
             }
             system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
             system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
@@ -382,62 +417,12 @@ class TrajectoryReader {
             system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
             system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         }
-        centerAndPBC();
+        centerAndPBC(system.getMonomers());
+        if (forceHandler)
+            forceHandler.redraw();
         render();
+        // Signal that config has been loaded
+        // block the nextConfig loaded to prevent the video loader from continuing after the chunk
         document.dispatchEvent(new Event('nextConfigLoaded'));
-    }
-    nextConfig() {
-        if (this.nextReader.readyState == 1) { //0: nothing loaded 1: working 2: done
-            return;
-        }
-        this.getNewConfig(1);
-    }
-    ;
-    previousConfig() {
-        if (this.previousReader.readyState == 1 || confNum == 1) {
-            return;
-        }
-        this.getNewConfig(-1);
-    }
-    ;
-    /**
-     * Step through trajectory until a specified timestep
-     * is found
-     * @param timeLim Timestep to stop at
-     * @param backwards Step backwards
-     */
-    stepUntil(timeLim, backwards) {
-        let icon = document.getElementById(backwards ? 'trajPrevUntilIco' : 'trajNextUntilIco');
-        if (icon.classList.contains('mif-pause')) {
-            // If we're already running, abort!
-            icon.classList.replace('mif-pause', backwards ? 'mif-previous' : 'mif-next');
-            return;
-        }
-        // Set icon to enable pausing
-        icon.classList.remove('mif-previous', 'mif-next');
-        icon.classList.add('mif-pause');
-        // Define loop, for requestAnimationFrame
-        let loop = () => {
-            if (icon.classList.contains('mif-pause') && ( // If user has clicked pause
-            !this.time || // Or we don't know the current timestep
-                // Or if we have stepped too far:
-                backwards && this.previousChunk && (this.time > timeLim) ||
-                !backwards && this.nextChunk && ((timeLim < 0) || this.time < timeLim))) {
-                // Take one step
-                if (backwards) {
-                    this.previousConfig();
-                }
-                else {
-                    this.nextConfig();
-                }
-                requestAnimationFrame(loop);
-            }
-            else {
-                // When finished, change icon back from pause
-                icon.classList.remove('mif-pause');
-                icon.classList.add(backwards ? 'mif-previous' : 'mif-next');
-            }
-        };
-        loop(); // Actually call the function
     }
 }

@@ -1,0 +1,20 @@
+<div style="margin: 5px; display: grid;">
+    <button onclick="makeTrapsFromSelection(); listForces();" class="button outline primary"
+        title="Create mutual traps from the selected elements">Create from selection
+    </button>
+
+    <button onclick="makeTrapsFromPairs(); listForces();" class="button outline"
+        title="Create mutual traps between all basepairs">Create from base pairs
+    </button>
+</div>
+
+<button onclick="deleteSelectedForces();" class="button outline"
+title="Delete all forces selected below">Delete selected
+</button>
+
+<p>
+    Current forces:
+    <div id="forces">
+        No forces added yet
+    </div>
+</p>
