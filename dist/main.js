@@ -71,14 +71,14 @@ let elements = new ElementMap(); //contains references to all BasicElements
 //initialize the space
 const systems = [];
 var tmpSystems = []; //used for editing
-const ANMs = [];
+// const ANMs: ANM[] = [];
 const forces = [];
 var forceHandler;
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
 var selectednetwork = 0; // Only used for networks
-const networks = []; // Only used for networks
+const networks = []; // Only used for networks, replaced anms
 const graphDatasets = []; // Only used for graph
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring

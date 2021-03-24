@@ -611,8 +611,6 @@ class View {
         ul.removeChild(li);
     }
 
-
-
 }
 
 let view = new View(document);
@@ -625,7 +623,6 @@ class graphData {
     units: string;
     gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
     cutoff: number; // Cutoff (A) for edges, only used if graphData is generated as a Fit
-    indexfile; // Array of Arrays, each array holds the corresponding particle ids
     constructor(l, d, x, dt, u){
         this.label = l;
         this.data = d;
@@ -655,6 +652,13 @@ class graphData {
         }
         this.units = units; // assumes successful conversion
     };
+    toJson(){
+        // Easiest to just change the whole graph to the correct output format
+        flux.changeType('rmsf');
+        flux.changeUnits('nm_sqr');
+        let data = this.data.map(e => {return Math.sqrt(e)});
+        return {'RMSF (nm)':data};
+    };
 }
 
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
@@ -665,17 +669,17 @@ class fluxGraph {
     data: graphData[];
     type: string;
     temp: number;
-    chart;
-    targetdata: string;
+    chart; // chartjs main chart object
     units: string;
     colors;
-    colorarr;
+    colorarr; // just stores colors for the graph
     charttype: string;
     chartdata;
     chartoptions;
-    chartconfig;
-    datasetCount: number;
-    gids: number[];
+    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
+    datasetCount: number; // how many datasets are currently displayed on the graph
+    gids: number[]; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
+    currentindexinfo: number[][]; // stores indexing information to generate rmsf datasets, mass discretization outputs here
 
     constructor(type, units) {
         this.title = 'Flux Chart';
@@ -705,6 +709,7 @@ class fluxGraph {
         this.type = type;
         this.temp = 0;
         this.chart = null;
+        this.currentindexinfo = [];
 
         // Specific to the chart
         this.charttype = 'line';
@@ -779,7 +784,7 @@ class fluxGraph {
             this.loadjson(jsonReader); //loads single dataset
         };
         jsonReader.onloadend = () => {
-            graphDatasets[graphDatasets.length-1].label = filearr.pop().name; //renames
+            graphDatasets[graphDatasets.length-1].label = filearr.pop().name; //rename
             if(view.fluxSideBarDisplayed) view.addGraphData(graphDatasets.length-1); //add to aside bar if its displayed
         }
 
@@ -834,38 +839,19 @@ class fluxGraph {
         this.temp = temp;
     };
 
-    addTestSet() {
-        let label = 'test';
-        let units = "A_sqr";
-        let datatype = "bfactor";
-        let xdata = [0, 1, 2, 3, 4, 5];
-        let ydata = [10, 23, 18, 5, 11, 35];
-        let gdata = new graphData(label, ydata, xdata, datatype, units);
-        graphDatasets.push(gdata);
-        let gid = graphDatasets.indexOf(gdata);
-        this.addDatatoGraph(gid);
-    }
-
-    setTargetData(gid) {
-        this.chart.data = {
-            labels: [],
-            datasets: []
-        };
-
-        this.addDatatoGraph(gid);
-    };
-
     addDatatoGraph(gid: number) {
         let GD = graphDatasets[gid];
         if (this.chart == null) {
             this.initializeGraph();
         }
-        if (GD.xdata.length > this.chart.data.labels.length) {
-            this.chart.data.labels = [...Array(GD.xdata.length).keys()]; // Rewrites x data to always start from 0 and go up
+        // Rewrites graph width with the chart.data.labels
+        let currlens = this.gids.map(g => {return graphDatasets[g].xdata.length});
+        let longest = Math.max(...currlens) > GD.xdata.length ? Math.max(...currlens) : GD.xdata.length;
+        if (longest != this.chart.data.labels.length) {
+            this.chart.data.labels = [...Array(longest).keys()]; // Rewrites x data to always start from 0 and go up
         } // else just use the current sized container, will be indexed off largest dataset in array
         if (GD.units != this.units) GD.convertUnits(this.units);
         if (GD.datatype != this.type) GD.convertType(this.type);
-
 
         if (GD.cutoff > 0) { // If it's data that's been fit it get's dashed
             this.chart.data.datasets.push({
@@ -889,7 +875,6 @@ class fluxGraph {
         this.datasetCount += 1;
         this.chart.update();
         this.gids.push(gid);
-        //Still Need a chart update call to see changes
     };
 
     removeDatafromGraph(gid: number) {
@@ -916,13 +901,41 @@ class fluxGraph {
         }
     };
 
-    writeConfig() {
-
-    };
-
     toggleSidebar() {
         let sb = document.getElementById('fluxbar');
         // sb.toggle
+    };
+
+    applyCurrentIndx(mode:string = "avg") {
+        if(this.gids.length != 1){
+            notify("Please Select a Single Dataset to Apply Indexing To");
+            return;
+        }
+        let gid = this.gids[0];
+        let GD = graphDatasets[gid];
+        this.toggleData(gid);
+        try {
+            let newData = [];
+            let newXData = [];
+            if(mode == 'avg'){
+                let currentYdata =  this.currentindexinfo.map(d => { //get particle numbers same as index
+                    return d.map(x => {return GD.data[x]});
+                })
+                for(let i = 0; i < this.currentindexinfo.length; i++){
+                    let parents = this.currentindexinfo[i]; //list of particle ids representing each particle i
+                    let parentvals = currentYdata[i].slice();
+                    let avg = parentvals.reduce((a, b) => a+b)/parents.length; //average
+                    newData.push(avg);
+                    newXData.push(i);
+                }
+                GD.xdata = newXData.slice();
+                GD.data = newData.slice();
+                GD.label += ' avg_indexed';
+            }
+        } catch (e) {
+            notify("Indexing could not be applied")
+        }
+        this.toggleData(gid);
     };
 
     changeUnits(newunits: string) {
@@ -1004,6 +1017,7 @@ class fluxGraph {
             view.addGraphData(ngid);
         }
     };
+
     downloadChart(){
         var a = document.createElement('a');
         a.href = this.chart.toBase64Image(); //declared in chart.options.animate
@@ -1011,13 +1025,25 @@ class fluxGraph {
         // Trigger the download
         a.click();
     };
+
+    downloadGraphDatasets(){
+        this.gids.forEach(g => {
+            makeFluctuationFile(g);
+        });
+    };
+
     prepIndxButton(indx){
-        // Show hidden index download button
         let ib = document.getElementById('indxbutton');
         ib.onclick = function(){makeIndxFile(indx)};
+        flux.currentindexinfo = indx.slice();
         // $('indxbutton').on("click", function() {
         //     makeIndxFile(indx);
         // })
+    };
+
+    prepJSONButton(nid){ // this function doesn't really belong here
+        let jb = document.getElementById('jsonbutton');
+        jb.onclick = function(){makeNetworkJSONFile(nid)};
     };
 
 }

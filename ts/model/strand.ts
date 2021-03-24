@@ -326,7 +326,7 @@ class Peptide extends Strand {
 
 }
 
-// Meant to hold multi-sized generic spheres
+// Meant to hold multi-sized generic spheres representing arbitrary particle types
 class Generic extends Strand {
     constructor(id: number, system: System) {
         super(id, system);

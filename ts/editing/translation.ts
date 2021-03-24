@@ -109,7 +109,7 @@ function calcsp(currentNuc) {
         notify("Can't calculate backbone connection for particle " + currentNuc.id + " because there is no upstream connection");
         return
     }
-    
+
     let xbbLast = temp.x,
         ybbLast = temp.y,
         zbbLast = temp.z;
@@ -126,12 +126,14 @@ function calcsp(currentNuc) {
     let spRotation = new THREE.Quaternion().setFromUnitVectors(
         new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
 
-    currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
-    currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-    currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
-    sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-    sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-    sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+    if (!currentNuc.isGS()) {
+        currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+        currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+        currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
+        sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+        sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+    }
 }
 
 function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {

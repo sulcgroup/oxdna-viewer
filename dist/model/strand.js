@@ -279,7 +279,7 @@ class Peptide extends Strand {
         this.forEach(e => e.deselect());
     }
 }
-// Meant to hold multi-sized generic spheres
+// Meant to hold multi-sized generic spheres representing arbitrary particle types
 class Generic extends Strand {
     constructor(id, system) {
         super(id, system);

@@ -16,7 +16,8 @@
     <button class="button primary outline" id="sidetoggle" onclick="view.toggleSideBarDatasets()">Data & Options</button>
 
     <button class="button secondary" onclick="flux.downloadChart()" ><span class="mif-floppy-disk"></span></button>
-    <button class="button dark" onclick="networks[selectednetwork]">Generate Par</button>
+    <button class="button dark" onclick="flux.applyCurrentIndx('avg')">Apply Indexing</button>
+    <button class="button dark" onclick="flux.downloadGraphDatasets()">Download Datasets</button>
 
 </div>
 
@@ -43,24 +44,26 @@
             <ul class="items-list" id="readynetlist" data-role="collapse" data-toggle-element="#collapse_toggle_1"></ul>
         </div>
 
-        <button class="button" id="collapse_toggle_2">Options</button>
-        <div class="pos-relative">
-            <div data-role="collapse" data-toggle-element="#collapse_toggle_2" data-collapsed="true">
-            <ul class="items-list" id="options">
-                <li><label>
-                    <input type="text" placeholder="set chart title">
-                </label></li>
-                <li><label>
-                    <input type="text" placeholder="particle id offset">
-                </label></li>
-                <li><label>
-                    <input type="text" placeholder="Bending Restraints?">
-                </label></li>
-                <li><label>
-                    <input type="text" placeholder="Torsional Restraints?">
-                </label></li>
-            </ul>
-            </div>
+<!--        This section may be used later, however, since we are still dependent on the Python Scripts-->
+<!--        for solving large networks it is of little use currently-->
+<!--        <button class="button" id="collapse_toggle_2">Options</button>-->
+<!--        <div class="pos-relative">-->
+<!--            <div data-role="collapse" data-toggle-element="#collapse_toggle_2" data-collapsed="true">-->
+<!--            <ul class="items-list" id="options">-->
+<!--                <li><label>-->
+<!--                    <input type="text" placeholder="set chart title">-->
+<!--                </label></li>-->
+<!--                <li><label>-->
+<!--                    <input type="text" placeholder="particle id offset">-->
+<!--                </label></li>-->
+<!--                <li><label>-->
+<!--                    <input type="text" placeholder="Bending Restraints?">-->
+<!--                </label></li>-->
+<!--                <li><label>-->
+<!--                    <input type="text" placeholder="Torsional Restraints?">-->
+<!--                </label></li>-->
+<!--            </ul>-->
+<!--            </div>-->
 
             <input id="fluxfile"  type="file" data-role="file" data-prepend="Data Files" data-cls-caption="bg-blue fg-white"
                    data-cls-button="bg-darkBlue fg-white" multiple accept=".json">

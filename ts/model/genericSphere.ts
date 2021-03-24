@@ -65,12 +65,7 @@ class GenericSphere extends BasicElement {
         sys.fillVec('scales', 3, sid, [0, 0, 0]);
         sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
         sys.fillVec('conScales', 3, sid, [0, 0, 0]);
-        if (spLen == 0) {
-            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        }
-        else {
-            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
-        }
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('visibility', 3, sid, [1, 1, 1]);
         color = this.elemToColor(this.type);
@@ -104,12 +99,7 @@ class GenericSphere extends BasicElement {
         sys.fillVec('nsOffsets', 3, sid, p.toArray());
         sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-        if (spLen == 0) {
-            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        }
-        else {
-            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
-        }
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
         //bbLast = p.clone();
     }
     ;
@@ -202,6 +192,9 @@ class GenericSphere extends BasicElement {
         return false;
     }
     ;
+    isGS(){
+        return true;
+    }
     /*
     getTypeNumber() {
         // Will Probably need this for Patchy Particles?

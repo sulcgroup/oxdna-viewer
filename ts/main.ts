@@ -82,7 +82,7 @@ let elements: ElementMap = new ElementMap(); //contains references to all BasicE
 //initialize the space
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
-const ANMs: ANM[] = [];
+// const ANMs: ANM[] = [];
 const forces: Force[] = [];
 var forceHandler;
 var sysCount: number = 0;
@@ -90,7 +90,7 @@ var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
 
 var selectednetwork: number = 0; // Only used for networks
-const networks: Network[] = []; // Only used for networks
+const networks: Network[] = []; // Only used for networks, replaced anms
 const graphDatasets: graphData[] = []; // Only used for graph
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
 

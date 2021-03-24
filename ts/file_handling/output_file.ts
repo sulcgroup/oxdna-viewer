@@ -371,3 +371,11 @@ function makeIndxFile(indxarray) {
         write();
     }
 }
+
+function makeNetworkJSONFile(nid) {
+    makeTextFile("network.json", JSON.stringify(networks[nid].toJson()));
+}
+
+function makeFluctuationFile(gid) {
+    makeTextFile("flux.json", JSON.stringify(graphDatasets[gid].toJson()));
+}

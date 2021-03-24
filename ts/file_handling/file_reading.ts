@@ -830,15 +830,16 @@ class pdbchain{
     }
 }
 
+// Stores locations of unique and repeated chains throughout the provided PDB file
 class pdbReadingList{
-    uniqueIDs: string[];
-    uniqueStart: number[];
+    uniqueIDs: string[]; // unique chain Identifiers
+    uniqueStart: number[]; // starting line number of
     uniqueEnd : number[];
     repeatIDs : string[];
     repeatStart: number[];
     repeatEnd: number[];
-    repeatCoords : THREE.Vector3[][];
-    repeatQuatRots : THREE.Quaternion[];
+    repeatCoords : THREE.Vector3[][]; // coordinates for repeated chains
+    repeatQuatRots : THREE.Quaternion[]; // Rotation Quaternion for Repeated chain a1/a3 vectors
     constructor(){
         this.uniqueIDs = [];
         this.uniqueStart = [];
@@ -885,7 +886,7 @@ function prep_pdb(pdblines: string[]){
     }
 
     // If models are present in pdb file, Assumes that repeat chain ids are
-    // other instances of the 1st chain that has the same chain identifer
+    // repeat instances of the 1st chain w/ the same chain identifer
     let bioassemblyassumption = false;
     if (modelDivs.length > 0) bioassemblyassumption = true;
 
@@ -929,7 +930,9 @@ function prep_pdb(pdblines: string[]){
     });
 
     // Stores ID, start line, end line if chain is unique
-    // Stores Id, start line, end line, coordinates and Quat Rotation for a1
+    // Stores Id, start line, end line, coordinates a if chain is repeated and Quat Rotation for a1
+    // tl;dr  unique chains require more calculations while repeated chains can resuse those calculated parameters and shifts them accordingly
+    // necessary for loading large things like Virus particles
     let initList =  new pdbReadingList;
     let prevend = firstatom;
     for(let i=0; i<nchainids.length; i++){
@@ -992,6 +995,7 @@ function prep_pdb(pdblines: string[]){
     // }
 }
 
+//
 function readPdbFile(file) {
     let reader = new FileReader();
 
@@ -1006,7 +1010,7 @@ function readPdbFile(file) {
 
         let label = "pdb";
 
-        // Search Just the Header for PDB code ex. (1BU4)
+        // Search Just the Header for PDB code ex. (1BU4), label used for graph datasets
         for(let i = 0; i < 10; i++) {
             if (pdbLines[i].substr(0, 6) === 'HEADER') {
                 let head = pdbLines[i].match(/\S+/g); //header info, search

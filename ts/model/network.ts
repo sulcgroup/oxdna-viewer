@@ -1,16 +1,14 @@
 /**
- * A simple class meant for easy generation AND deletion of networks
- *
- *
- * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
+ * Two simple classes meant for easy generation, viewing, and deletion of networks
  */
-class Edges {
-    p1: number[];
-    p2: number[];
-    ks: number[];
+
+class Edges { //Edges connect particles, for now these represent spring potentials only
+    p1: number[]; // particle 1 indices, the p1 indices are always lower than p2
+    p2: number[]; // particle 2 indices
+    ks: number[]; // spring constants
     types: string[];
     eqDist: number[];
-    total: number;
+    total: number; // number of edges
     extraParams: any[];
     constructor() {
         this.total = 0;
@@ -39,8 +37,7 @@ class Edges {
             this.types.push(type);
             this.total += 1;
         }
-    }
-    ;
+    };
     removeEdge(id1: number, id2: number){
         if (id1 == id2) return;
         for(let i = 0; i < this.total; i++){
@@ -67,10 +64,8 @@ class Edges {
     };
 }
 
-
 class Network {
-    //Added to Merge ANM and Network
-    // id: number
+    nid: number; // network id number as these are stored separate to actual systems
     system: System;
     INSTANCES: number;
     offsets: Float32Array;
@@ -83,7 +78,7 @@ class Network {
     network: THREE.Mesh; // not sure what this does yet
     // network implementation
     particles: number[];
-    nid: number;
+
     reducedEdges: Edges;
     masses: number[];
     types: string[];
@@ -100,8 +95,8 @@ class Network {
         this.types = selectedMonomers.map(mon => {return mon.type;});
         this.masses = [];
         this.fillMasses(selectedMonomers);
-        this.nid = nid; // Separate Indexing for network objects?
-        this.reducedEdges = new Edges();
+        this.nid = nid; // Separate Indexing for network objects
+        this.reducedEdges = new Edges(); // Holds all info about connections
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
         this.networktype = 'empty';
@@ -122,6 +117,7 @@ class Network {
                 return new THREE.Vector3((this.xI[i]+this.xI[j])/2, (this.yI[i]+this.yI[j])/2, (this.zI[i]+this.zI[j])/2);
             }
         };
+        flux.prepJSONButton(nid);
     }
     ;
     //The below functions are for merging the ANM and Network
@@ -135,7 +131,10 @@ class Network {
     }
     ;
     toJson(){
-        // We'll write this in a little bit
+        let coords: number[][] = this.elemcoords.xI.map((x, xid) => [x*8.518, this.elemcoords.yI[xid]*8.518, this.elemcoords.zI[xid]*8.518]);
+        // let connections = this.reducedEdges.p1.map((x, xid) => [x, this.reducedEdges.p2[xid], this.reducedEdges.ks[xid],]);
+        let simMasses = this.masses.slice();
+        return {"simMasses":simMasses, "coordinates":coords}
     }
     ;
     selectNetwork(){
@@ -189,9 +188,7 @@ class Network {
             canvas.focus();
         }
     }
-    // Functions above are meant to be more universal
-
-    // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
+    ;
     initEdges(){ // Fills vectors for edges from Par File
         //init general color
         const col = backboneColors[this.nid % backboneColors.length];
@@ -215,6 +212,9 @@ class Network {
         this.fillVec('visibility', 3, t, [1, 1, 1]);
     }
     ;
+    // Functions above are meant to be more universal
+
+    // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms: number){
         this.reducedEdges.clearAll();
         this.selectNetwork();
@@ -392,5 +392,4 @@ class Network {
         return RMSF;
     }
     ;
-
 }
