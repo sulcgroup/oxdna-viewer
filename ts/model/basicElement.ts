@@ -11,7 +11,7 @@ abstract class BasicElement {
     label: string;
     n3: BasicElement | null;
     n5: BasicElement | null;
-    // connections: ANMConnection[] = [];
+    connections: BasicElement[] = []; // ref all elements it's
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string

@@ -9,6 +9,8 @@ function rotateElements(elements, axis, angle, about) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
+    if (forceHandler)
+        forceHandler.redraw();
 }
 function rotateElementsByQuaternion(elements, q, about) {
     // For some reason, we have to rotate the orientations
@@ -105,14 +107,18 @@ function calcsp(currentNuc) {
     let xsp = (xbb + xbbLast) / 2, ysp = (ybb + ybbLast) / 2, zsp = (zbb + zbbLast) / 2;
     let spLen = Math.sqrt(Math.pow(xbb - xbbLast, 2) + Math.pow(ybb - ybbLast, 2) + Math.pow(zbb - zbbLast, 2));
     let spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(xsp - xbb, ysp - ybb, zsp - zbb).normalize());
-    if (!currentNuc.isGS()) {
-        currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
-        currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-        currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
-        sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-        sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
+    currentNuc.setInstanceParameter('bbconOffsets', [xsp, ysp, zsp]);
+    currentNuc.setInstanceParameter('bbconRotation', [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+    //introduce distance based cutoff of the backbone connectors
+    if (spLen >= box.x * .9 || spLen >= box.y * .9 || spLen >= box.z * .9 || currentNuc.isGS()) {
+        currentNuc.setInstanceParameter('bbconScales', [0, 0, 0]);
     }
+    else {
+        currentNuc.setInstanceParameter('bbconScales', [1, spLen, 1]);
+    }
+    sys.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
+    sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 function translateElements(elements, v) {
     elements.forEach((e) => {
@@ -154,6 +160,8 @@ function translateElements(elements, v) {
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset']);
     }
+    if (forceHandler)
+        forceHandler.redraw();
     render();
 }
 //dragControls.activate();

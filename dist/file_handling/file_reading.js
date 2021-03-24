@@ -1,12 +1,4 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-// chunk .dat file so its not trying to read the entire thing at once
-function datChunker(datFile, currentChunk, chunkSize) {
-    const sliced = datFile.slice(currentChunk * chunkSize, currentChunk * chunkSize + chunkSize);
-    return sliced;
-}
-//markers are used by the trajectory reader to keep track of configuration start/ends
-class marker {
-}
 // Creates color overlays
 function makeLut(data, key) {
     const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
@@ -47,8 +39,8 @@ target.addEventListener("dragexit", function (event) {
 }, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
-const datReader = new FileReader();
-var trajReader;
+//const datReader = new FileReader();
+//var trajReader: TrajectoryReader;
 let confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
 box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
@@ -63,6 +55,7 @@ target.addEventListener("drop", function (event) {
 function handleFiles(files) {
     const filesLen = files.length;
     let topFile, jsonFile, trapFile, pdbfile;
+    let idxFile = null;
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -88,12 +81,26 @@ function handleFiles(files) {
             pdbfile = files[i];
             readPdbFile(pdbfile);
         }
+        else if (ext === "idx")
+            idxFile = files[i];
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.");
             return;
         }
     }
     let jsonAlone = false;
+    let datAlone = datFile && !topFile;
+    let trapAlone = trapFile && !topFile;
+    if (jsonFile && !topFile)
+        jsonAlone = true;
+    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
+        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+        return;
+    }
+    if (datAlone && systems.length === 0) {
+        notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
+        return;
+    }
     if (!trapFile) {
         if (jsonFile && !topFile)
             jsonAlone = true;
@@ -104,21 +111,21 @@ function handleFiles(files) {
                 notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return;
         }
-        //read a topology/configuration pair and maybe a json file
-        if (!jsonAlone) {
-            readFiles(topFile, datFile, jsonFile);
-        }
-        //read just a json file to generate an overlay on an existing scene
-        if (jsonFile && jsonAlone) {
-            const jsonReader = new FileReader(); //read .json
-            jsonReader.onload = () => {
-                readJson(systems[systems.length - 1], jsonReader);
-            };
-            jsonReader.readAsText(jsonFile);
-            renderer.domElement.style.cursor = "auto";
-        }
     }
-    else {
+    //read a topology/configuration pair and maybe a json file
+    if (!jsonAlone) {
+        readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
+    }
+    //read just a json file to generate an overlay on an existing scene
+    if (jsonFile && jsonAlone) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            readJson(systems[systems.length - 1], jsonReader);
+        };
+        jsonReader.readAsText(jsonFile);
+        renderer.domElement.style.cursor = "auto";
+    }
+    if (trapFile && trapAlone) {
         const trapReader = new FileReader(); //read .trap file
         trapReader.onload = () => {
             readTrap(systems[systems.length - 1], trapReader);
@@ -132,15 +139,15 @@ function handleFiles(files) {
 function readTrap(system, trapReader) {
     let file = trapReader.result;
     let trap_file = file;
-    //{ can be replaced with \n to make sure no parameter is lost 
+    //{ can be replaced with \n to make sure no parameter is lost
     while (file.indexOf("{") >= 0)
         file = file.replace("{", "\n");
-    // traps can be split by } because everything between {} is one trap 
+    // traps can be split by } because everything between {} is one trap
     let traps = file.split("}");
     let trap_objs = [];
     traps.forEach((trap) => {
         let lines = trap.split('\n');
-        //empty lines and empty traps need not be processed as well as comments  
+        //empty lines and empty traps need not be processed as well as comments
         lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
         if (lines.length == 0)
             return;
@@ -161,20 +168,26 @@ function readTrap(system, trapReader) {
         if (Object.keys(trap_obj).length > 0)
             trap_objs.push(trap_obj);
     });
-    //handle the different traps 
-    trap_objs.forEach((trap) => {
-        switch (trap.type) {
+    //handle the different traps
+    trap_objs.forEach(f => {
+        switch (f.type) {
             case "mutual_trap":
-                let mutTrap = new MutualTrap(trap, system);
+                let mutTrap = new MutualTrap();
+                mutTrap.setFromParsedJson(f);
                 mutTrap.update();
                 forces.push(mutTrap);
                 break;
             default:
-                notify(`External force ${trap["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
         }
     });
-    forceHandler = new ForceHandler(forces);
+    if (!forceHandler) {
+        forceHandler = new ForceHandler(forces);
+    }
+    else {
+        forceHandler.set(forces);
+    }
 }
 // Files can also be retrieved from a path
 function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefined) {
@@ -199,7 +212,7 @@ function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefi
             datReq.responseType = "blob";
             datReq.onload = () => {
                 datFile = datReq.response;
-                readFiles(topFile, datFile, overlayFile);
+                readFiles(topFile, datFile, null, overlayFile);
             };
             datReq.send();
         };
@@ -214,15 +227,44 @@ function readFilesFromURLParams() {
     const overlayPath = url.searchParams.get("overlay");
     readFilesFromPath(topologyPath, configurationPath, overlayPath);
 }
+var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, jsonFile) {
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
-        //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-        const topReader = new TopReader(topFile, system, elements);
-        topReader.readAsText(topReader.topFile);
+        systems.push(system); //add system to Systems[]
+        //TODO: is this really neaded?
+        system.setDatFile(datFile); //store datFile in current System object
+        if (idxFile === null) {
+            //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+            const topReader = new TopReader(topFile, system, elements, () => {
+                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                trajReader = new TrajectoryReader(datFile, topReader, system, elements);
+                trajReader.indexTrajectory();
+                //set up instancing data arrays
+                system.initInstances(system.systemLength());
+            });
+            topReader.read();
+        }
+        else {
+            console.log("index provided");
+            const idxReader = new FileReader(); //read .json
+            idxReader.onload = () => {
+                let file = idxReader.result;
+                let indexes = JSON.parse(file);
+                const topReader = new TopReader(topFile, system, elements, () => {
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile, topReader, system, elements, indexes);
+                    trajReader.nextConfig();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                topReader.read();
+            };
+            idxReader.readAsText(idxFile);
+        }
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {
@@ -231,64 +273,41 @@ function readFiles(topFile, datFile, jsonFile) {
             jsonReader.readAsText(jsonFile);
             renderer.domElement.style.cursor = "auto";
         }
+        if (trapFile) {
+            const trapReader = new FileReader(); //read .trap file
+            trapReader.onload = () => {
+                readTrap(systems[systems.length - 1], trapReader);
+            };
+            trapReader.readAsText(trapFile);
+            renderer.domElement.style.cursor = "auto";
+        }
+    }
+    else if (datFile) {
+        const r = new FileReader();
+        r.onload = () => updateConfFromFile(r.result);
+        r.readAsText(datFile);
     }
     else {
         notify("Please drop one topology and one configuration/trajectory file");
     }
 }
-function readDat(datReader, system) {
-    let currentStrand = system.strands[0];
-    let numNuc = system.systemLength();
-    // parse file into lines
-    let lines = datReader.result.split(/[\n]+/g);
-    if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
-        notify(".dat and .top files incompatible", "alert");
-        return;
-    }
-    // Increase the simulation box size if larger than current
-    box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
-    box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
-    box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
-    redrawBox();
-    const time = parseInt(lines[0].split(" ")[2]);
-    confNum += 1;
-    console.log(confNum, "t =", time);
-    let timedisp = document.getElementById("trajTimestep");
-    timedisp.innerHTML = `t = ${time.toLocaleString()}`;
-    timedisp.hidden = false;
-    // discard the header
-    lines = lines.slice(3);
-    let currentNucleotide, l;
-    //for each line in the current configuration, read the line and calculate positions
-    for (let i = 0; i < numNuc; i++) {
-        if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-            break;
-        }
-        ;
-        // get the nucleotide associated with the line
-        currentNucleotide = elements.get(i + system.globalStartId);
-        // consume a new line from the file
-        l = lines[i].split(" ");
-        currentNucleotide.calcPositionsFromConfLine(l);
-        //when a strand is finished, add it to the system
-        if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
-            if (currentNucleotide.n5 == currentStrand.end3) {
-                currentStrand.end5 = currentNucleotide;
-            }
-            system.addStrand(currentStrand); // add strand to system
-            currentStrand = system.strands[currentStrand.strandID]; //don't ask, its another artifact of strands being 1-indexed
-            if (elements.get(currentNucleotide.id + 1)) {
-                currentStrand = elements.get(currentNucleotide.id + 1).strand;
-            }
-        }
-    }
-    addSystemToScene(system);
-    centerAndPBC(system.getMonomers());
-    sysCount++;
-    //if there's another time line after the first configuration is loaded, its a trajectory
-    if (lines[numNuc].slice(0, 1) == 't')
-        return true;
-    return false;
+function updateConfFromFile(dat_file) {
+    let lines = dat_file.split("\n");
+    lines = lines.slice(3); // discard the header
+    systems.forEach(system => {
+        system.strands.forEach((strand) => {
+            strand.forEach(e => {
+                let line = lines.shift().split(' ');
+                e.calcPositionsFromConfLine(line);
+            }, true); //oxDNA runs 3'-5'
+        });
+        system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+    });
+    tmpSystems.forEach(system => {
+        system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+    });
+    centerAndPBC();
+    render();
 }
 function readJson(system, jsonReader) {
     const file = jsonReader.result;
@@ -337,6 +356,8 @@ function readOxViewJsonFile(file) {
     reader.onload = () => {
         let sysStartId = sysCount;
         const newElementIds = new Map();
+        // Check if file includes custom colors
+        let customColors = false;
         // Parse json string
         const data = JSON.parse(reader.result);
         // Set box data, if provided
@@ -400,10 +421,10 @@ function readOxViewJsonFile(file) {
                         }
                         newElementIds.set(elementData.id, e.id);
                         e.strand = strand;
-                        if (strandData.end3 == elementData.id || !elementData.n3) {
+                        if (strandData.end3 == elementData.id || !('n3' in elementData)) {
                             strand.end3 = e; // Set strand 3' end
                         }
-                        if (strandData.end5 == elementData.id || !elementData.n5) {
+                        if (strandData.end5 == elementData.id || !('n5' in elementData)) {
                             strand.end5 = e; // Set strand 3' end
                         }
                         // Set misc attributes
@@ -412,6 +433,7 @@ function readOxViewJsonFile(file) {
                         e.clusterId = elementData.cluster;
                         if (elementData.color) {
                             e.color = new THREE.Color(elementData.color);
+                            customColors = true;
                         }
                         e.sid = sidCounter++;
                         elementData.createdElement = e;
@@ -454,15 +476,15 @@ function readOxViewJsonFile(file) {
                             if (d.a1 && d.a3) {
                                 let a1 = new THREE.Vector3().fromArray(d.a1);
                                 let a3 = new THREE.Vector3().fromArray(d.a3);
-                                e.calcPositions(p, a1, a3);
+                                e.calcPositions(p, a1, a3, true);
                             }
                             else {
-                                e.calcPositions(p); // Amino acid
+                                e.calcPositions(p, undefined, undefined, true); // Amino acid
                             }
                             // Otherwise fallback to reading instance parameters
                         }
                         else if ('conf' in d) {
-                            //make sure warning shows up only once 
+                            //make sure warning shows up only once
                             if (!deprecated)
                                 notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
                             deprecated = true;
@@ -483,18 +505,32 @@ function readOxViewJsonFile(file) {
                 });
                 // Finally, we can add the system to the scene
                 addSystemToScene(sys);
-                /*
-                                // Redraw sp connectors
-                                sys.strands.forEach(s=>{
-                                    s.forEach(e=>{
-                                        if(e.n3) {
-                                            calcsp(e);
-                                        }
-                                    });
-                                    s.updateEnds();
-                                });
-                */
+                centerAndPBC();
+                if (customColors) {
+                    view.coloringMode.set("Custom");
+                }
             });
+        }
+        if (data.forces) {
+            data.forces.forEach(f => {
+                switch (f.type) {
+                    case "mutual_trap":
+                        let mutTrap = new MutualTrap();
+                        mutTrap.setFromParsedJson(f);
+                        mutTrap.update();
+                        forces.push(mutTrap);
+                        break;
+                    default:
+                        notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                        break;
+                }
+            });
+            if (!forceHandler) {
+                forceHandler = new ForceHandler(forces);
+            }
+            else {
+                forceHandler.set(forces);
+            }
         }
     };
     reader.readAsText(file);
@@ -573,9 +609,6 @@ function readParFile(file) {
                     extraParams.push(l[i]);
                 }
             }
-            //dereference p and q into particle positions from the system
-            // const particle1 = system.getElementBySID(p),
-            //     particle2 = system.getElementBySID(q);
             // if (particle1 == undefined) console.log(i)
             net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         }
@@ -583,38 +616,14 @@ function readParFile(file) {
         // Create and Fill Vectors
         net.initInstances(net.reducedEdges.total);
         net.initEdges();
+        net.fillConnections(); // fills connection array for
         net.prepVis(); // Creates Mesh for visualization
         networks.push(net); // Any network added here shows up in UI network selector
         selectednetwork = net.nid; // auto select network just loaded
         view.addNetwork(net.nid);
-        // addNetworktoScene()(anm);
-        // system.strands.forEach((s) => {
-        //     if (s.isPeptide()) {
-        //         api.toggleStrand(s);
-        //     }
-        // })
-        // ANMs.push(anm);
     };
     reader.readAsText(file);
 }
-// function addNetworktoScene(nid: number){
-//     let net = networks[nid];
-//     net.geometry = instancedConnector.clone();
-//     net.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(net.offsets, 3));
-//     net.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(net.rotations, 4));
-//     net.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(net.colors, 3));
-//     net.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(net.scales, 3));
-//     net.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(net.visibility, 3 ) );
-//
-//     net.network = new THREE.Mesh(net.geometry, instanceMaterial);
-//     net.network.frustumCulled = false;
-//
-//     scene.add(net.network);;
-//
-//     render();
-//
-//     canvas.focus();
-// }
 // function addANMToScene(anm: ANM) {
 //     anm.geometry = instancedConnector.clone();
 //
@@ -693,6 +702,13 @@ function addSystemToScene(system) {
     renderer.domElement.style.cursor = "auto";
     canvas.focus();
 }
+// Receive files from Nanobase
+window.addEventListener("message", (event) => {
+    if (!event.origin.startsWith("http://localhost:8000") && !event.origin.startsWith("http://nanobase.org")) {
+        return;
+    }
+    handleFiles(event.data.files);
+}, false);
 // Helper Objects for pdb parsing
 class pdbatom {
     constructor() {
@@ -835,45 +851,6 @@ function prep_pdb(pdblines) {
         }
     }
     return initList;
-    // // Assign Chains by which model they belong too (Mapping out what we want)
-    // let modelChainAssign : number[][] = [];
-    // for(let i = 0; i < modelDivs.length/2; i++){
-    //     let tmp = [];
-    //     chainDivs.forEach((c, cid) => {
-    //         if(c < modelDivs[i*2]){ //if chain is in model
-    //             tmp.push(nchainids[cid])
-    //         }
-    //     })
-    //     modelChainAssign.push(tmp);
-    // }
-    //
-    // if(modelDivs.length != 0) {
-    //     // FIND REPEATED MODELS
-    //     let modelLength = [];
-    //     modelDivs.forEach((l, id) => {
-    //         if (id % 2 == 1) {
-    //             let modellen = modelDivs[id - 1] - l;
-    //             modelLength.push(modellen)
-    //         }
-    //     })
-    //
-    //     let repeated_models = [];
-    //     modelLength.forEach((v, ind) => {
-    //         let check = modelLength.indexOf(v);
-    //         if (check != ind) { //check for repeated
-    //             repeated_models.push(check) // holds index of parent model
-    //         } else {
-    //             repeated_models.push(-1) // -1 denotes a unique model
-    //         }
-    //     });
-    //
-    //     // okay so we have a list saying which models are unique
-    //     // and another list that gives us the indices to where those are located in the pdb text
-    //     repeated_models.forEach((mod, ind) => {
-    //         if(mod > -1)
-    //     })
-    //
-    // }
 }
 //
 function readPdbFile(file) {
@@ -1234,6 +1211,25 @@ function addPDBToScene() {
         // type and pdbid don't need to be redeclared here
         let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
         let pairs;
+        //Helper Function
+        // Stack Overflow<3 Permutator
+        const permutator = (inputArr) => {
+            let result = [];
+            const permute = (arr, m = []) => {
+                if (arr.length === 0) {
+                    result.push(m);
+                }
+                else {
+                    for (let i = 0; i < arr.length; i++) {
+                        let curr = arr.slice();
+                        let next = curr.splice(i, 1);
+                        permute(curr.slice(), m.concat(next));
+                    }
+                }
+            };
+            permute(inputArr);
+            return result;
+        };
         // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to initInfo
         let CalcInfoNC = (res) => {
             // Info we want from PDB
@@ -1272,25 +1268,6 @@ function addPDBToScene() {
             nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
             let l = res.atoms.length;
             let pos = nuccom.divideScalar(l);
-            //Calculate a3 Vector Helper Function
-            // Stack Overflow<3 Permutator
-            const permutator = (inputArr) => {
-                let result = [];
-                const permute = (arr, m = []) => {
-                    if (arr.length === 0) {
-                        result.push(m);
-                    }
-                    else {
-                        for (let i = 0; i < arr.length; i++) {
-                            let curr = arr.slice();
-                            let next = curr.splice(i, 1);
-                            permute(curr.slice(), m.concat(next));
-                        }
-                    }
-                };
-                permute(inputArr);
-                return result;
-            };
             // Compute a1 Vector
             let ring_poss = permutator(ring_names);
             let a3 = new THREE.Vector3;
@@ -1473,9 +1450,7 @@ function addPDBToScene() {
             AM.pdbid = info[0];
             AM.type = info[1];
             let center = info[2].sub(CM);
-            AM.calcPositions(center);
-            AM.a1 = info[3];
-            AM.a3 = info[4];
+            AM.calcPositions(center, AM.a1, AM.a3, true);
         };
         // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
         let FillInfoNC = (info, NC, CM) => {

@@ -135,10 +135,12 @@ function makeTopFile(name) {
         let cons = [];
         // Protein mode
         if (counts['totAA'] > 0) {
-            for (let i = 0; i < e.connections.length; i++) {
-                let c = e.connections[i];
-                if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != n5) {
-                    cons.push(newElementIds.get(c.p2));
+            if (e.isAminoAcid()) {
+                for (let i = 0; i < e.connections.length; i++) {
+                    let c = e.connections[i];
+                    if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
+                        cons.push(newElementIds.get(c));
+                    }
                 }
             }
         }
@@ -187,10 +189,8 @@ function makeParFile(name, altNumbering, counts) {
         const t = net.reducedEdges.total;
         if (t != 0) {
             for (let i = 0; i < t; i++) {
-                let p1oldid = net.particles[net.reducedEdges.p1[i]]; // old element old id
-                let p2oldid = net.particles[net.reducedEdges.p2[i]];
-                let p1 = elements.get(p1oldid);
-                let p2 = elements.get(p2oldid);
+                let p1 = net.particles[net.reducedEdges.p1[i]]; // old element old id
+                let p2 = net.particles[net.reducedEdges.p2[i]];
                 const p1ID = altNumbering.get(p1);
                 const p2ID = altNumbering.get(p2);
                 const line = [p1ID, p2ID, net.reducedEdges.eqDist[i], net.reducedEdges.types[i], net.reducedEdges.ks[i]].concat(net.reducedEdges.extraParams[i]);

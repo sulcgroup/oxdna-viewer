@@ -1,6 +1,7 @@
 /**
  * Two simple classes meant for easy generation, viewing, and deletion of networks
  */
+var selectElements = api.selectElements;
 class Edges {
     constructor() {
         this.total = 0;
@@ -64,10 +65,10 @@ class Network {
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
-        this.particles = selectedMonomers.map(mon => { return mon.id; });
-        this.types = selectedMonomers.map(mon => { return mon.type; });
+        this.particles = selectedMonomers;
+        this.types = this.particles.map(s => { return s.type; });
         this.masses = [];
-        this.fillMasses(selectedMonomers);
+        this.fillMasses(this.particles);
         this.nid = nid; // Separate Indexing for network objects
         this.reducedEdges = new Edges(); // Holds all info about connections
         this.simFC = 0.05709; // gamma_sim
@@ -75,17 +76,22 @@ class Network {
         this.networktype = 'empty';
         this.onscreen = false;
         this.elemcoords = {
-            xI: selectedMonomers.map(e => e.getPos().x),
-            yI: selectedMonomers.map(e => e.getPos().y),
-            zI: selectedMonomers.map(e => e.getPos().z),
+            coords: this.particles.map(e => e.getPos()),
+            // xI: selectedMonomers.map(e => e.getPos().x),
+            // yI: selectedMonomers.map(e => e.getPos().y),
+            // zI: selectedMonomers.map(e => e.getPos().z),
             distance: function (i, j) {
-                return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
+                return this.coords[i].distanceTo(this.coords[j]);
+                // return Math.sqrt((this.xI[i] - this.xI[j])**2 + (this.yI[i] - this.yI[j])**2 + (this.zI[i] - this.zI[j])**2)
             },
             rotation: function (i, j) {
-                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(this.xI[i] - this.xI[j], this.yI[i] - this.yI[j], this.zI[i] - this.zI[j]).normalize());
+                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.coords[i].clone().sub(this.coords[j]).normalize()
+                // THREE.Vector3(this.xI[i]-this.xI[j],this.yI[i]-this.yI[j], this.zI[i]-this.zI[j]).normalize()
+                );
             },
             center: function (i, j) {
-                return new THREE.Vector3((this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2);
+                return this.coords[i].clone().add(this.coords[j]).divideScalar(2);
+                // return new THREE.Vector3((this.xI[i]+this.xI[j])/2, (this.yI[i]+this.yI[j])/2, (this.zI[i]+this.zI[j])/2);
             }
         };
         flux.prepJSONButton(nid);
@@ -109,7 +115,7 @@ class Network {
     }
     ;
     selectNetwork() {
-        api.selectElementIDs(this.particles, false);
+        selectElements(this.particles, false);
     }
     ;
     sendtoUI() {
@@ -188,6 +194,7 @@ class Network {
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms) {
         this.reducedEdges.clearAll();
+        this.clearConnections();
         this.selectNetwork();
         //let elems: BasicElement[] = Array.from(selectedBases);
         // go through coordinates and assign connections if 2 particles
@@ -210,6 +217,7 @@ class Network {
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
+            this.fillConnections();
         }
     }
     ;
@@ -234,8 +242,8 @@ class Network {
             //Hessian Calc w/ Masses
             for (let l = 0; l < this.reducedEdges.total; l++) {
                 let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l];
-                let ip = api.getElements([this.particles[i]])[0].getPos(); //Particle i Position
-                let jp = api.getElements([this.particles[j]])[0].getPos(); //Particle j Position
+                let ip = this.particles[i].getPos(); //Particle i Position
+                let jp = this.particles[j].getPos(); //Particle j Position
                 let mi = this.masses[i];
                 let mj = this.masses[j];
                 let mij = Math.sqrt(mi * mj); //masses
@@ -337,6 +345,20 @@ class Network {
             RMSF.push(r);
         }
         return RMSF;
+    }
+    ;
+    fillConnections() {
+        if (this.reducedEdges.total != 0) {
+            this.particles.forEach(p => p.connections = []); // Empty whatever connections were there, assumes particles only belong to one network
+            this.reducedEdges.p1.forEach((one, idx) => {
+                let ptwo = this.particles[this.reducedEdges.p2[idx]];
+                this.particles[one].connections.push(ptwo);
+            });
+        }
+    }
+    ;
+    clearConnections() {
+        this.particles.forEach(p => p.connections = []); // Empty whatever connections were there, assumes particles only belong to one network
     }
     ;
 }

@@ -1,8 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-
-
-
 // Creates color overlays
 function makeLut(data, key) {
     const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
@@ -119,13 +116,14 @@ function handleFiles(files: FileList) {
         notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
         return
     }
-    if (!trapFile){
+    if (!trapFile) {
         if (jsonFile && !topFile) jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone)  {
+        if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
             if (pdbfile) notify("Reading PDB File...");
             else notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return
         }
+    }
 
     //read a topology/configuration pair and maybe a json file
     if (!jsonAlone) {
@@ -654,6 +652,7 @@ function readParFile(file) {
         // Create and Fill Vectors
         net.initInstances(net.reducedEdges.total);
         net.initEdges();
+        net.fillConnections(); // fills connection array for
 
         net.prepVis(); // Creates Mesh for visualization
         networks.push(net); // Any network added here shows up in UI network selector
@@ -1601,7 +1600,7 @@ function addPDBToScene () {
             AM.pdbid = info[0];
             AM.type = info[1];
             let center = info[2].sub(CM);
-            AM.calcPositions(center, AM.a1, AM.a3, undefined);
+            AM.calcPositions(center, AM.a1, AM.a3, true);
         }
 
         // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
