@@ -642,6 +642,7 @@ var whitelist = new Set([
 ]);
 window.addEventListener("message", (event) => {
     if (!(event.origin in whitelist)) {
+        console.log(event.origin);
         console.log("Please contact the developers to have your site added to the whitelist");
         return;
     }
