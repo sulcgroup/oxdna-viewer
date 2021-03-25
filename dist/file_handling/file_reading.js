@@ -634,8 +634,15 @@ function addSystemToScene(system) {
     canvas.focus();
 }
 // Receive files from Nanobase
+var whitelist = new Set([
+    "http://localhost:9000",
+    "http://localhost:8000",
+    "http://nanobase.org",
+    "https://oxdna.org"
+]);
 window.addEventListener("message", (event) => {
-    if (!event.origin.startsWith("http://localhost:8000") && !event.origin.startsWith("http://nanobase.org")) {
+    if (!(event.origin in whitelist)) {
+        console.log("Please contact the developers to have your site added to the whitelist");
         return;
     }
     handleFiles(event.data.files);
