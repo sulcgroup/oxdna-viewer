@@ -711,11 +711,16 @@ var whitelist = new Set([
 ])
 
 window.addEventListener("message", (event) => {
+    console.log(event.origin);
+    console.log(whitelist.has(event.origin));
     if (!(whitelist.has(event.origin))) {
-        console.log(event.origin);
-        console.log(whitelist.has(event.origin));
         console.log("Please contact the developers to have your site added to the whitelist");  
-    return;
+        return
     }
-    handleFiles(event.data.files);
+    if (event.data.message === 'drop') {
+        handleFiles(event.data.files);
+    }
+    else if (event.data.message === 'download') {
+        makeOutputFiles();
+    }
 }, false);

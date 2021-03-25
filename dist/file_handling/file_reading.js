@@ -642,11 +642,16 @@ var whitelist = new Set([
     "https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
 ]);
 window.addEventListener("message", (event) => {
+    console.log(event.origin);
+    console.log(whitelist.has(event.origin));
     if (!(whitelist.has(event.origin))) {
-        console.log(event.origin);
-        console.log(whitelist.has(event.origin));
         console.log("Please contact the developers to have your site added to the whitelist");
         return;
     }
-    handleFiles(event.data.files);
+    if (event.data.message === 'drop') {
+        handleFiles(event.data.files);
+    }
+    else if (event.data.message === 'download') {
+        makeOutputFiles();
+    }
 }, false);
