@@ -1324,19 +1324,20 @@ function addPDBToScene () {
             if (scHAcom.lengthSq() == 0) scHAcom.x = 1;
             scHAcom.normalize();
             let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
-            let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
-            let CABfactor = parseFloat(CA.tempFactor);
+            if(CA) {
+                let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
+                let CABfactor = parseFloat(CA.tempFactor);
 
-            let a1 = scHAcom.clone().sub(CApos).normalize();
-            if (a1.dot(bv1) < 0.99) {
-                a3 = a1.clone().cross(bv1);
-            } else if (a1.dot(bv2) < 0.99) {
-                a3 = a1.clone().cross(bv2);
-            } else if (a1.dot(bv3) < 0.99) {
-                a3 = a1.clone().cross(bv3);
-            }
-            return [pdbid, type, CApos, a1, a3, CABfactor];
-
+                let a1 = scHAcom.clone().sub(CApos).normalize();
+                if (a1.dot(bv1) < 0.99) {
+                    a3 = a1.clone().cross(bv1);
+                } else if (a1.dot(bv2) < 0.99) {
+                    a3 = a1.clone().cross(bv2);
+                } else if (a1.dot(bv3) < 0.99) {
+                    a3 = a1.clone().cross(bv3);
+                }
+                return [pdbid, type, CApos, a1, a3, CABfactor];
+            } else return ["NOCA", "NOCA", bv1, bv1, bv1, 0]
         }
 
         // Helper values
@@ -1479,23 +1480,25 @@ function addPDBToScene () {
                     let aa = currentStrand.createBasicElement(nextElementId);
                     aa.sid = nextElementId - oldElementId;
                     let info = CalcInfoAA(nstrand.residues[j]);
-                    initInfo.push(info);
-                    strandInfo.push(info);
-                    bFactors.push(info[5]);
-                    xdata.push(aa.sid);
-                    com.add(info[2]); //Add position to COM calc
-                    // Amino Acids are intialized from N-terminus to C-terminus
-                    // Same as PDB format
-                    // Neighbors must be filled for correct initialization
-                    aa.n3 = null;
-                    aa.n5 = null;
-                    if (j != 0) {
-                        let prevaa = elements.get(nextElementId - 1); //Get previous Element
-                        aa.n3 = prevaa;
-                        prevaa.n5 = aa;
+                    if(info[1] != "NOCA"){ // No Alpha Coordinates found
+                        initInfo.push(info);
+                        strandInfo.push(info);
+                        bFactors.push(info[5]);
+                        xdata.push(aa.sid);
+                        com.add(info[2]); //Add position to COM calc
+                        // Amino Acids are intialized from N-terminus to C-terminus
+                        // Same as PDB format
+                        // Neighbors must be filled for correct initialization
+                        aa.n3 = null;
+                        aa.n5 = null;
+                        if (j != 0) {
+                            let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                            aa.n3 = prevaa;
+                            prevaa.n5 = aa;
+                        }
+                        elements.push(aa);
+                        nextElementId++;
                     }
-                    elements.push(aa);
-                    nextElementId++;
                 }
                 currentStrand.updateEnds();
 
@@ -1609,8 +1612,24 @@ function addPDBToScene () {
             NC.pdbid = info[0];
             NC.type = info[1];
             let center = info[2].sub(CM);
-            NC.calcPositions(center, info[3], info[4]);
+            NC.calcPositions(center, info[3], info[4], true);
         }
+
+        //Set box dimensions
+        let xpos = initInfo.map((info) => {return info[2].x;});
+        let ypos = initInfo.map((info) => {return info[2].y;});
+        let zpos = initInfo.map((info) => {return info[2].z;});
+        let xdim= (Math.max(...xpos) - Math.min(...xpos)) * 1.5;
+        let ydim= (Math.max(...ypos) - Math.min(...ypos)) * 1.5;
+        let zdim= (Math.max(...zpos) - Math.min(...zpos)) * 1.5;
+        if(xdim < 2) xdim = 2.5;
+        if(ydim < 2) ydim = 2.5;
+        if(zdim < 2) zdim = 2.5;
+
+        if(box.x < xdim) box.x = xdim;
+        if(box.y < ydim) box.y = ydim;
+        if(box.z < zdim) box.z = zdim;
+        redrawBox();
 
         // Second Loop Going through Exactly the same way
         // Fill Info Functions called on each element to initialize type specific
