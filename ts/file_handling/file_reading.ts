@@ -1002,7 +1002,9 @@ function readPdbFile(file) {
         const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
             "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
             "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
-        let loadpdbsection = function(chainindx, start, end): [boolean, THREE.Vector3[], pdbatom[], pdbresidue[], pdbchain[]] {
+        let chainindx = -1;
+        let totalchainlength = 0; // Subchains are loaded separately but not accounted for in initlist which I used
+        let loadpdbsection = function(start, end): [boolean, THREE.Vector3[], pdbatom[], pdbresidue[], pdbchain[]] {
             pdbpositions = [];
             atoms = [];
             chains = [];
@@ -1017,9 +1019,9 @@ function readPdbFile(file) {
                     na.atomType = pdbLine.substring(12, 16).trim();
                     na.altLoc = pdbLine.substring(16, 17).trim();
                     na.resType = pdbLine.substring(17, 20).trim();
-                    na.chainID = pdbLine.substring(21, 22).trim();
-                    na.chainIndx = chainindx;
-                    let tmp = pdbLine.substring(22, 29); // Usually the residue number
+                    na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+
+                    let tmp = pdbLine.substring(23, 29); // Usually the residue number
                     //check for insertion code
                     na.iCode = "";
                     if(isNaN(parseInt(tmp[5]))){
@@ -1046,18 +1048,30 @@ function readPdbFile(file) {
                         if(na.atomType == "N1") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                     }
 
-                    // copy is necessary
-                    let nac: pdbatom = {
-                        ...na
-                    };
-                    atoms.push(nac);
+                    //checks if last read atom belongs to a different chain than the one before it
+                    if (prevChainId !== na.chainID) {
+                        //notify("chain created");
+                        chainindx += 1;
+                        na.chainIndx = chainindx;
+                        nc.chainID = na.chainID;
+                        nc.chainIndx = na.chainIndx;
+                        // copy is necessary
+                        let ncc = {
+                            ...nc
+                        };
+                        chains.push(ncc);
+                        //set previous chain id to that of last read atom
+                        prevChainId = na.chainID;
+                    } else { // not a new chain, same chain index
+                        na.chainIndx = chainindx;
+                    }
 
                     //checks if last read atom belongs to a different chain than the one before it
-                    if (prevResId != nac.pdbResIdent) {
-                        nr.resType = nac.resType;
-                        nr.pdbResIdent = nac.pdbResIdent;
-                        nr.chainID = nac.chainID;
-                        nr.chainIndx = nac.chainIndx;
+                    if (prevResId != na.pdbResIdent) {
+                        nr.resType = na.resType;
+                        nr.pdbResIdent = na.pdbResIdent;
+                        nr.chainID = na.chainID;
+                        nr.chainIndx = na.chainIndx;
 
                         // copy is necessary
                         let nrc = {
@@ -1065,22 +1079,14 @@ function readPdbFile(file) {
                         };
                         residues.push(nrc)
                         //set previous chain id to that of last read atom
-                        prevResId = nac.pdbResIdent;
+                        prevResId = nrc.pdbResIdent;
                     }
 
-                    //checks if last read atom belongs to a different chain than the one before it
-                    if (prevChainId !== nac.chainID) {
-                        //notify("chain created");
-                        nc.chainID = nac.chainID;
-                        nc.chainIndx = nac.chainIndx;
-                        // copy is necessary
-                        let ncc = {
-                            ...nc
-                        };
-                        chains.push(ncc);
-                        //set previous chain id to that of last read atom
-                        prevChainId = nac.chainID;
-                    }
+                    // copy is necessary
+                    let nac: pdbatom = {
+                        ...na
+                    };
+                    atoms.push(nac);
                 }
             }
             // info
@@ -1111,7 +1117,7 @@ function readPdbFile(file) {
 
         // load all Unique Chains
         initList.uniqueIDs.forEach((id, indx) => {
-            let alignTO = loadpdbsection(indx, initList.uniqueStart[indx], initList.uniqueEnd[indx]);
+            let alignTO = loadpdbsection(initList.uniqueStart[indx], initList.uniqueEnd[indx]);
             uniqatoms = uniqatoms.concat(alignTO[2]);
             uniqresidues = uniqresidues.concat(alignTO[3]);
             uniqchains = uniqchains.concat(alignTO[4]);
@@ -1134,7 +1140,6 @@ function readPdbFile(file) {
 
                     //Calc quaternion rotation between vectors
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
-                    //Get Rotated Adj Coordinates
                     // let newcoords = alignMEcoord;
                     initList.repeatCoords[rindx] = newcoords;
                     initList.repeatQuatRots[rindx] = rotQuat;
@@ -1160,6 +1165,10 @@ function readPdbFile(file) {
             notify("No Atoms Found in PDB File");
             return;
         }
+
+        // Rewrite initlist.uniqueIDs to take into account subchains (labeled but no TER statements) found in the PDB file
+        // Won't work for repeated copies of subchains (something to look out for in the future)
+        initList.uniqueIDs = uniqchains.map(x => {return x.chainID});
 
         // These hefty objects are needed to calculate the positions & a1, a3 of nucleotides and amino acids
         let pdbinfo = new pdbinfowrapper(label, uniqchains, initList);
