@@ -638,7 +638,8 @@ var whitelist = new Set([
     "http://localhost:9000",
     "http://localhost:8000",
     "http://nanobase.org",
-    "https://oxdna.org"
+    "https://oxdna.org",
+    "https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
 ]);
 window.addEventListener("message", (event) => {
     if (!(whitelist.has(event.origin))) {
