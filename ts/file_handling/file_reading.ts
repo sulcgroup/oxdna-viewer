@@ -701,21 +701,10 @@ function addSystemToScene(system: System) {
     canvas.focus();
 }
 
-// Communicate with Nanobase and oxDNA.org
+// Receive files from Nanobase
 window.addEventListener("message", (event) => {
     if (!event.origin.startsWith("http://localhost:8000") && !event.origin.startsWith("http://nanobase.org")) {
-        if (!event.origin.startsWith("http://localhost:9000") && !event.origin.startsWith("https://oxdna.org")) {
-            return;
-        }
-        else {
-            if (event.data.message === 'drop') {
-                handleFiles(event.data.files);
-            }
-            else if (event.data.message === 'download') {
-                makeOutputFiles();
-            }
-        }
-        return;
+      return;
     }
     handleFiles(event.data.files);
 }, false);
