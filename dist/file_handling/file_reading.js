@@ -30,12 +30,15 @@ function makeLut(data, key) {
 const target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 target.addEventListener("dragenter", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 target.addEventListener("dragexit", function (event) {
     event.preventDefault();
+    target.classList.remove('dragging');
 }, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
@@ -45,12 +48,15 @@ let confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile sto
 box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
 var toggleFailure = false, defaultColormap = "cooltowarm";
-// What to do if a file is dropped
-target.addEventListener("drop", function (event) {
+function handleDrop(event) {
     // cancel default actions
     event.preventDefault();
     const files = event.dataTransfer.files;
     handleFiles(files);
+}
+// What to do if a file is dropped
+target.addEventListener("drop", function (event) {
+    handleDrop(event);
 }, false);
 function handleFiles(files) {
     const filesLen = files.length;
@@ -653,6 +659,9 @@ window.addEventListener("message", (event) => {
     }
     else if (event.data.message === 'download') {
         makeOutputFiles();
+    }
+    else if (event.data.message === 'remove-event') {
+        target.removeEventListener("drop", handleDrop);
     }
     else {
         console.log(event.data.message, "is not a recognized message");

@@ -37,14 +37,17 @@ function makeLut(data, key) {
 const target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 
 target.addEventListener("dragenter", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 
 target.addEventListener("dragexit", function (event) {
     event.preventDefault();
+    target.classList.remove('dragging');
 }, false);
 
 // the actual code to drop in the config files
@@ -62,12 +65,16 @@ let confNum: number = 0,
 var toggleFailure: Boolean = false,
     defaultColormap: string = "cooltowarm";
 
-// What to do if a file is dropped
-target.addEventListener("drop", function (event) {
+function handleDrop (event) {
     // cancel default actions
     event.preventDefault();
     const files = event.dataTransfer.files;
     handleFiles(files);
+}
+
+// What to do if a file is dropped
+target.addEventListener("drop", function (event) {
+    handleDrop(event)
 
 }, false);
 
@@ -722,6 +729,9 @@ window.addEventListener("message", (event) => {
     }
     else if (event.data.message === 'download') {
         makeOutputFiles();
+    }
+    else if (event.data.message === 'remove-event') {
+        target.removeEventListener("drop", handleDrop);
     }
     else {
         console.log(event.data.message, "is not a recognized message")
