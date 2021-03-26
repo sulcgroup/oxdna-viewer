@@ -701,13 +701,13 @@ function addSystemToScene(system: System) {
     canvas.focus();
 }
 
-// Receive files from Nanobase
-var whitelist = new Set([
+// Receive files from outside websites hosting oxView in an iframe
+const whitelist = new Set([
     "http://localhost:9000",
     "http://localhost:8000",
     "http://nanobase.org",
     "https://oxdna.org",
-    "https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
+    //"https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
 ])
 
 window.addEventListener("message", (event) => {
