@@ -68,15 +68,13 @@ var toggleFailure: Boolean = false,
 function handleDrop (event) {
     // cancel default actions
     event.preventDefault();
+    target.classList.remove('dragging');
     const files = event.dataTransfer.files;
     handleFiles(files);
 }
 
 // What to do if a file is dropped
-target.addEventListener("drop", function (event) {
-    handleDrop(event)
-
-}, false);
+target.addEventListener("drop", handleDrop, false);
 
 function handleFiles(files: FileList) {
 
