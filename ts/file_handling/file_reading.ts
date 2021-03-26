@@ -72,7 +72,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let topFile, jsonFile, trapFile, pdbfile;
+    let topFile, jsonFile, trapFile, pdbfile, hbondfile;
     let idxFile = null;
 
     // assign files to the extentions
@@ -97,6 +97,11 @@ function handleFiles(files: FileList) {
             notify("Reading PDB File...");
             pdbfile = files[i];
             readPdbFile(pdbfile);
+            return;
+        }
+        else if (ext === ".hb") {
+            hbondfile = files[i];
+            readHBondFile(hbondfile);
             return;
         }
         else if (ext === "idx") idxFile = files[i];
@@ -862,11 +867,14 @@ class pdbinfowrapper { //Transfers Necessary Data from readPdbFile to addPDBtoSc
     pdbfilename: string;
     pdbsysinfo: pdbchain[];
     initlist: pdbReadingList;
+    disulphideBonds: [any, number, any, number][];
+
 
     constructor(pi, chains, initlist) {
         this.pdbfilename = pi;
         this.pdbsysinfo = chains;
         this.initlist = initlist;
+        this.disulphideBonds = [];
     }
 }
 
@@ -877,6 +885,9 @@ function prep_pdb(pdblines: string[]){
     let modelDivs: number[] = [];
     let firstatom = 0;
     let noatom = false;
+    // Other Info for MWCENM
+    let dsbonds = [];
+
     // Find Chain Termination statements TER and uses
     for(let i = 0; i< pdblines.length; i++){
         if(pdblines[i].substr(0, 4) == 'ATOM' && noatom==false){
@@ -888,6 +899,11 @@ function prep_pdb(pdblines: string[]){
             chainDivs.push(i);
         } else if(pdblines[i].substr(0, 6) === 'ENDMDL'){
             modelDivs.push(i);
+        } else if(pdblines[i].substr(0, 6) === 'SSBOND'){
+            let line = pdblines[i];
+            // disulphide bond info: residue 1 chain id, res 1 res num, res2 chain id, res 2 res num
+            let dbond = [line.substring(15, 17).trim(), parseInt(line.substring(17, 21).trim()), line.substring(29, 31).trim(), parseInt(line.substring(31, 35).trim())];
+            dsbonds.push(dbond);
         }
     }
 
@@ -958,7 +974,7 @@ function prep_pdb(pdblines: string[]){
         }
     }
 
-    return initList;
+    return {"initlist":initList, "dsbonds":dsbonds};
 }
 
 //
@@ -967,7 +983,9 @@ function readPdbFile(file) {
 
     reader.onload = () => {
         const pdbLines = (reader.result as string).split(/[\n]+/g);
-        let initList = prep_pdb(pdbLines);
+        let ret = prep_pdb(pdbLines);
+        let initList = ret["initlist"];
+        let dsbonds = ret["dsbonds"]
         let uniqatoms : pdbatom[] = [];
         let uniqresidues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
         let uniqchains : pdbchain[] = [];
@@ -1003,7 +1021,6 @@ function readPdbFile(file) {
             "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
             "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
         let chainindx = -1;
-        let totalchainlength = 0; // Subchains are loaded separately but not accounted for in initlist which I used
         let loadpdbsection = function(start, end): [boolean, THREE.Vector3[], pdbatom[], pdbresidue[], pdbchain[]] {
             pdbpositions = [];
             atoms = [];
@@ -1172,6 +1189,7 @@ function readPdbFile(file) {
 
         // These hefty objects are needed to calculate the positions & a1, a3 of nucleotides and amino acids
         let pdbinfo = new pdbinfowrapper(label, uniqchains, initList);
+        pdbinfo.disulphideBonds = dsbonds; // Store Disulphide Bonds
         pdbFileInfo.push(pdbinfo); // Store Info in this global array so onloadend can access the info
 
     }
@@ -1188,6 +1206,7 @@ function addPDBToScene () {
     // Adds last added pdb info object in pdbFile Info
     if(pdbFileInfo.length > 0) {
         let pdata = pdbFileInfo.slice(-1)[0];
+        let pindx = pdbFileInfo.indexOf(pdata);
         let strands = pdata.pdbsysinfo;
         let label = pdata.pdbfilename;
         let initlist = pdata.initlist;
@@ -1489,12 +1508,14 @@ function addPDBToScene () {
                     let aa = currentStrand.createBasicElement(nextElementId);
                     aa.sid = nextElementId - oldElementId;
                     let info = CalcInfoAA(nstrand.residues[j]);
-                    if(info[1] != "NOCA"){ // No Alpha Coordinates found
+                    if(info[1] != "NOCA"){ // If C-Alpha Coordinates found
                         initInfo.push(info);
                         strandInfo.push(info);
                         bFactors.push(info[5]);
                         xdata.push(aa.sid);
                         com.add(info[2]); //Add position to COM calc
+                        // pdbFileInfo Index, chain index, pdbResIdent
+                        aa.setPDBIndices(pindx, initlist.uniqueIDs[i], info[0]);
                         // Amino Acids are intialized from N-terminus to C-terminus
                         // Same as PDB format
                         // Neighbors must be filled for correct initialization
@@ -1518,6 +1539,7 @@ function addPDBToScene () {
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             // basically just copy the strand we just built using the sotred init info and repeat chain info
                             let repeatAmino = repeatStrand.createBasicElement(nextElementId);
+                            repeatAmino.pdbindices = (mon as AminoAcid).pdbindices;
                             repeatAmino.sid = nextElementId - oldElementId;
                             let rinfo = strandInfo[mid].slice(); // copy originals initialization info
                             let rotquat = initlist.repeatQuatRots[indx];
@@ -1610,7 +1632,6 @@ function addPDBToScene () {
         sys.initInstances(sys.systemLength())
         // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
         let FillInfoAA = (info: [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number], AM: AminoAcid, CM: THREE.Vector3) => {
-            AM.pdbid = info[0];
             AM.type = info[1];
             let center = info[2].sub(CM);
             AM.calcPositions(center, AM.a1, AM.a3, true);
@@ -1618,7 +1639,6 @@ function addPDBToScene () {
 
         // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
         let FillInfoNC = (info: [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number], NC: Nucleotide, CM: THREE.Vector3) => {
-            NC.pdbid = info[0];
             NC.type = info[1];
             let center = info[2].sub(CM);
             NC.calcPositions(center, info[3], info[4], true);

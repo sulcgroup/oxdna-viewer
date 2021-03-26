@@ -5,6 +5,7 @@
  * @param dummySys - If created during editing, the data arrays for instancing are stored in a dummy system
  */
 class BasicElement {
+    // pdbid: string; //Only Intialized if loaded from a PDB structure
     constructor(id, strand) {
         this.connections = []; // ref all elements it's
         this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids

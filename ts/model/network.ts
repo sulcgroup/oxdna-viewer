@@ -87,6 +87,7 @@ class Network {
     networktype: string; //networktype defined in any edge fill call
     fittingReady: boolean; //Tells UI whether this network is ready to be displayed
     onscreen: boolean; // Tells UI whether this network is in the scene or not
+    hydrogenbondinginfo;
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
@@ -246,6 +247,174 @@ class Network {
             this.sendtoUI();
             this.fillConnections();
         }
+    }
+    ;
+    edgesMWCENM(){
+        this.reducedEdges.clearAll();
+        this.clearConnections();
+        this.selectNetwork();
+        let pdbindices;
+        try{
+            pdbindices = this.particles.map(e => {return (e as AminoAcid).pdbindices});
+        } catch (e) {
+            notify("PDB Info could not be found. Make sure only AminoAcids are selected and they have been loaded from a PDB file.");
+            return;
+        }
+        let uniqdatasets = new Set<number>(pdbindices.map((a) => {return a[0]}));
+        let uniqstrands = new Set<Strand>(this.particles.map(x => {return x.strand}));
+        let uniqchains = new Set<any>(pdbindices.map((a) => {return a[1]}));
+        this.addBackboneConnections(uniqdatasets);
+    }
+    ;
+    addHydrogenBonds(){
+
+        // Need Hydrogen Bonds File (Chimera)
+    }
+    addNonpolarBonds(){
+        let nonpolark = 1.0;
+
+        let nonpolarcheck = function(res1, res2){
+
+            let pi = (res1 as AminoAcid).pdbindices; // location of pdb information
+            let pdbres1 = pdbFileInfo[pi[0]].pdbsysinfo[pi[1]].residues.filter(res => {if (parseInt(res.pdbResIdent) == pi[2]){ return true;} })[0];
+            let res1atoms = pdbres1.atoms.filter(atom => {if(['CA', 'N', 'H', 'C', 'O'].indexOf(atom.atomType) != -1) return true;}); // sidechain atoms
+
+            let ni = (res2 as AminoAcid).pdbindices; // location of pdb information
+            let pdbres2 = pdbFileInfo[ni[0]].pdbsysinfo[ni[1]].residues.filter(res => {if (parseInt(res.pdbResIdent) == ni[2]){ return true;} })[0];
+            let res2atoms = pdbres2.atoms.filter(atom => {if(['CA', 'N', 'H', 'C', 'O'].indexOf(atom.atomType) != -1) return true;}); // sidechain atoms
+
+            let pdbdist = function(atom1, atom2){
+                return Math.sqrt(Math.pow(atom1.x - atom2.x,2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2))
+            }
+
+            let makenonbonded=false;
+            res1atoms.forEach(pa => {
+                res2atoms.forEach(na => {
+                    if(pdbdist(pa, na) < 4){ // 4 A is the cutoff used in the original MWCENM paper
+                        makenonbonded=true;
+                    }
+                })
+            })
+
+            return makenonbonded;
+        }
+
+        this.particles.forEach((p1, ind1) => {
+            this.particles.forEach((p2, ind2) => {
+                if(this.elemcoords.distance(ind1, ind2) < 2){  // speed up the code a bit
+                    if(nonpolarcheck(p1, p2)){
+                        let pindx = this.particles.indexOf(p1);
+                        let nindx = this.particles.indexOf(p2);
+                        this.reducedEdges.addEdge(pindx, nindx, this.elemcoords.distance(pindx, nindx), 's', nonpolark);
+                    }
+                }
+            })
+        })
+    }
+    ;
+    addSaltBridges(pH=7){ // Assuming pH 7 though other options may later be added
+        let saltbridgek = 10;
+        let catres;
+        let anres;
+        let catatoms;
+        let anatoms;
+        if(pH == 7){
+            catres = ["D", "E"]; // aspartic acid and glutamic acid
+            catatoms = {"D":["OD1", "OD2"], "E": ["OE1", "AE1", "OE2", "AE2"]}; // Which atoms might hold the charge
+            anres = ["K", "H", "R"]; // Lysine, histidine and Arginine
+            anatoms = {"H":["ND1", "AD1"], "K":["NZ"], "R":["NH1", "NH2"]}; // Which atoms might hold the charge
+        } else {
+            notify("No pH besides 7 currently supported");
+        }
+
+        let posresidues = this.particles.filter(x => {if(catres.indexOf(x.type) != -1) return true}); // all particles in network that are positive
+        let negresidues = this.particles.filter(x => {if(anres.indexOf(x.type) != -1) return true});  // all particles in network that are negative
+
+
+        let saltbridgecheck = function(posres, negres){
+
+            let pi = (posres as AminoAcid).pdbindices; // location of pdb information
+            let pospdbres = pdbFileInfo[pi[0]].pdbsysinfo[pi[1]].residues.filter(res => {if (parseInt(res.pdbResIdent) == pi[2]){ return true;} })[0];
+            let posatoms = pospdbres.atoms.filter(atom => {if(catatoms[posres.type].indexOf(atom.atomType) != -1) return true;});
+
+            let ni = (negres as AminoAcid).pdbindices; // location of pdb information
+            let negpdbres = pdbFileInfo[ni[0]].pdbsysinfo[ni[1]].residues.filter(res => {if (parseInt(res.pdbResIdent) == ni[2]){ return true;} })[0];
+            let negatoms = negpdbres.atoms.filter(atom => {if(anatoms[negres.type].indexOf(atom.atomType) != -1) return true;});
+
+            let pdbdist = function(atom1, atom2){
+                return Math.sqrt(Math.pow(atom1.x - atom2.x,2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2))
+            }
+
+            let makesaltbridge=false;
+            posatoms.forEach(pa => {
+                negatoms.forEach(na => {
+                    if(pdbdist(pa, na) < 4){ // 4 A is the cutoff used in the original MWCENM paper
+                        makesaltbridge=true;
+                    }
+                })
+            })
+
+            return makesaltbridge;
+        }
+
+        // Checks all combinations of paired residues for
+        posresidues.forEach(pr => {
+            negresidues.forEach(nr => {
+                if(saltbridgecheck(pr, nr)){
+                    let pindx = this.particles.indexOf(pr);
+                    let nindx = this.particles.indexOf(nr);
+                    this.reducedEdges.addEdge(pindx, nindx, this.elemcoords.distance(pindx, nindx), 's',  saltbridgek);
+                }
+            })
+        })
+
+    }
+    ;
+    addDisulphideBonds(uniqdatasets, pdbindices) {
+        [...uniqdatasets].forEach(ud => {
+            let dsbonds = pdbFileInfo[ud].disulphideBonds;
+            let chains = pdbFileInfo[ud].pdbsysinfo;
+
+            let p1, p2;
+            let p1found, p2found;
+            let k = 100; // strength of disulfide bond
+            dsbonds.forEach((db) => {
+                p1found = false;
+                p2found = false;
+                pdbindices.filter((pi, pindx) => {
+                    if (pi[0] == ud && pi[1] == db[0] && pi[2] == db[1]) {
+                        p1 = this.particles[pindx];
+                    } else if (pi[0] == ud && pi[1] == db[2] && pi[2] == db[3]) {
+                        p2 = this.particles[pindx];
+                    }
+                })
+                if (p1found && p2found) {
+                    let p1indx = this.particles.indexOf(p1);
+                    let p2indx = this.particles.indexOf(p2);
+                    this.reducedEdges.addEdge(p1indx, p2indx, this.elemcoords.distance(p1indx, p2indx), 's', k);
+                } else {
+                    notify("Disulphide Bond could not be parsed from pdb info");
+                    return;
+                }
+
+            })
+        })
+    }
+    ;
+    addBackboneConnections(uniqstrands) {
+        let covalentk = 100;
+
+        [...uniqstrands].forEach(str => {
+            let monos = str.getMonomers();
+            monos.forEach(x => {
+                let pind = this.particles.indexOf(x);
+                let qind = this.particles.indexOf(x.n3);
+                if(pind != -1 && this.particles.indexOf(x.n5) != -1){
+                    this.reducedEdges.addEdge(pind, qind, this.elemcoords.distance(pind, qind), 's', covalentk);
+                }
+            })
+
+        })
     }
     ;
     generateHessian(): number[][] {
