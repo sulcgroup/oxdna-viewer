@@ -729,8 +729,8 @@ window.addEventListener("message", (event) => {
         makeOutputFiles();
     }
     else if (event.data.message === 'remove-event') {
-        console.log(target)
         target.removeEventListener("drop", handleDrop);
+        target.addEventListener("drop", function () {notify("Dragging onto embedded viewer does not allow form completion")});
     }
     else {
         console.log(event.data.message, "is not a recognized message")
