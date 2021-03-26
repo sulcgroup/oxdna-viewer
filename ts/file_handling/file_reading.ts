@@ -731,6 +731,7 @@ window.addEventListener("message", (event) => {
         makeOutputFiles();
     }
     else if (event.data.message === 'remove-event') {
+        console.log(target)
         target.removeEventListener("drop", handleDrop);
     }
     else {
