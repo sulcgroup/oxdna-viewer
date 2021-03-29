@@ -729,6 +729,8 @@ window.addEventListener("message", (event) => {
     else if (event.data.message === 'remove-event') {
         target.removeEventListener("drop", handleDrop);
         target.addEventListener("drop", function () {notify("Dragging onto embedded viewer does not allow form completion")});
+        const openButton : HTMLInputElement = <HTMLInputElement>document.getElementById('open-button')
+        openButton.disabled = true;
     }
     else {
         console.log(event.data.message, "is not a recognized message")
