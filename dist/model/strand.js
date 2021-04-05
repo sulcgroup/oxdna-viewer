@@ -143,6 +143,9 @@ class Strand {
     isNucleicAcid() {
         return false;
     }
+    isGS() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {
@@ -253,6 +256,74 @@ class Peptide extends Strand {
         return json;
     }
     ;
+    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
+    getMonomers(reverse) {
+        return super.getMonomers(!reverse);
+    }
+    forEach(callbackfn, reverse, condition) {
+        super.forEach(callbackfn, !reverse, condition);
+    }
+    map(callbackfn, reverse) {
+        return super.map(callbackfn, !reverse);
+    }
+    filter(callbackfn, reverse) {
+        return super.filter(callbackfn, !reverse);
+    }
+    toggleMonomers() {
+        this.forEach(e => e.toggle());
+    }
+    select() {
+        this.forEach(e => e.select());
+    }
+    deselect() {
+        this.forEach(e => e.deselect());
+    }
+}
+// Meant to hold multi-sized generic spheres representing arbitrary particle types
+class Generic extends Strand {
+    constructor(id, system) {
+        super(id, system);
+    }
+    ;
+    createBasicElement(id) {
+        return new GenericSphere(id, this);
+    }
+    ;
+    translateStrand(amount) {
+        const s = this.system;
+        const monomers = this.getMonomers();
+        for (let i = monomers[0].sid * 3; i <= monomers[monomers.length - 1].sid * 3; i += 3) {
+            s.nsOffsets[i] += amount.x;
+            s.nsOffsets[i + 1] += amount.y;
+            s.nsOffsets[i + 2] += amount.z;
+            s.bbOffsets[i] += amount.x;
+            s.bbOffsets[i + 1] += amount.y;
+            s.bbOffsets[i + 2] += amount.z;
+            s.bbconOffsets[i] += amount.x;
+            s.bbconOffsets[i + 1] += amount.y;
+            s.bbconOffsets[i + 2] += amount.z;
+            s.cmOffsets[i] += amount.x;
+            s.cmOffsets[i + 1] += amount.y;
+            s.cmOffsets[i + 2] += amount.z;
+        }
+        s.callUpdates(['instanceOffset']);
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset']);
+            });
+        }
+    }
+    ;
+    // is Generic Sphere method
+    isGS() {
+        return true;
+    }
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        json['class'] = 'GS';
+        return json;
+    }
     //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
     getMonomers(reverse) {
         return super.getMonomers(!reverse);

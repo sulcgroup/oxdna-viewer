@@ -4,10 +4,14 @@
  */
 
 class AminoAcid extends BasicElement {
+    a1: THREE.Vector3;
+    a3: THREE.Vector3;
+
     constructor(id: number, strand: Strand) {
         super(id, strand);
         this.elementType = AA;
-        
+        this.a1 = new THREE.Vector3(0.,0.,0.);
+        this.a3 = new THREE.Vector3(0.,0.,0.);
     };
 
     elemToColor(elem: number | string): THREE.Color {
@@ -23,12 +27,16 @@ class AminoAcid extends BasicElement {
             parseFloat(l[1]),
             parseFloat(l[2])
         );
-        this.calcPositions(p, undefined, undefined, colorUpdate);
+        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
+        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
+        this.calcPositions(p, a1, a3, colorUpdate);
     }
 
     calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3, colorUpdate?: boolean) {
         const sys = this.getSystem();
         let sid = this.sid;
+        this.a1 = a1.clone();
+        this.a3 = a3.clone();
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
         if (this.n3 && this.n3 != this.strand.end5) {
@@ -169,7 +177,14 @@ class AminoAcid extends BasicElement {
         const x: number = tempVec.x;
         const y: number = tempVec.y;
         const z: number = tempVec.z;
-        dat = x + " " + y + " " + z + " 1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
+        let xA1 = this.a1.x;
+        let yA1 = this.a1.y;
+        let zA1 = this.a1.z;
+        let xA3 = this.a3.x;
+        let yA3 = this.a3.y;
+        let zA3 = this.a3.z;
+        dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
+            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string //add all locations to dat file string
         return dat;
     };
 

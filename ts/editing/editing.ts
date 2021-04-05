@@ -227,3 +227,73 @@ function moveToWrapper(){
     let e = bases.pop();
     edit.move_to(e, bases);
 }
+
+function createNetworkWrapper() {
+    // Makes a Network
+    let bases = Array.from(selectedBases);
+    // copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
+    let nid = networks.length;
+    editHistory.do(new RevertableNetworkCreation(bases, nid));
+    view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
+}
+function deleteNetworkWrapper(nid: number) {
+    let net = networks[nid];
+    if(net.onscreen){
+        net.toggleVis(); // turn it off
+    }
+    networks.splice(nid, 1);
+    if(selectednetwork == nid) selectednetwork = -1;
+    view.removeNetwork(nid);
+}
+
+function fillEdgesWrapper(nid: number, edgecase: number) {
+    // Easy expansion for other edge methods
+    if(networks.length == 0) {
+        notify('No Networks Found, Please Create Network');
+    } else {
+        let net = networks[nid];
+        switch(edgecase){
+            case 0:
+                let cutoff = view.getInputNumber("edgeCutoff");
+                if(typeof(cutoff) != "number" || cutoff > 1000 || cutoff <= 0 || isNaN(cutoff)){
+                    notify("Please enter recongized value into 'Edge Cutoff' box")
+                } else {
+                    net.edgesByCutoff(cutoff);
+                }
+        }
+    }
+}
+
+function visualizeNetworkWrapper(nid: number) {
+    let net = networks[nid];
+    if(net.reducedEdges.total == 0){
+        notify("Connections must be assigned prior to Network Visualization");
+        return;
+    }
+    net.toggleVis();
+}
+
+function selectNetworkWrapper(nid: number) {
+    clearSelection();
+    let net = networks[nid];
+    net.selectNetwork();
+}
+
+function discretizeMassWrapper(){
+    if (selectedBases.size == 0) { // Need Elements
+        notify("Please select Bases");
+        return;
+    }
+    let cellSize = view.getInputNumber("cellSize");
+    if (cellSize <= 0 || typeof(cellSize) != "number" || isNaN(cellSize)) { //Valid value for cellsize
+        notify("Please Enter Valid Cell Size into the Cell Size Box");
+        return;
+    } else {
+        let elems = Array.from(selectedBases); // Save so that we can clear the selection
+        clearSelection();
+        let ret = edit.discretizeMass(elems, cellSize);
+        const InstMassSys = ret["elems"].map(e => new InstanceCopy(e));
+        editHistory.add(new RevertableAddition(InstMassSys, ret["elems"]));
+        flux.prepIndxButton(ret["indx"]);
+    }
+}

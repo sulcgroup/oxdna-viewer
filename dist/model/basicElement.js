@@ -6,7 +6,7 @@
  */
 class BasicElement {
     constructor(id, strand) {
-        this.connections = [];
+        this.connections = []; // ref all elements it's
         this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
         this.id = id;
         this.strand = strand;
@@ -120,6 +120,9 @@ class BasicElement {
         return this.getInstanceParameter3('cmOffsets');
     }
     isAminoAcid() {
+        return false;
+    }
+    isGS() {
         return false;
     }
     toJSON() {

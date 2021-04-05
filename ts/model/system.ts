@@ -141,6 +141,12 @@ class System {
         while(currentIDs.has(id)) id++;
         return id;
     }
+    getNextGenericSphereStrandID() {
+        let id = 0;
+        let currentIDs = new Set(this.strands.filter(s=>s.isGS()).map(s=>s.id));
+        while(currentIDs.has(id)) id++;
+        return id;
+    }
 
     createStrand(strID: number): Strand {
         if (strID < 0)
@@ -159,6 +165,13 @@ class System {
     addNewPeptideStrand() {
         let id = this.getNextPeptideStrandID();
         let strand = new Peptide(id, this);
+        strand.system = this;
+        this.strands.push(strand);
+        return strand;
+    }
+    addNewGenericSphereStrand() {
+        let id = this.getNextGenericSphereStrandID();
+        let strand = new Generic(id, this);
         strand.system = this;
         this.strands.push(strand);
         return strand;

@@ -18,7 +18,7 @@ function makeOutputFiles() {
         let { file_name, file } = makeDatFile(name, reorganized);
         makeTextFile(file_name, file);
     }
-    if (ANMs.length > 0) {
+    if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
         makeTextFile(file_name, file);
     }
@@ -135,10 +135,12 @@ function makeTopFile(name) {
         let cons = [];
         // Protein mode
         if (counts['totAA'] > 0) {
-            for (let i = 0; i < e.connections.length; i++) {
-                let c = e.connections[i];
-                if (newElementIds.get(c.p2) > newElementIds.get(e) && newElementIds.get(c.p2) != n5) {
-                    cons.push(newElementIds.get(c.p2));
+            if (e.isAminoAcid()) {
+                for (let i = 0; i < e.connections.length; i++) {
+                    let c = e.connections[i];
+                    if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
+                        cons.push(newElementIds.get(c));
+                    }
                 }
             }
         }
@@ -183,18 +185,33 @@ function makeDatFile(name, altNumbering = undefined) {
 function makeParFile(name, altNumbering, counts) {
     const par = [];
     par.push(counts[3]);
-    ANMs.forEach((anm) => {
-        //ANMs can be huge so we need to use a traditional for loop here
-        const l = anm.children.length;
-        for (let i = 0; i < l; i++) {
-            const curCon = anm.children[i];
-            const p1ID = altNumbering.get(curCon.p1);
-            const p2ID = altNumbering.get(curCon.p2);
-            const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
-            par.push(line.join(" "));
+    networks.forEach((net) => {
+        const t = net.reducedEdges.total;
+        if (t != 0) {
+            for (let i = 0; i < t; i++) {
+                let p1 = net.particles[net.reducedEdges.p1[i]]; // old element old id
+                let p2 = net.particles[net.reducedEdges.p2[i]];
+                const p1ID = altNumbering.get(p1);
+                const p2ID = altNumbering.get(p2);
+                const line = [p1ID, p2ID, net.reducedEdges.eqDist[i], net.reducedEdges.types[i], net.reducedEdges.ks[i]].concat(net.reducedEdges.extraParams[i]);
+                par.push(line.join(" "));
+            }
         }
     });
     return { file_name: name + ".par", file: par.join('\n') };
+    // ANMs.forEach ((anm: ANM) => {
+    //     //ANMs can be huge so we need to use a traditional for loop here
+    //     const l = anm.children.length
+    //     for (let i = 0; i < l; i++) {
+    //         const curCon = anm.children[i]
+    //         const p1ID: number = altNumbering.get(curCon.p1);
+    //         const p2ID: number = altNumbering.get(curCon.p2);
+    //
+    //         const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
+    //         par.push(line.join(" "));
+    //     }
+    // });
+    // return {file_name: name+".par", file: par.join('\n') };
 }
 function writeMutTrapText(base1, base2) {
     return "{\n" + "type = mutual_trap\n" +
@@ -245,3 +262,32 @@ function makeTextFile(filename, text) {
     //window.parent.FakeDataDownload(blob, filename);
 }
 ;
+function makeIndxFile(indxarray) {
+    let write = () => {
+        let text = "";
+        indxarray.forEach(ind => {
+            ind.forEach((sub, si) => {
+                if (si != 0 && si != sub.length - 1) {
+                    text += " ";
+                }
+                text += sub.toString(); // Add particle id
+            });
+            // Newline between each particles array
+            text += '\n';
+        });
+        makeTextFile("index.txt", text);
+    };
+    if (indxarray.length == 0) {
+        notify("Index Data is Empty");
+        return;
+    }
+    else {
+        write();
+    }
+}
+function makeNetworkJSONFile(nid) {
+    makeTextFile("network.json", JSON.stringify(networks[nid].toJson()));
+}
+function makeFluctuationFile(gid) {
+    makeTextFile("flux.json", JSON.stringify(graphDatasets[gid].toJson()));
+}

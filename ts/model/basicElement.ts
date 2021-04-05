@@ -11,7 +11,7 @@ abstract class BasicElement {
     label: string;
     n3: BasicElement | null;
     n5: BasicElement | null;
-    connections: ANMConnection[] = [];
+    connections: BasicElement[] = []; // ref all elements it's
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string
@@ -19,6 +19,7 @@ abstract class BasicElement {
     clusterId: number;
     dummySys: System;
     color: THREE.Color;
+    pdbid: string; //Only Intialized if loaded from a PDB structure
 
     constructor(id: number, strand: Strand) {
         this.id = id;
@@ -176,6 +177,10 @@ abstract class BasicElement {
     }
 
     isAminoAcid() {
+        return false;
+    }
+
+    isGS() {
         return false;
     }
 

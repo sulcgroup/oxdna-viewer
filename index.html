@@ -1,5 +1,5 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/html">
 
 <head>
     <link rel="shortcut icon" type="image/png" href="favicon.png">
@@ -170,6 +170,7 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-edit">Edit</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-view">View</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
+            <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
         </ul>
 
         <div class="content-holder">
@@ -654,6 +655,83 @@
                     <span class="title">Forces</span>
                 </div>
             </div>
+            <!-- Separate Protein section-->
+            <div class="section" id="section-protein">
+                <div class="group">
+                    <div class="tight group flex-column">
+                        <div>
+                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper()"
+                                    title="Discretize Selected Masses">
+                                <span class="mif-compass"></span>
+                                <span class="caption"> Coarse-Grain</span>
+                            </button>
+                            <button class="ribbon-icon-button" id="jsonbutton"
+                                    title="Download JSON File to solve the network using our scripts">
+                                <span class="caption"> Download Network JSON File</span>
+                            </button>
+                            <button class="ribbon-icon-button" id="indxbutton"
+                                    title="Download Index File for Generated Particles">
+                                <span class="caption"> Download Index File</span>
+                            </button>
+                        </div>
+                        <input type="text" data-role="input" title="cellSize" class="mb-1" id="cellSize"
+                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
+                               data-history="true" data-prevent-submit="true"
+                               placeholder="Input Cell Size">
+                    </div>
+                </div>
+
+                <div class="group">
+                    <div class="tight group flex-column">
+                        <div>
+                            <button class="ribbon-icon-button" onclick="createNetworkWrapper()"
+                                    title="Create Network">
+                                <span class="mif-lightning5 mif-1x"></span>
+                                <span class="caption">Create Network</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="deleteNetworkWrapper(selectednetwork)"
+                                    title="Delete Network">
+                                <span class="mif-lightning5 mif-1x"></span>
+                                <span class="caption">Delete Network</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="visualizeNetworkWrapper(selectednetwork)"
+                                    title="Delete Network">
+                                <span class="mif-lightning5 mif-1x"></span>
+                                <span class="caption">View Network</span>
+                            </button>
+
+                            <div class="dropdown-button">
+                                <button class="button dropdown-toggle">Network Select</button>
+                                <ul class="d-menu put-left" data-role="dropdown" id="networks" title="Select a Created Network">
+                                    <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
+                                </ul>
+                            </div>
+
+                            <div class="dropdown-button">
+                                <button class="button dropdown-toggle">Assign Edges</button>
+                                <ul class="d-menu put-left" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
+                                    <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
+                                </ul>
+                            </div>
+
+                        </div>
+                        <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"
+                           data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
+                           data-history="true" data-prevent-submit="true"
+                           placeholder="Input Cutoff Value">
+                    </div>
+                </div>
+
+                <div class="tight group flex-column">
+                    <button class="ribbon-button" onclick="view.toggleWindow('fluctuationWindow', flux.initializeGraph());"
+                            title="Preview expected fluctuations of networks">
+                        <span class="mif-flow-cascade mif-3x"></span>
+                        <span class="caption">Fluctuation Solver</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -675,6 +753,7 @@
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
         <script src="./ts/lib/justcontext.js"></script>
+        <script src="./ts/lib/chart.min.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
         <script src="./ts/controls/TrackballControls.js"></script>
         <script src="./dist/scene/scene_setup.js"></script>
@@ -698,6 +777,10 @@
         <script src="./dist/model/system.js"></script>
         <script src="./dist/model/anm.js"></script>
         <script src="./dist/model/force.js"></script>
+        <script src="./dist/model/network.js"></script>
+        <script src="./dist/model/genericSphere.js"></script>
+        <script src="./dist/model/svd.js"></script>
+        <script src="./dist/model/leastSquares.js"></script>
         <script src="./dist/UI/base_selector.js"></script>
         <script src="./dist/UI/keybindings.js"></script>
         <script src="./dist/file_handling/output_file.js"></script>

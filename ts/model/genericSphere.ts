@@ -2,34 +2,31 @@
  * Extends BasicElement with amino acid-specific properties such as the larger colormap to account for 20 types.
  * This class is incomplete and only supports visualization right now.  Editing will not work.
  */
-class AminoAcid extends BasicElement {
-    constructor(id, strand) {
+class GenericSphere extends BasicElement {
+    mass:number;
+    constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.elementType = AA;
-        this.a1 = new THREE.Vector3(0., 0., 0.);
-        this.a3 = new THREE.Vector3(0., 0., 0.);
+        this.elementType = GS;
+        this.mass = 1.0;
+        this.type = 'gs';
     }
     ;
-    elemToColor(elem) {
-        elem = { "K": 0, "C": 1, "A": 2, "T": 3, "E": 3, "S": 4, "D": 5, "N": 6, "Q": 7, "H": 8, "G": 10, "P": 11, "R": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
-        if (elem == undefined)
-            return GREY;
-        return nucleosideColors[elem];
+    elemToColor(elem: number | string) {
+        return GREY;
     }
     ;
-    calcPositionsFromConfLine(l, colorUpdate) {
+    calcPositionsFromConfLine(l: string[]) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
-        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
-        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
-        this.calcPositions(p, a1, a3, colorUpdate);
+        this.calcPositions(p);
     }
-    calcPositions(p, a1, a3, colorUpdate) {
-        const sys = this.getSystem();
+    calcPositions(p: THREE.Vector3) { //mass Parameter should be set prior to calling this
+        let sys = this.getSystem();
+        if (this.dummySys !== null) {
+            sys = this.dummySys;
+        }
         let sid = this.sid;
-        this.a1 = a1.clone();
-        this.a3 = a3.clone();
-        // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
+        // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.0
         let sp, spLen, spRotation;
         if (this.n3 && this.n3 != this.strand.end5) {
             let bbLast = this.n3.getInstanceParameter3('bbOffsets');
@@ -43,17 +40,19 @@ class AminoAcid extends BasicElement {
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
         this.handleCircularStrands(sys, sid, p);
-        if (colorUpdate) {
-            // determine the mesh color, either from a supplied colormap json or by the strand ID.
-            const bbColor = this.strandToColor(this.strand.id);
-            sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
-            const nsColor = this.elemToColor(this.type);
-            sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
-            let idColor = new THREE.Color();
-            idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
-            sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
-        }
+        // determine the mesh color, either from a supplied colormap json or by the strand ID.
+        let color = new THREE.Color();
+        color = this.strandToColor(this.strand.id);
+        let idColor = new THREE.Color();
+        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
+        let scale;
+        if(this.mass > 4){ //More than 4 particles
+            scale = 1+this.mass/16;
+        } else {
+            scale = 1;
+        }
+
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
@@ -64,15 +63,44 @@ class AminoAcid extends BasicElement {
         sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         sys.fillVec('scales', 3, sid, [0, 0, 0]);
-        sys.fillVec('nsScales', 3, sid, [1, 1, 1]);
+        sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
         sys.fillVec('conScales', 3, sid, [0, 0, 0]);
-        if (spLen == 0) {
-            sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
+        sys.fillVec('visibility', 3, sid, [1, 1, 1]);
+        color = this.elemToColor(this.type);
+        sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
+        sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+        // keep track of last backbone for sugar-phosphate positioning
+        //bbLast = p.clone();
+    }
+    ;
+    calculateNewConfigPositions(l) {
+        const sys = this.getSystem();
+        let sid = this.sid;
+        //extract position
+        const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
+        //calculate new backbone connector position/rotation
+        let sp, spLen, spRotation;
+        if (this.n3 && this.n3 != this.strand.end5) {
+            let bbLast = this.n3.getInstanceParameter3('bbOffsets');
+            sp = p.clone().add(bbLast).divideScalar(2);
+            spLen = p.distanceTo(bbLast);
+            spRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), sp.clone().sub(p).normalize());
         }
         else {
-            sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+            sp = new THREE.Vector3();
+            spLen = 0;
+            spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
-        sys.fillVec('visibility', 3, sid, [1, 1, 1]);
+        this.handleCircularStrands(sys, sid, p);
+        sys.fillVec('cmOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbOffsets', 3, sid, p.toArray());
+        sys.fillVec('nsOffsets', 3, sid, p.toArray());
+        sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
+        sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+        //bbLast = p.clone();
     }
     ;
     translatePosition(amount) {
@@ -127,12 +155,10 @@ class AminoAcid extends BasicElement {
                     break;
                 case "Custom":
                     if (!this.color) {
-                        bbColor = GREY;
-                        aaColor = GREY;
+                        bbColor = new THREE.Color(0x888888);
                     }
                     else {
                         bbColor = this.color;
-                        aaColor = this.color;
                     }
                     break;
             }
@@ -156,36 +182,24 @@ class AminoAcid extends BasicElement {
         const x = tempVec.x;
         const y = tempVec.y;
         const z = tempVec.z;
-        let xA1 = this.a1.x;
-        let yA1 = this.a1.y;
-        let zA1 = this.a1.z;
-        let xA3 = this.a3.x;
-        let yA3 = this.a3.y;
-        let zA3 = this.a3.z;
-        dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
-            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string //add all locations to dat file string
+        dat = x + " " + y + " " + z + " 1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
         return dat;
     }
     ;
     extendStrand(len, direction) {
     }
     isAminoAcid() {
+        return false;
+    }
+    ;
+    isGS(){
         return true;
     }
+    /*
     getTypeNumber() {
-        let c = this.type;
-        let i = ['X', 'A', 'R', 'N', 'D', 'C',
-            'E', 'Q', 'G', 'H', 'I',
-            'L', 'K', 'M', 'F',
-            'P', 'S', 'T', 'W',
-            'Y', 'V', 'Z'].indexOf(c);
-        if (i >= 0) {
-            return -i;
-        }
-        else {
-            return parseInt(c);
-        }
+        // Will Probably need this for Patchy Particles?
     }
+    */
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -193,4 +207,3 @@ class AminoAcid extends BasicElement {
         return json;
     }
 }
-;

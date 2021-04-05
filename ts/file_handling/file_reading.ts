@@ -1,8 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-
-
-
 // Creates color overlays
 function makeLut(data, key) {
     const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
@@ -80,7 +77,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let topFile, jsonFile, trapFile;
+    let topFile, jsonFile, trapFile, pdbfile;
     let idxFile = null;
 
     // assign files to the extentions
@@ -101,9 +98,15 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
+        else if (ext === "pdb") {
+            notify("Reading PDB File...");
+            pdbfile = files[i];
+            readPdbFile(pdbfile);
+            return;
+        }
         else if (ext === "idx") idxFile = files[i];
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
             return
         }
     }
@@ -119,6 +122,13 @@ function handleFiles(files: FileList) {
     if (datAlone && systems.length === 0) {
         notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
         return
+    }
+    if (!trapFile) {
+        if (jsonFile && !topFile) jsonAlone = true;
+        if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
+            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+            return
+        }
     }
 
     //read a topology/configuration pair and maybe a json file
@@ -570,9 +580,61 @@ function readOxViewJsonFile(file: File) {
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
+// function readParFile(file) {
+//     let system = systems[systems.length - 1]; //associate the par file with the last loaded system
+//     let reader = new FileReader();
+//     reader.onload = () => {
+//         let lines = (reader.result as string).split(/[\n]+/g);
+//
+//         //remove the header
+//         lines = lines.slice(1)
+//
+//         const size = lines.length;
+//
+//         //create an ANM object to allow visualization
+//         const anm = new ANM(system, ANMs.length, size)
+//
+//         //process connections
+//         for (let i = 0; i < size-1; i++) {
+//             let l = lines[i].split(" ")
+//             //extract values
+//             const p = parseInt(l[0]),
+//                 q = parseInt(l[1]),
+//                 eqDist = parseFloat(l[2]),
+//                 type = l[3],
+//                 strength = parseFloat(l[4]);
+//
+//             // if its a torsional ANM then there are additional parameters on some lines
+//             let extraParams = []
+//             if (l.length > 5) {
+//                 for (let i = 5; i < l.length; i++) {
+//                     extraParams.push(l[i])
+//                 }
+//             }
+//
+//             //dereference p and q into particle positions from the system
+//             const particle1 = system.getElementBySID(p),
+//                   particle2 = system.getElementBySID(q);
+//
+//             if (particle1 == undefined) console.log(i)
+//
+//             anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
+//         };
+//         addANMToScene(anm);
+//         system.strands.forEach((s) => {
+//             if (s.isPeptide()) {
+//                 api.toggleStrand(s);
+//             }
+//         })
+//         ANMs.push(anm);
+//     }
+//     reader.readAsText(file);
+// }
+
+//reads in an anm parameter file and associates it with the last loaded system.
 function readParFile(file) {
-    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
     let reader = new FileReader();
+    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
     reader.onload = () => {
         let lines = (reader.result as string).split(/[\n]+/g);
 
@@ -582,7 +644,7 @@ function readParFile(file) {
         const size = lines.length;
 
         //create an ANM object to allow visualization
-        const anm = new ANM(system, ANMs.length, size)
+        const net = new Network(networks.length, system.getMonomers());
 
         //process connections
         for (let i = 0; i < size-1; i++) {
@@ -602,43 +664,41 @@ function readParFile(file) {
                 }
             }
 
-            //dereference p and q into particle positions from the system
-            const particle1 = system.getElementBySID(p),
-                  particle2 = system.getElementBySID(q);
-
-            if (particle1 == undefined) console.log(i)
-
-            anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
+            // if (particle1 == undefined) console.log(i)
+            net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         };
-        addANMToScene(anm);
-        system.strands.forEach((s) => {
-            if (s.isPeptide()) {
-                api.toggleStrand(s);
-            }
-        })
-        ANMs.push(anm);
+        // Create and Fill Vectors
+        net.initInstances(net.reducedEdges.total);
+        net.initEdges();
+        net.fillConnections(); // fills connection array for
+
+        net.prepVis(); // Creates Mesh for visualization
+        networks.push(net); // Any network added here shows up in UI network selector
+        selectednetwork = net.nid; // auto select network just loaded
+        view.addNetwork(net.nid);
+
     }
     reader.readAsText(file);
 }
 
-function addANMToScene(anm: ANM) {
-    anm.geometry = instancedConnector.clone();
-
-    anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
-    anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
-    anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
-    anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
-    anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
-
-    anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
-    anm.network.frustumCulled = false;
-
-    scene.add(anm.network);
-
-    render();
-
-    canvas.focus();
-}
+// function addANMToScene(anm: ANM) {
+//     anm.geometry = instancedConnector.clone();
+//
+//     anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
+//     anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
+//     anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
+//     anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
+//     anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
+//
+//     anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
+//     anm.network.frustumCulled = false;
+//
+//     scene.add(anm.network);
+//
+//     render();
+//
+//     canvas.focus();
+// }
 
 function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
@@ -749,3 +809,905 @@ window.addEventListener("message", (event) => {
         return
     }
 }, false);
+
+// Helper Objects for pdb parsing
+class pdbatom{
+    // store most info as strings to make robust against more interestingly formulated PDB files
+    indx : string;
+    atomType: string;
+    altLoc: string;
+    resType: string;
+    chainID: string;
+    chainIndx: number;
+    pdbResIdent : string;
+    iCode: string;
+    x: number;
+    y: number;
+    z: number;
+    occupancy: string;
+    tempFactor: string; // make optional?
+    element: string | number;
+    charge: string | number;
+    constructor() {
+        this.indx = "";
+        this.atomType = "";
+        this.altLoc = "";
+        this.resType = "";
+        this.chainID = "";
+        this.chainIndx = -1;
+        this.pdbResIdent = "";
+        this.iCode = "";
+        this.x = 0; // these MUST be numbers
+        this.y = 0;
+        this.z = 0;
+        this.occupancy = "";
+        this.tempFactor = "";
+        this.element = "";
+        this.charge = "";
+    }
+}
+
+class pdbresidue{
+    resType: string;
+    pdbResIdent: string;
+    chainID: string;
+    chainIndx: number;
+    type: string;
+    atoms: pdbatom[];
+    constructor(){
+        this.resType = "";
+        this.chainIndx = -1;
+        this.pdbResIdent = "";
+        this.chainID = "";
+        this.type = "";
+        this.atoms = [];
+    }
+}
+
+class pdbchain{
+    chainID: string;
+    chainIndx: number;
+    residues: pdbresidue[];
+    strandtype: string;
+    constructor(){
+        this.chainIndx = -1;
+        this.chainID = "";
+        this.residues = [];
+        this.strandtype = "";
+    }
+}
+
+// Stores locations of unique and repeated chains throughout the provided PDB file
+class pdbReadingList{
+    uniqueIDs: string[]; // unique chain Identifiers
+    uniqueStart: number[]; // starting line number of
+    uniqueEnd : number[];
+    repeatIDs : string[];
+    repeatStart: number[];
+    repeatEnd: number[];
+    repeatCoords : THREE.Vector3[][]; // coordinates for repeated chains
+    repeatQuatRots : THREE.Quaternion[]; // Rotation Quaternion for Repeated chain a1/a3 vectors
+    constructor(){
+        this.uniqueIDs = [];
+        this.uniqueStart = [];
+        this.uniqueEnd = [];
+        this.repeatIDs = [];
+        this.repeatStart =[];
+        this.repeatEnd = [];
+        this.repeatCoords = [];
+        this.repeatQuatRots = [];
+    }
+}
+
+class pdbinfowrapper { //Transfers Necessary Data from readPdbFile to addPDBtoScene
+    pdbfilename: string;
+    pdbsysinfo: pdbchain[];
+    initlist: pdbReadingList;
+
+    constructor(pi, chains, initlist) {
+        this.pdbfilename = pi;
+        this.pdbsysinfo = chains;
+        this.initlist = initlist;
+    }
+}
+
+function prep_pdb(pdblines: string[]){
+
+    //Checks for repeated chains, Biological Assemblies etc.
+    let chainDivs: number[] = [];
+    let modelDivs: number[] = [];
+    let firstatom = 0;
+    let noatom = false;
+    // Find Chain Termination statements TER and uses
+    for(let i = 0; i< pdblines.length; i++){
+        if(pdblines[i].substr(0, 4) == 'ATOM' && noatom==false){
+            firstatom = i;
+            noatom = true;
+        }
+
+        if (pdblines[i].substr(0, 3) === 'TER'){
+            chainDivs.push(i);
+        } else if(pdblines[i].substr(0, 6) === 'ENDMDL'){
+            modelDivs.push(i);
+        }
+    }
+
+    // If models are present in pdb file, Assumes that repeat chain ids are
+    // repeat instances of the 1st chain w/ the same chain identifer
+    let bioassemblyassumption = false;
+    if (modelDivs.length > 0) bioassemblyassumption = true;
+
+    // Look at line above chain termination for chain ID
+    let chainids: string[] = [];
+    chainDivs.forEach(d => {
+        chainids.push(pdblines[d-1].substring(21, 22).trim())
+    });
+
+
+    //Re-Assign Chain Ids based off repeating or not
+    let sorted_repeated_chainids: string[] = [];
+    chainids.forEach((chain, ind) => {
+        if(chainids.indexOf(chain) != ind && bioassemblyassumption) { //Check for repeated and presence of models
+            sorted_repeated_chainids.push(chain);
+        } else {
+            sorted_repeated_chainids.push(chain+"*"); // not a repeat? denoted as A*
+        }
+    })
+
+    let nchainids : string[] = []; // Store new chainids
+    let alphabet = 'abcdefghijklmnopqrstuvwxyz123456789<>?/!@#$%^&*()_-=+'.split('');
+
+    sorted_repeated_chainids.forEach((val, ind) => {
+        if(nchainids.indexOf(val) != ind){ //same chain identifier needs to be fixed
+            if(val != "" && val.includes("*")){ //unique chain
+                let nval = val;
+                let attmpt_indx = 1;
+                while(nchainids.indexOf(nval) != -1){
+                    nval = alphabet[attmpt_indx] + val;
+                    attmpt_indx += 1;
+                }
+                nchainids.push(nval);
+            } else {
+                nchainids.push(val);
+            }
+        } else {
+            nchainids.push(val);
+        }
+
+    });
+
+    // Stores ID, start line, end line if chain is unique
+    // Stores Id, start line, end line, coordinates a if chain is repeated and Quat Rotation for a1
+    // tl;dr  unique chains require more calculations while repeated chains can resuse those calculated parameters and shifts them accordingly
+    // necessary for loading large things like Virus particles
+    let initList =  new pdbReadingList;
+    let prevend = firstatom;
+    for(let i=0; i<nchainids.length; i++){
+        if(nchainids[i].includes("*")){
+            let id = nchainids[i].replace('*', ''); // remove asterisk from chain id
+            initList.uniqueIDs.push(id)
+            initList.uniqueStart.push(prevend)
+            initList.uniqueEnd.push(chainDivs[i])
+            prevend = chainDivs[i]
+        } else {
+            initList.repeatIDs.push(nchainids[i])
+            initList.repeatStart.push(prevend)
+            initList.repeatEnd.push(chainDivs[i])
+            initList.repeatCoords.push([new THREE.Vector3(0, 0, 0)])
+            initList.repeatQuatRots.push(new THREE.Quaternion())
+            prevend = chainDivs[i]
+        }
+    }
+
+    return initList;
+}
+
+//
+function readPdbFile(file) {
+    let reader = new FileReader();
+
+    reader.onload = () => {
+        const pdbLines = (reader.result as string).split(/[\n]+/g);
+        let initList = prep_pdb(pdbLines);
+        let uniqatoms : pdbatom[] = [];
+        let uniqresidues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
+        let uniqchains : pdbchain[] = [];
+
+        // bookkeeping
+
+        let label = "pdb";
+
+        // Search Just the Header for PDB code ex. (1BU4), label used for graph datasets
+        for(let i = 0; i < 10; i++) {
+            if (pdbLines[i].substr(0, 6) === 'HEADER') {
+                let head = pdbLines[i].match(/\S+/g); //header info, search
+                head.forEach(i => {
+                    let si = i.split('');
+                    if (si.length == 4 && (!isNaN(parseFloat(si[0])) && isFinite(parseFloat(si[0])))) { //PDB IDs are 4 characters 1st character is always an integer checks for that
+                        label = i;
+                    }
+                })
+            }
+        }
+
+        // Called for each unique chain found in the system
+        let pdbpositions = [];
+        let prevChainId = "";
+        let Amino: boolean = false;
+        let atoms : pdbatom[] = [];
+        let residues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
+        let chains : pdbchain[] = [];
+        let na = new pdbatom();
+        let nr = new pdbresidue();
+        let nc = new pdbchain();
+        const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
+            "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
+            "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
+        let chainindx = -1;
+        let totalchainlength = 0; // Subchains are loaded separately but not accounted for in initlist which I used
+        let loadpdbsection = function(start, end): [boolean, THREE.Vector3[], pdbatom[], pdbresidue[], pdbchain[]] {
+            pdbpositions = [];
+            atoms = [];
+            chains = [];
+            residues = [];
+            prevChainId = "";
+            let prevResId = " ";
+            for(let j = start; j < end; j++){
+                if (pdbLines[j].substr(0, 4) === 'ATOM') {
+                    let pdbLine = pdbLines[j];
+                    // http://www.wwpdb.org/documentation/file-format-content/format33/sect9.html#ATOM
+                    na.indx = pdbLine.substring(6, 11).trim();
+                    na.atomType = pdbLine.substring(12, 16).trim();
+                    na.altLoc = pdbLine.substring(16, 17).trim();
+                    na.resType = pdbLine.substring(17, 20).trim();
+                    na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+
+                    let tmp = pdbLine.substring(23, 29); // Usually the residue number
+                    //check for insertion code
+                    na.iCode = "";
+                    if(isNaN(parseInt(tmp[5]))){
+                        na.iCode = tmp[5];
+                        na.pdbResIdent = tmp.slice(0, 5).trim()
+                    } else {
+                        na.pdbResIdent = tmp.trim();
+                    }
+                    // Convert From Angstroms to Simulation Units while we're at it
+                    na.x = parseFloat(pdbLine.substring(30, 38))/ 8.518;
+                    na.y = parseFloat(pdbLine.substring(38, 46))/ 8.518;
+                    na.z = parseFloat(pdbLine.substring(46, 54))/ 8.518;
+                    na.occupancy = pdbLine.substring(54, 60).trim();
+                    na.tempFactor = pdbLine.substring(60, 66).trim();
+                    na.element = pdbLine.substring(76, 78).trim();
+                    na.charge = pdbLine.substring(78, 80).trim();
+
+                    // residue type has to be correct
+                    if(j == start) Amino = recongizedProteinResidues.indexOf(na.resType) >= 0;
+
+                    if(Amino){
+                        if(na.atomType == "CA") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
+                    } else {
+                        if(na.atomType == "N1") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
+                    }
+
+                    //checks if last read atom belongs to a different chain than the one before it
+                    if (prevChainId !== na.chainID) {
+                        //notify("chain created");
+                        chainindx += 1;
+                        na.chainIndx = chainindx;
+                        nc.chainID = na.chainID;
+                        nc.chainIndx = na.chainIndx;
+                        // copy is necessary
+                        let ncc = {
+                            ...nc
+                        };
+                        chains.push(ncc);
+                        //set previous chain id to that of last read atom
+                        prevChainId = na.chainID;
+                    } else { // not a new chain, same chain index
+                        na.chainIndx = chainindx;
+                    }
+
+                    //checks if last read atom belongs to a different chain than the one before it
+                    if (prevResId != na.pdbResIdent) {
+                        nr.resType = na.resType;
+                        nr.pdbResIdent = na.pdbResIdent;
+                        nr.chainID = na.chainID;
+                        nr.chainIndx = na.chainIndx;
+
+                        // copy is necessary
+                        let nrc = {
+                            ...nr
+                        };
+                        residues.push(nrc)
+                        //set previous chain id to that of last read atom
+                        prevResId = nrc.pdbResIdent;
+                    }
+
+                    // copy is necessary
+                    let nac: pdbatom = {
+                        ...na
+                    };
+                    atoms.push(nac);
+                }
+            }
+            // info
+            return [Amino, pdbpositions, atoms, residues, chains];
+        }
+
+        let getpdbpositions = function(start, end, Amino?): THREE.Vector3[] {
+            // reads in pdb text and returns the positions b/t start and end linenumbers
+            let pdbpositions = [];
+            for(let j = start; j < end; j++) {
+                if (pdbLines[j].substr(0, 4) === 'ATOM'){
+                    // Align via N1 positions for DNA & CA for proteins
+                    if (!Amino && pdbLines[j].substring(12, 16).trim() == "N1"){
+                        let x = parseFloat(pdbLines[j].substring(30, 38))/ 8.518;
+                        let y = parseFloat(pdbLines[j].substring(38, 46))/ 8.518;
+                        let z = parseFloat(pdbLines[j].substring(46, 54))/ 8.518;
+                        pdbpositions.push(new THREE.Vector3(x, y, z));
+                    } else if (Amino && pdbLines[j].substring(12, 16).trim() == "CA"){
+                        let x = parseFloat(pdbLines[j].substring(30, 38))/ 8.518;
+                        let y = parseFloat(pdbLines[j].substring(38, 46))/ 8.518;
+                        let z = parseFloat(pdbLines[j].substring(46, 54))/ 8.518;
+                        pdbpositions.push(new THREE.Vector3(x, y, z));
+                    }
+                }
+            }
+            return pdbpositions;
+        }
+
+        // load all Unique Chains
+        initList.uniqueIDs.forEach((id, indx) => {
+            let alignTO = loadpdbsection(initList.uniqueStart[indx], initList.uniqueEnd[indx]);
+            uniqatoms = uniqatoms.concat(alignTO[2]);
+            uniqresidues = uniqresidues.concat(alignTO[3]);
+            uniqchains = uniqchains.concat(alignTO[4]);
+
+            // deal with repeats of each individual unique chain
+            initList.repeatIDs.forEach((rid, rindx) => {
+                if(id.includes(rid)){ //Makes sure Chain IDs contain original chain identifier
+                    let alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0]);
+                    if(alignME.length != alignTO[1].length) notify("PDB Chains have unequal lengths");
+
+                    let alignMEcoord = alignME.map(x => {return x.clone()}); //copy our arrays
+                    let newcoords = alignME.map(x => {return x.clone()}); //copy our arrays
+                    let alignTOcoord = alignTO[1].map(x => {return x.clone()});//copy our arrays
+
+                    let uniqueCOM = alignTO[1].reduce((a,b) => a.add(b)).divideScalar(alignTO[1].length);
+                    let repeatCOM = alignME.reduce((a,b) => a.add(b)).divideScalar(alignME.length);
+
+                    let aME = alignMEcoord[0].clone().sub(repeatCOM).normalize();
+                    let aTO = alignTOcoord[0].clone().sub(uniqueCOM).normalize();
+
+                    //Calc quaternion rotation between vectors
+                    let rotQuat = new THREE.Quaternion().setFromUnitVectors(aTO, aME);
+                    // let newcoords = alignMEcoord;
+                    initList.repeatCoords[rindx] = newcoords;
+                    initList.repeatQuatRots[rindx] = rotQuat;
+                }
+            })
+        })
+
+        // Assigns Atoms to their corresponding Residues
+        uniqresidues.forEach((res: pdbresidue) => {
+            res.atoms = uniqatoms.filter(atom => atom.chainIndx == res.chainIndx && atom.pdbResIdent ==  res.pdbResIdent)
+        });
+
+        // Assigns Residues to their corresponding Chain
+        uniqchains.forEach((chain: pdbchain) => {
+            chain.residues = uniqresidues.filter(res => res.chainIndx == chain.chainIndx)
+        });
+
+        if (uniqchains.length == 0){
+            notify("No Chains Found in PDB File");
+            return;
+        }
+        if (uniqatoms.length == 0){
+            notify("No Atoms Found in PDB File");
+            return;
+        }
+
+        // Rewrite initlist.uniqueIDs to take into account subchains (labeled but no TER statements) found in the PDB file
+        // Won't work for repeated copies of subchains (something to look out for in the future)
+        initList.uniqueIDs = uniqchains.map(x => {return x.chainID});
+
+        // These hefty objects are needed to calculate the positions & a1, a3 of nucleotides and amino acids
+        let pdbinfo = new pdbinfowrapper(label, uniqchains, initList);
+        pdbFileInfo.push(pdbinfo); // Store Info in this global array so onloadend can access the info
+
+    }
+    reader.onloadend = () => {
+        addPDBToScene();
+    }
+
+
+    reader.readAsText(file); // Executes Loading reads file etc.
+                             // when it ends triggers addPDBtoScene
+}
+
+function addPDBToScene () {
+    // Adds last added pdb info object in pdbFile Info
+    if(pdbFileInfo.length > 0) {
+        let pdata = pdbFileInfo.slice(-1)[0];
+        let strands = pdata.pdbsysinfo;
+        let label = pdata.pdbfilename;
+        let initlist = pdata.initlist;
+
+
+        // Looking back at this the strands name probably wasn't the most unique choice
+        // strands is meant to be the chain object from the PDB Parser
+        // Parses PDB Data and Intializes System, Errors go to the Console
+
+        //PDB Parsing
+        // Members of the Recongized arrays cannot have overlapping Members
+        const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
+        const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
+        const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN",
+            "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
+            "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
+        const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
+        const recongizedRNAStrandEnds = ["A3", "A5", "C3", "C5", "G3", "G5", "U3", "U5"];
+
+        // Intialize bookkeeping Members for Boolean Checks
+        let checker = {
+            DNAPresent: false,
+            proteinPresent: false,
+            RNAPresent: false,
+            mutantStrand: false
+        };
+
+        //Classify Residue Types
+        for (let i: number = 0; i < initlist.uniqueIDs.length; i++) {
+            let strand: pdbchain = strands[i];
+            // Reset Bookkeeping Members for each Strand
+            for (let key in checker) checker[key] = false;
+            // Loop over all Residues in each Strand
+            strand.residues.forEach(res => {
+                // Sort PDB Info and set Flags for System Initialization at Residue Level
+
+                //Check if Residue from PDB is in recongized array
+                if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'DN') {
+                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File. This is currently unsupported");
+                        return 1;
+                    }
+                    if (res.resType === 'DI') {
+                        notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
+                        return 1;
+                    }
+
+                    // Sets which Nucleic Acids are Intialized
+                    res.type = 'dna';
+                    // Bookkeeping
+                    checker.DNAPresent = true;
+
+                } else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'UNK') {
+                        notify("Amino Acid blank is Unknown");
+                        return 1;
+                    }
+                    // Sets which Residues are Intialized
+                    res.type = 'pro';
+                    // Bookkeeping
+                    checker.proteinPresent = true;
+
+                } else if (recongizedRNAResidues.indexOf(res.resType) > -1) {
+                    // Deal with Special Cases Here
+                    if (res.resType === 'N') {
+                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
+                        return 1;
+                    }
+                    if (res.resType === 'I') {
+                        notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
+                        return 1;
+                    }
+                    // Sets which Nucleic Acids are Intialized
+                    res.type = 'rna';
+                    // Bookkeeping
+                    checker.RNAPresent = true;
+
+                } else {
+                    notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
+                        "It will not be Intialized in the Viewer.");
+                    res.type = 'unworthy';
+                }
+            });
+
+            // Check for strands with inconsistent Residue Types
+            checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
+            if (checker.mutantStrand) {
+                notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
+                strand.strandtype = 'bastard';
+            } else {
+                if (checker.proteinPresent) strand.strandtype = 'pro';
+                if (checker.DNAPresent) strand.strandtype = 'dna';
+                if (checker.RNAPresent) strand.strandtype = 'rna';
+            }
+
+        }
+
+        //Helper values
+        let bv1 = new THREE.Vector3(1, 0, 0);
+        let bv2 = new THREE.Vector3(0, 1, 0);
+        let bv3 = new THREE.Vector3(0, 0, 1);
+        let proelem = {
+            "LYS": "K",
+            "CYS": "C",
+            "ALA": "A",
+            "THR": "T",
+            "GLU": "E",
+            "GLN": "Q",
+            "SER": "S",
+            "ASP": "D",
+            "ASN": "N",
+            "HIS": "H",
+            "GLY": "G",
+            "PRO": "P",
+            "ARG": "R",
+            "VAL": "V",
+            "ILE": "I",
+            "LEU": "L",
+            "MET": "M",
+            "PHE": "F",
+            "TYR": "Y",
+            "TRP": "W"
+        };
+        let type: string = "";
+        let pdbid: string = "";
+        let a3 = new THREE.Vector3();
+        // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to initInfo
+        let CalcInfoAA = (res: pdbresidue): [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number] => {
+            //Set Type
+            type = proelem[res.resType]; //Set Type Based Off Three Letter Codes
+            pdbid = res.pdbResIdent;
+            let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
+            res.atoms.forEach(a => {
+                if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
+                    scHAcom.x += a.x;
+                    scHAcom.y += a.y;
+                    scHAcom.z += a.z;
+                }
+            })
+            // if null vector (glycine) a1 is 1, 0, 0
+            if (scHAcom.lengthSq() == 0) scHAcom.x = 1;
+            scHAcom.normalize();
+            let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
+            if(CA) {
+                let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
+                let CABfactor = parseFloat(CA.tempFactor);
+
+                let a1 = scHAcom.clone().sub(CApos).normalize();
+                if (a1.dot(bv1) < 0.99) {
+                    a3 = a1.clone().cross(bv1);
+                } else if (a1.dot(bv2) < 0.99) {
+                    a3 = a1.clone().cross(bv2);
+                } else if (a1.dot(bv3) < 0.99) {
+                    a3 = a1.clone().cross(bv3);
+                }
+                return [pdbid, type, CApos, a1, a3, CABfactor];
+            } else return ["NOCA", "NOCA", bv1, bv1, bv1, 0]
+        }
+
+        // Helper values
+        let nucelems = {"DC": "C", "DC3": "C", "DC5":"C",  "DG": "G", "DG3": "G", "DG5":"G", "DT": "T", "DT3": "T", "DT5":"T", "T": "T", "T3": "T", "T5":"T", "DA": "A", "DA3": "A", "DA5":"A", "U": "U", "U3": "U", "U5":"U", "A": "A", "A3": "A", "A5":"A", "G": "G", "G3": "G", "G5":"G", "C": "C", "C3": "C", "C5":"C"}
+        // type and pdbid don't need to be redeclared here
+        let ring_names: string[] = ["C2", "C4", "C5", "C6", "N1", "N3"];
+        let pairs: [string, string][];
+        //Helper Function
+        // Stack Overflow<3 Permutator
+        const permutator = (inputArr) => {
+            let result = [];
+            const permute = (arr, m = []) => {
+                if (arr.length === 0) {
+                    result.push(m)
+                } else {
+                    for (let i = 0; i < arr.length; i++) {
+                        let curr = arr.slice();
+                        let next = curr.splice(i, 1);
+                        permute(curr.slice(), m.concat(next))
+                    }
+                }
+            }
+            permute(inputArr)
+            return result;
+        }
+        // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to initInfo
+        let CalcInfoNC = (res: pdbresidue): [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number] => {
+            // Info we want from PDB
+            type = nucelems[res.resType];
+            //Residue Number in PDB File
+            pdbid = res.pdbResIdent;
+            let nuccom = new THREE.Vector3;
+            let baseCom = new THREE.Vector3;
+            //Calculate Base atoms Center of Mass
+            let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
+
+            baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
+            baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
+            baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
+            baseCom.divideScalar(base_atoms.length);
+
+            let nanCheck = false;
+            let Bfacts = res.atoms.map(a => {
+                let b = parseFloat(a.tempFactor);
+                if (isNaN(b)) {
+                    notify("Bfactors contain NaN value, check formatting of provided PDB file");
+                    nanCheck = true;
+                    return;
+                }
+                return b;
+            });
+
+            if(nanCheck) return;
+
+            let Bfactavg = Bfacts.map(a => a).reduce((a, b) => a+b);
+            Bfactavg /= res.atoms.length;
+            //sum bfactors of ind atoms
+
+            let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
+            let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
+            let parallel_to = o4pos.sub(baseCom);
+
+            //Calculate Center of Mass
+
+            nuccom.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
+            nuccom.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
+            nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
+            let l = res.atoms.length;
+            let pos = nuccom.divideScalar(l);
+
+            // Compute a1 Vector
+            let ring_poss = permutator(ring_names);
+            let a3 = new THREE.Vector3;
+            for (let i: number = 0; i < ring_poss.length; i++) {
+                let types = ring_poss[i];
+                let p = res.atoms.filter(a => a.atomType == types[0])[0]
+                let q = res.atoms.filter(a => a.atomType == types[1])[0]
+                let r = res.atoms.filter(a => a.atomType == types[2])[0]
+                let v1 = new THREE.Vector3;
+                let v2 = new THREE.Vector3;
+                v1.x = p.x - q.x;
+                v1.y = p.y - q.y;
+                v1.z = p.z - q.z;
+                v2.x = p.x - r.x;
+                v2.y = p.y - r.y;
+                v2.z = p.z - r.z;
+                let nv1 = v1.clone().normalize();
+                let nv2 = v2.clone().normalize();
+
+                if (Math.abs(nv1.dot(nv2)) > 0.01) {
+                    let tmpa3 = nv1.cross(nv2);
+                    tmpa3.normalize();
+                    if (tmpa3.dot(parallel_to) < 0) {
+                        tmpa3.negate();
+                    }
+                    a3.add(tmpa3);
+                }
+            }
+
+            a3.normalize();
+
+            // Compute a1 Vector
+            if (["C", "T", "U"].indexOf(type) > -1) {
+                pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
+            } else {
+                pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
+            }
+
+            let a1 = new THREE.Vector3(0, 0, 0);
+            for (let i = 0; i < pairs.length; i++) {
+                let p_atom = res.atoms.filter(a => a.atomType == pairs[i][0])[0];
+                let q_atom = res.atoms.filter(a => a.atomType == pairs[i][1])[0];
+                let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
+                a1.add(diff);
+            }
+            a1.normalize();
+
+            return [pdbid, type, pos, a1, a3, Bfactavg]
+        }
+
+        let nextElementId = elements.getNextId();
+        let oldElementId = nextElementId;
+
+        let initInfo: [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number][] = [];
+        //Make System From the PDB Information
+        let sys = new System(sysCount, nextElementId);
+        // First Loop to Map Out the System
+        let com = new THREE.Vector3();
+        // Store B-factor Information Here
+        let bFactors = [];
+        let xdata = [];
+        for (let i: number = 0; i < (initlist.uniqueIDs.length); i++) {
+            let nstrand = strands[i];
+
+            if (nstrand.strandtype == 'pro') {
+                let currentStrand: Peptide = sys.addNewPeptideStrand();
+                // currentStrand.system = sys;
+                let strandInfo = [];
+                for (let j = 0; j < nstrand.residues.length; j++) {
+                    let aa = currentStrand.createBasicElement(nextElementId);
+                    aa.sid = nextElementId - oldElementId;
+                    let info = CalcInfoAA(nstrand.residues[j]);
+                    if(info[1] != "NOCA"){ // No Alpha Coordinates found
+                        initInfo.push(info);
+                        strandInfo.push(info);
+                        bFactors.push(info[5]);
+                        xdata.push(aa.sid);
+                        com.add(info[2]); //Add position to COM calc
+                        // Amino Acids are intialized from N-terminus to C-terminus
+                        // Same as PDB format
+                        // Neighbors must be filled for correct initialization
+                        aa.n3 = null;
+                        aa.n5 = null;
+                        if (j != 0) {
+                            let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                            aa.n3 = prevaa;
+                            prevaa.n5 = aa;
+                        }
+                        elements.push(aa);
+                        nextElementId++;
+                    }
+                }
+                currentStrand.updateEnds();
+
+                // Take care of repeats Access by Chain Identifier
+                initlist.repeatIDs.forEach((rid, indx) => {
+                    if(nstrand.chainID.includes(rid)){ // Repeat same chain
+                        let repeatStrand: Peptide = sys.addNewPeptideStrand();
+                        currentStrand.getMonomers(true).forEach((mon, mid) => {
+                            // basically just copy the strand we just built using the sotred init info and repeat chain info
+                            let repeatAmino = repeatStrand.createBasicElement(nextElementId);
+                            repeatAmino.sid = nextElementId - oldElementId;
+                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                            let rotquat = initlist.repeatQuatRots[indx];
+                            rinfo[3] = rinfo[3].applyQuaternion(rotquat) // Rotate a1
+                            rinfo[4] = rinfo[4].applyQuaternion(rotquat) // Rotate a3
+                            rinfo[2] = initlist.repeatCoords[indx][mid];
+                            bFactors.push(rinfo[5]) // Assume same B factors
+                            xdata.push(repeatAmino.sid)
+                            com.add(rinfo[2])
+                            initInfo.push(rinfo);
+                            repeatAmino.n3 = null;
+                            repeatAmino.n5 = null;
+                            if (mid != 0) { // not first element of strand
+                                let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                                repeatAmino.n3 = prevaa;
+                                prevaa.n5 = repeatAmino;
+                            }
+                            elements.push(repeatAmino);
+                            nextElementId++;
+                        });
+                        repeatStrand.updateEnds();
+                    }
+                });
+
+            } else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
+                let currentStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand();
+                let strandInfo = [];
+                //PDB entries typically list from 5' to 3'
+                //Neighbors must be filled for correct initialization
+                let pdbres3to5 = nstrand.residues.reverse(); // Flipped Order so it reads 3'  to 5'
+                for (let j = 0; j < nstrand.residues.length; j++) {
+                    //For getting center of mass
+                    let info = CalcInfoNC(pdbres3to5[j]);
+                    initInfo.push(info);
+                    strandInfo.push(info);
+                    com.add(info[2]); //Add position to COM calc
+
+                    let nc = currentStrand.createBasicElement(nextElementId);
+                    nc.n3 = null;
+                    nc.n5 = null;
+                    nc.sid = nextElementId - oldElementId;
+                    bFactors.push(info[5]);
+                    xdata.push(nc.sid);
+                    if (j != 0) {
+                        let prevnc = elements.get(nextElementId - 1); //Get previous Element
+                        nc.n3 = prevnc;
+                        prevnc.n5 = nc;
+                    }
+                    elements.push(nc);
+                    nextElementId++;
+                }
+                currentStrand.updateEnds();
+
+                // Take care of repeats Access by Chain Identifier
+                initlist.repeatIDs.forEach((rid, indx) => {
+                    if(nstrand.chainID.includes(rid)){
+                        let repeatStrand: Peptide = sys.addNewPeptideStrand();
+                        currentStrand.getMonomers(true).forEach((mon, mid) => {
+                            let repeatNuc = repeatStrand.createBasicElement(nextElementId);
+                            repeatNuc.sid = nextElementId - oldElementId;
+                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                            let rotquat = initlist.repeatQuatRots[indx];
+                            rinfo[3] = rinfo[3].applyQuaternion(rotquat) // Rotate a1
+                            rinfo[4] = rinfo[4].applyQuaternion(rotquat) // Rotate a3
+                            rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
+                            bFactors.push(rinfo[5]) // Assume same B factors
+                            xdata.push(repeatNuc.sid)
+                            com.add(rinfo[2])
+                            initInfo.push(rinfo);
+                            repeatNuc.n3 = null;
+                            repeatNuc.n5 = null;
+                            if (mid != 0) {
+                                let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                                repeatNuc.n3 = prevaa;
+                                prevaa.n5 = repeatNuc;
+                            }
+                            elements.push(repeatNuc);
+                            nextElementId++;
+                        });
+                        repeatStrand.updateEnds();
+                    }
+                });
+            }
+        }
+
+        com.divideScalar(sys.systemLength());
+        let pdbBfactors = new graphData(label, bFactors, xdata, "bfactor", "A_sqr");
+        graphDatasets.push(pdbBfactors);
+
+        sys.initInstances(sys.systemLength())
+        // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
+        let FillInfoAA = (info: [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number], AM: AminoAcid, CM: THREE.Vector3) => {
+            AM.pdbid = info[0];
+            AM.type = info[1];
+            let center = info[2].sub(CM);
+            AM.calcPositions(center, AM.a1, AM.a3, true);
+        }
+
+        // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
+        let FillInfoNC = (info: [string, string, THREE.Vector3, THREE.Vector3, THREE.Vector3, number], NC: Nucleotide, CM: THREE.Vector3) => {
+            NC.pdbid = info[0];
+            NC.type = info[1];
+            let center = info[2].sub(CM);
+            NC.calcPositions(center, info[3], info[4], true);
+        }
+
+        //Set box dimensions
+        let xpos = initInfo.map((info) => {return info[2].x;});
+        let ypos = initInfo.map((info) => {return info[2].y;});
+        let zpos = initInfo.map((info) => {return info[2].z;});
+        let xdim= (Math.max(...xpos) - Math.min(...xpos)) * 1.5;
+        let ydim= (Math.max(...ypos) - Math.min(...ypos)) * 1.5;
+        let zdim= (Math.max(...zpos) - Math.min(...zpos)) * 1.5;
+        if(xdim < 2) xdim = 2.5;
+        if(ydim < 2) ydim = 2.5;
+        if(zdim < 2) zdim = 2.5;
+
+        if(box.x < xdim) box.x = xdim;
+        if(box.y < ydim) box.y = ydim;
+        if(box.z < zdim) box.z = zdim;
+        redrawBox();
+
+        // Second Loop Going through Exactly the same way
+        // Fill Info Functions called on each element to initialize type specific
+        let Amino: AminoAcid;
+        let Nuc: Nucleotide;
+        nextElementId = oldElementId; //Reset
+
+        for (let i: number = 0; i < (initlist.uniqueIDs.length+initlist.repeatIDs.length); i++) {
+            let strand = sys.strands[i];
+
+            if (strand.isPeptide()) {
+                for (let k = 0; k < strand.getLength(); k++) {
+                    Amino = elements.get(nextElementId) as AminoAcid;
+                    FillInfoAA(initInfo[nextElementId-oldElementId], Amino, com);
+                    nextElementId++;
+                }
+            } else if (strand.isNucleicAcid()) {
+                for (let k = 0; k < strand.getLength(); k++) {
+                    Nuc = elements.get(nextElementId) as Nucleotide;
+                    FillInfoNC(initInfo[nextElementId-oldElementId], Nuc, com);
+                    nextElementId++;
+                }
+            }
+        }
+
+        //System is set Up just needs to be added to the systems array now I believe
+        addSystemToScene(sys);
+        systems.push(sys);
+        sysCount++;
+    }
+}

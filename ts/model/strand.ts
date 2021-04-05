@@ -166,6 +166,10 @@ abstract class Strand {
         return false;
     }
 
+    isGS(): boolean {
+        return false;
+    }
+
     toJSON() {
         // Specify required attributes
         let json = {
@@ -321,3 +325,88 @@ class Peptide extends Strand {
     }
 
 }
+
+// Meant to hold multi-sized generic spheres representing arbitrary particle types
+class Generic extends Strand {
+    constructor(id: number, system: System) {
+        super(id, system);
+    };
+
+    createBasicElement(id?: number) {
+        return new GenericSphere(id, this);
+    };
+
+    translateStrand(amount: THREE.Vector3) {
+        const s = this.system;
+        const monomers = this.getMonomers();
+        for (
+            let i = monomers[0].sid * 3;
+            i <= monomers[monomers.length-1].sid * 3;
+            i+=3)
+        {
+
+            s.nsOffsets[i] += amount.x;
+            s.nsOffsets[i + 1] += amount.y;
+            s.nsOffsets[i + 2] += amount.z;
+
+            s.bbOffsets[i] += amount.x;
+            s.bbOffsets[i + 1] += amount.y;
+            s.bbOffsets[i + 2] += amount.z;
+
+            s.bbconOffsets[i] += amount.x;
+            s.bbconOffsets[i + 1] += amount.y;
+            s.bbconOffsets[i + 2] += amount.z;
+
+            s.cmOffsets[i] += amount.x;
+            s.cmOffsets[i + 1] += amount.y;
+            s.cmOffsets[i + 2] += amount.z;
+        }
+        s.callUpdates(['instanceOffset'])
+        if (tmpSystems.length > 0) {
+            tmpSystems.forEach((s) => {
+                s.callUpdates(['instanceOffset'])
+            })
+        }
+    };
+    // is Generic Sphere method
+    isGS(): boolean{
+        return true;
+    }
+    toJSON() {
+        // Get superclass attributes
+        let json = super.toJSON();
+        json['class'] = 'GS';
+        return json;
+    }
+
+    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
+    getMonomers(reverse?:boolean): BasicElement[] {
+        return super.getMonomers(!reverse)
+    }
+
+    forEach(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean, condition?: (value: BasicElement, index: number)=>boolean) {
+        super.forEach(callbackfn, !reverse, condition);
+    }
+
+    map(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean) {
+        return super.map(callbackfn, !reverse);
+    }
+
+    filter(callbackfn: (value: BasicElement, index: number)=>boolean, reverse?:boolean) {
+        return super.filter(callbackfn, !reverse)
+    }
+
+    toggleMonomers() {
+        this.forEach(e=>e.toggle());
+    }
+
+    select() {
+        this.forEach(e=>e.select());
+    }
+
+    deselect() {
+        this.forEach(e=>e.deselect());
+    }
+
+}
+

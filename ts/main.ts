@@ -82,7 +82,7 @@ let elements: ElementMap = new ElementMap(); //contains references to all BasicE
 //initialize the space
 const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
-const ANMs: ANM[] = [];
+//const ANMs: ANM[] = [];
 let forces: Force[] = [];
 var forcesTable: string[][] = [];
 var forceHandler;
@@ -90,11 +90,17 @@ var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
 
+var selectednetwork: number = 0; // Only used for networks
+const networks: Network[] = []; // Only used for networks, replaced anms
+const graphDatasets: graphData[] = []; // Only used for graph
+const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
+
 var lut, devs: number[]; //need for Lut coloring
 
 const DNA: number = 0;
 const RNA: number = 1;
 const AA: number = 2;
+const GS: number = 3;
 
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter

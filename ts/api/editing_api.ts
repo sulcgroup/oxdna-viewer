@@ -473,6 +473,8 @@ module edit{
                     let strand: Strand;
                     if (e.isAminoAcid()) {
                         strand = sys.addNewPeptideStrand();
+                    } else if (e.type == 'gs') {
+                        strand = sys.addNewGenericSphereStrand();
                     } else {
                         strand = sys.addNewNucleicAcidStrand();
                     }
@@ -882,6 +884,133 @@ module edit{
         addedElems.forEach(e=>e.clusterId=clusterCounter);
 
         return addedElems;
+    }
+
+    /**
+     * Experimental Function that Discretizes Mass of system (every particle has same mass currently 1)
+     */
+    export function discretizeMass(elems: BasicElement[], cellsize: number) {
+        //cellsize must be in Angstroms as we convert it here
+        cellsize /= 8.518; //Angstrom to sim unit length
+        // get positions from Three Vector returned from getPos()
+        let xPositions : number[] = elems.map(e => e.getPos().x);
+        let yPositions : number[] = elems.map(e => e.getPos().y);
+        let zPositions : number[] = elems.map(e => e.getPos().z);
+
+        let xmax : number = 0, xmin : number = 0;
+        let ymax : number = 0, ymin : number = 0;
+        let zmax : number = 0, zmin : number = 0;
+
+        // Useful for building 3d Grid
+        xmax = Math.max(...xPositions);
+        xmin = Math.min(...xPositions);
+        ymax = Math.max(...yPositions);
+        ymin = Math.min(...yPositions);
+        zmax = Math.max(...zPositions);
+        zmin = Math.min(...zPositions);
+
+        // Assign boxids based off position in the grid
+        let xboxids : number[] = [];
+        let yboxids : number[] = [];
+        let zboxids : number[] = [];
+        let elemids : number[] = [];
+
+        let elemIndx : number = 0;
+        elems.forEach(elem => {
+                let xbid : number = Math.floor((elem.getPos().x - xmin)/cellsize);
+                let ybid : number = Math.floor((elem.getPos().y - ymin)/cellsize);
+                let zbid : number = Math.floor((elem.getPos().z - zmin)/cellsize);
+                xboxids.push(xbid);
+                yboxids.push(ybid);
+                zboxids.push(zbid);
+                elemids.push(elemIndx);
+                elemIndx +=1;
+            }
+        )
+
+        // Numbers for looping through boxids
+        let xGridNum: number = Math.ceil((xmax - xmin)/cellsize);
+        let yGridNum: number = Math.ceil((ymax - ymin)/cellsize);
+        let zGridNum: number = Math.ceil((zmax - zmin)/cellsize);
+
+        // New Particle Arrays
+        let gPositions : THREE.Vector3[] = [];
+        let gMasses: number [] = [];
+        let indexfile = [];
+        let currentBox: number[] = [];
+
+        //Sort through boxids and generate array for intialization of new particles
+        for (let i = 0; i < xGridNum; i+=1) {
+            for (let j = 0; j < yGridNum; j += 1) {
+                for (let k = 0; k < zGridNum; k += 1) {
+                    //returns only boxid entries matching the current i, j, k
+                    currentBox = [];
+
+                    for(let p: number = 0; p < xboxids.length; p++){
+                        if(xboxids[p]==i && yboxids[p]==j && zboxids[p]==k){
+                            currentBox.push(elemids[p])
+                        }
+                    }
+
+                    //If any particle in this section of the grid
+                    if (currentBox.length > 0) {
+                        indexfile.push(currentBox);
+                        let m = currentBox.length;
+                        let com = new THREE.Vector3(0, 0, 0);
+                        for (let l = 0; l < m; l += 1) {
+                            com.add(elems[currentBox[l]].getPos());
+                        }
+                        com = com.divideScalar(m);
+                        gPositions.push(com.clone());
+                        gMasses.push(m);
+                    }
+                }
+            }
+        }
+
+        // Now I need to Return the New System
+        //dummy system
+        let dumb = new System(tmpSystems.length, 0);
+        dumb.initInstances(gPositions.length);
+        tmpSystems.push(dumb);
+
+        let currentelemsize = elements.size;
+        let realSys = new System(sysCount++, currentelemsize);
+        realSys.initInstances(0);
+        systems.push(realSys);
+        addSystemToScene(realSys);
+
+        let gstrand = realSys.addNewGenericSphereStrand();
+        let newElems: GenericSphere[] = [];
+        let last;
+        for(let i: number = 0; i < gPositions.length; i++) {
+            let be = gstrand.createBasicElement(currentelemsize + i);
+            elements.push(be);
+            be.sid = i;
+            be.dummySys = dumb;
+            be.type = 'gs';
+            be.n5 = null;
+            if(i != 0) {
+                let prev = newElems[i-1];
+                be.n3 = prev;
+                prev.n5 = be;
+            } else {
+                be.n3 = null;
+            }
+            be.strand = gstrand;
+            be.mass = gMasses[i];
+            newElems.push(be);
+            last = be;
+        }
+        gstrand.setFrom(last);
+
+        newElems.forEach((e, eid) => {
+            e.calcPositions(gPositions[eid]);
+        })
+
+        addSystemToScene(dumb); // add tmpSys to scene
+
+        return {elems: newElems, indx: indexfile};
     }
 
     /**
