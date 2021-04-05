@@ -205,7 +205,7 @@ function deleteNetworkWrapper(nid) {
 }
 function fillEdgesWrapper(nid, edgecase) {
     // Easy expansion for other edge methods
-    if (networks.length == 0) {
+    if (networks.length == 0 || nid < 0) {
         notify('No Networks Found, Please Create Network');
     }
     else {
@@ -219,6 +219,9 @@ function fillEdgesWrapper(nid, edgecase) {
                 else {
                     net.edgesByCutoff(cutoff);
                 }
+                break;
+            case 1:
+                net.edgesMWCENM();
         }
     }
 }
