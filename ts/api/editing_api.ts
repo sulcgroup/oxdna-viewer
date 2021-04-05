@@ -327,6 +327,8 @@ module edit{
         tmpSys.initInstances(instCopies.length);
         tmpSystems.push(tmpSys);
 
+        let newClusterMap: Map<number, number> = new Map();
+
         let oldids = instCopies.map(c=>{return c.id});
         let elems = instCopies.map((c,sid)=>{
             // Create new element
@@ -342,6 +344,15 @@ module edit{
             e.dummySys = tmpSys;
             e.sid = sid;
             e.type = c.type;
+
+            // Add pasted elements to new cluster
+            // (or clusters, if the copied elements had more than one cluster)
+            if (c.clusterId !== undefined && c.clusterId > 0) {
+                if (!newClusterMap.has(c.clusterId)) {
+                    newClusterMap.set(c.clusterId, ++clusterCounter);
+                }
+                e.clusterId = newClusterMap.get(c.clusterId);
+            }
 
             // Assign a picking color
             let idColor = new THREE.Color();
@@ -562,7 +573,7 @@ module edit{
         let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
-        const l = sequence.length
+        const l = sequence.length;
         
         const positions = end.extendStrand(l, direction, true); // true = double strand
 
@@ -865,6 +876,10 @@ module edit{
             addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
         }
         strand.updateEnds();
+
+        // Make created strand(s) a new cluster, for convenience.
+        clusterCounter++;
+        addedElems.forEach(e=>e.clusterId=clusterCounter);
 
         return addedElems;
     }

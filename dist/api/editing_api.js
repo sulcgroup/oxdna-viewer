@@ -280,6 +280,7 @@ var edit;
         const tmpSys = new System(systems.length, 0);
         tmpSys.initInstances(instCopies.length);
         tmpSystems.push(tmpSys);
+        let newClusterMap = new Map();
         let oldids = instCopies.map(c => { return c.id; });
         let elems = instCopies.map((c, sid) => {
             // Create new element
@@ -296,6 +297,14 @@ var edit;
             e.dummySys = tmpSys;
             e.sid = sid;
             e.type = c.type;
+            // Add pasted elements to new cluster
+            // (or clusters, if the copied elements had more than one cluster)
+            if (c.clusterId !== undefined && c.clusterId > 0) {
+                if (!newClusterMap.has(c.clusterId)) {
+                    newClusterMap.set(c.clusterId, ++clusterCounter);
+                }
+                e.clusterId = newClusterMap.get(c.clusterId);
+            }
             // Assign a picking color
             let idColor = new THREE.Color();
             idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
@@ -783,6 +792,9 @@ var edit;
             addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
         }
         strand.updateEnds();
+        // Make created strand(s) a new cluster, for convenience.
+        clusterCounter++;
+        addedElems.forEach(e => e.clusterId = clusterCounter);
         return addedElems;
     }
     edit.createStrand = createStrand;

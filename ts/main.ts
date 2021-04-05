@@ -97,7 +97,7 @@ const RNA: number = 1;
 const AA: number = 2;
 
 const editHistory = new EditHistory();
-let clusterCounter = 0 // Cluster counter
+let clusterCounter = 0; // Cluster counter
 
 //to keep track of if the topology was edited at any point.
 var topologyEdited: Boolean = false;

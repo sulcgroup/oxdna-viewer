@@ -356,6 +356,8 @@ function readOxViewJsonFile(file) {
         }
         // Add systems, if provided (really should be)
         if (data.systems) {
+            // Keep track if new clusters
+            let newClusterMap = new Map();
             // Go through and add each system
             data.systems.forEach(sysData => {
                 let sys = new System(sysStartId + sysData.id, elements.getNextId());
@@ -420,7 +422,14 @@ function readOxViewJsonFile(file) {
                         // Set misc attributes
                         e.label = elementData.label;
                         e.type = elementData.type;
-                        e.clusterId = elementData.cluster;
+                        // Set cluster id, making sure not to reuse any already
+                        // existing cluster id loaded earlier.
+                        if (elementData.cluster) {
+                            if (!newClusterMap.has(elementData.cluster)) {
+                                newClusterMap.set(elementData.cluster, ++clusterCounter);
+                            }
+                            e.clusterId = newClusterMap.get(elementData.cluster);
+                        }
                         if (elementData.color) {
                             e.color = new THREE.Color(elementData.color);
                             customColors = true;
