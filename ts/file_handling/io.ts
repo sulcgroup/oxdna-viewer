@@ -1,5 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-
+/// <reference path="./order_parameter_selector.ts" />
 class TopReader extends FileReader{
     topFile: File = null;
     system: System;
