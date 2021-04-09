@@ -97,16 +97,6 @@ const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for f
 
 var lut, devs: number[]; //need for Lut coloring
 
-//const DNA: number = 0;
-//const RNA: number = 1;
-//const AA: number = 2;
-//const GS: number = 3;
-enum ElementType{
-    DNA = 0,
-    RNA = 1,
-    AA  = 2,
-    GS  = 3
-}
 
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter

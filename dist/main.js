@@ -83,17 +83,6 @@ const networks = []; // Only used for networks, replaced anms
 const graphDatasets = []; // Only used for graph
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring
-//const DNA: number = 0;
-//const RNA: number = 1;
-//const AA: number = 2;
-//const GS: number = 3;
-var ElementType;
-(function (ElementType) {
-    ElementType[ElementType["DNA"] = 0] = "DNA";
-    ElementType[ElementType["RNA"] = 1] = "RNA";
-    ElementType[ElementType["AA"] = 2] = "AA";
-    ElementType[ElementType["GS"] = 3] = "GS";
-})(ElementType || (ElementType = {}));
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //to keep track of if the topology was edited at any point.
