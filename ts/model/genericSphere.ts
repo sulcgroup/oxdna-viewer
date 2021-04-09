@@ -6,7 +6,6 @@ class GenericSphere extends BasicElement {
     mass:number;
     constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.elementType = GS;
         this.mass = 1.0;
         this.type = 'gs';
     }
