@@ -15,7 +15,6 @@ abstract class BasicElement {
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string
-    elementType: number = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
     clusterId: number;
     dummySys: System;
     color: THREE.Color;

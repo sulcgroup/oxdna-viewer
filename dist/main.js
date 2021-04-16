@@ -83,10 +83,6 @@ const networks = []; // Only used for networks, replaced anms
 const graphDatasets = []; // Only used for graph
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring
-const DNA = 0;
-const RNA = 1;
-const AA = 2;
-const GS = 3;
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //to keep track of if the topology was edited at any point.
