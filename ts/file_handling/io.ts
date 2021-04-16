@@ -440,12 +440,13 @@ class TrajectoryReader {
             notify(".dat and .top files incompatible", "alert");
             return
         }
-        if( box=== undefined)
+        if( box === undefined)
             box = new THREE.Vector3(0,0,0);
+        let newBox = new THREE.Vector3(parseFloat(lines[1].split(" ")[2]), parseFloat(lines[1].split(" ")[3]), parseFloat(lines[1].split(" ")[4]))
         // Increase the simulation box size if larger than current
-        box.x = Math.max(box.x, parseFloat(lines[1].split(" ")[2]));
-        box.y = Math.max(box.y, parseFloat(lines[1].split(" ")[3]));
-        box.z = Math.max(box.z, parseFloat(lines[1].split(" ")[4]));
+        box.x = Math.max(box.x, newBox.x);
+        box.y = Math.max(box.y, newBox.y);
+        box.z = Math.max(box.z, newBox.z);
         redrawBox();
     
         const time = parseInt(lines[0].split(" ")[2]);
@@ -516,7 +517,7 @@ class TrajectoryReader {
             system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
             system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
         }
-        centerAndPBC(system.getMonomers());
+        centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
         render();
         // Signal that config has been loaded

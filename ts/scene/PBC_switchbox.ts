@@ -14,13 +14,20 @@ function centerAndPBCBtnClick(elems?: BasicElement[]){
     centerAndPBC(elems);
 }
 
-
-function centerAndPBC(elems?: BasicElement[]) {
+/**
+ * Center elements in the simulation box and then apply periodic boundary conditions to bring them all in the same box instance.
+ * @param elems Optional parameter defining which particles to apply the centering and PBC to.  Defaults to all particles.
+ * @param targetBox Optional parameter defining the size of the box. Defaults to the global box size which is the largest box loaded.
+ */
+function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
     if (!elems) {
         elems = Array.from(elements.values());
     }
-    centerElements(elems);
-    bringInBox(getInboxingMode());
+    if (!targetBox) {
+        targetBox = box;
+    }
+    centerElements(elems, targetBox);
+    bringInBox(getInboxingMode(), targetBox);
 
     // Update instances
     elements.forEach(e=>{if (e.n3) calcsp(e);})
@@ -61,9 +68,11 @@ function getInboxingMode(): string {
 }
 
 /**
- * Bring all elements (or strands) inside the simulation box
+ * Peform the actual inboxing 
+ * @param boxOption Whether to bring individual nucleotides into the box or the center of mass of each strand.
+ * @param targetBox The size of box to use.
  */
-function bringInBox(boxOption: string) {
+function bringInBox(boxOption: string, targetBox) {
     if (boxOption == "None") {
         return;
     }
@@ -73,18 +82,18 @@ function bringInBox(boxOption: string) {
     // Find out which center we use, or just use box center
     let center = getCenteringGoal();
     if(!center) {
-        center = box.clone().divideScalar(2);
+        center = targetBox.clone().divideScalar(2);
     }
 
     // Define function to calculate a coordinates position
     // withing periodic boundaries
     let coordInBox = (coord: THREE.Vector3)=>{
         let p = coord.clone();
-        let shift = box.clone().divideScalar(2).sub(center);
+        let shift = targetBox.clone().divideScalar(2).sub(center);
         p.add(shift);
-        p.x = realMod(p.x, box.x);
-        p.y = realMod(p.y, box.y);
-        p.z = realMod(p.z, box.z);
+        p.x = realMod(p.x, targetBox.x);
+        p.y = realMod(p.y, targetBox.y);
+        p.z = realMod(p.z, targetBox.z);
         p.sub(shift);
         return p;
     };
@@ -114,7 +123,7 @@ function bringInBox(boxOption: string) {
  * @param elems List of elements to center
  * @param origin Optional point to center to, will be read from GUI options if not provided
  */
-function centerElements(elems: BasicElement[], origin?: THREE.Vector3) {
+function centerElements(elems: BasicElement[], targetBox, origin?: THREE.Vector3) {
     if (!origin) {
         origin = getCenteringGoal();
         if (!origin) {
@@ -123,7 +132,7 @@ function centerElements(elems: BasicElement[], origin?: THREE.Vector3) {
     }
 
     // Calculate Centre of mass, taking periodic boundary conditions into account
-    let com = calcCOM(elems);
+    let com = calcCOM(elems, targetBox);
 
     // Move COM to desired origin point
     translateElements(new Set(elems), origin.clone().sub(com));
@@ -132,7 +141,7 @@ function centerElements(elems: BasicElement[], origin?: THREE.Vector3) {
 // Calculate center of mass taking periodic boundary conditions into account:
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
-function calcCOM(elems: BasicElement[]): THREE.Vector3 {
+function calcCOM(elems: BasicElement[], targetBox): THREE.Vector3 {
     // Create one averaging variable for each dimension, representing that 1D
     // interval as a unit circle in 2D (with the circumference being the
     // bounding box side length)
@@ -146,9 +155,9 @@ function calcCOM(elems: BasicElement[]): THREE.Vector3 {
         // Calculate positions on unit circle for each dimension and that to the
         // sum.
         let angle = new THREE.Vector3(
-            (p.x * 2 * Math.PI) / box.x,
-            (p.y * 2 * Math.PI) / box.y,
-            (p.z * 2 * Math.PI) / box.z
+            (p.x * 2 * Math.PI) / targetBox.x,
+            (p.y * 2 * Math.PI) / targetBox.y,
+            (p.z * 2 * Math.PI) / targetBox.z
         );
 
         cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
@@ -163,9 +172,9 @@ function calcCOM(elems: BasicElement[]): THREE.Vector3 {
 
     // Convert back from unit circle coordinates into x,y,z
     let cms = new THREE.Vector3(
-        box.x / (2 * Math.PI) * (Math.atan2(-cm_x.y, -cm_x.x) + Math.PI),
-        box.y / (2 * Math.PI) * (Math.atan2(-cm_y.y, -cm_y.x) + Math.PI),
-        box.z / (2 * Math.PI) * (Math.atan2(-cm_z.y, -cm_z.x) + Math.PI)
+        targetBox.x / (2 * Math.PI) * (Math.atan2(-cm_x.y, -cm_x.x) + Math.PI),
+        targetBox.y / (2 * Math.PI) * (Math.atan2(-cm_y.y, -cm_y.x) + Math.PI),
+        targetBox.z / (2 * Math.PI) * (Math.atan2(-cm_z.y, -cm_z.x) + Math.PI)
     );
 
     return cms;
