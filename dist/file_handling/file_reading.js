@@ -719,6 +719,7 @@ function addSystemToScene(system) {
 const whitelist = new Set([
     "http://localhost:9000",
     "http://localhost:8000",
+    "http://206.207.50.88",
     "http://nanobase.org",
     "https://oxdna.org",
     "https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
