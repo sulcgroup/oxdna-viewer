@@ -197,34 +197,15 @@ class NucleicAcidStrand extends Strand {
             return new DNANucleotide(id, this);
     };
 
+    /**
+     * Translate the strand by a given amount
+     * @param amount Vector3 with the amount to translate the strand
+     */
     translateStrand(amount: THREE.Vector3) {
         const s = this.system;
-        const monomers = this.getMonomers();
-        for (
-            let i = monomers[0].sid * 3;
-            i <= monomers[monomers.length-1].sid * 3;
-            i+=3)
-        {
-            s.bbOffsets[i] += amount.x;
-            s.bbOffsets[i + 1] += amount.y;
-            s.bbOffsets[i + 2] += amount.z;
-
-            s.nsOffsets[i] += amount.x;
-            s.nsOffsets[i + 1] += amount.y;
-            s.nsOffsets[i + 2] += amount.z;
-
-            s.conOffsets[i] += amount.x;
-            s.conOffsets[i + 1] += amount.y;
-            s.conOffsets[i + 2] += amount.z;
-
-            s.bbconOffsets[i] += amount.x;
-            s.bbconOffsets[i + 1] += amount.y;
-            s.bbconOffsets[i + 2] += amount.z;
-
-            s.cmOffsets[i] += amount.x;
-            s.cmOffsets[i + 1] += amount.y;
-            s.cmOffsets[i + 2] += amount.z;
-        } 
+        const monomers = this.getMonomers(true);
+        monomers.forEach(e => e.translatePosition(amount));
+        
         s.callUpdates(['instanceOffset'])
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {

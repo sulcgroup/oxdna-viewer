@@ -23,7 +23,7 @@ function centerAndPBC(elems, targetBox) {
         targetBox = box;
     }
     centerElements(elems, targetBox);
-    bringInBox(getInboxingMode(), targetBox);
+    bringInBox(elems, getInboxingMode(), targetBox);
     // Update instances
     elements.forEach(e => { if (e.n3)
         calcsp(e); });
@@ -65,7 +65,7 @@ function getInboxingMode() {
  * @param boxOption Whether to bring individual nucleotides into the box or the center of mass of each strand.
  * @param targetBox The size of box to use.
  */
-function bringInBox(boxOption, targetBox) {
+function bringInBox(elems, boxOption, targetBox) {
     if (boxOption == "None") {
         return;
     }
@@ -76,6 +76,14 @@ function bringInBox(boxOption, targetBox) {
     if (!center) {
         center = targetBox.clone().divideScalar(2);
     }
+    // If boxing is strand we need to find which systems contain target elems
+    let sys2Box = new Set();
+    elems.forEach(e => {
+        let s = e.getSystem();
+        if (!sys2Box.has(s)) {
+            sys2Box.add(s);
+        }
+    });
     // Define function to calculate a coordinates position
     // withing periodic boundaries
     let coordInBox = (coord) => {
@@ -90,14 +98,14 @@ function bringInBox(boxOption, targetBox) {
     };
     // Apply to either monomers, or whole strands
     if (boxOption == "Monomer") {
-        elements.forEach(e => {
+        elems.forEach(e => {
             let pOld = e.getPos();
             let pNew = coordInBox(pOld);
             e.translatePosition(pNew.sub(pOld));
         });
     }
     else if (boxOption == "Strand") {
-        systems.forEach(system => {
+        sys2Box.forEach(system => {
             system.strands.forEach(strand => {
                 let pOld = strand.getPos();
                 ;
