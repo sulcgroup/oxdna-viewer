@@ -12,22 +12,25 @@ class Edges {
         this.extraParams = [];
     }
     addEdge(id1, id2, eqdist, type, k = 1, xparams = []) {
-        if (id1 < id2) {
-            this.p1.push(id1);
-            this.p2.push(id2);
-            this.ks.push(k);
-            this.types.push(type);
-            this.eqDist.push(eqdist);
-            this.extraParams.push(xparams);
-            this.total += 1;
+        if (id1 == id2)
+            return; // Can't Add Edge to Itself
+        let ind = this.checkEdge(id1, id2, eqdist);
+        if (ind > 0) {
+            this.ks[ind] += k; // additive spring constants, I did this for MWCENM hopefully it doesn't bite me later
         }
-        else if (id2 > id1) {
-            this.p1.push(id2);
-            this.p2.push(id1);
+        else {
+            if (id1 < id2) {
+                this.p1.push(id1);
+                this.p2.push(id2);
+            }
+            else if (id1 > id2) {
+                this.p1.push(id2);
+                this.p2.push(id1);
+            }
             this.ks.push(k);
+            this.types.push(type);
             this.eqDist.push(eqdist);
             this.extraParams.push(xparams);
-            this.types.push(type);
             this.total += 1;
         }
     }
@@ -46,6 +49,18 @@ class Edges {
                 this.total -= 1;
                 break;
             }
+        }
+    }
+    ;
+    checkEdge(id1, id2, eqdist) {
+        let dist = this.eqDist.indexOf(eqdist);
+        if (dist > -1) {
+            if ((this.p1[dist] == id1 && this.p2[dist] == id2) || (this.p2[dist] == id1 && this.p1[dist] == id2)) {
+                return dist;
+            }
+        }
+        else {
+            return dist;
         }
     }
     ;
@@ -258,7 +273,7 @@ class Network {
             let hbonds = pdbFileInfo[ud].hydrogenBonds;
             // let chains = pdbFileInfo[ud].pdbsysinfo;
             let p1, p2; // will be refences to corresponding particles
-            let p1found, p2found; // bool indica
+            let p1found, p2found; // bools
             let hbondk = 100; // strength of h bond
             hbonds.forEach((hb, hid) => {
                 p1found = false;
@@ -369,7 +384,7 @@ class Network {
             let makesaltbridge = false;
             posatoms.forEach(pa => {
                 negatoms.forEach(na => {
-                    if (pdbdist(pa, na) < 4) { // 4 A is the cutoff used in the original MWCENM paper
+                    if (pdbdist(pa, na) < 4 / 8.518) { // 4 A is the cutoff used in the original MWCENM paper
                         makesaltbridge = true;
                     }
                 });

@@ -77,7 +77,7 @@ function handleFiles(files) {
             jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
-        else if (ext === "pdb") {
+        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") {
             notify("Reading PDB File...");
             pdbfile = files[i];
             readPdbFile(pdbfile);
@@ -813,8 +813,12 @@ function prep_pdb(pdblines) {
     let noatom = false;
     // Other Info for MWCENM
     let dsbonds = [];
+    let start = 0; // sometimes the end of a chain is saved into a different file, ignoring any garbage like that
+    if (pdblines[0].substr(0, 3) == "TER") {
+        start = 1;
+    }
     // Find Chain Termination statements TER and uses
-    for (let i = 0; i < pdblines.length; i++) {
+    for (let i = start; i < pdblines.length; i++) {
         if (pdblines[i].substr(0, 4) == 'ATOM' && noatom == false) {
             firstatom = i;
             noatom = true;
@@ -830,6 +834,9 @@ function prep_pdb(pdblines) {
             // disulphide bond info: residue 1 chain id, res 1 res num, res2 chain id, res 2 res num
             let dbond = [line.substring(15, 17).trim(), parseInt(line.substring(17, 21).trim()), line.substring(29, 31).trim(), parseInt(line.substring(31, 35).trim())];
             dsbonds.push(dbond);
+        }
+        else if (pdblines[i].substr(0, 3) === 'END') { // sometimes people don't end their chain with a TER statement
+            chainDivs.push(i);
         }
     }
     // If models are present in pdb file, Assumes that repeat chain ids are
@@ -853,16 +860,22 @@ function prep_pdb(pdblines) {
         }
     });
     let nchainids = []; // Store new chainids
-    let alphabet = 'abcdefghijklmnopqrstuvwxyz123456789<>?/!@#$%^&*()_-=+'.split('');
+    let fullalpha = [];
+    let lastindex = 1; //
+    let alphabet = 'a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.1.2.3.4.5.6.7.8.9.<.>.?./.!.@.#.$.%.^.&.*.(.)._.-.=.+'.split('.');
+    fullalpha = fullalpha.concat(alphabet);
+    // supports 2862 chains with the same chain id in the same pdb file
+    alphabet.forEach((id, idx, arr) => fullalpha = fullalpha.concat(arr.map(x => { return id + x; })));
     sorted_repeated_chainids.forEach((val, ind) => {
         if (nchainids.indexOf(val) != ind) { //same chain identifier needs to be fixed
             if (val != "" && val.includes("*")) { //unique chain
                 let nval = val;
-                let attmpt_indx = 1;
-                while (nchainids.indexOf(nval) != -1) {
-                    nval = alphabet[attmpt_indx] + val;
+                let attmpt_indx = lastindex;
+                while (nchainids.indexOf(nval) != -1 && attmpt_indx < 2862) {
+                    nval = fullalpha[attmpt_indx] + val;
                     attmpt_indx += 1;
                 }
+                lastindex = attmpt_indx;
                 nchainids.push(nval);
             }
             else {
@@ -1570,23 +1583,28 @@ function addPDBToScene() {
                 let pdbres3to5 = nstrand.residues.reverse(); // Flipped Order so it reads 3'  to 5'
                 for (let j = 0; j < nstrand.residues.length; j++) {
                     //For getting center of mass
-                    let info = CalcInfoNC(pdbres3to5[j]);
-                    initInfo.push(info);
-                    strandInfo.push(info);
-                    com.add(info[2]); //Add position to COM calc
-                    let nc = currentStrand.createBasicElement(nextElementId);
-                    nc.n3 = null;
-                    nc.n5 = null;
-                    nc.sid = nextElementId - oldElementId;
-                    bFactors.push(info[5]);
-                    xdata.push(nc.sid);
-                    if (j != 0) {
-                        let prevnc = elements.get(nextElementId - 1); //Get previous Element
-                        nc.n3 = prevnc;
-                        prevnc.n5 = nc;
+                    try {
+                        let info = CalcInfoNC(pdbres3to5[j]);
+                        initInfo.push(info);
+                        strandInfo.push(info);
+                        com.add(info[2]); //Add position to COM calc
+                        let nc = currentStrand.createBasicElement(nextElementId);
+                        nc.n3 = null;
+                        nc.n5 = null;
+                        nc.sid = nextElementId - oldElementId;
+                        bFactors.push(info[5]);
+                        xdata.push(nc.sid);
+                        if (j != 0) {
+                            let prevnc = elements.get(nextElementId - 1); //Get previous Element
+                            nc.n3 = prevnc;
+                            prevnc.n5 = nc;
+                        }
+                        elements.push(nc);
+                        nextElementId++;
                     }
-                    elements.push(nc);
-                    nextElementId++;
+                    catch (e) {
+                        notify("Nucleotide could not be initialized");
+                    }
                 }
                 currentStrand.updateEnds();
                 // Take care of repeats Access by Chain Identifier
@@ -1596,25 +1614,30 @@ function addPDBToScene() {
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatNuc = repeatStrand.createBasicElement(nextElementId);
                             repeatNuc.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
-                            let rotquat = initlist.repeatQuatRots[indx];
-                            rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
-                            rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
-                            rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
-                            bFactors.push(rinfo[5]); // Assume same B factors
-                            xdata.push(repeatNuc.sid);
-                            com.add(rinfo[2]);
-                            initInfo.push(rinfo);
-                            repeatNuc.n3 = null;
-                            repeatNuc.n5 = null;
-                            // monomers go 5' to 3'
-                            if (mid != 0) {
-                                let prevaa = elements.get(nextElementId - 1); //Get previous Element
-                                repeatNuc.n3 = prevaa;
-                                prevaa.n5 = repeatNuc;
+                            try {
+                                let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                                let rotquat = initlist.repeatQuatRots[indx];
+                                rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
+                                rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
+                                rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
+                                bFactors.push(rinfo[5]); // Assume same B factors
+                                xdata.push(repeatNuc.sid);
+                                com.add(rinfo[2]);
+                                initInfo.push(rinfo);
+                                repeatNuc.n3 = null;
+                                repeatNuc.n5 = null;
+                                // monomers go 5' to 3'
+                                if (mid != 0) {
+                                    let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                                    repeatNuc.n3 = prevaa;
+                                    prevaa.n5 = repeatNuc;
+                                }
+                                elements.push(repeatNuc);
+                                nextElementId++;
                             }
-                            elements.push(repeatNuc);
-                            nextElementId++;
+                            catch (e) {
+                                notify("Nucleotide could not be initialized");
+                            }
                         });
                         repeatStrand.updateEnds();
                     }
@@ -1624,6 +1647,8 @@ function addPDBToScene() {
         com.divideScalar(sys.systemLength());
         let pdbBfactors = new graphData(label, bFactors, xdata, "bfactor", "A_sqr");
         graphDatasets.push(pdbBfactors);
+        if (flux.fluxWindowOpen)
+            view.addGraphData(graphDatasets.length - 1); // add to flux window if open, otherwise it'll be added on next opening
         sys.initInstances(sys.systemLength());
         // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
         let FillInfoAA = (info, AM, CM) => {
@@ -1641,9 +1666,16 @@ function addPDBToScene() {
         let xpos = initInfo.map((info) => { return info[2].x; });
         let ypos = initInfo.map((info) => { return info[2].y; });
         let zpos = initInfo.map((info) => { return info[2].z; });
-        let xdim = (Math.max(...xpos) - Math.min(...xpos)) * 1.5;
-        let ydim = (Math.max(...ypos) - Math.min(...ypos)) * 1.5;
-        let zdim = (Math.max(...zpos) - Math.min(...zpos)) * 1.5;
+        //built in Math.min and Math.max crash the program once xpos, ypos, and zpos reach a high length (N=300000 was my test case)
+        let xmax = xpos.reduce((a, b) => { return Math.max(a, b); });
+        let xmin = xpos.reduce((a, b) => { return Math.min(a, b); });
+        let ymax = ypos.reduce((a, b) => { return Math.max(a, b); });
+        let ymin = ypos.reduce((a, b) => { return Math.min(a, b); });
+        let zmax = zpos.reduce((a, b) => { return Math.max(a, b); });
+        let zmin = zpos.reduce((a, b) => { return Math.min(a, b); });
+        let xdim = xmax - xmin;
+        let ydim = ymax - ymin;
+        let zdim = zmax - zmin;
         if (xdim < 2)
             xdim = 2.5;
         if (ydim < 2)
@@ -1651,11 +1683,11 @@ function addPDBToScene() {
         if (zdim < 2)
             zdim = 2.5;
         if (box.x < xdim)
-            box.x = xdim;
+            box.x = xdim * 1.25;
         if (box.y < ydim)
-            box.y = ydim;
+            box.y = ydim * 1.25;
         if (box.z < zdim)
-            box.z = zdim;
+            box.z = zdim * 1.25;
         redrawBox();
         // Second Loop Going through Exactly the same way
         // Fill Info Functions called on each element to initialize type specific

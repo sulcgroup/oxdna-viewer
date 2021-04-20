@@ -20,6 +20,7 @@ class Edges { //Edges connect particles, for now these represent spring potentia
         this.extraParams = [];
     }
     addEdge(id1: number, id2: number, eqdist:number, type:string, k: number =1, xparams: any[] = []) {
+        if(id1 == id2) return; // Can't Add Edge to Itself
         let ind = this.checkEdge(id1, id2, eqdist);
         if(ind > 0){
             this.ks[ind] += k; // additive spring constants, I did this for MWCENM hopefully it doesn't bite me later
@@ -27,7 +28,7 @@ class Edges { //Edges connect particles, for now these represent spring potentia
             if (id1 < id2) {
                 this.p1.push(id1);
                 this.p2.push(id2);
-            } else if (id2 > id1) {
+            } else if (id1 > id2) {
                 this.p1.push(id2);
                 this.p2.push(id1);
             }

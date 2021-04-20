@@ -424,7 +424,7 @@ class View {
     inboxingMode: ToggleGroupWithDisable;
     selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
-    fluxSideBarDisplayed: boolean;
+    // fluxSideBarDisplayed: boolean;
 
     basepairMessage = "Locating basepairs, please be patient...";
 
@@ -438,7 +438,7 @@ class View {
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
-        this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
+        // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
             if (g.enabled()) {
                 // Make sure something is selected
@@ -497,6 +497,17 @@ class View {
         }
     }
 
+    public toggleFluxWindow(id: string, oncreate?: ()=>void){
+        let elem = this.doc.getElementById(id);
+        if (elem) {
+            Metro.window.toggle(elem);
+            // flux.fluxWindowOpen = !flux.fluxWindowOpen;
+            // flux.flushDatasetsandNetworks();
+        } else {
+            this.createFluxWindow(id, oncreate, flux.toggleDatasetsandNetworks, flux.flushDatasetsandNetworks);
+        }
+    }
+
     public createWindow(id: string, oncreate?: ()=>void) {
         fetch(`windows/${id}.json`)
             .then(response => response.json())
@@ -506,6 +517,23 @@ class View {
                 w.load(`windows/${id}.html`).then(oncreate);
             }
         );
+    }
+
+    public createFluxWindow(id: string, oncreate?: ()=>void, ontoggle?: ()=>void, onclose?: ()=>void) {
+        fetch(`windows/${id}.json`)
+            .then(response => response.json())
+            .then(data => {
+                    let w = Metro.window.create(data);
+                    w[0].id = id;
+                    w.load(`windows/${id}.html`).then(oncreate);
+                    w[0].ontoggle = ontoggle();
+                    // w[0].onclose = () => {
+                    //     flux.flushDatasetsandNetworks();
+                    //     notify("UNLDING");
+                    // }
+                    // w[0].onclose = onclose();
+                }
+            );
     }
 
     public showHoverInfo(pos: THREE.Vector2, e: BasicElement) {
@@ -576,7 +604,7 @@ class View {
     }));
     }
 
-    //Network Selector Methods
+    //Network Selector Methods (Protein tab)
     public addNetwork(nid : number){
         let ul = document.getElementById("networks")
         let li = document.createElement("li");
@@ -606,26 +634,6 @@ class View {
         }
     }
 
-    public toggleSideBarDatasets(){
-        if(this.fluxSideBarDisplayed){
-            for(let i = 0; i < graphDatasets.length; i++){
-                this.removeGraphData(i);
-            }
-            for(let i = 0; i< networks.length; i++){
-                this.removeNetworkData(i);
-            }
-            this.fluxSideBarDisplayed = false;
-        } else {
-            for(let i = 0; i < networks.length; i++){
-                this.addNetworkData(i);
-            }
-            for(let i = 0; i < graphDatasets.length; i++){
-                this.addGraphData(i);
-            }
-            this.fluxSideBarDisplayed = true;
-        }
-    }
-
     public addGraphData(gid : number){
         let GD = graphDatasets[gid];
         let ul = document.getElementById("datalist") //In fluctuation Window
@@ -646,21 +654,25 @@ class View {
     }
 
     public addNetworkData(nid: number){
-        let ul = document.getElementById("readynetlist") //In fluctuation Window
-        let li = document.createElement("li");
-        let sp1 = document.createElement("span");
-        let sp2 = document.createElement("span")
-        sp1.setAttribute('class', 'label');
-        sp2.setAttribute('class', 'second-label');
-        let name = "Network " + (nid+1).toString();
-        sp1.appendChild(document.createTextNode(name));
-        sp2.appendChild(document.createTextNode(networks[nid].networktype));
-        li.setAttribute('id', name);
-        li.setAttribute('value', String(nid));
-        li.appendChild(sp1);
-        li.appendChild(sp2);
-        li.onclick = function() {flux.fitData(li.value)};
-        ul.appendChild(li);
+        if(networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
+            let ul = document.getElementById("readynetlist") //In fluctuation Window
+            let li = document.createElement("li");
+            let sp1 = document.createElement("span");
+            let sp2 = document.createElement("span")
+            sp1.setAttribute('class', 'label');
+            sp2.setAttribute('class', 'second-label');
+            let name = "Network " + (nid + 1).toString();
+            sp1.appendChild(document.createTextNode(name));
+            sp2.appendChild(document.createTextNode(networks[nid].networktype));
+            li.setAttribute('id', name);
+            li.setAttribute('value', String(nid));
+            li.appendChild(sp1);
+            li.appendChild(sp2);
+            li.onclick = function () {
+                flux.fitData(li.value)
+            };
+            ul.appendChild(li);
+        }
     }
 
     public removeGraphData(gid : number){
@@ -672,10 +684,12 @@ class View {
     }
 
     public removeNetworkData(nid : number){
-        let ul = document.getElementById("readynetlist");
-        let name = "Network " + (nid+1).toString();
-        let li = document.getElementById(name);
-        ul.removeChild(li);
+        if(networks[nid].fittingReady){
+            let ul = document.getElementById("readynetlist");
+            let name = "Network " + (nid+1).toString();
+            let li = document.getElementById(name);
+            ul.removeChild(li);
+        }
     }
 
 }
@@ -734,6 +748,7 @@ class fluxGraph {
     xaxislabel: string;
     yaxislabel: string;
     data: graphData[];
+    fluxWindowOpen: boolean;
     type: string;
     temp: number;
     chart; // chartjs main chart object
@@ -777,6 +792,7 @@ class fluxGraph {
         this.temp = 0;
         this.chart = null;
         this.currentindexinfo = [];
+        this.fluxWindowOpen = false;
 
         // Specific to the chart
         this.charttype = 'line';
@@ -827,11 +843,60 @@ class fluxGraph {
         }
     };
 
-    toggleGraph() {
-        if (this.chart == null) {
-            this.initializeGraph();
-        }
+    initChart() {
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = async () => {
+            await delay(75);
+            try {
+                let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
+                this.chart = new Chart(ctx, this.chartconfig);
+            } catch {
+                notify("Graph could not be Initialized");
+            }
+        };
+        wait();
     }
+
+    toggleDatasetsandNetworks(){
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = async () => {
+            await delay(75);
+            try {
+                flux.fluxWindowOpen = !flux.fluxWindowOpen;
+                if(flux.fluxWindowOpen){
+                    flux.loadDatasetsandNetworks();
+                } else {
+                    flux.flushDatasetsandNetworks();
+                }
+            } catch {
+                notify("Dataset and Network Data could not be Initialized");
+            }
+        };
+        wait();
+    }
+
+
+    loadDatasetsandNetworks() {
+        if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {view.addGraphData(gid);})
+        if(networks.length > 0) networks.forEach((n, nid) => {view.addNetworkData(nid);})
+    }
+
+    flushDatasetsandNetworks() {
+        if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {
+            try{
+                view.removeGraphData(gid);
+            } catch (e) {}
+        })
+        if(networks.length > 0) networks.forEach((n, nid) => {
+            if (n.fittingReady) {
+                try {
+                    view.removeNetworkData(nid);
+                } catch (e) {}
+            }
+        })
+    }
+
+
 
     clearGraph() {
         if(this.gids.length != 0) this.gids.forEach(g => this.toggleData(g));
@@ -852,7 +917,7 @@ class fluxGraph {
         };
         jsonReader.onloadend = () => {
             graphDatasets[graphDatasets.length-1].label = filearr.pop().name; //rename
-            if(view.fluxSideBarDisplayed) view.addGraphData(graphDatasets.length-1); //add to aside bar if its displayed
+            if(this.fluxWindowOpen) view.addGraphData(graphDatasets.length-1); //add to aside bar if its displayed
         }
 
         if(files.length == 0) notify('Please Select a File');
@@ -968,10 +1033,10 @@ class fluxGraph {
         }
     };
 
-    toggleSidebar() {
-        let sb = document.getElementById('fluxbar');
-        // sb.toggle
-    };
+    // toggleSidebar() {
+    //     let sb = document.getElementById('fluxbar');
+    //     // sb.toggle
+    // };
 
     applyCurrentIndx(mode:string = "avg") {
         if(this.gids.length != 1){
