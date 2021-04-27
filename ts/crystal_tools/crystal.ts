@@ -189,7 +189,10 @@ const rotM = (caxis: THREE.Vector3, angle:number) =>{
 const getPatchPosition = (cluster, position)=>{
     // we assume PBC is always on 
     let mean = new THREE.Vector3(0,0,0); 
-    const patch_description = [[[10799,10819]], [[9733,9754]], [[8703,8724]], [[12448,12469]], [[12512,12532]], [[12576,12596]]];
+    const patch_description = [
+        [[10799,10819]], [[9733,9754]], [[8703,8724]], 
+        [[12448,12469]], [[12512,12532]], [[12576,12596]]
+    ];
     patch_description[position][0].forEach(
         idx=> mean.add(cluster[idx].getPos())
     );
