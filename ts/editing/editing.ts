@@ -15,6 +15,8 @@ class InstanceCopy {
     bpid: number;
     elemType: any;
     system: System;
+    _a1 : THREE.Vector3;
+    _a3 : THREE.Vector3;
 
 
     cmOffsets: THREE.Vector3; bbOffsets: THREE.Vector3;
@@ -44,6 +46,8 @@ class InstanceCopy {
         }
         this.elemType = e.constructor;
         this.system = e.getSystem();
+        this._a3 = e["_a3"];
+        this._a1 = e["_a1"]; //Dirty
     }
 
     writeToSystem(sid: number, sys: System) {
@@ -91,9 +95,15 @@ function pasteWrapper(keepPos?: Boolean) {
         cameraHeading.applyQuaternion(camera.quaternion);
         pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20))
     }
+    //console.log("->",copied[0]["_a3"]);
     // Add elements to scene
     let elems = edit.addElementsAt(copied, pos);
 
+    //console.log(
+    //    "-->",
+    //    elems[0]["_a3"]
+    //)
+   
     // Add to history
     editHistory.add(new RevertableAddition(copied, elems, pos));
     topologyEdited = true;

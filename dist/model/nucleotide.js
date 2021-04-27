@@ -12,7 +12,9 @@ class Nucleotide extends BasicElement {
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
+        this._a1 = a1; //Extremely dirty hack
         let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
+        this._a3 = a3; //Extremely dirty hack
         this.calcPositions(p, a1, a3, colorUpdate);
     }
     ;

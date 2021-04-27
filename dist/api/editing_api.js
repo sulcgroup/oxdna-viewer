@@ -316,6 +316,9 @@ var edit;
         // Sort out neighbors
         elems.forEach((e, sid) => {
             let c = instCopies[sid];
+            //console.log("M<>",c["_a1"]);
+            e["_a1"] = new THREE.Vector3().copy(c["_a1"]);
+            e["_a3"] = new THREE.Vector3().copy(c["_a3"]);
             // Add neighbors to new copies in list, or to existing elements
             // if they don't already have neighbors
             if (c.n3id >= 0) { // If we have a 3' neighbor

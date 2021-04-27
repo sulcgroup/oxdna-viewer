@@ -6,6 +6,8 @@
 abstract class Nucleotide extends BasicElement {
 
     pair: Nucleotide | null;
+    _a1:THREE.Vector3;
+    _a3:THREE.Vector3;
 
     constructor(id: number, strand: Strand) {
         super(id, strand);
@@ -25,11 +27,13 @@ abstract class Nucleotide extends BasicElement {
             parseFloat(l[4]),
             parseFloat(l[5])
         );
+        this._a1 = a1; //Extremely dirty hack
         let a3 = new THREE.Vector3(
             parseFloat(l[6]),
             parseFloat(l[7]),
             parseFloat(l[8])
         );
+        this._a3 = a3; //Extremely dirty hack
         this.calcPositions(p, a1, a3, colorUpdate)
     };
 

@@ -25,6 +25,8 @@ class InstanceCopy {
         }
         this.elemType = e.constructor;
         this.system = e.getSystem();
+        this._a3 = e["_a3"];
+        this._a1 = e["_a1"]; //Dirty
     }
     writeToSystem(sid, sys) {
         instanceParams.forEach((size, attr) => {
@@ -65,8 +67,13 @@ function pasteWrapper(keepPos) {
         cameraHeading.applyQuaternion(camera.quaternion);
         pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20));
     }
+    //console.log("->",copied[0]["_a3"]);
     // Add elements to scene
     let elems = edit.addElementsAt(copied, pos);
+    //console.log(
+    //    "-->",
+    //    elems[0]["_a3"]
+    //)
     // Add to history
     editHistory.add(new RevertableAddition(copied, elems, pos));
     topologyEdited = true;
