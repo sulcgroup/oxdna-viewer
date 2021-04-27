@@ -778,22 +778,8 @@ function addSystemToScene(system: System) {
     canvas.focus();
 }
 
-// Receive files from outside websites hosting oxView in an iframe
-const whitelist = new Set([
-    "http://localhost:9000",
-    "http://localhost:8000",
-    "http://206.207.50.88",
-    "https://nanobase.org",
-    "https://www.nanobase.org",
-    "https://oxdna.org",
-    "https://sulcgroup.github.io" //for some reason the iframe on Chrome thinks this is the message source
-])
 
 window.addEventListener("message", (event) => {
-    if (!(whitelist.has(event.origin))) {
-        console.log("Please contact the developers to have your site added to the whitelist");  
-        return
-    }
     if (event.data.message === 'drop') {
         handleFiles(event.data.files);
     }
