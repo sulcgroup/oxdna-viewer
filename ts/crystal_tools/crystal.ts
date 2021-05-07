@@ -46,6 +46,82 @@ const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
     );
 }
 
+const get_strand_ends = ()=>{
+    let bases = Array.from(selectedBases);
+    let s = new Set<Strand>();
+    bases.forEach(b=>s.add(b.strand));
+    s.forEach(ss=>console.log(ss.end5.sid));
+}
+
+const patch_description5p=[
+ //red
+ [[11858-21, 11858],
+ [11232-21, 11232],
+ [7866 -21, 7866 ],
+ [12968-21, 12968]],
+ //pink
+ [[12904-21,12904],
+ [9510 -21,9510 ],
+ [6628 -21,6628 ],
+ [8962 -21,8962 ]],
+ //blue
+ [[9446 -21,9446 ],
+ [11794-21,11794],
+ [11168-21,11168],
+ [8414 -21,8414 ]],
+ //green
+ [[6144 -21,6144 ],
+ [10058-21,10058],
+ [10606-21,10606],
+ [6692 -21,6692 ]],
+ //yellow
+ [[8350 -21,8350 ],
+ [8898 -21,8898 ],
+ [10542-21,10542],
+ [7802 -21,7802 ]],
+ //orange
+ [[7318 -21,7318 ],
+ [12420-21,12420],
+ [9994 -21,9994 ],
+ [7254 -21,7254 ]]
+];
+
+
+const patch_description = [
+    [[11858,7866,11232,12968]],
+    [[8350 ,7802,10542,8898]],
+    [[7318 ,12420,9994,7254]],
+    [[10606,6144,6692,10058]],
+    [[9510 ,12904,8962,6628]],
+    [[8414 ,11794,11168,9446]]
+  ];
+
+
+
+const extend_5p_patches = (extend_patch_by="TTTTTTTTTTTTTTTTTTTTT") => {
+    const patch_description = [
+        [[11858,7866,11232,12968]],
+        [[8350 ,7802,10542,8898]],
+        [[7318 ,12420,9994,7254]],
+        [[10606,6144,6692,10058]],
+        [[9510 ,12904,8962,6628]],
+        [[8414 ,11794,11168,9446]]
+      ];
+    patch_description.forEach(patch=>{
+        const ppatch = patch[0]; // because of our patch definition
+        ppatch.forEach(pid=>{
+            let strand = elements.get(pid).strand;
+            // callect the 3p overhang
+            let vics = [];
+            for(let i=pid; i < pid+21;i++)
+                vics.push(elements.get(i));
+            // remove them and extend the 3p
+            edit.deleteElements(vics);
+            edit.extendStrand(strand.end5, extend_patch_by);
+        });
+    });
+    topologyEdited = true;
+}
 
 
 let loadCrystal = ()=>{
@@ -285,14 +361,7 @@ const rotM = (caxis: THREE.Vector3, angle:number) =>{
 //    [[12448,12469]], [[12512,12532]], [[12576,12596]]
 //];
 
-const patch_description = [
-  [[11858,7866,11232,12968]],
-  [[8350 ,7802,10542,8898]],
-  [[7318 ,12420,9994,7254]],
-  [[10606,6144,6692,10058]],
-  [[9510 ,12904,8962,6628]],
-  [[8414 ,11794,11168,9446]]
-];
+
 
 
 
