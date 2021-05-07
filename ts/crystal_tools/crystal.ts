@@ -1,6 +1,52 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 
+const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
+    let strands = new Set<Strand>();
+    selectedBases.forEach(b =>{
+            strands.add(b.strand)
+        }
+    ); // filter out strands
+
+    let cmss = [];
+    strands.forEach(strand=>{
+        let cms = new THREE.Vector3();
+        let l=0
+        strand.forEach(base =>{
+            cms.add(base.getPos());
+            l+=1;
+        });
+        cms.divideScalar(l);
+        cmss.push(cms);
+    }); // find their cms
+
+    let npos = new THREE.Vector3().copy(cmss[0]);
+    npos.add(cmss[1]);
+    npos.divideScalar(2);
+    
+    let duplex_strands = new Set();
+    let elems =  edit.createStrand(patch_sequence, true) ;
+    let ecms = new THREE.Vector3();
+    elems.forEach(e =>{
+        ecms.add(e.getPos());
+        duplex_strands.add(e.strand);
+    });
+    ecms.divideScalar(elems.length); 
+
+    translateElements(new Set(elems),  new THREE.Vector3().copy(npos).sub(ecms));
+
+    edit.ligate( // connect first strand
+        ([... strands][0] as Strand).end3,
+        ([... duplex_strands][0] as Strand).end5
+    );
+    
+    edit.ligate( // connect second strand
+        ([... strands][1] as Strand).end3,
+        ([... duplex_strands][1] as Strand).end5
+    );
+}
+
+
 
 let loadCrystal = ()=>{
     // register 1st drop event 
@@ -19,7 +65,8 @@ let loadCrystal = ()=>{
 
 let crystal_clusters = [];
 const crystal_types = [0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0];
-const MYSCALE = 34./0.5 
+//29
+const MYSCALE = 32./0.5 
         
 let handleCrystalDrop = (files)=>{
     const datFileReader = new FileReader(); //read .json
@@ -29,8 +76,11 @@ let handleCrystalDrop = (files)=>{
         let lines = file_data.split(/[\n]+/g);
         //box 
         let b_size = parseFloat(lines[1].split(" ")[2]) * MYSCALE;
+        //let b_size = 175;
         box.copy(new THREE.Vector3(
-            b_size, b_size, b_size
+            Math.round(b_size),
+            Math.round(b_size),
+            Math.round(b_size)
         ));
 
         lines = lines.slice(3); //discard header
@@ -99,7 +149,6 @@ let handleCrystalDrop = (files)=>{
                 "instanceColor", "instanceRotation", 
                 "instanceVisibility"]);
         }
-        centerAndPBCBtnClick();  
         step2(); 
         render();
     }
@@ -121,7 +170,7 @@ const crystal_bindings = [
 //create traps
 let step2 = ()=>{
     clearSelection();
-    centerAndPBCBtnClick();   // adjust PBC
+    topologyEdited = true;
 
     crystal_bindings.forEach( connection => {
         let from_id = connection[0];
@@ -130,23 +179,57 @@ let step2 = ()=>{
         let to_patch = connection[3];
         console.log(from_id, from_patch, to_id, to_patch);
 
-        let middle = getPatchPosition(crystal_clusters[from_id],from_patch);
-        middle.add(
-            getPatchPosition(crystal_clusters[to_id],to_patch)
+        let nucleotide : Nucleotide = getPatchLast(crystal_clusters[from_id],from_patch);
+        let npos = new THREE.Vector3().copy(
+            nucleotide.getPos()
         );
-        middle.divideScalar(2);
-        const geometry = new THREE.SphereGeometry( 5, 32, 32 );
-        const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
-        const sphere = new THREE.Mesh( geometry, material );
-        sphere.position.copy(middle);
-        scene.add( sphere );    
         
+        npos.add(
+            nucleotide.getA1().multiplyScalar(2)
+        );
+        
+        //let ecms = new THREE.Vector3();
+        //middle.add(
+        //    getPatchPosition(crystal_clusters[to_id],to_patch)
+        //);
+        //middle.divideScalar(2);
+        //const geometry = new THREE.SphereGeometry( 5, 32, 32 );
+        //const material = new THREE.MeshBasicMaterial( {color: 0xffff00} );
+        ////const sphere = new THREE.Mesh( geometry, material );
+        ////sphere.position.copy(middle);
+        ////scene.add( sphere );    
+        //
 
-        //api.selectElements([
-        //    getPatchPosition(crystal_clusters[from_id],from_patch),
-        //    getPatchPosition(crystal_clusters[to_id],to_patch),
-        //],true);
+        let strands = new Set();
+        let elems =  edit.createStrand("GGGGGGGGG", true) ;
+        let ecms = new THREE.Vector3();
+        elems.forEach(e =>{
+            ecms.add(e.getPos());
+            strands.add(e.strand);
+        });
+        ecms.divideScalar(18); // patch 9 but we have 2 strands
+
+        translateElements(new Set(elems),  new THREE.Vector3().copy(npos).sub(ecms));
+
+        
+        edit.ligate(
+            crystal_clusters[from_id][patch_description[from_patch][0][0]].strand.end3,
+            ([... strands][0] as Strand).end5
+        );
+
+        edit.ligate(
+            crystal_clusters[to_id][patch_description[to_patch][0][0]].strand.end3,
+            ([... strands][1] as Strand).end5
+        );
+
     });
+    // as the octahedra have no pairing this gives us the patch forces
+    makeTrapsFromPairs();
+
+
+    //view.longCalculation(findBasepairs, view.basepairMessage, ()=>{
+    //    console.log("done searching forces");
+    //});
     //makeTrapsFromSelection(); 
 }
 
@@ -185,18 +268,63 @@ const rotM = (caxis: THREE.Vector3, angle:number) =>{
     return M;
 };
 
+//{
+//    "red"    : [11858,7866,11232,12968],
+//    "pink"   : [8350,7802,10542,8898],
+//    "blue"   : [7318,12420,9994,7254],
+//    "green"  : [10606,6144,6692,10058],
+//    "yellow" : [9510,12904,8962,6628],
+//    "orange" : [8414,11794,11168,9446]
+//}
+
+
+
+//old attempt
+//const patch_description = [
+//    [[10799,10819]], [[9733,9754]], [[8703,8724]], 
+//    [[12448,12469]], [[12512,12532]], [[12576,12596]]
+//];
+
+const patch_description = [
+  [[11858,7866,11232,12968]],
+  [[8350 ,7802,10542,8898]],
+  [[7318 ,12420,9994,7254]],
+  [[10606,6144,6692,10058]],
+  [[9510 ,12904,8962,6628]],
+  [[8414 ,11794,11168,9446]]
+];
+
+
+
+
+
+//const modify = ()=>{
+//    
+//}
+//const patch_description = [11858,7866,11232,12968,8350 ,7802,10542,8898,7318 ,12420,9994,7254,10606,6144,6692,10058,9510 ,12904,8962,6628,8414 ,11794,11168,9446,
+//         11858 +21,7866+21,11232+21,12968+21,8350+21 ,7802+21,10542+21,8898+21,7318+21 ,12420+21,9994+21,7254+21,10606+21,6144+21,6692+21,10058+21,9510 +21 ,12904 +21,8962 +21,6628 +21,8414 +21  ,11794 +21 ,11168 +21,9446+21
+//];
+
+//const patch_description = [
+//    [[11858]],
+//    [[8350]],
+//    [[7318]],
+//    [[10606]],
+//    [[9510]],
+//    [[8414]]
+//  ];
 
 const getPatchPosition = (cluster, position)=>{
     // we assume PBC is always on 
     let mean = new THREE.Vector3(0,0,0); 
-    const patch_description = [
-        [[10799,10819]], [[9733,9754]], [[8703,8724]], 
-        [[12448,12469]], [[12512,12532]], [[12576,12596]]
-    ];
     patch_description[position][0].forEach(
         idx=> mean.add(cluster[idx].getPos())
     );
     return mean.divideScalar(patch_description[position][0].length);
+}
+
+const getPatchLast = (cluster, position)=>{
+    return cluster[patch_description[position][0][0]];
 }
 
 

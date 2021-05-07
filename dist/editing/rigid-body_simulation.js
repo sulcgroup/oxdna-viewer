@@ -98,6 +98,20 @@ class RigidClusterSimulator {
             requestAnimationFrame(this.simulate.bind(this));
         }
         else {
+            //cs.push({
+            //    "elems": c.getElements(),
+            //    "transl": c.getTotalTranslation(),
+            //    "rot": c.getTotalRotation(),
+            //    "pos": c.getPosition(),
+            //});
+            //this.clusters.forEach((c) => {
+            //    translateElements(
+            //        c.getElements(), c.getTotalTranslation()
+            //    );
+            //    rotateElementsByQuaternion(
+            //        c.getElements(), c.getTotalRotation(), c.getPosition()
+            //    );
+            //});
             editHistory.add(new RevertableClusterSim(this.clusters));
             console.log("Added simulation result to edit history");
         }
@@ -115,6 +129,7 @@ class Cluster {
         this.angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
         this.totalTranslation = new THREE.Vector3();
         this.totalRotation = new THREE.Quaternion();
+        this.counter = 0;
         this.clusterElements = clusterElements;
         this.sim = simulator;
         this.mass = 25;
@@ -178,6 +193,7 @@ class Cluster {
      */
     computeConnectionForces() {
         this.conPoints.forEach((p) => {
+            //if (p.getDist() < 20){
             let scalar = this.sim.connectionSpringConst * (p.getDist() - this.sim.connectionRelaxedLength);
             let f = p.getToPos().clone().sub(p.getFromPos());
             f.setLength(scalar);
@@ -207,10 +223,15 @@ class Cluster {
         this.angularVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaO = this.angularVelocity.clone().multiplyScalar(dt);
         // Perform transformations
-        translateElements(this.clusterElements, deltaP);
         let rotAngle = deltaO.length();
         let rotAxis = deltaO.normalize();
-        rotateElements(this.clusterElements, rotAxis, rotAngle, this.position);
+        let update = false;
+        if (this.counter % 100 == 0) {
+            update = true;
+        }
+        translateElements(this.clusterElements, deltaP, false);
+        rotateElements(this.clusterElements, rotAxis, rotAngle, this.position, update);
+        //}
         this.totalTranslation.add(deltaP);
         let tempQ = new THREE.Quaternion();
         tempQ.setFromAxisAngle(rotAxis, rotAngle);
@@ -218,6 +239,7 @@ class Cluster {
         // Clear forces
         this.force = new THREE.Vector3();
         this.torque = new THREE.Vector3();
+        this.counter += 1;
     }
     ;
     /**

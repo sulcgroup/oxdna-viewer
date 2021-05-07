@@ -113,6 +113,24 @@ class RigidClusterSimulator {
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
         } else {
+
+            //cs.push({
+            //    "elems": c.getElements(),
+            //    "transl": c.getTotalTranslation(),
+            //    "rot": c.getTotalRotation(),
+            //    "pos": c.getPosition(),
+            //});
+
+            //this.clusters.forEach((c) => {
+            //    translateElements(
+            //        c.getElements(), c.getTotalTranslation()
+            //    );
+            //    rotateElementsByQuaternion(
+            //        c.getElements(), c.getTotalRotation(), c.getPosition()
+            //    );
+            //});
+
+
             editHistory.add(new RevertableClusterSim(this.clusters));
             console.log("Added simulation result to edit history")
         }
@@ -220,6 +238,7 @@ class Cluster {
      */
     public computeConnectionForces() {
         this.conPoints.forEach((p) => {
+            //if (p.getDist() < 20){
             let scalar = this.sim.connectionSpringConst * (
                 p.getDist() - this.sim.connectionRelaxedLength
             );
@@ -229,6 +248,7 @@ class Cluster {
         });
     };
 
+    counter = 0;
     /**
      * Integrate one time-step and update cluster position and orientation
      * depending on the forces that act upon it.
@@ -254,10 +274,18 @@ class Cluster {
         let deltaO = this.angularVelocity.clone().multiplyScalar(dt);
 
         // Perform transformations
-        translateElements(this.clusterElements, deltaP);
+        
+        
         let rotAngle = deltaO.length();
         let rotAxis = deltaO.normalize();
-        rotateElements(this.clusterElements, rotAxis, rotAngle, this.position);
+
+        let update = false;
+        if(this.counter % 100 ==0){
+            update=true;
+        }    
+        translateElements(this.clusterElements, deltaP,false);
+        rotateElements(this.clusterElements, rotAxis, rotAngle, this.position,update);
+        //}
 
         this.totalTranslation.add(deltaP);
 
@@ -268,6 +296,7 @@ class Cluster {
         // Clear forces
         this.force = new THREE.Vector3();
         this.torque = new THREE.Vector3();
+        this.counter +=1;
     };
 
     /**

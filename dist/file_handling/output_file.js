@@ -22,6 +22,7 @@ function makeOutputFiles() {
         let { file_name, file } = makeParFile(name, reorganized, counts);
         makeTextFile(file_name, file);
     }
+    return reorganized;
 }
 function makeArrayBuffer(buffer, filename) {
     var link = document.createElement('a');
@@ -158,10 +159,10 @@ function makeDatFile(name, altNumbering = undefined) {
         maxCoord = Math.max(maxCoord, Math.max(Math.abs(p.x), Math.abs(p.y), Math.abs(p.z)));
     });
     let dat = "";
-    let box = Math.ceil(3 * maxCoord);
+    //let box: number = Math.ceil(3 * maxCoord);
     dat = [
         `t = 0`,
-        `b = ${box} ${box} ${box}`,
+        `b = ${box.x} ${box.y} ${box.z}`,
         `E = 0 0 0\n`
     ].join('\n');
     // get coordinates for all elements, in the correct order

@@ -25,6 +25,7 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
         let {file_name, file} = makeParFile(name, reorganized, counts);
         makeTextFile(file_name, file);
     }
+    return reorganized;
 }
 
 function makeArrayBuffer(buffer, filename) {
@@ -193,10 +194,10 @@ function makeDatFile(name, altNumbering=undefined) {
         ))
     });
     let dat: string = "";
-    let box: number = Math.ceil(3 * maxCoord);
+    //let box: number = Math.ceil(3 * maxCoord);
     dat = [
         `t = 0`,
-        `b = ${box} ${box} ${box}`,
+        `b = ${box.x} ${box.y} ${box.z}`,
         `E = 0 0 0\n`
     ].join('\n');
 

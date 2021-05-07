@@ -6,14 +6,14 @@ function glsl2three(input: THREE.Vector4) {
     return out;
 }
 
-function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3) {
+function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle: number, about: THREE.Vector3,update=true) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
-    rotateElementsByQuaternion(elements, q, about);
+    rotateElementsByQuaternion(elements, q, about,update);
     if(forceHandler) forceHandler.redraw();
 }
 
-function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3) {
+function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3,update=true) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
     let q2 = q.clone();
@@ -87,14 +87,15 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
             calcsp(base.n5); //calculate sp between current and n5
         }
     });
-
-    for (let i = 0; i < systems.length; i++){
-        systems[i].callUpdates(['instanceOffset', 'instanceRotation'])
+    if(update){
+        for (let i = 0; i < systems.length; i++){
+            systems[i].callUpdates(['instanceOffset', 'instanceRotation'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++){
+            tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation'])
+        }
+        render();
     }
-    for (let i = 0; i < tmpSystems.length; i++){
-        tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation'])
-    }
-    render();
 }
 
 //adjust the backbone after the move. Copied from DragControls
@@ -140,7 +141,7 @@ function calcsp(currentNuc) {
     sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 
-function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
+function translateElements(elements: Set<BasicElement>, v: THREE.Vector3, update=true) {
     elements.forEach((e) => {
         let sys = e.getSystem();
         let sid = e.sid;
@@ -178,7 +179,20 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
             calcsp(base.n5); //calculate sp between current and n5
         }
     });
+    if(update){
+        for (let i = 0; i < systems.length; i++){
+            systems[i].callUpdates(['instanceOffset'])
+        }
+        for (let i = 0; i < tmpSystems.length; i++){
+            tmpSystems[i].callUpdates(['instanceOffset'])
+        }
+        if(forceHandler) forceHandler.redraw();
+        render();
+    }
+}
 
+
+const update_instance_offset = ()=>{
     for (let i = 0; i < systems.length; i++){
         systems[i].callUpdates(['instanceOffset'])
     }
@@ -188,6 +202,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     if(forceHandler) forceHandler.redraw();
     render();
 }
-
+//
+//
 //dragControls.activate();
 //dragControls.enabled = true;
