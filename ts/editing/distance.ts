@@ -10,7 +10,7 @@ class DistanceHandler{
     }
 
     getHTML(){
-        return this.distances.map(d=>d.getHtml());
+        return this.distances.map(d=>d.html);
     }
 
     append(e1:BasicElement,e2:BasicElement){
@@ -31,7 +31,6 @@ class DistanceHandler{
             d=>d.compute()
         );
     }
-
 }
 
 let distanceHandler = new DistanceHandler();
@@ -39,26 +38,29 @@ let boundDistanceUpdate=false;
 
 
 function distanceSetup(){
+    // On opening the window we want to bind
+    // the update calls to the next conf loaded
     if(!boundDistanceUpdate){
         trajReader.lookupReader.callback = api.observable.wrap(
-            trajReader.lookupReader.callback, ()=>{
-                listDistances();
-          });
+            trajReader.lookupReader.callback, listDistances);
         boundDistanceUpdate=true;
     }
     listDistances();
 };
 
 function listDistances() {
+    //call all updates and spit out the distance HTML
     distanceHandler.update();
     let distanceDOM = document.getElementById("distances");
     distanceDOM.innerText = "";
     distanceHandler.getHTML().forEach(
         d => distanceDOM.appendChild(d)
     );
+    render();
 }
 
 function measureDistanceFromSelection(){
+    //create a new distance measurer
     let s = Array.from(selectedBases);
     if(s.length!=2){
         notify("please use 2 elements for distance selection");
@@ -68,37 +70,53 @@ function measureDistanceFromSelection(){
     clearSelection();
 }
 
-class DistanceObservable{
+class DistanceObservable {
     e1:BasicElement;
     e2:BasicElement;
     dist : number;
     parent : DistanceHandler;
     html : HTMLDivElement;
+    label : HTMLLabelElement;
+    line:THREE.Line;
 
-    constructor(e1:BasicElement,e2:BasicElement, parent : DistanceHandler){
+    constructor(e1:BasicElement,e2:BasicElement, parent : DistanceHandler){  
         this.e1=e1;
         this.e2=e2;
         this.parent = parent;
+        this.init();
         this.compute();
+        
     }
+
     compute(){
-        this.dist = this.e1.getPos().distanceTo(
-            this.e2.getPos()
+        if(this.label) this.label.innerText = `${this.e1.id}\t-\t${this.e2.id}\t:\t${this.dist}`;
+        this.dist = this.e1.getPos().distanceTo(this.e2.getPos()); 
+        this.line.geometry = new THREE.BufferGeometry().setFromPoints(
+            [this.e1.getPos(),this.e2.getPos()]
         );
     }
     
-    getHtml(){
-        let container_div = document.createElement('div');
+    private init(){
+        //setup html
+        this.html= document.createElement('div');
         let delete_button = document.createElement('button');
-        let label = document.createElement('label');
+        this.label = document.createElement('label');
         delete_button.innerText = "x";
-        delete_button.onclick = ()=>{
+        delete_button.onclick = () =>{
             this.parent.delete(this);
+            scene.remove(this.line);
             listDistances();
         }
-        label.innerText = `${this.e1.id}\t-\t${this.e2.id}\t:\t${this.dist}`;
-        container_div.appendChild(delete_button);
-        container_div.appendChild(label);
-        return container_div;
+        this.html.appendChild(delete_button);
+        this.html.appendChild(this.label);
+
+        //line representation
+        this.line =  new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(
+                [this.e1.getPos(),this.e2.getPos()]
+            ),
+            new THREE.LineBasicMaterial({ color: 0x999999})
+        )
+        scene.add(this.line);
     }
 }
