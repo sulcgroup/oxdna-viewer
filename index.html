@@ -331,6 +331,7 @@
                         <span class="caption">Clear selection</span>
                     </button>
                 </div>
+                <div class="tight group">
                 <button class="ribbon-button" onclick="view.toggleWindow('baseInfoWindow', ()=>{if(systems.length>0){updateView(systems[0])}})">
                     <span class="mif-list mif-3x"></span>
                     <span class="caption">Selected base info</span>
@@ -340,6 +341,14 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Selected base list</span>
                 </button>
+                </div>
+                <div class="tight group">
+                    <button class="ribbon-button" onclick="view.toggleWindow('distanceWindow', distanceSetup)" title="Distance information window.">
+                        
+                        <span class="mif-settings-ethernet mif-2x"></span>
+                        <span class="caption">Distance</span>
+                    </button>
+                </div>
             </div></div>
 
             <!--Edit-->
@@ -415,6 +424,7 @@
                     </button>
                 </div>
 
+                
                 <div class="tight group flex-column">
                     <div>
                         <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
@@ -798,6 +808,7 @@
         <script src="./dist/ox_serve/relax_scenarios.js"></script>
         <script src="./dist/ox_serve/live_relax.js"></script>
         <script src="./dist/file_handling/order_parameter_selector.js"></script>
+        <script src="./dist/editing/distance.js"></script>
     </div>
 </body>
 
