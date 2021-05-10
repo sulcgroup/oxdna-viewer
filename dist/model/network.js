@@ -136,6 +136,8 @@ class Network {
     ;
     sendtoUI() {
         this.fittingReady = true;
+        if (flux.fluxWindowOpen)
+            view.addNetworkData(this.nid);
     }
     ;
     fillVec(vecName, unitSize, pos, vals) {
@@ -260,6 +262,7 @@ class Network {
         // network is ready for solving and visualization
         this.networktype = "MWCENM";
         if (this.reducedEdges.total != 0) {
+            // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
             this.initInstances(this.reducedEdges.total);
             this.initEdges();
             this.prepVis();
@@ -303,6 +306,7 @@ class Network {
     }
     addNonpolarBonds() {
         let nonpolark = 1.0;
+        let np = 12;
         // checks for atoms within 4 residues of one another on two amino acids
         // let nonpolarcheck = function(res1, res2){ // looks for pairs of atoms from different residues within 4 Angstroms
         //
@@ -447,7 +451,10 @@ class Network {
                 let qind = this.particles.indexOf(p.n3);
                 if (qind != -1) {
                     notify("backbone Bond " + i.toString() + " " + qind.toString());
-                    this.reducedEdges.addEdge(qind, i, this.elemcoords.distance(i, qind), 's', covalentk);
+                    let dis = this.elemcoords.distance(i, qind);
+                    if (dis < 1) { // removes any obviously incorrect backbone bonds
+                        this.reducedEdges.addEdge(qind, i, this.elemcoords.distance(i, qind), 's', covalentk);
+                    }
                 }
             }
         }

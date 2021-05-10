@@ -4,6 +4,8 @@
     "title": "Fluctuation Window",
     "width": 600,
     "height": 500,
+    "btnClose": false,
     "data-role": "window",
-    "data-btn-close": false
+    "clsCaption": "bg-red",
+    "clsContent": "bg-white fg-red"
 }

@@ -643,9 +643,9 @@ function readHBondFile(file) {
         let hbonds = [];
         //process hbonds
         for (let i = 0; i < size - 1; i++) {
-            if (recongizedProteinResidues.indexOf(lines[i].substring(0, 3).trim()) != -1) { //check that its a protein residue
-                // trims all split items then removes the empty strings
-                let l = lines[i].split(" ").map(function (item) { return item.trim(); }).filter(n => n);
+            // trims all split items then removes the empty strings
+            let l = lines[i].split(" ").map(function (item) { return item.trim(); }).filter(n => n);
+            if (recongizedProteinResidues.indexOf(l[0]) != -1) { //check that its a protein residue
                 //extract values
                 const pos1 = l[1].split("."), atm1 = l[2], id2 = l[3], pos2 = l[4].split("."), atm2 = l[5], dist = parseFloat(l[8]);
                 if (recongizedProteinResidues.indexOf(id2) != -1) { //bonded to another protein residue
@@ -656,7 +656,17 @@ function readHBondFile(file) {
                     hbonds.push(hbond);
                 }
             }
+            else if (recongizedProteinResidues.indexOf(l[1]) != -1 && recongizedProteinResidues.indexOf(l[5]) != -1) { // residue is second listed indicates hbonds listed from models
+                //extract values
+                const pos1 = l[0].split(".")[1], atm1 = l[3], id1 = l[2], id2 = l[6], pos2 = l[4].split(".")[1], atm2 = l[7], dist = parseFloat(l[10]);
+                let pdbinds1 = [pos1, parseInt(id1)];
+                let pdbinds2 = [pos2, parseInt(id2)];
+                let hbond = [pdbinds1, pdbinds2];
+                hbonds.push(hbond);
+            }
         }
+        if (hbonds.length == 0)
+            notify("H bond file format is unrecongized");
         pdbFileInfo[pdbInfoIndx].hydrogenBonds = hbonds;
     };
     reader.readAsText(file);
@@ -820,7 +830,7 @@ function prep_pdb(pdblines) {
     // Find Chain Termination statements TER and uses
     for (let i = start; i < pdblines.length; i++) {
         if (pdblines[i].substr(0, 4) == 'ATOM' && noatom == false) {
-            firstatom = i;
+            firstatom = i; //line number of first atomic coordinate
             noatom = true;
         }
         if (pdblines[i].substr(0, 3) === 'TER') {
@@ -844,69 +854,86 @@ function prep_pdb(pdblines) {
     let bioassemblyassumption = false;
     if (modelDivs.length > 0)
         bioassemblyassumption = true;
-    // Look at line above chain termination for chain ID
-    let chainids = [];
-    chainDivs.forEach(d => {
-        chainids.push(pdblines[d - 1].substring(21, 22).trim());
-    });
-    //Re-Assign Chain Ids based off repeating or not
-    let sorted_repeated_chainids = [];
-    chainids.forEach((chain, ind) => {
-        if (chainids.indexOf(chain) != ind && bioassemblyassumption) { //Check for repeated and presence of models
-            sorted_repeated_chainids.push(chain);
-        }
-        else {
-            sorted_repeated_chainids.push(chain + "*"); // not a repeat? denoted as A*
-        }
-    });
     let nchainids = []; // Store new chainids
-    let fullalpha = [];
-    let lastindex = 1; //
-    let alphabet = 'a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.1.2.3.4.5.6.7.8.9.<.>.?./.!.@.#.$.%.^.&.*.(.)._.-.=.+'.split('.');
-    fullalpha = fullalpha.concat(alphabet);
-    // supports 2862 chains with the same chain id in the same pdb file
-    alphabet.forEach((id, idx, arr) => fullalpha = fullalpha.concat(arr.map(x => { return id + x; })));
-    sorted_repeated_chainids.forEach((val, ind) => {
-        if (nchainids.indexOf(val) != ind) { //same chain identifier needs to be fixed
-            if (val != "" && val.includes("*")) { //unique chain
-                let nval = val;
-                let attmpt_indx = lastindex;
-                while (nchainids.indexOf(nval) != -1 && attmpt_indx < 2862) {
-                    nval = fullalpha[attmpt_indx] + val;
-                    attmpt_indx += 1;
+    let finalids = []; // Final Ids to Loaded, can be from chains or models
+    let finaldivs = [];
+    if (chainDivs.length != 0) { // Assumes normal PDB file with all chains declared
+        // Look at line above chain termination for chain ID
+        let chainids = [];
+        chainDivs.forEach(d => {
+            chainids.push(pdblines[d - 1].substring(21, 22).trim());
+        });
+        //Re-Assign Chain Ids based off repeating or not
+        let sorted_repeated_chainids = [];
+        chainids.forEach((chain, ind) => {
+            if (chainids.indexOf(chain) != ind && bioassemblyassumption) { //Check for repeated and presence of models
+                sorted_repeated_chainids.push(chain);
+            }
+            else {
+                sorted_repeated_chainids.push(chain + "*"); // not a repeat? denoted as A*
+            }
+        });
+        let fullalpha = [];
+        let lastindex = 1; //
+        let alphabet = 'a.b.c.d.e.f.g.h.i.j.k.l.m.n.o.p.q.r.s.t.u.v.w.x.y.z.1.2.3.4.5.6.7.8.9.<.>.?./.!.@.#.$.%.^.&.*.(.)._.-.=.+'.split('.');
+        fullalpha = fullalpha.concat(alphabet);
+        // supports 2862 chains with the same chain id in the same pdb file
+        alphabet.forEach((id, idx, arr) => fullalpha = fullalpha.concat(arr.map(x => { return id + x; })));
+        sorted_repeated_chainids.forEach((val, ind) => {
+            if (nchainids.indexOf(val) != ind) { //same chain identifier needs to be fixed
+                if (val != "" && val.includes("*")) { //unique chain
+                    let nval = val;
+                    let attmpt_indx = lastindex;
+                    while (nchainids.indexOf(nval) != -1 && attmpt_indx < 2862) {
+                        nval = fullalpha[attmpt_indx] + val;
+                        attmpt_indx += 1;
+                    }
+                    lastindex = attmpt_indx;
+                    nchainids.push(nval);
                 }
-                lastindex = attmpt_indx;
-                nchainids.push(nval);
+                else {
+                    nchainids.push(val);
+                }
             }
             else {
                 nchainids.push(val);
             }
-        }
-        else {
-            nchainids.push(val);
-        }
-    });
+        });
+        //important must be set
+        finalids = nchainids;
+        finaldivs = chainDivs;
+    }
+    else if (modelDivs.length != 0) {
+        // Assumes a malformed PDB with models but no chains, (looking at you Modeller)
+        bioassemblyassumption = false;
+        let chainids = [];
+        modelDivs.forEach((d, dindx) => {
+            chainids.push((dindx + 1).toString() + "*"); // Assumes all chains are unique since they weren't labeled
+        });
+        finalids = chainids;
+        finaldivs = modelDivs;
+    }
     // Stores ID, start line, end line if chain is unique
     // Stores Id, start line, end line, coordinates a if chain is repeated and Quat Rotation for a1
     // tl;dr  unique chains require more calculations while repeated chains can resuse those calculated parameters and shifts them accordingly
     // necessary for loading large things like Virus particles
     let initList = new pdbReadingList;
     let prevend = firstatom;
-    for (let i = 0; i < nchainids.length; i++) {
-        if (nchainids[i].includes("*")) {
-            let id = nchainids[i].replace('*', ''); // remove asterisk from chain id
+    for (let i = 0; i < finalids.length; i++) {
+        if (finalids[i].includes("*")) {
+            let id = finalids[i].replace('*', ''); // remove asterisk from chain id
             initList.uniqueIDs.push(id);
             initList.uniqueStart.push(prevend);
-            initList.uniqueEnd.push(chainDivs[i]);
-            prevend = chainDivs[i];
+            initList.uniqueEnd.push(finaldivs[i]);
+            prevend = finaldivs[i];
         }
         else {
-            initList.repeatIDs.push(nchainids[i]);
+            initList.repeatIDs.push(finalids[i]);
             initList.repeatStart.push(prevend);
-            initList.repeatEnd.push(chainDivs[i]);
+            initList.repeatEnd.push(finaldivs[i]);
             initList.repeatCoords.push([new THREE.Vector3(0, 0, 0)]);
             initList.repeatQuatRots.push(new THREE.Quaternion());
-            prevend = chainDivs[i];
+            prevend = finaldivs[i];
         }
     }
     return { "initlist": initList, "dsbonds": dsbonds };
@@ -1006,7 +1033,7 @@ function readPdbFile(file) {
                 return a1;
             }
         };
-        let chainindx = -1;
+        let chainindx = 0;
         let loadpdbsection = function (start, end) {
             pdbpositions = [];
             atoms = [];
@@ -1022,16 +1049,37 @@ function readPdbFile(file) {
                     na.atomType = pdbLine.substring(12, 16).trim();
                     na.altLoc = pdbLine.substring(16, 17).trim();
                     na.resType = pdbLine.substring(17, 20).trim();
-                    na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
-                    let tmp = pdbLine.substring(23, 29); // Usually the residue number
-                    //check for insertion code
-                    na.iCode = "";
-                    if (isNaN(parseInt(tmp[5]))) {
-                        na.iCode = tmp[5];
-                        na.pdbResIdent = tmp.slice(0, 5).trim();
+                    let chaincheck = pdbLine.substring(21, 22).trim() != ""; // chain is legit if filled at 21st character
+                    if (!chaincheck) { // file missing chain data?
+                        if (prevChainId == chainindx.toString()) {
+                            na.chainID = chainindx.toString();
+                        }
+                        else {
+                            na.chainID = (chainindx + 1).toString();
+                        }
+                        let tmp = pdbLine.substring(21, 27); // Location of residue identifer IF file is missing chain data
+                        //check for insertion code
+                        na.iCode = "";
+                        if (isNaN(parseInt(tmp[5]))) {
+                            na.iCode = tmp[5];
+                            na.pdbResIdent = tmp.slice(0, 5).trim();
+                        }
+                        else {
+                            na.pdbResIdent = tmp.trim();
+                        }
                     }
                     else {
-                        na.pdbResIdent = tmp.trim();
+                        na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+                        let tmp = pdbLine.substring(23, 29); // Usually the residue number
+                        //check for insertion code
+                        na.iCode = "";
+                        if (isNaN(parseInt(tmp[5]))) {
+                            na.iCode = tmp[5];
+                            na.pdbResIdent = tmp.slice(0, 5).trim();
+                        }
+                        else {
+                            na.pdbResIdent = tmp.trim();
+                        }
                     }
                     // Convert From Angstroms to Simulation Units while we're at it
                     na.x = parseFloat(pdbLine.substring(30, 38)) / 8.518;

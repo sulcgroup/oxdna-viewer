@@ -460,11 +460,17 @@ class View {
         let elem = this.doc.getElementById(id);
         if (elem) {
             Metro.window.toggle(elem);
-            // flux.fluxWindowOpen = !flux.fluxWindowOpen;
+            flux.fluxWindowOpen = !flux.fluxWindowOpen;
+            if (flux.fluxWindowOpen)
+                flux.loadDatasetsandNetworks();
+            else
+                flux.flushDatasetsandNetworks();
             // flux.flushDatasetsandNetworks();
         }
         else {
-            this.createFluxWindow(id, oncreate, flux.toggleDatasetsandNetworks, flux.flushDatasetsandNetworks);
+            this.createFluxWindow(id, oncreate, flux.toggleDatasetsandNetworks, flux.toggleDatasetsandNetworks);
+            flux.fluxWindowOpen = true;
+            flux.loadDatasetsandNetworks();
         }
     }
     createWindow(id, oncreate) {
@@ -476,19 +482,21 @@ class View {
             w.load(`windows/${id}.html`).then(oncreate);
         });
     }
-    createFluxWindow(id, oncreate, ontoggle, onclose) {
+    createFluxWindow(id, oncreate, ontoggle, onload) {
         fetch(`windows/${id}.json`)
             .then(response => response.json())
             .then(data => {
             let w = Metro.window.create(data);
             w[0].id = id;
             w.load(`windows/${id}.html`).then(oncreate);
-            w[0].ontoggle = ontoggle();
+            // w[0].ontoggle = ontoggle();
+            // w[0].onload = onload();
             // w[0].onclose = () => {
             //     flux.flushDatasetsandNetworks();
             //     notify("UNLDING");
             // }
-            // w[0].onclose = onclose();
+            // w.data-close-action = ontoggle();
+            // w[0].closeAction = onload();
         });
     }
     showHoverInfo(pos, e) {
@@ -556,25 +564,32 @@ class View {
     }
     //Network Selector Methods (Protein tab)
     addNetwork(nid) {
-        let ul = document.getElementById("networks");
-        let li = document.createElement("li");
         let name = "Network " + (nid + 1).toString();
-        li.setAttribute('id', name);
-        li.appendChild(document.createTextNode(name));
-        li.setAttribute("onclick", String(selectednetwork = nid));
-        ul.appendChild(li);
+        let exists = !!document.getElementById(name);
+        if (!exists) {
+            let ul = document.getElementById("networks");
+            let li = document.createElement("li");
+            li.setAttribute('id', name);
+            li.appendChild(document.createTextNode(name));
+            li.setAttribute("onclick", String(selectednetwork = nid));
+            ul.appendChild(li);
+        }
     }
     removeNetwork(nid) {
-        let ul = document.getElementById("networks");
         let name = "Network " + (nid + 1).toString();
-        let item = document.getElementById(name);
-        ul.removeChild(item);
+        let exists = !!document.getElementById(name);
+        if (exists) {
+            let ul = document.getElementById("networks");
+            let name = "Network " + (nid + 1).toString();
+            let item = document.getElementById(name);
+            ul.removeChild(item);
+        }
     }
     toggleDataset(gid) {
         let GD = graphDatasets[gid];
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        let x = document.getElementById(name);
-        if (typeof (x) != 'undefined' && x != null) {
+        let exists = !!document.getElementById(name);
+        if (!exists) {
             //exists
             this.removeGraphData(gid);
         }
@@ -582,51 +597,62 @@ class View {
             this.addGraphData(gid);
         }
     }
+    // UI methods for adding and removing info from lists in Fluctuation tab
     addGraphData(gid) {
         let GD = graphDatasets[gid];
-        let ul = document.getElementById("datalist"); //In fluctuation Window
-        let li = document.createElement("li");
-        let sp1 = document.createElement("span");
-        let sp2 = document.createElement("span");
-        sp1.setAttribute('class', 'label');
-        sp2.setAttribute('class', 'second-label');
-        sp1.appendChild(document.createTextNode(GD.label));
-        sp2.appendChild(document.createTextNode(GD.datatype));
-        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        li.setAttribute('id', name);
-        li.setAttribute('value', String(gid));
-        li.appendChild(sp1);
-        li.appendChild(sp2);
-        li.onclick = function () { flux.toggleData(li.value); };
-        ul.appendChild(li);
-    }
-    addNetworkData(nid) {
-        if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
-            let ul = document.getElementById("readynetlist"); //In fluctuation Window
+        let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype; // Main label
+        let elementExists = !!document.getElementById(name); // boolean return if element exists
+        if (!elementExists) {
+            let ul = document.getElementById("datalist"); //In fluctuation Window
             let li = document.createElement("li");
             let sp1 = document.createElement("span");
             let sp2 = document.createElement("span");
             sp1.setAttribute('class', 'label');
             sp2.setAttribute('class', 'second-label');
-            let name = "Network " + (nid + 1).toString();
-            sp1.appendChild(document.createTextNode(name));
-            sp2.appendChild(document.createTextNode(networks[nid].networktype));
+            sp1.appendChild(document.createTextNode(GD.label));
+            sp2.appendChild(document.createTextNode(GD.oDatatype));
             li.setAttribute('id', name);
-            li.setAttribute('value', String(nid));
+            li.setAttribute('value', String(gid));
             li.appendChild(sp1);
             li.appendChild(sp2);
-            li.onclick = function () {
-                flux.fitData(li.value);
-            };
+            li.onclick = function () { flux.toggleData(li.value); };
             ul.appendChild(li);
+        }
+    }
+    addNetworkData(nid) {
+        let name = "Network " + (nid + 1).toString();
+        let exists = !!document.getElementById(name);
+        if (!exists) {
+            if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
+                let ul = document.getElementById("readynetlist"); //In fluctuation Window
+                let li = document.createElement("li");
+                let sp1 = document.createElement("span");
+                let sp2 = document.createElement("span");
+                sp1.setAttribute('class', 'label');
+                sp2.setAttribute('class', 'second-label');
+                let name = "Network " + (nid + 1).toString();
+                sp1.appendChild(document.createTextNode(name));
+                sp2.appendChild(document.createTextNode(networks[nid].networktype));
+                li.setAttribute('id', name);
+                li.setAttribute('value', String(nid));
+                li.appendChild(sp1);
+                li.appendChild(sp2);
+                li.onclick = function () {
+                    flux.fitData(li.value);
+                };
+                ul.appendChild(li);
+            }
         }
     }
     removeGraphData(gid) {
         let GD = graphDatasets[gid];
-        let ul = document.getElementById("datalist");
-        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        let li = document.getElementById(name);
-        ul.removeChild(li);
+        let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype;
+        let elementExists = !!document.getElementById(name); // boolean return if element exists
+        if (elementExists) {
+            let ul = document.getElementById("datalist");
+            let li = document.getElementById(name);
+            ul.removeChild(li);
+        }
     }
     removeNetworkData(nid) {
         if (networks[nid].fittingReady) {
@@ -647,6 +673,7 @@ class graphData {
         this.units = u;
         this.gammaSim = 0;
         this.cutoff = 0;
+        this.oDatatype = this.datatype;
     }
     ;
     convertType(format) {
