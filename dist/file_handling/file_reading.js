@@ -655,6 +655,7 @@ function readHBondFile(file) {
                     let hbond = [pdbinds1, pdbinds2];
                     hbonds.push(hbond);
                 }
+                // can read hbonds using just model identifiers (no chain identifiers)
             }
             else if (recongizedProteinResidues.indexOf(l[1]) != -1 && recongizedProteinResidues.indexOf(l[5]) != -1) { // residue is second listed indicates hbonds listed from models
                 //extract values

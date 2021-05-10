@@ -393,7 +393,6 @@ class ToggleGroupWithDisable extends ToggleGroup {
 }
 class View {
     constructor(doc) {
-        // fluxSideBarDisplayed: boolean;
         this.basepairMessage = "Locating basepairs, please be patient...";
         this.doc = doc;
         // Initialise toggle groups
@@ -468,7 +467,7 @@ class View {
             // flux.flushDatasetsandNetworks();
         }
         else {
-            this.createFluxWindow(id, oncreate, flux.toggleDatasetsandNetworks, flux.toggleDatasetsandNetworks);
+            this.createWindow(id, oncreate);
             flux.fluxWindowOpen = true;
             flux.loadDatasetsandNetworks();
         }
@@ -480,23 +479,6 @@ class View {
             let w = Metro.window.create(data);
             w[0].id = id;
             w.load(`windows/${id}.html`).then(oncreate);
-        });
-    }
-    createFluxWindow(id, oncreate, ontoggle, onload) {
-        fetch(`windows/${id}.json`)
-            .then(response => response.json())
-            .then(data => {
-            let w = Metro.window.create(data);
-            w[0].id = id;
-            w.load(`windows/${id}.html`).then(oncreate);
-            // w[0].ontoggle = ontoggle();
-            // w[0].onload = onload();
-            // w[0].onclose = () => {
-            //     flux.flushDatasetsandNetworks();
-            //     notify("UNLDING");
-            // }
-            // w.data-close-action = ontoggle();
-            // w[0].closeAction = onload();
         });
     }
     showHoverInfo(pos, e) {
@@ -985,10 +967,6 @@ class fluxGraph {
         }
     }
     ;
-    // toggleSidebar() {
-    //     let sb = document.getElementById('fluxbar');
-    //     // sb.toggle
-    // };
     applyCurrentIndx(mode = "avg") {
         if (this.gids.length != 1) {
             notify("Please Select a Single Dataset to Apply Indexing To");

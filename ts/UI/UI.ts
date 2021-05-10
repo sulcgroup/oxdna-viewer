@@ -424,7 +424,6 @@ class View {
     inboxingMode: ToggleGroupWithDisable;
     selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
-    // fluxSideBarDisplayed: boolean;
 
     basepairMessage = "Locating basepairs, please be patient...";
 
@@ -506,7 +505,7 @@ class View {
             else flux.flushDatasetsandNetworks();
             // flux.flushDatasetsandNetworks();
         } else {
-            this.createFluxWindow(id, oncreate, flux.toggleDatasetsandNetworks, flux.toggleDatasetsandNetworks);
+            this.createWindow(id, oncreate);
             flux.fluxWindowOpen = true;
             flux.loadDatasetsandNetworks();
         }
@@ -521,27 +520,6 @@ class View {
                 w.load(`windows/${id}.html`).then(oncreate);
             }
         );
-    }
-
-    public createFluxWindow(id: string, oncreate?: ()=>void, ontoggle?: ()=>void, onload?: ()=>void) {
-        fetch(`windows/${id}.json`)
-            .then(response => response.json())
-            .then(data => {
-                    let w = Metro.window.create(data);
-                    w[0].id = id;
-                    w.load(`windows/${id}.html`).then(oncreate);
-                    // w[0].ontoggle = ontoggle();
-
-                    // w[0].onload = onload();
-
-                    // w[0].onclose = () => {
-                    //     flux.flushDatasetsandNetworks();
-                    //     notify("UNLDING");
-                    // }
-                    // w.data-close-action = ontoggle();
-                    // w[0].closeAction = onload();
-                }
-            );
     }
 
     public showHoverInfo(pos: THREE.Vector2, e: BasicElement) {
@@ -903,7 +881,6 @@ class fluxGraph {
         wait();
     }
 
-
     loadDatasetsandNetworks() {
         if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {view.addGraphData(gid);})
         if(networks.length > 0) networks.forEach((n, nid) => {view.addNetworkData(nid);})
@@ -923,8 +900,6 @@ class fluxGraph {
             }
         })
     }
-
-
 
     clearGraph() {
         if(this.gids.length != 0) this.gids.forEach(g => this.toggleData(g));
@@ -1060,11 +1035,6 @@ class fluxGraph {
             this.removeDatafromGraph(gid);
         }
     };
-
-    // toggleSidebar() {
-    //     let sb = document.getElementById('fluxbar');
-    //     // sb.toggle
-    // };
 
     applyCurrentIndx(mode:string = "avg") {
         if(this.gids.length != 1){
