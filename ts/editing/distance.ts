@@ -88,8 +88,17 @@ class DistanceObservable {
         
     }
 
+    private round_num(num, pow = 2){
+        let round = Math.pow(10,pow);
+        return Math.round((num + Number.EPSILON) * round) / round;
+    }
+    
     compute(){
-        if(this.label) this.label.innerText = `${this.e1.id}\t-\t${this.e2.id}\t:\t${this.dist}`;
+
+        if(this.label) {
+            const nm_dist = 0.8518 * this.dist;
+            this.label.innerText = `${this.e1.id}\t-\t${this.e2.id}\t | \t${this.round_num(this.dist,3)}\t SU | \t${this.round_num(nm_dist,3)} nm`;
+        }
         this.dist = this.e1.getPos().distanceTo(this.e2.getPos()); 
         this.line.geometry = new THREE.BufferGeometry().setFromPoints(
             [this.e1.getPos(),this.e2.getPos()]
