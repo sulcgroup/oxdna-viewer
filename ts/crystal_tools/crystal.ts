@@ -1,51 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 
-const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
-    let strands = new Set<Strand>();
-    selectedBases.forEach(b =>{
-            strands.add(b.strand)
-        }
-    ); // filter out strands
-
-    let cmss = [];
-    strands.forEach(strand=>{
-        let cms = new THREE.Vector3();
-        let l=0
-        strand.forEach(base =>{
-            cms.add(base.getPos());
-            l+=1;
-        });
-        cms.divideScalar(l);
-        cmss.push(cms);
-    }); // find their cms
-
-    let npos = new THREE.Vector3().copy(cmss[0]);
-    npos.add(cmss[1]);
-    npos.divideScalar(2);
-    
-    let duplex_strands = new Set();
-    let elems =  edit.createStrand(patch_sequence, true) ;
-    let ecms = new THREE.Vector3();
-    elems.forEach(e =>{
-        ecms.add(e.getPos());
-        duplex_strands.add(e.strand);
-    });
-    ecms.divideScalar(elems.length); 
-
-    translateElements(new Set(elems),  new THREE.Vector3().copy(npos).sub(ecms));
-
-    edit.ligate( // connect first strand
-        ([... strands][0] as Strand).end3,
-        ([... duplex_strands][0] as Strand).end5
-    );
-    
-    edit.ligate( // connect second strand
-        ([... strands][1] as Strand).end3,
-        ([... duplex_strands][1] as Strand).end5
-    );
-}
-
 const get_strand_ends = ()=>{
     let bases = Array.from(selectedBases);
     let s = new Set<Strand>();
@@ -123,6 +78,27 @@ const extend_5p_patches = (extend_patch_by="TTTTTTTTTTTTTTTTTTTTT") => {
     topologyEdited = true;
 }
 
+
+const extend_5p_patches_flat = (extend_patch_by="TTTTTTTTTTTTTTTTTTTTT") => {
+    const patch_description = [
+        11858,7866,11232,12968,
+        8350 ,7802,10542,8898,
+        7318 ,12420,9994,7254,
+        10606,6144,6692,10058,
+        9510 ,12904,8962,6628,
+        8414 ,11794,11168,9446];
+    patch_description.forEach(pid=>{
+            let strand = elements.get(pid).strand;
+            // callect the 3p overhang
+            let vics = [];
+            for(let i=pid; i < pid+21;i++)
+                vics.push(elements.get(i));
+            // remove them and extend the 3p
+            edit.deleteElements(vics);
+            edit.extendStrand(strand.end5, extend_patch_by);
+    });
+    topologyEdited = true;
+}
 
 let loadCrystal = ()=>{
     // register 1st drop event 
@@ -232,6 +208,24 @@ let handleCrystalDrop = (files)=>{
     datFileReader.readAsText(files[0]);
 }
 
+
+const extend_selected_strands = (seq = "TTTTTTTTT") =>{
+    let strands = new Set<Strand>();
+    selectedBases.forEach(b =>{
+            strands.add(b.strand)
+        }
+    ); // filter out strands
+    clearSelection();
+    strands.forEach(s =>{
+        let bases = edit.extendStrand(s.end5, seq);
+        api.selectElements(bases);
+        selectionToCluster();
+        bases.forEach(b => b.translatePosition(new THREE.Vector3(100,0,0)));
+    });
+    tmpSystems.forEach((s) => s.callUpdates(['instanceOffset']));
+    render();
+} 
+
 const crystal_bindings = [
     [0,  2 ,   1,   1], [1 ,  4 ,  2,    5], [2 ,  2 ,  3,  1],   [0 ,  5 ,  3,  4], [0 ,  1 ,  4,  5], 
     [1 ,  2 ,  4,   3], [4 ,  2 ,  5,    3], [5 ,  0 ,  6,  3],   [3 ,  5 ,  6,  1], [0 ,  4 ,  6,  0], 
@@ -263,6 +257,8 @@ let step2 = ()=>{
         npos.add(
             nucleotide.getA1().multiplyScalar(2)
         );
+
+        
         
         //let ecms = new THREE.Vector3();
         //middle.add(
@@ -276,27 +272,33 @@ let step2 = ()=>{
         ////scene.add( sphere );    
         //
 
-        let strands = new Set();
-        let elems =  edit.createStrand("GGGGGGGGG", true) ;
-        let ecms = new THREE.Vector3();
-        elems.forEach(e =>{
-            ecms.add(e.getPos());
-            strands.add(e.strand);
-        });
-        ecms.divideScalar(18); // patch 9 but we have 2 strands
 
-        translateElements(new Set(elems),  new THREE.Vector3().copy(npos).sub(ecms));
+        let a  = crystal_clusters[from_id][patch_description[from_patch][0][0]].strand.end3;
+        let b  = crystal_clusters[to_id][patch_description[to_patch][0][0]].strand.end3;
+        if(a.getPos().distanceTo(b.getPos()) < 60){
 
-        
-        edit.ligate(
-            crystal_clusters[from_id][patch_description[from_patch][0][0]].strand.end3,
-            ([... strands][0] as Strand).end5
-        );
+            let strands = new Set();
+            let elems =  edit.createStrand("GGGGGGGGG", true) ;
+            let ecms = new THREE.Vector3();
+            elems.forEach(e =>{
+                ecms.add(e.getPos());
+                strands.add(e.strand);
+            });
+            ecms.divideScalar(18); // patch 9 but we have 2 strands
 
-        edit.ligate(
-            crystal_clusters[to_id][patch_description[to_patch][0][0]].strand.end3,
-            ([... strands][1] as Strand).end5
-        );
+            translateElements(new Set(elems),  new THREE.Vector3().copy(ecms));
+
+
+            edit.ligate(
+                a,
+                ([... strands][0] as Strand).end5
+            );
+
+            edit.ligate(
+                b,
+                ([... strands][1] as Strand).end5
+            );
+        }
 
     });
     // as the octahedra have no pairing this gives us the patch forces
@@ -464,3 +466,227 @@ const align_to_patch_particle = (cluster:Nucleotide[], a1,a2,a3)=>{
     //    rotate(cluster,R)
     //} // it seems there is a bug in the original script here...
 }
+
+
+
+//12420 -right
+//8414  -left
+//9994  
+//11794 
+//7318  
+//11168 
+//7254  
+//9446  
+
+//[12420, 8414]  
+//[9994, 11794] 
+//[7318, 11168] 
+//[7254, 9446 ] 
+
+//[12420, 8414
+//,9994, 11794, 
+//,7318, 11168, 
+//,7254, 9446 ] 
+
+
+//   r  , l
+//[12420, 8414]
+//[9994 , 11794]
+//[7318 , 11168]
+//[7254 , 9446]
+
+
+const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
+    let strands = new Set<Strand>();
+    selectedBases.forEach(b =>{
+            strands.add(b.strand)
+        }
+    ); // filter out strands
+
+    let cmss = [];
+    strands.forEach(strand=>{
+        let cms = new THREE.Vector3();
+        let l=0
+        strand.forEach(base =>{
+            cms.add(base.getPos());
+            l+=1;
+        });
+        cms.divideScalar(l);
+        cmss.push(cms);
+    }); // find their cms
+
+    let npos = new THREE.Vector3().copy(cmss[0]);
+    npos.add(cmss[1]);
+    npos.divideScalar(2);
+    
+    let duplex_strands = new Set();
+    let elems =  edit.createStrand(patch_sequence, true) ;
+    let ecms = new THREE.Vector3();
+    elems.forEach(e =>{
+        ecms.add(e.getPos());
+        duplex_strands.add(e.strand);
+    });
+    ecms.divideScalar(elems.length); 
+
+    translateElements(new Set(elems),  new THREE.Vector3().copy(npos).sub(ecms));
+
+    edit.ligate( // connect first strand
+        ([... strands][0] as Strand).end3,
+        ([... duplex_strands][0] as Strand).end5
+    );
+    
+    edit.ligate( // connect second strand
+        ([... strands][1] as Strand).end3,
+        ([... duplex_strands][1] as Strand).end5
+    );
+}
+
+const setup_bcc = ()=>{
+    const connect = (f, t)=>{
+        clearSelection();
+        api.selectElementIDs([f,t]);
+        interconnectDuplex3p();
+    }
+    //grid id to index 
+    let d = {};
+
+    // we assume that the first system is the one we want to copy around
+    systems[0].select();
+    const n_elements = selectedBases.size;
+    // compute the cms of the octahedron origami
+    let cms = new THREE.Vector3(0,0,0);
+    selectedBases.forEach( base =>{
+        cms.add(base.getPos());
+    });
+    cms.divideScalar(selectedBases.size);
+    // prepare to copy around
+    cutWrapper(); 
+    let idx = 0;
+    let k=0;
+    for(let k=0;k < 3; k++){
+        for(let j = 0; j < 3; j++){
+            for(let i=0; i < 3; i++){
+                //build up the index of the origami in the 
+                //grid to use for offset
+                d[`${i},${j},${k}`]= idx++;
+                //progress ?
+                console.log(i,j,k)
+                //paste in a new structure
+                pasteWrapper(true);
+                //make sure everything is its own cluster
+                selectionToCluster();
+                //coupy our computed cms value
+                let cms_c = new THREE.Vector3().copy(cms);
+                //compute the offset position
+                cms_c.set(cms.x +80*i,cms.y+80*j,cms.z+80*k);
+                //move the origami
+                translateElements(selectedBases, cms_c);
+            }
+        } 
+    } 
+    console.log("test:");
+    console.log(d);
+    // adjust box
+    box.set(500,500,500);
+    for(let k=0;k < 3; k++){
+        for(let j = 0; j < 3; j++){
+            for(let i=0; i < 3; i++){
+                
+                const self_idx = d[`${i},${j},${k}`];
+                const right    = d[`${i+1},${j},${k}`];
+                const top      = d[`${i},${j+1},${k}`];
+                const north    = d[`${i},${j},${k+1}`]; 
+                console.log(self_idx, right,top, north);
+
+                const s = self_idx*n_elements; 
+                if(right){
+                    const r = right*n_elements;
+                    connect(s+12420, r+8414);
+                    connect(s+9994 , r+11794);
+                    connect(s+7318 , r+11168);
+                    connect(s+7254 , r+9446);
+                }
+                if(top){
+                    const t = top*n_elements;
+                    connect(s+7866 , t+6692);
+                    connect(s+11858, t+6144);
+                    connect(s+11232, t+10058);
+                    connect(s+12968, t+10606);
+                }
+                if(north){
+                    const n = north*n_elements;
+                    connect(s+8898 , n+6628);
+                    connect(s+10542, n+9510);
+                    connect(s+8350 , n+8962);
+                    connect(s+7802 , n+12904); 
+                }
+            }
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+//let q=lines.length;
+//for(let i=0; i<=q; i++)
+//if(lines[i]){
+//console.log(`pasting ${i}`);
+//
+//selectionToCluster(); // make sure every added origami is its own cluster
+//crystal_clusters.push(
+//    Array.from(selectedBases)
+//);
+//}
+//for(let i=0; i<crystal_clusters.length;i++)
+//if(lines[i]){
+//console.log(`setting ${i}`);
+//let line = lines[i].split(" ");
+//    let ppos = new THREE.Vector3(
+//        parseFloat(line[0]),
+//        parseFloat(line[1]),
+//        parseFloat(line[2]),
+//    );
+//    let pa1 = new THREE.Vector3(
+//        parseFloat(line[3]),
+//        parseFloat(line[4]),
+//        parseFloat(line[5]),
+//    );
+//    let pa3 = new THREE.Vector3(
+//        parseFloat(line[6]),
+//        parseFloat(line[7]),
+//        parseFloat(line[8]),
+//    );
+//    let pa2 = new THREE.Vector3().copy(pa1);
+//    pa2.cross(pa3);
+//    ppos.multiplyScalar(MYSCALE);
+//
+//    align_to_patch_particle(crystal_clusters[i], pa1,pa2,pa3);
+//
+//    for (let i = 0; i < tmpSystems.length; i++){
+//        tmpSystems[i].callUpdates([
+//            'instanceOffset',"instanceScale", 
+//            "instanceColor", "instanceRotation", 
+//            "instanceVisibility"]);
+//    }
+//
+//    translateElements(crystal_clusters[i], ppos);      
+//}
+//clearSelection();
+//
+//for (let i = 0; i < tmpSystems.length; i++){
+//tmpSystems[i].callUpdates([
+//    'instanceOffset',"instanceScale", 
+//    "instanceColor", "instanceRotation", 
+//    "instanceVisibility"]);
+//}
