@@ -541,7 +541,7 @@ const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
     );
 }
 
-const setup_bcc = ()=>{
+const setup_bcc = (i_max = 5, j_max = 5, k_max = 5)=>{
     const connect = (f, t)=>{
         clearSelection();
         api.selectElementIDs([f,t]);
@@ -563,14 +563,14 @@ const setup_bcc = ()=>{
     cutWrapper(); 
     let idx = 0;
     let k=0;
-    for(let k=0;k < 3; k++){
-        for(let j = 0; j < 3; j++){
-            for(let i=0; i < 3; i++){
+    for(let k=0;k < k_max; k++){
+        for(let j = 0; j < j_max; j++){
+            for(let i=0; i < i_max; i++){
                 //build up the index of the origami in the 
                 //grid to use for offset
                 d[`${i},${j},${k}`]= idx++;
                 //progress ?
-                console.log(i,j,k)
+                console.log(k,j,i);
                 //paste in a new structure
                 pasteWrapper(true);
                 //make sure everything is its own cluster
@@ -587,10 +587,10 @@ const setup_bcc = ()=>{
     console.log("test:");
     console.log(d);
     // adjust box
-    box.set(500,500,500);
-    for(let k=0;k < 3; k++){
-        for(let j = 0; j < 3; j++){
-            for(let i=0; i < 3; i++){
+    //box.set(1500,1500,1500);
+    for(let k=0;k < k_max; k++){
+        for(let j = 0; j < j_max; j++){
+            for(let i=0; i < i_max; i++){
                 
                 const self_idx = d[`${i},${j},${k}`];
                 const right    = d[`${i+1},${j},${k}`];
