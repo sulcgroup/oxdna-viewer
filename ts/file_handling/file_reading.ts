@@ -2,11 +2,20 @@
 
 // Creates color overlays
 function makeLut(data, key) {
-    const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
+
+    let arr = data[key];
+    let min = arr[0], max = arr[0];
+    
+    for(let i =0; i < arr.length;i++)
+    {
+        if(min >  arr[i]) min = arr[i];
+        if(max <= arr[i]) max = arr[i];
+    }
+   
     if (lut == undefined){
         lut = new THREE.Lut(defaultColormap, 512);
         lut.setMax(max);
-        lut.setMin(min);
+        lut.setMin(min); 
     }
     if (max > lut.maxV){
         lut.setMax(max);
