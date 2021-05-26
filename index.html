@@ -56,32 +56,35 @@
                 <th>Action</th>
             </tr>
             </thead>
-            <tr><td>p</td><td>Save image</td></tr>
-            <tr><td>s</td><td>Toggle selection</td></tr>
-            <tr><td>d</td><td>Toggle transformation</td></tr>
-            <tr><td>t</td><td>Translate mode</td></tr>
-            <tr><td>r</td><td>Rotate mode</td></tr>
+            <tr><td>P</td><td>Save image</td></tr>
+            <tr><td>S</td><td>Toggle selection</td></tr>
+            <tr><td>D</td><td>Toggle transformation</td></tr>
+            <tr><td>T</td><td>Translate mode</td></tr>
+            <tr><td>R</td><td>Rotate mode</td></tr>
+            <tr><td>L</td><td>Ligate</td></tr>
+            <tr><td>N</td><td>Nick</td></tr>
             <tr><td>Right arrow</td><td>Next configuration</td></tr>
             <tr><td>Left arrow</td><td>Previous configuration</td></tr>
-            <tr><td>ctrl/⌘-s</td><td>Save topology and configuration</td></tr>
-            <tr><td>ctrl/⌘-z</td><td>Undo edit</td></tr>
-            <tr><td>ctrl/⌘-shift-z (or ctrl/⌘-y)</td><td>Redo edit</td></tr>
-            <tr><td>ctrl/⌘-a</td><td>Select all elements</td></tr>
-            <tr><td>ctrl/⌘-i</td><td>Invert selection</td></tr>
-            <tr><td>ctrl/⌘-click</td><td>Select multiple elements</td></tr>
-            <tr><td>shift-click</td><td>Select intermediate by gid</td></tr>
-            <tr><td>shift-alt-click</td><td>Select intermediate by shortest path</td></tr>
-            <tr><td>ctrl/⌘-c</td><td>Copy selection</td></tr>
-            <tr><td>ctrl/⌘-v</td><td>Paste selection</td></tr>
-            <tr><td>ctrl/⌘-shift-v</td><td>Paste selection in-place</td></tr>
+            <tr><td>Ctrl/⌘-S</td><td>Save topology and configuration</td></tr>
+            <tr><td>Ctrl/⌘-Z</td><td>Undo edit</td></tr>
+            <tr><td>Ctrl/⌘-Shift-Z (or Ctrl/⌘-Y)</td><td>Redo edit</td></tr>
+            <tr><td>Ctrl/⌘-A</td><td>Select all elements</td></tr>
+            <tr><td>Ctrl/⌘-I</td><td>Invert selection</td></tr>
+            <tr><td>Ctrl/⌘-click</td><td>Select multiple elements</td></tr>
+            <tr><td>Shift-click</td><td>Select intermediate by gid</td></tr>
+            <tr><td>Shift-alt-click</td><td>Select intermediate by shortest path</td></tr>
+            <tr><td>Ctrl/⌘-C</td><td>Copy selection</td></tr>
+            <tr><td>Ctrl/⌘-B</td><td>Paste selection</td></tr>
+            <tr><td>Ctrl/⌘-Shift-V</td><td>Paste selection in-place</td></tr>
+            <tr><td>Delete</td><td>Delete selected elements</td></tr>
             <tr><td>Numpad0</td><td>Reset camera</td></tr>
-            <tr><td>Numpad1</td><td>Move camera to x-axis (ctrl/⌘ to invert)</td></tr>
+            <tr><td>Numpad1</td><td>Move camera to x-axis (Ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad2</td><td>Rotate camera down</td></tr>
-            <tr><td>Numpad3</td><td>Move camera to y-axis (ctrl/⌘ to invert)</td></tr>
+            <tr><td>Numpad3</td><td>Move camera to y-axis (Ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad4</td><td>Rotate camera left</td></tr>
             <tr><td>Numpad5</td><td>Toggle orthographic/perspective</td></tr>
             <tr><td>Numpad6</td><td>Rotate camera right</td></tr>
-            <tr><td>Numpad7</td><td>Move camera to z-axis (ctrl/⌘ to invert)</td></tr>
+            <tr><td>Numpad7</td><td>Move camera to z-axis (Ctrl/⌘ to invert)</td></tr>
             <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
         </table>
     </div>
@@ -175,8 +178,8 @@
 
         <div class="content-holder">
             <div class="section" id="section-file">
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (ctrl/⌘-o)"
-                    title="Open files (ctrl/⌘-o)">
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (Ctrl/⌘-O)"
+                    title="Open files (Ctrl/⌘-O)" id="open-button">
                     <span class="mif-folder-open mif-3x"></span>
                     <span class="caption">Open</span>
                 </button>
@@ -188,7 +191,7 @@
                 <div class="group">
                     <button class="ribbon-button"
                         onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited"
-                        title="Downloading the current scene as oxDNA files (ctrl/⌘-s)">
+                        title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)">
                         <span class="mif-floppy-disk mif-2x"></span>
                         <span class="caption">Simulation files</span>
                     </button>
@@ -209,7 +212,7 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Sequence file</span>
                 </button>
-                <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('p')">
+                <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
                     <span class="mif-photo-camera mif-3x"></span>
                     <span class="caption">Save image</span>
                 </button>
@@ -224,14 +227,14 @@
                 <div class=" group" style="width: 300px">
                     <div class="row flex-align-center">
                         <button class="button" onclick="trajReader.previousConfig()"
-                            title="Previous config (left keyboard arrow)">
+                            title="Previous config (Left keyboard arrow)">
                             <span class="mif-previous mif-2x"></span>
                             <!--<span class="caption">Previous</span>-->
                         </button>
                         <button class="button" id="playTrajectory" onclick="trajReader.playTrajectory();" title="Play current trajectory.">►</button>
                         
                         <button class="button" onclick="trajReader.nextConfig()"
-                        title="Next config (right keyboard arrow)">
+                        title="Next config (Right keyboard arrow)">
                         <span class="mif-next mif-2x"></span>
                         <!--<span class="caption">Next</span>-->
                         </button>
@@ -315,11 +318,11 @@
                     <input type="checkbox" id="selectPairs" data-role="switch" title="Automatically select basepairs">
                 </div>
                 <div class="tight group flex-column">
-                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (ctrl/⌘-a)">
+                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (Ctrl/⌘-A)">
                         <span class="mif-done_all mif-1x"></span>
                         <span class="caption">Select all</span>
                     </button>
-                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (ctrl/⌘-i)">
+                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (Ctrl/⌘-I)">
                         <span class="mif-contrast mif-1x"></span>
                         <span class="caption">Invert selection</span>
                     </button>
@@ -328,6 +331,7 @@
                         <span class="caption">Clear selection</span>
                     </button>
                 </div>
+                <div class="tight group">
                 <button class="ribbon-button" onclick="view.toggleWindow('baseInfoWindow', ()=>{if(systems.length>0){updateView(systems[0])}})">
                     <span class="mif-list mif-3x"></span>
                     <span class="caption">Selected base info</span>
@@ -337,30 +341,38 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Selected base list</span>
                 </button>
+                </div>
+                <div class="tight group">
+                    <button class="ribbon-button" onclick="view.toggleWindow('distanceWindow', distanceSetup)" title="Distance information window.">
+                        
+                        <span class="mif-settings-ethernet mif-2x"></span>
+                        <span class="caption">Distance</span>
+                    </button>
+                </div>
             </div></div>
 
             <!--Edit-->
             <div class="section" id="section-edit"><div class="d-flex flex-wrap">
                 <div class="tight group">
-                    <button class="ribbon-button" title="Undo (ctrl/⌘-z)" onclick="editHistory.undo()">
+                    <button class="ribbon-button" title="Undo (Ctrl/⌘-Z)" onclick="editHistory.undo()">
                         <span class="mif-undo mif-2x"></span>
                         <span class="caption">Undo</span>
                     </button>
-                    <button class="ribbon-button" title="Redo (ctrl/⌘-y)" onclick="editHistory.redo()">
+                    <button class="ribbon-button" title="Redo (Ctrl/⌘-Y)" onclick="editHistory.redo()">
                         <span class="mif-redo mif-2x"></span>
                         <span class="caption">Redo</span>
                     </button>
                 </div>
                 <div class="tight group">
-                    <button class="ribbon-button" title="Cut selection (ctrl/⌘-x)" onclick="cutWrapper()">
+                    <button class="ribbon-button" title="Cut selection (Ctrl/⌘-X)" onclick="cutWrapper()">
                         <span class="mif-cut mif-2x"></span>
                         <span class="caption">Cut</span>
                     </button>
-                    <button class="ribbon-button" title="Copy selection (ctrl/⌘-c)" onclick="copyWrapper()">
+                    <button class="ribbon-button" title="Copy selection (Ctrl/⌘-C)" onclick="copyWrapper()">
                         <span class="mif-copy mif-2x"></span>
                         <span class="caption">Copy</span>
                     </button>
-                    <button class="ribbon-button" title="Paste (ctrl/⌘-p)" onclick="pasteWrapper()">
+                    <button class="ribbon-button" title="Paste (Ctrl/⌘-V)" onclick="pasteWrapper()">
                         <span class="mif-paste mif-2x"></span>
                         <span class="caption">Paste</span>
                     </button>
@@ -368,21 +380,21 @@
 
                 <div class="tight group">
                     <div class="ribbon-toggle-group toggleGroup_w1" id="transform">
-                        <button class="ribbon-icon-button active" onclick="view.transformMode.set('None')" title="Toggle with 'd'">
+                        <button class="ribbon-icon-button active" onclick="view.transformMode.set('None')" title="Toggle with 'D'">
                             <span class="icon">
                                 <span class="mif-not"></span>
                             </span>
                             <span class="caption">None</span>
                         </button>
 
-                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Translate')" title="Toggle with 't'">
+                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Translate')" title="Toggle with 'T'">
                             <span class="icon">
                                 <span class="mif-enlarge"></span>
                             </span>
                             <span class="caption">Translate</span>
                         </button>
 
-                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Rotate')" title="Toggle with 'r'">
+                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Rotate')" title="Toggle with 'R'">
                             <span class="icon">
                                 <span class="mif-3d-rotation"></span>
                             </span>
@@ -392,19 +404,19 @@
                 </div>
 
                 <div class="tight group">
-                    <button class="ribbon-button" onclick="nickWrapper()" title="break the upstream connection of the last selected particle">
+                    <button class="ribbon-button" onclick="nickWrapper()" title="Break the upstream connection of the last selected particle (N)">
                         <img src="img/ico/nick.svg">
                         <span class="caption">Nick</span>
                     </button>
-                    <button class="ribbon-button" onclick="deleteWrapper()" title="delete the selected monomers">
+                    <button class="ribbon-button" onclick="deleteWrapper()" title="Delete the selected monomers (Delete)">
                         <img src="img/ico/delete.svg">
                         <span class="caption">Delete</span>
                     </button>
-                    <button class="ribbon-button" onclick="ligateWrapper()" title="ligate the last two selected particles together">
+                    <button class="ribbon-button" onclick="ligateWrapper()" title="Ligate the last two selected particles together (L)">
                         <img src="img/ico/ligate.svg">
                         <span class="caption">Ligate</span>
                     </button>
-                    <button class="ribbon-button" onclick="moveToWrapper()" title="move a group of elements towards the last selected element">
+                    <button class="ribbon-button" onclick="moveToWrapper()" title="Move a group of elements towards the last selected element">
                         <span class="icon">
                             <span class="mif-vertical-align-bottom"></span>
                         </span>
@@ -412,6 +424,7 @@
                     </button>
                 </div>
 
+                
                 <div class="tight group flex-column">
                     <div>
                         <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
@@ -753,7 +766,6 @@
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/Lut.js"></script>
         <script src="./ts/lib/justcontext.js"></script>
-        <script src="./ts/lib/chart.min.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
         <script src="./ts/controls/TrackballControls.js"></script>
         <script src="./dist/scene/scene_setup.js"></script>
@@ -796,6 +808,7 @@
         <script src="./dist/ox_serve/relax_scenarios.js"></script>
         <script src="./dist/ox_serve/live_relax.js"></script>
         <script src="./dist/file_handling/order_parameter_selector.js"></script>
+        <script src="./dist/editing/distance.js"></script>
     </div>
 </body>
 

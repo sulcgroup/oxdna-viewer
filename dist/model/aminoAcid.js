@@ -5,7 +5,6 @@
 class AminoAcid extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
-        this.elementType = AA;
         this.a1 = new THREE.Vector3(0., 0., 0.);
         this.a3 = new THREE.Vector3(0., 0., 0.);
     }

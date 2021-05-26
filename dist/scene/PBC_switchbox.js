@@ -10,12 +10,20 @@ function centerAndPBCBtnClick(elems) {
     window.sessionStorage.inboxingOption = view.inboxingMode.get();
     centerAndPBC(elems);
 }
-function centerAndPBC(elems) {
+/**
+ * Center elements in the simulation box and then apply periodic boundary conditions to bring them all in the same box instance.
+ * @param elems Optional parameter defining which particles to apply the centering and PBC to.  Defaults to all particles.
+ * @param targetBox Optional parameter defining the size of the box. Defaults to the global box size which is the largest box loaded.
+ */
+function centerAndPBC(elems, targetBox) {
     if (!elems) {
         elems = Array.from(elements.values());
     }
-    centerElements(elems);
-    bringInBox(getInboxingMode());
+    if (!targetBox) {
+        targetBox = box;
+    }
+    centerElements(elems, targetBox);
+    bringInBox(elems, getInboxingMode(), targetBox);
     // Update instances
     elements.forEach(e => { if (e.n3)
         calcsp(e); });
@@ -53,9 +61,11 @@ function getInboxingMode() {
     return view.inboxingMode.get();
 }
 /**
- * Bring all elements (or strands) inside the simulation box
+ * Peform the actual inboxing
+ * @param boxOption Whether to bring individual nucleotides into the box or the center of mass of each strand.
+ * @param targetBox The size of box to use.
  */
-function bringInBox(boxOption) {
+function bringInBox(elems, boxOption, targetBox) {
     if (boxOption == "None") {
         return;
     }
@@ -64,30 +74,38 @@ function bringInBox(boxOption) {
     // Find out which center we use, or just use box center
     let center = getCenteringGoal();
     if (!center) {
-        center = box.clone().divideScalar(2);
+        center = targetBox.clone().divideScalar(2);
     }
+    // If boxing is strand we need to find which systems contain target elems
+    let sys2Box = new Set();
+    elems.forEach(e => {
+        let s = e.getSystem();
+        if (!sys2Box.has(s)) {
+            sys2Box.add(s);
+        }
+    });
     // Define function to calculate a coordinates position
     // withing periodic boundaries
     let coordInBox = (coord) => {
         let p = coord.clone();
-        let shift = box.clone().divideScalar(2).sub(center);
+        let shift = targetBox.clone().divideScalar(2).sub(center);
         p.add(shift);
-        p.x = realMod(p.x, box.x);
-        p.y = realMod(p.y, box.y);
-        p.z = realMod(p.z, box.z);
+        p.x = realMod(p.x, targetBox.x);
+        p.y = realMod(p.y, targetBox.y);
+        p.z = realMod(p.z, targetBox.z);
         p.sub(shift);
         return p;
     };
     // Apply to either monomers, or whole strands
     if (boxOption == "Monomer") {
-        elements.forEach(e => {
+        elems.forEach(e => {
             let pOld = e.getPos();
             let pNew = coordInBox(pOld);
             e.translatePosition(pNew.sub(pOld));
         });
     }
     else if (boxOption == "Strand") {
-        systems.forEach(system => {
+        sys2Box.forEach(system => {
             system.strands.forEach(strand => {
                 let pOld = strand.getPos();
                 ;
@@ -105,7 +123,7 @@ function bringInBox(boxOption) {
  * @param elems List of elements to center
  * @param origin Optional point to center to, will be read from GUI options if not provided
  */
-function centerElements(elems, origin) {
+function centerElements(elems, targetBox, origin) {
     if (!origin) {
         origin = getCenteringGoal();
         if (!origin) {
@@ -113,14 +131,14 @@ function centerElements(elems, origin) {
         }
     }
     // Calculate Centre of mass, taking periodic boundary conditions into account
-    let com = calcCOM(elems);
+    let com = calcCOM(elems, targetBox);
     // Move COM to desired origin point
     translateElements(new Set(elems), origin.clone().sub(com));
 }
 // Calculate center of mass taking periodic boundary conditions into account:
 // https://doi.org/10.1080/2151237X.2008.10129266
 // https://en.wikipedia.org/wiki/Center_of_mass#Systems_with_periodic_boundary_conditions
-function calcCOM(elems) {
+function calcCOM(elems, targetBox) {
     // Create one averaging variable for each dimension, representing that 1D
     // interval as a unit circle in 2D (with the circumference being the
     // bounding box side length)
@@ -129,7 +147,7 @@ function calcCOM(elems) {
         let p = e.getPos();
         // Calculate positions on unit circle for each dimension and that to the
         // sum.
-        let angle = new THREE.Vector3((p.x * 2 * Math.PI) / box.x, (p.y * 2 * Math.PI) / box.y, (p.z * 2 * Math.PI) / box.z);
+        let angle = new THREE.Vector3((p.x * 2 * Math.PI) / targetBox.x, (p.y * 2 * Math.PI) / targetBox.y, (p.z * 2 * Math.PI) / targetBox.z);
         cm_x.add(new THREE.Vector2(Math.cos(angle.x), Math.sin(angle.x)));
         cm_y.add(new THREE.Vector2(Math.cos(angle.y), Math.sin(angle.y)));
         cm_z.add(new THREE.Vector2(Math.cos(angle.z), Math.sin(angle.z)));
@@ -139,6 +157,6 @@ function calcCOM(elems) {
     cm_y.divideScalar(elems.length);
     cm_z.divideScalar(elems.length);
     // Convert back from unit circle coordinates into x,y,z
-    let cms = new THREE.Vector3(box.x / (2 * Math.PI) * (Math.atan2(-cm_x.y, -cm_x.x) + Math.PI), box.y / (2 * Math.PI) * (Math.atan2(-cm_y.y, -cm_y.x) + Math.PI), box.z / (2 * Math.PI) * (Math.atan2(-cm_z.y, -cm_z.x) + Math.PI));
+    let cms = new THREE.Vector3(targetBox.x / (2 * Math.PI) * (Math.atan2(-cm_x.y, -cm_x.x) + Math.PI), targetBox.y / (2 * Math.PI) * (Math.atan2(-cm_y.y, -cm_y.x) + Math.PI), targetBox.z / (2 * Math.PI) * (Math.atan2(-cm_z.y, -cm_z.x) + Math.PI));
     return cms;
 }

@@ -8,7 +8,6 @@ class BasicElement {
     // pdbid: string; //Only Intialized if loaded from a PDB structure
     constructor(id, strand) {
         this.connections = []; // ref all elements it's
-        this.elementType = -1; // 0:A 1:G 2:C 3:T/U OR 1 of 20 amino acids
         this.id = id;
         this.strand = strand;
         if (strand && strand.isEmpty()) {

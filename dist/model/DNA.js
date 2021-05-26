@@ -4,7 +4,6 @@
 class DNANucleotide extends Nucleotide {
     constructor(id, strand) {
         super(id, strand);
-        this.elementType = DNA;
         this.bbnsDist = 0.8147053;
     }
     ;

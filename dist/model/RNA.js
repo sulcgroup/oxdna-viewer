@@ -4,7 +4,6 @@
 class RNANucleotide extends Nucleotide {
     constructor(id, strand) {
         super(id, strand);
-        this.elementType = RNA;
         this.bbnsDist = 0.8246211;
     }
     ;

@@ -2,11 +2,20 @@
 
 // Creates color overlays
 function makeLut(data, key) {
-    const min = Math.min.apply(null, data[key]), max = Math.max.apply(null, data[key]);
+
+    let arr = data[key];
+    let min = arr[0], max = arr[0];
+    
+    for(let i =0; i < arr.length;i++)
+    {
+        if(min >  arr[i]) min = arr[i];
+        if(max <= arr[i]) max = arr[i];
+    }
+   
     if (lut == undefined){
         lut = new THREE.Lut(defaultColormap, 512);
         lut.setMax(max);
-        lut.setMin(min);
+        lut.setMin(min); 
     }
     if (max > lut.maxV){
         lut.setMax(max);
@@ -34,14 +43,17 @@ function makeLut(data, key) {
 const target = renderer.domElement;
 target.addEventListener("dragover", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 
 target.addEventListener("dragenter", function (event) {
     event.preventDefault();
+    target.classList.add('dragging');
 }, false);
 
 target.addEventListener("dragexit", function (event) {
     event.preventDefault();
+    target.classList.remove('dragging');
 }, false);
 
 // the actual code to drop in the config files
@@ -59,14 +71,16 @@ let confNum: number = 0,
 var toggleFailure: Boolean = false,
     defaultColormap: string = "cooltowarm";
 
-// What to do if a file is dropped
-target.addEventListener("drop", function (event) {
+function handleDrop (event) {
     // cancel default actions
-    event.preventDefault();
+    target.classList.remove('dragging');
     const files = event.dataTransfer.files;
     handleFiles(files);
+}
 
-}, false);
+// What to do if a file is dropped
+target.addEventListener("drop", function (event) {event.preventDefault();})
+target.addEventListener("drop", handleDrop, false);
 
 function handleFiles(files: FileList) {
 
@@ -407,6 +421,9 @@ function readOxViewJsonFile(file: File) {
         }
         // Add systems, if provided (really should be)
         if (data.systems) {
+            // Keep track if new clusters
+            let newClusterMap: Map<number, number> = new Map();
+
             // Go through and add each system
             data.systems.forEach(sysData => {
                 let sys = new System(sysStartId+sysData.id, elements.getNextId());
@@ -467,7 +484,16 @@ function readOxViewJsonFile(file: File) {
                         // Set misc attributes
                         e.label = elementData.label;
                         e.type = elementData.type;
-                        e.clusterId = elementData.cluster;
+
+                        // Set cluster id, making sure not to reuse any already
+                        // existing cluster id loaded earlier.
+                        if (elementData.cluster) {
+                            if (!newClusterMap.has(elementData.cluster)) {
+                                newClusterMap.set(elementData.cluster, ++clusterCounter);
+                            }
+                            e.clusterId = newClusterMap.get(elementData.cluster);
+                        }
+
                         if (elementData.color) {
                             e.color = new THREE.Color(elementData.color);
                             customColors = true;
@@ -828,12 +854,24 @@ function addSystemToScene(system: System) {
     canvas.focus();
 }
 
-// Receive files from Nanobase
+
 window.addEventListener("message", (event) => {
-    if (!event.origin.startsWith("http://localhost:8000") && !event.origin.startsWith("http://nanobase.org")) {
-      return;
+    if (event.data.message === 'drop') {
+        handleFiles(event.data.files);
     }
-    handleFiles(event.data.files);
+    else if (event.data.message === 'download') {
+        makeOutputFiles();
+    }
+    else if (event.data.message === 'remove-event') {
+        target.removeEventListener("drop", handleDrop);
+        target.addEventListener("drop", function () {notify("Dragging onto embedded viewer does not allow form completion")});
+        const openButton : HTMLInputElement = <HTMLInputElement>document.getElementById('open-button')
+        openButton.disabled = true;
+    }
+    else {
+        console.log(event.data.message, "is not a recognized message")
+        return
+    }
 }, false);
 
 // Helper Objects for pdb parsing

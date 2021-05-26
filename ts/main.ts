@@ -97,13 +97,9 @@ const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for f
 
 var lut, devs: number[]; //need for Lut coloring
 
-const DNA: number = 0;
-const RNA: number = 1;
-const AA: number = 2;
-const GS: number = 3;
 
 const editHistory = new EditHistory();
-let clusterCounter = 0 // Cluster counter
+let clusterCounter = 0; // Cluster counter
 
 //to keep track of if the topology was edited at any point.
 var topologyEdited: Boolean = false;
