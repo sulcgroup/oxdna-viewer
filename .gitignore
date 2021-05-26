@@ -2,4 +2,4 @@
 .vscode/
 .cache/
 .ts/.vscode
-node_modules/
+//node_modules/

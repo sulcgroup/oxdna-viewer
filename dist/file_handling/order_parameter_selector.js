@@ -99,6 +99,9 @@ class ChartColorMap {
 let chartColorMap = new ChartColorMap();
 let axis_counter = 0;
 let handleParameterDrop = (files) => {
+    function replaceAll(string, search, replace) {
+        return string.split(search).join(replace);
+    }
     labels = [];
     trajReader.lookupReader.position_lookup.forEach((p, i) => {
         labels.push(p[2]);
@@ -110,8 +113,10 @@ let handleParameterDrop = (files) => {
         parameterFileReader.onload = () => {
             let file_data = parameterFileReader.result;
             let parameters = {}; // we want a dictionary in the end 
-            if (file_data.startsWith("{")) // case 1 we are json
+            if (file_data.startsWith("{")) { // case 1 we are json
+                file_data = replaceAll(file_data, "NaN", "null");
                 parameters = JSON.parse(file_data);
+            }
             else {
                 // we are probably text lets handle it in the oxdna.org 
                 // distance file spec 

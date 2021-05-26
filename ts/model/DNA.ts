@@ -5,7 +5,6 @@
 class DNANucleotide extends Nucleotide {
     constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.elementType = DNA;
         this.bbnsDist = 0.8147053;
     };
     calcBBPos(p: THREE.Vector3, a1: THREE.Vector3, a2: THREE.Vector3, a3: THREE.Vector3): THREE.Vector3 {
