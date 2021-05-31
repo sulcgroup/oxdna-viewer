@@ -267,7 +267,7 @@ function updateColoring(mode?: string) {
             view.coloringMode.set("Strand");
             return;
         }
-    } else if (lut) {
+    } else if (lut && mode !== 'Custom') {
         api.removeColorbar();
     }
 
