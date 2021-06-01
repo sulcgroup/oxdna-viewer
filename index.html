@@ -673,10 +673,15 @@
                 <div class="group">
                     <div class="tight group flex-column">
                         <div>
-                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper()"
+                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper(0)"
                                     title="Discretize Selected Masses">
                                 <span class="mif-compass"></span>
-                                <span class="caption"> Coarse-Grain</span>
+                                <span class="caption"> Coarse-Grain Voxel</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper(1)"
+                                    title="Discretize Selected Masses">
+                                <span class="mif-compass"></span>
+                                <span class="caption"> Coarse-Grain Density</span>
                             </button>
                             <button class="ribbon-icon-button" id="jsonbutton"
                                     title="Download JSON File to solve the network using our scripts">

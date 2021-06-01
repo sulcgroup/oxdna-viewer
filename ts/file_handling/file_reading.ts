@@ -1025,6 +1025,13 @@ function prep_pdb(pdblines: string[]){
     let finaldivs : number[] = [];
 
     if(chainDivs.length != 0){ // Assumes normal PDB file with all chains declared
+        // check for chaindivs that are too close to one another (<= 2 lines)
+        chainDivs = chainDivs.filter(function(a, aid, arr){
+            if(aid != 0){
+                return a - arr[aid - 1] > 2; // false if less than two lines from previous (ex. [1030, 1032, 100001] -> [1030, 100001])
+            } else return true;
+        });
+
         // Look at line above chain termination for chain ID
         let chainids: string[] = [];
         chainDivs.forEach(d => {
@@ -1066,7 +1073,6 @@ function prep_pdb(pdblines: string[]){
             } else {
                 nchainids.push(val);
             }
-
         });
 
         //important must be set
@@ -1116,7 +1122,7 @@ function prep_pdb(pdblines: string[]){
 
 // Members of the Recongized arrays cannot have overlapping Members
 const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "CYX", "GLN",
-    "GLU", "GLY", "HIS", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
+    "GLU", "GLY", "HIS", "HSD", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
     "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
 const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
 const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
@@ -1224,6 +1230,9 @@ function readPdbFile(file) {
             residues = [];
             prevChainId = "";
             let prevResId = " ";
+            // residue type has to be correct
+            let Amino = recongizedProteinResidues.indexOf(pdbLines[start].substring(17, 20).trim()) >= 0;
+
             for(let j = start; j < end; j++){
                 if (pdbLines[j].substr(0, 4) === 'ATOM') {
                     let pdbLine = pdbLines[j];
@@ -1234,7 +1243,7 @@ function readPdbFile(file) {
                     na.resType = pdbLine.substring(17, 20).trim();
 
                     let chaincheck = pdbLine.substring(21, 22).trim() != ""; // chain is legit if filled at 21st character
-                    if(!chaincheck){ // file missing chain data?
+                    if(!chaincheck){ // fill missing chain data
                         if(prevChainId == chainindx.toString()){
                             na.chainID = chainindx.toString();
                         }
@@ -1253,19 +1262,35 @@ function readPdbFile(file) {
                         }
 
                     } else {
-                        na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+                        let resIdentAddOn = '';
+                        let tmpchainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+                        if(prevChainId.includes('9')){ // number strand identifiers
+                            if(isNaN(parseInt(tmpchainID.substr(0, 1))) && isNaN(parseInt(tmpchainID.substr(1, 1)))) {
+                                na.chainID = tmpchainID
+                            } else {
+                                resIdentAddOn = tmpchainID.substr(1, 1);
+                                na.chainID = tmpchainID.substr(0, 1);
+                            }
+                        } else {
+                            if(!isNaN(parseInt(tmpchainID.substr(1, 1)))){
+                                resIdentAddOn = tmpchainID.substr(1, 1);
+                                na.chainID = tmpchainID.substr(0, 1);
+                            } else {
+                                na.chainID = tmpchainID
+                            }
+                        }
+
                         let tmp = pdbLine.substring(23, 29); // Usually the residue number
                         //check for insertion code
                         na.iCode = "";
-                        if(isNaN(parseInt(tmp[5]))){
+                        if(isNaN(parseInt(tmp[5]))){ // not a number, most likely an insertion code
                             na.iCode = tmp[5];
-                            na.pdbResIdent = tmp.slice(0, 5).trim()
+                            na.pdbResIdent = resIdentAddOn+tmp.slice(0, 5).trim()
                         } else {
-                            na.pdbResIdent = tmp.trim();
+                            // is a number, most likely no insertion code and misplaced pbd residue number
+                            na.pdbResIdent = resIdentAddOn+tmp.trim();
                         }
                     }
-
-
 
                     // Convert From Angstroms to Simulation Units while we're at it
                     na.x = parseFloat(pdbLine.substring(30, 38))/ 8.518;
@@ -1276,17 +1301,14 @@ function readPdbFile(file) {
                     na.element = pdbLine.substring(76, 78).trim();
                     na.charge = pdbLine.substring(78, 80).trim();
 
-                    // residue type has to be correct
-                    if(j == start) Amino = recongizedProteinResidues.indexOf(na.resType) >= 0;
-
                     if(Amino){
                         if(na.atomType == "CA") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                     } else {
                         if(na.atomType == "N1") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                     }
 
-                    //checks if last read atom belongs to a different chain than the one before it
-                    if (prevChainId !== na.chainID) {
+                    //checks if last read atom belongs to a different chain than the one before it, or if the Res Identifer has sudden jump
+                    if (prevChainId !== na.chainID || (parseInt(na.pdbResIdent) - parseInt(prevResId) < 0 && !isNaN(parseInt(prevResId)))) {
                         //notify("chain created");
                         chainindx += 1;
                         na.chainIndx = chainindx;
@@ -1337,6 +1359,7 @@ function readPdbFile(file) {
             let firstres = true;
             let prevResId;
             let a1;
+
             for(let j = start; j < end; j++) {
 
                 if (pdbLines[j].substr(0, 4) === 'ATOM'){
@@ -1359,18 +1382,11 @@ function readPdbFile(file) {
                         na.y = parseFloat(pdbLine.substring(38, 46))/ 8.518;
                         na.z = parseFloat(pdbLine.substring(46, 54))/ 8.518;
                         // residue type has to be correct
-                        if(atoms.length == 0) Amino = recongizedProteinResidues.indexOf(na.resType) >= 0;
-
-                        if(Amino){
-                            if(na.atomType == "CA") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
-                        } else {
-                            if(na.atomType == "N1") pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
-                        }
 
                         if(atoms.length==0) prevResId = na.pdbResIdent;
 
-                        //checks if last read atom belongs to a different chain than the one before it
-                        if (prevResId != na.pdbResIdent) { // will trigger after first reside is read
+                        //checks if last read atom belongs to a different Residue than the one before it
+                        if (prevResId != na.pdbResIdent) { // will trigger after first residue is read
                             nr.resType = atoms[0].resType;
                             nr.pdbResIdent = atoms[0].pdbResIdent;
                             nr.atoms = atoms;
@@ -1428,8 +1444,9 @@ function readPdbFile(file) {
                     let uniqa1 = calcA1FromRes(firstresidueunique);
                     let repeata1 = alignME[1];
 
-                    if(alignME[0].length != alignTO[1].length) notify("PDB Chains have unequal lengths");
-
+                    if(alignME[0].length != alignTO[1].length) notify("PDB Error: Master chain and repeat chain have unequal lengths: "+alignME[0].length.toString()+" "+alignTO[1].length.toString());
+                    // currently the rotation doesn't work as desired, but is not necessary at this stage
+                    // b/c protein a1 and a3 are arbitrary (for now), and dna repeat strands don't seem to exist in wild pdbs
                     // let alignMEcoord = alignME[0].map(x => {return x.clone()}); //copy our arrays
                     let newcoords = alignME[0].map(x => {return x.clone()}); //copy our arrays
                     // let alignTOcoord = alignTO[1].map(x => {return x.clone()});//copy our arrays
@@ -1441,8 +1458,6 @@ function readPdbFile(file) {
                     // let aTO = alignTOcoord[0].clone().sub(uniqueCOM).normalize();
                     // notify(aME.x.toString() + " " + aME.y.toString() + " " + aME.z.toString());
                     // notify(aTO.x.toString() + " " + aTO.y.toString() + " " + aTO.z.toString());
-
-
                     //Calc quaternion rotation between vectors
                     // let rotQuat = new THREE.Quaternion().setFromUnitVectors(uniqa1, repeata1);
                     let rotQuat = new THREE.Quaternion().setFromUnitVectors(repeata1, uniqa1);
@@ -1500,8 +1515,8 @@ function addPDBToScene () {
         let strands = pdata.pdbsysinfo;
         let label = pdata.pdbfilename;
         let initlist = pdata.initlist;
-        // Looking back at this the strands name probably wasn't the most unique choice
-        // strands is meant to be the chain object from the PDB Parser
+        // Looking back at this the strands as a variable name probably wasn't the most unique choice
+        // strands is meant to be the chain object from the PDB Parser passed through the pdbsysinfo of the pdbdata
         // Parses PDB Data and Intializes System, Errors go to the Console
 
 
@@ -1526,8 +1541,8 @@ function addPDBToScene () {
                 if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
                     if (res.resType === 'DN') {
-                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File. This is currently unsupported");
-                        return 1;
+                        notify("Nucleotide Base type 'DN' (for Generic Nucleic Acid) in PDB File. Replacing with 'DA'");
+                        res.resType = 'DA';
                     }
                     if (res.resType === 'DI') {
                         notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
@@ -1542,8 +1557,8 @@ function addPDBToScene () {
                 } else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
                     if (res.resType === 'UNK') {
-                        notify("Amino Acid blank is Unknown");
-                        return 1;
+                        notify("Amino Acid blank is Unknown, replacing with Glycine");
+                        res.resType = 'GLY';
                     }
                     // Sets which Residues are Intialized
                     res.type = 'pro';
@@ -1553,8 +1568,8 @@ function addPDBToScene () {
                 } else if (recongizedRNAResidues.indexOf(res.resType) > -1 || recongizedRNAStrandEnds.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
                     if (res.resType === 'N') {
-                        notify("Nucleotide Number blank has Residue Base type 'N' for Generic Nucleic Acid in PDB File");
-                        return 1;
+                        notify("Nucleotide has Residue Base type 'N' for Generic Nucleic Acid in PDB File, replacing with 'A'");
+                        res.resType = 'A';
                     }
                     if (res.resType === 'I') {
                         notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
@@ -1566,14 +1581,26 @@ function addPDBToScene () {
                     checker.RNAPresent = true;
 
                 } else {
-                    notify("Residue Number blank on Strand blank in Provided PDB is Not Supported. " +
+                    notify("Residue type: "+res.resType+" Residue Number: "+res.pdbResIdent+ " on chain: " +strand.chainID+"in Provided PDB is Not Supported. " +
                         "It will not be Intialized in the Viewer.");
                     res.type = 'unworthy';
                 }
             });
 
+            // Corrects wrong identifers for DNA or RNA
+            if(checker.DNAPresent && checker.RNAPresent){
+                let restypestmp = strand.residues.map(x=>x.resType);
+                let Upresent = restypestmp.indexOf('U') > -1 // U is our check on whether its RNA or not
+                if(Upresent){ //Assume RNA
+                    checker.DNAPresent = false;
+                } else { // Assume DNA
+                    checker.RNAPresent = false;
+                }
+            }
+
             // Check for strands with inconsistent Residue Types
             checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
+
             if (checker.mutantStrand) {
                 notify("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
                 strand.strandtype = 'bastard';
@@ -1601,6 +1628,7 @@ function addPDBToScene () {
             "ASP": "D",
             "ASN": "N",
             "HIS": "H",
+            "HSD": "H",
             "GLY": "G",
             "PRO": "P",
             "ARG": "R",
@@ -1816,7 +1844,7 @@ function addPDBToScene () {
                 initlist.repeatIDs.forEach((rid, indx) => {
                     if(nstrand.chainID.includes(rid)){ // Repeat same chain
                         let repeatStrand: Peptide = sys.addNewPeptideStrand();
-                        currentStrand.getMonomers(true).forEach((mon, mid) => {
+                        currentStrand.getMonomers().forEach((mon, mid) => {
                             // basically just copy the strand we just built using the sotred init info and repeat chain info
                             let repeatAmino = repeatStrand.createBasicElement(nextElementId);
                             repeatAmino.pdbindices = (mon as AminoAcid).pdbindices;

@@ -282,7 +282,7 @@ function selectNetworkWrapper(nid: number) {
     net.selectNetwork();
 }
 
-function discretizeMassWrapper(){
+function discretizeMassWrapper(option: number){
     if (selectedBases.size == 0) { // Need Elements
         notify("Please select Bases");
         return;
@@ -294,7 +294,14 @@ function discretizeMassWrapper(){
     } else {
         let elems = Array.from(selectedBases); // Save so that we can clear the selection
         clearSelection();
-        let ret = edit.discretizeMass(elems, cellSize);
+        let ret;
+        if(option == 0){
+            ret = edit.discretizeMass(elems, cellSize);
+        } else if (option == 1) {
+            // cellsize is the placed particle radius
+            ret  = edit.discretizeDensity(elems, 0.2, cellSize);
+        }
+
         const InstMassSys = ret["elems"].map(e => new InstanceCopy(e));
         editHistory.add(new RevertableAddition(InstMassSys, ret["elems"]));
         flux.prepIndxButton(ret["indx"]);

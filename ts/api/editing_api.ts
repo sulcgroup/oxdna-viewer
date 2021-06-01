@@ -889,7 +889,7 @@ module edit{
     /**
      * Experimental Function that Discretizes Density of system (every selected particle has same mass currently 1)
      */
-    export function discretizeDensity(elems: BasicElement[], dd: number, radius: number, cellsize: number) {
+    export function discretizeDensity(elems: BasicElement[], dd: number, cellsize: number) {
         //cellsize must be in Angstroms as we convert it here
         cellsize /= 8.518; //Angstrom to sim unit length
         // get positions from Three Vector returned from getPos()
@@ -905,7 +905,7 @@ module edit{
 
         // Useful for building 3d Grid
         let [xmax, xmin, ymax, ymin, zmax, zmin] = [Math.max(...xPositions),  Math.min(...xPositions), Math.max(...yPositions),
-                                                    ymin = Math.min(...yPositions), Math.max(...zPositions), Math.min(...zPositions)];
+                                                    Math.min(...yPositions), Math.max(...zPositions), Math.min(...zPositions)];
         // xmin = Math.min(...xPositions);
         // ymax = Math.max(...yPositions);
         // ymin = Math.min(...yPositions);
@@ -926,9 +926,27 @@ module edit{
         let [xGridNum, yGridNum, zGridNum] = [Math.ceil((xmax - xmin)/dd),  Math.ceil((ymax - ymin)/dd), Math.ceil((zmax - zmin)/dd)]
         let griddim = [xGridNum, yGridNum, zGridNum];
 
+
+
         let density_grid = new Array(xGridNum);
-        density_grid.map(x => {return new Array(yGridNum)}); // 2nd dim
-        density_grid.forEach(x=> x.map(y=> {return new Array(zGridNum)})) //3rd dim
+        for(let i = 0; i < xGridNum; i++){
+            density_grid[i] = new Array(yGridNum);
+        }
+        for(let i = 0; i < xGridNum; i++){
+            for(let j = 0; j < yGridNum; j++){
+                density_grid[i][j] = new Array(zGridNum);
+            }
+        }
+        for(let i = 0; i < xGridNum; i++){
+            for(let j = 0; j < yGridNum; j++){
+                for(let k = 0; k < zGridNum; k++) {
+                    density_grid[i][j][k] = 0;
+                }
+            }
+        }
+
+        // density_grid.map(x => {return new Array(yGridNum)}); // 2nd dim
+        // density_grid.forEach(x=> x.map(y=> {return new Array(zGridNum)})) //3rd dim
         // 3d grid density_grid[xbin][ybin][zbin] = x
 
         // default particle density for particles of the selected system
@@ -936,7 +954,7 @@ module edit{
         let defDensity = 1; // sim units
 
         // get 3d slice as well as coordinates
-        let get_subbox = function(xc, yc, zc, rad) { //returns slice of density_array (rad**3) and its center
+        let get_subbox = function(xc, yc, zc, rad) : [number[], number[], number[]]{ //returns slice of density_array (rad**3) and its center
             // minimum of subbox
             let n = [xc, yc, zc].map((e, eid) => {
                 if (e-rad < 0) {
@@ -957,15 +975,13 @@ module edit{
             // center
             let center = [(m[0]-n[0])/2, (m[1]-n[1])/2, (m[2]-n[2])/2]
             // let subbox = density_grid.slice(n[0], m[0]).map(y => y.slice(n[1], m[1]).map(z => z.slice(n[2], m[2])));
-            let min = n;
-            let max = m;
-            return [center, min, max]
+            return [center, n, m]
         }
 
         // Fill grid Function, adds 1 density for any point in sphere of default radius/ default spacing
         let add_density = function(xc, yc, zc){
             let bn_rad = defRadius/dd; // simunits/simunits
-            let center, min, max = get_subbox(xc, yc, zc, bn_rad);
+            let [center, min, max] = get_subbox(xc, yc, zc, bn_rad);
             let [cx, cy, cz] = center;
             for(let i = min[0]; i < max[0]; i++){
                 for(let j = min[1]; j < max[1]; j++){
@@ -995,8 +1011,13 @@ module edit{
 
         // make 1d representation for easier looping and working with large arrays
         let density_flat = new Array(xGridNum*yGridNum*zGridNum);
-        density_grid.forEach((x, xid)=>x.forEach((y, yid)=>y.forEach((z, zid)=> density_flat[xid + xGridNum * yid + xGridNum * yGridNum * zid]=z)))
-
+        for (let i = 0; i < xGridNum; i+=1) {
+            for (let j = 0; j < yGridNum; j += 1) {
+                for (let k = 0; k < zGridNum; k += 1) {
+                    density_flat[i + xGridNum * j + xGridNum * yGridNum * k]=density_grid[i][j][k];
+                }
+            }
+        }
 
 
         // convert 1d to 3d index
@@ -1012,26 +1033,35 @@ module edit{
             return xi + xGridNum * yi + xGridNum * yGridNum * zi;
         }
 
+        let test = 1024;
+        let [xt, yt, zt] = onetothree(test);
+        let ret = threetoone(xt, yt, zt);
+
+
+
         let placeParticle1D =  function(placementindex, particle_radius, value){
             let effrad = Math.floor(particle_radius/dd)
             let tworad = effrad*2;
             let [xc, yc, zc] = onetothree(placementindex);
-            let affected = [];
 
-            let subbox, center, min, max = get_subbox(xc, yc, zc, tworad);
+            let [center, min, max] = get_subbox(xc, yc, zc, tworad);
             let [cx, cy, cz] = center;
-            subbox.forEach(x => x.forEach(y => y.forEach(z => { //for each x,y,z in subbox
-                // get distance of each point from center
-                let dist = Math.sqrt((x-cx)**2 + (y-cy)**2 + (z-cz)**2)
-                if(dist <= effrad){
-                    density_flat[threetoone(min[0]+x,min[1]+y, min[2]+z)] -= value;
-                } else if (dist > tworad) {
-                    // density_flat[threetoone(min[0]+x,min[1]+y, min[2]+z)] -= 0.2*1;
-                } else { // [effrad, tworad]
-                    density_flat[threetoone(min[0]+x,min[1]+y, min[2]+z)] -= 0.25*value;
+            for(let i = min[0]; i < max[0]; i++){
+                for(let j = min[1]; j < max[1]; j++){
+                    for(let k = min[2]; k < max[2]; k++){
+                        let dist = Math.sqrt((i-cx)**2 + (j-cy)**2 + (k-cz)**2)
+                        if(dist <= effrad){
+                            density_flat[threetoone(min[0]+i,min[1]+j, min[2]+k)] -= value;
+                        } else if (dist > tworad) {
+                            // density_flat[threetoone(min[0]+x,min[1]+y, min[2]+z)] -= 0.2*1;
+                        } else { // [effrad, tworad]
+                            density_flat[threetoone(min[0]+1,min[1]+2, min[2]+3)] -= 0.25*value;
+                        }
+                    }
                 }
-            })))
+            }
         }
+
 
         let pos = density_flat.filter(function (a) {return a>= 0;})
         let postotal = pos.reduce(function(a,b) {return a+b;})
@@ -1053,25 +1083,23 @@ module edit{
             // get max val of placement
             threeD.push(max)
             placedParticles.push(threeD);
+
+            pos = density_flat.filter(function (a) {return a>= 0;})
+            postotal = pos.reduce(function(a,b) {return a+b;})
         }
 
         // sphere on density_grid indices, anything in placed particle sphere get indexed for that particle
         // need to back out which particles are represented by the placed particles
         let assignIndices = function(placed){
-            let tmpindx = []
             let indices = placed.map(function (a) {return [];});
             placed.forEach((a, aindx) => {
                 let [x, y, z, d] = a;
                 let target_rad = cellsize;
-                let center, min, max = get_subbox(x, y, z, target_rad)
-                // elem_boxids.forEach(indx => {
-                //     let [xi, yi, zi] = indx;
-                //
-                // })
+                let [center, min, max] = get_subbox(x, y, z, target_rad)
                 let in_rad = elem_boxids.filter(function(indx){
-                    if(min[0]<=indx[0]<=max[0]) { // keep elements with correct x dim index
-                        if(min[1]<=indx[1]<=max[1]){ // keep elements with correct y dim index
-                            if(min[2]<=indx[2]<=max[2]){ // keep elements with correct z dim index
+                    if(min[0]<=indx[0] && indx[0]<=max[0]) { // keep elements with correct x dim index
+                        if(min[1]<=indx[1] && indx[1]<=max[1]){ // keep elements with correct y dim index
+                            if(min[2]<=indx[2] && indx[2]<=max[2]){ // keep elements with correct z dim index
                                 // keeps elements within radius of the placed particle
                                 return (indx[0] - center[0]) ** 2 + (indx[1] - center[1]) ** 2 + (indx[2] - center[2]) ** 2 < target_rad;
                             } else return false;
@@ -1081,11 +1109,10 @@ module edit{
                     }
                 })
 
-                // get indices of selected bases
-                let particle_indices = in_rad.map(function(indx){
+                // get indices of filtered bases
+                indices[aindx] = in_rad.map(function(indx){
                     return elem_boxids.indexOf(indx);
                 })
-                indices[aindx] = particle_indices;
             })
 
             return indices;
