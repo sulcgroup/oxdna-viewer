@@ -97,6 +97,7 @@ const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for f
 
 var lut, devs: number[]; //need for Lut coloring
 
+var tacoxdna;
 
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter

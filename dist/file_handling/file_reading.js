@@ -1,4 +1,43 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+function importFiles(files) {
+    let from = document.getElementById("importFromSelect").value;
+    let to = 'oxview';
+    let activity = Metro.activity.open({
+        type: 'square',
+        overlayColor: '#fff',
+        overlayAlpha: .5,
+        text: `Importing file ${files[0].name}`
+    });
+    let opts = {};
+    if (from === "cadnano") {
+        opts = {
+            grid: document.getElementById("importCadnanoLatticeSelect").value,
+            sequences: false
+        };
+    }
+    tacoxdna.Logger.log(`Converting ${[...files].map(f => f.name).join(',')} from ${from} to ${to}.`);
+    let readFiles = new Map();
+    for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+            readFiles.set(file, evt.target.result);
+            console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
+            if (readFiles.size === files.length) {
+                let onDone = (oxViewStr) => {
+                    Metro.activity.close(activity);
+                    readOxViewString(oxViewStr);
+                    tacoxdna.Logger.log('Conversion finished');
+                };
+                tacoxdna.convertFromTo_async(readFiles, from, to, opts).then(onDone).catch(() => {
+                    // Browser probably doesn't support module web workers
+                    let converted = tacoxdna.convertFromTo(readFiles, from, to, opts);
+                    onDone(converted);
+                });
+            }
+        };
+        reader.readAsText(file);
+    }
+}
 // Creates color overlays
 function makeLut(data, key) {
     let arr = data[key];
@@ -364,196 +403,199 @@ function readJson(system, jsonReader) {
 }
 function readOxViewJsonFile(file) {
     let reader = new FileReader();
-    reader.onload = () => {
-        let sysStartId = sysCount;
-        const newElementIds = new Map();
-        // Check if file includes custom colors
-        let customColors = false;
-        // Parse json string
-        const data = JSON.parse(reader.result);
-        // Set box data, if provided
-        if (data.box) {
-            box = new THREE.Vector3().fromArray(data.box);
-        }
-        // Add systems, if provided (really should be)
-        if (data.systems) {
-            // Keep track if new clusters
-            let newClusterMap = new Map();
-            // Go through and add each system
-            data.systems.forEach(sysData => {
-                let sys = new System(sysStartId + sysData.id, elements.getNextId());
-                sys.label = sysData.label;
-                let sidCounter = 0;
-                // Go through and add each strand
-                sysData.strands.forEach(strandData => {
-                    let strand;
-                    // Create strand of correct class
-                    let strandClass;
-                    switch (strandData.class) {
-                        case 'NucleicAcidStrand':
-                            strandClass = NucleicAcidStrand;
-                            break;
-                        case 'Peptide':
-                            strandClass = Peptide;
-                            break;
-                        default:
-                            let error = `Unrecognised type of strand:  ${strandData.class}`;
-                            notify(error, "alert");
-                            throw error;
-                    }
-                    strand = new strandClass(strandData.id, sys);
-                    // Add strand to system
-                    sys.addStrand(strand);
-                    // Go through and add each monomer element
-                    strandData.monomers.forEach(elementData => {
-                        // Create element of correct class
-                        let e;
-                        let elementClass;
-                        switch (elementData.class) {
-                            case 'DNA':
-                                elementClass = DNANucleotide;
-                                break;
-                            case 'RNA':
-                                elementClass = RNANucleotide;
-                                break;
-                            case 'AA':
-                                elementClass = AminoAcid;
-                                break;
-                            default:
-                                let error = `Unrecognised type of element:  ${elementData.class}`;
-                                notify(error);
-                                throw error;
-                        }
-                        e = new elementClass(undefined, strand);
-                        // Preserve ID when possible, keep track of new IDs if not
-                        if (elements.has(elementData.id)) {
-                            elements.push(e); // Create new ID
-                        }
-                        else {
-                            elements.set(elementData.id, e); // Reuse old ID
-                        }
-                        newElementIds.set(elementData.id, e.id);
-                        e.strand = strand;
-                        if (strandData.end3 == elementData.id || !('n3' in elementData)) {
-                            strand.end3 = e; // Set strand 3' end
-                        }
-                        if (strandData.end5 == elementData.id || !('n5' in elementData)) {
-                            strand.end5 = e; // Set strand 3' end
-                        }
-                        // Set misc attributes
-                        e.label = elementData.label;
-                        e.type = elementData.type;
-                        // Set cluster id, making sure not to reuse any already
-                        // existing cluster id loaded earlier.
-                        if (elementData.cluster) {
-                            if (!newClusterMap.has(elementData.cluster)) {
-                                newClusterMap.set(elementData.cluster, ++clusterCounter);
-                            }
-                            e.clusterId = newClusterMap.get(elementData.cluster);
-                        }
-                        if (elementData.color) {
-                            e.color = new THREE.Color(elementData.color);
-                            customColors = true;
-                        }
-                        e.sid = sidCounter++;
-                        elementData.createdElement = e;
-                    });
-                });
-                sysData.createdSystem = sys;
-                sys.initInstances(sidCounter);
-                systems.push(sys);
-                sysCount++;
-            });
-            // Loop through another time to connect elements, since we now have updated IDs
-            data.systems.forEach(sysData => {
-                sysData.strands.forEach(strandData => {
-                    strandData.monomers.forEach(d => {
-                        let e = d.createdElement;
-                        // Set references to any connected elements
-                        if ('n5' in d) {
-                            e.n5 = elements.get(newElementIds.get(d.n5));
-                        }
-                        if ('n3' in d) {
-                            e.n3 = elements.get(newElementIds.get(d.n3));
-                        }
-                        if ('bp' in d) {
-                            e.pair = elements.get(newElementIds.get(d.bp));
-                        }
-                    });
-                });
-            });
-            // Let's do this one more time...
-            // Since we now have the topology setup, let's set the configuration
-            data.systems.forEach(sysData => {
-                let sys = sysData.createdSystem;
-                let deprecated = false;
-                sysData.strands.forEach(strandData => {
-                    strandData.monomers.slice().reverse().forEach(d => {
-                        let e = d.createdElement;
-                        // If we have a position, use that
-                        if (d.p) {
-                            let p = new THREE.Vector3().fromArray(d.p);
-                            if (d.a1 && d.a3) {
-                                let a1 = new THREE.Vector3().fromArray(d.a1);
-                                let a3 = new THREE.Vector3().fromArray(d.a3);
-                                e.calcPositions(p, a1, a3, true);
-                            }
-                            else {
-                                e.calcPositions(p, undefined, undefined, true); // Amino acid
-                            }
-                            // Otherwise fallback to reading instance parameters
-                        }
-                        else if ('conf' in d) {
-                            //make sure warning shows up only once
-                            if (!deprecated)
-                                notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
-                            deprecated = true;
-                            e.sid = e.id; // Why is this needed?
-                            // Populate instances
-                            for (let attr in d.conf) {
-                                let v = d.conf[attr];
-                                sys.fillVec(attr, v.length, e.sid, v);
-                            }
-                            // Re-assign a picking color if ID has changed
-                            if (d.id !== e.id) {
-                                let idColor = new THREE.Color();
-                                idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-                                sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
-                            }
-                        }
-                    });
-                });
-                // Finally, we can add the system to the scene
-                addSystemToScene(sys);
-                centerAndPBC();
-                if (customColors) {
-                    view.coloringMode.set("Custom");
-                }
-            });
-        }
-        if (data.forces) {
-            data.forces.forEach(f => {
-                switch (f.type) {
-                    case "mutual_trap":
-                        let mutTrap = new MutualTrap();
-                        mutTrap.setFromParsedJson(f);
-                        mutTrap.update();
-                        forces.push(mutTrap);
-                        break;
-                    default:
-                        notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
-                        break;
-                }
-            });
-            if (!forceHandler) {
-                forceHandler = new ForceHandler(forces);
-            }
-            else {
-                forceHandler.set(forces);
-            }
-        }
+    reader.onload = (e) => {
+        readOxViewString(e.target.result);
     };
     reader.readAsText(file);
+}
+function readOxViewString(s) {
+    let sysStartId = sysCount;
+    const newElementIds = new Map();
+    // Check if file includes custom colors
+    let customColors = false;
+    // Parse json string
+    const data = JSON.parse(s);
+    // Set box data, if provided
+    if (data.box) {
+        box = new THREE.Vector3().fromArray(data.box);
+    }
+    // Add systems, if provided (really should be)
+    if (data.systems) {
+        // Keep track if new clusters
+        let newClusterMap = new Map();
+        // Go through and add each system
+        data.systems.forEach(sysData => {
+            let sys = new System(sysStartId + sysData.id, elements.getNextId());
+            sys.label = sysData.label;
+            let sidCounter = 0;
+            // Go through and add each strand
+            sysData.strands.forEach(strandData => {
+                let strand;
+                // Create strand of correct class
+                let strandClass;
+                switch (strandData.class) {
+                    case 'NucleicAcidStrand':
+                        strandClass = NucleicAcidStrand;
+                        break;
+                    case 'Peptide':
+                        strandClass = Peptide;
+                        break;
+                    default:
+                        let error = `Unrecognised type of strand:  ${strandData.class}`;
+                        notify(error, "alert");
+                        throw error;
+                }
+                strand = new strandClass(strandData.id, sys);
+                // Add strand to system
+                sys.addStrand(strand);
+                // Go through and add each monomer element
+                strandData.monomers.forEach(elementData => {
+                    // Create element of correct class
+                    let e;
+                    let elementClass;
+                    switch (elementData.class) {
+                        case 'DNA':
+                            elementClass = DNANucleotide;
+                            break;
+                        case 'RNA':
+                            elementClass = RNANucleotide;
+                            break;
+                        case 'AA':
+                            elementClass = AminoAcid;
+                            break;
+                        default:
+                            let error = `Unrecognised type of element:  ${elementData.class}`;
+                            notify(error);
+                            throw error;
+                    }
+                    e = new elementClass(undefined, strand);
+                    // Preserve ID when possible, keep track of new IDs if not
+                    if (elements.has(elementData.id)) {
+                        elements.push(e); // Create new ID
+                    }
+                    else {
+                        elements.set(elementData.id, e); // Reuse old ID
+                    }
+                    newElementIds.set(elementData.id, e.id);
+                    e.strand = strand;
+                    if (strandData.end3 == elementData.id || !('n3' in elementData)) {
+                        strand.end3 = e; // Set strand 3' end
+                    }
+                    if (strandData.end5 == elementData.id || !('n5' in elementData)) {
+                        strand.end5 = e; // Set strand 3' end
+                    }
+                    // Set misc attributes
+                    e.label = elementData.label;
+                    e.type = elementData.type;
+                    // Set cluster id, making sure not to reuse any already
+                    // existing cluster id loaded earlier.
+                    if (elementData.cluster) {
+                        if (!newClusterMap.has(elementData.cluster)) {
+                            newClusterMap.set(elementData.cluster, ++clusterCounter);
+                        }
+                        e.clusterId = newClusterMap.get(elementData.cluster);
+                    }
+                    if (elementData.color) {
+                        e.color = new THREE.Color(elementData.color);
+                        customColors = true;
+                    }
+                    e.sid = sidCounter++;
+                    elementData.createdElement = e;
+                });
+            });
+            sysData.createdSystem = sys;
+            sys.initInstances(sidCounter);
+            systems.push(sys);
+            sysCount++;
+        });
+        // Loop through another time to connect elements, since we now have updated IDs
+        data.systems.forEach(sysData => {
+            sysData.strands.forEach(strandData => {
+                strandData.monomers.forEach(d => {
+                    let e = d.createdElement;
+                    // Set references to any connected elements
+                    if ('n5' in d) {
+                        e.n5 = elements.get(newElementIds.get(d.n5));
+                    }
+                    if ('n3' in d) {
+                        e.n3 = elements.get(newElementIds.get(d.n3));
+                    }
+                    if ('bp' in d) {
+                        e.pair = elements.get(newElementIds.get(d.bp));
+                    }
+                });
+            });
+        });
+        // Let's do this one more time...
+        // Since we now have the topology setup, let's set the configuration
+        data.systems.forEach(sysData => {
+            let sys = sysData.createdSystem;
+            let deprecated = false;
+            sysData.strands.forEach(strandData => {
+                strandData.monomers.slice().reverse().forEach(d => {
+                    let e = d.createdElement;
+                    // If we have a position, use that
+                    if (d.p) {
+                        let p = new THREE.Vector3().fromArray(d.p);
+                        if (d.a1 && d.a3) {
+                            let a1 = new THREE.Vector3().fromArray(d.a1);
+                            let a3 = new THREE.Vector3().fromArray(d.a3);
+                            e.calcPositions(p, a1, a3, true);
+                        }
+                        else {
+                            e.calcPositions(p, undefined, undefined, true); // Amino acid
+                        }
+                        // Otherwise fallback to reading instance parameters
+                    }
+                    else if ('conf' in d) {
+                        //make sure warning shows up only once
+                        if (!deprecated)
+                            notify("The loaded file is using a deprecated .oxView format. Please save your design again to avoid this warning", 'warn');
+                        deprecated = true;
+                        e.sid = e.id; // Why is this needed?
+                        // Populate instances
+                        for (let attr in d.conf) {
+                            let v = d.conf[attr];
+                            sys.fillVec(attr, v.length, e.sid, v);
+                        }
+                        // Re-assign a picking color if ID has changed
+                        if (d.id !== e.id) {
+                            let idColor = new THREE.Color();
+                            idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
+                            sys.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
+                        }
+                    }
+                });
+            });
+            // Finally, we can add the system to the scene
+            addSystemToScene(sys);
+            centerAndPBC();
+            if (customColors) {
+                view.coloringMode.set("Custom");
+            }
+        });
+    }
+    if (data.forces) {
+        data.forces.forEach(f => {
+            switch (f.type) {
+                case "mutual_trap":
+                    let mutTrap = new MutualTrap();
+                    mutTrap.setFromParsedJson(f);
+                    mutTrap.update();
+                    forces.push(mutTrap);
+                    break;
+                default:
+                    notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                    break;
+            }
+        });
+        if (!forceHandler) {
+            forceHandler = new ForceHandler(forces);
+        }
+        else {
+            forceHandler.set(forces);
+        }
+    }
 }
 //reads in an anm parameter file and associates it with the last loaded system.
 // function readParFile(file) {
