@@ -1,4 +1,23 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+// Only show options for the selected input format
+function toggleInputOpts(value) {
+    document.getElementById('importCadnanoLatticeGroup').hidden = value !== 'cadnano';
+}
+// Try to guess format from file ending
+function guessInputFormat(files) {
+    let from = document.getElementById('importFromSelect');
+    for (const f of files) {
+        if (f.name.endsWith('.rpoly')) {
+            from.value = 'rpoly';
+            break;
+        }
+        else if (f.name.endsWith('.json')) {
+            from.value = 'cadnano';
+            break;
+        }
+    }
+    toggleInputOpts(from.value);
+}
 function importFiles(files) {
     let from = document.getElementById("importFromSelect").value;
     let to = 'oxview';
@@ -28,9 +47,9 @@ function importFiles(files) {
                     readOxViewString(oxViewStr);
                     tacoxdna.Logger.log('Conversion finished');
                 };
-                tacoxdna.convertFromTo_async(readFiles, from, to, opts).then(onDone).catch(() => {
+                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch(() => {
                     // Browser probably doesn't support module web workers
-                    let converted = tacoxdna.convertFromTo(readFiles, from, to, opts);
+                    let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
                     onDone(converted);
                 });
             }

@@ -130,17 +130,18 @@
         <form>
             <div class="form-group">
                 <label>Select file</label>
-                <input id='importFilesInput' type="file" data-role="file">
+                <input id='importFilesInput' type="file" data-role="file" onchange="guessInputFormat(this.files)">
             </div>
             <div class="form-group">
                 <label>File format</label>
-                <select id="importFromSelect" data-role="select">
+                <select id="importFromSelect" onchange="toggleInputOpts(this.value)">
                     <option value="cadnano">caDNAno</option>
+                    <option value="rpoly">rpoly</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id='importCadnanoLatticeGroup'>
                 <label>Lattice type</label>
-                <select id="importCadnanoLatticeSelect" data-role="select">
+                <select id="importCadnanoLatticeSelect">
                     <option value="sq">Square</option>
                     <option value="he">Hexagonal</option>
                 </select>
@@ -212,15 +213,15 @@
                     <span class="mif-folder-open mif-3x"></span>
                     <span class="caption">Open</span>
                 </button>
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files"
-                id="import-button">
-                <span class="mif-file-upload mif-3x"></span>
-                <span class="caption">Import cadnano</span>
-                </button>
                 <button class="ribbon-button" onclick="makeOxViewJsonFile()"
                     title="Download a file JSON file storing the current design">
                     <span class="mif-floppy-disk mif-3x"></span>
                     <span class="caption">Save .oxview</span>
+                </button>
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files"
+                    id="import-button">
+                    <span class="mif-file-upload mif-3x fg-green"></span>
+                    <span class="caption">Import</span>
                 </button>
                 <div class="group">
                     <button class="ribbon-button"
