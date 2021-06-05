@@ -137,13 +137,25 @@
                 <select id="importFromSelect" onchange="toggleInputOpts(this.value)">
                     <option value="cadnano">caDNAno</option>
                     <option value="rpoly">rpoly</option>
+                    <option value="pdb">PDB</option>
                 </select>
             </div>
-            <div class="form-group" id='importCadnanoLatticeGroup'>
+            <hr>
+            <div class="form-group" id='importCadnanoOpts'>
                 <label>Lattice type</label>
                 <select id="importCadnanoLatticeSelect">
                     <option value="sq">Square</option>
                     <option value="he">Hexagonal</option>
+                </select>
+            </div>
+            <div class="form-group" id='importPDBOpts' hidden>
+                <div class="form-group">
+                    <input id="pdb_models_as_strands" type="checkbox" data-role="checkbox" data-caption="Interpret PDB models as separate strands">
+                </div>
+                <label>Input strand direction</label>
+                <select id="importPdbInputStrandDir">
+                    <option value="53">5' → 3'</option>
+                    <option value="35">3' → 5'</option>
                 </select>
             </div>
         </form>
@@ -799,7 +811,7 @@
         <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
-        <script src="./ts/lib/tacoxdna/tacoxdna.js"></script>
+        <script src="./ts/lib/tacoxdna.js"></script>
         <script src="./ts/lib/Lut.js"></script>
         <script src="./ts/lib/justcontext.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
