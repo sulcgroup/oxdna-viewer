@@ -127,6 +127,8 @@
     <div id='importFileDialog' class="dialog" data-role="dialog">
         <h2>TacoxDNA importer</h2>
         <p>Powered by <a href="tacoxdna.sissa.it/">tacoxDNA</a>, you can now import other common design formats.</p>
+        <p>To load oxView, oxDNA or PDB files, simply click on "Open" instead.</p>
+        <hr>
         <form>
             <div class="form-group">
                 <label>Select file</label>
@@ -137,7 +139,6 @@
                 <select id="importFromSelect" onchange="toggleInputOpts(this.value)">
                     <option value="cadnano">caDNAno</option>
                     <option value="rpoly">rpoly</option>
-                    <option value="pdb">PDB</option>
                 </select>
             </div>
             <hr>
@@ -146,16 +147,6 @@
                 <select id="importCadnanoLatticeSelect">
                     <option value="sq">Square</option>
                     <option value="he">Hexagonal</option>
-                </select>
-            </div>
-            <div class="form-group" id='importPDBOpts' hidden>
-                <div class="form-group">
-                    <input id="pdb_models_as_strands" type="checkbox" data-role="checkbox" data-caption="Interpret PDB models as separate strands">
-                </div>
-                <label>Input strand direction</label>
-                <select id="importPdbInputStrandDir">
-                    <option value="53">5' → 3'</option>
-                    <option value="35">3' → 5'</option>
                 </select>
             </div>
         </form>

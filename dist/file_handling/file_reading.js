@@ -2,7 +2,6 @@
 // Only show options for the selected input format
 function toggleInputOpts(value) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
-    document.getElementById('importPDBOpts').hidden = value !== 'pdb';
 }
 // Try to guess format from file ending
 function guessInputFormat(files) {
@@ -14,10 +13,6 @@ function guessInputFormat(files) {
         }
         else if (f.name.endsWith('.json')) {
             from.value = 'cadnano';
-            break;
-        }
-        else if (f.name.endsWith('.pdb')) {
-            from.value = 'pdb';
             break;
         }
     }

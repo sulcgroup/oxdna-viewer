@@ -3,7 +3,6 @@
 // Only show options for the selected input format
 function toggleInputOpts(value: string) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
-    document.getElementById('importPDBOpts').hidden = value !== 'pdb';
 }
 
 // Try to guess format from file ending
@@ -14,8 +13,6 @@ function guessInputFormat(files: File[]) {
             from.value = 'rpoly'; break;
         } else if (f.name.endsWith('.json')) {
             from.value = 'cadnano'; break;
-        } else if (f.name.endsWith('.pdb')) {
-            from.value = 'pdb'; break;
         }
     }
     toggleInputOpts(from.value);
