@@ -203,7 +203,7 @@ function handleFiles(files: FileList) {
     }
     if (!trapFile) {
         if (jsonFile && !topFile) jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone) {
+        if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
             notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
             return
         }
