@@ -126,13 +126,13 @@
 
     <div id='importFileDialog' class="dialog" data-role="dialog">
         <h2>TacoxDNA importer</h2>
-        <p>Powered by <a href="tacoxdna.sissa.it/">tacoxDNA</a>, you can now import other common design formats.</p>
+        <p>Powered by <a href="http://tacoxdna.sissa.it/">tacoxDNA</a>, you can now import common design formats.</p>
         <p>To load oxView, oxDNA or PDB files, simply click on "Open" instead.</p>
         <hr>
         <form>
             <div class="form-group">
                 <label>Select file</label>
-                <input id='importFilesInput' type="file" data-role="file" onchange="guessInputFormat(this.files)">
+                <input id='importFilesInput' type="file" data-role="file" multiple="true" onchange="guessInputFormat(this.files)">
             </div>
             <div class="form-group">
                 <label>File format</label>
@@ -142,18 +142,26 @@
                 </select>
             </div>
             <hr>
-            <div class="form-group" id='importCadnanoOpts'>
-                <label>Lattice type</label>
-                <select id="importCadnanoLatticeSelect">
-                    <option value="sq">Square</option>
-                    <option value="he">Hexagonal</option>
-                </select>
+            <div id='importCadnanoOpts'>
+                <div class="form-group">
+                    <label>Lattice type</label>
+                    <select id="importCadnanoLatticeSelect">
+                        <option value="sq">Square</option>
+                        <option value="he">Hexagonal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Scaffold sequence</label>
+                    <input type="text" placeholder="RANDOM" id="importCadnanoScaffoldSeq">
+                </div>
             </div>
         </form>
 
+        <div data-role="progress" data-type="line" id="importProgress" hidden></div>
+
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary js-dialog-close">Import and load</button>
+            <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary">Import and load</button>
         </div>
     </div>
 

@@ -21,18 +21,17 @@ function guessInputFormat(files: File[]) {
 function importFiles(files: File[]) {
     let from = (document.getElementById("importFromSelect") as HTMLSelectElement).value;
     let to = 'oxview';
-    let activity = Metro.activity.open({
-        type: 'square',
-        overlayColor: '#fff',
-        overlayAlpha: .5,
-        text: `Importing file ${files[0].name}`
-    });
     let opts = {};
+
+    let progress = document.getElementById("importProgress");
+    progress.hidden = false;
+
+    document.body.style.cursor = "wait";
 
     if (from === "cadnano") {
         opts = {
             grid: (document.getElementById("importCadnanoLatticeSelect") as HTMLSelectElement).value,
-            sequences: false
+            sequence: (document.getElementById("importCadnanoScaffoldSeq") as HTMLSelectElement).value
         };
     }
 
@@ -45,10 +44,13 @@ function importFiles(files: File[]) {
             console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
             if (readFiles.size === files.length) {
                 let onDone = (oxViewStr) => {
-                    Metro.activity.close(activity);
                     readOxViewString(oxViewStr);
                     tacoxdna.Logger.log('Conversion finished');
+                    progress.hidden = true;
+                    Metro.dialog.close('#importFileDialog');
+                    document.body.style.cursor = "auto";
                 };
+
                 tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch(() => {
                     // Browser probably doesn't support module web workers
                     let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
