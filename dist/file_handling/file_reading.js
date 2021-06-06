@@ -46,10 +46,18 @@ function importFiles(files) {
                     Metro.dialog.close('#importFileDialog');
                     document.body.style.cursor = "auto";
                 };
-                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch(() => {
+                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch((e) => {
                     // Browser probably doesn't support module web workers
-                    let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
-                    onDone(converted);
+                    try {
+                        let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
+                        onDone(converted);
+                    }
+                    catch (error) {
+                        notify(error, "alert");
+                        progress.hidden = true;
+                        Metro.dialog.close('#importFileDialog');
+                        document.body.style.cursor = "auto";
+                    }
                 });
             }
         };
