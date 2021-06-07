@@ -46,15 +46,12 @@
     </div>
     <div class="group" style="float:right; width:25%;">
         <div>
-            <!--            <div class="caption">Temperature at which fluctuation data was obtained is mandatory</div>-->
             <label for="temp">Temperature (K)</label><input id="temp" type="text" data-role="input" data-default-value="300" onclick="flux.setTemp(view.getInputNumber('temp'))">
         </div>
         <button class="button" id="collapse_toggle_3">Available Datasets</button>
-        <div data-role="collapse" data-toggle-element="#collapse_toggle_3">
-            <!--        dynamically List Data Here -->
-            <ul class="items-list" id="datalist"></ul>
+        <div class="pos-relative">
+            <ul class="items-list" id="datalist" data-role="collapse" data-toggle-element="#collapse_toggle_3"></ul>
         </div>
-        <!--        networks Added in view.toggleSideBarDatasets-->
         <button class="button" id="collapse_toggle_1">Fitting Ready Networks</button>
         <div class="pos-relative">
             <ul class="items-list" id="readynetlist" data-role="collapse" data-toggle-element="#collapse_toggle_1"></ul>

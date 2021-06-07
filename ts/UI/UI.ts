@@ -651,7 +651,7 @@ class View {
     }
 
     public addNetworkData(nid: number){
-        let name = "Network " + (nid+1).toString();
+        let name = "Network " + (nid+1).toString() + " Fit";
         let exists = !!document.getElementById(name);
         if(!exists) {
             if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
@@ -690,7 +690,7 @@ class View {
     public removeNetworkData(nid : number){
         if(networks[nid].fittingReady){
             let ul = document.getElementById("readynetlist");
-            let name = "Network " + (nid+1).toString();
+            let name = "Network " + (nid+1).toString() + " Fit";
             let li = document.getElementById(name);
             ul.removeChild(li);
         }
@@ -883,7 +883,7 @@ class fluxGraph {
 
     loadDatasetsandNetworks() {
         if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {view.addGraphData(gid);})
-        if(networks.length > 0) networks.forEach((n, nid) => {view.addNetworkData(nid);})
+        if(networks.length > 0) networks.forEach((n, nid) => {if(n.fittingReady) {view.addNetworkData(nid);}})
     }
 
     flushDatasetsandNetworks() {

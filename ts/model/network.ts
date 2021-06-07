@@ -258,10 +258,10 @@ class Network {
         this.networktype = "ANM";
         if(this.reducedEdges.total != 0) {
             this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
-            this.fillConnections();
         }
     }
     ;
@@ -290,10 +290,10 @@ class Network {
         if(this.reducedEdges.total != 0) {
             // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
             this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
-            this.fillConnections();
         }
     }
     ;
