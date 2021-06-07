@@ -264,7 +264,7 @@ function updateColoring(mode) {
             return;
         }
     }
-    else if (lut) {
+    else if (lut && mode !== 'Custom') {
         api.removeColorbar();
     }
     elements.forEach(e => e.updateColor());

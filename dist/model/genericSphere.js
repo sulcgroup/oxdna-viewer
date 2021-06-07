@@ -153,7 +153,14 @@ class GenericSphere extends BasicElement {
                     break;
                 case "Custom":
                     if (!this.color) {
-                        bbColor = new THREE.Color(0x888888);
+                        // Use overlay color if overlay is loaded, otherwise color gray
+                        if (lut) {
+                            bbColor = sys.lutCols[sid];
+                            aaColor = sys.lutCols[sid];
+                        }
+                        else {
+                            bbColor = GREY;
+                        }
                     }
                     else {
                         bbColor = this.color;
