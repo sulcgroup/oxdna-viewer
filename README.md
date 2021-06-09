@@ -197,5 +197,5 @@ If you use oxView or our oxDNA analysis package in your research, please cite:
 Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr Šulc: Design, optimization and analysis of large DNA and RNA nanostructures through interactive visualization, editing and molecular simulation, Nucleic Acids Research, Volume 48, Issue 12, 09 July 2020, Page e72
 (https://doi.org/10.1093/nar/gkaa417)
 
-
-We gratefully acknowledge support from NSF grant no 1931487 and ONR grant no N000142012094 that support the development.
+## Acknowledgments
+We gratefully acknowledge support from NSF grant no 1931487 and ONR grant no N000142012094 that support the development. We thank to all the users for submitting their feedback, bug reports and feature requests, as well as all members of Sulc, Yan, Doye, Turberfield, and Louis groups who participate in testing of the tool.
