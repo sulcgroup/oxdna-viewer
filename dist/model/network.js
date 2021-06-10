@@ -232,10 +232,10 @@ class Network {
         this.networktype = "ANM";
         if (this.reducedEdges.total != 0) {
             this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
-            this.fillConnections();
         }
     }
     ;
@@ -264,10 +264,10 @@ class Network {
         if (this.reducedEdges.total != 0) {
             // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
             this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
-            this.fillConnections();
         }
     }
     ;
@@ -304,6 +304,7 @@ class Network {
             });
         });
     }
+    ;
     addNonpolarBonds() {
         let nonpolark = 1.0;
         let np = 12;
@@ -465,27 +466,19 @@ class Network {
             notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
             return;
         }
-        let hessian = [];
+        // let hessian : number[][] = [];
         if (this.reducedEdges.total == 0) {
             notify("Network must be filled prior to solving ANM");
         }
         else {
             //Initialize Empty Hessian (3Nx3N)
-            let tmp = new Array(3 * this.particles.length); //3N
-            for (let i = 0; i < 3 * this.particles.length; i++) { //3N x
-                hessian.push(tmp.slice());
-                for (let j = 0; j < 3 * this.particles.length; j++) {
-                    hessian[i][j] = 0;
-                }
-            }
+            let hessian = new Array(3 * this.particles.length * 3 * this.particles.length);
             //Hessian Calc w/ Masses
             for (let l = 0; l < this.reducedEdges.total; l++) {
-                let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l];
+                let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l], adim = 3 * this.particles.length;
                 let mi = this.masses[i];
                 let mj = this.masses[j];
                 let mij = Math.sqrt(mi * mj); //masses
-                let mi2 = mi * mi;
-                let mj2 = mj * mj;
                 let d = this.elemcoords.distance(i, j); //distances
                 let d2 = d * d;
                 let diff = this.elemcoords.diff(i, j);
@@ -496,89 +489,97 @@ class Network {
                 // Couldn't find a more pleasant way to do this
                 // Fills 1 element in hij, hji, hii, hjj on each line
                 // Verified this returns correct Hessian
-                hessian[3 * i][3 * j] -= diag.x / mij;
-                hessian[3 * j][3 * i] -= diag.x / mij;
-                hessian[3 * i][3 * i] += diag.x / mi2;
-                hessian[3 * j][3 * j] += diag.x / mj2;
-                hessian[3 * i][3 * j + 1] -= xy / mij;
-                hessian[3 * j + 1][3 * i] -= xy / mij;
-                hessian[3 * i][3 * i + 1] += xy / mi2;
-                hessian[3 * j + 1][3 * j] += xy / mj2;
-                hessian[3 * i][3 * j + 2] -= xz / mij;
-                hessian[3 * j + 2][3 * i] -= xz / mij;
-                hessian[3 * i][3 * i + 2] += xz / mi2;
-                hessian[3 * j + 2][3 * j] += xz / mj2;
-                hessian[3 * i + 1][3 * j] -= xy / mij;
-                hessian[3 * j][3 * i + 1] -= xy / mij;
-                hessian[3 * i + 1][3 * i] += xy / mi2;
-                hessian[3 * j][3 * j + 1] += xy / mj2;
+                hessian[3 * i * adim + 3 * j] -= diag[0] / mij;
+                hessian[3 * j * adim + 3 * i] -= diag[0] / mij;
+                hessian[3 * i * adim + 3 * i] += diag[0] / mi;
+                hessian[3 * j * adim + 3 * j] += diag[0] / mj;
+                hessian[3 * i * adim + 3 * j + 1] -= xy / mij;
+                hessian[(3 * j + 1) * adim + 3 * i] -= xy / mij;
+                hessian[3 * i * adim + 3 * i + 1] += xy / mi;
+                hessian[3 * j * adim + 3 * j + 1] += xy / mj;
+                hessian[3 * i * adim + 3 * j + 2] -= xz / mij;
+                hessian[(3 * j + 2) * adim + 3 * i] -= xz / mij;
+                hessian[3 * i * adim + 3 * i + 2] += xz / mi;
+                hessian[3 * j * adim + 3 * j + 2] += xz / mj;
+                hessian[(3 * i + 1) * adim + 3 * j] -= xy / mij;
+                hessian[3 * j * adim + 3 * i + 1] -= xy / mij;
+                hessian[(3 * i + 1) * adim + 3 * i] += xy / mi;
+                hessian[3 * j * adim + 3 * j + 1] += xy / mj;
                 //fine
-                hessian[3 * i + 1][3 * j + 1] -= diag.y / mij;
-                hessian[3 * j + 1][3 * i + 1] -= diag.y / mij;
-                hessian[3 * i + 1][3 * i + 1] += diag.y / mi2;
-                hessian[3 * j + 1][3 * j + 1] += diag.y / mj2;
-                hessian[3 * i + 1][3 * j + 2] -= yz / mij;
-                hessian[3 * j + 2][3 * i + 1] -= yz / mij;
-                hessian[3 * i + 1][3 * i + 2] += yz / mi2;
-                hessian[3 * j + 2][3 * j + 1] += yz / mj2;
-                hessian[3 * i + 2][3 * j] -= xz / mij;
-                hessian[3 * j][3 * i + 2] -= xz / mij;
-                hessian[3 * i + 2][3 * i] += xz / mi2;
-                hessian[3 * j][3 * j + 2] += xz / mj2;
-                hessian[3 * i + 2][3 * j + 1] -= yz / mij;
-                hessian[3 * j + 1][3 * i + 2] -= yz / mij;
-                hessian[3 * i + 2][3 * i + 1] += yz / mi2;
-                hessian[3 * j + 1][3 * j + 2] += yz / mj2;
+                hessian[(3 * i + 1) * adim + 3 * j + 1] -= diag[1] / mij;
+                hessian[(3 * j + 1) * adim + 3 * i + 1] -= diag[1] / mij;
+                hessian[(3 * i + 1) * adim + 3 * i + 1] += diag[1] / mi;
+                hessian[(3 * j + 1) * adim + 3 * j + 1] += diag[1] / mj;
+                hessian[(3 * i + 1) * adim + 3 * j + 2] -= yz / mij;
+                hessian[(3 * j + 2) * adim + 3 * i + 1] -= yz / mij;
+                hessian[(3 * i + 1) * adim + 3 * i + 2] += yz / mi;
+                hessian[(3 * j + 2) * adim + 3 * j + 1] += yz / mj;
+                hessian[(3 * i + 2) * adim + 3 * j] -= xz / mij;
+                hessian[3 * j * adim + 3 * i + 2] -= xz / mij;
+                hessian[(3 * i + 2) * adim + 3 * i] += xz / mi;
+                hessian[3 * j * adim + 3 * j + 2] += xz / mj;
+                hessian[(3 * i + 2) * adim + 3 * j + 1] -= yz / mij;
+                hessian[(3 * j + 1) * adim + 3 * i + 2] -= yz / mij;
+                hessian[(3 * i + 2) * adim + 3 * i + 1] += yz / mi;
+                hessian[(3 * j + 1) * adim + 3 * j + 2] += yz / mj;
                 //fine
-                hessian[3 * i + 2][3 * j + 2] -= diag.z / mij;
-                hessian[3 * j + 2][3 * i + 2] -= diag.z / mij;
-                hessian[3 * i + 2][3 * i + 2] += diag.z / mi2;
-                hessian[3 * j + 2][3 * j + 2] += diag.z / mj2;
+                hessian[(3 * i + 2) * adim + 3 * j + 2] -= diag[2] / mij;
+                hessian[(3 * j + 2) * adim + 3 * i + 2] -= diag[2] / mij;
+                hessian[(3 * i + 2) * adim + 3 * i + 2] += diag[2] / mi;
+                hessian[(3 * j + 2) * adim + 3 * j + 2] += diag[2] / mj;
             }
             return hessian;
         }
     }
     ;
-    invertHessian(hessian) {
-        let r = SVD(hessian, true, true, 1e-10);
+    // adim is just the size of one dimension of the hessian (always 3*N)
+    invertHessian(hessian, adim) {
+        let r = SVD(hessian, adim, true, true, 1e-10);
         let u = r['orderu'], q = r['q'], vt = r['ordervt']; //v needs to be transposed
         let tol = 0.000001;
         // Make diagonal of inverse eigenvalues
-        let invq = [];
-        for (let i = 0; i < 3 * this.particles.length; i++) { //3N x
-            let tmp = new Array(3 * this.particles.length); //3N
-            for (let j = 0; j < 3 * this.particles.length; j++) {
-                tmp[j] = 0;
-            }
-            invq.push(tmp);
-        }
+        // let invq: number[][]= [];
+        // for(let i=0; i<3*this.particles.length; i++){ //3N x
+        //     let tmp = new Array(3*this.particles.length) //3N
+        //     for(let j=0; j<3*this.particles.length; j++){
+        //         tmp[j] = 0;
+        //     }
+        //     invq.push(tmp);
+        // }
+        // Make diagonal of inverse eigenvalues
+        let invq = new Array(3 * this.particles.length * 3 * this.particles.length).fill(0);
         //make diagonal
         for (let i = 0; i < q.length; i++) {
             let qval = q[i];
             if (qval < tol)
-                invq[i][i] = 0;
+                invq[i * 3 * q.length + i] = 0;
             else
-                invq[i][i] = 1 / qval;
+                invq[i * 3 * q.length + i] = 1 / qval;
         }
         // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
-        function matrixDot(A, B) {
-            var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
-            return result.map((row, i) => {
-                return row.map((val, j) => {
-                    return A[i].reduce((sum, elm, k) => sum + (elm * B[k][j]), 0);
-                });
+        function matrixDot(A, radim, cadim, B, rbdim, cbdim) {
+            // var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
+            var result = new Array(radim * cbdim).fill(0);
+            return result.map((val, i) => {
+                let ix = Math.floor(i / radim);
+                let jx = i % radim;
+                let sum = 0;
+                for (let k = 0; k < rbdim; k++) {
+                    sum += A[ix * cadim + k] * B[k * cbdim + jx];
+                }
+                return sum;
             });
         }
         // multiply
-        let nf = matrixDot(u, invq); //  U*q
+        let nf = matrixDot(u, 3 * q.length, 3 * q.length, invq, 3 * q.length, 3 * q.length); //  U*q
         // Calculate U q+ V+ (Psuedo-Inverse)
-        return matrixDot(nf, vt); // U*q*Vt
+        return matrixDot(nf, 3 * q.length, 3 * q.length, vt, 3 * q.length, 3 * q.length); // U*q*Vt
     }
     ;
     getRMSF(inverse, temp) {
         let RMSF = [];
         for (let i = 0; i < inverse.length / 3; i++) { //for each particle
-            let r = this.kb * temp * (inverse[3 * i][3 * i] + inverse[3 * i + 1][3 * i + 1] + inverse[3 * i + 2][3 * i + 2]); //A^2
+            let r = this.kb * temp * (inverse[3 * i * inverse.length + 3 * i] + inverse[(3 * i + 1) * inverse.length + 3 * i + 1] + inverse[(3 * i + 2) * inverse.length + 3 * i + 2]); //A^2
             RMSF.push(r);
         }
         return RMSF;

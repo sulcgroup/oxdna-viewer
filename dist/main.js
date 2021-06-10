@@ -80,7 +80,7 @@ var strandCount = 0;
 var selectedBases = new Set();
 var selectednetwork = 0; // Only used for networks
 const networks = []; // Only used for networks, replaced anms
-const graphDatasets = []; // Only used for graph
+const graphDatasets = []; // Only used for fluctuation graph
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring
 const editHistory = new EditHistory();

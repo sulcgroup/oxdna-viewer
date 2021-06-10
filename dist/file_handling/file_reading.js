@@ -1132,15 +1132,15 @@ function readPdbFile(file) {
                                 na.chainID = tmpchainID;
                             }
                         }
-                        // na.chainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
                         let tmp = pdbLine.substring(23, 29); // Usually the residue number
                         //check for insertion code
                         na.iCode = "";
-                        if (isNaN(parseInt(tmp[5]))) {
+                        if (isNaN(parseInt(tmp[5]))) { // not a number, most likely an insertion code
                             na.iCode = tmp[5];
                             na.pdbResIdent = resIdentAddOn + tmp.slice(0, 5).trim();
                         }
                         else {
+                            // is a number, most likely no insertion code and misplaced pbd residue number
                             na.pdbResIdent = resIdentAddOn + tmp.trim();
                         }
                     }

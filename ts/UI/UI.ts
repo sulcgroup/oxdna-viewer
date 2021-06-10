@@ -1127,10 +1127,49 @@ class fluxGraph {
 
         // ANM Solving, only one for a little bit
         if(net.networktype == 'ANM'){
-            let hess = net.generateHessian();
-            let invH = net.invertHessian(hess);
-            let temp = view.getInputNumber('temp');
-            let rmsf = net.getRMSF(invH, temp);
+            let rmsf = [];
+            if (window.Worker) {
+                const mainWorker = new Worker('anmworker.js');
+                let temp = view.getInputNumber('temp');
+
+                //
+                // mainWorker.onmessage = function(e) {
+                //     rmsf = e.data;
+                // }
+                // let rrmsf = []
+
+                function activate() {
+                    var promise = new Promise(function (resolve, reject) {
+                        var counter = 0;
+                        // var array = [];
+                        var callback = function (message) {
+                            counter++;
+
+                            rmsf = rmsf.concat(message.data);
+                            //And when all workers ends, resolve the promise
+                            if (counter >= 1) {
+                                //We resolve the promise with the array of results.
+                                resolve(message.data);
+                            }
+                        }
+
+                        mainWorker.onmessage = callback;
+                        mainWorker.postMessage([net.elemcoords.xI, net.elemcoords.yI, net.elemcoords.zI,
+                            net.reducedEdges.p1, net.reducedEdges.p2, net.reducedEdges.ks,
+                            net.masses, temp]);
+
+                    });
+                    return promise;
+                }
+
+                activate();
+            } else {
+                console.log("No Webworker Found");
+                return;
+            }
+
+
+
 
             let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
             let xvals = fit[0];
