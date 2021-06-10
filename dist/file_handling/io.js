@@ -24,6 +24,8 @@ class TopReader extends FileReader {
                 for (let j = 0; j < lines.length; j++) {
                     this.elems.set(nucCount + j, nuc);
                 }
+                // Create new cluster for loaded structure:
+                let cluster = ++clusterCounter;
                 lines.forEach((line, i) => {
                     if (line == "") {
                         // Delete last element
@@ -46,6 +48,8 @@ class TopReader extends FileReader {
                     let nuc = this.elems.get(nucCount + i);
                     // Set systemID
                     nuc.sid = this.sidCounter++;
+                    // Set cluster id;
+                    nuc.clusterId = cluster;
                     //create neighbor 3 element if it doesn't exist
                     let n3 = parseInt(l[2]);
                     if (n3 != -1) {

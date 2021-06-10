@@ -109,16 +109,12 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Cluster" :
-					if (typeof elements.values().next().value.clusterId == 'undefined') {
-						document.getElementById("clusterOptions").hidden = false;
-					} else {
-						sys.strands.forEach(strand=>strand.forEach(e=>{
-							if(e.clusterId == nucleotide.clusterId) {
-								e.toggle()
-							}
-						}));
-						updateView(sys);
-					}
+                    sys.strands.forEach(strand=>strand.forEach(e=>{
+                        if(e.clusterId == nucleotide.clusterId) {
+                            e.toggle()
+                        }
+                    }));
+                    updateView(sys);
 					break;
 
 			}
