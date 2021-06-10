@@ -124,6 +124,47 @@
         </div>
     </div>
 
+    <div id='importFileDialog' class="dialog" data-role="dialog">
+        <h2>TacoxDNA importer</h2>
+        <p>Powered by <a href="http://tacoxdna.sissa.it/">tacoxDNA</a>, you can now import common design formats.</p>
+        <p>To load oxView, oxDNA or PDB files, simply click on "Open" instead.</p>
+        <hr>
+        <form>
+            <div class="form-group">
+                <label>Select file</label>
+                <input id='importFilesInput' type="file" data-role="file" multiple="true" onchange="guessInputFormat(this.files)">
+            </div>
+            <div class="form-group">
+                <label>File format</label>
+                <select id="importFromSelect" onchange="toggleInputOpts(this.value)">
+                    <option value="cadnano">caDNAno</option>
+                    <option value="rpoly">rpoly</option>
+                </select>
+            </div>
+            <hr>
+            <div id='importCadnanoOpts'>
+                <div class="form-group">
+                    <label>Lattice type</label>
+                    <select id="importCadnanoLatticeSelect">
+                        <option value="sq">Square</option>
+                        <option value="he">Hexagonal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Scaffold sequence</label>
+                    <input type="text" placeholder="RANDOM" id="importCadnanoScaffoldSeq">
+                </div>
+            </div>
+        </form>
+
+        <div data-role="progress" data-type="line" id="importProgress" hidden></div>
+
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary">Import and load</button>
+        </div>
+    </div>
+
     <div id='exportOxdnaDialog' class="dialog" data-role="dialog">
         <p>Save the current stucture to oxDNA configuration and/or topology files</p>
         <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
@@ -179,7 +220,7 @@
         <div class="content-holder">
             <div class="section" id="section-file">
                 <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (Ctrl/⌘-O)"
-                    title="Open files (Ctrl/⌘-O)" id="open-button">
+                    id="open-button">
                     <span class="mif-folder-open mif-3x"></span>
                     <span class="caption">Open</span>
                 </button>
@@ -187,6 +228,11 @@
                     title="Download a file JSON file storing the current design">
                     <span class="mif-floppy-disk mif-3x"></span>
                     <span class="caption">Save .oxview</span>
+                </button>
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files"
+                    id="import-button">
+                    <span class="mif-file-upload mif-3x fg-green"></span>
+                    <span class="caption">Import</span>
                 </button>
                 <div class="group">
                     <button class="ribbon-button"
@@ -769,6 +815,7 @@
         <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
         <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
+        <script src="./ts/lib/tacoxdna.js"></script>
         <script src="./ts/lib/Lut.js"></script>
         <script src="./ts/lib/justcontext.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>

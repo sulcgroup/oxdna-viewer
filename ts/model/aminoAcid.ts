@@ -152,8 +152,14 @@ class AminoAcid extends BasicElement {
                     break;
                 case "Custom":
                     if (!this.color) {
-                        bbColor = GREY;
-                        aaColor = GREY;
+                        // Use overlay color if overlay is loaded, otherwise color gray
+                        if(lut) {
+                            bbColor = sys.lutCols[sid];
+                            aaColor = sys.lutCols[sid];
+                        } else {
+                            bbColor = GREY;
+                            aaColor = GREY;
+                        }
                     } else {
                         bbColor = this.color;
                         aaColor = this.color;

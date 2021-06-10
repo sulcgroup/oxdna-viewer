@@ -144,7 +144,13 @@ class Nucleotide extends BasicElement {
                     break;
                 case "Custom":
                     if (!this.color) {
-                        color = new THREE.Color(0x888888);
+                        // Use overlay color if overlay is loaded, otherwise color gray
+                        if (lut) {
+                            color = sys.lutCols[sid];
+                        }
+                        else {
+                            color = GREY;
+                        }
                     }
                     else {
                         color = this.color;
