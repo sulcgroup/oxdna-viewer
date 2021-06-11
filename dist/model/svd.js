@@ -32,8 +32,6 @@ const SVD = (a, adim, withu, withv, eps) => {
     eps = Math.pow(2, -52);
     // let tol = 1e-64 / eps
     let tol = 2e-12;
-    // dimensions (square matrix)
-    let dim = adim;
     //accessing a matrix a[i][j] = a[i*adim + j]
     // throw error if a is not defined
     if (!a) {

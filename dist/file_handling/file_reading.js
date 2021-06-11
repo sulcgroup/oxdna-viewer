@@ -859,6 +859,22 @@ window.addEventListener("message", (event) => {
 }, false);
 // Helper Objects for pdb parsing
 class pdbatom {
+    // store most info as strings to make robust against more interestingly formulated PDB files
+    indx;
+    atomType;
+    altLoc;
+    resType;
+    chainID;
+    chainIndx;
+    pdbResIdent;
+    iCode;
+    x;
+    y;
+    z;
+    occupancy;
+    tempFactor; // make optional?
+    element;
+    charge;
     constructor() {
         this.indx = "";
         this.atomType = "";
@@ -878,6 +894,12 @@ class pdbatom {
     }
 }
 class pdbresidue {
+    resType;
+    pdbResIdent;
+    chainID;
+    chainIndx;
+    type;
+    atoms;
     constructor() {
         this.resType = "";
         this.chainIndx = -1;
@@ -888,6 +910,10 @@ class pdbresidue {
     }
 }
 class pdbchain {
+    chainID;
+    chainIndx;
+    residues;
+    strandtype;
     constructor() {
         this.chainIndx = -1;
         this.chainID = "";
@@ -897,6 +923,14 @@ class pdbchain {
 }
 // Stores locations of unique and repeated chains throughout the provided PDB file
 class pdbReadingList {
+    uniqueIDs; // unique chain Identifiers
+    uniqueStart; // starting line number of
+    uniqueEnd;
+    repeatIDs;
+    repeatStart;
+    repeatEnd;
+    repeatCoords; // coordinates for repeated chains
+    repeatQuatRots; // Rotation Quaternion for Repeated chain a1/a3 vectors
     constructor() {
         this.uniqueIDs = [];
         this.uniqueStart = [];
@@ -909,6 +943,11 @@ class pdbReadingList {
     }
 }
 class pdbinfowrapper {
+    pdbfilename;
+    pdbsysinfo;
+    initlist;
+    disulphideBonds;
+    hydrogenBonds;
     constructor(pi, chains, initlist) {
         this.pdbfilename = pi;
         this.pdbsysinfo = chains;

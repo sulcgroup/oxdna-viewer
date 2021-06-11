@@ -4,8 +4,44 @@
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
 class System {
+    id;
+    globalStartId; //1st nucleotide's id
+    datFile;
+    colormapFile;
+    lutCols;
+    strands = [];
+    label;
+    //the system contains all the data from a dat file in its instancing arrays
+    //the system also owns the actual meshes that get sent to the scene.
+    INSTANCES;
+    bbOffsets;
+    bbRotation;
+    nsOffsets;
+    nsRotation;
+    conOffsets;
+    conRotation;
+    bbconOffsets;
+    bbconRotation;
+    bbconScales;
+    cmOffsets;
+    bbColors;
+    nsColors;
+    scales;
+    nsScales;
+    conScales;
+    visibility;
+    bbLabels;
+    backboneGeometry;
+    nucleosideGeometry;
+    connectorGeometry;
+    spGeometry;
+    pickingGeometry;
+    backbone;
+    nucleoside;
+    connector;
+    bbconnector;
+    dummyBackbone;
     constructor(id, startID) {
-        this.strands = [];
         this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];

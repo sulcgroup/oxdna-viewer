@@ -21,6 +21,7 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 class ElementMap extends Map {
+    idCounter;
     constructor() {
         super();
         this.idCounter = 0;

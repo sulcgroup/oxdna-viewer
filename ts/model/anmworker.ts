@@ -1,3 +1,4 @@
+
 this.onmessage = function(e) {
     let elemcoords = {
         // coords: this.particles.map(e => e.getPos()),
@@ -8,25 +9,19 @@ this.onmessage = function(e) {
             // return this.coords[i].distanceTo(this.coords[j]);
             return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2)
         },
-        rotation: function (i: number, j: number): THREE.Quaternion {
-            return new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(0, 1, 0), //this.coords[i].clone().sub(this.coords[j]).normalize()
-                new THREE.Vector3(this.xI[i] - this.xI[j], this.yI[i] - this.yI[j], this.zI[i] - this.zI[j]).normalize()
-            );
-        },
         center: function (i: number, j: number) { // midpoint b/t two particles
             // return this.coords[i].clone().add(this.coords[j]).divideScalar(2);
-            return new THREE.Vector3((this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2);
+            return [(this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2];
         },
         diff: function (i: number, j: number) { // returns j - i
-            return new THREE.Vector3((this.xI[j] - this.xI[i]), (this.yI[j] - this.yI[i]), (this.zI[j] - this.zI[i]));
+            return [(this.xI[j] - this.xI[i]), (this.yI[j] - this.yI[i]), (this.zI[j] - this.zI[i])];
         }
     };
 
 
     //generate hessian
     //Initialize Empty Hessian (3Nx3N)
-    let hessian: number[] = new Array(3 * elemcoords.xI.length * 3 * elemcoords.xI.length)
+    let hessian: number[] = new Array(3 * elemcoords.xI.length * 3 * elemcoords.xI.length).fill(0);
     let reducedEdges = {
         p1: e.data[3],
         p2: e.data[4],
@@ -35,22 +30,22 @@ this.onmessage = function(e) {
     let masses = e.data[6];
     let kb = 0.00138064852;
     let temp = e.data[7]
-    let adim = elemcoords.xI.length;
+    let adim = 3*elemcoords.xI.length;
 
     //Hessian Calc w/ Masses
     for (let l = 0; l < reducedEdges.p1.length; l++) {
-        let i = reducedEdges.p1[l], j = reducedEdges.p2[l], k = reducedEdges.ks[l],
-            adim = 3 * elemcoords.xI.length;
+        let i = reducedEdges.p1[l], j = reducedEdges.p2[l], k = reducedEdges.ks[l];
         let mi = masses[i];
         let mj = masses[j];
         let mij = Math.sqrt(mi * mj); //masses
         let d = elemcoords.distance(i, j); //distances
         let d2 = d * d;
         let diff = elemcoords.diff(i, j);
-        let diag = diff.clone().multiply(diff).multiplyScalar(k).divideScalar(d2);
-        let xy = k * (diff.x * diff.y) / d2;
-        let xz = k * (diff.x * diff.z) / d2;
-        let yz = k * (diff.y * diff.z) / d2;
+        // let diag = diff.clone().multiply(diff).multiplyScalar(k).divideScalar(d2);
+        let diag = diff.map((val, idx)=>{return val*val*k/d2;})
+        let xy = k * (diff[0] * diff[1]) / d2;
+        let xz = k * (diff[0] * diff[2]) / d2;
+        let yz = k * (diff[1] * diff[2]) / d2;
 
 
         // Couldn't find a more pleasant way to do this
@@ -433,8 +428,8 @@ this.onmessage = function(e) {
         // let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
 
         let order = q.map(x => key.indexOf(x)); // get index order to apply same sorting to u and v
-        let ordervt = JSON.parse(JSON.stringify(vt)); //deepcopy
-        let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
+        // let ordervt = JSON.parse(JSON.stringify(vt)); //deepcopy
+        // let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
 
         // guess what this function does
         let ordervector = function (vec: number[], order: number[]): number[]{
@@ -445,20 +440,13 @@ this.onmessage = function(e) {
             return nvec;
         }
 
-        let ordervector = function (vec: number[], order: number[]): number[]{
-            let nvec = vec.slice() //shallow copy
-            for(let j = 0; j < vec.length; j++){
-                nvec[j] = vec[order[j]];
-            }
-            return nvec;
-        }
-
 
         //lets reorder
+        let orderu = []
+        let ordervt = []
         for(i = 0; i < order.length; i++){
-
-            orderu[i] = JSON.parse(JSON.stringify(ordervector(u.slice(order[i]*adim,(order[i]+1)*adim), order))); //replace new array in correct order
-            ordervt[i] = JSON.parse(JSON.stringify(ordervector(vt[order[i]], order))); //replace new array in correct order
+            orderu = orderu.concat(ordervector(u.slice(order[i]*adim,(order[i]+1)*adim), order)); //replace new array in correct order
+            ordervt = ordervt.concat(ordervector(vt.slice(order[i]*adim, (order[i]+1)*adim), order)); //replace new array in correct order
         }
 
         // Number below eps should be zero
@@ -485,12 +473,12 @@ this.onmessage = function(e) {
     // }
 
     // Make diagonal of inverse eigenvalues
-    let invq = new Array(3*elemcoords.xI.length*3*elemcoords.xI.length).fill(0);
+    let invq = new Array(hessian.length).fill(0);
     //make diagonal
     for(let i = 0; i < q.length; i++){
         let qval = q[i];
-        if(qval < tol) invq[i* 3*q.length + i] = 0;
-        else invq[i* 3*q.length + i] = 1/qval;
+        if(qval < tol) invq[i*q.length + i] = 0;
+        else invq[i* q.length + i] = 1/qval;
     }
 
     // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
@@ -510,14 +498,14 @@ this.onmessage = function(e) {
     }
 
     // multiply
-    let nf = matrixDot(u, 3*q.length, 3*q.length, invq, 3* q.length, 3*q.length); //  U*q
+    let nf = matrixDot(u, q.length, q.length, invq, q.length, q.length); //  U*q
 
     // Calculate U q+ V+ (Psuedo-Inverse)
-    let inverse = matrixDot(nf, 3*q.length, 3*q.length, vt, 3* q.length, 3*q.length); // U*q*Vt
+    let inverse = matrixDot(nf, q.length, q.length, vt, q.length, q.length); // U*q*Vt
 
     let RMSF = [];
-    for(let i = 0; i < inverse.length/3; i++){ //for each particle
-        let r = kb * temp * (inverse[3*i*inverse.length + 3*i] + inverse[(3*i+1)*inverse.length + 3*i+1] + inverse[(3*i+2)*inverse.length + 3*i+2]); //A^2
+    for(let i = 0; i < q.length/3; i++){ //for each particle
+        let r = kb * temp * (inverse[3*i*q.length + 3*i] + inverse[(3*i+1)*q.length + 3*i+1] + inverse[(3*i+2)*q.length + 3*i+2]); //A^2
         RMSF.push(r);
     }
     this.postMessage(RMSF);

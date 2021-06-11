@@ -28,8 +28,13 @@ function toggleClusterSim() {
  *  the system with rigid-body dynamics.
  */
 class RigidClusterSimulator {
+    clusters = [];
+    clusterRepulsionConst; // = 1000;
+    connectionRelaxedLength; // = 3;
+    connectionSpringConst; // = 10;
+    friction; // = 0.25;
+    dt; // = 0.1;
     constructor() {
-        this.clusters = [];
         // load settings from view:
         this.clusterRepulsionConst = view.getInputNumber('rbd_clusterRepulsionConst');
         this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
@@ -105,16 +110,24 @@ class RigidClusterSimulator {
     ;
 }
 class Cluster {
+    conPoints = [];
+    clusterElements;
+    sim;
+    radius;
+    mass;
+    momentOfInertia_inv;
+    force;
+    torque;
+    linearVelocity = new THREE.Vector3(); // v
+    angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
+    position; // x
+    totalTranslation = new THREE.Vector3();
+    totalRotation = new THREE.Quaternion();
     /**
      * Create a rigid-body cluster from the given set of elements
      * @param clusterElements Set of BasicElements making up the cluster
      */
     constructor(clusterElements, simulator) {
-        this.conPoints = [];
-        this.linearVelocity = new THREE.Vector3(); // v
-        this.angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
-        this.totalTranslation = new THREE.Vector3();
-        this.totalRotation = new THREE.Quaternion();
         this.clusterElements = clusterElements;
         this.sim = simulator;
         this.mass = 25;
@@ -240,6 +253,8 @@ class Cluster {
  * Cluster helper class, defines a connection between clusters
  */
 class ClusterConnectionPoint {
+    from; // Local cluster
+    to; // Other cluster
     constructor(from, to) {
         this.from = from;
         this.to = to;

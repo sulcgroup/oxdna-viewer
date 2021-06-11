@@ -24,7 +24,7 @@
  *
  */
 // Also i have edited everything to be 1D arrays for better storage
-const SVD = (a: number[], adim, withu: boolean, withv: boolean, eps: number) => {
+const SVD = (a: number[], adim: number, withu: boolean, withv: boolean, eps: number) => {
     // Define default parameters
     withu = withu !== undefined ? withu : true
     withv = withv !== undefined ? withv : true
@@ -33,8 +33,6 @@ const SVD = (a: number[], adim, withu: boolean, withv: boolean, eps: number) => 
     // let tol = 1e-64 / eps
     let tol = 2e-12;
 
-    // dimensions (square matrix)
-    let dim = adim
     //accessing a matrix a[i][j] = a[i*adim + j]
 
     // throw error if a is not defined

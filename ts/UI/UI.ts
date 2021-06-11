@@ -1129,7 +1129,7 @@ class fluxGraph {
         if(net.networktype == 'ANM'){
             let rmsf = [];
             if (window.Worker) {
-                const mainWorker = new Worker('anmworker.js');
+                const mainWorker = new Worker('/oxdna-viewer/dist/model/anmworker.js');
                 let temp = view.getInputNumber('temp');
 
                 //
@@ -1147,16 +1147,29 @@ class fluxGraph {
 
                             rmsf = rmsf.concat(message.data);
                             //And when all workers ends, resolve the promise
-                            if (counter >= 1) {
+                            if (counter >= 1 && rmsf.length > 0) {
                                 //We resolve the promise with the array of results.
+                                let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
+                                let xvals = fit[0];
+                                let fitval = fit[1];
+                                let m = <number> fit[2];
+                                let k = 1/m; //N*10^-10/A (k*100 = pN/A)
+                                let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
+
+                                // rmsf is returned currently to check the Hessian inversion process
+                                let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+                                gendata.gammaSim = sim_k;
+                                let ngid = graphDatasets.length;
+                                graphDatasets.push(gendata);
+                                view.addGraphData(ngid);
                                 resolve(message.data);
                             }
                         }
 
                         mainWorker.onmessage = callback;
-                        mainWorker.postMessage([net.elemcoords.xI, net.elemcoords.yI, net.elemcoords.zI,
-                            net.reducedEdges.p1, net.reducedEdges.p2, net.reducedEdges.ks,
-                            net.masses, temp]);
+                        mainWorker.postMessage([net.elemcoords.xI.slice(), net.elemcoords.yI.slice(), net.elemcoords.zI.slice(),
+                            net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
+                            net.masses.slice(), temp]);
 
                     });
                     return promise;
@@ -1167,23 +1180,7 @@ class fluxGraph {
                 console.log("No Webworker Found");
                 return;
             }
-
-
-
-
-            let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
-            let xvals = fit[0];
-            let fitval = fit[1];
-            let m = <number> fit[2];
-            let k = 1/m; //N*10^-10/A (k*100 = pN/A)
-            let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
-
-            // rmsf is returned currently to check the Hessian inversion process
-            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
-            gendata.gammaSim = sim_k;
-            let ngid = graphDatasets.length;
-            graphDatasets.push(gendata);
-            view.addGraphData(ngid);
+            // This should be interesting
         }
     };
 

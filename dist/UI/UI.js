@@ -340,6 +340,9 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
+    id;
+    doc;
+    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -366,6 +369,8 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
+    lastActive;
+    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -392,8 +397,14 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
+    doc;
+    coloringMode;
+    centeringMode;
+    inboxingMode;
+    selectionMode;
+    transformMode;
+    basepairMessage = "Locating basepairs, please be patient...";
     constructor(doc) {
-        this.basepairMessage = "Locating basepairs, please be patient...";
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -647,6 +658,14 @@ class View {
 }
 let view = new View(document);
 class graphData {
+    label;
+    data;
+    xdata;
+    datatype; // rmsf or bfactor
+    units; // A_sqr or nm_sqr
+    gammaSim; // Spring force constant only used if graphData is generated as a Fit
+    cutoff; // Cutoff (A) for edges, only used if graphData is generated as a Fit
+    oDatatype; // Stores (original datatype) for the labels on the Fluctuation window (used in UI-> view)
     constructor(l, d, x, dt, u) {
         this.label = l;
         this.data = d;
@@ -696,6 +715,24 @@ class graphData {
 }
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
+    title;
+    xaxislabel;
+    yaxislabel;
+    data;
+    fluxWindowOpen;
+    type;
+    temp;
+    chart; // chartjs main chart object
+    units;
+    colors;
+    colorarr; // just stores colors for the graph
+    charttype;
+    chartdata;
+    chartoptions;
+    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
+    datasetCount; // how many datasets are currently displayed on the graph
+    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
+    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
@@ -1061,7 +1098,7 @@ class fluxGraph {
         if (net.networktype == 'ANM') {
             let rmsf = [];
             if (window.Worker) {
-                const mainWorker = new Worker('anmworker.js');
+                const mainWorker = new Worker('/oxdna-viewer/dist/model/anmworker.js');
                 let temp = view.getInputNumber('temp');
                 //
                 // mainWorker.onmessage = function(e) {
@@ -1076,15 +1113,27 @@ class fluxGraph {
                             counter++;
                             rmsf = rmsf.concat(message.data);
                             //And when all workers ends, resolve the promise
-                            if (counter >= 1) {
+                            if (counter >= 1 && rmsf.length > 0) {
                                 //We resolve the promise with the array of results.
+                                let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
+                                let xvals = fit[0];
+                                let fitval = fit[1];
+                                let m = fit[2];
+                                let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
+                                let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
+                                // rmsf is returned currently to check the Hessian inversion process
+                                let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+                                gendata.gammaSim = sim_k;
+                                let ngid = graphDatasets.length;
+                                graphDatasets.push(gendata);
+                                view.addGraphData(ngid);
                                 resolve(message.data);
                             }
                         };
                         mainWorker.onmessage = callback;
-                        mainWorker.postMessage([net.elemcoords.xI, net.elemcoords.yI, net.elemcoords.zI,
-                            net.reducedEdges.p1, net.reducedEdges.p2, net.reducedEdges.ks,
-                            net.masses, temp]);
+                        mainWorker.postMessage([net.elemcoords.xI.slice(), net.elemcoords.yI.slice(), net.elemcoords.zI.slice(),
+                            net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
+                            net.masses.slice(), temp]);
                     });
                     return promise;
                 }
@@ -1094,18 +1143,7 @@ class fluxGraph {
                 console.log("No Webworker Found");
                 return;
             }
-            let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
-            let xvals = fit[0];
-            let fitval = fit[1];
-            let m = fit[2];
-            let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
-            let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
-            // rmsf is returned currently to check the Hessian inversion process
-            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
-            gendata.gammaSim = sim_k;
-            let ngid = graphDatasets.length;
-            graphDatasets.push(gendata);
-            view.addGraphData(ngid);
+            // This should be interesting
         }
     }
     ;
