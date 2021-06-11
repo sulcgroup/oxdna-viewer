@@ -441,9 +441,12 @@ function readOxViewString(s) {
     let customColors = false;
     // Parse json string
     const data = JSON.parse(s);
-    // Set box data, if provided
+    // Update box data, if provided
     if (data.box) {
-        box = new THREE.Vector3().fromArray(data.box);
+        // Don't make smaller than current
+        box.x = Math.max(box.x, data.box[0]);
+        box.y = Math.max(box.y, data.box[1]);
+        box.z = Math.max(box.z, data.box[2]);
     }
     // Add systems, if provided (really should be)
     if (data.systems) {
