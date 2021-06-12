@@ -106,6 +106,7 @@ class Network {
     fittingReady; //Tells UI whether this network is ready to be displayed
     onscreen; // Tells UI whether this network is in the scene or not
     hydrogenbondinginfo;
+    cutoff; // keeps track of current cutoff value used to fill edges of network
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
@@ -167,8 +168,13 @@ class Network {
     ;
     sendtoUI() {
         this.fittingReady = true;
-        if (flux.fluxWindowOpen)
-            view.addNetworkData(this.nid);
+        let name = "Network " + (this.nid + 1).toString();
+        if (flux.fluxWindowOpen) {
+            let exists = !!document.getElementById(name);
+            if (!exists) {
+                view.addNetworkData(this.nid);
+            }
+        }
     }
     ;
     fillVec(vecName, unitSize, pos, vals) {

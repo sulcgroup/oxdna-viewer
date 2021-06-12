@@ -1,9 +1,18 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 // Based on https://github.com/mrdoob/three.js/blob/a72347515fa34e892f7a9bfa66a34fdc0df55954/examples/js/exporters/STLExporter.js
 class STLExporter {
+    elements;
+    vector = new THREE.Vector3();
+    normalMatrixWorld = new THREE.Matrix3();
+    Backbone;
+    Nucleoside;
+    Connector;
+    BBconnector;
+    include_backbone;
+    include_nucleoside;
+    include_connector;
+    include_bbconnector;
     constructor(elements, include_backbone, include_nucleoside, include_connector, include_bbconnector, scale, faces_mul) {
-        this.vector = new THREE.Vector3();
-        this.normalMatrixWorld = new THREE.Matrix3();
         this.elements = elements;
         //this.Backbone    = new THREE.SphereGeometry(.2,10,10);
         //this.Nucleoside  = new THREE.SphereGeometry(.3,10,10);      
