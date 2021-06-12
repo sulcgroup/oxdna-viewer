@@ -1138,12 +1138,6 @@ class fluxGraph {
                 const mainWorker = new Worker('/oxdna-viewer/dist/model/anmworker.js');
                 let temp = view.getInputNumber('temp');
 
-                //
-                // mainWorker.onmessage = function(e) {
-                //     rmsf = e.data;
-                // }
-                // let rrmsf = []
-
                 function activate() {
                     var promise = new Promise(function (resolve, reject) {
                         var counter = 0;
@@ -1181,7 +1175,8 @@ class fluxGraph {
                     return promise;
                 }
 
-                activate();
+                activate().then(r => mainWorker.terminate());
+
             } else {
                 console.log("No Webworker Found");
                 return;
