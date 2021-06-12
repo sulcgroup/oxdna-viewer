@@ -470,17 +470,14 @@ class View {
         let elem = this.doc.getElementById(id);
         if (elem) {
             Metro.window.toggle(elem);
-            flux.fluxWindowOpen = !flux.fluxWindowOpen;
-            if (flux.fluxWindowOpen)
-                flux.loadDatasetsandNetworks();
-            else
-                flux.flushDatasetsandNetworks();
+            // flux.fluxWindowOpen = !flux.fluxWindowOpen;
+            flux.toggleDatasetsandNetworks();
             // flux.flushDatasetsandNetworks();
         }
         else {
             this.createWindow(id, oncreate);
-            flux.fluxWindowOpen = true;
-            flux.loadDatasetsandNetworks();
+            // flux.fluxWindowOpen = true;
+            flux.toggleDatasetsandNetworks();
         }
     }
     createWindow(id, oncreate) {
@@ -558,23 +555,23 @@ class View {
     //Network Selector Methods (Protein tab)
     addNetwork(nid) {
         let name = "Network " + (nid + 1).toString();
-        let exists = !!document.getElementById(name);
+        let id = "Network " + (nid + 1).toString() + " Select";
+        let exists = !!document.getElementById(id);
         if (!exists) {
             let ul = document.getElementById("networks");
             let li = document.createElement("li");
-            li.setAttribute('id', name);
+            li.setAttribute('id', id);
             li.appendChild(document.createTextNode(name));
             li.setAttribute("onclick", String(selectednetwork = nid));
             ul.appendChild(li);
         }
     }
     removeNetwork(nid) {
-        let name = "Network " + (nid + 1).toString();
-        let exists = !!document.getElementById(name);
+        let id = "Network " + (nid + 1).toString() + " Select";
+        let exists = !!document.getElementById(id);
         if (exists) {
             let ul = document.getElementById("networks");
-            let name = "Network " + (nid + 1).toString();
-            let item = document.getElementById(name);
+            let item = document.getElementById(id);
             ul.removeChild(item);
         }
     }
@@ -613,7 +610,7 @@ class View {
         }
     }
     addNetworkData(nid) {
-        let name = "Network " + (nid + 1).toString() + " Fit";
+        let name = "Network " + (nid + 1).toString();
         let exists = !!document.getElementById(name);
         if (!exists) {
             if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
@@ -650,7 +647,7 @@ class View {
     removeNetworkData(nid) {
         if (networks[nid].fittingReady) {
             let ul = document.getElementById("readynetlist");
-            let name = "Network " + (nid + 1).toString() + " Fit";
+            let name = "Network " + (nid + 1).toString();
             let li = document.getElementById(name);
             ul.removeChild(li);
         }
@@ -815,7 +812,7 @@ class fluxGraph {
     initChart() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(75);
+            await delay(50);
             try {
                 let ctx = document.getElementById("flux").getContext('2d');
                 this.chart = new Chart(ctx, this.chartconfig);
@@ -829,7 +826,7 @@ class fluxGraph {
     toggleDatasetsandNetworks() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(75);
+            await delay(100);
             try {
                 flux.fluxWindowOpen = !flux.fluxWindowOpen;
                 if (flux.fluxWindowOpen) {
@@ -1085,6 +1082,10 @@ class fluxGraph {
         }
         // get network, make sure edges are there, otherwise nothing to calculate
         let net = networks[nid];
+        if (net.particles.length > 1000) {
+            notify("Large Networks (n>1000) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
+            return;
+        }
         if (net.reducedEdges.total == 0) {
             notify("Network's Edges must be filled prior to Fitting");
             return;
@@ -1122,7 +1123,7 @@ class fluxGraph {
                                 let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
                                 let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
                                 // rmsf is returned currently to check the Hessian inversion process
-                                let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
+                                let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "rmsf", "A_sqr");
                                 gendata.gammaSim = sim_k;
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);

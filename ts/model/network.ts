@@ -100,6 +100,7 @@ class Network {
     fittingReady: boolean; //Tells UI whether this network is ready to be displayed
     onscreen: boolean; // Tells UI whether this network is in the scene or not
     hydrogenbondinginfo;
+    cutoff: number; // keeps track of current cutoff value used to fill edges of network
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
@@ -112,7 +113,8 @@ class Network {
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
         this.networktype = 'empty';
-        this.onscreen = false;
+        this.onscreen = false; // parameter for viewing the networks
+        this.cutoff = 0;
         this.elemcoords = {
             // coords: this.particles.map(e => e.getPos()),
             xI: selectedMonomers.map(e => e.getPos().x),
@@ -162,7 +164,13 @@ class Network {
     ;
     sendtoUI(){
         this.fittingReady = true;
-        if(flux.fluxWindowOpen) view.addNetworkData(this.nid);
+        let name = "Network " + (this.nid+1).toString();
+        if(flux.fluxWindowOpen) {
+            let exists = !!document.getElementById(name);
+            if (!exists) {
+                view.addNetworkData(this.nid);
+            }
+        }
     }
     ;
     fillVec(vecName, unitSize, pos, vals) {
@@ -236,6 +244,7 @@ class Network {
 
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms: number){
+        this.cutoff = cutoffValueAngstroms;
         this.reducedEdges.clearAll();
         this.clearConnections();
         this.selectNetwork();
@@ -492,10 +501,6 @@ class Network {
     }
     ;
     generateHessian(): number[] {
-        if(this.particles.length > 2000){
-            notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
-            return;
-        }
         // let hessian : number[][] = [];
         if(this.reducedEdges.total==0){
             notify("Network must be filled prior to solving ANM");
@@ -585,16 +590,6 @@ class Network {
         let u = r['orderu'], q = r['q'], vt=r['ordervt']; //v needs to be transposed
 
         let tol = 0.000001;
-
-        // Make diagonal of inverse eigenvalues
-        // let invq: number[][]= [];
-        // for(let i=0; i<3*this.particles.length; i++){ //3N x
-        //     let tmp = new Array(3*this.particles.length) //3N
-        //     for(let j=0; j<3*this.particles.length; j++){
-        //         tmp[j] = 0;
-        //     }
-        //     invq.push(tmp);
-        // }
 
         // Make diagonal of inverse eigenvalues
         let invq = new Array(3*this.particles.length*3*this.particles.length).fill(0);

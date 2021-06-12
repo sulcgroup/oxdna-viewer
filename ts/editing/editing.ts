@@ -241,6 +241,10 @@ function deleteNetworkWrapper(nid: number) {
     if(net.onscreen){
         net.toggleVis(); // turn it off
     }
+    try{
+        view.removeNetworkData(nid)
+    } catch (e) {}
+
     networks.splice(nid, 1);
     if(selectednetwork == nid) selectednetwork = -1;
     view.removeNetwork(nid);
