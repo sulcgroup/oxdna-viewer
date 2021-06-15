@@ -33,6 +33,7 @@ function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
     elements.forEach(e=>{if (e.n3) calcsp(e);})
     systems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
+    if(forceHandler) forceHandler.redraw();
     render();
 }
 

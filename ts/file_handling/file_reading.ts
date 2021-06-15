@@ -155,8 +155,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let topFile, jsonFile, trapFile, pdbfile;
-    let idxFile = null;
+    let topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
@@ -164,58 +163,66 @@ function handleFiles(files: FileList) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
 
+        // oxview and pdb files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
             return;
         }
-        if (ext === "par") {
-            readParFile(files[i]);
+        else if (ext === "pdb") {
+            notify("Reading PDB File...");
+            readPdbFile(files[i]);
             return;
         }
+        // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
-        else if (ext === "pdb") {
-            notify("Reading PDB File...");
-            pdbfile = files[i];
-            readPdbFile(pdbfile);
-            return;
-        }
         else if (ext === "idx") idxFile = files[i];
+        else if (ext === "par") parFile = files[i];
+        // otherwise, what is this?
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
             return
         }
     }
-    let jsonAlone = false;
 
+    // If a new system is being loaded, there will be a dat and top file pair
+    let newSystem = datFile && topFile
+
+    // Additional information can be dropped in later
     let datAlone = datFile && !topFile;
     let trapAlone = trapFile && !topFile;
-    if (jsonFile && !topFile) jsonAlone = true;
-    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
-        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-        return
-    }
-    if (datAlone && systems.length === 0) {
-        notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
-        return
-    }
-    if (!trapFile) {
-        if (jsonFile && !topFile) jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
-            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-            return
-        }
+    let jsonAlone =  jsonFile && !topFile;
+    let parAlone = parFile && !topFile;
+
+    let addition = datAlone || trapAlone || jsonAlone || parAlone
+
+    if (!newSystem && !addition) {
+        notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
 
-    //read a topology/configuration pair and maybe a json file
-    if (!jsonAlone) {
-        readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
-    }
+    //if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
+    //    notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+    //    return
+    //}
+    //if (datAlone && systems.length === 0) {
+    //    notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
+    //    return
+    //}
+    //if (!trapFile) {
+    //    if (jsonFile && !topFile) jsonAlone = true;
+    //    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
+    //        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
+    //        return
+    //    }
+    //}
 
-    //read just a json file to generate an overlay on an existing scene
-    if (jsonFile && jsonAlone) {
+    //read a topology/configuration pair and whatever else
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile);
+
+/*     //read a json file to generate an overlay on an existing scene
+    if (jsonFile && addition) {
         const jsonReader = new FileReader(); //read .json
         jsonReader.onload = () => {
             readJson(systems[systems.length-1], jsonReader);
@@ -224,7 +231,8 @@ function handleFiles(files: FileList) {
         renderer.domElement.style.cursor = "auto";
     }
 
-    if (trapFile && trapAlone) {
+    // read a trap ile and generate an overlay on an existing scene
+    if (trapFile && addition) {
         const trapReader = new FileReader(); //read .trap file
         trapReader.onload = () => {
             readTrap(systems[systems.length-1], trapReader);
@@ -232,14 +240,27 @@ function handleFiles(files: FileList) {
         trapReader.readAsText(trapFile);
         renderer.domElement.style.cursor = "auto";
     }
+
+    // read a dat file to update an existing scene
+    if (datFile && addition) {
+        const r = new FileReader();
+        r.onload = ()=>updateConfFromFile(r.result as string);
+        r.readAsText(datFile);
+    }
+
+    // read a par file and add it as a network to an existing scene 
+    if (parFile && addition) {
+        readParFile(parFile);
+    } */
+
     render();
+    return
 }
 
 //parse a trap file
 function readTrap(system, trapReader) {
 
     let file = trapReader.result as string;
-    let trap_file = file;
     //{ can be replaced with \n to make sure no parameter is lost
     while(file.indexOf("{")>=0)
         file = file.replace("{","\n");
@@ -288,6 +309,7 @@ function readTrap(system, trapReader) {
     } else {
         forceHandler.set(forces);
     }
+    render()
 }
 
 
@@ -336,16 +358,20 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
+
+        //setupComplete fires when indexing arrays are finished being set up
+        //prevents async issues with par and overlay files
+        document.addEventListener('setupComplete', readAuxiliaryFiles)
 
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
         systems.push(system); //add system to Systems[]
         //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
-        if(idxFile===null){
+        if(!idxFile){
             //read topology file, the configuration file is read once the topology is loaded to avoid async errors
             const topReader = new TopReader(topFile, system, elements,()=>{
                 //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
@@ -375,15 +401,18 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
             };
             idxReader.readAsText(idxFile);
         }
+    }
+    else {
+        readAuxiliaryFiles()
+    }
 
-
+    function readAuxiliaryFiles() {
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {
-                readJson(system, jsonReader)
+                readJson(systems[systems.length-1], jsonReader)
             };
             jsonReader.readAsText(jsonFile);
-            renderer.domElement.style.cursor = "auto";
         }
 
         if (trapFile) {
@@ -392,16 +421,25 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
                 readTrap(systems[systems.length-1], trapReader);
             };
             trapReader.readAsText(trapFile);
-            renderer.domElement.style.cursor = "auto";
         }
-    } else if (datFile) {
-        const r = new FileReader();
-        r.onload = ()=>updateConfFromFile(r.result as string);
-        r.readAsText(datFile);
+
+        if (parFile) {
+            let parReader = new FileReader();
+            parReader.onload = () => {
+                readParFile(systems[systems.length - 1], parReader)
+            };
+            parReader.readAsText(parFile)
+        }
+        if (datFile && !topFile) {
+            const r = new FileReader();
+            r.onload = ()=> {
+                updateConfFromFile(r.result as string);
+            }
+            r.readAsText(datFile);
+        }
     }
-    else {
-        notify("Please drop one topology and one configuration/trajectory file");
-    }
+    render();
+    return
 }
 
 function updateConfFromFile(dat_file) {
@@ -434,12 +472,8 @@ function readJson(system, jsonReader) {
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
                 makeLut(data, key);
-                try{ //you need to toggle here for small systems, during the scene add for large systems because asynchronous reading.
-                    view.coloringMode.set("Overlay");
-                }
-                catch {
-                    toggleFailure = true;
-                }
+                view.coloringMode.set("Overlay");
+
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                 const end = system.systemLength() + system.globalStartId
@@ -717,53 +751,50 @@ function readOxViewString(s: string) {
 // }
 
 //reads in an anm parameter file and associates it with the last loaded system.
-function readParFile(file) {
-    let reader = new FileReader();
-    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
-    reader.onload = () => {
-        let lines = (reader.result as string).split(/[\n]+/g);
+function readParFile(system, reader) {
 
-        //remove the header
-        lines = lines.slice(1)
+    let lines = (reader.result as string).split(/[\n]+/g);
 
-        const size = lines.length;
+    //remove the header
+    lines = lines.slice(1)
 
-        //create an ANM object to allow visualization
-        const net = new Network(networks.length, system.getMonomers());
+    const size = lines.length;
 
-        //process connections
-        for (let i = 0; i < size-1; i++) {
-            let l = lines[i].split(" ")
-            //extract values
-            const p = parseInt(l[0]),
-                q = parseInt(l[1]),
-                eqDist = parseFloat(l[2]),
-                type = l[3],
-                strength = parseFloat(l[4]);
+    //create an ANM object to allow visualization
+    const net = new Network(networks.length, system.getMonomers());
 
-            // if its a torsional ANM then there are additional parameters on some lines
-            let extraParams = []
-            if (l.length > 5) {
-                for (let i = 5; i < l.length; i++) {
-                    extraParams.push(l[i])
-                }
+    //process connections
+    for (let i = 0; i < size-1; i++) {
+        let l = lines[i].split(" ")
+        //extract values
+        const p = parseInt(l[0]),
+            q = parseInt(l[1]),
+            eqDist = parseFloat(l[2]),
+            type = l[3],
+            strength = parseFloat(l[4]);
+
+        // if its a torsional ANM then there are additional parameters on some lines
+        let extraParams = []
+        if (l.length > 5) {
+            for (let i = 5; i < l.length; i++) {
+                extraParams.push(l[i])
             }
+        }
 
-            // if (particle1 == undefined) console.log(i)
-            net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
-        };
-        // Create and Fill Vectors
-        net.initInstances(net.reducedEdges.total);
-        net.initEdges();
-        net.fillConnections(); // fills connection array for
+        // if (particle1 == undefined) console.log(i)
+        net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
+    };
+    // Create and Fill Vectors
+    net.initInstances(net.reducedEdges.total);
+    net.initEdges();
+    net.fillConnections(); // fills connection array for
 
-        net.prepVis(); // Creates Mesh for visualization
-        networks.push(net); // Any network added here shows up in UI network selector
-        selectednetwork = net.nid; // auto select network just loaded
-        view.addNetwork(net.nid);
+    net.prepVis(); // Creates Mesh for visualization
+    networks.push(net); // Any network added here shows up in UI network selector
+    selectednetwork = net.nid; // auto select network just loaded
+    view.addNetwork(net.nid);
 
-    }
-    reader.readAsText(file);
+    notify("Par file read! Turn on visualization in the Protein tab")
 }
 
 // function addANMToScene(anm: ANM) {
@@ -852,11 +883,10 @@ function addSystemToScene(system: System) {
     pickingScene.add(system.dummyBackbone);
 
     // Catch an error caused by asynchronous readers and different file sizes
-    if(toggleFailure){
-        view.coloringMode.set("Overlay");
-    }
-
-    render();
+    //if(toggleFailure){
+    //    view.coloringMode.set("Overlay");
+    //}
+    document.dispatchEvent(new Event('setupComplete'))
 
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";

@@ -525,7 +525,6 @@ class TrajectoryReader {
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
-        render();
         // Signal that config has been loaded
         // block the nextConfig loaded to prevent the video loader from continuing after the chunk
         document.dispatchEvent(new Event('nextConfigLoaded'));

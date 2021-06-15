@@ -142,8 +142,6 @@ function updateView(sys: System) {
 		});
 	}
 
-	render(); //update scene;
-
 	let listBases = [];
 	let baseInfoStrands = {};
 
