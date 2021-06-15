@@ -39,26 +39,22 @@ function importFiles(files) {
             readFiles.set(file, evt.target.result);
             console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
             if (readFiles.size === files.length) {
-                let onDone = (oxViewStr) => {
-                    readOxViewString(oxViewStr);
+                var worker = new Worker('./dist/file_handling/tacoxdna_worker.js');
+                worker.onmessage = (e) => {
+                    let converted = e.data;
+                    readOxViewString(converted);
                     tacoxdna.Logger.log('Conversion finished');
                     progress.hidden = true;
                     Metro.dialog.close('#importFileDialog');
                     document.body.style.cursor = "auto";
                 };
-                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch((e) => {
-                    // Browser probably doesn't support module web workers
-                    try {
-                        let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
-                        onDone(converted);
-                    }
-                    catch (error) {
-                        notify(error, "alert");
-                        progress.hidden = true;
-                        Metro.dialog.close('#importFileDialog');
-                        document.body.style.cursor = "auto";
-                    }
-                });
+                worker.onerror = (error) => {
+                    notify(error.message, "alert");
+                    progress.hidden = true;
+                    Metro.dialog.close('#importFileDialog');
+                    document.body.style.cursor = "auto";
+                };
+                worker.postMessage([[...readFiles.values()], from, to, opts]);
             }
         };
         reader.readAsText(file);
