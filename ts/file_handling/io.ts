@@ -335,7 +335,7 @@ class TrajectoryReader {
                     }
                 }
                 // if we have just one conf ?
-                if(this.lookupReader.position_lookup.length==0 ){
+                if(this.lookupReader.position_lookup.length == 1 ){
                     this.lookupReader.addIndex(
                         0, this.chunker.file.size, this.lookupReader.position_lookup.length
                     );
