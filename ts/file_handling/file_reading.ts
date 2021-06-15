@@ -27,6 +27,8 @@ function importFiles(files: File[]) {
     let progress = document.getElementById("importProgress");
     progress.hidden = false;
 
+    let cancelButton = document.getElementById("importFileDialogCancel");
+
     document.body.style.cursor = "wait";
 
     if (from === "cadnano") {
@@ -49,19 +51,26 @@ function importFiles(files: File[]) {
             console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
             if (readFiles.size === files.length) {
                 var worker = new Worker('./dist/file_handling/tacoxdna_worker.js');
+                let finished = () => {
+                    progress.hidden = true;
+                    Metro.dialog.close('#importFileDialog');
+                    document.body.style.cursor = "auto";
+                }
                 worker.onmessage = (e: MessageEvent) => {
                     let converted = e.data;
                     readOxViewString(converted);
                     tacoxdna.Logger.log('Conversion finished');
-                    progress.hidden = true;
-                    Metro.dialog.close('#importFileDialog');
-                    document.body.style.cursor = "auto";
+                    finished();
                 };
                 worker.onerror = (error) => {
+                    tacoxdna.Logger.log('Error in conversion');
                     notify(error.message, "alert");
-                    progress.hidden = true;
-                    Metro.dialog.close('#importFileDialog');
-                    document.body.style.cursor = "auto";
+                    finished();
+                }
+                cancelButton.onclick = () => {
+                    worker.terminate();
+                    tacoxdna.Logger.log('Conversion aborted');
+                    finished();
                 }
                 worker.postMessage([[...readFiles.values()], from, to, opts]);
             }
