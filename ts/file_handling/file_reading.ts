@@ -3,6 +3,7 @@
 // Only show options for the selected input format
 function toggleInputOpts(value: string) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
+    document.getElementById('importRpolyOpts').hidden = value !== 'rpoly';
 }
 
 // Try to guess format from file ending
@@ -32,6 +33,10 @@ function importFiles(files: File[]) {
         opts = {
             grid: (document.getElementById("importCadnanoLatticeSelect") as HTMLSelectElement).value,
             sequence: (document.getElementById("importCadnanoScaffoldSeq") as HTMLSelectElement).value
+        };
+    } else if (from === "rpoly") {
+        opts = {
+            sequence: (document.getElementById("importRpolyScaffoldSeq") as HTMLSelectElement).value
         };
     }
 

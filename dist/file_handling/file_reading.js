@@ -2,6 +2,7 @@
 // Only show options for the selected input format
 function toggleInputOpts(value) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
+    document.getElementById('importRpolyOpts').hidden = value !== 'rpoly';
 }
 // Try to guess format from file ending
 function guessInputFormat(files) {
@@ -29,6 +30,11 @@ function importFiles(files) {
         opts = {
             grid: document.getElementById("importCadnanoLatticeSelect").value,
             sequence: document.getElementById("importCadnanoScaffoldSeq").value
+        };
+    }
+    else if (from === "rpoly") {
+        opts = {
+            sequence: document.getElementById("importRpolyScaffoldSeq").value
         };
     }
     tacoxdna.Logger.log(`Converting ${[...files].map(f => f.name).join(',')} from ${from} to ${to}.`);
