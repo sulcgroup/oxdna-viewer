@@ -297,6 +297,7 @@ var edit;
             e.dummySys = tmpSys;
             e.sid = sid;
             e.type = c.type;
+            e.color = c.color;
             // Add pasted elements to new cluster
             // (or clusters, if the copied elements had more than one cluster)
             if (c.clusterId !== undefined && c.clusterId > 0) {
@@ -985,4 +986,76 @@ var edit;
         destination.fillVec('nsColors', 3, id, source.getInstanceParameter3('nsColors').toArray());
         destination.fillVec('bbLabels', 3, id, source.getInstanceParameter3('bbLabels').toArray());
     }
+    /**
+     * Connects two 3' handles by a duplex of provided sequence.
+     * @param strand1 first  strand having the overhang
+     * @param strand2 second strand having the overhang
+     * @param the sequence of the duplex strand
+     */
+    function interconnectDuplex3p(strand1, strand2, patch_sequence = "GGGGGGGGG") {
+        let cmss = [];
+        [strand1, strand2].forEach(strand => {
+            let cms = new THREE.Vector3();
+            let l = 0;
+            strand.forEach(base => {
+                cms.add(base.getPos());
+                l += 1;
+            });
+            cms.divideScalar(l);
+            cmss.push(cms);
+        }); // find their cms
+        let npos = new THREE.Vector3().copy(cmss[0]);
+        npos.add(cmss[1]);
+        npos.divideScalar(2);
+        let duplex_strands = new Set();
+        let elems = edit.createStrand(patch_sequence, true);
+        let ecms = new THREE.Vector3();
+        elems.forEach(e => {
+            ecms.add(e.getPos());
+            duplex_strands.add(e.strand);
+        });
+        ecms.divideScalar(elems.length);
+        translateElements(new Set(elems), new THREE.Vector3().copy(npos).sub(ecms));
+        edit.ligate(// connect first strand
+        strand2.end3, [...duplex_strands][0].end5);
+        edit.ligate(// connect second strand
+        strand1.end3, [...duplex_strands][1].end5);
+    }
+    edit.interconnectDuplex3p = interconnectDuplex3p;
+    /**
+     * Connects two 5' handles by a duplex of provided sequence.
+     * @param strand1 first  strand having the overhang
+     * @param strand2 second strand having the overhang
+     * @param the sequence of the duplex strand
+     */
+    function interconnectDuplex5p(strand1, strand2, patch_sequence = "GGGGGGGGG") {
+        let cmss = [];
+        [strand1, strand2].forEach(strand => {
+            let cms = new THREE.Vector3();
+            let l = 0;
+            strand.forEach(base => {
+                cms.add(base.getPos());
+                l += 1;
+            });
+            cms.divideScalar(l);
+            cmss.push(cms);
+        }); // find their cms
+        let npos = new THREE.Vector3().copy(cmss[0]);
+        npos.add(cmss[1]);
+        npos.divideScalar(2);
+        let duplex_strands = new Set();
+        let elems = edit.createStrand(patch_sequence, true);
+        let ecms = new THREE.Vector3();
+        elems.forEach(e => {
+            ecms.add(e.getPos());
+            duplex_strands.add(e.strand);
+        });
+        ecms.divideScalar(elems.length);
+        translateElements(new Set(elems), new THREE.Vector3().copy(npos).sub(ecms));
+        edit.ligate(// connect first strand
+        strand1.end5, [...duplex_strands][0].end3);
+        edit.ligate(// connect second strand
+        strand2.end5, [...duplex_strands][1].end3);
+    }
+    edit.interconnectDuplex5p = interconnectDuplex5p;
 })(edit || (edit = {}));

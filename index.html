@@ -155,12 +155,18 @@
                     <input type="text" placeholder="RANDOM" id="importCadnanoScaffoldSeq">
                 </div>
             </div>
+            <div id='importRpolyOpts' hidden>
+                <div class="form-group">
+                    <label>Scaffold sequence</label>
+                    <input type="text" placeholder="RANDOM" id="importRpolyScaffoldSeq">
+                </div>
+            </div>
         </form>
 
         <div data-role="progress" data-type="line" id="importProgress" hidden></div>
 
         <div class="dialog-actions">
-            <button class="button js-dialog-close">Cancel</button>
+            <button id="importFileDialogCancel" class="button js-dialog-close">Cancel</button>
             <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary">Import and load</button>
         </div>
     </div>

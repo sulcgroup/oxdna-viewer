@@ -18,6 +18,7 @@ class InstanceCopy {
         this.type = e.type;
         this.id = e.id;
         this.clusterId = e.clusterId;
+        this.color = e.color;
         this.n3id = e.n3 ? e.n3.id : -1;
         this.n5id = e.n5 ? e.n5.id : -1;
         if (e.isPaired()) {

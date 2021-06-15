@@ -3,6 +3,7 @@
 // Only show options for the selected input format
 function toggleInputOpts(value: string) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
+    document.getElementById('importRpolyOpts').hidden = value !== 'rpoly';
 }
 
 // Try to guess format from file ending
@@ -26,12 +27,18 @@ function importFiles(files: File[]) {
     let progress = document.getElementById("importProgress");
     progress.hidden = false;
 
+    let cancelButton = document.getElementById("importFileDialogCancel");
+
     document.body.style.cursor = "wait";
 
     if (from === "cadnano") {
         opts = {
             grid: (document.getElementById("importCadnanoLatticeSelect") as HTMLSelectElement).value,
             sequence: (document.getElementById("importCadnanoScaffoldSeq") as HTMLSelectElement).value
+        };
+    } else if (from === "rpoly") {
+        opts = {
+            sequence: (document.getElementById("importRpolyScaffoldSeq") as HTMLSelectElement).value
         };
     }
 
@@ -43,26 +50,29 @@ function importFiles(files: File[]) {
             readFiles.set(file, evt.target.result);
             console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
             if (readFiles.size === files.length) {
-                let onDone = (oxViewStr) => {
-                    readOxViewString(oxViewStr);
-                    tacoxdna.Logger.log('Conversion finished');
+                var worker = new Worker('./dist/file_handling/tacoxdna_worker.js');
+                let finished = () => {
                     progress.hidden = true;
                     Metro.dialog.close('#importFileDialog');
                     document.body.style.cursor = "auto";
+                }
+                worker.onmessage = (e: MessageEvent) => {
+                    let converted = e.data;
+                    readOxViewString(converted);
+                    tacoxdna.Logger.log('Conversion finished');
+                    finished();
                 };
-
-                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch((e) => {
-                    // Browser probably doesn't support module web workers
-                    try {
-                        let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
-                        onDone(converted);
-                    } catch (error) {
-                        notify(error, "alert");
-                        progress.hidden = true;
-                        Metro.dialog.close('#importFileDialog');
-                        document.body.style.cursor = "auto";
-                    }
-                });
+                worker.onerror = (error) => {
+                    tacoxdna.Logger.log('Error in conversion');
+                    notify(error.message, "alert");
+                    finished();
+                }
+                cancelButton.onclick = () => {
+                    worker.terminate();
+                    tacoxdna.Logger.log('Conversion aborted');
+                    finished();
+                }
+                worker.postMessage([[...readFiles.values()], from, to, opts]);
             }
         };
         reader.readAsText(file);
@@ -669,7 +679,9 @@ function readOxViewString(s: string) {
             // Finally, we can add the system to the scene
             addSystemToScene(sys);
 
-            centerAndPBC();
+            // Center the newly added system
+            centerAndPBC(sys.getMonomers());
+
             if (customColors) {
                 view.coloringMode.set("Custom");
             }
