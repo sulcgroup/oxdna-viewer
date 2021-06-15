@@ -124,8 +124,7 @@ target.addEventListener("dragexit", function (event) {
 }, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
-let confNum = 0, datFileout = "", datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
-box = new THREE.Vector3(); //box size for system
+let confNum = 0, datFileout = "", box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
 var defaultColormap = "cooltowarm";
 function handleDrop(event) {
@@ -139,7 +138,7 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -266,7 +265,7 @@ function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefi
             datReq.open("GET", configurationPath);
             datReq.responseType = "blob";
             datReq.onload = () => {
-                datFile = datReq.response;
+                const datFile = datReq.response;
                 readFiles(topFile, datFile, null, overlayFile);
             };
             datReq.send();
@@ -285,6 +284,7 @@ function readFilesFromURLParams() {
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile) {
+    console;
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up

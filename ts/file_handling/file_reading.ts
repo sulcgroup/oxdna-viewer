@@ -140,7 +140,6 @@ target.addEventListener("dragexit", function (event) {
 
 let confNum: number = 0,
     datFileout: string = "",
-    datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
     box = new THREE.Vector3(); //box size for system
 
 //and a couple relating to overlay files
@@ -161,7 +160,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
@@ -296,7 +295,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             datReq.open("GET", configurationPath);
             datReq.responseType = "blob";
             datReq.onload = () => {
-                datFile = datReq.response;
+                const datFile = datReq.response;
                 readFiles(topFile, datFile, null, overlayFile);
             }
             datReq.send();
@@ -317,6 +316,7 @@ function readFilesFromURLParams() {
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File) {
+    console
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
