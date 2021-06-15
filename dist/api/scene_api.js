@@ -128,6 +128,9 @@ var api;
     }
     api.selectElementIDs = selectElementIDs;
     function selectPDBIDs(targetPDBNumber, chainids, keepPrevious) {
+        if (!keepPrevious) {
+            clearSelection();
+        }
         if (chainids == undefined) {
             for (let i = 0; i < targetPDBNumber.length; i++) {
                 elements.forEach((e, idx) => {
@@ -155,6 +158,9 @@ var api;
                     }
                 });
             }
+        }
+        if (selectedBases.size == 0) {
+            notify("No Matching PDB Identifiers Found");
         }
     }
     api.selectPDBIDs = selectPDBIDs;

@@ -101,6 +101,7 @@ class Network {
     onscreen: boolean; // Tells UI whether this network is in the scene or not
     hydrogenbondinginfo;
     cutoff: number; // keeps track of current cutoff value used to fill edges of network
+    center;
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {
@@ -138,6 +139,9 @@ class Network {
                 return new THREE.Vector3((this.xI[j]-this.xI[i]), (this.yI[j]-this.yI[i]), (this.zI[j]-this.zI[i]));
             }
         };
+        this.center = function(i:number, j: number){
+            return this.particles[i].getPos().clone().add(this.particles[j].getPos()).divideScalar(2);
+        }
         flux.prepJSONButton(nid);
     }
     ;
@@ -149,6 +153,21 @@ class Network {
         this.colors = new Float32Array(this.INSTANCES * 3);
         this.scales = new Float32Array(this.INSTANCES * 3);
         this.visibility = new Float32Array(this.INSTANCES * 3);
+    }
+    ;
+    callUpdates(names : string[]) {
+        names.forEach((name) => {
+            this.network.geometry["attributes"][name].needsUpdate = true;
+            // this.backbone.geometry["attributes"][name].needsUpdate = true;
+            // this.nucleoside.geometry["attributes"][name].needsUpdate = true;
+            // this.connector.geometry["attributes"][name].needsUpdate = true;
+            // this.bbconnector.geometry["attributes"][name].needsUpdate = true;
+            // if (name == "instanceScale" || name == "instanceRotation") {
+            // }
+            // else {
+            //     this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
+            // }
+        });
     }
     ;
     toJson(){
@@ -176,6 +195,20 @@ class Network {
     fillVec(vecName, unitSize, pos, vals) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i]
+        }
+    }
+    ;
+    getVec(vecName, unitSize, pos): any {
+        let vec = [];
+        for(let i = 0; i < unitSize; i++){
+            vec.push(this[vecName][pos* unitSize + i]);
+        }
+        if(unitSize == 3) {
+            return new THREE.Vector3(vec[0], vec[1], vec[2]);
+        } else if(unitSize == 4){
+            return new THREE.Vector4(vec[0], vec[1], vec[2], vec[3]);
+        } else {
+            return vec;
         }
     }
     ;
@@ -226,11 +259,37 @@ class Network {
         }
     }
     ;
+    updatePositions(){ // Called by translation.ts
+        // update all coordinates
+        this.elemcoords.xI = this.particles.map(e => e.getPos().x);
+        this.elemcoords.yI = this.particles.map(e => e.getPos().y);
+        this.elemcoords.zI = this.particles.map(e => e.getPos().z);
+        //update all connection positions by finding midpoint of new locations
+        for(let t = 0; t < this.reducedEdges.total; t++){
+            let i = this.reducedEdges.p1[t];
+            let j = this.reducedEdges.p2[t];
+            let pos = this.center(i, j).toArray();
+            this.fillVec('offsets', 3, t, [pos[0], pos[1], pos[2]]);
+        }
+        this.callUpdates(["instanceOffset"])
+    }
+    ;
+    updateRotations(q: THREE.Quaternion){// Called by translation.ts
+        for(let t = 0; t < this.reducedEdges.total; t++){
+            let currRot = this.getVec('rotations', 4, t);
+            let newRot =  glsl2three(currRot);
+            newRot.multiply(q);
+            this.fillVec('rotations', 4, t, [newRot.w, newRot.z, newRot.y, newRot.x]);
+        }
+        this.callUpdates(["instanceOffset", "instanceRotation"])
+    }
+    ;
     initEdge(t: number, col: THREE.Color){ // Fills vectors for edges from Par File by edge index
         // fill vectors for single edge in network
         let i = this.reducedEdges.p1[t];
         let j = this.reducedEdges.p2[t];
-        let pos = this.elemcoords.center(i, j);
+        let pos = this.center(i, j);
+        // the ot
         let rot = this.elemcoords.rotation(i, j);
         let dij = this.elemcoords.distance(i, j);
         this.fillVec('offsets', 3, t, [pos.x, pos.y, pos.z]);

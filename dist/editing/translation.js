@@ -82,6 +82,15 @@ function rotateElementsByQuaternion(elements, q, about) {
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
     }
+    for (let i = 0; i < networks.length; i++) {
+        let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
+            return true;
+        } });
+        if (check.length != 0) {
+            networks[i].updatePositions();
+            networks[i].updateRotations(q2);
+        }
+    }
     render();
 }
 //adjust the backbone after the move. Copied from DragControls
@@ -159,6 +168,14 @@ function translateElements(elements, v) {
     }
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset']);
+    }
+    for (let i = 0; i < networks.length; i++) {
+        let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
+            return true;
+        } });
+        if (check.length != 0) {
+            networks[i].updatePositions();
+        }
     }
     if (forceHandler)
         forceHandler.redraw();

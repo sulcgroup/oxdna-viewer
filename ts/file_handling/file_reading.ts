@@ -215,7 +215,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and maybe a json file
-    if (!jsonAlone) {
+    if (!jsonAlone && topFile && datFile) { // added topFile and datFile so lone trap files won't trigger this
         readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
     }
 

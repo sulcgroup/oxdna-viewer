@@ -1,6 +1,4 @@
 class EditHistory {
-    undoStack;
-    redoStack;
     constructor() {
         this.undoStack = new Stack();
         this.redoStack = new Stack();
@@ -62,8 +60,6 @@ class EditHistory {
     }
 }
 class RevertableEdit {
-    undo;
-    do;
     /**
      * Takes undo and redo functions as arguments.
      * @param undo function that, when applied, will revert the edit
@@ -92,7 +88,6 @@ class RevertableAddition extends RevertableEdit {
     ;
 }
 class RevertableDeletion extends RevertableEdit {
-    victims;
     constructor(victims) {
         const saved = victims.map(e => new InstanceCopy(e));
         let undo = function () { this.victims = edit.addElements(saved); };
@@ -103,8 +98,6 @@ class RevertableDeletion extends RevertableEdit {
     ;
 }
 class RevertableMassDiscretization extends RevertableEdit {
-    victims;
-    newbies;
     constructor(victims, newelements, newinstcopies) {
         const saved = victims.map(e => new InstanceCopy(e));
         let undo = function () {
@@ -274,8 +267,9 @@ class RevertableClusterSim extends RevertableEdit {
 }
 // Adapted from https://github.com/worsnupd/ts-data-structures
 class Stack {
-    top;
-    size = 0;
+    constructor() {
+        this.size = 0;
+    }
     push(data) {
         this.top = new StackElem(data, this.top);
         this.size++;
@@ -300,8 +294,6 @@ class Stack {
     }
 }
 class StackElem {
-    data;
-    next;
     constructor(data, next) {
         this.data = data;
         this.next = next;

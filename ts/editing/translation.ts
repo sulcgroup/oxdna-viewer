@@ -94,6 +94,13 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation'])
     }
+    for ( let i = 0; i< networks.length; i++){
+        let check = [...elements].filter(e => {if(networks[i].particles.indexOf(e) > -1) {return true;}})
+        if(check.length != 0){
+            networks[i].updatePositions();
+            networks[i].updateRotations(q2);
+        }
+    }
     render();
 }
 
@@ -184,6 +191,12 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     }
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset'])
+    }
+    for ( let i = 0; i< networks.length; i++){
+        let check = [...elements].filter(e => {if(networks[i].particles.indexOf(e) > -1) {return true;}})
+        if(check.length != 0) {
+            networks[i].updatePositions();
+        }
     }
     if(forceHandler) forceHandler.redraw();
     render();
