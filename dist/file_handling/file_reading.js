@@ -600,7 +600,8 @@ function readOxViewString(s) {
             });
             // Finally, we can add the system to the scene
             addSystemToScene(sys);
-            centerAndPBC();
+            // Center the newly added system
+            centerAndPBC(sys.getMonomers());
             if (customColors) {
                 view.coloringMode.set("Custom");
             }
