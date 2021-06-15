@@ -1,6 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 
+
 const get_strand_ends = ()=>{
     let bases = Array.from(selectedBases);
     let s = new Set<Strand>();
@@ -496,6 +497,33 @@ const align_to_patch_particle = (cluster:Nucleotide[], a1,a2,a3)=>{
 //[7254 , 9446]
 
 
+function extend_overhang(strand = systems[0].strands[0]){ 
+    // we are interested in 5ps?
+    const p5 = strand.end5 as Nucleotide;
+    // fetch 5' orientation
+    const a = p5.getA1();
+    let bases =  edit.extendStrand( p5 , "TTTTTTTTTTTTTTTTTTTTTTTTT") as Nucleotide[];
+    let npos = new THREE.Vector3().copy(a).multiplyScalar(-1.5);
+    bases.forEach(b => b.translatePosition(npos));
+    rotateElements(new Set(bases), bases[0].getA2(),Math.PI/2, bases[0].getPos());
+    render();
+}
+
+function extend_duplex(strand=systems[0].strands[0]){
+    const p5 = strand.end5 as Nucleotide;
+    // fetch 5' orientation
+    const a = p5.getA1(); 
+    let bases = edit.createStrand("TTTTTTTTTTTTTTTTTTTTTTTTT", true) as Nucleotide[];
+    let end3p = bases[0].strand.end3 as Nucleotide;
+    
+    let npos = new THREE.Vector3().copy(p5.getPos()).sub(end3p.getPos()).sub(a.multiplyScalar(2.5));
+    bases.forEach(b => b.translatePosition(npos));
+
+    rotateElements(new Set(bases), bases[0].getA2(),-Math.PI/4, bases[0].getPos());
+
+    edit.ligate(p5,end3p);
+}
+
 const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
     let strands = new Set<Strand>();
     selectedBases.forEach(b =>{
@@ -520,7 +548,7 @@ const interconnectDuplex3p = (patch_sequence = "GGGGGGGGG") =>{
     npos.divideScalar(2);
     
     let duplex_strands = new Set();
-    let elems =  edit.createStrand(patch_sequence, true) ;
+    let elems =  edit.createStrand(patch_sequence, true);
     let ecms = new THREE.Vector3();
     elems.forEach(e =>{
         ecms.add(e.getPos());
