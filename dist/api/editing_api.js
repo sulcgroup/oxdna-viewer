@@ -297,6 +297,7 @@ var edit;
             e.dummySys = tmpSys;
             e.sid = sid;
             e.type = c.type;
+            e.color = c.color;
             // Add pasted elements to new cluster
             // (or clusters, if the copied elements had more than one cluster)
             if (c.clusterId !== undefined && c.clusterId > 0) {
