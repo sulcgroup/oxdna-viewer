@@ -135,7 +135,6 @@ function updateView(sys) {
             sys.callUpdates(["instanceColor"]);
         });
     }
-    render(); //update scene;
     let listBases = [];
     let baseInfoStrands = {};
     //sort selection info into respective containers
