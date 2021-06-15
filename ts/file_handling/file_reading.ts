@@ -138,17 +138,13 @@ target.addEventListener("dragexit", function (event) {
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
 
-//const datReader = new FileReader();
-//var trajReader: TrajectoryReader;
-
 let confNum: number = 0,
     datFileout: string = "",
     datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
     box = new THREE.Vector3(); //box size for system
 
 //and a couple relating to overlay files
-var toggleFailure: Boolean = false,
-    defaultColormap: string = "cooltowarm";
+var defaultColormap: string = "cooltowarm";
 
 function handleDrop (event) {
     // cancel default actions
@@ -212,56 +208,8 @@ function handleFiles(files: FileList) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
 
-    //if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
-    //    notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-    //    return
-    //}
-    //if (datAlone && systems.length === 0) {
-    //    notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
-    //    return
-    //}
-    //if (!trapFile) {
-    //    if (jsonFile && !topFile) jsonAlone = true;
-    //    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
-    //        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-    //        return
-    //    }
-    //}
-
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile);
-
-/*     //read a json file to generate an overlay on an existing scene
-    if (jsonFile && addition) {
-        const jsonReader = new FileReader(); //read .json
-        jsonReader.onload = () => {
-            readJson(systems[systems.length-1], jsonReader);
-        };
-        jsonReader.readAsText(jsonFile);
-        renderer.domElement.style.cursor = "auto";
-    }
-
-    // read a trap ile and generate an overlay on an existing scene
-    if (trapFile && addition) {
-        const trapReader = new FileReader(); //read .trap file
-        trapReader.onload = () => {
-            readTrap(systems[systems.length-1], trapReader);
-        };
-        trapReader.readAsText(trapFile);
-        renderer.domElement.style.cursor = "auto";
-    }
-
-    // read a dat file to update an existing scene
-    if (datFile && addition) {
-        const r = new FileReader();
-        r.onload = ()=>updateConfFromFile(r.result as string);
-        r.readAsText(datFile);
-    }
-
-    // read a par file and add it as a network to an existing scene 
-    if (parFile && addition) {
-        readParFile(parFile);
-    } */
 
     render();
     return
@@ -711,58 +659,6 @@ function readOxViewString(s: string) {
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
-// function readParFile(file) {
-//     let system = systems[systems.length - 1]; //associate the par file with the last loaded system
-//     let reader = new FileReader();
-//     reader.onload = () => {
-//         let lines = (reader.result as string).split(/[\n]+/g);
-//
-//         //remove the header
-//         lines = lines.slice(1)
-//
-//         const size = lines.length;
-//
-//         //create an ANM object to allow visualization
-//         const anm = new ANM(system, ANMs.length, size)
-//
-//         //process connections
-//         for (let i = 0; i < size-1; i++) {
-//             let l = lines[i].split(" ")
-//             //extract values
-//             const p = parseInt(l[0]),
-//                 q = parseInt(l[1]),
-//                 eqDist = parseFloat(l[2]),
-//                 type = l[3],
-//                 strength = parseFloat(l[4]);
-//
-//             // if its a torsional ANM then there are additional parameters on some lines
-//             let extraParams = []
-//             if (l.length > 5) {
-//                 for (let i = 5; i < l.length; i++) {
-//                     extraParams.push(l[i])
-//                 }
-//             }
-//
-//             //dereference p and q into particle positions from the system
-//             const particle1 = system.getElementBySID(p),
-//                   particle2 = system.getElementBySID(q);
-//
-//             if (particle1 == undefined) console.log(i)
-//
-//             anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
-//         };
-//         addANMToScene(anm);
-//         system.strands.forEach((s) => {
-//             if (s.isPeptide()) {
-//                 api.toggleStrand(s);
-//             }
-//         })
-//         ANMs.push(anm);
-//     }
-//     reader.readAsText(file);
-// }
-
-//reads in an anm parameter file and associates it with the last loaded system.
 function readParFile(system, reader) {
 
     let lines = (reader.result as string).split(/[\n]+/g);
@@ -808,25 +704,6 @@ function readParFile(system, reader) {
 
     notify("Par file read! Turn on visualization in the Protein tab")
 }
-
-// function addANMToScene(anm: ANM) {
-//     anm.geometry = instancedConnector.clone();
-//
-//     anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
-//     anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
-//     anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
-//     anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
-//     anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
-//
-//     anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
-//     anm.network.frustumCulled = false;
-//
-//     scene.add(anm.network);
-//
-//     render();
-//
-//     canvas.focus();
-// }
 
 function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
@@ -894,10 +771,7 @@ function addSystemToScene(system: System) {
 
     pickingScene.add(system.dummyBackbone);
 
-    // Catch an error caused by asynchronous readers and different file sizes
-    //if(toggleFailure){
-    //    view.coloringMode.set("Overlay");
-    //}
+    // Let the other file readers know that it's safe to reference system properties
     document.dispatchEvent(new Event('setupComplete'))
 
     // Reset the cursor from the loading spinny and reset canvas focus
