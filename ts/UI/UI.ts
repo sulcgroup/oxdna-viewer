@@ -574,18 +574,18 @@ class View {
         });
 
         // Set wait cursor and request an animation frame to make sure
-    // that it gets changed before starting calculation:
-    let dom = document.activeElement;
-    dom['style'].cursor = "wait";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        try {
-            var t0 = performance.now();
-            calc();
-            var t1 = performance.now();
+        // that it gets changed before starting calculation:
+        let dom = document.activeElement;
+        dom['style'].cursor = "wait";
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            try {
+                var t0 = performance.now();
+                calc();
+                var t1 = performance.now();
             console.log("Long calculation took " + (t1 - t0) + " milliseconds.")
-        } catch (error) {
-           notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
-        }
+            } catch (error) {
+               notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
+            }
 
         // Change cursor back and remove modal
         dom['style'].cursor = "auto";
