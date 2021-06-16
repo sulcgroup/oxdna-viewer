@@ -524,25 +524,45 @@ class View {
         return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
     }
 
+    public scaleCanvas(scalingFactor) {
+        const width = canvas.width;
+        const height = canvas.height;
+        canvas.width = width*scalingFactor;
+        canvas.height = height*scalingFactor;
+        const ctx = canvas.getContext('webgl');
+        ctx.viewport(0, 0, canvas.width, canvas.height);
+        render();
+    }
+
     public saveCanvasImage(){
-        canvas.toBlob(function(blob){
-            var a = document.createElement('a');
-            var url = URL.createObjectURL(blob);
-            a.href = url;
-            a.download = 'canvas.png';
-            a.click();
-        }, 'image/png', 1.0);
-        //get the colorbar too
-        if (colorbarScene.children.length != 0) {
-            renderColorbar();
-            colorbarCanvas.toBlob(function(blob) {
+        function saveImage() {
+            canvas.toBlob(function(blob){
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
-                a.download = 'colorbar.png';
+                a.download = 'canvas.png';
                 a.click();
             }, 'image/png', 1.0);
+            //get the colorbar too
+            if (colorbarScene.children.length != 0) {
+                renderColorbar();
+                colorbarCanvas.toBlob(function(blob) {
+                    var a = document.createElement('a');
+                    var url = URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = 'colorbar.png';
+                    a.click();
+                }, 'image/png', 1.0);
+            }
         }
+        new Promise((resolve) => {
+            this.scaleCanvas(2)
+            resolve('success');
+        }).then(() => {
+            saveImage();
+            this.scaleCanvas(0.5)
+        });
+        
     }
 
     public longCalculation(calc: () => void, message: string, callback?: () => void) {
