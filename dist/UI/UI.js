@@ -478,7 +478,15 @@ class View {
     selectPairs() {
         return this.doc.getElementById("selectPairs").checked;
     }
-    scaleCanvas(scalingFactor) {
+    updateImageResolutionText() {
+        // Utility function to display the image resolution for saving canvas images
+        let factor = parseFloat(document.getElementById('saveImageScalingFactor').value);
+        const width = canvas.width * factor;
+        const height = canvas.height * factor;
+        let elem = document.getElementById('saveImageResolution');
+        elem.innerHTML = `${width} x ${height}`;
+    }
+    scaleCanvas(scalingFactor = 2) {
         const width = canvas.width;
         const height = canvas.height;
         canvas.width = width * scalingFactor;
@@ -487,7 +495,10 @@ class View {
         ctx.viewport(0, 0, canvas.width, canvas.height);
         render();
     }
-    saveCanvasImage() {
+    saveCanvasImage(scaleFactor) {
+        if (scaleFactor === undefined) {
+            scaleFactor = parseFloat(document.getElementById('saveImageScalingFactor').value);
+        }
         function saveImage() {
             canvas.toBlob(function (blob) {
                 var a = document.createElement('a');
@@ -509,11 +520,16 @@ class View {
             }
         }
         new Promise((resolve) => {
-            this.scaleCanvas(2);
+            this.scaleCanvas(scaleFactor);
             resolve('success');
         }).then(() => {
-            saveImage();
-            this.scaleCanvas(0.5);
+            try {
+                saveImage();
+            }
+            catch (error) {
+                notify("Canvas is too large to save, please try a smaller scaling factor", "alert");
+            }
+            this.scaleCanvas(1 / scaleFactor);
         });
     }
     longCalculation(calc, message, callback) {

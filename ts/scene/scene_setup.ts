@@ -45,9 +45,9 @@ function onWindowResize() {
     // updates the picker texture to match the renderer 
     pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
-    render();
 
-    
+    view.updateImageResolutionText();
+    render();
 }
 
 let camera: THREE.Camera
