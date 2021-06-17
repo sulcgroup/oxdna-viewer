@@ -61,15 +61,18 @@ function addOXServeURL() {
 class OXServeSocket extends WebSocket {
     constructor(url) {
         super(url);
+        this.abort = true;
         this.onmessage = (response) => {
-            let message = JSON.parse(response.data);
-            if ("console_log" in message) {
-                console.log(message["console_log"]);
-            }
-            if ("dat_file" in message) {
-                updateConfFromFile(message["dat_file"]);
-                if (forceHandler)
-                    forceHandler.redraw();
+            if (!this.abort) { //ignore all incomming messages when we stop the simulation
+                let message = JSON.parse(response.data);
+                if ("console_log" in message) {
+                    console.log(message["console_log"]);
+                }
+                if ("dat_file" in message) {
+                    updateConfFromFile(message["dat_file"]);
+                    if (forceHandler)
+                        forceHandler.redraw();
+                }
             }
         };
         this.onopen = (resonse) => {
@@ -78,17 +81,21 @@ class OXServeSocket extends WebSocket {
             connect_button.style.backgroundColor = "green";
             connect_button.textContent = "Connected!";
             Metro.dialog.close('#socketConnectionsDialog');
+            this.abort = false;
         };
         this.onclose = (resonse) => {
             let connect_button = document.getElementById("btnConnect");
             connect_button.style.backgroundColor = "";
             connect_button.textContent = "Connect to oxServe";
             notify("lost oxServe Connection", "warn");
+            this.abort = true;
         };
         this.stop_simulation = () => {
             this.send("abort");
+            this.abort = true;
         };
         this.start_simulation = () => {
+            this.abort = false;
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);

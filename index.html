@@ -26,7 +26,8 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body onload="view.updateImageResolutionText()"
+>
     <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
         data-shift=".shifted-content">
         <div class="sidebar-header bg-grayMouse">
@@ -264,10 +265,22 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Sequence file</span>
                 </button>
-                <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
-                    <span class="mif-photo-camera mif-3x"></span>
-                    <span class="caption">Save image</span>
-                </button>
+                <div class="ribbon-split-button">
+                    <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
+                        <span class="mif-photo-camera mif-3x"></span>
+                        <span class="caption">Save image</span>
+                    </button>
+                    <span class="ribbon-split dropdown-toggle">Image size</span>
+                    <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
+                        <label for="fogNear">Scaling factor: </label>
+                        <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2" id="saveImageScalingFactor"
+                            title="Factor with which to scale the current canvas." min=1
+                            onchange="view.updateImageResolutionText()"
+                        >
+                        <hr>
+                        <span>Resolution: <small id="saveImageResolution">? x ?</small></span>
+                    </ul>
+                </div>
                 <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')">
                     <span class="mif-video-camera mif-3x"></span>
                     <span class="caption">Create video</span>

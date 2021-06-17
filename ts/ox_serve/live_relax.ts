@@ -81,17 +81,20 @@ function addOXServeURL(){
 
 
 class OXServeSocket extends WebSocket{
+    abort = true;
     constructor(url : string){
         super(url);
     }
     onmessage = (response) => {
-        let message = JSON.parse(response.data);
-        if ("console_log" in message){
-            console.log(message["console_log"]);
-        }
-        if ("dat_file" in message) {
-            updateConfFromFile(message["dat_file"]);
-            if (forceHandler) forceHandler.redraw();
+        if(!this.abort){ //ignore all incomming messages when we stop the simulation
+            let message = JSON.parse(response.data);
+            if ("console_log" in message){
+                console.log(message["console_log"]);
+            }
+            if ("dat_file" in message) {
+                updateConfFromFile(message["dat_file"]);
+                if (forceHandler) forceHandler.redraw();
+            }
         }
     };
 
@@ -102,6 +105,7 @@ class OXServeSocket extends WebSocket{
         connect_button.style.backgroundColor = "green";
         connect_button.textContent = "Connected!";
         Metro.dialog.close('#socketConnectionsDialog');
+        this.abort = false; 
     }
 
     onclose = (resonse) => {
@@ -109,15 +113,17 @@ class OXServeSocket extends WebSocket{
         connect_button.style.backgroundColor = "";
         connect_button.textContent = "Connect to oxServe";
         notify("lost oxServe Connection", "warn");
+        this.abort=true;
     }
 
     
     stop_simulation = () =>{
         this.send("abort");
+        this.abort = true;
     }
 
     start_simulation = () => {
-
+        this.abort = false;
         let reorganized, counts, conf = {};
         {
             let {a, b, file_name, file} = makeTopFile(name);
@@ -175,5 +181,4 @@ let socket : OXServeSocket;
 function establishConnection(id){
     let url = window.localStorage.getItem("oxServeIps").split(",")[id];
     socket = new OXServeSocket(url);   
-
 }

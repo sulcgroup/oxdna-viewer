@@ -40,6 +40,7 @@ function onWindowResize() {
     // updates the picker texture to match the renderer 
     pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
+    view.updateImageResolutionText();
     render();
 }
 let camera;
