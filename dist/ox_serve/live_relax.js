@@ -135,6 +135,17 @@ class OXServeSocket extends WebSocket {
             for (let [key, value] of Object.entries(settings_list["const"])) {
                 conf["settings"][key] = value["val"];
             }
+            //set all relax fields
+            let useRelax = false;
+            if (sim_type === "MC")
+                useRelax = view.getInputBool("mcUseRelax");
+            if (sim_type === "MD_GPU")
+                useRelax = view.getInputBool("mdUseRelax");
+            if (useRelax) {
+                for (let [key, value] of Object.entries(settings_list["relax"])) {
+                    conf["settings"][key] = document.getElementById(value["id"]).value;
+                }
+            }
             this.send(JSON.stringify(conf));
         };
     }

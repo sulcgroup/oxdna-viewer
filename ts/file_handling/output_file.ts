@@ -181,7 +181,7 @@ function makeTopFile(name){
     //this is absolute abuse of ES6 and I feel a little bad about it
     return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n")};
 }
-function makeDatFile(name, altNumbering=undefined) {
+function makeDatFile(name :string, altNumbering=undefined) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => { //for all elements

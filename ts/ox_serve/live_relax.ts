@@ -151,6 +151,7 @@ class OXServeSocket extends WebSocket{
                      sim_type = backend[i].value;  
             } 
         } 
+        
         console.log(`Simulation type is ${sim_type}`);
         let settings_list = relax_scenarios[sim_type];
 
@@ -168,6 +169,15 @@ class OXServeSocket extends WebSocket{
         //set all const fields 
         for (let [key, value] of Object.entries(settings_list["const"])) {
             conf["settings"][key] = value["val"];    
+        }
+        //set all relax fields
+        let useRelax = false;
+        if (sim_type==="MC") useRelax = view.getInputBool("mcUseRelax");
+        if (sim_type==="MD_GPU") useRelax = view.getInputBool("mdUseRelax");
+        if (useRelax){
+            for (let [key, value] of Object.entries(settings_list["relax"])) {
+                conf["settings"][key] = (document.getElementById(value["id"]) as HTMLInputElement).value;
+            }  
         }
         
         this.send(

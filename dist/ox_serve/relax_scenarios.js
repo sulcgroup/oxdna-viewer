@@ -10,6 +10,16 @@ var relax_scenarios = {
             "backend_precision": { "val": "double" },
             "use_average_seq": { "val": 0 }
         },
+        "relax": {
+            "max_backbone_force": {
+                "val": 5,
+                "id": "mcBackboneForce"
+            },
+            "max_backbone_force_far": {
+                "val": 10,
+                "id": "mcBackboneForceFar"
+            }
+        },
         "var": {
             "T": {
                 "val": 30,
@@ -42,14 +52,6 @@ var relax_scenarios = {
             "delta_rotation": {
                 "val": 0.22,
                 "id": "mcDeltaRotation"
-            },
-            "max_backbone_force": {
-                "val": 5,
-                "id": "mcBackboneForce"
-            },
-            "max_backbone_force_far": {
-                "val": 10,
-                "id": "mcBackboneForceFar"
             }
         }
     },
@@ -59,7 +61,6 @@ var relax_scenarios = {
             "T_units": { "val": "C" },
             "backend": { "val": "CUDA" },
             "backend_precision": { "val": "mixed" },
-            "max_density_multiplier": { "val": 10 },
             "time_scale": { "val": "linear" },
             "verlet_skin": { "val": 0.5 },
             "use_average_seq": { "val": 0 },
@@ -72,6 +73,20 @@ var relax_scenarios = {
             "edge_n_forces": { "val": 1 },
             "cells_auto_optimisation": { "val": "true" },
             "reset_com_momentum": { "val": "true" }
+        },
+        "relax": {
+            "max_backbone_force": {
+                "val": 5,
+                "id": "mdBackboneForce"
+            },
+            "max_backbone_force_far": {
+                "val": 10,
+                "id": "mdBackboneForceFar"
+            },
+            "max_density_multiplier": {
+                "val": 10,
+                "id": "mdMaxDensityMul"
+            }
         },
         "var": {
             "T": {
@@ -109,14 +124,6 @@ var relax_scenarios = {
             "diff_coeff": {
                 "val": 2.5,
                 "id": "mdDiff_Coeff"
-            },
-            "max_backbone_force": {
-                "val": 5,
-                "id": "mdBackboneForce"
-            },
-            "max_backbone_force_far": {
-                "val": 10,
-                "id": "mdBackboneForceFar"
             }
         }
     }
