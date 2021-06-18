@@ -83,10 +83,6 @@ var relax_scenarios = {
             "max_backbone_force_far"   : {
                 "val":10,
                 "id" : "mdBackboneForceFar"
-            },
-            "max_density_multiplier"   : {
-                "val":10,
-                "id" : "mdMaxDensityMul"
             }
         },
         "var":{
@@ -125,6 +121,10 @@ var relax_scenarios = {
             "diff_coeff" : {
                 "val":2.5, 
                 "id" :"mdDiff_Coeff"
+            },
+            "max_density_multiplier"   : {
+                "val":10,
+                "id" : "mdMaxDensityMul"
             }
         }
     }
