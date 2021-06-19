@@ -765,10 +765,10 @@ function addSystemToScene(system: System) {
 
     // Add everything to the scene (if they are toggled)
 
-    view.setPropertyInScene('backbone');
-    view.setPropertyInScene('nucleoside');
-    view.setPropertyInScene('connector');
-    view.setPropertyInScene('bbconnector');
+    view.setPropertyInScene('backbone', system);
+    view.setPropertyInScene('nucleoside', system);
+    view.setPropertyInScene('connector', system);
+    view.setPropertyInScene('bbconnector', system);
 
     pickingScene.add(system.dummyBackbone);
 

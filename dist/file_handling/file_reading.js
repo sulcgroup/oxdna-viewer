@@ -695,10 +695,10 @@ function addSystemToScene(system) {
     system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
     system.dummyBackbone.frustumCulled = false;
     // Add everything to the scene (if they are toggled)
-    view.setPropertyInScene('backbone');
-    view.setPropertyInScene('nucleoside');
-    view.setPropertyInScene('connector');
-    view.setPropertyInScene('bbconnector');
+    view.setPropertyInScene('backbone', system);
+    view.setPropertyInScene('nucleoside', system);
+    view.setPropertyInScene('connector', system);
+    view.setPropertyInScene('bbconnector', system);
     pickingScene.add(system.dummyBackbone);
     // Let the other file readers know that it's safe to reference system properties
     document.dispatchEvent(new Event('setupComplete'));

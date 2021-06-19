@@ -422,11 +422,24 @@ class View {
     getComponentToggle(name) {
         return document.getElementById(`${name}_toggle`).checked;
     }
-    setPropertyInScene(name, value) {
+    /**
+     * Show or hide a geometric component
+     * @param name e.g. 'backbone'
+     * @param system Specify to update a specific system, defaults to update all
+     * @param value true (to show) or false (to hide), defaults to get value from UI
+     */
+    setPropertyInScene(name, system, value) {
+        let syslist;
+        if (system === undefined) {
+            syslist = [systems, tmpSystems].flat();
+        }
+        else {
+            syslist = [system];
+        }
         if (value === undefined) {
             value = this.getComponentToggle(name);
         }
-        for (const system of [systems, tmpSystems].flat()) {
+        for (const system of syslist) {
             if (scene.children.includes(system[name])) {
                 if (!value) {
                     scene.remove(system[name]);
