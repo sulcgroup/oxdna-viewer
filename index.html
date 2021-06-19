@@ -685,7 +685,32 @@
                             <input type="checkbox" id="nucleoside_toggle" onchange="view.setPropertyInScene('nucleoside')" data-role="switch" data-caption="Nucleoside sphere" checked><br>
                             <input type="checkbox" id="connector_toggle" onchange="view.setPropertyInScene('connector')" data-role="switch" data-caption="Nucleoside connector" checked><br>
                             <input type="checkbox" id="backbone_toggle" onchange="view.setPropertyInScene('backbone')" data-role="switch" data-caption="Backbone sphere" checked><br>
-                            <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector')" data-role="switch" data-caption="Backbone connector" checked>
+                            <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector')" data-role="switch" data-caption="Backbone connector" checked><br>
+                            <details>
+                                <summary onclick="event.stopPropagation()">Change sizes</summary>
+                                <div class="flex-align-center">
+                                    <div>
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Nucleoside sphere size
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div>
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Nucleoside connector thickness
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div>
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Backbone sphere size
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div>
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Backbone connector thickness
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                </div>
+                            </details>
                         </ul>
                     </div>
                     <button class="ribbon-button" onclick="api.switchCamera()">
