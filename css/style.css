@@ -18,6 +18,11 @@ canvas {
     z-index: 1;
 }
 
+.flexBetween {
+    justify-content: space-between;
+    display: flex;
+}
+
 #hoverInfo {
     background-color: #ffffffa4;
 	position: absolute;

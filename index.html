@@ -688,23 +688,23 @@
                             <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector')" data-role="switch" data-caption="Backbone connector" checked><br>
                             <details>
                                 <summary onclick="event.stopPropagation()">Change sizes</summary>
-                                <div class="flex-align-center">
-                                    <div>
+                                <div>
+                                    <div class="flexBetween">
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1/1.1)"><span class="mif-minus"></span></button>
                                         Nucleoside sphere size
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1.1)"><span class="mif-plus"></span></button>
                                     </div>
-                                    <div>
+                                    <div class="flexBetween">
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1/1.1)"><span class="mif-minus"></span></button>
                                         Nucleoside connector thickness
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1.1)"><span class="mif-plus"></span></button>
                                     </div>
-                                    <div>
+                                    <div class="flexBetween">
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1/1.1)"><span class="mif-minus"></span></button>
                                         Backbone sphere size
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1.1)"><span class="mif-plus"></span></button>
                                     </div>
-                                    <div>
+                                    <div class="flexBetween">
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1/1.1)"><span class="mif-minus"></span></button>
                                         Backbone connector thickness
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span class="mif-plus"></span></button>
