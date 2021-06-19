@@ -39,24 +39,33 @@ abstract class BasicElement {
     //abstract rotate(quat: THREE.Quaternion): void;
 
     // highlight/remove highlight the bases we've clicked from the list and modify color
-    toggle(supressEvent?: boolean) {
+    toggle() {
         if (selectedBases.has(this)) {
-            selectedBases.delete(this);
+            this.deselect();
         }
         else {
-            selectedBases.add(this);
+            this.select()
         }
-        this.updateColor();
     };
 
     select() {
         selectedBases.add(this);
         this.updateColor();
+
+        const scale = 1.2;
+
+        this.setInstanceParameter('scales', [scale, scale, scale]);
+        let sys = this.dummySys ? this.dummySys : this.getSystem();
+        sys.callUpdates(['instanceScale']);
     }
 
     deselect() {
         selectedBases.delete(this);
         this.updateColor();
+
+        this.setInstanceParameter('scales', [1, 1, 1]);
+        let sys = this.dummySys ? this.dummySys : this.getSystem();
+        sys.callUpdates(['instanceScale']);
     }
 
     updateSP(num: number): THREE.Object3D {
