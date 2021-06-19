@@ -451,6 +451,32 @@ class View {
         }
         render();
     }
+    /**
+     * Scale a component geometry by a factor
+     * @param name e.g. 'backbone'
+     * @param factor e.g. 0.8
+     */
+    scaleComponent(name, factor) {
+        for (const system of [systems, tmpSystems].flat()) {
+            switch (name) {
+                case 'backbone':
+                    system.backbone.geometry.scale(factor, factor, factor);
+                    break;
+                case 'nucleoside':
+                    system.nucleoside.geometry.scale(factor, factor, factor);
+                    break;
+                case 'connector':
+                    system.connector.geometry.scale(factor, 1, factor);
+                    break;
+                case 'bbconnector':
+                    system.bbconnector.geometry.scale(factor, 1, factor);
+                    break;
+                default:
+                    break;
+            }
+        }
+        render();
+    }
     sectionClicked() {
         let s = document.getElementsByClassName("section active")[0];
         s.hidden = !s.hidden;

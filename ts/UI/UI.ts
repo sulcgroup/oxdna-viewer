@@ -487,6 +487,33 @@ class View {
         render();
     }
 
+    /**
+     * Scale a component geometry by a factor
+     * @param name e.g. 'backbone'
+     * @param factor e.g. 0.8
+     */
+    public scaleComponent(name: string, factor: number) {
+        for (const system of [systems, tmpSystems].flat()) {
+            switch (name) {
+                case 'backbone':
+                    system.backbone.geometry.scale(factor, factor, factor);
+                    break;
+                case 'nucleoside':
+                    system.nucleoside.geometry.scale(factor, factor, factor);
+                    break;
+                case 'connector':
+                    system.connector.geometry.scale(factor, 1, factor);
+                    break;
+                case 'bbconnector':
+                    system.bbconnector.geometry.scale(factor, 1, factor);
+                    break;
+                default:
+                    break;
+            }
+        }
+        render();
+    }
+
     public sectionClicked() {
         let s = document.getElementsByClassName("section active")[0] as HTMLElement;
         s.hidden = !s.hidden;
