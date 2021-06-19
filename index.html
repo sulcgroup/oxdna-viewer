@@ -672,10 +672,22 @@
                         <span class="mif-image mif-3x"></span>
                         <span class="caption">Background</span>
                     </button>
-                    <button class="ribbon-button" onclick="toggleVisArbitrary()">
+                    <button class="ribbon-button" onclick="toggleVisArbitrary()" title="Hide selected elements. If selection is empty all elements will become visible again.">
                         <span class="mif-eye mif-3x"></span>
-                        <span class="caption">Toggle visibility</span>
+                        <span class="caption">Hide selection</span>
                     </button>
+                    <div>
+                        <button class="ribbon-button dropdown-toggle">
+                            <span class="mif-eye mif-3x"></span>
+                            <span class="caption">Visible components</span>
+                        </button>
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: max-content;">
+                            <input type="checkbox" id="nucleoside_toggle" onchange="view.setPropertyInScene('nucleoside',this.checked)" data-role="switch" data-caption="Nucleoside sphere" checked><br>
+                            <input type="checkbox" id="connector_toggle" onchange="view.setPropertyInScene('connector',this.checked)" data-role="switch" data-caption="Nucleoside connector" checked><br>
+                            <input type="checkbox" id="backbone_toggle" onchange="view.setPropertyInScene('backbone',this.checked)" data-role="switch" data-caption="Backbone sphere" checked><br>
+                            <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector',this.checked)" data-role="switch" data-caption="Backbone connector" checked>
+                        </ul>
+                    </div>
                     <button class="ribbon-button" onclick="api.switchCamera()">
                         <span class="mif-video-camera mif-3x"></span>
                         <span id="cameraSwitch" class="caption">Orthographic</span>

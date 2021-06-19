@@ -455,6 +455,26 @@ class View {
         });
     }
 
+    public getComponentToggle(name: string) {
+        return (document.getElementById(`${name}_toggle`) as HTMLInputElement).checked;
+    }
+
+    public setPropertyInScene(name: string, value?: boolean) {
+        if (value === undefined) {
+            value = this.getComponentToggle(name);
+        }
+        for (const system of [systems, tmpSystems].flat()) {
+            if (scene.children.includes(system[name])) {
+                if (!value) {
+                    scene.remove(system[name]);
+                }
+            } else if (value) {
+                scene.add(system[name]);
+            }
+        }
+        render();
+    }
+
     public sectionClicked() {
         let s = document.getElementsByClassName("section active")[0] as HTMLElement;
         s.hidden = !s.hidden;

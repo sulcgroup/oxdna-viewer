@@ -763,11 +763,12 @@ function addSystemToScene(system: System) {
     system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
     system.dummyBackbone.frustumCulled = false;
 
-    // Add everything to the scene
-    scene.add(system.backbone);
-    scene.add(system.nucleoside);
-    scene.add(system.connector);
-    scene.add(system.bbconnector);
+    // Add everything to the scene (if they are toggled)
+
+    view.setPropertyInScene('backbone');
+    view.setPropertyInScene('nucleoside');
+    view.setPropertyInScene('connector');
+    view.setPropertyInScene('bbconnector');
 
     pickingScene.add(system.dummyBackbone);
 

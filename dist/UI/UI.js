@@ -419,6 +419,25 @@ class View {
             }
         });
     }
+    getComponentToggle(name) {
+        return document.getElementById(`${name}_toggle`).checked;
+    }
+    setPropertyInScene(name, value) {
+        if (value === undefined) {
+            value = this.getComponentToggle(name);
+        }
+        for (const system of [systems, tmpSystems].flat()) {
+            if (scene.children.includes(system[name])) {
+                if (!value) {
+                    scene.remove(system[name]);
+                }
+            }
+            else if (value) {
+                scene.add(system[name]);
+            }
+        }
+        render();
+    }
     sectionClicked() {
         let s = document.getElementsByClassName("section active")[0];
         s.hidden = !s.hidden;
