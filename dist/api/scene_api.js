@@ -230,21 +230,6 @@ var api;
         updateColoring();
     }
     api.setColorBounds = setColorBounds;
-    function spOnly() {
-        elements.forEach((n) => {
-            n.setInstanceParameter('scales', [0, 0, 0]);
-            n.setInstanceParameter('nsScales', [0, 0, 0]);
-            n.setInstanceParameter('conScales', [0, 0, 0]);
-        });
-        for (let i = 0; i < systems.length; i++) {
-            systems[i].callUpdates(['instanceScale']);
-        }
-        for (let i = 0; i < tmpSystems.length; i++) {
-            tmpSystems[i].callUpdates(['instanceScale']);
-        }
-        render();
-    }
-    api.spOnly = spOnly;
     function showEverything() {
         elements.forEach((n) => {
             n.setInstanceParameter('scales', [1, 1, 1]);

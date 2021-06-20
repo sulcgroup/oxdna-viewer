@@ -234,22 +234,6 @@ module api{
         }
         updateColoring();
     }
-    
-    export function spOnly() {
-        elements.forEach((n: BasicElement) => {
-            n.setInstanceParameter('scales', [0, 0, 0]);
-            n.setInstanceParameter('nsScales', [0, 0, 0]);
-            n.setInstanceParameter('conScales', [0, 0, 0]);
-        });
-        for (let i = 0; i < systems.length; i++) {
-            systems[i].callUpdates(['instanceScale'])
-        }
-        for (let i = 0; i < tmpSystems.length; i++) {
-            tmpSystems[i].callUpdates(['instanceScale'])
-        }
-        render();
-
-    }
 
     export function showEverything() {
         elements.forEach((n: BasicElement) => {
