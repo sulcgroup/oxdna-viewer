@@ -226,6 +226,15 @@ var edit;
             if (n5) {
                 strand5 = splitStrand(n5);
             }
+            // Remove pairing
+            if (e.isPaired()) {
+                if (e.pair.pair === e) {
+                    e.pair.pair = undefined;
+                }
+                else {
+                    console.warn("Non-mutual basepair!");
+                }
+            }
             // Remove e from element map and selection
             elements.delete(e.id);
             selectedBases.delete(e);

@@ -47,6 +47,8 @@ class System {
     bbconnector: THREE.Mesh;
     dummyBackbone: THREE.Mesh;
 
+    checkedForBasepairs = false;
+
     constructor(id: number, startID: number) {
         this.id = id;
         this.globalStartId = startID;
