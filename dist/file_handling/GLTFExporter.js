@@ -48,12 +48,12 @@ var PATH_PROPERTIES = {
     quaternion: 'rotation',
     morphTargetInfluences: 'weights'
 };
-function exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, scale, faces_mul, flattenHierarchy) {
+function exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, backboneScale, nucleosideScale, connectorScale, bbconnectorScale, faces_mul, flattenHierarchy, nsRoughness = 0.2, bbRoughness = 0.2, nsMetalness = 0, bbMetalness = 0) {
     // Setup geometries
-    const backbone = new THREE.SphereBufferGeometry(.2 * scale, 5 * faces_mul, 5 * faces_mul);
-    const nucleoside = new THREE.SphereBufferGeometry(.3 * scale, 5 * faces_mul, 5 * faces_mul);
-    const connector = new THREE.CylinderBufferGeometry(.1 * scale, .1 * scale, 1, 4 * faces_mul);
-    const bbConnector = new THREE.CylinderBufferGeometry(.1 * scale, .05 * scale, 1, 4 * faces_mul);
+    const backbone = new THREE.SphereBufferGeometry(.2 * backboneScale, 5 * faces_mul, 5 * faces_mul);
+    const nucleoside = new THREE.SphereBufferGeometry(.3 * nucleosideScale, 5 * faces_mul, 5 * faces_mul);
+    const connector = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1 * connectorScale, 1, 4 * faces_mul);
+    const bbConnector = new THREE.CylinderBufferGeometry(.1 * bbconnectorScale, .05 * bbconnectorScale, 1, 4 * faces_mul);
     // Setup materials
     let materialMap = new Map();
     let handleElement = (e) => {
@@ -75,13 +75,15 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
         if (!materialMap.has(nsColor)) {
             materialMap.set(nsColor, new THREE.MeshStandardMaterial({
                 color: nsColor,
-                roughness: 0.2
+                roughness: nsRoughness,
+                metalness: nsMetalness
             }));
         }
         if (!materialMap.has(bbColor)) {
             materialMap.set(bbColor, new THREE.MeshStandardMaterial({
                 color: bbColor,
-                roughness: 0.2
+                roughness: bbRoughness,
+                metalness: bbMetalness
             }));
         }
         // Add meshes for the components selected, using shared geometry

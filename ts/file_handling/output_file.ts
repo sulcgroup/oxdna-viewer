@@ -41,22 +41,39 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     const name = view.getInputValue("3dExportFilename");
     const fileFormat = view.getInputValue("3dExportFormat");
     
-    const include_backbone = view.getInputBool("includeBackbone");
-    const include_nucleoside = view.getInputBool("includeNucleoside");
-    const include_connector = view.getInputBool("includeConnector");
-    const include_bbconnector = view.getInputBool("includeBBconnector");
+    const include_backbone = view.getInputBool("backbone_toggle");
+    const include_nucleoside = view.getInputBool("nucleoside_toggle");
+    const include_connector = view.getInputBool("connector_toggle");
+    const include_bbconnector = view.getInputBool("bbconnector_toggle");
 
-    const flattenHierarchy = view.getInputBool("3dExportFlat");
-    
     const faces_mul = view.getInputNumber("3dExportFacesMul");
-    const stl_scale = view.getInputNumber("3dExportScale");
 
     if (fileFormat === 'stl') {
-        saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul);
+        saveSTL(name, 
+            include_backbone, include_nucleoside,
+            include_connector, include_bbconnector,
+            view.backboneScale, view.nucleosideScale,
+            view.connectorScale, view.bbconnectorScale,
+            faces_mul
+        );
     } else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
 
-        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, stl_scale, faces_mul, flattenHierarchy);
+        const flattenHierarchy = view.getInputBool("3dExportFlat");
+        const bbMetalness = view.getSliderInputNumber("3dExport_bbMetalness");
+        const nsMetalness = view.getSliderInputNumber("3dExport_nsMetalness");
+        const bbRoughness = view.getSliderInputNumber("3dExport_bbRoughness");
+        const nsRoughness = view.getSliderInputNumber("3dExport_nsRoughness");
+
+        let objects = exportGLTF(systems,
+            include_backbone, include_nucleoside,
+            include_connector, include_bbconnector,
+            view.backboneScale, view.nucleosideScale,
+            view.connectorScale, view.bbconnectorScale,
+            faces_mul, flattenHierarchy,
+            nsRoughness, bbRoughness,
+            nsMetalness, bbMetalness
+        );
         var exporter = new GLTFExporter();
         var options = { 'forceIndices': true, 'binary': binary };
         // Parse the input and generate the glTF output

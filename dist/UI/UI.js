@@ -396,6 +396,10 @@ class View {
     constructor(doc) {
         this.basepairMessage = "Locating basepairs, please be patient...";
         this.vrEnabled = false;
+        this.backboneScale = 1;
+        this.nucleosideScale = 1;
+        this.connectorScale = 1;
+        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -421,9 +425,6 @@ class View {
             }
         });
     }
-    getComponentToggle(name) {
-        return document.getElementById(`${name}_toggle`).checked;
-    }
     /**
      * Show or hide a geometric component
      * @param name e.g. 'backbone'
@@ -439,7 +440,7 @@ class View {
             syslist = [system];
         }
         if (value === undefined) {
-            value = this.getComponentToggle(name);
+            value = this.getInputBool(`${name}_toggle`);
         }
         for (const system of syslist) {
             if (scene.children.includes(system[name])) {
@@ -459,25 +460,72 @@ class View {
      * @param factor e.g. 0.8
      */
     scaleComponent(name, factor) {
+        // Keep track of scales
+        switch (name) {
+            case 'backbone':
+                this.backboneScale *= factor;
+                break;
+            case 'nucleoside':
+                this.nucleosideScale *= factor;
+                break;
+            case 'connector':
+                this.connectorScale *= factor;
+                break;
+            case 'bbconnector':
+                this.bbconnectorScale *= factor;
+                break;
+            default:
+                console.error("Unknown component name: " + name);
+                break;
+        }
+        // Scale components in all systems
         for (const system of [systems, tmpSystems].flat()) {
-            switch (name) {
-                case 'backbone':
-                    system.backbone.geometry.scale(factor, factor, factor);
-                    break;
-                case 'nucleoside':
-                    system.nucleoside.geometry.scale(factor, factor, factor);
-                    break;
-                case 'connector':
-                    system.connector.geometry.scale(factor, 1, factor);
-                    break;
-                case 'bbconnector':
-                    system.bbconnector.geometry.scale(factor, 1, factor);
-                    break;
-                default:
-                    break;
+            const g = system[name].geometry;
+            if (['backbone', 'nucleoside'].includes(name)) {
+                // Scale spheres proportionally along all axes
+                g.scale(factor, factor, factor);
+            }
+            else if (['connector', 'bbconnector'].includes(name)) {
+                // Don't scale the length of connectors
+                g.scale(factor, 1, factor);
+            }
+            else {
+                console.error("Unknown component name: " + name);
             }
         }
         render();
+    }
+    /**
+     * Reset component geometry scale
+     * @param name Geometry name, e.g. 'backbone'
+     */
+    resetComponentScale(name) {
+        this.setComponentScale(name);
+    }
+    /**
+     * Set component geometry scale
+     * @param name Geometry name, e.g. 'backbone'
+     * @param scale New scale of component, leave blank to reset scale to 1
+     */
+    setComponentScale(name, scale = 1) {
+        switch (name) {
+            case 'backbone':
+                scale /= this.backboneScale;
+                break;
+            case 'nucleoside':
+                scale /= this.nucleosideScale;
+                break;
+            case 'connector':
+                scale /= this.connectorScale;
+                break;
+            case 'bbconnector':
+                scale /= this.bbconnectorScale;
+                break;
+            default:
+                console.error("Unknown component name: " + name);
+                break;
+        }
+        this.scaleComponent(name, scale);
     }
     enableVR() {
         if (!this.vrEnabled) {
@@ -521,6 +569,15 @@ class View {
     }
     getInputNumber(id) {
         return parseFloat(this.getInputValue(id));
+    }
+    getSliderInputNumber(id) {
+        let e = document.getElementById(id);
+        if (e === null) {
+            throw `Could not find slider with id "${id}"`;
+        }
+        else {
+            return Metro.getPlugin(document.getElementById(id)).slider.value;
+        }
     }
     getInputValue(id) {
         return this.doc.getElementById(id).value;

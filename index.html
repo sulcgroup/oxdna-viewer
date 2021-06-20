@@ -188,23 +188,57 @@
         <div class="dialog-title">3D Export Options</div>
         <div class="dialog-content">
             <label for="3dExportFormat">Export format:</label>
-            <select id="3dExportFormat">
-                <option value="gltf">gltf</option>
+            <select id="3dExportFormat" onchange="document.getElementById('gltfOptions').hidden = this.value === 'stl'">
+                <option value="gltf" selected>gltf</option>
                 <option value="glb">glb</option>
                 <option value="stl">stl</option>
             </select>
-            <input type="checkbox" id="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
-            <input type="checkbox" id="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
-            <input type="checkbox" id="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
-            <input type="checkbox" id="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
-            <label for="3dExportScale">scale: </label>
-            <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max=10></br>
-            <label for="3dExportFacesMul">faces multiplier: </label>
-            <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5><br>
-            <input type="checkbox" id="3dExportFlat"
-                title="Ignore system hierarchy and export all object on the same level (makes faster import)">Export flat hierarchy<br>
-            <label for="3dExportFilename">File name: </label>
-            <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name">
+            <hr>
+            <div id="gltfOptions">
+                <fieldset>
+                <legend>Material options for glTF:</legend>
+                <div class="row">
+                    <div class="cell-md-6" title="Set high for a metal look">
+                        <label class="cell">Backbone metalness</label>
+                        <input id="3dExport_bbMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                    </div>
+                    <div class="cell-md-6" title="Set low for a polished look">
+                        <label class="cell">Backbone roughness</label>
+                        <input id="3dExport_bbRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="cell-md-6" title="Set high for a metal look">
+                        <label class="cell">Nucleoside metalness</label>
+                        <input id="3dExport_nsMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                    </div>
+                    <div class="cell-md-6" title="Set low for a polished look">
+                        <label class="cell">Nucleoside roughness</label>
+                        <input id="3dExport_nsRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                    </div>
+                </div>
+                </fieldset>
+                <div class="row">
+                    <input type="checkbox" id="3dExportFlat"
+                        title="Ignore system hierarchy and export all object on the same level (makes faster import)"
+                    >Export flat hierarchy
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="cell-md-6">
+                    <label>File name</label>
+                    <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name">
+                </div>
+                <div class="cell-md-6">
+                    <label>Faces multiplier</label>
+                    <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5>
+                </div>
+            </div>
+
+            <p>To hide or change the scaling of the backbones, nucleosides, etc. before export, use the "Visual Components" tool in the "View" menu.</p>
         </div>
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
@@ -709,6 +743,11 @@
                                         Backbone connector thickness
                                         <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span class="mif-plus"></span></button>
                                     </div>
+                                    <hr>
+                                    <button class="ribbon-icon-button" onclick="['backbone', 'nucleoside','connector', 'bbconnector'].forEach(v=>view.resetComponentScale(v))">
+                                        <span class="mif-undo"></span>
+                                        <span class="caption">Reset</span>
+                                    </button>
                                 </div>
                             </details>
                         </ul>

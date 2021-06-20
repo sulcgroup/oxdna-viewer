@@ -59,15 +59,20 @@ var PATH_PROPERTIES = {
 
 
 function exportGLTF (
-	systems : System[], include_backbone : boolean, 
-	include_nucleoside: boolean, include_connector: boolean,
-	include_bbconnector: boolean, scale: number, faces_mul : number, flattenHierarchy?: boolean)
-{ 
+	systems : System[],
+	include_backbone : boolean, include_nucleoside: boolean,
+	include_connector: boolean, include_bbconnector: boolean, 
+	backboneScale: number, nucleosideScale: number,
+	connectorScale: number, bbconnectorScale: number,
+	faces_mul : number, flattenHierarchy?: boolean,
+	nsRoughness=0.2, bbRoughness=0.2,
+	nsMetalness=0, bbMetalness=0)
+{
 	// Setup geometries
-	const backbone    = new THREE.SphereBufferGeometry(.2 * scale ,5 * faces_mul,5* faces_mul);
-	const nucleoside  = new THREE.SphereBufferGeometry(.3 * scale ,5 * faces_mul,5* faces_mul);
-	const connector   = new THREE.CylinderBufferGeometry(.1 * scale, .1  * scale, 1, 4* faces_mul);
-	const bbConnector = new THREE.CylinderBufferGeometry(.1 * scale, .05 * scale, 1, 4* faces_mul);
+	const backbone    = new THREE.SphereBufferGeometry(.2 * backboneScale ,5 * faces_mul,5* faces_mul);
+	const nucleoside  = new THREE.SphereBufferGeometry(.3 * nucleosideScale ,5 * faces_mul,5* faces_mul);
+	const connector   = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1  * connectorScale, 1, 4* faces_mul);
+	const bbConnector = new THREE.CylinderBufferGeometry(.1 * bbconnectorScale, .05 * bbconnectorScale, 1, 4* faces_mul);
 
 	// Setup materials
 	let materialMap: Map<number, THREE.Material> = new Map();
@@ -93,13 +98,15 @@ function exportGLTF (
 		if (!materialMap.has(nsColor)) {
 			materialMap.set(nsColor, new THREE.MeshStandardMaterial({
 				color: nsColor,
-				roughness: 0.2
+				roughness: nsRoughness,
+				metalness: nsMetalness
 			}));
 		}
 		if (!materialMap.has(bbColor)) {
 			materialMap.set(bbColor, new THREE.MeshStandardMaterial({
 				color: bbColor,
-				roughness: 0.2
+				roughness: bbRoughness,
+				metalness: bbMetalness
 			}));
 		}
 
