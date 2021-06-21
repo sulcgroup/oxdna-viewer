@@ -1246,7 +1246,7 @@ class fluxGraph {
         if (net.networktype == 'ANM') {
             let rmsf = [];
             if (window.Worker) {
-                const mainWorker = new Worker('/oxdna-viewer/dist/model/anmworker.js');
+                const mainWorker = new Worker('/oxdna-viewer/dist/model/anm_worker.js');
                 let temp = view.getInputNumber('temp');
                 function activate() {
                     var promise = new Promise(function (resolve, reject) {

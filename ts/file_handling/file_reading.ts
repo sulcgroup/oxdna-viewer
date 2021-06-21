@@ -174,9 +174,14 @@ function handleFiles(files: FileList) {
             readOxViewJsonFile(files[i]);
             return;
         }
-        else if (ext === "pdb") {
+        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
             notify("Reading PDB File...");
             readPdbFile(files[i]);
+            return;
+        }
+        else if (ext === "hb") {
+            notify("Reading Hydrogen Bonding File...")
+            readHBondFile(files[i]);
             return;
         }
         // everything else is read in the context of other files so we need to check what we have.
@@ -660,9 +665,69 @@ function readOxViewString(s: string) {
     }
 }
 
+// reads hydrogen bonding file generated with Chimera
+// hbondinfo is then stored in the pdbfiledatasets
+function readHBondFile(file) {
+    let reader = new FileReader();
+    let pdbInfoIndx = pdbFileInfo.length - 1;
+
+    if(pdbInfoIndx == -1){
+        notify("Please Load PDB file to associate H-Bond file with");
+        return;
+    }
+
+    reader.onload = () => {
+        let lines = (reader.result as string).split(/[\n]+/g);
+        const size = lines.length;
+        let hbonds = [];
+
+        //process hbonds
+        for (let i = 0; i < size-1; i++) {
+            // trims all split items then removes the empty strings
+            let l = lines[i].split(" ").map(function(item) {return item.trim()}).filter(n => n);
+            if (recongizedProteinResidues.indexOf(l[0]) != -1) { //check that its a protein residue
+                //extract values
+                const pos1 = l[1].split("."),
+                    atm1 = l[2],
+                    id2 = l[3],
+                    pos2 = l[4].split("."),
+                    atm2 = l[5],
+                    dist = parseFloat(l[8]);
+
+                if(recongizedProteinResidues.indexOf(id2) != -1) { //bonded to another protein residue
+                    // Chain Identifier, residue number
+                    let pdbinds1 = [pos1[1], parseInt(pos1[0])];
+                    let pdbinds2 = [pos2[1], parseInt(pos2[0])];
+
+                    let hbond = [pdbinds1, pdbinds2];
+                    hbonds.push(hbond);
+                }
+                // can read hbonds using just model identifiers (no chain identifiers)
+            } else if (recongizedProteinResidues.indexOf(l[1]) != -1 && recongizedProteinResidues.indexOf(l[5]) != -1) { // residue is second listed indicates hbonds listed from models
+                //extract values
+                const pos1 = l[0].split(".")[1],
+                    atm1 = l[3],
+                    id1 = l[2],
+                    id2 = l[6],
+                    pos2 = l[4].split(".")[1],
+                    atm2 = l[7],
+                    dist = parseFloat(l[10]);
+
+                let pdbinds1 = [pos1, parseInt(id1)];
+                let pdbinds2 = [pos2, parseInt(id2)];
+
+                let hbond = [pdbinds1, pdbinds2];
+                hbonds.push(hbond);
+            }
+        }
+        if(hbonds.length == 0) notify("H bond file format is unrecongized");
+        pdbFileInfo[pdbInfoIndx].hydrogenBonds = hbonds;
+    }
+    reader.readAsText(file);
+}
+
 //reads in an anm parameter file and associates it with the last loaded system.
 function readParFile(system, reader) {
-gi
     let lines = (reader.result as string).split(/[\n]+/g);
 
     //remove the header

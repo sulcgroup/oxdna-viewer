@@ -449,5 +449,5 @@ this.onmessage = function (e) {
         let r = kb * temp * (inverse[3 * i * q.length + 3 * i] + inverse[(3 * i + 1) * q.length + 3 * i + 1] + inverse[(3 * i + 2) * q.length + 3 * i + 2]); //A^2
         RMSF.push(r);
     }
-    this.postMessage(RMSF);
+    postMessage(RMSF, undefined);
 };
