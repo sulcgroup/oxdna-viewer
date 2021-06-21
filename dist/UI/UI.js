@@ -551,7 +551,7 @@ class View {
             let li = document.createElement("li");
             li.setAttribute('id', id);
             li.appendChild(document.createTextNode(name));
-            li.setAttribute("onclick", String(selectednetwork = nid));
+            li.setAttribute("onclick", "selectNetworkWrapper(" + nid.toString() + ")"); // yikes
             ul.appendChild(li);
         }
     }

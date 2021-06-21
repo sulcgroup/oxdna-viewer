@@ -194,7 +194,7 @@ function handleFiles(files) {
         }
     }
     //read a topology/configuration pair and maybe a json file
-    if (!jsonAlone && topFile && datFile) {
+    if (!jsonAlone && topFile && datFile) { // added topFile and datFile so lone trap files won't trigger this
         readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
     }
     //read just a json file to generate an overlay on an existing scene

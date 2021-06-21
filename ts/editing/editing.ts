@@ -282,7 +282,14 @@ function visualizeNetworkWrapper(nid: number) {
 
 function selectNetworkWrapper(nid: number) {
     clearSelection();
-    let net = networks[nid];
+    let net;
+    try{
+        net = networks[nid];
+    } catch (e) {
+        notify("Network " + (nid+1).toString() + " Does Not Exist");
+        return;
+    }
+    selectednetwork = nid; // global declared in main
     net.selectNetwork();
 }
 

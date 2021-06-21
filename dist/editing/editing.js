@@ -240,7 +240,15 @@ function visualizeNetworkWrapper(nid) {
 }
 function selectNetworkWrapper(nid) {
     clearSelection();
-    let net = networks[nid];
+    let net;
+    try {
+        net = networks[nid];
+    }
+    catch (e) {
+        notify("Network " + (nid + 1).toString() + " Does Not Exist");
+        return;
+    }
+    selectednetwork = nid; // global declared in main
     net.selectNetwork();
 }
 function discretizeMassWrapper(option) {
