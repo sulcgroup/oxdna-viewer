@@ -1630,8 +1630,8 @@ function addPDBToScene () {
                 } else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
                     if (res.resType === 'UNK') {
-                        notify("Amino Acid blank is Unknown, replacing with Glycine");
-                        res.resType = 'GLY';
+                        notify("Amino Acid blank is Unknown, shown in grey");
+                        res.resType = undefined;
                     }
                     // Sets which Residues are Intialized
                     res.type = 'pro';
@@ -1641,8 +1641,8 @@ function addPDBToScene () {
                 } else if (recongizedRNAResidues.indexOf(res.resType) > -1 || recongizedRNAStrandEnds.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
                     if (res.resType === 'N') {
-                        notify("Nucleotide has Residue Base type 'N' for Generic Nucleic Acid in PDB File, replacing with 'A'");
-                        res.resType = 'A';
+                        notify("Nucleotide has Residue Base type 'N' for Generic Nucleic Acid in PDB File, shown in grey");
+                        res.resType = undefined;
                     }
                     if (res.resType === 'I') {
                         notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.")
