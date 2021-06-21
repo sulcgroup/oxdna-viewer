@@ -40,6 +40,7 @@ function onWindowResize() {
     // updates the picker texture to match the renderer 
     pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
+    view.updateImageResolutionText();
     render();
 }
 let camera;
@@ -127,7 +128,6 @@ function redrawBox() {
     }
     boxObj = drawBox(box, getCenteringGoal());
     boxObj.visible = visible;
-    render();
 }
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
 function toggleArrows(chkBox) {
@@ -204,7 +204,6 @@ function drawBox(size, position) {
     var geometry = new THREE.BufferGeometry().setFromPoints(points);
     var boxObj = new THREE.LineSegments(geometry, material);
     scene.add(boxObj);
-    render();
     return boxObj;
 }
 // adding mouse control to the scene 

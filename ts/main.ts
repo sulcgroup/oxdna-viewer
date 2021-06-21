@@ -97,8 +97,6 @@ const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for f
 
 var lut, devs: number[]; //need for Lut coloring
 
-var tacoxdna;
-
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 
@@ -111,15 +109,22 @@ readFilesFromURLParams();
 render();
 
 function findBasepairs() {
-    elements.forEach(e => {
-        if (e instanceof Nucleotide) {
-            if(!e.pair) {
-                e.pair = e.findPair();
-                if(e.pair) {
-                    e.pair.pair = e;
-                }
-            }
+    systems.forEach(system=>{
+        if (!system.checkedForBasepairs) {
+            system.strands.forEach(strand=>{
+                strand.forEach(e=>{
+                    if (e instanceof Nucleotide) {
+                        if(!e.pair) {
+                            e.pair = e.findPair();
+                            if(e.pair) {
+                                e.pair.pair = e;
+                            }
+                        }
+                    }
+                });
+            });
         }
+        system.checkedForBasepairs = true;
     });
 };
 

@@ -1,13 +1,13 @@
-Relaxation settings:
+Simulation settings:
 <fieldset>
-    <legend> Relax method:</legend>
+    <legend>  Method:</legend>
     <input type="radio" id="rxBackend" name="relaxBackend" value="MC" checked onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;" >CPU
     <input type="radio" id="rxBackend" name="relaxBackend" value="MD_GPU" onchange="document.getElementById('relax_MC_settings').hidden = !document.getElementById('relax_MC_settings').hidden;document.getElementById('relax_MD_settings').hidden = !document.getElementById('relax_MD_settings').hidden;">GPU
 </fieldset>
 
 <fieldset>
     <button class="button" id="oxIP${id}_1" onclick="if(socket) socket.stop_simulation()" title="Delete entry">x</button>
-    <button class="button" id="oxIP${id}_2" onclick="if(socket) socket.start_simulation()" title="Establish connection">►</button>
+    <button class="button" id="oxIP${id}_2" onclick="if(socket) socket.start_simulation()" title="Establish connection">►</button>                      
 <fieldset>
 
 <fieldset id="relax_MC_settings" >
@@ -35,6 +35,15 @@ Relaxation settings:
     <label for="mcDeltaRotation">Delta Rotation: </label>
     <input type="number" value="0.22" id="mcDeltaRotation" title="">
 
+   
+    Relax settings:<br/>
+    <input type="checkbox" checked="true" id="mcUseRelax" data-role="checkbox" data-caption="Use" title="Use relax settings.">
+    <br/>
+    <label for="mcBackboneForce">Backbone Force: </label>
+    <input type="number" value="5" id="mcBackboneForce" title="">
+
+    <label for="mcBackboneForceFar">Backbone Force Far: </label>
+    <input type="number" value="10" id="mcBackboneForceFar" title="">
 
 </fieldset>
 
@@ -65,4 +74,20 @@ Relaxation settings:
     
     <label for="mdDiff_Coeff">diff coeff: </label>
     <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value.">
+
+    <label for="mdMaxDensityMul">Max Density Multiplier: </label>
+    <input type="number" value="10" id="mdMaxDensityMul" title="">
+    
+    Relax settings:<br/>
+    
+    <input type="checkbox" checked="true" id="mdUseRelax" data-role="checkbox" data-caption="Use" title="Use relax settings.">
+    <br/>
+    <label for="mdBackboneForce">Backbone Force: </label>
+    <input type="number" value="5" id="mdBackboneForce" title="">
+
+    <label for="mdBackboneForceFar">Backbone Force Far: </label>
+    <input type="number" value="10" id="mdBackboneForceFar" title="">
+    
+
+
 </fieldset>

@@ -189,7 +189,7 @@ var pickingMaterial = new THREE.ShaderMaterial(
 	
 //Renders the secret scene containing the picking materials
 //Returns the global id of the particle under the mouse.
-//The GPU picker can accomodate 16,581,375 particles...
+//The GPU picker can accommodate 16,581,375 particles...
 //I have no idea what happens if you go over that, but I kinda doubt we'll find out any time soon.
 function gpuPicker(event): number {
 	renderer.setRenderTarget(pickingTexture);

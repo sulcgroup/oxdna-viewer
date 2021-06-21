@@ -1,5 +1,6 @@
 // Use Metro GUI
 declare var Metro: any;
+var VRButton: any;
 
 function createTable(dataName: string, header: string[]) {
     let table = document.createElement("table");
@@ -426,7 +427,11 @@ class View {
     transformMode: ToggleGroupWithDisable;
 
     basepairMessage = "Locating basepairs, please be patient...";
-
+    vrEnabled = false;
+    backboneScale = 1;
+    nucleosideScale = 1;
+    connectorScale = 1;
+    bbconnectorScale = 1;
 
     constructor(doc: Document) {
         this.doc = doc;
@@ -454,6 +459,128 @@ class View {
         });
     }
 
+    /**
+     * Show or hide a geometric component
+     * @param name e.g. 'backbone'
+     * @param system Specify to update a specific system, defaults to update all
+     * @param value true (to show) or false (to hide), defaults to get value from UI
+     */
+    public setPropertyInScene(name: string, system?: System, value?: boolean) {
+        let syslist: System[];
+        if (system === undefined) {
+            syslist = [systems, tmpSystems].flat();
+        } else {
+            syslist = [system];
+        }
+        if (value === undefined) {
+            value = this.getInputBool(`${name}_toggle`);
+        }
+        for (const system of syslist) {
+            if (scene.children.includes(system[name])) {
+                if (!value) {
+                    scene.remove(system[name]);
+                }
+            } else if (value) {
+                scene.add(system[name]);
+            }
+        }
+        render();
+    }
+
+    /**
+     * Scale a component geometry by a factor
+     * @param name e.g. 'backbone'
+     * @param factor e.g. 0.8
+     */
+    public scaleComponent(name: string, factor: number) {
+        // Keep track of scales
+        switch (name) {
+            case 'backbone': this.backboneScale *= factor; break;
+            case 'nucleoside': this.nucleosideScale *= factor; break;
+            case 'connector': this.connectorScale *= factor; break;
+            case 'bbconnector': this.bbconnectorScale*= factor; break;
+            default: console.error("Unknown component name: "+name); break;
+        }
+        // Scale components in all systems
+        for (const system of [systems, tmpSystems].flat()) {
+            const g = system[name].geometry;
+            if (['backbone', 'nucleoside'].includes(name)) {
+                // Scale spheres proportionally along all axes
+                g.scale(factor, factor, factor);
+            } else if (['connector', 'bbconnector'].includes(name)) {
+                // Don't scale the length of connectors
+                g.scale(factor, 1, factor);
+            } else {
+                console.error("Unknown component name: "+name);
+            }
+        }
+        render();
+    }
+
+    /**
+     * Reset component geometry scale
+     * @param name Geometry name, e.g. 'backbone'
+     */
+    public resetComponentScale(name: string) {
+        this.setComponentScale(name);
+    }
+
+    /**
+     * Set component geometry scale
+     * @param name Geometry name, e.g. 'backbone'
+     * @param scale New scale of component, leave blank to reset scale to 1
+     */
+    public setComponentScale(name: string, scale=1) {
+        switch (name) {
+            case 'backbone': scale /= this.backboneScale; break;
+            case 'nucleoside': scale /= this.nucleosideScale; break;
+            case 'connector': scale /= this.connectorScale; break;
+            case 'bbconnector': scale /= this.bbconnectorScale; break;
+            default: console.error("Unknown component name: "+name); break;
+        }
+        this.scaleComponent(name, scale);
+    }
+
+    public enableVR() {
+        if (!this.vrEnabled) {
+            let vrRenderer: any;
+            vrRenderer = renderer;
+
+            // Create rig to be able to rotate the camera
+            // in code. Otherwise, the camera is fixed
+            var rig = new THREE.PerspectiveCamera();
+            rig.add(camera);
+            scene.add(rig);
+
+            // Add vr button to document
+            document.body.appendChild(VRButton.createButton(vrRenderer));
+
+            // Enamble VR in vrRenderer
+            vrRenderer.vr.enabled = true;
+
+            // Make the camera go around the scene
+            // (looks like the model is rotating)
+            // Perhaps not needed for 6-DoF devices
+            var rotation = 0;
+            vrRenderer.setAnimationLoop(function(){
+                rotation += 0.001;
+                rig.position.x = Math.sin(rotation) * 5;
+                rig.position.z = Math.cos(rotation) * 5;
+                rig.lookAt(new THREE.Vector3(0,0,0));
+                vrRenderer.render(scene, camera);
+            });
+
+            // Make controller click go to next config
+            const selectListener = (event) => {
+                trajReader.nextConfig();
+            };
+            const controller = vrRenderer.vr.getController(0);
+            controller.addEventListener('select', selectListener);
+
+            this.vrEnabled = true;
+        }
+    }
+
     public sectionClicked() {
         let s = document.getElementsByClassName("section active")[0] as HTMLElement;
         s.hidden = !s.hidden;
@@ -465,6 +592,15 @@ class View {
 
     public getInputNumber(id: string): number {
         return parseFloat(this.getInputValue(id));
+    }
+
+    public getSliderInputNumber(id: string): number {
+        let e = document.getElementById(id);
+        if (e === null) {
+            throw `Could not find slider with id "${id}"`;
+        } else {
+            return Metro.getPlugin(document.getElementById(id)).slider.value;
+        }
     }
 
     public getInputValue(id: string): string {
@@ -537,25 +673,62 @@ class View {
         return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
     }
 
-    public saveCanvasImage(){
-        canvas.toBlob(function(blob){
-            var a = document.createElement('a');
-            var url = URL.createObjectURL(blob);
-            a.href = url;
-            a.download = 'canvas.png';
-            a.click();
-        }, 'image/png', 1.0);
-        //get the colorbar too
-        if (colorbarScene.children.length != 0) {
-            renderColorbar();
-            colorbarCanvas.toBlob(function(blob) {
+    public updateImageResolutionText() {
+        // Utility function to display the image resolution for saving canvas images
+        let factor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
+        const width = canvas.width * factor;
+        const height = canvas.height * factor;
+
+        let elem = document.getElementById('saveImageResolution');
+        elem.innerHTML = `${width} x ${height}`;
+    }
+
+    public scaleCanvas(scalingFactor=2) {
+        const width = canvas.width;
+        const height = canvas.height;
+        canvas.width = width*scalingFactor;
+        canvas.height = height*scalingFactor;
+        const ctx = canvas.getContext('webgl');
+        ctx.viewport(0, 0, canvas.width, canvas.height);
+        render();
+    }
+
+    public saveCanvasImage(scaleFactor?: number) {
+        if (scaleFactor === undefined) {
+            scaleFactor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
+        }
+        function saveImage() {
+            canvas.toBlob(function(blob){
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
-                a.download = 'colorbar.png';
+                a.download = 'canvas.png';
                 a.click();
             }, 'image/png', 1.0);
+            //get the colorbar too
+            if (colorbarScene.children.length != 0) {
+                renderColorbar();
+                colorbarCanvas.toBlob(function(blob) {
+                    var a = document.createElement('a');
+                    var url = URL.createObjectURL(blob);
+                    a.href = url;
+                    a.download = 'colorbar.png';
+                    a.click();
+                }, 'image/png', 1.0);
+            }
         }
+        new Promise((resolve) => {
+            this.scaleCanvas(scaleFactor);
+            resolve('success');
+        }).then(() => {
+            try {
+                saveImage();
+            } catch (error) {
+                notify("Canvas is too large to save, please try a smaller scaling factor", "alert");
+            }
+            this.scaleCanvas(1/scaleFactor);
+        });
+        
     }
 
     public longCalculation(calc: () => void, message: string, callback?: () => void) {
@@ -567,18 +740,18 @@ class View {
         });
 
         // Set wait cursor and request an animation frame to make sure
-    // that it gets changed before starting calculation:
-    let dom = document.activeElement;
-    dom['style'].cursor = "wait";
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-        try {
-            var t0 = performance.now();
-            calc();
-            var t1 = performance.now();
+        // that it gets changed before starting calculation:
+        let dom = document.activeElement;
+        dom['style'].cursor = "wait";
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            try {
+                var t0 = performance.now();
+                calc();
+                var t1 = performance.now();
             console.log("Long calculation took " + (t1 - t0) + " milliseconds.")
-        } catch (error) {
-           notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
-        }
+            } catch (error) {
+               notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
+            }
 
         // Change cursor back and remove modal
         dom['style'].cursor = "auto";

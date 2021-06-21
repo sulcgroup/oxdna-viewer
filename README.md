@@ -25,6 +25,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
   * [Known issues](#known-issues)
   * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions)
   * [Citation](#citation)
+  * [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -95,7 +96,8 @@ The edit API can be accessed by typing `edit.<command>(<arguments>)` in the brow
  * `extendStrand(<monomer object> <string>)`: Extends the parent strand of the provided monomer with the given sequence.  The string must be in ALL CAPS to correspond to particle types. The new monomers will appear in a helix with an axis corresponding to the a3 vector of the provided monomer.  These will most likley need to be relaxed prior to production simulations with edited files. Hooked up to the "Extend" button in the menu
  * `extendDuplex(<monomer object> <string>)`: Similar to extendStrand—extends the parent strand of a given monomer and creates a complement strand. If the given monomer does not have a base pair, it will create one and extend from it. Hooked up to the "Extend" button in the menu while "Duplex mode" is selected.
  * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button in the menu.
-
+ * `interconnectDuplex3p(<Strand1>,<Strand2>,<string>)` : connects 2 strands with a duplex patch using their 3-primes.
+ * `interconnectDuplex5p(<Strand1>,<Strand2>,<string>)` : connects 2 strands with a duplex patch using their 5-primes.
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems contain strands which contain elements. The elements are organised as a double-linked lists within the strands and can be iterated: `strand.forEach` or listed: `strand.getMonomers()`. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].getMonomers()[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999). If you hover above an element, you will see its system ID, its strand ID and its element ID respectively.
 
 ### Observable API
@@ -193,5 +195,9 @@ If you want to extend the code for your own purposes, you will also need to inst
 
 ## Citation
 If you use oxView or our oxDNA analysis package in your research, please cite:  
+
 Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr Šulc: Design, optimization and analysis of large DNA and RNA nanostructures through interactive visualization, editing and molecular simulation, Nucleic Acids Research, Volume 48, Issue 12, 09 July 2020, Page e72
 (https://doi.org/10.1093/nar/gkaa417)
+
+## Acknowledgements
+We gratefully acknowledge support from NSF grant no 1931487 and ONR grant no N000142012094. We thank to all the users for submitting their feedback, bug reports and feature requests, as well as all members of Sulc, Yan, Doye, Turberfield, and Louis groups who participate in testing of the tool.

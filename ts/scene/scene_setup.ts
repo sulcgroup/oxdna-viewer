@@ -45,9 +45,9 @@ function onWindowResize() {
     // updates the picker texture to match the renderer 
     pickingTexture.setSize(window.innerWidth, window.innerHeight);
     controls.handleResize();
-    render();
 
-    
+    view.updateImageResolutionText();
+    render();
 }
 
 let camera: THREE.Camera
@@ -149,7 +149,6 @@ function redrawBox() {
     }
     boxObj = drawBox(box, getCenteringGoal());
     boxObj.visible = visible;
-    render();
 }
 
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
@@ -226,7 +225,6 @@ function drawBox(size: THREE.Vector3, position: THREE.Vector3): THREE.LineSegmen
     var geometry = new THREE.BufferGeometry().setFromPoints(points);
     var boxObj = new THREE.LineSegments(geometry, material);
     scene.add(boxObj);
-    render();
     return boxObj;
 }
 

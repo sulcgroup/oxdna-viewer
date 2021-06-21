@@ -3,6 +3,7 @@
 // Only show options for the selected input format
 function toggleInputOpts(value: string) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
+    document.getElementById('importRpolyOpts').hidden = value !== 'rpoly';
 }
 
 // Try to guess format from file ending
@@ -26,12 +27,18 @@ function importFiles(files: File[]) {
     let progress = document.getElementById("importProgress");
     progress.hidden = false;
 
+    let cancelButton = document.getElementById("importFileDialogCancel");
+
     document.body.style.cursor = "wait";
 
     if (from === "cadnano") {
         opts = {
             grid: (document.getElementById("importCadnanoLatticeSelect") as HTMLSelectElement).value,
             sequence: (document.getElementById("importCadnanoScaffoldSeq") as HTMLSelectElement).value
+        };
+    } else if (from === "rpoly") {
+        opts = {
+            sequence: (document.getElementById("importRpolyScaffoldSeq") as HTMLSelectElement).value
         };
     }
 
@@ -43,26 +50,29 @@ function importFiles(files: File[]) {
             readFiles.set(file, evt.target.result);
             console.log(`Finished reading ${readFiles.size} of ${files.length} files`);
             if (readFiles.size === files.length) {
-                let onDone = (oxViewStr) => {
-                    readOxViewString(oxViewStr);
-                    tacoxdna.Logger.log('Conversion finished');
+                var worker = new Worker('./dist/file_handling/tacoxdna_worker.js');
+                let finished = () => {
                     progress.hidden = true;
                     Metro.dialog.close('#importFileDialog');
                     document.body.style.cursor = "auto";
+                }
+                worker.onmessage = (e: MessageEvent) => {
+                    let converted = e.data;
+                    readOxViewString(converted);
+                    tacoxdna.Logger.log('Conversion finished');
+                    finished();
                 };
-
-                tacoxdna.convertFromTo_async([...readFiles.values()], from, to, opts).then(onDone).catch((e) => {
-                    // Browser probably doesn't support module web workers
-                    try {
-                        let converted = tacoxdna.convertFromTo([...readFiles.values()], from, to, opts);
-                        onDone(converted);
-                    } catch (error) {
-                        notify(error, "alert");
-                        progress.hidden = true;
-                        Metro.dialog.close('#importFileDialog');
-                        document.body.style.cursor = "auto";
-                    }
-                });
+                worker.onerror = (error) => {
+                    tacoxdna.Logger.log('Error in conversion');
+                    notify(error.message, "alert");
+                    finished();
+                }
+                cancelButton.onclick = () => {
+                    worker.terminate();
+                    tacoxdna.Logger.log('Conversion aborted');
+                    finished();
+                }
+                worker.postMessage([[...readFiles.values()], from, to, opts]);
             }
         };
         reader.readAsText(file);
@@ -128,17 +138,12 @@ target.addEventListener("dragexit", function (event) {
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
 
-//const datReader = new FileReader();
-//var trajReader: TrajectoryReader;
-
 let confNum: number = 0,
     datFileout: string = "",
-    datFile, //currently var so only 1 datFile stored for all systems w/ last uploaded system's dat
     box = new THREE.Vector3(); //box size for system
 
 //and a couple relating to overlay files
-var toggleFailure: Boolean = false,
-    defaultColormap: string = "cooltowarm";
+var defaultColormap: string = "cooltowarm";
 
 function handleDrop (event) {
     // cancel default actions
@@ -155,8 +160,8 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let topFile, jsonFile, trapFile, pdbfile, hbondfile;
-    let idxFile = null;
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
+
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
@@ -164,87 +169,57 @@ function handleFiles(files: FileList) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
 
+        // oxview and pdb files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
             return;
         }
-        if (ext === "par") {
-            readParFile(files[i]);
+        else if (ext === "pdb") {
+            notify("Reading PDB File...");
+            readPdbFile(files[i]);
             return;
         }
+        // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
-        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") {
-            notify("Reading PDB File...");
-            pdbfile = files[i];
-            readPdbFile(pdbfile);
-            return;
-        }
-        else if (ext === "hb") {
-            hbondfile = files[i];
-            readHBondFile(hbondfile);
-            return;
-        }
         else if (ext === "idx") idxFile = files[i];
+        else if (ext === "par") parFile = files[i];
+        // otherwise, what is this?
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  .json data overlay is optional and can be added later. To load an ANM model par file you must first load the system associated.")
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
             return
         }
     }
-    let jsonAlone = false;
 
+    // If a new system is being loaded, there will be a dat and top file pair
+    let newSystem = datFile && topFile
+
+    // Additional information can be dropped in later
     let datAlone = datFile && !topFile;
     let trapAlone = trapFile && !topFile;
-    if (jsonFile && !topFile) jsonAlone = true;
-    if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone)  {
-        notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-        return
-    }
-    if (datAlone && systems.length === 0) {
-        notify("You cannot load a .dat file without an already loaded topology. Please load .dat and .top files together");
-        return
-    }
-    if (!trapFile) {
-        if (jsonFile && !topFile) jsonAlone = true;
-        if ((filesLen > 3 || filesLen < 2) && !jsonAlone && !datAlone) {
-            notify("Please drag and drop 1 .dat and 1 .top file. .json is optional.  More .jsons can be dropped individually later");
-            return
-        }
+    let jsonAlone =  jsonFile && !topFile;
+    let parAlone = parFile && !topFile;
+
+
+    let addition = datAlone || trapAlone || jsonAlone || parAlone
+
+    if (!newSystem && !addition) {
+        notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
 
-    //read a topology/configuration pair and maybe a json file
-    if (!jsonAlone && topFile && datFile) { // added topFile and datFile so lone trap files won't trigger this
-        readFiles(topFile, datFile, idxFile, jsonFile, trapAlone ? undefined : trapFile);
-    }
+    //read a topology/configuration pair and whatever else
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile);
 
-    //read just a json file to generate an overlay on an existing scene
-    if (jsonFile && jsonAlone) {
-        const jsonReader = new FileReader(); //read .json
-        jsonReader.onload = () => {
-            readJson(systems[systems.length-1], jsonReader);
-        };
-        jsonReader.readAsText(jsonFile);
-        renderer.domElement.style.cursor = "auto";
-    }
-
-    if (trapFile && trapAlone) {
-        const trapReader = new FileReader(); //read .trap file
-        trapReader.onload = () => {
-            readTrap(systems[systems.length-1], trapReader);
-        };
-        trapReader.readAsText(trapFile);
-        renderer.domElement.style.cursor = "auto";
-    }
     render();
+    return
 }
 
 //parse a trap file
 function readTrap(system, trapReader) {
 
     let file = trapReader.result as string;
-    let trap_file = file;
     //{ can be replaced with \n to make sure no parameter is lost
     while(file.indexOf("{")>=0)
         file = file.replace("{","\n");
@@ -293,6 +268,7 @@ function readTrap(system, trapReader) {
     } else {
         forceHandler.set(forces);
     }
+    render()
 }
 
 
@@ -321,7 +297,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             datReq.open("GET", configurationPath);
             datReq.responseType = "blob";
             datReq.onload = () => {
-                datFile = datReq.response;
+                const datFile = datReq.response;
                 readFiles(topFile, datFile, null, overlayFile);
             }
             datReq.send();
@@ -341,16 +317,21 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File) {
+    console
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
+
+        //setupComplete fires when indexing arrays are finished being set up
+        //prevents async issues with par and overlay files
+        document.addEventListener('setupComplete', readAuxiliaryFiles)
 
         //make system to store the dropped files in
         const system = new System(sysCount, elements.getNextId());
         systems.push(system); //add system to Systems[]
         //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
-        if(idxFile===null){
+        if(!idxFile){
             //read topology file, the configuration file is read once the topology is loaded to avoid async errors
             const topReader = new TopReader(topFile, system, elements,()=>{
                 //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
@@ -380,15 +361,18 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
             };
             idxReader.readAsText(idxFile);
         }
+    }
+    else {
+        readAuxiliaryFiles()
+    }
 
-
+    function readAuxiliaryFiles() {
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {
-                readJson(system, jsonReader)
+                readJson(systems[systems.length-1], jsonReader)
             };
             jsonReader.readAsText(jsonFile);
-            renderer.domElement.style.cursor = "auto";
         }
 
         if (trapFile) {
@@ -397,16 +381,25 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
                 readTrap(systems[systems.length-1], trapReader);
             };
             trapReader.readAsText(trapFile);
-            renderer.domElement.style.cursor = "auto";
         }
-    } else if (datFile) {
-        const r = new FileReader();
-        r.onload = ()=>updateConfFromFile(r.result as string);
-        r.readAsText(datFile);
+
+        if (parFile) {
+            let parReader = new FileReader();
+            parReader.onload = () => {
+                readParFile(systems[systems.length - 1], parReader)
+            };
+            parReader.readAsText(parFile)
+        }
+        if (datFile && !topFile) {
+            const r = new FileReader();
+            r.onload = ()=> {
+                updateConfFromFile(r.result as string);
+            }
+            r.readAsText(datFile);
+        }
     }
-    else {
-        notify("Please drop one topology and one configuration/trajectory file");
-    }
+    render();
+    return
 }
 
 function updateConfFromFile(dat_file) {
@@ -439,12 +432,8 @@ function readJson(system, jsonReader) {
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
                 makeLut(data, key);
-                try{ //you need to toggle here for small systems, during the scene add for large systems because asynchronous reading.
-                    view.coloringMode.set("Overlay");
-                }
-                catch {
-                    toggleFailure = true;
-                }
+                view.coloringMode.set("Overlay");
+
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                 const end = system.systemLength() + system.globalStartId
@@ -490,9 +479,12 @@ function readOxViewString(s: string) {
     // Parse json string
     const data = JSON.parse(s);
 
-    // Set box data, if provided
+    // Update box data, if provided
     if (data.box) {
-        box = new THREE.Vector3().fromArray(data.box);
+        // Don't make smaller than current
+        box.x = Math.max(box.x, data.box[0]);
+        box.y = Math.max(box.y, data.box[1]);
+        box.z = Math.max(box.z, data.box[2]);
     }
     // Add systems, if provided (really should be)
     if (data.systems) {
@@ -637,7 +629,9 @@ function readOxViewString(s: string) {
             // Finally, we can add the system to the scene
             addSystemToScene(sys);
 
-            centerAndPBC();
+            // Center the newly added system
+            centerAndPBC(sys.getMonomers());
+
             if (customColors) {
                 view.coloringMode.set("Custom");
             }
@@ -667,187 +661,51 @@ function readOxViewString(s: string) {
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
-// function readParFile(file) {
-//     let system = systems[systems.length - 1]; //associate the par file with the last loaded system
-//     let reader = new FileReader();
-//     reader.onload = () => {
-//         let lines = (reader.result as string).split(/[\n]+/g);
-//
-//         //remove the header
-//         lines = lines.slice(1)
-//
-//         const size = lines.length;
-//
-//         //create an ANM object to allow visualization
-//         const anm = new ANM(system, ANMs.length, size)
-//
-//         //process connections
-//         for (let i = 0; i < size-1; i++) {
-//             let l = lines[i].split(" ")
-//             //extract values
-//             const p = parseInt(l[0]),
-//                 q = parseInt(l[1]),
-//                 eqDist = parseFloat(l[2]),
-//                 type = l[3],
-//                 strength = parseFloat(l[4]);
-//
-//             // if its a torsional ANM then there are additional parameters on some lines
-//             let extraParams = []
-//             if (l.length > 5) {
-//                 for (let i = 5; i < l.length; i++) {
-//                     extraParams.push(l[i])
-//                 }
-//             }
-//
-//             //dereference p and q into particle positions from the system
-//             const particle1 = system.getElementBySID(p),
-//                   particle2 = system.getElementBySID(q);
-//
-//             if (particle1 == undefined) console.log(i)
-//
-//             anm.createConnection(particle1, particle2, eqDist, type, strength, extraParams);
-//         };
-//         addANMToScene(anm);
-//         system.strands.forEach((s) => {
-//             if (s.isPeptide()) {
-//                 api.toggleStrand(s);
-//             }
-//         })
-//         ANMs.push(anm);
-//     }
-//     reader.readAsText(file);
-// }
+function readParFile(system, reader) {
+gi
+    let lines = (reader.result as string).split(/[\n]+/g);
 
-//reads in an anm parameter file and associates it with the last loaded system.
-function readParFile(file) {
-    let reader = new FileReader();
-    let system = systems[systems.length - 1]; //associate the par file with the last loaded system
-    reader.onload = () => {
-        let lines = (reader.result as string).split(/[\n]+/g);
+    //remove the header
+    lines = lines.slice(1)
 
-        //remove the header
-        lines = lines.slice(1)
+    const size = lines.length;
 
-        const size = lines.length;
+    //create an ANM object to allow visualization
+    const net = new Network(networks.length, system.getMonomers());
 
-        //create an ANM object to allow visualization
-        const net = new Network(networks.length, system.getMonomers());
+    //process connections
+    for (let i = 0; i < size-1; i++) {
+        let l = lines[i].split(" ")
+        //extract values
+        const p = parseInt(l[0]),
+            q = parseInt(l[1]),
+            eqDist = parseFloat(l[2]),
+            type = l[3],
+            strength = parseFloat(l[4]);
 
-        //process connections
-        for (let i = 0; i < size-1; i++) {
-            let l = lines[i].split(" ")
-            //extract values
-            const p = parseInt(l[0]),
-                q = parseInt(l[1]),
-                eqDist = parseFloat(l[2]),
-                type = l[3],
-                strength = parseFloat(l[4]);
-
-            // if its a torsional ANM then there are additional parameters on some lines
-            let extraParams = []
-            if (l.length > 5) {
-                for (let i = 5; i < l.length; i++) {
-                    extraParams.push(l[i])
-                }
-            }
-
-            // if (particle1 == undefined) console.log(i)
-            net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
-        };
-        // Create and Fill Vectors
-        net.initInstances(net.reducedEdges.total);
-        net.initEdges();
-        net.fillConnections(); // fills connection array for
-
-        net.prepVis(); // Creates Mesh for visualization
-        networks.push(net); // Any network added here shows up in UI network selector
-        selectednetwork = net.nid; // auto select network just loaded
-        view.addNetwork(net.nid);
-
-    }
-    reader.readAsText(file);
-}
-
-// reads hydrogen bonding file generated with Chimera
-// hbondinfo is then stored in the pdbfiledatasets
-function readHBondFile(file) {
-    let reader = new FileReader();
-    let pdbInfoIndx = pdbFileInfo.length - 1;
-
-    if(pdbInfoIndx == -1){
-        notify("Please Load PDB file to associate H-Bond file with");
-        return;
-    }
-
-    reader.onload = () => {
-        let lines = (reader.result as string).split(/[\n]+/g);
-        const size = lines.length;
-        let hbonds = [];
-
-        //process hbonds
-        for (let i = 0; i < size-1; i++) {
-            // trims all split items then removes the empty strings
-            let l = lines[i].split(" ").map(function(item) {return item.trim()}).filter(n => n);
-            if (recongizedProteinResidues.indexOf(l[0]) != -1) { //check that its a protein residue
-                //extract values
-                const pos1 = l[1].split("."),
-                    atm1 = l[2],
-                    id2 = l[3],
-                    pos2 = l[4].split("."),
-                    atm2 = l[5],
-                    dist = parseFloat(l[8]);
-
-                if(recongizedProteinResidues.indexOf(id2) != -1) { //bonded to another protein residue
-                    // Chain Identifier, residue number
-                    let pdbinds1 = [pos1[1], parseInt(pos1[0])];
-                    let pdbinds2 = [pos2[1], parseInt(pos2[0])];
-
-                    let hbond = [pdbinds1, pdbinds2];
-                    hbonds.push(hbond);
-                }
-                // can read hbonds using just model identifiers (no chain identifiers)
-            } else if (recongizedProteinResidues.indexOf(l[1]) != -1 && recongizedProteinResidues.indexOf(l[5]) != -1) { // residue is second listed indicates hbonds listed from models
-                //extract values
-                const pos1 = l[0].split(".")[1],
-                    atm1 = l[3],
-                    id1 = l[2],
-                    id2 = l[6],
-                    pos2 = l[4].split(".")[1],
-                    atm2 = l[7],
-                    dist = parseFloat(l[10]);
-
-                let pdbinds1 = [pos1, parseInt(id1)];
-                let pdbinds2 = [pos2, parseInt(id2)];
-
-                let hbond = [pdbinds1, pdbinds2];
-                hbonds.push(hbond);
+        // if its a torsional ANM then there are additional parameters on some lines
+        let extraParams = []
+        if (l.length > 5) {
+            for (let i = 5; i < l.length; i++) {
+                extraParams.push(l[i])
             }
         }
-        if(hbonds.length == 0) notify("H bond file format is unrecongized");
-        pdbFileInfo[pdbInfoIndx].hydrogenBonds = hbonds;
-    }
-    reader.readAsText(file);
+
+        // if (particle1 == undefined) console.log(i)
+        net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
+    };
+    // Create and Fill Vectors
+    net.initInstances(net.reducedEdges.total);
+    net.initEdges();
+    net.fillConnections(); // fills connection array for
+
+    net.prepVis(); // Creates Mesh for visualization
+    networks.push(net); // Any network added here shows up in UI network selector
+    selectednetwork = net.nid; // auto select network just loaded
+    view.addNetwork(net.nid);
+
+    notify("Par file read! Turn on visualization in the Protein tab")
 }
-
-
-// function addANMToScene(anm: ANM) {
-//     anm.geometry = instancedConnector.clone();
-//
-//     anm.geometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(anm.offsets, 3));
-//     anm.geometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(anm.rotations, 4));
-//     anm.geometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(anm.colors, 3));
-//     anm.geometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(anm.scales, 3));
-//     anm.geometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(anm.visibility, 3 ) );
-//
-//     anm.network = new THREE.Mesh(anm.geometry, instanceMaterial);
-//     anm.network.frustumCulled = false;
-//
-//     scene.add(anm.network);
-//
-//     render();
-//
-//     canvas.focus();
-// }
 
 function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
@@ -907,20 +765,17 @@ function addSystemToScene(system: System) {
     system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
     system.dummyBackbone.frustumCulled = false;
 
-    // Add everything to the scene
-    scene.add(system.backbone);
-    scene.add(system.nucleoside);
-    scene.add(system.connector);
-    scene.add(system.bbconnector);
+    // Add everything to the scene (if they are toggled)
+
+    view.setPropertyInScene('backbone', system);
+    view.setPropertyInScene('nucleoside', system);
+    view.setPropertyInScene('connector', system);
+    view.setPropertyInScene('bbconnector', system);
 
     pickingScene.add(system.dummyBackbone);
 
-    // Catch an error caused by asynchronous readers and different file sizes
-    if(toggleFailure){
-        view.coloringMode.set("Overlay");
-    }
-
-    render();
+    // Let the other file readers know that it's safe to reference system properties
+    document.dispatchEvent(new Event('setupComplete'))
 
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";

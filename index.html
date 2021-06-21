@@ -26,7 +26,8 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body>
+<body onload="view.updateImageResolutionText()"
+>
     <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
         data-shift=".shifted-content">
         <div class="sidebar-header bg-grayMouse">
@@ -155,12 +156,18 @@
                     <input type="text" placeholder="RANDOM" id="importCadnanoScaffoldSeq">
                 </div>
             </div>
+            <div id='importRpolyOpts' hidden>
+                <div class="form-group">
+                    <label>Scaffold sequence</label>
+                    <input type="text" placeholder="RANDOM" id="importRpolyScaffoldSeq">
+                </div>
+            </div>
         </form>
 
         <div data-role="progress" data-type="line" id="importProgress" hidden></div>
 
         <div class="dialog-actions">
-            <button class="button js-dialog-close">Cancel</button>
+            <button id="importFileDialogCancel" class="button js-dialog-close">Cancel</button>
             <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary">Import and load</button>
         </div>
     </div>
@@ -181,23 +188,57 @@
         <div class="dialog-title">3D Export Options</div>
         <div class="dialog-content">
             <label for="3dExportFormat">Export format:</label>
-            <select id="3dExportFormat">
-                <option value="gltf">gltf</option>
+            <select id="3dExportFormat" onchange="document.getElementById('gltfOptions').hidden = this.value === 'stl'">
+                <option value="gltf" selected>gltf</option>
                 <option value="glb">glb</option>
                 <option value="stl">stl</option>
             </select>
-            <input type="checkbox" id="includeBackbone" title="include backbone mesh into output" checked>Backbone mesh<br>
-            <input type="checkbox" id="includeNucleoside" title="include nucleoside mesh into output" checked>Nucleoside mesh<br>
-            <input type="checkbox" id="includeConnector" title="include connector mesh into output" checked>Connector mesh<br>
-            <input type="checkbox" id="includeBBconnector" title="include backbone connector mesh into output" checked>Backbone connector mesh<br>
-            <label for="3dExportScale">scale: </label>
-            <input type="number" value="1" id="3dExportScale" title="rescale the model" min=1 max=10></br>
-            <label for="3dExportFacesMul">faces multiplier: </label>
-            <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5><br>
-            <input type="checkbox" id="3dExportFlat"
-                title="Ignore system hierarchy and export all object on the same level (makes faster import)">Export flat hierarchy<br>
-            <label for="3dExportFilename">File name: </label>
-            <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name">
+            <hr>
+            <div id="gltfOptions">
+                <fieldset>
+                <legend>Material options for glTF:</legend>
+                <div class="row">
+                    <div class="cell-md-6" title="Set high for a metal look">
+                        <label class="cell">Backbone metalness</label>
+                        <input id="3dExport_bbMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                    </div>
+                    <div class="cell-md-6" title="Set low for a polished look">
+                        <label class="cell">Backbone roughness</label>
+                        <input id="3dExport_bbRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="cell-md-6" title="Set high for a metal look">
+                        <label class="cell">Nucleoside metalness</label>
+                        <input id="3dExport_nsMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                    </div>
+                    <div class="cell-md-6" title="Set low for a polished look">
+                        <label class="cell">Nucleoside roughness</label>
+                        <input id="3dExport_nsRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                    </div>
+                </div>
+                </fieldset>
+                <div class="row">
+                    <input type="checkbox" id="3dExportFlat"
+                        title="Ignore system hierarchy and export all object on the same level (makes faster import)"
+                    >Export flat hierarchy
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row">
+                <div class="cell-md-6">
+                    <label>File name</label>
+                    <input type="text" id="3dExportFilename" size="13" value="output" title="3d file name">
+                </div>
+                <div class="cell-md-6">
+                    <label>Faces multiplier</label>
+                    <input type="number" value="2" id="3dExportFacesMul" title="increases model smoothness" min=1 max=5>
+                </div>
+            </div>
+
+            <p>To hide or change the scaling of the backbones, nucleosides, etc. before export, use the "Visual Components" tool in the "View" menu.</p>
         </div>
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
@@ -208,7 +249,7 @@
     <nav id="menu" data-role="ribbonmenu" class="shifted-content">
         <ul class="tabs-holder flex-wrap">
             <li id='sidebar-toggle' class="static"><a href="#">oxView</a></li>
-            <li ondblclick="view.sectionClicked()"><a href="#section-file">File</a></li>
+            <li ondblclick="view.sectionClicked()"><a id="fileSectionLink"href="#section-file">File</a></li>
             <li ondblclick="view.sectionClicked()" hidden="true" id="trajControls"><a id="trajControlsLink" href="#section-trajectory">Trajectory</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-select">Select</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-edit">Edit</a></li>
@@ -258,10 +299,22 @@
                     <span class="mif-file-download mif-3x"></span>
                     <span class="caption">Sequence file</span>
                 </button>
-                <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
-                    <span class="mif-photo-camera mif-3x"></span>
-                    <span class="caption">Save image</span>
-                </button>
+                <div class="ribbon-split-button">
+                    <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
+                        <span class="mif-photo-camera mif-3x"></span>
+                        <span class="caption">Save image</span>
+                    </button>
+                    <span class="ribbon-split dropdown-toggle">Image size</span>
+                    <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
+                        <label for="fogNear">Scaling factor: </label>
+                        <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2" id="saveImageScalingFactor"
+                            title="Factor with which to scale the current canvas." min=1
+                            onchange="view.updateImageResolutionText()"
+                        >
+                        <hr>
+                        <span>Resolution: <small id="saveImageResolution">? x ?</small></span>
+                    </ul>
+                </div>
                 <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')">
                     <span class="mif-video-camera mif-3x"></span>
                     <span class="caption">Create video</span>
@@ -494,6 +547,12 @@
                             <img src="img/ico/skip.svg">
                             <span class="caption"> Skip</span>
                         </button>
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Remove selected elements and connect neigbours">
+                            <span class="caption"> Connect 3' duplex</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Remove selected elements and connect neigbours">
+                            <span class="caption"> Connect 5' duplex</span>
+                        </button>
                     </div>
                     <input type="text" data-role="input" id="sequence" class="mb-1"
                         data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
@@ -647,10 +706,52 @@
                         <span class="mif-image mif-3x"></span>
                         <span class="caption">Background</span>
                     </button>
-                    <button class="ribbon-button" onclick="toggleVisArbitrary()">
+                    <button class="ribbon-button" onclick="toggleVisArbitrary()" title="Hide selected elements. If selection is empty all elements will become visible again.">
                         <span class="mif-eye mif-3x"></span>
-                        <span class="caption">Toggle visibility</span>
+                        <span class="caption">Hide selection</span>
                     </button>
+                    <div>
+                        <button class="ribbon-button dropdown-toggle">
+                            <span class="mif-eye mif-3x"></span>
+                            <span class="caption">Visible components</span>
+                        </button>
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: max-content;">
+                            <input type="checkbox" id="nucleoside_toggle" onchange="view.setPropertyInScene('nucleoside')" data-role="switch" data-caption="Nucleoside sphere" checked><br>
+                            <input type="checkbox" id="connector_toggle" onchange="view.setPropertyInScene('connector')" data-role="switch" data-caption="Nucleoside connector" checked><br>
+                            <input type="checkbox" id="backbone_toggle" onchange="view.setPropertyInScene('backbone')" data-role="switch" data-caption="Backbone sphere" checked><br>
+                            <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector')" data-role="switch" data-caption="Backbone connector" checked><br>
+                            <details>
+                                <summary onclick="event.stopPropagation()">Change sizes</summary>
+                                <div>
+                                    <div class="flexBetween">
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Nucleoside sphere size
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div class="flexBetween">
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Nucleoside connector thickness
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div class="flexBetween">
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Backbone sphere size
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <div class="flexBetween">
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1/1.1)"><span class="mif-minus"></span></button>
+                                        Backbone connector thickness
+                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span class="mif-plus"></span></button>
+                                    </div>
+                                    <hr>
+                                    <button class="ribbon-icon-button" onclick="['backbone', 'nucleoside','connector', 'bbconnector'].forEach(v=>view.resetComponentScale(v))">
+                                        <span class="mif-undo"></span>
+                                        <span class="caption">Reset</span>
+                                    </button>
+                                </div>
+                            </details>
+                        </ul>
+                    </div>
                     <button class="ribbon-button" onclick="api.switchCamera()">
                         <span class="mif-video-camera mif-3x"></span>
                         <span id="cameraSwitch" class="caption">Orthographic</span>
@@ -669,6 +770,11 @@
                         <span class="mif-video-camera mif-2x"></span>
                         <span class="mif-undo mif-2x"></span>
                         <span class="caption">Reset camera</span>
+                    </button>
+                    <button class="ribbon-button" onclick="view.enableVR()"
+                        title="Reset the camera view">
+                        <span class="mif-2x">VR</span>
+                        <span class="caption">Enable VR</span>
                     </button>
                 </div>
             </div></div>
@@ -818,6 +924,7 @@
         <script src="./ts/lib/tacoxdna.js"></script>
         <script src="./ts/lib/Lut.js"></script>
         <script src="./ts/lib/justcontext.js"></script>
+        <script src="./ts/lib/VRButton.js"></script>
         <script src="./ts/controls/TransformControls.js"></script>
         <script src="./ts/controls/TrackballControls.js"></script>
         <script src="./dist/scene/scene_setup.js"></script>

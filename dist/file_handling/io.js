@@ -24,6 +24,8 @@ class TopReader extends FileReader {
                 for (let j = 0; j < lines.length; j++) {
                     this.elems.set(nucCount + j, nuc);
                 }
+                // Create new cluster for loaded structure:
+                let cluster = ++clusterCounter;
                 lines.forEach((line, i) => {
                     if (line == "") {
                         // Delete last element
@@ -46,6 +48,8 @@ class TopReader extends FileReader {
                     let nuc = this.elems.get(nucCount + i);
                     // Set systemID
                     nuc.sid = this.sidCounter++;
+                    // Set cluster id;
+                    nuc.clusterId = cluster;
                     //create neighbor 3 element if it doesn't exist
                     let n3 = parseInt(l[2]);
                     if (n3 != -1) {
@@ -222,66 +226,34 @@ class TrajectoryReader {
         else
             this.idx--;
     }
-    fetchTFromBinary(buff) {
-        let eqs_idx = buff.indexOf(61); // =
-        let nl = buff.indexOf(10); // \n
-        //console.log(
-        //    String.fromCharCode.apply(null, buff.slice(eqs_idx+1,nl-1)).trim()
-        //);
-        return String.fromCharCode.apply(null, buff.slice(eqs_idx + 1, nl)).trim();
-    }
     indexTrajectory() {
-        this.chunker.getNextChunk().arrayBuffer().then(value => {
-            let buff = new Uint8Array(value);
-            let val = 116; // t
-            let i = -1;
-            //let last_i = -1;
-            let cur_offset = 0;
-            // we know that the 1st offset is 0 as file starts with t 
-            if (this.firstRead)
-                i = 0;
-            //populate the index array by the positions of t
-            while ((i = buff.indexOf(val, i + 1)) != -1) {
-                cur_offset = (this.chunker.getOffset() + i);
-                if (this.offset != cur_offset)
-                    this.lookupReader.addIndex(this.offset, cur_offset - this.offset, this.lookupReader.position_lookup.length);
-                this.offset = cur_offset;
-            }
-            // if there still stuff to fetch on first read ? NOTE: not sure why this is true
-            if (this.chunker.isLast()) {
-                let size = this.chunker.file.size - this.offset;
-                if (size) {
-                    this.lookupReader.addIndex(this.offset, size, this.lookupReader.position_lookup.length);
-                }
-            }
-            // if we have just one conf ?
-            if (this.lookupReader.position_lookup.length == 0) {
-                this.lookupReader.addIndex(0, this.chunker.file.size, this.lookupReader.position_lookup.length);
-            }
-            else { // we are reading a trajectory 
-                if (this.trajControls.hidden) {
-                    // enable traj control
-                    this.indexProgressControls.hidden = false;
-                    this.trajControls.hidden = false;
-                    // set focus to trajectory controls
-                    document.getElementById('trajControlsLink').click();
-                }
-            }
-            // handle first read to display some conf
+        var worker = new Worker('./dist/file_handling/read_worker.js');
+        worker.postMessage(this.datFile);
+        this.firstConf;
+        worker.onmessage = (e) => {
+            let [indices, last, state] = e.data;
+            this.lookupReader.position_lookup = indices;
             if (this.firstRead) {
                 this.firstRead = false;
                 this.lookupReader.getConf(0); // load up first conf
+                this.indexProgressControls.hidden = false;
+                this.trajControls.hidden = false;
+                // set focus to trajectory controls
+                document.getElementById('trajControlsLink').click();
             }
-            if (!this.chunker.isLast()) {
-                //do update magic
-                let state = this.chunker.getEstimatedState(this.lookupReader.position_lookup);
-                this.indexProgress.value = Math.round((state[1] / state[0]) * 100);
-                //process more stuff 
-                this.indexTrajectory();
-            }
-            else {
+            //update progress bar
+            this.indexProgress.value = Math.round((state[1] / state[0]) * 100);
+            if (last) {
                 //finish up indexing
                 notify("Finished indexing!");
+                //dirty hack to handle single conf case
+                if (indices.length == 1) {
+                    trajReader.trajectorySlider.hidden = true;
+                    this.indexProgressControls.hidden = true;
+                    this.trajControls.hidden = true;
+                    document.getElementById('fileSectionLink').click();
+                    return;
+                }
                 // and index file saving 
                 document.getElementById('downloadIndex').hidden = false;
                 // hide progress bar 
@@ -289,14 +261,10 @@ class TrajectoryReader {
                 document.getElementById('trajIndexingProgressLabel').hidden = true;
                 //enable orderparameter selector 
                 document.getElementById("hyperSelectorBtnId").disabled = false;
-                // and index file saving 
-                //(<HTMLElement>document.getElementById('downloadIndex')).hidden=false;
             }
             //update slider
             trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
-        }, reason => {
-            console.log(reason);
-        });
+        };
     }
     downloadIndexFile() {
         makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
@@ -422,7 +390,6 @@ class TrajectoryReader {
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)
             forceHandler.redraw();
-        render();
         // Signal that config has been loaded
         // block the nextConfig loaded to prevent the video loader from continuing after the chunk
         document.dispatchEvent(new Event('nextConfigLoaded'));

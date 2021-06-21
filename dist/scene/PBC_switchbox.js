@@ -29,6 +29,8 @@ function centerAndPBC(elems, targetBox) {
         calcsp(e); });
     systems.forEach(s => s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
+    if (forceHandler)
+        forceHandler.redraw();
     render();
 }
 /**

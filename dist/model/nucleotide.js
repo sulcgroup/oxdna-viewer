@@ -120,43 +120,41 @@ class Nucleotide extends BasicElement {
             sys = this.dummySys;
         }
         let color;
-        if (selectedBases.has(this)) {
-            color = selectionColor;
+        switch (view.coloringMode.get()) {
+            case "Strand":
+                color = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length];
+                break;
+            case "System":
+                color = backboneColors[this.getSystem().id % backboneColors.length];
+                break;
+            case "Cluster":
+                if (!this.clusterId || this.clusterId < 0) {
+                    color = new THREE.Color(0xE60A0A);
+                }
+                else {
+                    color = backboneColors[this.clusterId % backboneColors.length];
+                }
+                break;
+            case "Overlay":
+                color = sys.lutCols[sid];
+                break;
+            case "Custom":
+                if (!this.color) {
+                    // Use overlay color if overlay is loaded, otherwise color gray
+                    if (lut) {
+                        color = sys.lutCols[sid];
+                    }
+                    else {
+                        color = GREY;
+                    }
+                }
+                else {
+                    color = this.color;
+                }
+                break;
         }
-        else {
-            switch (view.coloringMode.get()) {
-                case "Strand":
-                    color = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length];
-                    break;
-                case "System":
-                    color = backboneColors[this.getSystem().id % backboneColors.length];
-                    break;
-                case "Cluster":
-                    if (!this.clusterId || this.clusterId < 0) {
-                        color = new THREE.Color(0xE60A0A);
-                    }
-                    else {
-                        color = backboneColors[this.clusterId % backboneColors.length];
-                    }
-                    break;
-                case "Overlay":
-                    color = sys.lutCols[sid];
-                    break;
-                case "Custom":
-                    if (!this.color) {
-                        // Use overlay color if overlay is loaded, otherwise color gray
-                        if (lut) {
-                            color = sys.lutCols[sid];
-                        }
-                        else {
-                            color = GREY;
-                        }
-                    }
-                    else {
-                        color = this.color;
-                    }
-                    break;
-            }
+        if (selectedBases.has(this)) {
+            color = color.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
         }
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
     }
@@ -219,17 +217,24 @@ class Nucleotide extends BasicElement {
         let strandCount = sys.strands.length;
         for (let i = 0; i < strandCount; i++) { //for every strand in the System
             let strand = sys.strands[i];
-            strand.forEach(e => {
-                if (this.n3 != e && this.n5 != e &&
-                    this.getTypeNumber() != e.getTypeNumber() &&
-                    (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0) {
-                    let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
-                    if (dist < bestDist) {
-                        bestCandidate = e;
-                        bestDist = dist;
+            if (strand.isNucleicAcid()) {
+                strand.forEach((e) => {
+                    if (this.n3 != e && this.n5 != e &&
+                        this.getTypeNumber() != e.getTypeNumber() &&
+                        (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0) {
+                        //check distance
+                        let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
+                        if (dist < bestDist) {
+                            //check orientation
+                            let orient = e.getA1().dot(this.getA1());
+                            if (orient < -0.85) {
+                                bestCandidate = e;
+                                bestDist = dist;
+                            }
+                        }
                     }
-                }
-            });
+                });
+            }
         }
         return bestCandidate;
     }

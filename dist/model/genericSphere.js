@@ -123,50 +123,48 @@ class GenericSphere extends BasicElement {
         }
         let bbColor;
         let aaColor;
-        if (selectedBases.has(this)) {
-            bbColor = selectionColor;
-            aaColor = selectionColor;
-        }
-        else {
-            switch (view.coloringMode.get()) {
-                case "Strand":
-                    bbColor = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length];
-                    aaColor = this.elemToColor(this.type);
-                    break;
-                case "System":
-                    bbColor = backboneColors[this.getSystem().id % backboneColors.length];
-                    aaColor = this.elemToColor(this.type);
-                    break;
-                case "Cluster":
-                    if (!this.clusterId || this.clusterId < 0) {
-                        bbColor = new THREE.Color(0xE60A0A);
-                        aaColor = bbColor.clone();
-                    }
-                    else {
-                        bbColor = backboneColors[this.clusterId % backboneColors.length];
-                        aaColor = bbColor.clone();
-                    }
-                    break;
-                case "Overlay":
-                    bbColor = sys.lutCols[sid];
+        switch (view.coloringMode.get()) {
+            case "Strand":
+                bbColor = backboneColors[(Math.abs(this.strand.id) + this.getSystem().id) % backboneColors.length];
+                aaColor = this.elemToColor(this.type);
+                break;
+            case "System":
+                bbColor = backboneColors[this.getSystem().id % backboneColors.length];
+                aaColor = this.elemToColor(this.type);
+                break;
+            case "Cluster":
+                if (!this.clusterId || this.clusterId < 0) {
+                    bbColor = new THREE.Color(0xE60A0A);
                     aaColor = bbColor.clone();
-                    break;
-                case "Custom":
-                    if (!this.color) {
-                        // Use overlay color if overlay is loaded, otherwise color gray
-                        if (lut) {
-                            bbColor = sys.lutCols[sid];
-                            aaColor = sys.lutCols[sid];
-                        }
-                        else {
-                            bbColor = GREY;
-                        }
+                }
+                else {
+                    bbColor = backboneColors[this.clusterId % backboneColors.length];
+                    aaColor = bbColor.clone();
+                }
+                break;
+            case "Overlay":
+                bbColor = sys.lutCols[sid];
+                aaColor = bbColor.clone();
+                break;
+            case "Custom":
+                if (!this.color) {
+                    // Use overlay color if overlay is loaded, otherwise color gray
+                    if (lut) {
+                        bbColor = sys.lutCols[sid];
+                        aaColor = sys.lutCols[sid];
                     }
                     else {
-                        bbColor = this.color;
+                        bbColor = GREY;
                     }
-                    break;
-            }
+                }
+                else {
+                    bbColor = this.color;
+                }
+                break;
+        }
+        if (selectedBases.has(this)) {
+            bbColor = bbColor.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
+            aaColor = aaColor.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
         }
         sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
         sys.fillVec('nsColors', 3, sid, [aaColor.r, aaColor.g, aaColor.b]);

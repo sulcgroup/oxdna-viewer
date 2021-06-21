@@ -19,6 +19,8 @@
       "./ts/editing/rigid-body_simulation.ts",
       "./ts/editing/translation.ts",
       "./ts/file_handling/file_reading.ts",
+      "./ts/file_handling/tacoxdna_worker.ts",
+      "./ts/file_handling/read_worker.ts",
       "./ts/file_handling/io.ts",
       "./ts/file_handling/output_file.ts",
       "./ts/file_handling/video.ts",

@@ -17,7 +17,13 @@ class STLExporter{
     include_connector : boolean;
     include_bbconnector : boolean;
 
-    constructor(elements : ElementMap, include_backbone : boolean, include_nucleoside: boolean, include_connector: boolean, include_bbconnector: boolean, scale: number, faces_mul : number){ 
+    constructor(elements : ElementMap,
+        include_backbone : boolean, include_nucleoside: boolean,
+        include_connector: boolean, include_bbconnector: boolean,
+        backboneScale: number, nucleosideScale: number,
+        connectorScale: number, bbconnectorScale: number,
+        faces_mul : number
+    ) {
         this.elements = elements;
 
         //this.Backbone    = new THREE.SphereGeometry(.2,10,10);
@@ -25,10 +31,10 @@ class STLExporter{
         //this.Connector   = new THREE.CylinderGeometry(.1,.1,1, 8);  
         //this.BBconnector = new THREE.CylinderGeometry(.1,.05,1, 8); 
 
-        this.Backbone    = new THREE.SphereGeometry(.2 * scale ,5 * faces_mul,5* faces_mul);
-        this.Nucleoside  = new THREE.SphereGeometry(.3 * scale ,5 * faces_mul,5* faces_mul);
-        this.Connector   = new THREE.CylinderGeometry(.1 * scale, .1  * scale, 1, 4* faces_mul);
-        this.BBconnector = new THREE.CylinderGeometry(.1 * scale, .05 * scale, 1, 4* faces_mul);
+        this.Backbone    = new THREE.SphereGeometry(.2 * backboneScale ,5 * faces_mul,5* faces_mul);
+        this.Nucleoside  = new THREE.SphereGeometry(.3 * nucleosideScale ,5 * faces_mul,5* faces_mul);
+        this.Connector   = new THREE.CylinderGeometry(.1 * connectorScale, .1  * connectorScale, 1, 4* faces_mul);
+        this.BBconnector = new THREE.CylinderGeometry(.1 * bbconnectorScale, .05 * bbconnectorScale, 1, 4* faces_mul);
 
         this.include_backbone = include_backbone;
         this.include_bbconnector = include_bbconnector;
@@ -132,10 +138,22 @@ class STLExporter{
 }
 
 
-function saveSTL(name : string, include_backbone : boolean, include_nucleoside: boolean, include_connector: boolean, include_bbconnector: boolean, scale : number, faces_mul: number){  
+function saveSTL(name : string,
+    include_backbone : boolean, include_nucleoside: boolean,
+    include_connector: boolean, include_bbconnector: boolean,
+    backboneScale: number, nucleosideScale: number,
+    connectorScale: number, bbconnectorScale: number,
+    faces_mul: number
+) {
     console.log('Note: The mesh accuracy is set down because js has a limitation on the string length.');
     console.log('on large scenes play with the included objects');
-	var exporter = new STLExporter(elements, include_backbone, include_nucleoside, include_connector, include_bbconnector, scale,faces_mul );
-	var stlString = exporter.parse();
-	makeTextFile( name + '.stl', stlString);
+    var exporter = new STLExporter(
+        elements, include_backbone, include_nucleoside,
+        include_connector, include_bbconnector,
+        backboneScale, nucleosideScale,
+        connectorScale, bbconnectorScale,
+        faces_mul
+    );
+    var stlString = exporter.parse();
+    makeTextFile( name + '.stl', stlString);
   }

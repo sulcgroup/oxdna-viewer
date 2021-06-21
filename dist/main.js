@@ -83,7 +83,6 @@ const networks = []; // Only used for networks, replaced anms
 const graphDatasets = []; // Only used for fluctuation graph
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 var lut, devs; //need for Lut coloring
-var tacoxdna;
 const editHistory = new EditHistory();
 let clusterCounter = 0; // Cluster counter
 //to keep track of if the topology was edited at any point.
@@ -92,15 +91,22 @@ var topologyEdited = false;
 readFilesFromURLParams();
 render();
 function findBasepairs() {
-    elements.forEach(e => {
-        if (e instanceof Nucleotide) {
-            if (!e.pair) {
-                e.pair = e.findPair();
-                if (e.pair) {
-                    e.pair.pair = e;
-                }
-            }
+    systems.forEach(system => {
+        if (!system.checkedForBasepairs) {
+            system.strands.forEach(strand => {
+                strand.forEach(e => {
+                    if (e instanceof Nucleotide) {
+                        if (!e.pair) {
+                            e.pair = e.findPair();
+                            if (e.pair) {
+                                e.pair.pair = e;
+                            }
+                        }
+                    }
+                });
+            });
         }
+        system.checkedForBasepairs = true;
     });
 }
 ;

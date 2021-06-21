@@ -105,17 +105,12 @@ canvas.addEventListener('mousedown', event => {
                     updateView(sys);
                     break;
                 case "Cluster":
-                    if (typeof elements.values().next().value.clusterId == 'undefined') {
-                        document.getElementById("clusterOptions").hidden = false;
-                    }
-                    else {
-                        sys.strands.forEach(strand => strand.forEach(e => {
-                            if (e.clusterId == nucleotide.clusterId) {
-                                e.toggle();
-                            }
-                        }));
-                        updateView(sys);
-                    }
+                    sys.strands.forEach(strand => strand.forEach(e => {
+                        if (e.clusterId == nucleotide.clusterId) {
+                            e.toggle();
+                        }
+                    }));
+                    updateView(sys);
                     break;
             }
             if (tmpSystems.length !== 0) {
@@ -140,7 +135,6 @@ function updateView(sys) {
             sys.callUpdates(["instanceColor"]);
         });
     }
-    render(); //update scene;
     let listBases = [];
     let baseInfoStrands = {};
     //sort selection info into respective containers

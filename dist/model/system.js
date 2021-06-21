@@ -6,6 +6,7 @@
 class System {
     constructor(id, startID) {
         this.strands = [];
+        this.checkedForBasepairs = false;
         this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];

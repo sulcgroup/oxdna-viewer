@@ -15,6 +15,7 @@ class InstanceCopy {
     bpid: number;
     elemType: any;
     system: System;
+    color: THREE.Color;
 
 
     cmOffsets: THREE.Vector3; bbOffsets: THREE.Vector3;
@@ -37,6 +38,7 @@ class InstanceCopy {
         this.type = e.type;
         this.id = e.id;
         this.clusterId = e.clusterId;
+        this.color = e.color;
         this.n3id = e.n3 ? e.n3.id : -1;
         this.n5id = e.n5 ? e.n5.id : -1;
         if(e.isPaired()) {
@@ -173,6 +175,31 @@ function deleteWrapper() {
     editHistory.do(new RevertableDeletion(e));
     topologyEdited = true;
 
+}
+function interconnectDuplex3pWrapper(){
+    let strands = new Set<Strand>();
+    let seq: string = view.getInputValue("sequence").toUpperCase();
+
+    selectedBases.forEach(b=>strands.add(b.strand));
+    if (strands.size != 2 || seq == ""){
+        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.");
+    }else{
+        let [s1,s2] = Array.from(strands);
+        edit.interconnectDuplex3p(s1,s2,seq); 
+    }
+}
+
+function interconnectDuplex5pWrapper(){
+    let strands = new Set<Strand>();
+    let seq: string = view.getInputValue("sequence").toUpperCase();
+
+    selectedBases.forEach(b=>strands.add(b.strand));
+    if (strands.size != 2 || seq == ""){
+        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.");
+    }else{
+        let [s1,s2] = Array.from(strands);
+        edit.interconnectDuplex5p(s1,s2,seq); 
+    }
 }
 
 function skipWrapper() {
