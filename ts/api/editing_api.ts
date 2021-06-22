@@ -897,6 +897,347 @@ module edit{
     }
 
     /**
+     * Experimental Function that Discretizes Density of system (every selected particle has same mass currently 1)
+     */
+    export function discretizeDensity(elems: BasicElement[], dd: number, cellsize: number) {
+        //cellsize must be in Angstroms as we convert it here
+        cellsize /= 8.518; //Angstrom to sim unit length
+        // get positions from Three Vector returned from getPos()
+        let Positions : THREE.Vector3[] = elems.map(e => e.getPos());
+        let [xPositions, yPositions, zPositions] = [elems.map(e => e.getPos().x), elems.map(e => e.getPos().y), elems.map(e => e.getPos().z)]
+        // let xPositions : number[] = elems.map(e => e.getPos().x);
+        // let yPositions : number[] = elems.map(e => e.getPos().y);
+        // let zPositions : number[] = elems.map(e => e.getPos().z);
+
+        // let xmax : number = 0, xmin : number = 0;
+        // let ymax : number = 0, ymin : number = 0;
+        // let zmax : number = 0, zmin : number = 0;
+
+        // Useful for building 3d Grid
+        let [xmax, xmin, ymax, ymin, zmax, zmin] = [Math.max(...xPositions),  Math.min(...xPositions), Math.max(...yPositions),
+                                                    Math.min(...yPositions), Math.max(...zPositions), Math.min(...zPositions)];
+        // xmin = Math.min(...xPositions);
+        // ymax = Math.max(...yPositions);
+        // ymin = Math.min(...yPositions);
+        // zmax = Math.max(...zPositions);
+        // zmin = Math.min(...zPositions);
+
+        // // Assign boxids based off position in the grid
+        // let xboxids : number[] = [];
+        // let yboxids : number[] = [];
+        // let zboxids : number[] = [];
+        // let elemids : number[] = [];
+        // let xGridNum: number = Math.ceil((xmax - xmin)/dd);
+        // let yGridNum: number = Math.ceil((ymax - ymin)/dd);
+        // let zGridNum: number = Math.ceil((zmax - zmin)/dd);
+
+        // let dd = 0.1; //step size of density box in sim units
+        // Numbers for looping through boxids
+        let [xGridNum, yGridNum, zGridNum] = [Math.ceil((xmax - xmin)/dd),  Math.ceil((ymax - ymin)/dd), Math.ceil((zmax - zmin)/dd)]
+        let griddim = [xGridNum, yGridNum, zGridNum];
+
+
+
+        let density_grid = new Array(xGridNum);
+        for(let i = 0; i < xGridNum; i++){
+            density_grid[i] = new Array(yGridNum);
+        }
+        for(let i = 0; i < xGridNum; i++){
+            for(let j = 0; j < yGridNum; j++){
+                density_grid[i][j] = new Array(zGridNum);
+            }
+        }
+        for(let i = 0; i < xGridNum; i++){
+            for(let j = 0; j < yGridNum; j++){
+                for(let k = 0; k < zGridNum; k++) {
+                    density_grid[i][j][k] = 0;
+                }
+            }
+        }
+
+        // density_grid.map(x => {return new Array(yGridNum)}); // 2nd dim
+        // density_grid.forEach(x=> x.map(y=> {return new Array(zGridNum)})) //3rd dim
+        // 3d grid density_grid[xbin][ybin][zbin] = x
+
+        // default particle density for particles of the selected system
+        let defRadius = 1;
+        let defDensity = 1; // sim units
+
+        // get 3d slice as well as coordinates
+        let get_subbox = function(xc, yc, zc, rad) : [number[], number[], number[]]{ //returns slice of density_array (rad**3) and its center
+            // minimum of subbox
+            let n = [xc, yc, zc].map((e, eid) => {
+                if (e-rad < 0) {
+                    return 0;
+                }else {
+                    return e - rad;
+                }
+            });
+            // maximum of subbox
+            let m = [xc, yc, zc].map((e, eid)=>{
+                if (e+rad>griddim[eid]-1) {
+                    return griddim[eid]-1;
+                } else {
+                    return e+rad;
+                }
+            })
+
+            // center
+            let center = [(m[0]-n[0])/2, (m[1]-n[1])/2, (m[2]-n[2])/2]
+            // let subbox = density_grid.slice(n[0], m[0]).map(y => y.slice(n[1], m[1]).map(z => z.slice(n[2], m[2])));
+            return [center, n, m]
+        }
+
+        // Fill grid Function, adds 1 density for any point in sphere of default radius/ default spacing
+        let add_density = function(xc, yc, zc){
+            let bn_rad = defRadius/dd; // simunits/simunits
+            let [center, min, max] = get_subbox(xc, yc, zc, bn_rad);
+            let [cx, cy, cz] = center;
+            for(let i = min[0]; i < max[0]; i++){
+                for(let j = min[1]; j < max[1]; j++){
+                    for(let k = min[2]; k < max[2]; k++){
+                        let dist = Math.sqrt((i-cx)**2 + (j-cy)**2 + (k-cz)**2)
+                        if(dist <= bn_rad){
+                            density_grid[min[0]+i][min[1]+j][min[2]+k] += defDensity
+                        }
+                    }
+                }
+            }
+            // subbox.forEach(x => x.forEach(y => y.forEach(z => { //for each x,y,z in subbox
+            //     // get distance of each point from center
+            //     let dist = Math.sqrt((x-cx)**2 + (y-cy)**2 + (z-cz)**2)
+            //     if(dist <= bn_rad){
+            //         density_grid[min[0]+x][min[1]+y][min[2]+z] += defDensity
+            //     }
+            // })))
+        }
+
+        let elem_boxids = Positions.map(V=>{
+            return [Math.floor((V.x-xmin)/dd), Math.floor((V.y-ymin)/dd), Math.floor((V.z-zmin)/dd)];
+        })
+
+        // fill density grid with particles
+        elem_boxids.forEach(eid => add_density(eid[0], eid[1], eid[2]))
+
+        // make 1d representation for easier looping and working with large arrays
+        let density_flat = new Array(xGridNum*yGridNum*zGridNum);
+        for (let i = 0; i < xGridNum; i+=1) {
+            for (let j = 0; j < yGridNum; j += 1) {
+                for (let k = 0; k < zGridNum; k += 1) {
+                    density_flat[i + xGridNum * j + xGridNum * yGridNum * k]=density_grid[i][j][k];
+                }
+            }
+        }
+
+
+        // convert 1d to 3d index
+        let onetothree = function(index){
+            let zv = Math.floor(index/(xGridNum*yGridNum));
+            let tmp = index - (zv*xGridNum*yGridNum);
+            let yv = Math.floor(tmp/ xGridNum);
+            let xv = tmp % xGridNum;
+            return [xv, yv, zv];
+        }
+        // convert 3d to 1d index
+        let threetoone = function(xi, yi, zi){
+            return xi + xGridNum * yi + xGridNum * yGridNum * zi;
+        }
+
+        let test = 1024;
+        let [xt, yt, zt] = onetothree(test);
+        let ret = threetoone(xt, yt, zt);
+
+
+
+        let placeParticle1D =  function(placementindex, particle_radius, value){
+            let effrad = Math.floor(particle_radius/dd)
+            let tworad = effrad*2;
+            let [xc, yc, zc] = onetothree(placementindex);
+
+            let [center, min, max] = get_subbox(xc, yc, zc, tworad);
+            let [cx, cy, cz] = center;
+            for(let i = min[0]; i < max[0]; i++){
+                for(let j = min[1]; j < max[1]; j++){
+                    for(let k = min[2]; k < max[2]; k++){
+                        let dist = Math.sqrt((i-cx)**2 + (j-cy)**2 + (k-cz)**2)
+                        if(dist <= effrad){
+                            density_flat[threetoone(min[0]+i,min[1]+j, min[2]+k)] -= value;
+                        } else if (dist > tworad) {
+                            // density_flat[threetoone(min[0]+x,min[1]+y, min[2]+z)] -= 0.2*1;
+                        } else { // [effrad, tworad]
+                            density_flat[threetoone(min[0]+1,min[1]+2, min[2]+3)] -= 0.25*value;
+                        }
+                    }
+                }
+            }
+        }
+
+
+        let pos = density_flat.filter(function (a) {return a>= 0;})
+        let postotal = pos.reduce(function(a,b) {return a+b;})
+
+        let tol = 10;
+        // use the 3d grid to iterate through
+        // use the 1d for finding highest density
+        let placedParticles = [];
+        while (postotal > tol){
+            let target_rad = cellsize;
+            // find max
+            let max = density_flat.reduce(function(a, b) {return Math.max(a, b);});
+            // get index of max
+            let oned = density_flat.indexOf(max);
+            //Place particle in grid, subtracts density from density flat
+            placeParticle1D(oned, target_rad, max)
+            // get 3d index
+            let threeD = onetothree(oned);
+            // get max val of placement
+            threeD.push(max)
+            placedParticles.push(threeD);
+
+            pos = density_flat.filter(function (a) {return a>= 0;})
+            postotal = pos.reduce(function(a,b) {return a+b;})
+        }
+
+        // sphere on density_grid indices, anything in placed particle sphere get indexed for that particle
+        // need to back out which particles are represented by the placed particles
+        let assignIndices = function(placed){
+            let indices = placed.map(function (a) {return [];});
+            placed.forEach((a, aindx) => {
+                let [x, y, z, d] = a;
+                let target_rad = cellsize;
+                let [center, min, max] = get_subbox(x, y, z, target_rad)
+                let in_rad = elem_boxids.filter(function(indx){
+                    if(min[0]<=indx[0] && indx[0]<=max[0]) { // keep elements with correct x dim index
+                        if(min[1]<=indx[1] && indx[1]<=max[1]){ // keep elements with correct y dim index
+                            if(min[2]<=indx[2] && indx[2]<=max[2]){ // keep elements with correct z dim index
+                                // keeps elements within radius of the placed particle
+                                return (indx[0] - center[0]) ** 2 + (indx[1] - center[1]) ** 2 + (indx[2] - center[2]) ** 2 < target_rad;
+                            } else return false;
+                        } else return false;
+                    } else {
+                        return false;
+                    }
+                })
+
+                // get indices of filtered bases
+                indices[aindx] = in_rad.map(function(indx){
+                    return elem_boxids.indexOf(indx);
+                })
+            })
+
+            return indices;
+        }
+
+        let indexfile = assignIndices(placedParticles)
+
+
+        let gPositions = placedParticles.map(indx => {
+            return new THREE.Vector3(indx[0]*dd, indx[1]*dd, indx[2]*dd)
+        });
+        let gMasses = placedParticles.map(indx => {
+            return indx[3];
+        })
+
+        // let elemIndx : number = 0;
+        // elems.forEach(elem => {
+        //         let xbid : number = Math.floor((elem.getPos().x - xmin)/cellsize);
+        //         let ybid : number = Math.floor((elem.getPos().y - ymin)/cellsize);
+        //         let zbid : number = Math.floor((elem.getPos().z - zmin)/cellsize);
+        //         xboxids.push(xbid);
+        //         yboxids.push(ybid);
+        //         zboxids.push(zbid);
+        //         elemids.push(elemIndx);
+        //         elemIndx +=1;
+        //     }
+        // )
+
+        // // Numbers for looping through boxids
+        // let xGridNum: number = Math.ceil((xmax - xmin)/cellsize);
+        // let yGridNum: number = Math.ceil((ymax - ymin)/cellsize);
+        // let zGridNum: number = Math.ceil((zmax - zmin)/cellsize);
+
+        // New Particle Arrays
+        // let gPositions : THREE.Vector3[] = [];
+
+        // let gMasses: number [] = [];
+        // let indexfile = [];
+        // let currentBox: number[] = [];
+
+        // //Sort through boxids and generate array for intialization of new particles
+        // for (let i = 0; i < xGridNum; i+=1) {
+        //     for (let j = 0; j < yGridNum; j += 1) {
+        //         for (let k = 0; k < zGridNum; k += 1) {
+        //             //returns only boxid entries matching the current i, j, k
+        //             currentBox = [];
+        //
+        //             for(let p: number = 0; p < xboxids.length; p++){
+        //                 if(xboxids[p]==i && yboxids[p]==j && zboxids[p]==k){
+        //                     currentBox.push(elemids[p])
+        //                 }
+        //             }
+        //
+        //             //If any particle in this section of the grid
+        //             if (currentBox.length > 0) {
+        //                 indexfile.push(currentBox);
+        //                 let m = currentBox.length;
+        //                 let com = new THREE.Vector3(0, 0, 0);
+        //                 for (let l = 0; l < m; l += 1) {
+        //                     com.add(elems[currentBox[l]].getPos());
+        //                 }
+        //                 com = com.divideScalar(m);
+        //                 gPositions.push(com.clone());
+        //                 gMasses.push(m);
+        //             }
+        //         }
+        //     }
+        // }
+
+        // Now I need to Return the New System
+        //dummy system
+        let dumb = new System(tmpSystems.length, 0);
+        dumb.initInstances(gPositions.length);
+        tmpSystems.push(dumb);
+
+        let currentelemsize = elements.size;
+        let realSys = new System(sysCount++, currentelemsize);
+        realSys.initInstances(0);
+        systems.push(realSys);
+        addSystemToScene(realSys);
+
+        let gstrand = realSys.addNewGenericSphereStrand();
+        let newElems: GenericSphere[] = [];
+        let last;
+        for(let i: number = 0; i < gPositions.length; i++) {
+            let be = gstrand.createBasicElement(currentelemsize + i);
+            elements.push(be);
+            be.sid = i;
+            be.dummySys = dumb;
+            be.type = 'gs';
+            be.n5 = null;
+            if(i != 0) {
+                let prev = newElems[i-1];
+                be.n3 = prev;
+                prev.n5 = be;
+            } else {
+                be.n3 = null;
+            }
+            be.strand = gstrand;
+            be.mass = gMasses[i];
+            newElems.push(be);
+            last = be;
+        }
+        gstrand.setFrom(last);
+
+        newElems.forEach((e, eid) => {
+            e.calcPositions(gPositions[eid]);
+        })
+
+        addSystemToScene(dumb); // add tmpSys to scene
+
+        return {elems: newElems, indx: indexfile};
+    }
+
+    /**
      * Experimental Function that Discretizes Mass of system (every particle has same mass currently 1)
      */
     export function discretizeMass(elems: BasicElement[], cellsize: number) {

@@ -224,6 +224,10 @@ function deleteNetworkWrapper(nid) {
     if (net.onscreen) {
         net.toggleVis(); // turn it off
     }
+    try {
+        view.removeNetworkData(nid);
+    }
+    catch (e) { }
     networks.splice(nid, 1);
     if (selectednetwork == nid)
         selectednetwork = -1;
@@ -231,7 +235,7 @@ function deleteNetworkWrapper(nid) {
 }
 function fillEdgesWrapper(nid, edgecase) {
     // Easy expansion for other edge methods
-    if (networks.length == 0) {
+    if (networks.length == 0 || nid < 0) {
         notify('No Networks Found, Please Create Network');
     }
     else {
@@ -245,6 +249,9 @@ function fillEdgesWrapper(nid, edgecase) {
                 else {
                     net.edgesByCutoff(cutoff);
                 }
+                break;
+            case 1:
+                net.edgesMWCENM();
         }
     }
 }
@@ -258,10 +265,18 @@ function visualizeNetworkWrapper(nid) {
 }
 function selectNetworkWrapper(nid) {
     clearSelection();
-    let net = networks[nid];
+    let net;
+    try {
+        net = networks[nid];
+    }
+    catch (e) {
+        notify("Network " + (nid + 1).toString() + " Does Not Exist");
+        return;
+    }
+    selectednetwork = nid; // global declared in main
     net.selectNetwork();
 }
-function discretizeMassWrapper() {
+function discretizeMassWrapper(option) {
     if (selectedBases.size == 0) { // Need Elements
         notify("Please select Bases");
         return;
@@ -274,7 +289,14 @@ function discretizeMassWrapper() {
     else {
         let elems = Array.from(selectedBases); // Save so that we can clear the selection
         clearSelection();
-        let ret = edit.discretizeMass(elems, cellSize);
+        let ret;
+        if (option == 0) {
+            ret = edit.discretizeMass(elems, cellSize);
+        }
+        else if (option == 1) {
+            // cellsize is the placed particle radius
+            ret = edit.discretizeDensity(elems, 0.2, cellSize);
+        }
         const InstMassSys = ret["elems"].map(e => new InstanceCopy(e));
         editHistory.add(new RevertableAddition(InstMassSys, ret["elems"]));
         flux.prepIndxButton(ret["indx"]);

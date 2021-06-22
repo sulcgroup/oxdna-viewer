@@ -9,6 +9,10 @@ class AminoAcid extends BasicElement {
         this.a3 = new THREE.Vector3(0., 0., 0.);
     }
     ;
+    setPDBIndices(datasetindx, chainid, pdbresnum) {
+        this.pdbindices = [datasetindx, chainid, pdbresnum];
+    }
+    ;
     elemToColor(elem) {
         elem = { "K": 0, "C": 1, "A": 2, "T": 3, "E": 3, "S": 4, "D": 5, "N": 6, "Q": 7, "H": 8, "G": 10, "P": 11, "R": 12, "V": 13, "I": 14, "L": 15, "M": 16, "F": 17, "Y": 18, "W": 19 }[elem];
         if (elem == undefined)

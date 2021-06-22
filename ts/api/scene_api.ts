@@ -129,6 +129,41 @@ module api{
         selectElements(getElements(targets), keepPrevious);
     }
 
+    export function selectPDBIDs(targetPDBNumber: number[], chainids?: string[], keepPrevious?: boolean) {
+        if (!keepPrevious) {
+            clearSelection();
+        }
+        if(chainids == undefined){
+            for (let i = 0; i < targetPDBNumber.length; i++) {
+                elements.forEach((e, idx) => {
+                    if (e.isAminoAcid()) {
+                        let f = <AminoAcid>e;
+                        if (parseInt(f.pdbindices[2]) == targetPDBNumber[i]) {
+                            selectElements([e], true);
+                        }
+                    }
+                })
+            }
+        } else {
+            if (chainids.length == 0 && chainids.length != targetPDBNumber.length) notify("Please provide both residue and PDB number for all queries");
+            for (let i = 0; i < targetPDBNumber.length; i++) {
+                elements.forEach((e, idx) => {
+                    if (e.isAminoAcid()) {
+                        let f = <AminoAcid>e;
+                        if (chainids.length != 0 && parseInt(f.pdbindices[2]) == targetPDBNumber[i]) {
+                            if (chainids[i] == f.pdbindices[1]) {
+                                selectElements([e], true);
+                            }
+                        }
+                    }
+                })
+            }
+        }
+        if(selectedBases.size == 0){
+            notify("No Matching PDB Identifiers Found");
+        }
+    }
+
     /**
      * Show the specified element in the viewport
      * @param element Element to center view at

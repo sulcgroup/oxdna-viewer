@@ -407,7 +407,7 @@ class View {
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
-            this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
+            // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
             if (g.enabled()) {
                 // Make sure something is selected
@@ -605,6 +605,20 @@ class View {
             this.createWindow(id, oncreate);
         }
     }
+    toggleFluxWindow(id, oncreate) {
+        let elem = this.doc.getElementById(id);
+        if (elem) {
+            Metro.window.toggle(elem);
+            // flux.fluxWindowOpen = !flux.fluxWindowOpen;
+            flux.toggleDatasetsandNetworks();
+            // flux.flushDatasetsandNetworks();
+        }
+        else {
+            this.createWindow(id, oncreate);
+            // flux.fluxWindowOpen = true;
+            flux.toggleDatasetsandNetworks();
+        }
+    }
     createWindow(id, oncreate) {
         fetch(`windows/${id}.json`)
             .then(response => response.json())
@@ -711,27 +725,34 @@ class View {
             }
         }));
     }
-    //Network Selector Methods
+    //Network Selector Methods (Protein tab)
     addNetwork(nid) {
-        let ul = document.getElementById("networks");
-        let li = document.createElement("li");
         let name = "Network " + (nid + 1).toString();
-        li.setAttribute('id', name);
-        li.appendChild(document.createTextNode(name));
-        li.setAttribute("onclick", String(selectednetwork = nid));
-        ul.appendChild(li);
+        let id = "Network " + (nid + 1).toString() + " Select";
+        let exists = !!document.getElementById(id);
+        if (!exists) {
+            let ul = document.getElementById("networks");
+            let li = document.createElement("li");
+            li.setAttribute('id', id);
+            li.appendChild(document.createTextNode(name));
+            li.setAttribute("onclick", "selectNetworkWrapper(" + nid.toString() + ")"); // yikes
+            ul.appendChild(li);
+        }
     }
     removeNetwork(nid) {
-        let ul = document.getElementById("networks");
-        let name = "Network " + (nid + 1).toString();
-        let item = document.getElementById(name);
-        ul.removeChild(item);
+        let id = "Network " + (nid + 1).toString() + " Select";
+        let exists = !!document.getElementById(id);
+        if (exists) {
+            let ul = document.getElementById("networks");
+            let item = document.getElementById(id);
+            ul.removeChild(item);
+        }
     }
     toggleDataset(gid) {
         let GD = graphDatasets[gid];
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        let x = document.getElementById(name);
-        if (typeof (x) != 'undefined' && x != null) {
+        let exists = !!document.getElementById(name);
+        if (!exists) {
             //exists
             this.removeGraphData(gid);
         }
@@ -739,73 +760,70 @@ class View {
             this.addGraphData(gid);
         }
     }
-    toggleSideBarDatasets() {
-        if (this.fluxSideBarDisplayed) {
-            for (let i = 0; i < graphDatasets.length; i++) {
-                this.removeGraphData(i);
-            }
-            for (let i = 0; i < networks.length; i++) {
-                this.removeNetworkData(i);
-            }
-            this.fluxSideBarDisplayed = false;
-        }
-        else {
-            for (let i = 0; i < networks.length; i++) {
-                this.addNetworkData(i);
-            }
-            for (let i = 0; i < graphDatasets.length; i++) {
-                this.addGraphData(i);
-            }
-            this.fluxSideBarDisplayed = true;
-        }
-    }
+    // UI methods for adding and removing info from lists in Fluctuation tab
     addGraphData(gid) {
         let GD = graphDatasets[gid];
-        let ul = document.getElementById("datalist"); //In fluctuation Window
-        let li = document.createElement("li");
-        let sp1 = document.createElement("span");
-        let sp2 = document.createElement("span");
-        sp1.setAttribute('class', 'label');
-        sp2.setAttribute('class', 'second-label');
-        sp1.appendChild(document.createTextNode(GD.label));
-        sp2.appendChild(document.createTextNode(GD.datatype));
-        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        li.setAttribute('id', name);
-        li.setAttribute('value', String(gid));
-        li.appendChild(sp1);
-        li.appendChild(sp2);
-        li.onclick = function () { flux.toggleData(li.value); };
-        ul.appendChild(li);
+        let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype; // Main label
+        let elementExists = !!document.getElementById(name); // boolean return if element exists
+        if (!elementExists) {
+            let ul = document.getElementById("datalist"); //In fluctuation Window
+            let li = document.createElement("li");
+            let sp1 = document.createElement("span");
+            let sp2 = document.createElement("span");
+            sp1.setAttribute('class', 'label');
+            sp2.setAttribute('class', 'second-label');
+            sp1.appendChild(document.createTextNode(GD.label));
+            sp2.appendChild(document.createTextNode(GD.oDatatype));
+            li.setAttribute('id', name);
+            li.setAttribute('value', String(gid));
+            li.appendChild(sp1);
+            li.appendChild(sp2);
+            li.onclick = function () { flux.toggleData(li.value); };
+            ul.appendChild(li);
+        }
     }
     addNetworkData(nid) {
-        let ul = document.getElementById("readynetlist"); //In fluctuation Window
-        let li = document.createElement("li");
-        let sp1 = document.createElement("span");
-        let sp2 = document.createElement("span");
-        sp1.setAttribute('class', 'label');
-        sp2.setAttribute('class', 'second-label');
         let name = "Network " + (nid + 1).toString();
-        sp1.appendChild(document.createTextNode(name));
-        sp2.appendChild(document.createTextNode(networks[nid].networktype));
-        li.setAttribute('id', name);
-        li.setAttribute('value', String(nid));
-        li.appendChild(sp1);
-        li.appendChild(sp2);
-        li.onclick = function () { flux.fitData(li.value); };
-        ul.appendChild(li);
+        let exists = !!document.getElementById(name);
+        if (!exists) {
+            if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
+                let ul = document.getElementById("readynetlist"); //In fluctuation Window
+                let li = document.createElement("li");
+                let sp1 = document.createElement("span");
+                let sp2 = document.createElement("span");
+                sp1.setAttribute('class', 'label');
+                sp2.setAttribute('class', 'second-label');
+                let name = "Network " + (nid + 1).toString();
+                sp1.appendChild(document.createTextNode(name));
+                sp2.appendChild(document.createTextNode(networks[nid].networktype));
+                li.setAttribute('id', name);
+                li.setAttribute('value', String(nid));
+                li.appendChild(sp1);
+                li.appendChild(sp2);
+                li.onclick = function () {
+                    flux.fitData(li.value);
+                };
+                ul.appendChild(li);
+            }
+        }
     }
     removeGraphData(gid) {
         let GD = graphDatasets[gid];
-        let ul = document.getElementById("datalist");
-        let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
-        let li = document.getElementById(name);
-        ul.removeChild(li);
+        let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype;
+        let elementExists = !!document.getElementById(name); // boolean return if element exists
+        if (elementExists) {
+            let ul = document.getElementById("datalist");
+            let li = document.getElementById(name);
+            ul.removeChild(li);
+        }
     }
     removeNetworkData(nid) {
-        let ul = document.getElementById("readynetlist");
-        let name = "Network " + (nid + 1).toString();
-        let li = document.getElementById(name);
-        ul.removeChild(li);
+        if (networks[nid].fittingReady) {
+            let ul = document.getElementById("readynetlist");
+            let name = "Network " + (nid + 1).toString();
+            let li = document.getElementById(name);
+            ul.removeChild(li);
+        }
     }
 }
 let view = new View(document);
@@ -818,6 +836,7 @@ class graphData {
         this.units = u;
         this.gammaSim = 0;
         this.cutoff = 0;
+        this.oDatatype = this.datatype;
     }
     ;
     convertType(format) {
@@ -887,6 +906,7 @@ class fluxGraph {
         this.temp = 0;
         this.chart = null;
         this.currentindexinfo = [];
+        this.fluxWindowOpen = false;
         // Specific to the chart
         this.charttype = 'line';
         this.chartdata = {
@@ -936,10 +956,64 @@ class fluxGraph {
         };
     }
     ;
-    toggleGraph() {
-        if (this.chart == null) {
-            this.initializeGraph();
-        }
+    initChart() {
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = async () => {
+            await delay(50);
+            try {
+                let ctx = document.getElementById("flux").getContext('2d');
+                this.chart = new Chart(ctx, this.chartconfig);
+            }
+            catch {
+                notify("Graph could not be Initialized");
+            }
+        };
+        wait();
+    }
+    toggleDatasetsandNetworks() {
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+        const wait = async () => {
+            await delay(100);
+            try {
+                flux.fluxWindowOpen = !flux.fluxWindowOpen;
+                if (flux.fluxWindowOpen) {
+                    flux.loadDatasetsandNetworks();
+                }
+                else {
+                    flux.flushDatasetsandNetworks();
+                }
+            }
+            catch {
+                notify("Dataset and Network Data could not be Initialized");
+            }
+        };
+        wait();
+    }
+    loadDatasetsandNetworks() {
+        if (graphDatasets.length > 0)
+            graphDatasets.forEach((g, gid) => { view.addGraphData(gid); });
+        if (networks.length > 0)
+            networks.forEach((n, nid) => { if (n.fittingReady) {
+                view.addNetworkData(nid);
+            } });
+    }
+    flushDatasetsandNetworks() {
+        if (graphDatasets.length > 0)
+            graphDatasets.forEach((g, gid) => {
+                try {
+                    view.removeGraphData(gid);
+                }
+                catch (e) { }
+            });
+        if (networks.length > 0)
+            networks.forEach((n, nid) => {
+                if (n.fittingReady) {
+                    try {
+                        view.removeNetworkData(nid);
+                    }
+                    catch (e) { }
+                }
+            });
     }
     clearGraph() {
         if (this.gids.length != 0)
@@ -959,7 +1033,7 @@ class fluxGraph {
         };
         jsonReader.onloadend = () => {
             graphDatasets[graphDatasets.length - 1].label = filearr.pop().name; //rename
-            if (view.fluxSideBarDisplayed)
+            if (this.fluxWindowOpen)
                 view.addGraphData(graphDatasets.length - 1); //add to aside bar if its displayed
         };
         if (files.length == 0)
@@ -1076,11 +1150,6 @@ class fluxGraph {
         }
     }
     ;
-    toggleSidebar() {
-        let sb = document.getElementById('fluxbar');
-        // sb.toggle
-    }
-    ;
     applyCurrentIndx(mode = "avg") {
         if (this.gids.length != 1) {
             notify("Please Select a Single Dataset to Apply Indexing To");
@@ -1160,6 +1229,10 @@ class fluxGraph {
         }
         // get network, make sure edges are there, otherwise nothing to calculate
         let net = networks[nid];
+        if (net.particles.length > 1000) {
+            notify("Large Networks (n>1000) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
+            return;
+        }
         if (net.reducedEdges.total == 0) {
             notify("Network's Edges must be filled prior to Fitting");
             return;
@@ -1171,22 +1244,49 @@ class fluxGraph {
         }
         // ANM Solving, only one for a little bit
         if (net.networktype == 'ANM') {
-            let hess = net.generateHessian();
-            let invH = net.invertHessian(hess);
-            let temp = view.getInputNumber('temp');
-            let rmsf = net.getRMSF(invH, temp);
-            let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
-            let xvals = fit[0];
-            let fitval = fit[1];
-            let m = fit[2];
-            let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
-            let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
-            // rmsf is returned currently to check the Hessian inversion process
-            let gendata = new graphData(GD.label + " Fit", fitval, GD.xdata, "rmsf", "A_sqr");
-            gendata.gammaSim = sim_k;
-            let ngid = graphDatasets.length;
-            graphDatasets.push(gendata);
-            view.addGraphData(ngid);
+            let rmsf = [];
+            if (window.Worker) {
+                const mainWorker = new Worker('/oxdna-viewer/dist/model/anm_worker.js');
+                let temp = view.getInputNumber('temp');
+                function activate() {
+                    var promise = new Promise(function (resolve, reject) {
+                        var counter = 0;
+                        // var array = [];
+                        var callback = function (message) {
+                            counter++;
+                            rmsf = rmsf.concat(message.data);
+                            //And when all workers ends, resolve the promise
+                            if (counter >= 1 && rmsf.length > 0) {
+                                //We resolve the promise with the array of results.
+                                let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
+                                let xvals = fit[0];
+                                let fitval = fit[1];
+                                let m = fit[2];
+                                let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
+                                let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
+                                // rmsf is returned currently to check the Hessian inversion process
+                                let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "rmsf", "A_sqr");
+                                gendata.gammaSim = sim_k;
+                                let ngid = graphDatasets.length;
+                                graphDatasets.push(gendata);
+                                view.addGraphData(ngid);
+                                resolve(message.data);
+                            }
+                        };
+                        mainWorker.onmessage = callback;
+                        mainWorker.postMessage([net.elemcoords.xI.slice(), net.elemcoords.yI.slice(), net.elemcoords.zI.slice(),
+                            net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
+                            net.masses.slice(), temp]);
+                    });
+                    return promise;
+                }
+                activate().then(r => mainWorker.terminate());
+            }
+            else {
+                console.log("No Webworker Found");
+                return;
+            }
+            // This should be interesting
         }
     }
     ;

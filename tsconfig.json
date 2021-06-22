@@ -39,6 +39,7 @@
       "./ts/model/genericSphere.ts",
       "./ts/model/svd.ts",
       "./ts/model/leastSquares.ts",
+      "./ts/model/anm_worker.ts",
       "./ts/scene/instancing.ts",
       "./ts/scene/mesh_setup.ts",
       "./ts/scene/PBC_switchbox.ts",

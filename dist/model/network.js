@@ -12,22 +12,25 @@ class Edges {
         this.extraParams = [];
     }
     addEdge(id1, id2, eqdist, type, k = 1, xparams = []) {
-        if (id1 < id2) {
-            this.p1.push(id1);
-            this.p2.push(id2);
-            this.ks.push(k);
-            this.types.push(type);
-            this.eqDist.push(eqdist);
-            this.extraParams.push(xparams);
-            this.total += 1;
+        if (id1 == id2)
+            return; // Can't Add Edge to Itself
+        let ind = this.checkEdge(id1, id2, eqdist);
+        if (ind > 0) {
+            this.ks[ind] += k; // additive spring constants, I did this for MWCENM hopefully it doesn't bite me later
         }
-        else if (id2 > id1) {
-            this.p1.push(id2);
-            this.p2.push(id1);
+        else {
+            if (id1 < id2) {
+                this.p1.push(id1);
+                this.p2.push(id2);
+            }
+            else if (id1 > id2) {
+                this.p1.push(id2);
+                this.p2.push(id1);
+            }
             this.ks.push(k);
+            this.types.push(type);
             this.eqDist.push(eqdist);
             this.extraParams.push(xparams);
-            this.types.push(type);
             this.total += 1;
         }
     }
@@ -46,6 +49,18 @@ class Edges {
                 this.total -= 1;
                 break;
             }
+        }
+    }
+    ;
+    checkEdge(id1, id2, eqdist) {
+        let dist = this.eqDist.indexOf(eqdist);
+        if (dist > -1) {
+            if ((this.p1[dist] == id1 && this.p2[dist] == id2) || (this.p2[dist] == id1 && this.p1[dist] == id2)) {
+                return dist;
+            }
+        }
+        else {
+            return dist;
         }
     }
     ;
@@ -73,25 +88,31 @@ class Network {
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
         this.networktype = 'empty';
-        this.onscreen = false;
+        this.onscreen = false; // parameter for viewing the networks
+        this.cutoff = 0;
         this.elemcoords = {
-            coords: this.particles.map(e => e.getPos()),
-            // xI: selectedMonomers.map(e => e.getPos().x),
-            // yI: selectedMonomers.map(e => e.getPos().y),
-            // zI: selectedMonomers.map(e => e.getPos().z),
+            // coords: this.particles.map(e => e.getPos()),
+            xI: selectedMonomers.map(e => e.getPos().x),
+            yI: selectedMonomers.map(e => e.getPos().y),
+            zI: selectedMonomers.map(e => e.getPos().z),
             distance: function (i, j) {
-                return this.coords[i].distanceTo(this.coords[j]);
-                // return Math.sqrt((this.xI[i] - this.xI[j])**2 + (this.yI[i] - this.yI[j])**2 + (this.zI[i] - this.zI[j])**2)
+                // return this.coords[i].distanceTo(this.coords[j]);
+                return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
             },
             rotation: function (i, j) {
-                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.coords[i].clone().sub(this.coords[j]).normalize()
-                // THREE.Vector3(this.xI[i]-this.xI[j],this.yI[i]-this.yI[j], this.zI[i]-this.zI[j]).normalize()
-                );
+                return new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), //this.coords[i].clone().sub(this.coords[j]).normalize()
+                new THREE.Vector3(this.xI[i] - this.xI[j], this.yI[i] - this.yI[j], this.zI[i] - this.zI[j]).normalize());
             },
             center: function (i, j) {
-                return this.coords[i].clone().add(this.coords[j]).divideScalar(2);
-                // return new THREE.Vector3((this.xI[i]+this.xI[j])/2, (this.yI[i]+this.yI[j])/2, (this.zI[i]+this.zI[j])/2);
+                // return this.coords[i].clone().add(this.coords[j]).divideScalar(2);
+                return new THREE.Vector3((this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2);
+            },
+            diff: function (i, j) {
+                return new THREE.Vector3((this.xI[j] - this.xI[i]), (this.yI[j] - this.yI[i]), (this.zI[j] - this.zI[i]));
             }
+        };
+        this.center = function (i, j) {
+            return this.particles[i].getPos().clone().add(this.particles[j].getPos()).divideScalar(2);
         };
         flux.prepJSONButton(nid);
     }
@@ -104,6 +125,21 @@ class Network {
         this.colors = new Float32Array(this.INSTANCES * 3);
         this.scales = new Float32Array(this.INSTANCES * 3);
         this.visibility = new Float32Array(this.INSTANCES * 3);
+    }
+    ;
+    callUpdates(names) {
+        names.forEach((name) => {
+            this.network.geometry["attributes"][name].needsUpdate = true;
+            // this.backbone.geometry["attributes"][name].needsUpdate = true;
+            // this.nucleoside.geometry["attributes"][name].needsUpdate = true;
+            // this.connector.geometry["attributes"][name].needsUpdate = true;
+            // this.bbconnector.geometry["attributes"][name].needsUpdate = true;
+            // if (name == "instanceScale" || name == "instanceRotation") {
+            // }
+            // else {
+            //     this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
+            // }
+        });
     }
     ;
     toJson() {
@@ -119,11 +155,34 @@ class Network {
     ;
     sendtoUI() {
         this.fittingReady = true;
+        let name = "Network " + (this.nid + 1).toString();
+        if (flux.fluxWindowOpen) {
+            let exists = !!document.getElementById(name);
+            if (!exists) {
+                view.addNetworkData(this.nid);
+            }
+        }
     }
     ;
     fillVec(vecName, unitSize, pos, vals) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i];
+        }
+    }
+    ;
+    getVec(vecName, unitSize, pos) {
+        let vec = [];
+        for (let i = 0; i < unitSize; i++) {
+            vec.push(this[vecName][pos * unitSize + i]);
+        }
+        if (unitSize == 3) {
+            return new THREE.Vector3(vec[0], vec[1], vec[2]);
+        }
+        else if (unitSize == 4) {
+            return new THREE.Vector4(vec[0], vec[1], vec[2], vec[3]);
+        }
+        else {
+            return vec;
         }
     }
     ;
@@ -175,11 +234,37 @@ class Network {
         }
     }
     ;
+    updatePositions() {
+        // update all coordinates
+        this.elemcoords.xI = this.particles.map(e => e.getPos().x);
+        this.elemcoords.yI = this.particles.map(e => e.getPos().y);
+        this.elemcoords.zI = this.particles.map(e => e.getPos().z);
+        //update all connection positions by finding midpoint of new locations
+        for (let t = 0; t < this.reducedEdges.total; t++) {
+            let i = this.reducedEdges.p1[t];
+            let j = this.reducedEdges.p2[t];
+            let pos = this.center(i, j).toArray();
+            this.fillVec('offsets', 3, t, [pos[0], pos[1], pos[2]]);
+        }
+        this.callUpdates(["instanceOffset"]);
+    }
+    ;
+    updateRotations(q) {
+        for (let t = 0; t < this.reducedEdges.total; t++) {
+            let currRot = this.getVec('rotations', 4, t);
+            let newRot = glsl2three(currRot);
+            newRot.multiply(q);
+            this.fillVec('rotations', 4, t, [newRot.w, newRot.z, newRot.y, newRot.x]);
+        }
+        this.callUpdates(["instanceOffset", "instanceRotation"]);
+    }
+    ;
     initEdge(t, col) {
         // fill vectors for single edge in network
         let i = this.reducedEdges.p1[t];
         let j = this.reducedEdges.p2[t];
-        let pos = this.elemcoords.center(i, j);
+        let pos = this.center(i, j);
+        // the ot
         let rot = this.elemcoords.rotation(i, j);
         let dij = this.elemcoords.distance(i, j);
         this.fillVec('offsets', 3, t, [pos.x, pos.y, pos.z]);
@@ -192,6 +277,7 @@ class Network {
     // Functions above are meant to be more universal
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms) {
+        this.cutoff = cutoffValueAngstroms;
         this.reducedEdges.clearAll();
         this.clearConnections();
         this.selectNetwork();
@@ -199,8 +285,8 @@ class Network {
         // go through coordinates and assign connections if 2 particles
         // are less than the cutoff value apart
         let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
-        for (let i = 0; i < this.elemcoords.coords.length; i++) {
-            for (let j = 1; j < this.elemcoords.coords.length; j++) {
+        for (let i = 0; i < this.elemcoords.xI.length; i++) {
+            for (let j = 1; j < this.elemcoords.xI.length; j++) {
                 if (i >= j)
                     continue;
                 let dij = this.elemcoords.distance(i, j);
@@ -213,44 +299,252 @@ class Network {
         this.networktype = "ANM";
         if (this.reducedEdges.total != 0) {
             this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
             this.initEdges();
             this.prepVis();
             this.sendtoUI();
+        }
+    }
+    ;
+    edgesMWCENM() {
+        this.reducedEdges.clearAll();
+        this.clearConnections();
+        this.selectNetwork();
+        let pdbindices;
+        try {
+            pdbindices = this.particles.map(e => { return e.pdbindices; });
+        }
+        catch (e) {
+            notify("PDB Info could not be found. Make sure only AminoAcids are selected and they have been loaded from a PDB file.");
+            return;
+        }
+        let uniqdatasets = new Set(pdbindices.map((a) => { return a[0]; }));
+        // let uniqstrands = new Set<Strand>(this.particles.map(x => {return x.strand}));
+        // let uniqchains = new Set<any>(pdbindices.map((a) => {return a[1]}));
+        this.addBackboneConnections();
+        this.addHydrogenBonds(uniqdatasets, pdbindices);
+        this.addDisulphideBonds(uniqdatasets, pdbindices);
+        this.addNonpolarBonds();
+        this.addSaltBridges(7);
+        // network is ready for solving and visualization
+        this.networktype = "MWCENM";
+        if (this.reducedEdges.total != 0) {
+            // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
+            this.initInstances(this.reducedEdges.total);
             this.fillConnections();
+            this.initEdges();
+            this.prepVis();
+            this.sendtoUI();
+        }
+    }
+    ;
+    addHydrogenBonds(uniqdatasets, pdbindices) {
+        [...uniqdatasets].forEach(ud => {
+            let hbonds = pdbFileInfo[ud].hydrogenBonds;
+            // let chains = pdbFileInfo[ud].pdbsysinfo;
+            let p1, p2; // will be refences to corresponding particles
+            let p1found, p2found; // bools
+            let hbondk = 100; // strength of h bond
+            hbonds.forEach((hb, hid) => {
+                p1found = false;
+                p2found = false;
+                pdbindices.forEach((pi, pindx) => {
+                    if (pi[0] == ud && pi[1] == hb[0][0] && pi[2] == hb[0][1]) {
+                        p1 = this.particles[pindx];
+                        p1found = true;
+                    }
+                    if (pi[0] == ud && pi[1] == hb[1][0] && pi[2] == hb[1][1]) {
+                        p2 = this.particles[pindx];
+                        p2found = true;
+                    }
+                });
+                if (p1found && p2found) {
+                    let p1indx = this.particles.indexOf(p1);
+                    let p2indx = this.particles.indexOf(p2);
+                    notify("hbond " + p1indx.toString() + " " + p2indx.toString());
+                    this.reducedEdges.addEdge(p1indx, p2indx, this.elemcoords.distance(p1indx, p2indx), 's', hbondk);
+                }
+                else {
+                    notify("Hydrogen Bond could not be parsed from pdb info " + hid.toString());
+                    return;
+                }
+            });
+        });
+    }
+    ;
+    addNonpolarBonds() {
+        let nonpolark = 1.0;
+        let np = 12;
+        // checks for atoms within 4 residues of one another on two amino acids
+        // let nonpolarcheck = function(res1, res2){ // looks for pairs of atoms from different residues within 4 Angstroms
+        //
+        //     let pi = (res1 as AminoAcid).pdbindices; // location of pdb information
+        //     let pdbres1 = pdbFileInfo[pi[0]].pdbsysinfo.filter(chns => {if(chns.chainID == pi[1]) return true;})[0].residues.filter(res => {if (parseInt(res.pdbResIdent) == pi[2]){ return true;} })[0];
+        //     let res1atoms = pdbres1.atoms.filter(atom => {if(['CA', 'N', 'H', 'C', 'O'].indexOf(atom.atomType) == -1) return true;}); // sidechain atoms for res1 by filtering out main chain
+        //
+        //     let ni = (res2 as AminoAcid).pdbindices; // location of pdb information
+        //     let pdbres2 = pdbFileInfo[ni[0]].pdbsysinfo.filter(chns => {if(chns.chainID == ni[1]) return true;})[0].residues.filter(res => {if (parseInt(res.pdbResIdent) == ni[2]){ return true;} })[0];
+        //     let res2atoms = pdbres2.atoms.filter(atom => {if(['CA', 'N', 'H', 'C', 'O'].indexOf(atom.atomType) == -1) return true;}); // sidechain atoms for res2
+        //
+        //     let pdbdist = function(atom1, atom2){
+        //         return Math.sqrt(Math.pow(atom1.x - atom2.x,2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2));
+        //     }
+        //
+        //     let makenonbonded=false;
+        //
+        //     res1atoms.forEach(pa => {
+        //         res2atoms.forEach(na => {
+        //             if(pdbdist(pa, na) < 4){ // 4 A is the cutoff used in the original MWCENM paper
+        //                 makenonbonded=true;
+        //             }
+        //         })
+        //     })
+        //
+        //     return makenonbonded;
+        // }
+        for (let i = 0; i < this.particles.length; i++) {
+            for (let j = 0; j < this.particles.length; j++) {
+                if (i >= j)
+                    continue;
+                if (this.elemcoords.distance(i, j) < 4 / 8.518) { // 4 A is the cutoff used in the original MWCENM paper
+                    if (this.particles[i].n3 != this.particles[j] && this.particles[i].n5 != this.particles[j]) {
+                        notify("nonpolar Bond " + i.toString() + " " + j.toString());
+                        this.reducedEdges.addEdge(i, j, this.elemcoords.distance(i, j), 's', nonpolark);
+                    }
+                }
+            }
+        }
+    }
+    ;
+    addSaltBridges(pH = 7) {
+        let saltbridgek = 10;
+        let catres;
+        let anres;
+        let catatoms;
+        let anatoms;
+        if (pH == 7) {
+            catres = ["D", "E"]; // aspartic acid and glutamic acid
+            catatoms = { "D": ["OD1", "OD2"], "E": ["OE1", "AE1", "OE2", "AE2"] }; // Which atoms might hold the charge
+            anres = ["K", "H", "R"]; // Lysine, histidine and Arginine
+            anatoms = { "H": ["ND1", "AD1"], "K": ["NZ"], "R": ["NH1", "NH2"] }; // Which atoms might hold the charge
+        }
+        else {
+            notify("No pH besides 7 currently supported");
+        }
+        let posresidues = this.particles.filter(x => { if (catres.indexOf(x.type) != -1)
+            return true; }); // all particles in network that are positive
+        let negresidues = this.particles.filter(x => { if (anres.indexOf(x.type) != -1)
+            return true; }); // all particles in network that are negative
+        let saltbridgecheck = function (posres, negres) {
+            let pi = posres.pdbindices; // location of pdb information
+            let pospdbres = pdbFileInfo[pi[0]].pdbsysinfo.filter(chns => { if (chns.chainID == pi[1])
+                return true; })[0].residues.filter(res => { if (parseInt(res.pdbResIdent) == pi[2]) {
+                return true;
+            } })[0];
+            let posatoms = pospdbres.atoms.filter(atom => { if (catatoms[posres.type].indexOf(atom.atomType) != -1)
+                return true; });
+            let ni = negres.pdbindices; // location of pdb information
+            let negpdbres = pdbFileInfo[ni[0]].pdbsysinfo.filter(chns => { if (chns.chainID == ni[1])
+                return true; })[0].residues.filter(res => { if (parseInt(res.pdbResIdent) == ni[2]) {
+                return true;
+            } })[0];
+            let negatoms = negpdbres.atoms.filter(atom => { if (anatoms[negres.type].indexOf(atom.atomType) != -1)
+                return true; });
+            let pdbdist = function (atom1, atom2) {
+                return Math.sqrt(Math.pow(atom1.x - atom2.x, 2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2));
+            };
+            let makesaltbridge = false;
+            posatoms.forEach(pa => {
+                negatoms.forEach(na => {
+                    if (pdbdist(pa, na) < 4 / 8.518) { // 4 A is the cutoff used in the original MWCENM paper
+                        makesaltbridge = true;
+                    }
+                });
+            });
+            return makesaltbridge;
+        };
+        // Checks all combinations of paired residues for
+        posresidues.forEach(pr => {
+            negresidues.forEach(nr => {
+                if (saltbridgecheck(pr, nr)) {
+                    let pindx = this.particles.indexOf(pr);
+                    let nindx = this.particles.indexOf(nr);
+                    notify("salt b " + pindx.toString() + pr.type + " " + nindx.toString() + nr.type);
+                    this.reducedEdges.addEdge(pindx, nindx, this.elemcoords.distance(pindx, nindx), 's', saltbridgek);
+                }
+            });
+        });
+    }
+    ;
+    addDisulphideBonds(uniqdatasets, pdbindices) {
+        [...uniqdatasets].forEach(ud => {
+            let dsbonds = pdbFileInfo[ud].disulphideBonds;
+            let p1, p2;
+            let p1found, p2found;
+            let k = 100; // strength of disulfide bond
+            if (dsbonds.length != 0) {
+                dsbonds.forEach((db) => {
+                    p1found = false;
+                    p2found = false;
+                    pdbindices.forEach((pi, pindx) => {
+                        if (pi[0] == ud && pi[1] == db[0] && pi[2] == db[1]) {
+                            p1 = this.particles[pindx];
+                            p1found = true;
+                        }
+                        else if (pi[0] == ud && pi[1] == db[2] && pi[2] == db[3]) {
+                            p2 = this.particles[pindx];
+                            p2found = true;
+                        }
+                    });
+                    if (p1found && p2found) {
+                        let p1indx = this.particles.indexOf(p1); // edges filled by particles position in the particles array of network
+                        let p2indx = this.particles.indexOf(p2);
+                        this.reducedEdges.addEdge(p1indx, p2indx, this.elemcoords.distance(p1indx, p2indx), 's', k);
+                    }
+                    else {
+                        notify("Disulphide Bond could not be parsed from pdb info");
+                        return;
+                    }
+                });
+            }
+        });
+    }
+    ;
+    addBackboneConnections() {
+        // adds every particles n3 connection if n3 is in the particles array
+        let covalentk = 100;
+        for (let i = 0; i < this.particles.length; i++) {
+            let p = this.particles[i];
+            if (p.n3 != null) {
+                let qind = this.particles.indexOf(p.n3);
+                if (qind != -1) {
+                    notify("backbone Bond " + i.toString() + " " + qind.toString());
+                    let dis = this.elemcoords.distance(i, qind);
+                    if (dis < 1) { // removes any obviously incorrect backbone bonds
+                        this.reducedEdges.addEdge(qind, i, this.elemcoords.distance(i, qind), 's', covalentk);
+                    }
+                }
+            }
         }
     }
     ;
     generateHessian() {
-        if (this.particles.length > 2000) {
-            notify("Large Networks (n>2000) cannot be solved here. Please use the Python scripts provided at URMOM");
-            return;
-        }
-        let hessian = [];
+        // let hessian : number[][] = [];
         if (this.reducedEdges.total == 0) {
             notify("Network must be filled prior to solving ANM");
         }
         else {
             //Initialize Empty Hessian (3Nx3N)
-            let tmp = new Array(3 * this.particles.length); //3N
-            for (let i = 0; i < 3 * this.particles.length; i++) { //3N x
-                hessian.push(tmp);
-                for (let j = 0; j < 3 * this.particles.length; j++) {
-                    hessian[i][j] = 0;
-                }
-            }
+            let hessian = new Array(3 * this.particles.length * 3 * this.particles.length);
             //Hessian Calc w/ Masses
             for (let l = 0; l < this.reducedEdges.total; l++) {
-                let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l];
-                let ip = this.elemcoords[i]; //Particle i Position
-                let jp = this.elemcoords[j]; //Particle j Position
+                let i = this.reducedEdges.p1[l], j = this.reducedEdges.p2[l], k = this.reducedEdges.ks[l], adim = 3 * this.particles.length;
                 let mi = this.masses[i];
                 let mj = this.masses[j];
                 let mij = Math.sqrt(mi * mj); //masses
-                let mi2 = mi * mi;
-                let mj2 = mj * mj;
-                let d = ip.distanceTo(jp); //distances
+                let d = this.elemcoords.distance(i, j); //distances
                 let d2 = d * d;
-                let diff = jp.sub(ip);
+                let diff = this.elemcoords.diff(i, j);
                 let diag = diff.clone().multiply(diff).multiplyScalar(k).divideScalar(d2);
                 let xy = k * (diff.x * diff.y) / d2;
                 let xz = k * (diff.x * diff.z) / d2;
@@ -258,89 +552,88 @@ class Network {
                 // Couldn't find a more pleasant way to do this
                 // Fills 1 element in hij, hji, hii, hjj on each line
                 // Verified this returns correct Hessian
-                hessian[3 * i][3 * j] -= diag.x / mij;
-                hessian[3 * j][3 * i] -= diag.x / mij;
-                hessian[3 * i][3 * i] += diag.x / mi2;
-                hessian[3 * j][3 * j] += diag.x / mj2;
-                hessian[3 * i][3 * j + 1] -= xy / mij;
-                hessian[3 * j + 1][3 * i] -= xy / mij;
-                hessian[3 * i][3 * i + 1] += xy / mi2;
-                hessian[3 * j + 1][3 * j] += xy / mj2;
-                hessian[3 * i][3 * j + 2] -= xz / mij;
-                hessian[3 * j + 2][3 * i] -= xz / mij;
-                hessian[3 * i][3 * i + 2] += xz / mi2;
-                hessian[3 * j + 2][3 * j] += xz / mj2;
-                hessian[3 * i + 1][3 * j] -= xy / mij;
-                hessian[3 * j][3 * i + 1] -= xy / mij;
-                hessian[3 * i + 1][3 * i] += xy / mi2;
-                hessian[3 * j][3 * j + 1] += xy / mj2;
+                hessian[3 * i * adim + 3 * j] -= diag[0] / mij;
+                hessian[3 * j * adim + 3 * i] -= diag[0] / mij;
+                hessian[3 * i * adim + 3 * i] += diag[0] / mi;
+                hessian[3 * j * adim + 3 * j] += diag[0] / mj;
+                hessian[3 * i * adim + 3 * j + 1] -= xy / mij;
+                hessian[(3 * j + 1) * adim + 3 * i] -= xy / mij;
+                hessian[3 * i * adim + 3 * i + 1] += xy / mi;
+                hessian[3 * j * adim + 3 * j + 1] += xy / mj;
+                hessian[3 * i * adim + 3 * j + 2] -= xz / mij;
+                hessian[(3 * j + 2) * adim + 3 * i] -= xz / mij;
+                hessian[3 * i * adim + 3 * i + 2] += xz / mi;
+                hessian[3 * j * adim + 3 * j + 2] += xz / mj;
+                hessian[(3 * i + 1) * adim + 3 * j] -= xy / mij;
+                hessian[3 * j * adim + 3 * i + 1] -= xy / mij;
+                hessian[(3 * i + 1) * adim + 3 * i] += xy / mi;
+                hessian[3 * j * adim + 3 * j + 1] += xy / mj;
                 //fine
-                hessian[3 * i + 1][3 * j + 1] -= diag.y / mij;
-                hessian[3 * j + 1][3 * i + 1] -= diag.y / mij;
-                hessian[3 * i + 1][3 * i + 1] += diag.y / mi2;
-                hessian[3 * j + 1][3 * j + 1] += diag.y / mj2;
-                hessian[3 * i + 1][3 * j + 2] -= yz / mij;
-                hessian[3 * j + 2][3 * i + 1] -= yz / mij;
-                hessian[3 * i + 1][3 * i + 2] += yz / mi2;
-                hessian[3 * j + 2][3 * j + 1] += yz / mj2;
-                hessian[3 * i + 2][3 * j] -= xz / mij;
-                hessian[3 * j][3 * i + 2] -= xz / mij;
-                hessian[3 * i + 2][3 * i] += xz / mi2;
-                hessian[3 * j][3 * j + 2] += xz / mj2;
-                hessian[3 * i + 2][3 * j + 1] -= yz / mij;
-                hessian[3 * j + 1][3 * i + 2] -= yz / mij;
-                hessian[3 * i + 2][3 * i + 1] += yz / mi2;
-                hessian[3 * j + 1][3 * j + 2] += yz / mj2;
+                hessian[(3 * i + 1) * adim + 3 * j + 1] -= diag[1] / mij;
+                hessian[(3 * j + 1) * adim + 3 * i + 1] -= diag[1] / mij;
+                hessian[(3 * i + 1) * adim + 3 * i + 1] += diag[1] / mi;
+                hessian[(3 * j + 1) * adim + 3 * j + 1] += diag[1] / mj;
+                hessian[(3 * i + 1) * adim + 3 * j + 2] -= yz / mij;
+                hessian[(3 * j + 2) * adim + 3 * i + 1] -= yz / mij;
+                hessian[(3 * i + 1) * adim + 3 * i + 2] += yz / mi;
+                hessian[(3 * j + 2) * adim + 3 * j + 1] += yz / mj;
+                hessian[(3 * i + 2) * adim + 3 * j] -= xz / mij;
+                hessian[3 * j * adim + 3 * i + 2] -= xz / mij;
+                hessian[(3 * i + 2) * adim + 3 * i] += xz / mi;
+                hessian[3 * j * adim + 3 * j + 2] += xz / mj;
+                hessian[(3 * i + 2) * adim + 3 * j + 1] -= yz / mij;
+                hessian[(3 * j + 1) * adim + 3 * i + 2] -= yz / mij;
+                hessian[(3 * i + 2) * adim + 3 * i + 1] += yz / mi;
+                hessian[(3 * j + 1) * adim + 3 * j + 2] += yz / mj;
                 //fine
-                hessian[3 * i + 2][3 * j + 2] -= diag.z / mij;
-                hessian[3 * j + 2][3 * i + 2] -= diag.z / mij;
-                hessian[3 * i + 2][3 * i + 2] += diag.z / mi2;
-                hessian[3 * j + 2][3 * j + 2] += diag.z / mj2;
+                hessian[(3 * i + 2) * adim + 3 * j + 2] -= diag[2] / mij;
+                hessian[(3 * j + 2) * adim + 3 * i + 2] -= diag[2] / mij;
+                hessian[(3 * i + 2) * adim + 3 * i + 2] += diag[2] / mi;
+                hessian[(3 * j + 2) * adim + 3 * j + 2] += diag[2] / mj;
             }
             return hessian;
         }
     }
     ;
-    invertHessian(hessian) {
-        let r = SVD(hessian, true, true, 1e-10);
+    // adim is just the size of one dimension of the hessian (always 3*N)
+    invertHessian(hessian, adim) {
+        let r = SVD(hessian, adim, true, true, 1e-10);
         let u = r['orderu'], q = r['q'], vt = r['ordervt']; //v needs to be transposed
         let tol = 0.000001;
         // Make diagonal of inverse eigenvalues
-        let invq = [];
-        for (let i = 0; i < 3 * this.particles.length; i++) { //3N x
-            let tmp = new Array(3 * this.particles.length); //3N
-            for (let j = 0; j < 3 * this.particles.length; j++) {
-                tmp[j] = 0;
-            }
-            invq.push(tmp);
-        }
+        let invq = new Array(3 * this.particles.length * 3 * this.particles.length).fill(0);
         //make diagonal
         for (let i = 0; i < q.length; i++) {
             let qval = q[i];
             if (qval < tol)
-                invq[i][i] = 0;
+                invq[i * 3 * q.length + i] = 0;
             else
-                invq[i][i] = 1 / qval;
+                invq[i * 3 * q.length + i] = 1 / qval;
         }
         // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
-        function matrixDot(A, B) {
-            var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
-            return result.map((row, i) => {
-                return row.map((val, j) => {
-                    return A[i].reduce((sum, elm, k) => sum + (elm * B[k][j]), 0);
-                });
+        function matrixDot(A, radim, cadim, B, rbdim, cbdim) {
+            // var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
+            var result = new Array(radim * cbdim).fill(0);
+            return result.map((val, i) => {
+                let ix = Math.floor(i / radim);
+                let jx = i % radim;
+                let sum = 0;
+                for (let k = 0; k < rbdim; k++) {
+                    sum += A[ix * cadim + k] * B[k * cbdim + jx];
+                }
+                return sum;
             });
         }
         // multiply
-        let nf = matrixDot(u, invq); //  U*q
+        let nf = matrixDot(u, 3 * q.length, 3 * q.length, invq, 3 * q.length, 3 * q.length); //  U*q
         // Calculate U q+ V+ (Psuedo-Inverse)
-        return matrixDot(nf, vt); // U*q*Vt
+        return matrixDot(nf, 3 * q.length, 3 * q.length, vt, 3 * q.length, 3 * q.length); // U*q*Vt
     }
     ;
     getRMSF(inverse, temp) {
         let RMSF = [];
         for (let i = 0; i < inverse.length / 3; i++) { //for each particle
-            let r = this.kb * temp * (inverse[3 * i][3 * i] + inverse[3 * i + 1][3 * i + 1] + inverse[3 * i + 2][3 * i + 2]); //A^2
+            let r = this.kb * temp * (inverse[3 * i * inverse.length + 3 * i] + inverse[(3 * i + 1) * inverse.length + 3 * i + 1] + inverse[(3 * i + 2) * inverse.length + 3 * i + 2]); //A^2
             RMSF.push(r);
         }
         return RMSF;
