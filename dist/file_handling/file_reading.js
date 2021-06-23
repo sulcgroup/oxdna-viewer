@@ -138,21 +138,19 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
-        // oxview and pdb files had better be dropped alone because that's all that's loading.
+        // oxview files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
             return;
         }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
-            notify("Reading PDB File...");
-            readPdbFile(files[i]);
-            return;
+            pdbFile = files[i];
         }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext))
@@ -176,7 +174,7 @@ function handleFiles(files) {
         }
     }
     // If a new system is being loaded, there will be a dat and top file pair
-    let newSystem = datFile && topFile;
+    let newSystem = datFile && topFile || pdbFile;
     // Additional information can be dropped in later
     let datAlone = datFile && !topFile;
     let trapAlone = trapFile && !topFile;
@@ -188,7 +186,7 @@ function handleFiles(files) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
     render();
     return;
 }
@@ -286,8 +284,7 @@ function readFilesFromURLParams() {
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFile) {
-    console;
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up
@@ -326,6 +323,10 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFil
             };
             idxReader.readAsText(idxFile);
         }
+    }
+    else if (pdbFile) {
+        readPdbFile(pdbFile);
+        document.addEventListener('setupComplete', readAuxiliaryFiles);
     }
     else {
         readAuxiliaryFiles();
