@@ -160,7 +160,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -179,11 +179,6 @@ function handleFiles(files: FileList) {
             readPdbFile(files[i]);
             return;
         }
-        else if (ext === "hb") {
-            notify("Reading Hydrogen Bonding File...")
-            readHBondFile(files[i]);
-            return;
-        }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
         else if (ext === "top") topFile = files[i];
@@ -191,6 +186,7 @@ function handleFiles(files: FileList) {
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
+        else if (ext === "hb") hbFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -206,16 +202,17 @@ function handleFiles(files: FileList) {
     let trapAlone = trapFile && !topFile;
     let jsonAlone =  jsonFile && !topFile;
     let parAlone = parFile && !topFile;
+    let hbAlone = hbFile; // Can't think of any situation where (it would make any sense) for a hb file to be dropped with any other file
 
 
-    let addition = datAlone || trapAlone || jsonAlone || parAlone
+    let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone
 
     if (!newSystem && !addition) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFile);
 
     render();
     return
@@ -322,7 +319,7 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, hbFile?: File) {
     console
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
@@ -401,6 +398,13 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
                 updateConfFromFile(r.result as string);
             }
             r.readAsText(datFile);
+        }
+        if (hbFile){
+            const r = new FileReader();
+            r.onload = ()=> {
+                readHBondFile(hbFile);
+            }
+            r.readAsText(hbFile);
         }
     }
     render();
@@ -1255,9 +1259,18 @@ function readPdbFile(file) {
                         }
 
                     } else {
+                        let negative = false; // flag that triggers upon finding negative residues
+
                         let resIdentAddOn = '';
                         let tmpchainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
-                        if(prevChainId.includes('9')){ // number strand identifiers
+                        if(tmpchainID.includes("-", -1)){
+                            // negative numbered residues, yes they're real
+                            negative = true;
+                            tmpchainID = tmpchainID.substring(0, 1);
+                        }
+
+
+                        if(prevChainId.includes('9', -1)){ // number strand identifiers
                             if(isNaN(parseInt(tmpchainID.substr(0, 1))) && isNaN(parseInt(tmpchainID.substr(1, 1)))) {
                                 na.chainID = tmpchainID
                             } else {
@@ -1278,10 +1291,19 @@ function readPdbFile(file) {
                         na.iCode = "";
                         if(isNaN(parseInt(tmp[5]))){ // not a number, most likely an insertion code
                             na.iCode = tmp[5];
-                            na.pdbResIdent = resIdentAddOn+tmp.slice(0, 5).trim()
+                            if(!negative){
+                                na.pdbResIdent = resIdentAddOn+tmp.slice(0, 5).trim()
+                            } else {
+                                na.pdbResIdent = '-'+resIdentAddOn+tmp.slice(0, 5).trim()
+                            }
+
                         } else {
                             // is a number, most likely no insertion code and misplaced pbd residue number
-                            na.pdbResIdent = resIdentAddOn+tmp.trim();
+                            if(!negative){
+                                na.pdbResIdent = resIdentAddOn+tmp.trim();
+                            } else {
+                                na.pdbResIdent = '-'+resIdentAddOn+tmp.trim();
+                            }
                         }
                     }
 
@@ -1301,7 +1323,7 @@ function readPdbFile(file) {
                     }
 
                     //checks if last read atom belongs to a different chain than the one before it, or if the Res Identifer has sudden jump
-                    if (prevChainId !== na.chainID || (parseInt(na.pdbResIdent) - parseInt(prevResId) < 0 && !isNaN(parseInt(prevResId)))) {
+                    if (prevChainId !== na.chainID || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && !isNaN(parseInt(prevResId)))) {
                         //notify("chain created");
                         chainindx += 1;
                         na.chainIndx = chainindx;
