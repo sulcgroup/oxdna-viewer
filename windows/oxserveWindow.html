@@ -20,8 +20,11 @@ Simulation settings:
     <label for="mcSalt">Salt: </label>
     <input type="number" value="1" id="mcSalt" title="Na concentration">
     
-    <label for="mcInteractionType">Interaction type: </label>
-    <input type="text" value="DNA2" id="mcInteractionType" title="Interaction type.">
+    <label for="mcInteractionType">Interaction type:</label>
+    <select id="mcInteractionType">
+      <option value="DNA2">DNA</option>
+      <option value="RNA2">RNA</option>
+    </select>
 
     <label for="mcPrintConfInterval">Print Conf Interval: </label>
     <input type="number" value="1000" id="mcPrintConfInterval" title="Output configuration every # of steps.">
@@ -57,8 +60,11 @@ Simulation settings:
     <label for="mdSalt">Salt: </label>
     <input type="number" value="1" id="mdSalt" title="Na concentration">
     
-    <label for="mdInteractionType">Interaction type: </label>
-    <input type="text" value="DNA2" id="mdInteractionType" title="Interaction type.">
+    <label for="mdInteractionType">Interaction type:</label>
+    <select id="mdInteractionType">
+      <option value="DNA2">DNA</option>
+      <option value="RNA2">RNA</option>
+    </select>
 
     <label for="mdPrintConfInterval">Print Conf Interval: </label>
     <input type="number" value="10000" id="mdPrintConfInterval" title="Output configuration every # of steps.">
@@ -66,11 +72,11 @@ Simulation settings:
     <label for="mdPrintEnergyInterval">Print Energy Interval: </label>
     <input type="number" value="10000" id="mdPrintEnergyInterval" title="Output energy every # of steps.">
 
-    <label for="mdThermostat">Interaction type: </label>
+    <label for="mdThermostat">Thermostat: </label>
     <input type="text" value="john" id="mdThermostat" title="Thermostat to use.">
 
     <label for="mdDT">dt: </label>
-    <input type="number" value="0.005" id="mdDT" title="dt value.">
+    <input type="number" value="0.003" id="mdDT" title="dt value.">
     
     <label for="mdDiff_Coeff">diff coeff: </label>
     <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value.">
