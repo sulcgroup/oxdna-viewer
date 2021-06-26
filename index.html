@@ -556,14 +556,18 @@
 
                         <button class="ribbon-icon-button" onclick="getSelectedSeqWrapper()" title="Gets sequence from selection.(5'->3')">
                             <span class="mif-file-upload mif-3x"></span>
-                            <span class="caption"> Get Sequence</span>
+                            <span class="caption"> Get</span>
                         </button>
 
-                        <button class="ribbon-icon-button" onclick="findComplementaryDomainWrapper()" title="Searches for a complementary domain to the provided sequence.">
+                        <button class="ribbon-icon-button" onclick="reverseComplementWrapper()" title="Reverse complement of input sequence.">
+                            <img src="img/ico/rc.svg"width="28px">
+                            <span class="caption">RC</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="findDomainWrapper()" title="Searches for a provided sequence.">
                             <span class="mif-search mif-2x"></span>
-                            <span class="caption"> Search Comp. Domain</span>
+                            <span class="caption"> Search</span>
                         </button>
-
 
                     </div>
                     <input type="text" data-role="input" id="sequence" class="mb-1"

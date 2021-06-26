@@ -228,9 +228,14 @@ function rc(seq:string){
         ret.push(complement_dict[seq[i]]);
     return ret.join("");
 }
+function reverseComplementWrapper(){
+    let seqInp = view.getInputElement("sequence");
+    let seq = rc(seqInp.value.toUpperCase());
+    seqInp.value = seq;
+}
 
-function findComplementaryDomainWrapper(){
-    let seq: string = rc(view.getInputValue("sequence").toUpperCase());
+function findDomainWrapper(){
+    let seq: string = view.getInputValue("sequence").toUpperCase();
     const search_func = system=>{
         system.strands.forEach(strand=>{
             let strand_seq = strand.getSequence();

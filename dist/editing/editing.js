@@ -177,7 +177,6 @@ function getSelectedSeqWrapper() {
             seq += b.type; });
         seqInp.value = seq;
         seqLen.innerHTML = seq.length.toString();
-        //document.getElementById("seqLen").innerHTML = this.value.length
     }
     else
         notify("Selection only on 1 strand allowed");
@@ -189,8 +188,13 @@ function rc(seq) {
         ret.push(complement_dict[seq[i]]);
     return ret.join("");
 }
-function findComplementaryDomainWrapper() {
-    let seq = rc(view.getInputValue("sequence").toUpperCase());
+function reverseComplementWrapper() {
+    let seqInp = view.getInputElement("sequence");
+    let seq = rc(seqInp.value.toUpperCase());
+    seqInp.value = seq;
+}
+function findDomainWrapper() {
+    let seq = view.getInputValue("sequence").toUpperCase();
     const search_func = system => {
         system.strands.forEach(strand => {
             let strand_seq = strand.getSequence();
