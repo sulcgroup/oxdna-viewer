@@ -162,6 +162,49 @@ function interconnectDuplex5pWrapper() {
         edit.interconnectDuplex5p(s1, s2, seq);
     }
 }
+function getSelectedSeqWrapper() {
+    let seqInp = view.getInputElement("sequence");
+    let seqLen = view.getInputElement("seqLen");
+    let seq = "";
+    let strands = new Set();
+    //generate check for the selection to contain 1 strand
+    selectedBases.forEach(b => {
+        strands.add(b.strand);
+    });
+    if (strands.size == 1) {
+        //now that we know we have 1 strand we can enumerate the elements 5->3
+        Array.from(strands)[0].forEach(b => { if (selectedBases.has(b))
+            seq += b.type; });
+        seqInp.value = seq;
+        seqLen.innerHTML = seq.length.toString();
+        //document.getElementById("seqLen").innerHTML = this.value.length
+    }
+    else
+        notify("Selection only on 1 strand allowed");
+}
+let complement_dict = { "A": "T", "T": "A", "C": "G", "G": "C" };
+function rc(seq) {
+    let ret = [];
+    for (let i = seq.length - 1; i > 0; i--)
+        ret.push(complement_dict[seq[i]]);
+    return ret.join("");
+}
+function findComplementaryDomainWrapper() {
+    let seq = rc(view.getInputValue("sequence").toUpperCase());
+    const search_func = system => {
+        system.strands.forEach(strand => {
+            let strand_seq = strand.getSequence();
+            let idx = strand_seq.indexOf(seq);
+            if (idx >= 0) {
+                let monomers = strand.getMonomers();
+                api.selectElements(monomers.slice(idx, idx + seq.length + 1), true);
+                render();
+            }
+        });
+    };
+    systems.forEach(search_func);
+    tmpSystems.forEach(search_func);
+}
 function skipWrapper() {
     let e = Array.from(selectedBases);
     ;

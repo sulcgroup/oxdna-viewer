@@ -607,6 +607,10 @@ class View {
         return (<HTMLInputElement>this.doc.getElementById(id)).value;
     }
 
+    public  getInputElement(id: string):HTMLInputElement{
+        return <HTMLInputElement>this.doc.getElementById(id);
+    }
+
     public getInputBool(id: string): boolean {
         return (<HTMLInputElement>document.getElementById(id)).checked;
     }

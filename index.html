@@ -547,19 +547,31 @@
                             <img src="img/ico/skip.svg">
                             <span class="caption"> Skip</span>
                         </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Remove selected elements and connect neigbours">
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Connect 3'of 2 strands by a duplex">
                             <span class="caption"> Connect 3' duplex</span>
                         </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Remove selected elements and connect neigbours">
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Connect 5'of 2 strands by a duplex">
                             <span class="caption"> Connect 5' duplex</span>
                         </button>
+
+                        <button class="ribbon-icon-button" onclick="getSelectedSeqWrapper()" title="Gets sequence from selection.(5'->3')">
+                            <span class="mif-file-upload mif-3x"></span>
+                            <span class="caption"> Get Sequence</span>
+                        </button>
+
+                        <button class="ribbon-icon-button" onclick="findComplementaryDomainWrapper()" title="Searches for a complementary domain to the provided sequence.">
+                            <span class="mif-search mif-2x"></span>
+                            <span class="caption"> Search Comp. Domain</span>
+                        </button>
+
+
                     </div>
                     <input type="text" data-role="input" id="sequence" class="mb-1"
                         data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
                         data-history="true" data-prevent-submit="true"
                         placeholder="Type a sequence here"
                         style="text-transform: uppercase;"
-                        oninput='document.getElementById("seqLen").innerHTML = this.value.length'>
+                        onchange='document.getElementById("seqLen").innerHTML = this.value.length'>
                 </div>
             </div></div>
 

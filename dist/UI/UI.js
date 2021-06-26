@@ -582,6 +582,9 @@ class View {
     getInputValue(id) {
         return this.doc.getElementById(id).value;
     }
+    getInputElement(id) {
+        return this.doc.getElementById(id);
+    }
     getInputBool(id) {
         return document.getElementById(id).checked;
     }
