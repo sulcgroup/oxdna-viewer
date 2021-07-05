@@ -596,12 +596,15 @@ function readOxViewString(s) {
             });
             // Finally, we can add the system to the scene
             addSystemToScene(sys);
-            // Center the newly added system
-            centerAndPBC(sys.getMonomers());
             if (customColors) {
                 view.coloringMode.set("Custom");
             }
         });
+        // Center the newly added systems as one
+        // Needs to be done after all systems are added to the scene
+        centerAndPBC(
+        // Consider all added monomers
+        data.systems.flatMap(sysData => sysData.createdSystem.getMonomers()));
     }
     if (data.forces) {
         data.forces.forEach(f => {
