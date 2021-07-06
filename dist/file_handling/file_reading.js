@@ -201,7 +201,7 @@ const cylinderMesh = function (pointX, pointY, r, material) {
     // edge from X to Y
     var direction = new THREE.Vector3().subVectors(pointY, pointX);
     // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 32, 4);
+    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 8, 4);
     // shift it so one end rests on the origin
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
     // rotate it the right way for lookAt to work
@@ -238,7 +238,7 @@ function readMGL(file) {
                 let zpos = (parseFloat(line[2])) * MGL_SCALE;
                 let color = line[5].slice(2).slice(0, -1);
                 // main particle
-                const geometry = new THREE.SphereGeometry(MGL_D, 32, 32);
+                const geometry = new THREE.SphereGeometry(MGL_D, 8, 8);
                 const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) });
                 const sphere = new THREE.Mesh(geometry, material);
                 sphere.position.set(xpos, ypos, zpos);
