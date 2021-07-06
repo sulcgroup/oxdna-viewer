@@ -250,7 +250,6 @@ function readMGL(file) {
                     if (patch_str) {
                         let patch_info = patch_str.split(" ");
                         patch_info = patch_info.slice(1);
-                        console.log(patch_info);
                         let patch_x = parseFloat(patch_info[0]) * MGL_SCALE;
                         let patch_y = parseFloat(patch_info[1]) * MGL_SCALE;
                         let patch_z = parseFloat(patch_info[2]) * MGL_SCALE;
