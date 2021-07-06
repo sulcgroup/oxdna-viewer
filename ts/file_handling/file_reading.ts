@@ -160,7 +160,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -169,7 +169,7 @@ function handleFiles(files: FileList) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
 
-        // oxview and pdb files had better be dropped alone because that's all that's loading.
+        // oxview files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
             return;
@@ -179,9 +179,7 @@ function handleFiles(files: FileList) {
             return;
         }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
-            notify("Reading PDB File...");
-            readPdbFile(files[i]);
-            return;
+            pdbFile = files[i];
         }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
@@ -199,7 +197,7 @@ function handleFiles(files: FileList) {
     }
 
     // If a new system is being loaded, there will be a dat and top file pair
-    let newSystem = datFile && topFile
+    let newSystem = datFile && topFile || pdbFile
 
     // Additional information can be dropped in later
     let datAlone = datFile && !topFile;
@@ -216,7 +214,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
 
     render();
     return
@@ -408,8 +406,7 @@ function readFilesFromURLParams() {
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, hbFile?: File) {
-    console
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -452,6 +449,10 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
             };
             idxReader.readAsText(idxFile);
         }
+    }
+    else if (pdbFile) {
+        readPdbFile(pdbFile);
+        document.addEventListener('setupComplete', readAuxiliaryFiles)
     }
     else {
         readAuxiliaryFiles()
@@ -1353,7 +1354,6 @@ function readPdbFile(file) {
 
                     } else {
                         let negative = false; // flag that triggers upon finding negative residues
-
                         let resIdentAddOn = '';
                         let tmpchainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
                         if(tmpchainID.includes("-", -1)){
