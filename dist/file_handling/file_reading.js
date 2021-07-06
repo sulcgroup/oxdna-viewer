@@ -149,6 +149,10 @@ function handleFiles(files) {
             readOxViewJsonFile(files[i]);
             return;
         }
+        else if (ext === "mgl") {
+            readMGL(files[i]);
+            return;
+        }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
             notify("Reading PDB File...");
             readPdbFile(files[i]);
@@ -171,7 +175,7 @@ function handleFiles(files) {
             hbFile = files[i];
         // otherwise, what is this?
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
             return;
         }
     }
@@ -191,6 +195,76 @@ function handleFiles(files) {
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, hbFile);
     render();
     return;
+}
+const cylinderMesh = function (pointX, pointY, r, material) {
+    // https://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
+    // edge from X to Y
+    var direction = new THREE.Vector3().subVectors(pointY, pointX);
+    // Make the geometry (of "direction" length)
+    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 32, 4);
+    // shift it so one end rests on the origin
+    geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
+    // rotate it the right way for lookAt to work
+    geometry.applyMatrix(new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(90)));
+    // Make a mesh with the geometry
+    var mesh = new THREE.Mesh(geometry, material);
+    // Position it where we want
+    mesh.position.copy(pointX);
+    // And make it point to where we want
+    mesh.lookAt(pointY);
+    return mesh;
+};
+const MGL_SCALE = 1;
+function readMGL(file) {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        let lines = e.target.result.split(/[\n]+/g);
+        // parsing the header
+        let header = lines[0].split(":")[1].split(",");
+        let x = parseFloat(header[0]) * MGL_SCALE;
+        let y = parseFloat(header[1]) * MGL_SCALE;
+        let z = parseFloat(header[2]) * MGL_SCALE;
+        lines = lines.slice(1); // discard the header
+        // modify box 
+        box.set(x, y, z);
+        //lines = lines.slice(0,1);
+        lines.forEach(str => {
+            if (str) {
+                let line = str.split(" ");
+                // setup the size of the particles
+                const MGL_D = parseFloat(line[4]) * MGL_SCALE;
+                let xpos = (parseFloat(line[0])) * MGL_SCALE;
+                let ypos = (parseFloat(line[1])) * MGL_SCALE;
+                let zpos = (parseFloat(line[2])) * MGL_SCALE;
+                let color = line[5].slice(2).slice(0, -1);
+                // main particle
+                const geometry = new THREE.SphereGeometry(MGL_D, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) });
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.set(xpos, ypos, zpos);
+                scene.add(sphere);
+                // now let's figure out the bonds
+                let patch_pos = str.indexOf("M");
+                let patches_str = str.slice(patch_pos + 1).split("]").slice(0, -1);
+                patches_str.forEach(patch_str => {
+                    if (patch_str) {
+                        let patch_info = patch_str.split(" ");
+                        patch_info = patch_info.slice(1);
+                        console.log(patch_info);
+                        let patch_x = parseFloat(patch_info[0]) * MGL_SCALE;
+                        let patch_y = parseFloat(patch_info[1]) * MGL_SCALE;
+                        let patch_z = parseFloat(patch_info[2]) * MGL_SCALE;
+                        let patch_size = parseFloat(patch_info[3]) * MGL_SCALE;
+                        let patch_color = patch_info[4].slice(2);
+                        const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(patch_color) });
+                        const cylinder = cylinderMesh(new THREE.Vector3(xpos, ypos, zpos), new THREE.Vector3(xpos + patch_x, ypos + patch_y, zpos + patch_z), patch_size, material);
+                        scene.add(cylinder);
+                    }
+                });
+            }
+        });
+    };
+    reader.readAsText(file);
 }
 //parse a trap file
 function readTrap(system, trapReader) {
