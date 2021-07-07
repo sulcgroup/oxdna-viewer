@@ -37,7 +37,7 @@ function deleteSelectedForces() {
     listForces();
 }
 function drawSystemHierarchy() {
-    let checkboxhtml = (label) => `<input data-role="checkbox" data-caption="${label}">`;
+    let checkboxhtml = (label) => `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;
     const includeMonomers = document.getElementById("hierarchyMonomers").checked;
     const content = document.getElementById("hierarchyContent");
     content.innerText = '';
