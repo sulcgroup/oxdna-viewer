@@ -3,6 +3,7 @@
 function toggleInputOpts(value) {
     document.getElementById('importCadnanoOpts').hidden = value !== 'cadnano';
     document.getElementById('importRpolyOpts').hidden = value !== 'rpoly';
+    document.getElementById('importTiamatOpts').hidden = value !== 'tiamat';
 }
 // Try to guess format from file ending
 function guessInputFormat(files) {
@@ -14,6 +15,10 @@ function guessInputFormat(files) {
         }
         else if (f.name.endsWith('.json')) {
             from.value = 'cadnano';
+            break;
+        }
+        else if (f.name.endsWith('.dnajson')) {
+            from.value = 'tiamat';
             break;
         }
     }
@@ -38,7 +43,14 @@ function importFiles(files) {
             sequence: document.getElementById("importRpolyScaffoldSeq").value
         };
     }
-    tacoxdna.Logger.log(`Converting ${[...files].map(f => f.name).join(',')} from ${from} to ${to}.`);
+    else if (from === "tiamat") {
+        opts = {
+            tiamat_version: parseInt(document.getElementById("importTiamatVersion").value),
+            isDNA: document.getElementById("importTiamatIsDNA").value == "DNA",
+            default_val: document.getElementById("importTiamatDefaultVal").value
+        };
+    }
+    console.log(`Converting ${[...files].map(f => f.name).join(',')} from ${from} to ${to}.`);
     let readFiles = new Map();
     for (const file of files) {
         const reader = new FileReader();
@@ -55,17 +67,17 @@ function importFiles(files) {
                 worker.onmessage = (e) => {
                     let converted = e.data;
                     readOxViewString(converted);
-                    tacoxdna.Logger.log('Conversion finished');
+                    console.log('Conversion finished');
                     finished();
                 };
                 worker.onerror = (error) => {
-                    tacoxdna.Logger.log('Error in conversion');
+                    console.log('Error in conversion');
                     notify(error.message, "alert");
                     finished();
                 };
                 cancelButton.onclick = () => {
                     worker.terminate();
-                    tacoxdna.Logger.log('Conversion aborted');
+                    console.log('Conversion aborted');
                     finished();
                 };
                 worker.postMessage([[...readFiles.values()], from, to, opts]);
