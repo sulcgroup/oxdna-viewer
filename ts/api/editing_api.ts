@@ -184,25 +184,27 @@ module edit{
         // handle strand1 and strand2 not being in the same system
         if (sys5 !== sys3) {
             let tmpSys = new System(tmpSystems.length, 0);
+            tmpSystems.push(tmpSys);
             tmpSys.initInstances(strand3.getLength());
 
             strand3.forEach((e, i)=>{
                 copyInstances(e, i, tmpSys)
                 e.setInstanceParameter('visibility', [0,0,0])
+                e.sid = i;
                 e.dummySys = tmpSys;
-            }, true)
+            })
 
-            sys3.callUpdates(['instanceVisibility'])
             addSystemToScene(tmpSys);
-            tmpSystems.push(tmpSys);
         }
 
         //connect the 2 element objects 
         end5.n5 = end3;
         end3.n3 = end5;
 
+        // Update the strand to have the correct end
+        strand5.end5 = strand3.end5;
+
         // Update 5' end to include the new elements
-        strand5.updateEnds();
         strand3.forEach(e=>{
             e.strand = strand5;
         })
