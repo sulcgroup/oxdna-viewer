@@ -17,6 +17,8 @@ function guessInputFormat(files: File[]) {
             from.value = 'cadnano'; break;
         } else if (f.name.endsWith('.dnajson')) {
             from.value = 'tiamat'; break;
+        } else if (f.name.endsWith('.dna')) {
+            Metro.infobox.create("<h3>It looks like you are trying to import a tiamat .dna file</h3>Please first open it in Tiamat and export it as .dnajson, which you can then import here.", "alert");
         }
     }
     toggleInputOpts(from.value);
