@@ -928,11 +928,11 @@ class fluxGraph {
                 text: [this.title, this.type]
             },
             tooltips: {
-                mode: 'x',
+                mode: 'index',
                 intersect: false
             },
             hover: {
-                mode: 'x',
+                mode: 'nearest',
                 intersect: false
             },
             scales: {
@@ -962,7 +962,7 @@ class fluxGraph {
     initChart() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(50);
+            await delay(250);
             try {
                 let ctx = document.getElementById("flux").getContext('2d');
                 this.chart = new Chart(ctx, this.chartconfig);
@@ -976,7 +976,7 @@ class fluxGraph {
     toggleDatasetsandNetworks() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(100);
+            await delay(300);
             try {
                 flux.fluxWindowOpen = !flux.fluxWindowOpen;
                 if (flux.fluxWindowOpen) {
@@ -1250,6 +1250,7 @@ class fluxGraph {
             let rmsf = [];
             if (window.Worker) {
                 const mainWorker = new Worker('/oxdna-viewer/dist/model/anm_worker.js');
+                notify("Fitting Network " + (nid + 1).toString() + " to " + " Dataset " + GD.label);
                 let temp = view.getInputNumber('temp');
                 function activate() {
                     var promise = new Promise(function (resolve, reject) {
@@ -1273,6 +1274,7 @@ class fluxGraph {
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);
                                 view.addGraphData(ngid);
+                                notify("ANM Fitting Complete, Please check under Available Datasets in the Fluctuation Solver");
                                 resolve(message.data);
                             }
                         };

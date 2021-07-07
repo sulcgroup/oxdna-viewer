@@ -942,13 +942,19 @@ function prep_pdb(pdblines) {
         start = 1;
     }
     // Find Chain Termination statements TER and uses
+    // added contains_atoms as it is a necessary switch
+    let atoms_present = false;
     for (let i = start; i < pdblines.length; i++) {
         if (pdblines[i].substr(0, 4) == 'ATOM' && noatom == false) {
             firstatom = i; //line number of first atomic coordinate
             noatom = true;
         }
-        if (pdblines[i].substr(0, 3) === 'TER') {
+        if (pdblines[i].substr(0, 4) == 'ATOM') {
+            atoms_present = true;
+        }
+        if (pdblines[i].substr(0, 3) === 'TER' && atoms_present) {
             chainDivs.push(i);
+            atoms_present = false;
         }
         else if (pdblines[i].substr(0, 6) === 'ENDMDL') {
             modelDivs.push(i);
@@ -959,8 +965,11 @@ function prep_pdb(pdblines) {
             let dbond = [line.substring(15, 17).trim(), parseInt(line.substring(17, 21).trim()), line.substring(29, 31).trim(), parseInt(line.substring(31, 35).trim())];
             dsbonds.push(dbond);
         }
-        else if (pdblines[i].substr(0, 3) === 'END') { // sometimes people don't end their chain with a TER statement
+        else if (pdblines[i].substr(0, 3) === 'END' && atoms_present) { // sometimes people don't end their chain with a TER statement
+            // if (pdblines[i-1].substr(0, 4) == 'ATOM'){ // only if previous line has atom
             chainDivs.push(i);
+            atoms_present = false;
+            // }
         }
     }
     // If models are present in pdb file, Assumes that repeat chain ids are
@@ -969,21 +978,28 @@ function prep_pdb(pdblines) {
     if (modelDivs.length > 0)
         bioassemblyassumption = true;
     let nchainids = []; // Store new chainids
-    let finalids = []; // Final Ids to Loaded, can be from chains or models
+    let finalids = []; // Final Ids to be Loaded, can be from chains or models
     let finaldivs = [];
     if (chainDivs.length != 0) { // Assumes normal PDB file with all chains declared
         // check for chaindivs that are too close to one another (<= 2 lines)
         chainDivs = chainDivs.filter(function (a, aid, arr) {
             if (aid != 0) {
-                return a - arr[aid - 1] > 2; // false if less than two lines from previous (ex. [1030, 1032, 100001] -> [1030, 100001])
+                return a - arr[aid - 1] > 3; // false if less than two lines from previous (ex. [1030, 1032, 100001] -> [1030, 100001])
             }
             else
                 return true;
         });
         // Look at line above chain termination for chain ID
         let chainids = [];
-        chainDivs.forEach(d => {
-            chainids.push(pdblines[d - 1].substring(21, 22).trim());
+        chainDivs.forEach((d, idx, arr) => {
+            let chainid = pdblines[d - 1].substring(21, 22).trim();
+            if (chainid == "" && idx != 0) {
+                chainid = pdblines[(d - Math.floor((d - arr[idx - 1]) / 2))].substring(21, 22).trim(); // halfway through the chain
+                chainids.push(chainid);
+            }
+            else {
+                chainids.push(chainid);
+            }
         });
         //Re-Assign Chain Ids based off repeating or not
         let sorted_repeated_chainids = [];
@@ -1066,7 +1082,7 @@ const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "CYX", "GL
     "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
 const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
 const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
-const recongizedRNAResidues = ["A", "C", "G", "I", "U", "N"];
+const recongizedRNAResidues = ["A", "C", "G", "I", "U", "TU", "N"];
 const recongizedRNAStrandEnds = ["A3", "A5", "C3", "C5", "G3", "G5", "U3", "U5"];
 function readPdbFile(file) {
     let reader = new FileReader();
@@ -1163,6 +1179,8 @@ function readPdbFile(file) {
             residues = [];
             prevChainId = "";
             let prevResId = " ";
+            let tmpchainID = ""; // Original storage place of chain information
+            let rawPrevChainId = ""; // Unaltered Chain Info, used as a second criteria for chain formation, besides just residue numbers
             // residue type has to be correct
             let Amino = recongizedProteinResidues.indexOf(pdbLines[start].substring(17, 20).trim()) >= 0;
             for (let j = start; j < end; j++) {
@@ -1177,9 +1195,11 @@ function readPdbFile(file) {
                     if (!chaincheck) { // fill missing chain data
                         if (prevChainId == chainindx.toString()) {
                             na.chainID = chainindx.toString();
+                            tmpchainID = na.chainID;
                         }
                         else {
                             na.chainID = (chainindx + 1).toString();
+                            tmpchainID = na.chainID;
                         }
                         let tmp = pdbLine.substring(21, 27); // Location of residue identifer IF file is missing chain data
                         //check for insertion code
@@ -1195,9 +1215,9 @@ function readPdbFile(file) {
                     else {
                         let negative = false; // flag that triggers upon finding negative residues
                         let resIdentAddOn = '';
-                        let tmpchainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
+                        tmpchainID = pdbLine.substring(21, 23).trim(); //changed to (21, 22) to (21, 23) to deal with 2 letter identifiers present in some PDB Files
                         if (tmpchainID.includes("-", -1)) {
-                            // negative numbered residues, yes they're real
+                            // negative numbered residues, yes they're real, negative sign is taken into the chainID
                             negative = true;
                             tmpchainID = tmpchainID.substring(0, 1);
                         }
@@ -1258,7 +1278,7 @@ function readPdbFile(file) {
                             pdbpositions.push(new THREE.Vector3(na.x, na.y, na.z));
                     }
                     //checks if last read atom belongs to a different chain than the one before it, or if the Res Identifer has sudden jump
-                    if (prevChainId !== na.chainID || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && !isNaN(parseInt(prevResId)))) {
+                    if (prevChainId !== na.chainID || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && !isNaN(parseInt(prevResId)) && rawPrevChainId !== tmpchainID)) {
                         //notify("chain created");
                         chainindx += 1;
                         na.chainIndx = chainindx;
@@ -1271,6 +1291,7 @@ function readPdbFile(file) {
                         chains.push(ncc);
                         //set previous chain id to that of last read atom
                         prevChainId = na.chainID;
+                        rawPrevChainId = tmpchainID; // Unaltered Chain Info, used as a second criteria for chain formation, besides just residue numbers
                     }
                     else { // not a new chain, same chain index
                         na.chainIndx = chainindx;
@@ -1461,6 +1482,7 @@ function addPDBToScene() {
             // Loop over all Residues in each Strand
             strand.residues.forEach(res => {
                 // Sort PDB Info and set Flags for System Initialization at Residue Level
+                res.resType = res.resType.replace(/[0-9]/g, '');
                 //Check if Residue from PDB is in recongized array
                 if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
                     // Deal with Special Cases Here
@@ -1498,13 +1520,16 @@ function addPDBToScene() {
                         notify("Nucleotide Number blank has Residue Type Inosine. This is currently unsupported.");
                         return 1;
                     }
+                    if (res.resType === 'TU') { // weird case
+                        res.resType = 'U';
+                    }
                     // Sets which Nucleic Acids are Intialized
                     res.type = 'rna';
                     // Bookkeeping
                     checker.RNAPresent = true;
                 }
                 else {
-                    notify("Residue type: " + res.resType + " Residue Number: " + res.pdbResIdent + " on chain: " + strand.chainID + "in Provided PDB is Not Supported. " +
+                    notify("Residue type: " + res.resType + " Residue Number: " + res.pdbResIdent + " on chain: " + strand.chainID + " in Provided PDB is Not Supported. " +
                         "It will not be Intialized in the Viewer.");
                     res.type = 'unworthy';
                 }
@@ -1655,7 +1680,11 @@ function addPDBToScene() {
             let Bfactavg = Bfacts.map(a => a).reduce((a, b) => a + b);
             Bfactavg /= res.atoms.length;
             //sum bfactors of ind atoms
-            let o4atom = res.atoms.filter(a => a.atomType == "O4'")[0];
+            let o4atom = res.atoms.filter(a => a.atomType == "O4'" || a.atomType == "O4*")[0];
+            if (o4atom === undefined) {
+                notify("No o4' found for Nucleotide initialization");
+                return;
+            }
             let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
             let parallel_to = o4pos.sub(baseCom);
             //Calculate Center of Mass
@@ -1672,23 +1701,37 @@ function addPDBToScene() {
                 let p = res.atoms.filter(a => a.atomType == types[0])[0];
                 let q = res.atoms.filter(a => a.atomType == types[1])[0];
                 let r = res.atoms.filter(a => a.atomType == types[2])[0];
-                let v1 = new THREE.Vector3;
-                let v2 = new THREE.Vector3;
-                v1.x = p.x - q.x;
-                v1.y = p.y - q.y;
-                v1.z = p.z - q.z;
-                v2.x = p.x - r.x;
-                v2.y = p.y - r.y;
-                v2.z = p.z - r.z;
-                let nv1 = v1.clone().normalize();
-                let nv2 = v2.clone().normalize();
-                if (Math.abs(nv1.dot(nv2)) > 0.01) {
-                    let tmpa3 = nv1.cross(nv2);
-                    tmpa3.normalize();
-                    if (tmpa3.dot(parallel_to) < 0) {
-                        tmpa3.negate();
+                if (p === undefined || q === undefined || r === undefined) {
+                    if (p === undefined) {
+                        notify('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
                     }
-                    a3.add(tmpa3);
+                    if (q === undefined) {
+                        notify('Atom ' + types[1] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
+                    }
+                    if (r === undefined) {
+                        notify('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
+                    }
+                    break;
+                }
+                else {
+                    let v1 = new THREE.Vector3;
+                    let v2 = new THREE.Vector3;
+                    v1.x = p.x - q.x;
+                    v1.y = p.y - q.y;
+                    v1.z = p.z - q.z;
+                    v2.x = p.x - r.x;
+                    v2.y = p.y - r.y;
+                    v2.z = p.z - r.z;
+                    let nv1 = v1.clone().normalize();
+                    let nv2 = v2.clone().normalize();
+                    if (Math.abs(nv1.dot(nv2)) > 0.01) {
+                        let tmpa3 = nv1.cross(nv2);
+                        tmpa3.normalize();
+                        if (tmpa3.dot(parallel_to) < 0) {
+                            tmpa3.negate();
+                        }
+                        a3.add(tmpa3);
+                    }
                 }
             }
             a3.normalize();
@@ -1751,38 +1794,43 @@ function addPDBToScene() {
                         nextElementId++;
                     }
                 }
-                currentStrand.updateEnds();
-                // Take care of repeats Access by Chain Identifier
-                initlist.repeatIDs.forEach((rid, indx) => {
-                    if (nstrand.chainID.includes(rid)) { // Repeat same chain
-                        let repeatStrand = sys.addNewPeptideStrand();
-                        currentStrand.getMonomers().forEach((mon, mid) => {
-                            // basically just copy the strand we just built using the sotred init info and repeat chain info
-                            let repeatAmino = repeatStrand.createBasicElement(nextElementId);
-                            repeatAmino.pdbindices = mon.pdbindices;
-                            repeatAmino.sid = nextElementId - oldElementId;
-                            let rinfo = strandInfo[mid].slice(); // copy originals initialization info
-                            let rotquat = initlist.repeatQuatRots[indx];
-                            rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
-                            rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
-                            rinfo[2] = initlist.repeatCoords[indx][mid];
-                            bFactors.push(rinfo[5]); // Assume same B factors
-                            xdata.push(repeatAmino.sid);
-                            com.add(rinfo[2]);
-                            initInfo.push(rinfo);
-                            repeatAmino.n3 = null;
-                            repeatAmino.n5 = null;
-                            if (mid != 0) { // not first element of strand
-                                let prevaa = elements.get(nextElementId - 1); //Get previous Element
-                                repeatAmino.n3 = prevaa;
-                                prevaa.n5 = repeatAmino;
-                            }
-                            elements.push(repeatAmino);
-                            nextElementId++;
-                        });
-                        repeatStrand.updateEnds();
-                    }
-                });
+                if (currentStrand.end3 == undefined) {
+                    notify("Strand " + nstrand.chainID + " could not be initialized");
+                }
+                else {
+                    currentStrand.updateEnds();
+                    // Take care of repeats Access by Chain Identifier
+                    initlist.repeatIDs.forEach((rid, indx) => {
+                        if (nstrand.chainID.includes(rid)) { // Repeat same chain
+                            let repeatStrand = sys.addNewPeptideStrand();
+                            currentStrand.getMonomers().forEach((mon, mid) => {
+                                // basically just copy the strand we just built using the sotred init info and repeat chain info
+                                let repeatAmino = repeatStrand.createBasicElement(nextElementId);
+                                repeatAmino.pdbindices = mon.pdbindices;
+                                repeatAmino.sid = nextElementId - oldElementId;
+                                let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                                let rotquat = initlist.repeatQuatRots[indx];
+                                rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
+                                rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
+                                rinfo[2] = initlist.repeatCoords[indx][mid];
+                                bFactors.push(rinfo[5]); // Assume same B factors
+                                xdata.push(repeatAmino.sid);
+                                com.add(rinfo[2]);
+                                initInfo.push(rinfo);
+                                repeatAmino.n3 = null;
+                                repeatAmino.n5 = null;
+                                if (mid != 0) { // not first element of strand
+                                    let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                                    repeatAmino.n3 = prevaa;
+                                    prevaa.n5 = repeatAmino;
+                                }
+                                elements.push(repeatAmino);
+                                nextElementId++;
+                            });
+                            repeatStrand.updateEnds();
+                        }
+                    });
+                }
             }
             else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
                 let currentStrand = sys.addNewNucleicAcidStrand();
@@ -1815,42 +1863,47 @@ function addPDBToScene() {
                         notify("Nucleotide could not be initialized");
                     }
                 }
-                currentStrand.updateEnds();
-                // Take care of repeats Access by Chain Identifier
-                initlist.repeatIDs.forEach((rid, indx) => {
-                    if (nstrand.chainID.includes(rid)) {
-                        let repeatStrand = sys.addNewNucleicAcidStrand();
-                        currentStrand.getMonomers(true).forEach((mon, mid) => {
-                            let repeatNuc = repeatStrand.createBasicElement(nextElementId);
-                            repeatNuc.sid = nextElementId - oldElementId;
-                            try {
-                                let rinfo = strandInfo[mid].slice(); // copy originals initialization info
-                                let rotquat = initlist.repeatQuatRots[indx];
-                                rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
-                                rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
-                                rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
-                                bFactors.push(rinfo[5]); // Assume same B factors
-                                xdata.push(repeatNuc.sid);
-                                com.add(rinfo[2]);
-                                initInfo.push(rinfo);
-                                repeatNuc.n3 = null;
-                                repeatNuc.n5 = null;
-                                // monomers go 5' to 3'
-                                if (mid != 0) {
-                                    let prevaa = elements.get(nextElementId - 1); //Get previous Element
-                                    repeatNuc.n3 = prevaa;
-                                    prevaa.n5 = repeatNuc;
+                if (currentStrand.end3 == undefined) {
+                    notify("Strand " + nstrand.chainID + " could not be initialized");
+                }
+                else {
+                    currentStrand.updateEnds();
+                    // Take care of repeats Access by Chain Identifier
+                    initlist.repeatIDs.forEach((rid, indx) => {
+                        if (nstrand.chainID.includes(rid)) {
+                            let repeatStrand = sys.addNewNucleicAcidStrand();
+                            currentStrand.getMonomers(true).forEach((mon, mid) => {
+                                let repeatNuc = repeatStrand.createBasicElement(nextElementId);
+                                repeatNuc.sid = nextElementId - oldElementId;
+                                try {
+                                    let rinfo = strandInfo[mid].slice(); // copy originals initialization info
+                                    let rotquat = initlist.repeatQuatRots[indx];
+                                    rinfo[3] = rinfo[3].applyQuaternion(rotquat); // Rotate a1
+                                    rinfo[4] = rinfo[4].applyQuaternion(rotquat); // Rotate a3
+                                    rinfo[2] = initlist.repeatCoords[indx][mid]; // New Position
+                                    bFactors.push(rinfo[5]); // Assume same B factors
+                                    xdata.push(repeatNuc.sid);
+                                    com.add(rinfo[2]);
+                                    initInfo.push(rinfo);
+                                    repeatNuc.n3 = null;
+                                    repeatNuc.n5 = null;
+                                    // monomers go 5' to 3'
+                                    if (mid != 0) {
+                                        let prevaa = elements.get(nextElementId - 1); //Get previous Element
+                                        repeatNuc.n3 = prevaa;
+                                        prevaa.n5 = repeatNuc;
+                                    }
+                                    elements.push(repeatNuc);
+                                    nextElementId++;
                                 }
-                                elements.push(repeatNuc);
-                                nextElementId++;
-                            }
-                            catch (e) {
-                                notify("Nucleotide could not be initialized");
-                            }
-                        });
-                        repeatStrand.updateEnds();
-                    }
-                });
+                                catch (e) {
+                                    notify("Nucleotide could not be initialized");
+                                }
+                            });
+                            repeatStrand.updateEnds();
+                        }
+                    });
+                }
             }
         }
         com.divideScalar(sys.systemLength());
