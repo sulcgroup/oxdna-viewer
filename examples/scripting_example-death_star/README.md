@@ -3,7 +3,7 @@
 This example demonstrates how to use oxView's scripting interface to set up a simulation of orientation-controlled DNA structures as experimentally demonstrated in [this paper](https://science.sciencemag.org/content/371/6531/eabd6179).  It also demonstrates how to add additional objects to the scene, for example to show the location of a gold nanoparticle.
 
 ### Files
-You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click this link and select "Save Link As"):  
+You need to download the following file to complete this example (GitHub does not like downloading individual files, to download you need to right click this link and select "Save Link As"):  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-death_star/death_star.oxview" download>death_star.oxview</a>
 
 You will also need these two JavaScript scripts, however they can just be copy and pasted when you get to them in the example:  
