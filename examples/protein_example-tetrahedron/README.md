@@ -1,5 +1,7 @@
 # Parameterizing a protein ANM in oxView
 
+This example demonstrates how to use oxView to parameterize a DNA-protein hybrid using [ANM-oxDNA](https://github.com/sulcgroup/anm-oxdna).  The structure demonstrated here is a DNA tetrahedron scaffolded using KDPG aldolase as experimentally demonstrated in [this paper](https://pubs.acs.org/doi/10.1021/acsnano.8b09798)
+
 ### Files
 You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click these links and select "Save Link As"):  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/protein_example-tetrahedron/1eua.pdb" download>1eua.pdb</a>  
