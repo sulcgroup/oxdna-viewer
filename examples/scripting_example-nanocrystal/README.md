@@ -3,11 +3,11 @@
 This example demonstrates how to set up a 3x3x3 lattice of DNA origami octahedrons as experimentally demonstrated in [this paper](https://www.nature.com/articles/s41563-019-0550-x).  Please note that this sets up a very large scene and will take a long time to complete, even on a high end computer.
 
 ### Files
-You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click the links and select "Save Link As"):
-<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/tian_octahedron_ext.dat" download>tian_octahedron_ext.dat</a>
+You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click the links and select "Save Link As"):  
+<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/tian_octahedron_ext.dat" download>tian_octahedron_ext.dat</a>  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/tian_octahedron_ext.top" download>tian_octahedron_ext.top</a>
 
-You will also need this JavaScript script, however it can just be copy and pasted when you get to it in the example:
+You will also need this JavaScript script, however it can just be copy and pasted when you get to it in the example:  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/crystal_script3x3.js">crystal_script3x3.js</a>
 
 ### Protocol
