@@ -1240,8 +1240,8 @@ class fluxGraph {
         }
         // get network, make sure edges are there, otherwise nothing to calculate
         let net = networks[nid];
-        if (net.particles.length > 1000) {
-            notify("Large Networks (n>1000) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
+        if (net.particles.length > 1500) {
+            notify("Large Networks (n>1500) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
             return;
         }
         if (net.reducedEdges.total == 0) {
