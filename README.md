@@ -200,4 +200,4 @@ Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr 
 (https://doi.org/10.1093/nar/gkaa417)
 
 ## Acknowledgements
-We gratefully acknowledge support from NSF grant no 1931487 and ONR grant no N000142012094. We thank to all the users for submitting their feedback, bug reports and feature requests, as well as all members of Sulc, Yan, Doye, Turberfield, and Louis groups who participate in testing of the tool.
+We gratefully acknowledge support from NSF grant no 1931487, ONR grant no N000142012094 and MSCA grant no 765703. We thank to all the users for submitting their feedback, bug reports and feature requests, as well as all members of Sulc, Yan, Doye, Turberfield, and Louis groups who participate in testing of the tool.
