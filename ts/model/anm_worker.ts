@@ -24,6 +24,7 @@ let ordervector = function (vec: number[], order: number[]): number[] {
     }
     return vec;
 }
+
 let ordervector2 = function(u, start, adim, order){
     let tmp = 0;
     for (let j = start; j < adim+start; j++) {
@@ -96,7 +97,8 @@ function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
         for (j = 0; j < n; j++) {
             u[i * m + j] = a[i * adim + j]
         }
-    }
+    }// if we sacrefice the hessian we can free up some memory
+    a = null;
 
     for (i = 0; i < n; i++) {
         e[i] = g
@@ -341,7 +343,7 @@ function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
         q[ind] = (q.length - ind) * 10 ** -15;
     }
 
-    let key: number[] = q.slice();
+    
     // Some values of q are zero, Replacing with values that will be below tolerance but unique for full sorting
 
     // To return in order by singular value,
@@ -355,7 +357,8 @@ function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
 
     // let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
 
-    let order = q.map(x => key.indexOf(x)); // get index order to apply same sorting to u and v
+    //let key: number[] = q.slice();
+    let order = q.map(x => q.indexOf(x)); // get index order to apply same sorting to u and v
     console.log("order");
     // let ordervt = JSON.parse(JSON.stringify(vt)); //deepcopy
     // let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
@@ -363,92 +366,18 @@ function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
     //lets reorder
     let orderu = [];
     let ordervt = [];
-    //for (i = 0; i < order.length; i++) {
-    //order.forEach(idx => {
-    //    orderu.push(
-    //        ...ordervector(u.splice(idx * adim, adim), order)
-    //    );
-    //    ordervt.push(
-    //        ...ordervector(vt.splice(idx * adim, adim), order)
-    //    );
-    //    //now order has 1 less 
-    //    for (let j =0; j < order.length; j++)  order[j]--;
-    //}); 
+    //working but bad
+    for (i = 0; i < order.length; i++) {
+        orderu.push(... ordervector(u.slice(order[i] * adim, (order[i] + 1) * adim), order)); //replace new array in correct order
+        ordervt.push(... ordervector(vt.slice(order[i] * adim, (order[i] + 1) * adim), order));
+    }
 
-        //orderu.concat(); //replace new array in correct order
-        //orderu = orderu.concat(
-        //orderu = ordervector(
-        //    u.splice(order[i] * adim,   adim),
-        //    order
-        //);
-        //u.splice(i*adim,0, ...orderu );
-        ////ordervt = ordervt.concat(); //replace new array in correct order
-        //ordervt = ordervector(
-        //    vt.splice(order[i] * adim,  adim), 
-        //    order
-        //);
-        //vt.splice(i*adim,0, ...ordervt);
-
-        for (i = 0; i < order.length; i++) {
-            orderu.push(... ordervector(u.slice(order[i] * adim, (order[i] + 1) * adim), order)); //replace new array in correct order
-            ordervt.push(... ordervector(vt.slice(order[i] * adim, (order[i] + 1) * adim), order));
-        }
-        
-        ////each subarray is positioned in order
-        //order.forEach(idx => {
-        //    ordervector2(u,  idx*adim, adim,order);
-        //    ordervector2(vt, idx*adim, adim,order); 
-        //}); 
-        //for (let i = 0; i < order.length; i++) {
-        //    let cur_u = u.splice(order[i] * adim,  adim);
-        //    u.splice(i*adim,0, ...cur_u);
-        //    let cur_vt = vt.splice(order[i] * adim,  adim);
-        //    vt.splice(i*adim,0, ...cur_vt);
-        //    
-        //    ////and now reorder the order array
-        //    //let cidx = order[i];
-        //    //let pos_idx = order.indexOf(i);
-        //    //let tmp = order[pos_idx];
-        //    //order[pos_idx]=cidx;
-        //    //order[i]=tmp;
-        //}
-
-
-
-        //// now we need to rearange 
-        //order.forEach((idx,i) => {
-        //    //current peace 
-        //    let cur = u.splice(idx * adim,  adim);
-        //    // insert it at i loc
-        //    u.splice(i*adim,0, ...cur);
-        //    
-        //    let shift = order.indexOf(i);
-        //    let tmp = order[i];
-        //    let order[i] = shift;
-        //    //let in_place = u.splice(order.indexOf(idx), adim);
-        //    
-//
-        //})
-        //
-        
-        //u = orderu; //kill the old array
-        //for (i = 0; i < order.length; i++) {
-        //    ordervt = ordervt.concat(ordervector(vt.slice(order[i] * adim, (order[i] + 1) * adim), order)); //replace new array in correct order
-        //}
-        //vt = ordervt; //kill the old array
-        //replace new array in correct order
-    //}
-    //u = orderu; //kill the old array
-    //for (i = 0; i < order.length; i++) {
-    
-    //}
-    //vt = ordervt; //kill the old array
     // Number below eps should be zero
     for (i = 0; i < n; i++) {
         if (q[i] < eps) q[i] = 0;
     }
-    console.log(orderu);
-    console.log(ordervt);
+    //console.log(orderu);
+    //console.log(ordervt);
     return { orderu, q, ordervt }
 }
 
@@ -582,6 +511,7 @@ this.onmessage = function(e) {
 
     // Make diagonal of inverse eigenvalues
     let invq = new Array(hessian.length).fill(0);
+    //let invq = new Array(q.length).fill(0);
     //make diagonal
     for(let i = 0; i < q.length; i++){
         let qval = q[i];
