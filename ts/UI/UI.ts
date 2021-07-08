@@ -984,11 +984,18 @@ class fluxGraph {
             datasets: []
         }
         this.chartoptions = {
-            animation: {
-                onComplete: function () {
-                    this.chart.toBase64Image();
+            elements: {
+                line: {
+                    tension: 0 // disables bezier curves
                 }
             },
+            animation: {
+                duration: 0 // general animation time
+                //onComplete: function () {
+                //    this.chart.toBase64Image();
+                //}
+            },
+            responsiveAnimationDuration: 0, // animation duration after a resize
             responsive: true,
             title: {
                 display: true,
@@ -999,6 +1006,7 @@ class fluxGraph {
                 intersect: false
             },
             hover: {
+                animationDuration: 0,
                 mode: 'nearest',
                 intersect: false
             },
