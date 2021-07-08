@@ -4,8 +4,8 @@ In this example you will import a two-component structure using the [Tacoxdna](h
 
 ### Files
 You need to download the following files to complete this example:  
-<a href="rail.json" download>rail.json</a>  
-<a href="slider.json" download>slider.json</a>  
+<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
+<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
 
 ### Protocol
 
