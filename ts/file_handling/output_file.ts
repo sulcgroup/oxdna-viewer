@@ -18,12 +18,12 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
     if (dat) {
         console.log(reorganized)
         let {file_name, file} = makeDatFile(name, reorganized);
-        makeTextFile(file_name, file);	
+        setTimeout(() => makeTextFile(file_name, file), 20);
     }
 
     if (networks.length > 0) {
         let {file_name, file} = makeParFile(name, reorganized, counts);
-        makeTextFile(file_name, file);
+        setTimeout(() => makeTextFile(file_name, file), 40);
     }
 }
 
