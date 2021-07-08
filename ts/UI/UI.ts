@@ -1320,7 +1320,7 @@ class fluxGraph {
         if(net.networktype == 'ANM'){
             let rmsf = [];
             if (window.Worker) {
-                const mainWorker = new Worker('/oxdna-viewer/dist/model/anm_worker.js');
+                const mainWorker = new Worker('./dist/model/anm_worker.js');
                 notify("Fitting Network " + (nid+1).toString() + " to " + " Dataset " + GD.label);
                 let temp = view.getInputNumber('temp');
 
