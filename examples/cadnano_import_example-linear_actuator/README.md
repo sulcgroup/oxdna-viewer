@@ -3,7 +3,7 @@
 In this example you will import a two-component structure using the [Tacoxdna](http://tacoxdna.sissa.it/) Cadnano importer.  The structure in this directory is the linear actuator from [this](https://onlinelibrary.wiley.com/doi/full/10.1002/smll.202007704) paper.
 
 ### Files
-You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click these links and select "Save Link As":  
+You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click these links and select "Save Link As"):  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
 
