@@ -139,6 +139,7 @@
                 <label>File format</label>
                 <select id="importFromSelect" onchange="toggleInputOpts(this.value)">
                     <option value="cadnano">caDNAno</option>
+                    <option value="tiamat">tiamat</option>
                     <option value="rpoly">rpoly</option>
                 </select>
             </div>
@@ -154,6 +155,32 @@
                 <div class="form-group">
                     <label>Scaffold sequence</label>
                     <input type="text" placeholder="RANDOM" id="importCadnanoScaffoldSeq">
+                </div>
+            </div>
+            <div id='importTiamatOpts' hidden>
+                <div class="form-group">
+                    <label>Tiamat version</label>
+                    <select id="importTiamatVersion">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nucleic acid type</label>
+                    <select id="importTiamatIsDNA">
+                        <option value="DNA" selected>DNA</option>
+                        <option value="RNA">RNA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Default base</label>
+                    <select id="importTiamatDefaultVal">
+                        <option value="R" selected>Random</option>
+                        <option value="A">A</option>
+                        <option value="C">C</option>
+                        <option value="G">G</option>
+                        <option value="T">T/U</option>
+                    </select>
                 </div>
             </div>
             <div id='importRpolyOpts' hidden>

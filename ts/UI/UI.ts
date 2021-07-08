@@ -47,7 +47,7 @@ function deleteSelectedForces() {
 
 
 function drawSystemHierarchy() {
-    let checkboxhtml = (label)=> `<input data-role="checkbox" data-caption="${label}">`;
+    let checkboxhtml = (label)=> `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;
 
     const includeMonomers = (document.getElementById("hierarchyMonomers") as HTMLInputElement).checked;
 
@@ -984,22 +984,30 @@ class fluxGraph {
             datasets: []
         }
         this.chartoptions = {
-            animation: {
-                onComplete: function () {
-                    this.chart.toBase64Image();
+            elements: {
+                line: {
+                    tension: 0 // disables bezier curves
                 }
             },
+            animation: {
+                duration: 0 // general animation time
+                //onComplete: function () {
+                //    this.chart.toBase64Image();
+                //}
+            },
+            responsiveAnimationDuration: 0, // animation duration after a resize
             responsive: true,
             title: {
                 display: true,
                 text: [this.title, this.type]
             },
             tooltips: {
-                mode: 'x',
+                mode: 'index',
                 intersect: false
             },
             hover: {
-                mode: 'x',
+                animationDuration: 0,
+                mode: 'nearest',
                 intersect: false
             },
             scales: {
@@ -1029,7 +1037,7 @@ class fluxGraph {
     initChart() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(50);
+            await delay(250);
             try {
                 let ctx = (document.getElementById("flux") as HTMLCanvasElement).getContext('2d');
                 this.chart = new Chart(ctx, this.chartconfig);
@@ -1043,7 +1051,7 @@ class fluxGraph {
     toggleDatasetsandNetworks(){
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
-            await delay(100);
+            await delay(300);
             try {
                 flux.fluxWindowOpen = !flux.fluxWindowOpen;
                 if(flux.fluxWindowOpen){
@@ -1313,6 +1321,7 @@ class fluxGraph {
             let rmsf = [];
             if (window.Worker) {
                 const mainWorker = new Worker('/oxdna-viewer/dist/model/anm_worker.js');
+                notify("Fitting Network " + (nid+1).toString() + " to " + " Dataset " + GD.label);
                 let temp = view.getInputNumber('temp');
 
                 function activate() {
@@ -1339,6 +1348,7 @@ class fluxGraph {
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);
                                 view.addGraphData(ngid);
+                                notify("ANM Fitting Complete, Please check under Available Datasets in the Fluctuation Solver");
                                 resolve(message.data);
                             }
                         }

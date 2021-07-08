@@ -167,6 +167,7 @@ class ForceHandler{
 }
 
 function makeTrapsFromSelection() {
+    let stiffness = parseFloat((document.getElementById("txtForceValue") as HTMLInputElement).value);
     let selection = Array.from(selectedBases);
     // For every other element in selection
     for (let i = 0; i < selection.length; i+=2) {
@@ -174,11 +175,11 @@ function makeTrapsFromSelection() {
         if (selection[i+1] !== undefined) {
             //create mutual trap data for the 2 nucleotides in a pair - selected simultaneously
             let trapA = new MutualTrap();
-            trapA.set(selection[i], selection[i + 1]);
+            trapA.set(selection[i], selection[i + 1],stiffness);
             forces.push(trapA);
 
             let trapB = new MutualTrap();
-            trapB.set(selection[i + 1], selection[i]);
+            trapB.set(selection[i + 1], selection[i],stiffness);
             forces.push(trapB);
         } else { 
             //if there is no 2nd nucleotide in the pair
@@ -193,12 +194,13 @@ function makeTrapsFromSelection() {
 }
 
 function makeTrapsFromPairs() {
+    let stiffness = parseFloat((document.getElementById("txtForceValue") as HTMLInputElement).value);
     let nopairs = true;
     elements.forEach(e=>{
         // If element is paired, add a trap
         if (e.isPaired()) {
             let trap = new MutualTrap();
-            trap.set(e, (e as Nucleotide).pair);
+            trap.set(e, (e as Nucleotide).pair, stiffness);
             forces.push(trap);
             nopairs = false;
         }
