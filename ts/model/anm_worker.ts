@@ -97,8 +97,7 @@ function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
         for (j = 0; j < n; j++) {
             u[i * m + j] = a[i * adim + j]
         }
-    }// if we sacrefice the hessian we can free up some memory
-    a = null;
+    }
 
     for (i = 0; i < n; i++) {
         e[i] = g
@@ -511,6 +510,7 @@ this.onmessage = function(e) {
 
     // Make diagonal of inverse eigenvalues
     let invq = new Array(hessian.length).fill(0);
+    hessian = null;
     //let invq = new Array(q.length).fill(0);
     //make diagonal
     for(let i = 0; i < q.length; i++){
