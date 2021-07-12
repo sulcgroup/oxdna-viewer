@@ -1,11 +1,12 @@
 # Cadnano import example
 
-In this example you will import a two-component structure using the [Tacoxdna](http://tacoxdna.sissa.it/) Cadnano importer.  The structure in this directory is the linear actuator from [this](https://onlinelibrary.wiley.com/doi/full/10.1002/smll.202007704) paper.
+In this example you will import and assemble a two-component caDNAno structure (using the integrated [tacoxdna.js](http://tacoxdna.sissa.it/) importer).  The structure in this directory is the linear actuator from  the following paper: 
+> Benson, E., Carrascosa, R., Bath, J., Turberfield, A. J., Strategies for Constructing and Operating DNA Origami Linear Actuators. Small 2021, 17, 2007704. https://doi.org/10.1002/smll.202007704.
 
 ### Files
 You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click these links and select "Save Link As"):  
-<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
-<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
 
 ### Protocol
 
@@ -20,4 +21,4 @@ You need to download the following files to complete this example (GitHub does n
 4.  Position the slider on the rail(a)  In the "Select" tab, enable the "System" selection mode and click on the slider to select it.
     1. In the "Edit" tab, toggle the "Translate" tool (or press "T" on the keyboard). Use the arrows to position the slider on the rail.
 6.  (optional) Select by cluster, translate and rotate the single stranded clusters to avoid the extended backbone bonds.
-7.  (optional) Use the "Create" and "Ligate" tools to join the structures together.
+7.  (optional) To connect the slider to a specific position on the rail, you can create mutual trap forces between the complementary single strands to pull them together (make sure to set their sequences accordingly). Alternatively, remove the single strands and replace them with new duplexes of the correct length.
