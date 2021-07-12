@@ -554,10 +554,6 @@
                 <div class="tight group flex-column">
                     <div>
                         <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
-                        <button class="ribbon-icon-button" onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">
-                            <img src="img/ico/set.svg">
-                            <span class="caption"> Set</span>
-                        </button>
                         <button class="ribbon-icon-button" onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">
                             <img src="img/ico/extend.svg">
                             <span class="caption"> Extend</span>
@@ -574,15 +570,20 @@
                             <img src="img/ico/skip.svg">
                             <span class="caption"> Skip</span>
                         </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Connect 3'of 2 strands by a duplex">
-                            <span class="caption"> Connect 3' duplex</span>
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Join the 3' ends of two selected strands with a duplex, generated from the sequence input.">
+                            <img src="img/ico/connect3s.svg">
+                            <span class="caption"> Join 3'</span>
                         </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Connect 5'of 2 strands by a duplex">
-                            <span class="caption"> Connect 5' duplex</span>
+                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Join the 5' ends of two selected strands with a duplex, generated from the sequence input.">
+                            <img src="img/ico/connect5s.svg">
+                            <span class="caption"> Join 5'</span>
                         </button>
-
+                        <button class="ribbon-icon-button" onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">
+                            <img src="img/ico/set.svg">
+                            <span class="caption"> Set</span>
+                        </button>
                         <button class="ribbon-icon-button" onclick="getSelectedSeqWrapper()" title="Gets sequence from selection.(5'->3')">
-                            <span class="mif-file-upload mif-3x"></span>
+                            <span class="mif-file-upload mif-2x"></span>
                             <span class="caption"> Get</span>
                         </button>
 
