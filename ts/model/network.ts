@@ -682,13 +682,13 @@ class Network {
         return matrixDot(nf, 3*q.length, 3*q.length, vt, 3* q.length, 3*q.length); // U*q*Vt
     }
     ;
-    getRMSF(inverse : number[], temp: number): number[] { //Root Mean Square Fluctuaction in A^2
-        let RMSF = [];
+    getMSF(inverse : number[], temp: number): number[] { //Mean Square Fluctuaction in A^2
+        let MSF = [];
         for(let i = 0; i < inverse.length/3; i++){ //for each particle
-            let r = this.kb * temp * (inverse[3*i*inverse.length + 3*i] + inverse[(3*i+1)*inverse.length + 3*i+1] + inverse[(3*i+2)*inverse.length + 3*i+2]); //A^2
-            RMSF.push(r);
+            let m = this.kb * temp * (inverse[3*i*inverse.length + 3*i] + inverse[(3*i+1)*inverse.length + 3*i+1] + inverse[(3*i+2)*inverse.length + 3*i+2]); //A^2
+            MSF.push(m);
         }
-        return RMSF;
+        return MSF;
     }
     ;
     fillConnections(){

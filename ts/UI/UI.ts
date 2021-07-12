@@ -881,7 +881,7 @@ class graphData {
     label: string;
     data: number[];
     xdata: number[];
-    datatype: string; // rmsf or bfactor
+    datatype: string; // msf or bfactor
     units: string; // A_sqr or nm_sqr
     gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
     cutoff: number; // Cutoff (A) for edges, only used if graphData is generated as a Fit
@@ -897,12 +897,12 @@ class graphData {
         this.oDatatype = this.datatype;
     };
     convertType(format:string) {
-        if(['rmsf', 'bfactor'].indexOf(format) < 0) return; // TODO: Add error throw here and convertUnits
+        if(['msf', 'bfactor'].indexOf(format) < 0) return; // TODO: Add error throw here and convertUnits
         if (this.datatype == format) return; //Already in the right format gang gang
         // Conversion needs to know both formats and direction to do anything useful
-        if (this.datatype == 'rmsf' && format == 'bfactor'){
+        if (this.datatype == 'msf' && format == 'bfactor'){
             this.data = this.data.map(e => e * ((8 * Math.pow(Math.PI, 2)) / 3));
-        } else if (this.datatype == 'bfactor' && format == 'rmsf'){
+        } else if (this.datatype == 'bfactor' && format == 'msf'){
             this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
         }
         this.datatype = format; // assumes successful conversion
@@ -918,7 +918,7 @@ class graphData {
     };
     toJson(){
         // Easiest to just change the whole graph to the correct output format
-        flux.changeType('rmsf');
+        flux.changeType('msf');
         flux.changeUnits('nm_sqr');
         let data = this.data.map(e => {return Math.sqrt(e)});
         return {'RMSF (nm)':data};
@@ -1130,7 +1130,7 @@ class fluxGraph {
         let msddata = fluxdata.map(x => x**2) //rmsf to msf
         let xdata = msddata.map((val, ind) => ind+1);
 
-        let GD = new graphData('tmp', msddata, xdata, 'rmsf', 'nm_sqr'); //label needs to be re written
+        let GD = new graphData('tmp', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
         graphDatasets.push(GD);
     }
 
@@ -1151,7 +1151,7 @@ class fluxGraph {
         wait();
     }
 
-    setType(type: string) { //type can be bfactor or rmsf
+    setType(type: string) { //type can be bfactor or msf
         this.type = type;
     };
 
@@ -1289,12 +1289,12 @@ class fluxGraph {
         let gid = this.gids[0];
         let GD = graphDatasets[gid];
 
-        // make format rmsf for fitting
-        let Targetrmsf;
+        // make format msf for fitting
+        let Targetmsf;
         if(GD.datatype == "bfactor") {
-            Targetrmsf = GD.data.slice().map(b => b*(3/(8*Math.pow(Math.PI, 2))));
+            Targetmsf = GD.data.slice().map(b => b*(3/(8*Math.pow(Math.PI, 2))));
         } else {
-            Targetrmsf = GD.data.slice(); //must be rmsf
+            Targetmsf = GD.data.slice(); //must be msf
         }
 
         // get network, make sure edges are there, otherwise nothing to calculate
@@ -1311,14 +1311,14 @@ class fluxGraph {
         }
 
         // checks data you are fitting is exact same length, might need to make changes to this later
-        if(net.particles.length != Targetrmsf.length) {
+        if(net.particles.length != Targetmsf.length) {
             notify("Target Data is a different length than network, will not Fit");
             return;
         }
 
         // ANM Solving, only one for a little bit
         if(net.networktype == 'ANM'){
-            let rmsf = [];
+            let msf = [];
             if (window.Worker) {
                 const mainWorker = new Worker('./dist/model/anm_worker.js');
                 notify("Fitting Network " + (nid+1).toString() + " to " + " Dataset " + GD.label);
@@ -1331,19 +1331,19 @@ class fluxGraph {
                         var callback = function (message) {
                             counter++;
 
-                            rmsf = rmsf.concat(message.data);
+                            msf = msf.concat(message.data);
                             //And when all workers ends, resolve the promise
-                            if (counter >= 1 && rmsf.length > 0) {
+                            if (counter >= 1 && msf.length > 0) {
                                 //We resolve the promise with the array of results.
-                                let fit = findLineByLeastSquaresNoIntercept(rmsf, Targetrmsf);
+                                let fit = findLineByLeastSquaresNoIntercept(msf, Targetmsf);
                                 let xvals = fit[0];
                                 let fitval = fit[1];
                                 let m = <number> fit[2];
                                 let k = 1/m; //N*10^-10/A (k*100 = pN/A)
                                 let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
 
-                                // rmsf is returned currently to check the Hessian inversion process
-                                let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "rmsf", "A_sqr");
+                                // msf is returned currently to check the Hessian inversion process
+                                let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "msf", "A_sqr");
                                 gendata.gammaSim = sim_k;
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);
@@ -1403,4 +1403,4 @@ class fluxGraph {
 }
 
 // Fluctuation Chart Manager
-const flux = new fluxGraph("rmsf", "A_sqr");
+const flux = new fluxGraph("msf", "A_sqr");
