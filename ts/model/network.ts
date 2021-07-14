@@ -94,8 +94,6 @@ class Network {
     masses: number[];
     types: string[];
     kb : number;
-    angkb: number;
-    angkt: number;
     simFC : number;
     elemcoords;
     networktype: string; //networktype defined in any edge fill call
@@ -115,8 +113,6 @@ class Network {
         this.reducedEdges = new Edges(); // Holds all info about connections
         this.simFC = 0.05709; // gamma_sim
         this.kb = 0.00138064852; //Boltzmann Constant in pN/A
-        this.angkb = 0;
-        this.angkt = 0;
         this.networktype = 'empty';
         this.onscreen = false; // parameter for viewing the networks
         this.cutoff = 0;
@@ -575,13 +571,15 @@ class Network {
         let simCutoffValue = cutoffValueAngstroms/8.518; //sim unit conversion
         let a1s = this.particles.map(m => (<AminoAcid>m).a1)
         let a3s = this.particles.map(m => (<AminoAcid>m).a3)
+        let angkb = 1.3
+        let angkt = 1.4
         for(let i = 0; i < this.elemcoords.xI.length; i++){
             for(let j = 1; j < this.elemcoords.xI.length; j++){
                 if(i >= j) continue;
                 let dij = this.elemcoords.distance(i, j);
                 if(j-i === 1){
-                    let rij = new THREE.Vector3(this.elemcoords.diff(i,j));
-                    this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), this.angkb, this.angkt]);
+                    let rij = this.elemcoords.diff(i,j);
+                    this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), angkb, angkt]);
                 } else if(dij <= simCutoffValue){
                     this.reducedEdges.addEdge(i, j, dij, 's', 1);
                 }

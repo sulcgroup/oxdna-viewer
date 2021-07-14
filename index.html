@@ -942,11 +942,6 @@
                 </div>
 
                 <div class="tight group flex-column">
-                    <div>
-                        <label for="kbset">kb</label><input id="kbset" type="text" data-role="input" data-default-value="0" onclick="networks[selectednetwork].angkb = view.getInputNumber('kbset')">
-                        <label for="ktset">kt</label><input id="ktset" type="text" data-role="input" data-default-value="0" onclick="networks[selectednetwork].angkt = view.getInputNumber('ktset')">
-                    </div>
-
                     <button class="ribbon-button" onclick="view.toggleFluxWindow('fluctuationWindow', flux.initChart());" title="Preview expected fluctuations of networks">
                         <span class="mif-flow-cascade mif-3x"></span>
                         <span class="caption">Fluctuation Solver</span>

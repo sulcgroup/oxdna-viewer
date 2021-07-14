@@ -1254,7 +1254,7 @@ class fluxGraph {
             return;
         }
         // ANM Solving, only one for a little bit
-        if (net.networktype == 'ANM') {
+        if (net.networktype == 'ANM' || net.networktype == 'ANMT') {
             let msf = [];
             if (window.Worker) {
                 const mainWorker = new Worker('./dist/model/anm_worker.js');
@@ -1279,6 +1279,7 @@ class fluxGraph {
                                 // msf is returned currently to check the Hessian inversion process
                                 let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "msf", "A_sqr");
                                 gendata.gammaSim = sim_k;
+                                net.reducedEdges.ks = net.reducedEdges.ks.map(k => { return sim_k; });
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);
                                 view.addGraphData(ngid);
