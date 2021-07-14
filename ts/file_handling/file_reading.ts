@@ -236,7 +236,7 @@ const cylinderMesh = function (pointX, pointY, r, material) {
     // edge from X to Y
     var direction = new THREE.Vector3().subVectors(pointY, pointX);
     // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 8, 4);
+    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 10, 4);
     // shift it so one end rests on the origin
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
     // rotate it the right way for lookAt to work
@@ -277,10 +277,19 @@ function readMGL(file:File){
                 let ypos = (parseFloat(line[1]))*MGL_SCALE;
                 let zpos = (parseFloat(line[2]))*MGL_SCALE;
                 let color = line[5].slice(2).slice(0,-1);
+                let color_value:THREE.Color;
+                if(color.indexOf(",")>-1){
+                    //we have a an rgb color definition
+                    let rgb = color.split(",").map(s => parseFloat(s));
+                    color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
+                }
+                else{
+                    color_value = new THREE.Color(color);
+                }
 
                 // main particle
-                const geometry = new THREE.SphereGeometry( MGL_D, 8, 8 );
-                const material = new THREE.MeshPhongMaterial( {color: new THREE.Color(color)} );
+                const geometry = new THREE.SphereGeometry( MGL_D, 10, 10 );
+                const material = new THREE.MeshPhongMaterial( {color: color_value} );
                 const sphere = new THREE.Mesh( geometry, material );
                 sphere.position.set(xpos,ypos,zpos);
                 scene.add( sphere );
@@ -298,7 +307,18 @@ function readMGL(file:File){
                     let patch_size  = parseFloat(patch_info[3]) * MGL_SCALE;
 
                     let patch_color = patch_info[4].slice(2);
-                    const material = new THREE.MeshPhongMaterial( {color: new THREE.Color(patch_color)} );
+                    
+                    if(patch_color.indexOf(",")>-1){
+                        //we have a an rgb color definition
+                        let rgb = patch_color.split(",").map(s => parseFloat(s));
+                        color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
+                    }
+                    else{
+                        color_value = new THREE.Color(patch_color);
+                    }
+
+
+                    const material = new THREE.MeshPhongMaterial( {color: color_value} );
                     const cylinder = cylinderMesh(
                         new THREE.Vector3(xpos, ypos,zpos),
                         new THREE.Vector3(xpos + patch_x,ypos + patch_y,zpos + patch_z),
