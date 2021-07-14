@@ -346,6 +346,15 @@ function fillEdgesWrapper(nid: number, edgecase: number) {
                 break;
             case 1:
                 net.edgesMWCENM();
+                break;
+            case 2:
+                let cutoffe = view.getInputNumber("edgeCutoff");
+                if(typeof(cutoffe) != "number" || cutoffe > 1000 || cutoffe <= 0 || isNaN(cutoffe)){
+                    notify("Please enter recongized value into 'Edge Cutoff' box")
+                } else {
+                    net.edgesANMT(cutoffe)
+                }
+                break;
         }
     }
 }

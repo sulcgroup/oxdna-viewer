@@ -787,7 +787,7 @@ function readParFile(system, reader) {
     //create an ANM object to allow visualization
     const net = new Network(networks.length, system.getMonomers());
     //process connections
-    for (let i = 0; i < size - 1; i++) {
+    for (let i = 0; i < size; i++) {
         let l = lines[i].split(" ");
         //extract values
         const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[2]), type = l[3], strength = parseFloat(l[4]);

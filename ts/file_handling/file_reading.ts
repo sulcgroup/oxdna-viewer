@@ -868,7 +868,7 @@ function readParFile(system, reader) {
     const net = new Network(networks.length, system.getMonomers());
 
     //process connections
-    for (let i = 0; i < size-1; i++) {
+    for (let i = 0; i < size; i++) {
         let l = lines[i].split(" ")
         //extract values
         const p = parseInt(l[0]),

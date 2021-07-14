@@ -559,6 +559,44 @@ class Network {
         }
     }
     ;
+    edgesANMT(cutoffValueAngstroms: number){
+        this.cutoff = cutoffValueAngstroms;
+        this.reducedEdges.clearAll();
+        this.clearConnections();
+        this.selectNetwork();
+        //let elems: BasicElement[] = Array.from(selectedBases);
+
+        // go through coordinates and assign connections if 2 particles
+        // are less than the cutoff value apart
+        let simCutoffValue = cutoffValueAngstroms/8.518; //sim unit conversion
+        let a1s = this.particles.map(m => (<AminoAcid>m).a1)
+        let a3s = this.particles.map(m => (<AminoAcid>m).a3)
+        let angkb = 1.3
+        let angkt = 1.4
+        for(let i = 0; i < this.elemcoords.xI.length; i++){
+            for(let j = 1; j < this.elemcoords.xI.length; j++){
+                if(i >= j) continue;
+                let dij = this.elemcoords.distance(i, j);
+                if(j-i === 1){
+                    let rij = this.elemcoords.diff(i,j);
+                    this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), angkb, angkt]);
+                } else if(dij <= simCutoffValue){
+                    this.reducedEdges.addEdge(i, j, dij, 's', 1);
+                }
+            }
+        }
+
+        // network is ready for solving and visualization
+        this.networktype = "ANMT";
+        if(this.reducedEdges.total != 0) {
+            this.initInstances(this.reducedEdges.total);
+            this.fillConnections();
+            this.initEdges();
+            this.prepVis();
+            this.sendtoUI();
+        }
+    }
+    ;
     generateHessian(): number[] {
         // let hessian : number[][] = [];
         if(this.reducedEdges.total==0){
