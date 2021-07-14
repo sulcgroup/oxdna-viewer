@@ -929,6 +929,7 @@
                                 <ul class="d-menu put-left" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
                                     <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
                                     <li onclick="fillEdgesWrapper(selectednetwork, 1)">MWCENM</li>
+                                    <li onclick="fillEdgesWrapper(selectednetwork, 2)">ANMT</li>
                                 </ul>
                             </div>
 
@@ -941,6 +942,11 @@
                 </div>
 
                 <div class="tight group flex-column">
+                    <div>
+                        <label for="kbset">kb</label><input id="kbset" type="text" data-role="input" data-default-value="0" onclick="networks[selectednetwork].angkb = view.getInputNumber('kbset')">
+                        <label for="ktset">kt</label><input id="ktset" type="text" data-role="input" data-default-value="0" onclick="networks[selectednetwork].angkt = view.getInputNumber('ktset')">
+                    </div>
+
                     <button class="ribbon-button" onclick="view.toggleFluxWindow('fluctuationWindow', flux.initChart());" title="Preview expected fluctuations of networks">
                         <span class="mif-flow-cascade mif-3x"></span>
                         <span class="caption">Fluctuation Solver</span>
