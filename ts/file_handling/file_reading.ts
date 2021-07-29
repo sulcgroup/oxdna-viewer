@@ -252,7 +252,7 @@ const cylinderMesh = function (pointX, pointY, r, material) {
 
 
 
-const MGL_SCALE = 2;
+const MGL_SCALE = 1;
 function readMGL(file:File){
     let reader = new FileReader();
     reader.onload = (e) => {
@@ -281,12 +281,10 @@ function readMGL(file:File){
                 if(color.indexOf(",")>-1){
                     //we have a an rgb color definition
                     let rgb = color.split(",").map(s => parseFloat(s));
-                    //color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
-                    color_value = new THREE.Color(200,0,200); 
+                    color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
                 }
                 else{
-                    //color_value = new THREE.Color(color);
-                    color_value = new THREE.Color(200,0,200); 
+                    color_value = new THREE.Color(color);
                 }
 
                 // main particle
