@@ -264,12 +264,12 @@ function replaceSelectionByDuplexWrapper() {
     let s1 = duplex[0].strand;
     let s2 = duplex[1].strand;
     if(is_5p){
-        // we need to ligate the 3p of strands
+        // we need to ligate the 5p of strands
         edit.ligate(s1.end5,end1);
         edit.ligate(s2.end5,end2);
     }
     if(is_3p){
-        // we need to ligate the 5p of strands
+        // we need to ligate the 3p of strands
         edit.ligate(s1.end3,end1);
         edit.ligate(s2.end3,end2);
     }
