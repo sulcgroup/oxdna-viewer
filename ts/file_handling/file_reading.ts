@@ -735,7 +735,8 @@ function readOxViewString(s: string) {
                             let a3 = new THREE.Vector3().fromArray(d.a3);
                             e.calcPositions(p, a1, a3, true);
                         } else {
-                            e.calcPositions(p, undefined, undefined, true); // Amino acid
+                            const zero = new THREE.Vector3();
+                            e.calcPositions(p, zero, zero, true); // Amino acid
                         }
 
                     // Otherwise fallback to reading instance parameters

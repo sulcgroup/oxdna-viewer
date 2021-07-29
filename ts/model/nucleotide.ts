@@ -200,36 +200,6 @@ abstract class Nucleotide extends BasicElement {
         return nucleosideColors[elem];
     };
 
-    getDatFileOutput(): string {
-        let dat: string = "";
-        let tempVec = this.getPos(); //nucleotide's center of mass in world
-        const x: number = tempVec.x;
-        const y: number = tempVec.y;
-        const z: number = tempVec.z;
-        tempVec = this.getInstanceParameter3("bbOffsets");
-        const xbb: number = tempVec.x;
-        const ybb: number = tempVec.y;
-        const zbb: number = tempVec.z;
-        tempVec = this.getInstanceParameter3("nsOffsets"); //nucleotide's nucleoside's world position
-        const xns: number = tempVec.x;
-        const yns: number = tempVec.y;
-        const zns: number = tempVec.z;
-        let xA1: number;
-        let yA1: number;
-        let zA1: number;
-        //calculate axis vector a1 (backbone vector) and a3 (stacking vector)
-        xA1 = (xns - x) / 0.4;
-        yA1 = (yns - y) / 0.4;
-        zA1 = (zns - z) / 0.4;
-        const a3: THREE.Vector3 = this.getA3();
-        const xA3: number = a3.x;
-        const yA3: number = a3.y;
-        const zA3: number = a3.z;
-        dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
-            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string
-        return dat;
-    };
-
     getTypeNumber(): number {
         let c = this.type;
         if (c == 'U') {c = 'T';}
@@ -293,9 +263,6 @@ abstract class Nucleotide extends BasicElement {
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
-        json['a1'] = this.getA1().toArray();
-        json['a3'] = this.getA3().toArray();
-
         if (this.isPaired()) json['bp'] = this['pair'].id;
         json['class'] = 'nucleotide';
         return json;

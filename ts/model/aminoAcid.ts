@@ -10,9 +10,17 @@ class AminoAcid extends BasicElement {
 
     constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.a1 = new THREE.Vector3(0.,0.,0.);
-        this.a3 = new THREE.Vector3(0.,0.,0.);
+        this.a1 = new THREE.Vector3();
+        this.a3 = new THREE.Vector3();
     };
+
+    getA1() {
+        return this.a1;
+    }
+
+    getA3() {
+        return this.a3;
+    }
 
     setPDBIndices(datasetindx, chainid, pdbresnum){
         this.pdbindices = [datasetindx, chainid, pdbresnum];
@@ -179,23 +187,6 @@ class AminoAcid extends BasicElement {
             selectedBases.add(this); //"select" nucletide by adding it to the selected base list
         }
         this.updateColor();
-    };
-
-    getDatFileOutput(): string {
-        let dat: string = "";
-        const tempVec = this.getPos();
-        const x: number = tempVec.x;
-        const y: number = tempVec.y;
-        const z: number = tempVec.z;
-        let xA1 = this.a1.x;
-        let yA1 = this.a1.y;
-        let zA1 = this.a1.z;
-        let xA3 = this.a3.x;
-        let yA3 = this.a3.y;
-        let zA3 = this.a3.z;
-        dat = x + " " + y + " " + z + " " + xA1 + " " + yA1 + " " + zA1 + " " + xA3 + " " + yA3 +
-            " " + zA3 + " 0 0 0 0 0 0" + "\n"; //add all locations to dat file string //add all locations to dat file string
-        return dat;
     };
 
     extendStrand(len, direction){
