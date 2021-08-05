@@ -4,10 +4,13 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
 
     let reorganized, counts;
     if (top) {
-        let {a, b, file_name, file} = makeTopFile(name);
+        let {a, b, file_name, file, gs} = makeTopFile(name);
         reorganized = a;
         counts = b;
         makeTextFile(file_name,file);
+        if(gs.masses.length > 0){ // check for generic sphere presence
+            makeMassFile(name+"_m.txt",reorganized,counts,gs);
+        }
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated", "warning");
@@ -23,9 +26,6 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
 
     if (networks.length > 0) {
         let {file_name, file} = makeParFile(name, reorganized, counts);
-        if(counts['totGS'] > 0){
-
-        }
         setTimeout(() => makeTextFile(file_name, file), 40);
     }
 }
@@ -208,8 +208,6 @@ function makeTopFile(name){
 
     let firstLine = [counts['totParticles'], counts['totStrands']];
 
-    let masses;
-
     if (counts['totGS'] > 0) {
         // Add extra counts for protein/DNA/ cg DNA simulation
         firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v]));
@@ -245,7 +243,7 @@ function makeTopFile(name){
     //makeTextFile(name+".top", top.join("\n")); //make .top 
 
     //this is absolute abuse of ES6 and I feel a little bad about it
-    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n")};
+    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
 }
 function makeDatFile(name :string, altNumbering=undefined) {
     // Get largest absolute coordinate:
@@ -319,8 +317,9 @@ function makeParFile(name: string, altNumbering, counts) {
     // return {file_name: name+".par", file: par.join('\n') };
 }
 
-function makeMassFile(name: string, altNumbering, counts){
-
+function makeMassFile(name: string, altNumbering, counts, gsSubtypes){ //mass file for variable mass oxpy
+        let text = gsSubtypes.masses.map((m, idx)=>idx.toString()+" "+m.toString()).join('\n');
+        makeTextFile(name, text);
 }
 
 
