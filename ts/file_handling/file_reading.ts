@@ -845,7 +845,7 @@ function readParFile(system, reader) {
     const size = lines.length;
 
     //create an ANM object to allow visualization
-    const net = new Network(networks.length, system.getMonomers());
+    const net = new Network(networks.length, system.getAAMonomers());
 
     //process connections
     for (let i = 0; i < size; i++) {

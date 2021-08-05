@@ -11,7 +11,7 @@ abstract class BasicElement {
     label: string;
     n3: BasicElement | null;
     n5: BasicElement | null;
-    connections: BasicElement[] = []; // ref all elements it's
+    connections: BasicElement[] = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string

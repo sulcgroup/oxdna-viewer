@@ -20,6 +20,8 @@ function makeOutputFiles() {
     }
     if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
+        if (counts['totGS'] > 0) {
+        }
         setTimeout(() => makeTextFile(file_name, file), 40);
     }
 }
@@ -73,11 +75,15 @@ function getNewIds() {
     //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
     let peptides = [];
     let nas = [];
+    let gstrands = [];
     //figure out if there are any proteins in the system
     systems.forEach(system => {
         system.strands.forEach(strand => {
             if (strand.isPeptide()) {
                 peptides.push(strand);
+            }
+            else if (strand.isGS()) {
+                gstrands.push(strand);
             }
             else {
                 nas.push(strand);
@@ -90,6 +96,8 @@ function getNewIds() {
     let totAA = 0;
     let totNucleic = 0;
     let totPeptide = 0;
+    let totGS = 0; // Generic Sphere for Coarse Grained DNA model
+    let totGStrand = 0;
     let sidCounter = -1;
     let idCounter = 0;
     peptides.forEach(strand => {
@@ -98,6 +106,31 @@ function getNewIds() {
         strand.forEach((e) => {
             newElementIds.set(e, idCounter++);
             totAA++;
+        });
+    });
+    // these subtypes are not implemented in the CG-oxDNA model, just used for a 'relative' subtype that oxDNA will take as input
+    let gsSubtypes = {
+        subtypelist: [],
+        masses: [],
+        subtype: -1
+    };
+    gstrands.forEach(strand => {
+        newStrandIds.set(strand, sidCounter--);
+        totGStrand += 1;
+        strand.forEach((e) => {
+            let f = e;
+            newElementIds.set(e, idCounter++);
+            // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle
+            // resulting subtypes start from 0
+            if (f.mass in gsSubtypes.masses) {
+                gsSubtypes.subtypelist.push(gsSubtypes.subtype);
+            }
+            else {
+                gsSubtypes.subtype++;
+                gsSubtypes.subtypelist.push(gsSubtypes.subtype);
+                gsSubtypes.masses.push(f.mass); //masses will be indexed by the subtype ex. masses[2] Gathers all unique mass values
+            }
+            totGS++;
         });
     });
     sidCounter = 1;
@@ -111,24 +144,31 @@ function getNewIds() {
         );
     });
     const counts = {
-        totParticles: totNuc + totAA,
-        totStrands: totPeptide + totNucleic,
+        totParticles: totNuc + totAA + totGS,
+        totStrands: totPeptide + totNucleic + totGStrand,
         totNuc: totNuc,
         totAA: totAA,
+        totGS: totGS,
+        totPeptide: totPeptide,
         totNucleic: totNucleic
     };
     if (counts.totParticles != elements.size) {
         notify(`Length of totNuc (${counts.totParticles}) is not equal to length of elements array (${elements.size})`);
     }
-    return [newElementIds, newStrandIds, counts];
+    return [newElementIds, newStrandIds, counts, gsSubtypes];
 }
 function makeTopFile(name) {
     const top = []; // string of contents of .top file
     // remove any gaps in the particle numbering
-    let [newElementIds, newStrandIds, counts] = getNewIds();
+    let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
     let firstLine = [counts['totParticles'], counts['totStrands']];
-    // Add extra counts needed in protein simulation
-    if (counts['totAA'] > 0) {
+    let masses;
+    if (counts['totGS'] > 0) {
+        // Add extra counts for protein/DNA/ cg DNA simulation
+        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v => counts[v]));
+    }
+    else if (counts['totAA'] > 0) {
+        // Add extra counts needed in protein simulation
         firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v => counts[v]));
     }
     top.push(firstLine.join(" "));
@@ -137,8 +177,8 @@ function makeTopFile(name) {
         let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
         let cons = [];
         // Protein mode
-        if (counts['totAA'] > 0) {
-            if (e.isAminoAcid()) {
+        if (counts['totAA'] > 0 || counts['totGS'] > 0) {
+            if (e.isAminoAcid() || e.isGS()) {
                 for (let i = 0; i < e.connections.length; i++) {
                     let c = e.connections[i];
                     if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
@@ -147,7 +187,12 @@ function makeTopFile(name) {
                 }
             }
         }
-        top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+        if (e.isGS()) {
+            top.push([newStrandIds.get(e.strand), e.type + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+        }
+        else {
+            top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+        }
     });
     //makeTextFile(name+".top", top.join("\n")); //make .top 
     //this is absolute abuse of ES6 and I feel a little bad about it
@@ -187,7 +232,7 @@ function makeDatFile(name, altNumbering = undefined) {
 }
 function makeParFile(name, altNumbering, counts) {
     const par = [];
-    par.push(counts[3]);
+    par.push(counts['totAA'] + counts['totGS']);
     networks.forEach((net) => {
         const t = net.reducedEdges.total;
         if (t != 0) {
@@ -215,6 +260,8 @@ function makeParFile(name, altNumbering, counts) {
     //     }
     // });
     // return {file_name: name+".par", file: par.join('\n') };
+}
+function makeMassFile(name, altNumbering, counts) {
 }
 function writeMutTrapText(base1, base2) {
     return "{\n" + "type = mutual_trap\n" +

@@ -546,7 +546,7 @@ class Network {
                 if (i >= j)
                     continue;
                 let dij = this.elemcoords.distance(i, j);
-                if (j - i === 1) {
+                if (j - i === 1 && dij <= simCutoffValue) {
                     let rij = this.elemcoords.diff(i, j);
                     this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), angkb, angkt]);
                 }

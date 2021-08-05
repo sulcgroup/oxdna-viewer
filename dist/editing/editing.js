@@ -290,7 +290,7 @@ function fillEdgesWrapper(nid, edgecase) {
         switch (edgecase) {
             case 0:
                 let cutoff = view.getInputNumber("edgeCutoff");
-                if (typeof (cutoff) != "number" || cutoff > 1000 || cutoff <= 0 || isNaN(cutoff)) {
+                if (typeof (cutoff) != "number" || cutoff > 1000000 || cutoff <= 0 || isNaN(cutoff)) {
                     notify("Please enter recongized value into 'Edge Cutoff' box");
                 }
                 else {
@@ -302,7 +302,7 @@ function fillEdgesWrapper(nid, edgecase) {
                 break;
             case 2:
                 let cutoffe = view.getInputNumber("edgeCutoff");
-                if (typeof (cutoffe) != "number" || cutoffe > 1000 || cutoffe <= 0 || isNaN(cutoffe)) {
+                if (typeof (cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)) {
                     notify("Please enter recongized value into 'Edge Cutoff' box");
                 }
                 else {
