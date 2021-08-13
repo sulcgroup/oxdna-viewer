@@ -93,7 +93,14 @@
     <div id='socketConnectionsDialog' class="dialog" data-role="dialog">
         <p>The viewer supports live relaxation using ox-serve nodes.</p>
         <p>List of available servers:</p>
-        <div id="serverList" class="items-list"></div>
+        <div id="predefinedServerList" class="items-list" style="padding-top: 0;padding-bottom: 0;">
+            <div id="oxIp1">
+                <button class="square button secondary" title="Establish connection" onclick="establishNanobaseConnection()">
+                    <span class="mif-play"></span>
+                </button><span class="label"><a href="https://nanobase.org/">NANOBASE.org</a></span>
+            </div>
+        </div>
+        <div id="serverList" class="items-list" style="padding-top: 0;"></div>
         <div>
             <div class="inline-form">
                 <input type="text" data-role="input" id="newHostText"
