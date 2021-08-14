@@ -151,7 +151,7 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
     let gsSubtypes = {
         subtypelist: [], // per particle subtype assignment
         masses : [],  //
-        subtype : -1
+        subtype : 26 // default assignment (DNA +Protein use subtypes 0->26) Only for DNANM and CGDNA particles
     };
     gstrands.forEach(strand => {
         newStrandIds.set(strand, sidCounter--);
@@ -159,7 +159,7 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
         strand.forEach((e: BasicElement) => {
             let f = <GenericSphere>e;
             newElementIds.set(e, idCounter++);
-            // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle
+            // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle1
             // resulting subtypes start from 0
             if(f.mass in gsSubtypes.masses){
                 gsSubtypes.subtypelist.push(gsSubtypes.subtype);
@@ -318,7 +318,7 @@ function makeParFile(name: string, altNumbering, counts) {
 }
 
 function makeMassFile(name: string, altNumbering, counts, gsSubtypes){ //mass file for variable mass oxpy
-        let text = gsSubtypes.masses.map((m, idx)=>idx.toString()+" "+m.toString()).join('\n');
+        let text = gsSubtypes.masses.map((m, idx)=>(idx+27).toString()+" "+m.toString()).join('\n');
         makeTextFile(name, text);
 }
 
