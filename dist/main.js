@@ -90,26 +90,30 @@ var topologyEdited = false;
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 render();
-function findBasepairs() {
+function findBasepairs(min_length = 0) {
     systems.forEach(system => {
         if (!system.checkedForBasepairs) {
             system.strands.forEach(strand => {
-                strand.forEach(e => {
-                    if (e instanceof Nucleotide) {
-                        if (!e.pair) {
-                            e.pair = e.findPair();
-                            if (e.pair) {
-                                e.pair.pair = e;
+                if (strand.getLength() >= min_length)
+                    strand.forEach(e => {
+                        if (e instanceof Nucleotide) {
+                            if (!e.pair) {
+                                e.pair = e.findPair();
+                                if (e.pair) {
+                                    e.pair.pair = e;
+                                }
                             }
                         }
-                    }
-                });
+                    });
             });
         }
         system.checkedForBasepairs = true;
     });
 }
 ;
+function findBasepairsOrigami(min_length = 1000) {
+    findBasepairs(min_length);
+}
 // Ugly hacks for testing
 function getElements() {
     return elements;

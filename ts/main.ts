@@ -108,10 +108,11 @@ readFilesFromURLParams();
 
 render();
 
-function findBasepairs() {
+function findBasepairs(min_length=0) {
     systems.forEach(system=>{
         if (!system.checkedForBasepairs) {
             system.strands.forEach(strand=>{
+                if(strand.getLength() >= min_length ) 
                 strand.forEach(e=>{
                     if (e instanceof Nucleotide) {
                         if(!e.pair) {
@@ -127,6 +128,10 @@ function findBasepairs() {
         system.checkedForBasepairs = true;
     });
 };
+
+function findBasepairsOrigami(min_length=1000) {
+    findBasepairs(min_length);
+}
 
 // Ugly hacks for testing
 function getElements(): ElementMap {
