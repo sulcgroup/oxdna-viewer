@@ -500,7 +500,7 @@ class View {
         if (document.getElementById("marker3pToggle").checked) {
             // Place in front of backbone, pointing in the A3 direction
             const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length / 2 + spacing));
-            const q = new THREE.Quaternion().setFromUnitVectors(e.getA3(), new THREE.Vector3(0, 1, 0));
+            const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, -1, 0), e.getA3());
             e.setInstanceParameter('bbconOffsets', p.toArray());
             e.setInstanceParameter('bbconRotation', [q.w, q.z, q.y, q.x]);
             e.setInstanceParameter('bbconScales', [diameter, length, diameter]);
