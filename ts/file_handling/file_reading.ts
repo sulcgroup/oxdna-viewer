@@ -428,6 +428,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
 
 //fancy function to read files from args for electron parameters
 function readFilesFromPathArgs(args){
+    
     let activity = Metro.activity.open({
         type: 'square',
         overlayColor: '#fff',
@@ -451,7 +452,7 @@ function readFilesFromPathArgs(args){
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
                 readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
-                done();
+                done();             
            }
            else {
             let path = paths.pop();
@@ -492,10 +493,13 @@ function readFilesFromPathArgs(args){
                 
                 get_request(paths);
             }
+            req.onerror = () => {done()};
             req.send();
         }
     }
-    get_request([... args]);
+    if(args.length > 0) {
+        get_request(args);
+    }
 }
 
 // And from the URL

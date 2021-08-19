@@ -49,12 +49,13 @@
     }
   },
   "dependencies": {
-    "@types/jquery": "^3.5.6",
-    "electron-squirrel-startup": "^1.0.0",
     "@types/chart.js": "^2.9.31",
     "@types/chartjs-plugin-annotation": "^0.5.1",
+    "@types/jquery": "^3.5.6",
     "@types/moment": "^2.13.0",
-    "@types/sizzle": "2.3.2"
+    "@types/sizzle": "2.3.2",
+    "electron-squirrel-startup": "^1.0.0",
+    "update-electron-app": "^2.0.1"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.0.0-beta.59",

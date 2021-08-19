@@ -448,10 +448,13 @@ function readFilesFromPathArgs(args) {
                 }
                 get_request(paths);
             };
+            req.onerror = () => { done(); };
             req.send();
         }
     };
-    get_request([...args]);
+    if (args.length > 0) {
+        get_request(args);
+    }
 }
 // And from the URL
 function readFilesFromURLParams() {
