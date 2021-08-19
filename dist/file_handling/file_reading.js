@@ -379,6 +379,61 @@ function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefi
         topReq.send();
     }
 }
+//fancy function to read files from args for electron parameters
+function readFilesFromPathArgs(args) {
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    const get_request = (paths) => {
+        if (paths.length == 0) {
+            //read a topology/configuration pair and whatever else
+            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+        }
+        else {
+            let path = paths.pop();
+            let req = new XMLHttpRequest();
+            // get file extension
+            const fileName = path.toLowerCase();
+            const ext = fileName.split('.').pop();
+            req.open("GET", path);
+            req.responseType = "blob";
+            req.onload = () => {
+                const file = req.response;
+                //assign the file to the correct variable
+                if (["dat", "conf", "oxdna"].includes(ext))
+                    datFile = file;
+                else if (ext === "top")
+                    topFile = file;
+                else if (ext === "json")
+                    jsonFile = file;
+                else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
+                    trapFile = file;
+                else if (ext === "idx")
+                    idxFile = file;
+                else if (ext === "par")
+                    parFile = file;
+                else if (ext === "hb")
+                    hbFile = file;
+                else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
+                    pdbFile = file;
+                // otherwise, what is this?
+                else {
+                    notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+                    return;
+                }
+                if (ext === "oxview") {
+                    readOxViewJsonFile(file);
+                    return;
+                }
+                else if (ext === "mgl") {
+                    readMGL(file);
+                    return;
+                }
+                get_request(paths);
+            };
+            req.send();
+        }
+    };
+    get_request([...args]);
+}
 // And from the URL
 function readFilesFromURLParams() {
     const url = new URL(window.location.href);
