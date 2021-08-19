@@ -97,6 +97,7 @@ class OXServeSocket extends WebSocket {
         };
         this.start_simulation = () => {
             this.abort = false;
+            const name = 'out';
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);
