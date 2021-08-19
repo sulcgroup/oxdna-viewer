@@ -34,6 +34,42 @@ var api;
         render();
     }
     api.highlight5ps = highlight5ps;
+    /**
+     * Show geometries to mark 3' ends
+     * @param enable Set to true to show markers, false to hide them
+     * @param diameter Marker diameter
+     * @param length Marker length
+     * @param spacing Distance from backbone sphere
+     */
+    function show3primeMarkers(enable = true, diameter = 5, length = 1, spacing = .25) {
+        let tmpSys = new Set();
+        // Instance parameters to update
+        const names = ['instanceOffset', 'instanceRotation', 'instanceScale'];
+        systems.forEach(sys => {
+            sys.strands.forEach(strand => {
+                const e = strand.end3;
+                if (enable) {
+                    // Place in front of backbone, pointing in the A3 direction
+                    const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length / 2 + spacing));
+                    const q = new THREE.Quaternion().setFromUnitVectors(e.getA3(), new THREE.Vector3(0, 1, 0));
+                    e.setInstanceParameter('bbconOffsets', p.toArray());
+                    e.setInstanceParameter('bbconRotation', [q.w, q.z, q.y, q.x]);
+                    e.setInstanceParameter('bbconScales', [diameter, length, diameter]);
+                }
+                else {
+                    e.setInstanceParameter("bbconScales", [0, 0, 0]);
+                }
+                if (e.dummySys) {
+                    tmpSys.add(e.dummySys);
+                }
+            });
+            sys.callUpdates(names);
+            updateView(sys);
+        });
+        tmpSys.forEach(s => s.callUpdates(names));
+        render();
+    }
+    api.show3primeMarkers = show3primeMarkers;
     function toggleElements(elems) {
         let sys = new Set();
         let tmpSys = new Set();

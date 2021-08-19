@@ -677,13 +677,13 @@
                     </button>
                 </div>
                 <div class="tight group flex-column">
-                    <div style="height: 27px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
+                    <div style="height: 18px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
                             data-role="switch" data-caption="Arrows" checked>
                     </div>
-                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
+                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
                             data-role="switch" data-caption="Box">
                     </div>
-                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
+                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
                             data-role="switch" data-caption="Fog">
                         <span class="ribbon-split dropdown-toggle"></span>
                         <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
@@ -696,6 +696,10 @@
                                 title="Maximum distance to apply fog" min=0
                                 onchange="if(scene.fog!=null){setFog();}"><br>
                         </ul>
+                    </div>
+                    <div style="height: 18px;">
+                        <input type="checkbox" onchange="api.show3primeMarkers(this.checked)"
+                        data-role="switch" data-caption="3' markers">
                     </div>
                 </div>
                 <div class="group">
