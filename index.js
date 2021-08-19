@@ -25,9 +25,10 @@ const createWindow = () => {
   global.sharedObject = {argv: process.argv.splice(1)}; //first arg is the name of the app so we remove it
   console.log(global.sharedObject.argv);
   mainWindow.removeMenu();
-
-  // Open the DevTools.
-  //mainWindow.webContents.openDevTools();
+  // adding optional scripting interface
+  if(global.sharedObject.argv.includes('--js')){
+    mainWindow.openDevTools();
+  }
 };
 
 // This method will be called when Electron has finished
