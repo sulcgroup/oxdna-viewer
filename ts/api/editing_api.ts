@@ -17,9 +17,7 @@ module edit{
             e.n3 = null;
             strand.setFrom(e);
             // Remove connector geometry.
-            e.setInstanceParameter("bbconScales", [0, 0, 0]);
-            let sys = e.dummySys ? e.dummySys : e.getSystem();
-            sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
+            view.update3pMarker(e);
             return;
         }
 
@@ -64,10 +62,9 @@ module edit{
         }
 
         // Remove connector geometry.
-        // If different systems, we need to update both
-        e.setInstanceParameter("bbconScales", [0, 0, 0]);
+        view.update3pMarker(e);
         let sys = e.dummySys ? e.dummySys : e.getSystem();
-        sys.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
+        sys.callUpdates(['instanceColor']);
 
         return newStrand;
     }
@@ -259,7 +256,7 @@ module edit{
             e.toggleVisibility();
             // Remove connector geometry.
             if (n5) {
-                n5.setInstanceParameter("bbconScales", [0, 0, 0]);
+                view.update3pMarker(n5);
             }
 
             let strand3, strand5;
@@ -510,9 +507,7 @@ module edit{
                 // Set explicitly to null
                 e.n3 = null;
                 // Remove backbone bond
-                tmpSys.fillVec('bbconScales', 3, e.sid, [0, 0, 0]);
-                tmpSys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-                render();
+                view.update3pMarker(e);
             }
             if(!e.n5) {
                 // Set explicitly to null

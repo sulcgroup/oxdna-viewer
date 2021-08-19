@@ -42,34 +42,13 @@ module api{
      * @param length Marker length
      * @param spacing Distance from backbone sphere
      */
-    export function show3primeMarkers(enable=true, diameter=5, length=1, spacing=.25) {
-        let tmpSys = new Set<System>();
-        // Instance parameters to update
-        const names = ['instanceOffset', 'instanceRotation', 'instanceScale'];
+    export function update3primeMarkers(diameter: number, length: number, spacing: number) {
         systems.forEach(sys=>{
-            sys.strands.forEach(strand=>{
-                const e = strand.end3;
-                if (enable) {
-                    // Place in front of backbone, pointing in the A3 direction
-                    const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length/2 + spacing));
-                    const q = new THREE.Quaternion().setFromUnitVectors(
-                        e.getA3(),
-                        new THREE.Vector3(0, 1, 0)
-                    );
-                    e.setInstanceParameter('bbconOffsets', p.toArray());
-                    e.setInstanceParameter('bbconRotation', [q.w, q.z, q.y, q.x]);
-                    e.setInstanceParameter('bbconScales', [diameter, length, diameter]);
-                } else {
-                    e.setInstanceParameter("bbconScales", [0, 0, 0]);
-                }
-                if (e.dummySys) {
-                    tmpSys.add(e.dummySys);
-                }
-            });
-            sys.callUpdates(names);
-            updateView(sys);
+            sys.strands.forEach(s=>view.update3pMarker(
+                s.end3, diameter, length, spacing
+            ));
+            //updateView(sys);
         });
-        tmpSys.forEach(s=>s.callUpdates(names));
         render();
     }
 
