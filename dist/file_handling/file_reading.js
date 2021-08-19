@@ -381,11 +381,27 @@ function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefi
 }
 //fancy function to read files from args for electron parameters
 function readFilesFromPathArgs(args) {
+    let activity = Metro.activity.open({
+        type: 'square',
+        overlayColor: '#fff',
+        overlayAlpha: 1,
+        text: "Loading files from arguments."
+    });
+    // Set wait cursor and request an animation frame to make sure
+    // that it gets changed before starting calculation:
+    let dom = document.activeElement;
+    dom['style'].cursor = "wait";
+    const done = () => {
+        // Change cursor back and remove modal
+        dom['style'].cursor = "auto";
+        Metro.activity.close(activity);
+    };
     let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
     const get_request = (paths) => {
         if (paths.length == 0) {
             //read a topology/configuration pair and whatever else
             readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+            done();
         }
         else {
             let path = paths.pop();
@@ -417,14 +433,17 @@ function readFilesFromPathArgs(args) {
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+                    done();
                     return;
                 }
                 if (ext === "oxview") {
                     readOxViewJsonFile(file);
+                    done();
                     return;
                 }
                 else if (ext === "mgl") {
                     readMGL(file);
+                    done();
                     return;
                 }
                 get_request(paths);

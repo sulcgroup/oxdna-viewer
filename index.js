@@ -11,6 +11,7 @@ const createWindow = () => {
   const mainWindow = new BrowserWindow({
     width: 1024,
     height: 600,
+    icon: __dirname + '/favicon.png',
     webPreferences: {
       //https://stackoverflow.com/questions/37884130/electron-remote-is-undefined
       nodeIntegration: true,
@@ -23,7 +24,6 @@ const createWindow = () => {
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
   global.sharedObject = {argv: process.argv.splice(1)}; //first arg is the name of the app so we remove it
-  console.log(global.sharedObject.argv);
   mainWindow.removeMenu();
   // adding optional scripting interface
   if(global.sharedObject.argv.includes('--js')){

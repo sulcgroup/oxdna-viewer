@@ -13,8 +13,8 @@
   },
   "keywords": [],
   "author": {
-    "name": "M. Matthies",
-    "email": "progolab@gmail.com"
+    "name": "EJM",
+    "email": "psulc@asu.edu"
   },
   "license": "GPL3",
   "config": {
@@ -45,6 +45,7 @@
     }
   },
   "dependencies": {
+    "@types/jquery": "^3.5.6",
     "electron-squirrel-startup": "^1.0.0"
   },
   "devDependencies": {
