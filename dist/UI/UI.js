@@ -10,7 +10,7 @@ function select3psWrapper() {
         });
         clearSelection();
         strands.forEach(s => {
-            api.selectElements([s.end3]);
+            api.selectElements([s.end3], true);
         });
     }
 }
@@ -25,7 +25,7 @@ function select5psWrapper() {
         });
         clearSelection();
         strands.forEach(s => {
-            api.selectElements([s.end5]);
+            api.selectElements([s.end5], true);
         });
     }
 }
