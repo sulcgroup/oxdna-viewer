@@ -1,6 +1,6 @@
 {
-  "name": "ox-view",
-  "productName": "ox-view",
+  "name": "oxview",
+  "productName": "oxview",
   "version": "1.0.0",
   "description": "OxDNA viewer and editor.",
   "main": "./index.js",
@@ -9,7 +9,8 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "echo \"No linting configured\"",
+    "make-linux": "npx @electron-forge/cli make --platform linux --targets maker-deb"
   },
   "repository": {
     "type": "git",
@@ -55,6 +56,7 @@
     "@types/moment": "^2.13.0",
     "@types/sizzle": "2.3.2",
     "electron-squirrel-startup": "^1.0.0",
+    "rpmbuild": "0.0.23",
     "update-electron-app": "^2.0.1"
   },
   "devDependencies": {
