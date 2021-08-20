@@ -13,9 +13,7 @@ function select3psWrapper() {
             strands.add(b.strand)
         });
         clearSelection();
-        strands.forEach(s=>{
-            api.selectElements([s.end3],true);
-        });
+        api.selectElements(Array.from(strands).map(s=>s.end3));
     }
 }
 
@@ -29,9 +27,7 @@ function select5psWrapper() {
             strands.add(b.strand)
         });
         clearSelection();
-        strands.forEach(s=>{
-            api.selectElements([s.end5],true);
-        });
+        api.selectElements(Array.from(strands).map(s=>s.end5));
     }
 }
 
