@@ -1,5 +1,6 @@
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
+const resolve = require('path').resolve
 
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
