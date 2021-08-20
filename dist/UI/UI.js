@@ -1,4 +1,34 @@
 var VRButton;
+function select3psWrapper() {
+    if (selectedBases.size == 0) {
+        api.highlight3ps();
+    }
+    else {
+        let strands = new Set();
+        selectedBases.forEach(b => {
+            strands.add(b.strand);
+        });
+        clearSelection();
+        strands.forEach(s => {
+            api.selectElements([s.end3]);
+        });
+    }
+}
+function select5psWrapper() {
+    if (selectedBases.size == 0) {
+        api.highlight5ps();
+    }
+    else {
+        let strands = new Set();
+        selectedBases.forEach(b => {
+            strands.add(b.strand);
+        });
+        clearSelection();
+        strands.forEach(s => {
+            api.selectElements([s.end5]);
+        });
+    }
+}
 function createTable(dataName, header) {
     let table = document.createElement("table");
     table.id = dataName;

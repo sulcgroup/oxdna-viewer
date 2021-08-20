@@ -35,6 +35,13 @@ module api{
         render();
     }
 
+    //highlight
+    export function highlight3ps(system = systems[0]){
+        system.strands.forEach(strand=>strand.end3.select());
+        updateView(system);
+        render();
+    }
+
     /**
      * Show geometries to mark 3' ends
      * @param enable Set to true to show markers, false to hide them

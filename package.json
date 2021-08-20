@@ -9,8 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\"",
-    "make-linux": "npx @electron-forge/cli make --platform linux --targets maker-deb"
+    "lint": "echo \"No linting configured\""
   },
   "repository": {
     "type": "git",
