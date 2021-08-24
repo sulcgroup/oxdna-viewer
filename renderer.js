@@ -1,5 +1,15 @@
 // section responsible for electron interaction
-if(typeof require !== undefined) {
+if(window && window.process && process.versions['electron']) {
+    
+    const settings = require("electron-settings");
+    //retrieve settings
+    settings.get("BOXCentering").then(BOXCentering => {
+        if(BOXCentering) {
+            window.sessionStorage.centerOption   = BOXCentering.centerOption;
+            window.sessionStorage.inboxingOption = BOXCentering.inboxingOption;
+        }
+    });
+    
     const resolve = require('path').resolve;
     //we are in electron
     //ccCapture is not working ;(
@@ -22,4 +32,18 @@ if(typeof require !== undefined) {
     if(input_files.length > 0) {
         readFilesFromPathArgs(resolved);
     }
+
+}
+else{
+    //we are in browser
+    let btn = document.getElementById("videoCreateButton");
+    btn.disabled = false; 
+    btn.style.visibility="visible";
+    //so we also need to import CCapture
+    //<script src="./ts/lib/CCapture.all.min.js"></script>
+    var head = document.getElementsByTagName('head')[0];
+    var js = document.createElement("script");
+    js.type = "text/javascript";
+    js.src = "./ts/lib/CCapture.all.min.js";
+    head.appendChild(js);
 }
