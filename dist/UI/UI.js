@@ -367,6 +367,9 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
+    id;
+    doc;
+    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -393,6 +396,8 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
+    lastActive;
+    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -419,13 +424,19 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
+    doc;
+    coloringMode;
+    centeringMode;
+    inboxingMode;
+    selectionMode;
+    transformMode;
+    basepairMessage = "Locating basepairs, please be patient...";
+    vrEnabled = false;
+    backboneScale = 1;
+    nucleosideScale = 1;
+    connectorScale = 1;
+    bbconnectorScale = 1;
     constructor(doc) {
-        this.basepairMessage = "Locating basepairs, please be patient...";
-        this.vrEnabled = false;
-        this.backboneScale = 1;
-        this.nucleosideScale = 1;
-        this.connectorScale = 1;
-        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -872,56 +883,26 @@ class View {
     }
 }
 let view = new View(document);
-class graphData {
-    constructor(l, d, x, dt, u) {
-        this.label = l;
-        this.data = d;
-        this.xdata = x;
-        this.datatype = dt;
-        this.units = u;
-        this.gammaSim = 0;
-        this.cutoff = 0;
-        this.oDatatype = this.datatype;
-    }
-    ;
-    convertType(format) {
-        if (['msf', 'bfactor'].indexOf(format) < 0)
-            return; // TODO: Add error throw here and convertUnits
-        if (this.datatype == format)
-            return; //Already in the right format gang gang
-        // Conversion needs to know both formats and direction to do anything useful
-        if (this.datatype == 'msf' && format == 'bfactor') {
-            this.data = this.data.map(e => e * ((8 * Math.pow(Math.PI, 2)) / 3));
-        }
-        else if (this.datatype == 'bfactor' && format == 'msf') {
-            this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
-        }
-        this.datatype = format; // assumes successful conversion
-    }
-    ;
-    convertUnits(units) {
-        if (['A_sqr', 'nm_sqr'].indexOf(units) < 0)
-            return;
-        if (this.units == 'A_sqr' && units == "nm_sqr") {
-            this.data = this.data.map(e => e / 100);
-        }
-        else if (this.units == 'nm_sqr' && units == "A_sqr") {
-            this.data = this.data.map(e => e * 100);
-        }
-        this.units = units; // assumes successful conversion
-    }
-    ;
-    toJson() {
-        // Easiest to just change the whole graph to the correct output format
-        flux.changeType('msf');
-        flux.changeUnits('nm_sqr');
-        let data = this.data.map(e => { return Math.sqrt(e); });
-        return { 'RMSF (nm)': data };
-    }
-    ;
-}
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
+    title;
+    xaxislabel;
+    yaxislabel;
+    data;
+    fluxWindowOpen;
+    type;
+    temp;
+    chart; // chartjs main chart object
+    units;
+    colors;
+    colorarr; // just stores colors for the graph
+    charttype;
+    chartdata;
+    chartoptions;
+    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
+    datasetCount; // how many datasets are currently displayed on the graph
+    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
+    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';

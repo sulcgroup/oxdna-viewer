@@ -21,6 +21,7 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 class ElementMap extends Map {
+    idCounter;
     constructor() {
         super();
         this.idCounter = 0;
@@ -73,6 +74,7 @@ const systems = [];
 var tmpSystems = []; //used for editing
 //const ANMs: ANM[] = [];
 let forces = [];
+let pdbtemp = []; // stores output from worker, so worker can terminate
 var forcesTable = [];
 var forceHandler;
 var sysCount = 0;
