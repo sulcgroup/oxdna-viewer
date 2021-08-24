@@ -162,6 +162,72 @@ function interconnectDuplex5pWrapper() {
         edit.interconnectDuplex5p(s1, s2, seq);
     }
 }
+function replaceSelectionByDuplexWrapper() {
+    let set_strands = new Set();
+    selectedBases.forEach(b => set_strands.add(b.strand)); // figure out the strands in the game
+    //now let's figure out if the segments are matching up
+    let strands = Array.from(set_strands);
+    // segments partitioned by strand
+    let selected_segments = [
+        strands[0].getMonomers().filter(b => selectedBases.has(b)),
+        strands[1].getMonomers().filter(b => selectedBases.has(b))
+    ]; // partition the selection into the two strands segments
+    //selected_segments sequnces
+    let selected_segments_seq = [
+        selected_segments[0].map(b => b.type).join(""),
+        selected_segments[1].map(b => b.type).join("")
+    ];
+    if (selected_segments_seq[0] !== rc(selected_segments_seq[1])) {
+        notify("The segments selected do not match up, please select complementary segments in both strands.");
+        return;
+    }
+    let seg_length = selected_segments[0].length;
+    // now we have to figure out if we extend 3' or 5' of strand0
+    let end1;
+    let end2;
+    let is_5p = false;
+    let is_3p = false;
+    if (selected_segments[0][0].n5) {
+        //than this is what we want to extend
+        end1 = selected_segments[0][0].n5;
+        end2 = selected_segments[1][0].n5;
+        console.log("extending 5'");
+        is_5p = true;
+    }
+    if (selected_segments[0][seg_length - 1].n3) {
+        end1 = selected_segments[0][seg_length - 1].n3;
+        end2 = selected_segments[1][seg_length - 1].n3;
+        is_3p = true;
+    }
+    //kill of the selection we want to replace by Duplex
+    edit.deleteElements(Array.from(selectedBases));
+    //reconstiute the duplex
+    //let cms = new api.observable.CMS([end1,end2],1,0x00ff00);
+    let duplex = edit.createStrand(selected_segments_seq[0], true);
+    //shift the duplex to the center between the two strands
+    let end_cms = new THREE.Vector3();
+    [end1, end2].forEach(b => { end_cms.add(b.getPos()); });
+    end_cms.divideScalar(2);
+    //end we need the cms of the duplex
+    let duplex_cms = new THREE.Vector3();
+    duplex.forEach(b => { duplex_cms.add(b.getPos()); });
+    duplex_cms.divideScalar(duplex.length);
+    //first tranlate the duplex to the center of the strand
+    translateElements(new Set(duplex), end_cms.sub(duplex_cms));
+    //backfigure out the strands for ligation purpose
+    let s1 = duplex[0].strand;
+    let s2 = duplex[1].strand;
+    if (is_5p) {
+        // we need to ligate the 5p of strands
+        edit.ligate(s1.end5, end1);
+        edit.ligate(s2.end5, end2);
+    }
+    if (is_3p) {
+        // we need to ligate the 3p of strands
+        edit.ligate(s1.end3, end1);
+        edit.ligate(s2.end3, end2);
+    }
+}
 function getSelectedSeqWrapper() {
     let seqInp = view.getInputElement("sequence");
     let seqLen = view.getInputElement("seqLen");
@@ -184,7 +250,7 @@ function getSelectedSeqWrapper() {
 let complement_dict = { "A": "T", "T": "A", "C": "G", "G": "C" };
 function rc(seq) {
     let ret = [];
-    for (let i = seq.length - 1; i > 0; i--)
+    for (let i = seq.length - 1; i >= 0; i--)
         ret.push(complement_dict[seq[i]]);
     return ret.join("");
 }

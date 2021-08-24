@@ -2,6 +2,36 @@
 declare var Metro: any;
 var VRButton: any;
 
+
+function select3psWrapper() {
+    if(selectedBases.size==0){
+        api.highlight3ps();
+    }
+    else{
+        let strands = new Set<Strand>();
+        selectedBases.forEach(b=>{
+            strands.add(b.strand)
+        });
+        clearSelection();
+        api.selectElements(Array.from(strands).map(s=>s.end3));
+    }
+}
+
+function select5psWrapper() {
+    if(selectedBases.size==0){
+        api.highlight5ps();
+    }
+    else{
+        let strands = new Set<Strand>();
+        selectedBases.forEach(b=>{
+            strands.add(b.strand)
+        });
+        clearSelection();
+        api.selectElements(Array.from(strands).map(s=>s.end5));
+    }
+}
+
+
 function createTable(dataName: string, header: string[]) {
     let table = document.createElement("table");
     table.id = dataName;
@@ -515,6 +545,25 @@ class View {
             }
         }
         render();
+    }
+
+    public update3pMarker(e: BasicElement, diameter=5, length=1, spacing=.25) {
+        console.assert(e == e.strand.end3, "Not a 3' end!");
+        if ((document.getElementById("marker3pToggle") as HTMLInputElement).checked) {
+            // Place in front of backbone, pointing in the A3 direction
+            const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length/2 + spacing));
+            const q = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(0, -1, 0),
+                e.getA3()
+            );
+            e.setInstanceParameter('bbconOffsets', p.toArray());
+            e.setInstanceParameter('bbconRotation', [q.w, q.z, q.y, q.x]);
+            e.setInstanceParameter('bbconScales', [diameter, length, diameter]);
+        } else {
+            e.setInstanceParameter("bbconScales", [0, 0, 0]);
+        }
+        let sys = e.dummySys ? e.dummySys : e.getSystem();
+        sys.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
     }
 
     /**

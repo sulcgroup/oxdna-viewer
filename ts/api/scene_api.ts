@@ -35,6 +35,30 @@ module api{
         render();
     }
 
+    //highlight
+    export function highlight3ps(system = systems[0]){
+        system.strands.forEach(strand=>strand.end3.select());
+        updateView(system);
+        render();
+    }
+
+    /**
+     * Show geometries to mark 3' ends
+     * @param enable Set to true to show markers, false to hide them
+     * @param diameter Marker diameter
+     * @param length Marker length
+     * @param spacing Distance from backbone sphere
+     */
+    export function update3primeMarkers(diameter: number, length: number, spacing: number) {
+        systems.forEach(sys=>{
+            sys.strands.forEach(s=>view.update3pMarker(
+                s.end3, diameter, length, spacing
+            ));
+            //updateView(sys);
+        });
+        render();
+    }
+
     export function toggleElements(elems: BasicElement[]) {
         let sys = new Set<System>();
         let tmpSys = new Set<System>();

@@ -41,6 +41,7 @@ function addConnectionDom(element, id) {
         connect.title = "Establish connection";
         let label = document.createElement('span');
         label.classList.add('label');
+        label.setAttribute("style", "padding-left:2px;");
         label.innerHTML = element;
         item.appendChild(del);
         item.appendChild(connect);
@@ -96,6 +97,7 @@ class OXServeSocket extends WebSocket {
         };
         this.start_simulation = () => {
             this.abort = false;
+            const name = 'out';
             let reorganized, counts, conf = {};
             {
                 let { a, b, file_name, file } = makeTopFile(name);
@@ -154,4 +156,7 @@ let socket;
 function establishConnection(id) {
     let url = window.localStorage.getItem("oxServeIps").split(",")[id];
     socket = new OXServeSocket(url);
+}
+function establishNanobaseConnection() {
+    socket = new OXServeSocket("wss://nanobase.org:8989");
 }

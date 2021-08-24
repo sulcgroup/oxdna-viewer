@@ -893,7 +893,7 @@ GLTFExporter.prototype = {
 
 				if ( options.binary === true ) {
 
-					pending.push( new Promise( function ( resolve ) {
+					pending.push( new Promise<void>( function ( resolve ) {
 
 						canvas.toBlob( function ( blob ) {
 

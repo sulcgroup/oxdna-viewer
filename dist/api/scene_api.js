@@ -34,6 +34,28 @@ var api;
         render();
     }
     api.highlight5ps = highlight5ps;
+    //highlight
+    function highlight3ps(system = systems[0]) {
+        system.strands.forEach(strand => strand.end3.select());
+        updateView(system);
+        render();
+    }
+    api.highlight3ps = highlight3ps;
+    /**
+     * Show geometries to mark 3' ends
+     * @param enable Set to true to show markers, false to hide them
+     * @param diameter Marker diameter
+     * @param length Marker length
+     * @param spacing Distance from backbone sphere
+     */
+    function update3primeMarkers(diameter, length, spacing) {
+        systems.forEach(sys => {
+            sys.strands.forEach(s => view.update3pMarker(s.end3, diameter, length, spacing));
+            //updateView(sys);
+        });
+        render();
+    }
+    api.update3primeMarkers = update3primeMarkers;
     function toggleElements(elems) {
         let sys = new Set();
         let tmpSys = new Set();

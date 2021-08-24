@@ -1,0 +1,70 @@
+{
+  "name": "oxview",
+  "productName": "oxview",
+  "version": "1.0.1",
+  "description": "OxDNA viewer and editor.",
+  "main": "./index.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make",
+    "publish": "electron-forge publish",
+    "lint": "echo \"No linting configured\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sulcgroup/oxdna-viewer.git"
+  },
+  "keywords": [],
+  "author": {
+    "name": "EJM",
+    "email": "psulc@asu.edu"
+  },
+  "license": "GPL-3.0-or-later",
+  "config": {
+    "forge": {
+      "packagerConfig": {},
+      "makers": [
+        {
+          "name": "@electron-forge/maker-squirrel",
+          "config": {
+            "name": "my_app"
+          }
+        },
+        {
+          "name": "@electron-forge/maker-zip",
+          "platforms": [
+            "darwin"
+          ]
+        },
+        {
+          "name": "@electron-forge/maker-deb",
+          "config": {}
+        },
+        {
+          "name": "@electron-forge/maker-rpm",
+          "config": {}
+        }
+      ]
+    }
+  },
+  "dependencies": {
+    "@types/chart.js": "^2.9.31",
+    "@types/chartjs-plugin-annotation": "^0.5.1",
+    "@types/jquery": "^3.5.6",
+    "@types/moment": "^2.13.0",
+    "@types/sizzle": "2.3.2",
+    "electron-settings": "^4.0.2",
+    "electron-squirrel-startup": "^1.0.0",
+    "rpmbuild": "0.0.23",
+    "update-electron-app": "^2.0.1"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "^6.0.0-beta.59",
+    "@electron-forge/maker-deb": "^6.0.0-beta.59",
+    "@electron-forge/maker-rpm": "^6.0.0-beta.59",
+    "@electron-forge/maker-squirrel": "^6.0.0-beta.59",
+    "@electron-forge/maker-zip": "^6.0.0-beta.59",
+    "electron": "13.2.1"
+  }
+}

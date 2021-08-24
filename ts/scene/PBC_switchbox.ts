@@ -10,6 +10,15 @@
 function centerAndPBCBtnClick(elems?: BasicElement[]){
     window.sessionStorage.centerOption = view.centeringMode.get();
     window.sessionStorage.inboxingOption = view.inboxingMode.get();
+    // section responsible for electron interaction
+    if(window && window.process && process.versions['electron']) {           
+        const settings = require("electron-settings");
+        //retrieve settings
+        settings.set("BOXCentering", {
+            "centerOption"   : window.sessionStorage.centerOption,
+            "inboxingOption" : window.sessionStorage.inboxingOption
+        });
+    }
 
     centerAndPBC(elems);
 }

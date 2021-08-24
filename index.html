@@ -93,7 +93,14 @@
     <div id='socketConnectionsDialog' class="dialog" data-role="dialog">
         <p>The viewer supports live relaxation using ox-serve nodes.</p>
         <p>List of available servers:</p>
-        <div id="serverList" class="items-list"></div>
+        <div id="predefinedServerList" class="items-list" style="padding-top: 0;padding-bottom: 0;">
+            <div id="oxIp1">
+                <button class="square button secondary" title="Establish connection" onclick="establishNanobaseConnection()">
+                    <span class="mif-play"></span>
+                </button><span class="label"><a href="https://nanobase.org/" title="Database Server for DNA/RNA and Protein nanotechnology.">NANOBASE.org</a></span>
+            </div>
+        </div>
+        <div id="serverList" class="items-list" style="padding-top: 0;"></div>
         <div>
             <div class="inline-form">
                 <input type="text" data-role="input" id="newHostText"
@@ -470,9 +477,16 @@
                 </div>
                 <div class="tight group">
                     <button class="ribbon-button" onclick="view.toggleWindow('distanceWindow', distanceSetup)" title="Distance information window.">
-                        
                         <span class="mif-settings-ethernet mif-2x"></span>
                         <span class="caption">Distance</span>
+                    </button>
+                    <button class="ribbon-button" onclick="select3psWrapper()" title="select 3p's">
+                        <img src="img/ico/s3p.svg" height="30px">
+                        <span class="caption">3'</span>
+                    </button>
+                    <button class="ribbon-button" onclick="select5psWrapper()" title="select 5p's">
+                        <img src="img/ico/s5p.svg" height="30px">
+                        <span class="caption">5'</span>
                     </button>
                 </div>
             </div></div>
@@ -531,19 +545,23 @@
 
                 <div class="tight group">
                     <button class="ribbon-button" onclick="nickWrapper()" title="Break the upstream connection of the last selected particle (N)">
-                        <img src="img/ico/nick.svg">
+                        <img src="img/ico/nick.svg" height="18px">
                         <span class="caption">Nick</span>
                     </button>
                     <button class="ribbon-button" onclick="deleteWrapper()" title="Delete the selected monomers (Delete)">
-                        <img src="img/ico/delete.svg">
+                        <img src="img/ico/delete.svg" height="18px">
                         <span class="caption">Delete</span>
                     </button>
                     <button class="ribbon-button" onclick="ligateWrapper()" title="Ligate the last two selected particles together (L)">
-                        <img src="img/ico/ligate.svg">
+                        <img src="img/ico/ligate.svg" height="18px" >
                         <span class="caption">Ligate</span>
                     </button>
+                    <button class="ribbon-button" onclick="replaceSelectionByDuplexWrapper()" title="Take 2 selected sticky ends and replace them by a formed duplex.">
+                        <img src="img/ico/connectDuplex.svg" height="18px">
+                        <span class="caption">Connect SE</span>
+                    </button>
                     <button class="ribbon-button" onclick="moveToWrapper()" title="Move a group of elements towards the last selected element">
-                        <span class="icon">
+                        <span class="icon" height="18px">
                             <span class="mif-vertical-align-bottom"></span>
                         </span>
                         <span class="caption">Move To</span>
@@ -666,13 +684,13 @@
                     </button>
                 </div>
                 <div class="tight group flex-column">
-                    <div style="height: 27px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
+                    <div style="height: 18px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
                             data-role="switch" data-caption="Arrows" checked>
                     </div>
-                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
+                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
                             data-role="switch" data-caption="Box">
                     </div>
-                    <div style="height: 27px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
+                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
                             data-role="switch" data-caption="Fog">
                         <span class="ribbon-split dropdown-toggle"></span>
                         <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
@@ -685,6 +703,10 @@
                                 title="Maximum distance to apply fog" min=0
                                 onchange="if(scene.fog!=null){setFog();}"><br>
                         </ul>
+                    </div>
+                    <div style="height: 18px;">
+                        <input type="checkbox" id="marker3pToggle" onchange="api.update3primeMarkers()"
+                        data-role="switch" data-caption="3' markers">
                     </div>
                 </div>
                 <div class="group">
@@ -965,7 +987,6 @@
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/chart.min.js"></script>
         <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
-        <script src="./ts/lib/CCapture.all.min.js"></script>
         <script src="./ts/lib/three.js"></script>
         <script src="./ts/lib/tacoxdna.js"></script>
         <script src="./ts/lib/Lut.js"></script>
@@ -1016,6 +1037,8 @@
         <script src="./dist/ox_serve/live_relax.js"></script>
         <script src="./dist/file_handling/order_parameter_selector.js"></script>
         <script src="./dist/editing/distance.js"></script>
+        <!-- electron interaction  -->
+        <script src="./renderer.js"></script>
     </div>
 </body>
 

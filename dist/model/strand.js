@@ -72,7 +72,7 @@ class Strand {
         return this.map(e => e, reverse);
     }
     /**
-     * Performs the specified action for each element in an array.
+     * Performs the specified action for each element of the strand.
      * @param callbackfn A function that accepts up to two arguments
      * @param reverse Iterate in 3' to 5' direction, instead of the default 5' to 3'
      * @param condition If provided, only continue looping while condition is true

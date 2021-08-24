@@ -33,10 +33,18 @@ abstract class BasicElement {
     abstract calcPositionsFromConfLine(l: string[], colorUpdate?: boolean): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
-    abstract getDatFileOutput(): string; 
     abstract extendStrand(len, direction, double): void;
     abstract translatePosition(amount: THREE.Vector3): void;
+    abstract getA1(): THREE.Vector3;
+    abstract getA3(): THREE.Vector3;
     //abstract rotate(quat: THREE.Quaternion): void;
+
+    getDatFileOutput(): string {
+        const p = this.getPos();
+        const a1 = this.getA1();
+        const a3 = this.getA3();
+        return `${p.x} ${p.y} ${p.z} ${a1.x} ${a1.y} ${a1.z} ${a3.x} ${a3.y} ${a3.z} 0 0 0 0 0 0\n`;
+    }
 
     // highlight/remove highlight the bases we've clicked from the list and modify color
     toggle() {
@@ -46,7 +54,7 @@ abstract class BasicElement {
         else {
             this.select()
         }
-    };
+    }
 
     select() {
         selectedBases.add(this);
@@ -198,7 +206,9 @@ abstract class BasicElement {
             id: this.id,
             type: this.type,
             class: 'monomer',
-            p: this.getPos().toArray()
+            p: this.getPos().toArray(),
+            a1: this.getA1().toArray(),
+            a3: this.getA3().toArray()
         };
         // Specify optional attributes
         if (this.n3) json['n3'] = this.n3.id;

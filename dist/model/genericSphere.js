@@ -178,17 +178,12 @@ class GenericSphere extends BasicElement {
         }
         this.updateColor();
     }
-    ;
-    getDatFileOutput() {
-        let dat = "";
-        const tempVec = this.getPos();
-        const x = tempVec.x;
-        const y = tempVec.y;
-        const z = tempVec.z;
-        dat = x + " " + y + " " + z + " 1.0 1.0 0.0 0.0 0.0 -1.0 0.0 0.0 0.0 0.0 0.0 0.0" + "\n"; //add all locations to dat file string
-        return dat;
+    getA1() {
+        return new THREE.Vector3(1, 1, 0);
     }
-    ;
+    getA3() {
+        return new THREE.Vector3(0, 0, -1);
+    }
     extendStrand(len, direction) {
     }
     isAminoAcid() {

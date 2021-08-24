@@ -214,7 +214,7 @@ const cylinderMesh = function (pointX, pointY, r, material) {
     // edge from X to Y
     var direction = new THREE.Vector3().subVectors(pointY, pointX);
     // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 8, 4);
+    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 10, 4);
     // shift it so one end rests on the origin
     geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
     // rotate it the right way for lookAt to work
@@ -250,9 +250,18 @@ function readMGL(file) {
                 let ypos = (parseFloat(line[1])) * MGL_SCALE;
                 let zpos = (parseFloat(line[2])) * MGL_SCALE;
                 let color = line[5].slice(2).slice(0, -1);
+                let color_value;
+                if (color.indexOf(",") > -1) {
+                    //we have a an rgb color definition
+                    let rgb = color.split(",").map(s => parseFloat(s));
+                    color_value = new THREE.Color(rgb[0], rgb[1], rgb[2]);
+                }
+                else {
+                    color_value = new THREE.Color(color);
+                }
                 // main particle
-                const geometry = new THREE.SphereGeometry(MGL_D, 8, 8);
-                const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(color) });
+                const geometry = new THREE.SphereGeometry(MGL_D, 10, 10);
+                const material = new THREE.MeshPhongMaterial({ color: color_value });
                 const sphere = new THREE.Mesh(geometry, material);
                 sphere.position.set(xpos, ypos, zpos);
                 scene.add(sphere);
@@ -268,7 +277,15 @@ function readMGL(file) {
                         let patch_z = parseFloat(patch_info[2]) * MGL_SCALE;
                         let patch_size = parseFloat(patch_info[3]) * MGL_SCALE;
                         let patch_color = patch_info[4].slice(2);
-                        const material = new THREE.MeshPhongMaterial({ color: new THREE.Color(patch_color) });
+                        if (patch_color.indexOf(",") > -1) {
+                            //we have a an rgb color definition
+                            let rgb = patch_color.split(",").map(s => parseFloat(s));
+                            color_value = new THREE.Color(rgb[0], rgb[1], rgb[2]);
+                        }
+                        else {
+                            color_value = new THREE.Color(patch_color);
+                        }
+                        const material = new THREE.MeshPhongMaterial({ color: color_value });
                         const cylinder = cylinderMesh(new THREE.Vector3(xpos, ypos, zpos), new THREE.Vector3(xpos + patch_x, ypos + patch_y, zpos + patch_z), patch_size, material);
                         scene.add(cylinder);
                     }
@@ -360,6 +377,83 @@ function readFilesFromPath(topologyPath, configurationPath, overlayPath = undefi
             datReq.send();
         };
         topReq.send();
+    }
+}
+//fancy function to read files from args for electron parameters
+function readFilesFromPathArgs(args) {
+    let activity = Metro.activity.open({
+        type: 'square',
+        overlayColor: '#fff',
+        overlayAlpha: 1,
+        text: "Loading files from arguments."
+    });
+    // Set wait cursor and request an animation frame to make sure
+    // that it gets changed before starting calculation:
+    let dom = document.activeElement;
+    dom['style'].cursor = "wait";
+    const done = () => {
+        // Change cursor back and remove modal
+        dom['style'].cursor = "auto";
+        Metro.activity.close(activity);
+    };
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    const get_request = (paths) => {
+        if (paths.length == 0) {
+            //read a topology/configuration pair and whatever else
+            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+            done();
+        }
+        else {
+            let path = paths.pop();
+            let req = new XMLHttpRequest();
+            // get file extension
+            const fileName = path.toLowerCase();
+            const ext = fileName.split('.').pop();
+            req.open("GET", path);
+            req.responseType = "blob";
+            req.onload = () => {
+                const file = req.response;
+                //assign the file to the correct variable
+                if (["dat", "conf", "oxdna"].includes(ext))
+                    datFile = file;
+                else if (ext === "top")
+                    topFile = file;
+                else if (ext === "json")
+                    jsonFile = file;
+                else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
+                    trapFile = file;
+                else if (ext === "idx")
+                    idxFile = file;
+                else if (ext === "par")
+                    parFile = file;
+                else if (ext === "hb")
+                    hbFile = file;
+                else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
+                    pdbFile = file;
+                // otherwise, what is this?
+                else {
+                    notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+                    done();
+                    return;
+                }
+                if (ext === "oxview") {
+                    readOxViewJsonFile(file);
+                    done();
+                    return;
+                }
+                else if (ext === "mgl") {
+                    readMGL(file);
+                    done();
+                    return;
+                }
+                get_request(paths);
+            };
+            req.onerror = () => { done(); };
+            req.send();
+        }
+    };
+    if (args.length > 0) {
+        get_request(args);
     }
 }
 // And from the URL
@@ -659,7 +753,8 @@ function readOxViewString(s) {
                             e.calcPositions(p, a1, a3, true);
                         }
                         else {
-                            e.calcPositions(p, undefined, undefined, true); // Amino acid
+                            const zero = new THREE.Vector3();
+                            e.calcPositions(p, zero, zero, true); // Amino acid
                         }
                         // Otherwise fallback to reading instance parameters
                     }
