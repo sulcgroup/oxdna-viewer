@@ -876,8 +876,10 @@ function readParFile(system, reader) {
                 extraParams.push(l[i]);
             }
         }
+        if (Number.isInteger(p) && Number.isInteger(q)) {
+            net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
+        }
         // if (particle1 == undefined) console.log(i)
-        net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
     }
     ;
     // Create and Fill Vectors

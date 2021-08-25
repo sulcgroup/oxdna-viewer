@@ -5,20 +5,8 @@
  * @param dummySys - If created during editing, the data arrays for instancing are stored in a dummy system
  */
 class BasicElement {
-    id; //location in world - all systems
-    sid; //in-system ID, only used if in a temporary system
-    label;
-    n3;
-    n5;
-    connections = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
-    strand;
-    bbnsDist;
-    type; // Base as string
-    clusterId;
-    dummySys;
-    color;
-    pdbindices; //Only Intialized if loaded from a PDB structure
     constructor(id, strand) {
+        this.connections = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
         this.id = id;
         this.strand = strand;
         if (strand && strand.isEmpty()) {

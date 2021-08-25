@@ -3,18 +3,15 @@ function forcesToString() {
     return forces.map(f => f.toString(newElementIds)).join('\n\n');
 }
 class Force {
-    type;
-    sceneObjects = [];
+    constructor() {
+        this.sceneObjects = [];
+    }
 }
 class MutualTrap extends Force {
-    type = 'mutual_trap';
-    particle; // the particle on which to exert the force.
-    ref_particle; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
-    stiff; // stiffness of the trap.
-    r0; // equilibrium distance of the trap.
-    PBC;
-    equilibrium_distances;
-    force;
+    constructor() {
+        super(...arguments);
+        this.type = 'mutual_trap';
+    }
     set(particle, ref_particle, stiff = 0.09, r0 = 1.2, PBC = 1) {
         this.particle = particle;
         this.ref_particle = ref_particle;
@@ -80,11 +77,8 @@ class MutualTrap extends Force {
     }
 }
 class ForceHandler {
-    mutual_traps;
-    sceneObjects = [];
-    force_lines;
-    equilibrium_distances_lines;
     constructor(forces) {
+        this.sceneObjects = [];
         this.set(forces);
     }
     set(forces) {
