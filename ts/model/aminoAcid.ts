@@ -6,7 +6,7 @@
 class AminoAcid extends BasicElement {
     a1: THREE.Vector3;
     a3: THREE.Vector3;
-    pdbindices: [number, any, any];
+
 
     constructor(id: number, strand: Strand) {
         super(id, strand);

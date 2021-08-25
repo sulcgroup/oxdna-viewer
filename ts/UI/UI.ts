@@ -926,54 +926,6 @@ class View {
 
 let view = new View(document);
 
-class graphData {
-    label: string;
-    data: number[];
-    xdata: number[];
-    datatype: string; // msf or bfactor
-    units: string; // A_sqr or nm_sqr
-    gammaSim: number; // Spring force constant only used if graphData is generated as a Fit
-    cutoff: number; // Cutoff (A) for edges, only used if graphData is generated as a Fit
-    oDatatype: string; // Stores (original datatype) for the labels on the Fluctuation window (used in UI-> view)
-    constructor(l, d, x, dt, u){
-        this.label = l;
-        this.data = d;
-        this.xdata = x;
-        this.datatype = dt;
-        this.units = u;
-        this.gammaSim = 0;
-        this.cutoff = 0;
-        this.oDatatype = this.datatype;
-    };
-    convertType(format:string) {
-        if(['msf', 'bfactor'].indexOf(format) < 0) return; // TODO: Add error throw here and convertUnits
-        if (this.datatype == format) return; //Already in the right format gang gang
-        // Conversion needs to know both formats and direction to do anything useful
-        if (this.datatype == 'msf' && format == 'bfactor'){
-            this.data = this.data.map(e => e * ((8 * Math.pow(Math.PI, 2)) / 3));
-        } else if (this.datatype == 'bfactor' && format == 'msf'){
-            this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
-        }
-        this.datatype = format; // assumes successful conversion
-    };
-    convertUnits(units:string) {
-        if(['A_sqr', 'nm_sqr'].indexOf(units) < 0) return;
-        if(this.units == 'A_sqr' && units == "nm_sqr"){
-            this.data = this.data.map(e => e / 100);
-        } else if(this.units == 'nm_sqr' && units == "A_sqr"){
-            this.data = this.data.map(e => e * 100);
-        }
-        this.units = units; // assumes successful conversion
-    };
-    toJson(){
-        // Easiest to just change the whole graph to the correct output format
-        flux.changeType('msf');
-        flux.changeUnits('nm_sqr');
-        let data = this.data.map(e => {return Math.sqrt(e)});
-        return {'RMSF (nm)':data};
-    };
-}
-
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
     title: string;
