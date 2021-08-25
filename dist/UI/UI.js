@@ -872,54 +872,6 @@ class View {
     }
 }
 let view = new View(document);
-class graphData {
-    constructor(l, d, x, dt, u) {
-        this.label = l;
-        this.data = d;
-        this.xdata = x;
-        this.datatype = dt;
-        this.units = u;
-        this.gammaSim = 0;
-        this.cutoff = 0;
-        this.oDatatype = this.datatype;
-    }
-    ;
-    convertType(format) {
-        if (['msf', 'bfactor'].indexOf(format) < 0)
-            return; // TODO: Add error throw here and convertUnits
-        if (this.datatype == format)
-            return; //Already in the right format gang gang
-        // Conversion needs to know both formats and direction to do anything useful
-        if (this.datatype == 'msf' && format == 'bfactor') {
-            this.data = this.data.map(e => e * ((8 * Math.pow(Math.PI, 2)) / 3));
-        }
-        else if (this.datatype == 'bfactor' && format == 'msf') {
-            this.data = this.data.map(e => e * (3 / (8 * Math.pow(Math.PI, 2))));
-        }
-        this.datatype = format; // assumes successful conversion
-    }
-    ;
-    convertUnits(units) {
-        if (['A_sqr', 'nm_sqr'].indexOf(units) < 0)
-            return;
-        if (this.units == 'A_sqr' && units == "nm_sqr") {
-            this.data = this.data.map(e => e / 100);
-        }
-        else if (this.units == 'nm_sqr' && units == "A_sqr") {
-            this.data = this.data.map(e => e * 100);
-        }
-        this.units = units; // assumes successful conversion
-    }
-    ;
-    toJson() {
-        // Easiest to just change the whole graph to the correct output format
-        flux.changeType('msf');
-        flux.changeUnits('nm_sqr');
-        let data = this.data.map(e => { return Math.sqrt(e); });
-        return { 'RMSF (nm)': data };
-    }
-    ;
-}
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
     constructor(type, units) {
@@ -1081,13 +1033,16 @@ class fluxGraph {
         let filearr = Array.from(files);
         filearr.reverse(); // Since we use pop to access elements
         const jsonReader = new FileReader(); //read .json
+        let oldGDIndx = graphDatasets.length;
         jsonReader.onload = () => {
             this.loadjson(jsonReader); //loads single dataset
         };
         jsonReader.onloadend = () => {
-            graphDatasets[graphDatasets.length - 1].label = filearr.pop().name; //rename
-            if (this.fluxWindowOpen)
-                view.addGraphData(graphDatasets.length - 1); //add to aside bar if its displayed
+            if (graphDatasets.length > oldGDIndx) {
+                graphDatasets[graphDatasets.length - 1].label = filearr.pop().name; //rename
+                if (this.fluxWindowOpen)
+                    view.addGraphData(graphDatasets.length - 1); //add to flux window sidebar if its displayed
+            }
         };
         if (files.length == 0)
             notify('Please Select a File');
@@ -1102,17 +1057,134 @@ class fluxGraph {
         const data = JSON.parse(file);
         // const data = JSON.parse(jsonfile);
         let rmsfkey = "RMSF (nm)";
-        let fluxdata;
-        try {
-            fluxdata = data[rmsfkey];
+        let masskey = "simMasses";
+        let coordkey = "coordinates";
+        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix"];
+        if (rmsfkey in data) {
+            this.loadfluxjson(data[rmsfkey]);
         }
-        catch (e) {
+        else if (masskey in data && coordkey in data) {
+            this.loadnetworkjson(data[masskey], data[coordkey]);
+        }
+        else if (cgkeys[0] in data && cgkeys[4] in data) {
+            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]]);
+        }
+        else {
             notify('Could Not Load Json File');
         }
+    }
+    loadcgjson(bfactors, masses, coords, temp, fc_matrix) {
+        this.loadnetworkjson(masses, coords);
+        let monomers = systems[systems.length - 1].getMonomers();
+        const net = new Network(networks.length, monomers);
+        let N = masses.length;
+        for (let i = 0; i < N; i++) {
+            for (let j = i + 1; j < N; j++) {
+                if (fc_matrix[i * N + j] != null && fc_matrix[i * N + j] != 0.) {
+                    net.reducedEdges.addEdge(i, j, net.elemcoords.distance(i, j), 's', fc_matrix[i * N + j]);
+                }
+            }
+        }
+        // Create and Fill Vectors
+        net.initInstances(net.reducedEdges.total);
+        net.initEdges();
+        net.fillConnections(); // fills connection array for
+        net.prepVis(); // Creates Mesh for visualization
+        networks.push(net); // Any network added here shows up in UI network selector
+        selectednetwork = net.nid; // auto select network just loaded
+        view.addNetwork(net.nid);
+        let xdata = bfactors.map((val, ind) => ind + 1);
+        let GD = new graphData('cg_system', bfactors, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
+        graphDatasets.push(GD);
+        notify("Coarse Grained System Loaded");
+    }
+    loadfluxjson(fluxdata) {
         let msddata = fluxdata.map(x => x ** 2); //rmsf to msf
         let xdata = msddata.map((val, ind) => ind + 1);
         let GD = new graphData('tmp', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
         graphDatasets.push(GD);
+    }
+    loadnetworkjson(masses, coordinates) {
+        coordinates = coordinates.map(x => x.map(y => y / 8.518)); //convert to simulation units
+        //find center of mass
+        let com = coordinates.reduce((a, b) => { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; });
+        com = com.map(x => x / masses.length);
+        // shift coordinates so com is dead center
+        coordinates = coordinates.map(x => {
+            x[0] -= com[0];
+            x[1] -= com[1];
+            x[2] -= com[2];
+            return x;
+        });
+        let xpos = coordinates.map((info) => { return info[0]; });
+        let ypos = coordinates.map((info) => { return info[1]; });
+        let zpos = coordinates.map((info) => { return info[2]; });
+        let xmax = xpos.reduce((a, b) => { return Math.max(a, b); });
+        let xmin = xpos.reduce((a, b) => { return Math.min(a, b); });
+        let ymax = ypos.reduce((a, b) => { return Math.max(a, b); });
+        let ymin = ypos.reduce((a, b) => { return Math.min(a, b); });
+        let zmax = zpos.reduce((a, b) => { return Math.max(a, b); });
+        let zmin = zpos.reduce((a, b) => { return Math.min(a, b); });
+        let xdim = xmax - xmin;
+        let ydim = ymax - ymin;
+        let zdim = zmax - zmin;
+        if (xdim < 2)
+            xdim = 2.5;
+        if (ydim < 2)
+            ydim = 2.5;
+        if (zdim < 2)
+            zdim = 2.5;
+        if (box.x < xdim)
+            box.x = xdim * 1.25;
+        if (box.y < ydim)
+            box.y = ydim * 1.25;
+        if (box.z < zdim)
+            box.z = zdim * 1.25;
+        redrawBox();
+        let dumb = new System(tmpSystems.length, 0);
+        dumb.initInstances(masses.length);
+        tmpSystems.push(dumb);
+        let currentelemsize = elements.size;
+        let realSys = new System(sysCount++, currentelemsize);
+        realSys.initInstances(0);
+        systems.push(realSys);
+        addSystemToScene(realSys);
+        let gstrand = realSys.addNewGenericSphereStrand();
+        let newElems = [];
+        let last;
+        for (let i = 0; i < masses.length; i++) {
+            let be = gstrand.createBasicElement(currentelemsize + i);
+            elements.push(be);
+            be.sid = i;
+            be.dummySys = dumb;
+            be.type = 'gs';
+            be.n5 = null;
+            if (i != 0) {
+                let prev = newElems[i - 1];
+                be.n3 = prev;
+                prev.n5 = be;
+            }
+            else {
+                be.n3 = null;
+            }
+            be.strand = gstrand;
+            be.mass = masses[i];
+            newElems.push(be);
+            last = be;
+        }
+        gstrand.setFrom(last);
+        let pos = new THREE.Vector3(0., 0., 0.);
+        newElems.forEach((e, eid) => {
+            let tmp = coordinates[eid];
+            pos.x = tmp[0];
+            pos.y = tmp[1];
+            pos.z = tmp[2];
+            e.calcPositions(pos);
+        });
+        addSystemToScene(dumb); // add tmpSys to scene
+        const InstMassSys = newElems.map(e => new InstanceCopy(e));
+        editHistory.add(new RevertableAddition(InstMassSys, newElems));
+        // flux.prepIndxButton(ret["indx"]);
     }
     initializeGraph() {
         // onCreate parameter of toggleWindow won't initialize this correctly

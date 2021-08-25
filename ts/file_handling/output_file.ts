@@ -4,10 +4,13 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
 
     let reorganized, counts;
     if (top) {
-        let {a, b, file_name, file} = makeTopFile(name);
+        let {a, b, file_name, file, gs} = makeTopFile(name);
         reorganized = a;
         counts = b;
         makeTextFile(file_name,file);
+        if(gs.masses.length > 0){ // check for generic sphere presence
+            makeMassFile(name+"_m.txt",reorganized,counts,gs);
+        }
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated", "warning");
@@ -96,17 +99,25 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
     totNuc: number;
     totAA: number;
     totNucleic: number;
+}, {
+    subtypelist: number[], // per particle subtype assignment, need for correct topology
+    masses : number[],  // subtype indexed masses, need for masses file generation
+    subtype : number
 }] {
     //remove any gaps in the particle numbering
     //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
     let peptides = [];
     let nas = [];
+    let gstrands = [];
 
     //figure out if there are any proteins in the system
     systems.forEach(system => {
         system.strands.forEach(strand => {
             if (strand.isPeptide()) {
                 peptides.push(strand);
+            }
+            else if(strand.isGS()){
+                gstrands.push(strand);
             }
             else {
                 nas.push(strand);
@@ -121,6 +132,8 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
     let totAA = 0;
     let totNucleic = 0;
     let totPeptide = 0;
+    let totGS = 0; // Generic Sphere for Coarse Grained DNA model
+    let totGStrand = 0;
 
     let sidCounter = -1;
     let idCounter = 0;
@@ -134,6 +147,31 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
         });
     });
 
+    // these subtypes are not implemented in the CG-oxDNA model, just used for a 'relative' subtype that oxDNA will take as input
+    let gsSubtypes = {
+        subtypelist: [], // per particle subtype assignment
+        masses : [],  //
+        subtype : 26 // default assignment (DNA +Protein use subtypes 0->26) Only for DNANM and CGDNA particles
+    };
+    gstrands.forEach(strand => {
+        newStrandIds.set(strand, sidCounter--);
+        totGStrand += 1;
+        strand.forEach((e: BasicElement) => {
+            let f = <GenericSphere>e;
+            newElementIds.set(e, idCounter++);
+            // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle1
+            // resulting subtypes start from 0
+            if(f.mass in gsSubtypes.masses){
+                gsSubtypes.subtypelist.push(gsSubtypes.subtype);
+            } else {
+                gsSubtypes.subtype++;
+                gsSubtypes.subtypelist.push(gsSubtypes.subtype);
+                gsSubtypes.masses.push(f.mass); //masses will be indexed by the subtype ex. masses[2] Gathers all unique mass values
+            }
+            totGS++;
+        });
+    })
+
     sidCounter = 1;
     nas.forEach(strand => {
         newStrandIds.set(strand, sidCounter++);
@@ -146,10 +184,12 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
     });
 
     const counts = {
-        totParticles: totNuc + totAA,
-        totStrands: totPeptide + totNucleic,
+        totParticles: totNuc + totAA + totGS,
+        totStrands: totPeptide + totNucleic + totGStrand,
         totNuc: totNuc,
         totAA: totAA,
+        totGS: totGS,
+        totPeptide: totPeptide,
         totNucleic: totNucleic
     };
 
@@ -157,19 +197,22 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
         notify(`Length of totNuc (${counts.totParticles}) is not equal to length of elements array (${elements.size})`);
     }
 
-    return [newElementIds, newStrandIds, counts];
+    return [newElementIds, newStrandIds, counts, gsSubtypes];
  }
 
 function makeTopFile(name){
     const top: string[] = []; // string of contents of .top file
 
     // remove any gaps in the particle numbering
-    let [newElementIds, newStrandIds, counts] = getNewIds();
+    let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
 
     let firstLine = [counts['totParticles'], counts['totStrands']];
 
-    // Add extra counts needed in protein simulation
-    if (counts['totAA'] > 0) {
+    if (counts['totGS'] > 0) {
+        // Add extra counts for protein/DNA/ cg DNA simulation
+        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v]));
+    } else if (counts['totAA'] > 0) {
+        // Add extra counts needed in protein simulation
         firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v=>counts[v]));
     }
 
@@ -181,8 +224,8 @@ function makeTopFile(name){
         let cons: number[] = []
         
         // Protein mode
-        if (counts['totAA'] > 0) {
-            if (e.isAminoAcid()) {
+        if (counts['totAA'] > 0 || counts['totGS'] > 0) {
+            if (e.isAminoAcid() || e.isGS()) {
                 for (let i = 0; i < e.connections.length; i++) {
                     let c = e.connections[i];
                     if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
@@ -191,12 +234,16 @@ function makeTopFile(name){
                 }
             }
         }
-        top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+        if(e.isGS()){
+            top.push([newStrandIds.get(e.strand), e.type+gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+        }else{
+            top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+        }
     });
     //makeTextFile(name+".top", top.join("\n")); //make .top 
 
     //this is absolute abuse of ES6 and I feel a little bad about it
-    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n")};
+    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
 }
 function makeDatFile(name :string, altNumbering=undefined) {
     // Get largest absolute coordinate:
@@ -238,7 +285,7 @@ function makeDatFile(name :string, altNumbering=undefined) {
 
 function makeParFile(name: string, altNumbering, counts) {
     const par: string[] = [];
-    par.push(counts[3]);
+    par.push(counts['totAA'] + counts['totGS']);
 
     networks.forEach((net: Network) => {
         const t = net.reducedEdges.total;
@@ -269,6 +316,13 @@ function makeParFile(name: string, altNumbering, counts) {
     // });
     // return {file_name: name+".par", file: par.join('\n') };
 }
+
+function makeMassFile(name: string, altNumbering, counts, gsSubtypes){ //mass file for variable mass oxpy
+        let text = gsSubtypes.masses.map((m, idx)=>(idx+27).toString()+" "+m.toString()).join('\n');
+        makeTextFile(name, text);
+}
+
+
 
 function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file
 	return "{\n" + "type = mutual_trap\n" +

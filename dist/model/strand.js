@@ -174,6 +174,13 @@ class NucleicAcidStrand extends Strand {
             return new DNANucleotide(id, this);
     }
     ;
+    createBasicElementTyped(type, id) {
+        if (type == 'rna')
+            return new RNANucleotide(id, this);
+        else if (type == 'dna')
+            return new DNANucleotide(id, this);
+    }
+    ;
     /**
      * Translate the strand by a given amount
      * @param amount Vector3 with the amount to translate the strand

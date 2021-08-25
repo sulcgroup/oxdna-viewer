@@ -84,6 +84,7 @@ const systems: System[] = [];
 var tmpSystems: System[] = [] //used for editing
 //const ANMs: ANM[] = [];
 let forces: Force[] = [];
+let pdbtemp = []; // stores output from worker, so worker can terminate
 var forcesTable: string[][] = [];
 var forceHandler;
 var sysCount: number = 0;

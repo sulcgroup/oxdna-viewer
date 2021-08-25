@@ -24,6 +24,8 @@
       "./ts/file_handling/read_worker.ts",
       "./ts/file_handling/io.ts",
       "./ts/file_handling/output_file.ts",
+      "./ts/file_handling/pdb_lib.ts",
+      "./ts/file_handling/pdb_worker.ts",
       "./ts/file_handling/video.ts",
       "./ts/file_handling/stl_exporter.ts",
       "./ts/file_handling/GLTFExporter.ts",

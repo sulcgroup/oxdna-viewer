@@ -131,6 +131,18 @@ class System {
         );
     }
 
+    getAAMonomers() {
+        return [].concat.apply([],
+            this.strands.map(s=>{
+                if(s.isPeptide()) {
+                    return s.getMonomers();
+                } else {
+                    return [];
+                }
+            })
+        );
+    }
+
     getNextPeptideStrandID() {
         let id = -1;
         let currentIDs = new Set(this.strands.filter(s=>s.isPeptide()).map(s=>s.id));
@@ -146,7 +158,7 @@ class System {
     getNextGenericSphereStrandID() {
         let id = 0;
         let currentIDs = new Set(this.strands.filter(s=>s.isGS()).map(s=>s.id));
-        while(currentIDs.has(id)) id++;
+        while(currentIDs.has(id)) id--;
         return id;
     }
 

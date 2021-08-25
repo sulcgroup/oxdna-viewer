@@ -11,14 +11,14 @@ abstract class BasicElement {
     label: string;
     n3: BasicElement | null;
     n5: BasicElement | null;
-    connections: BasicElement[] = []; // ref all elements it's
+    connections: BasicElement[] = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
     strand: Strand;
     bbnsDist : number;
     type: string; // Base as string
     clusterId: number;
     dummySys: System;
     color: THREE.Color;
-    // pdbid: string; //Only Intialized if loaded from a PDB structure
+    pdbindices: [number, any, any]; //Only Intialized if loaded from a PDB structure
 
     constructor(id: number, strand: Strand) {
         this.id = id;
