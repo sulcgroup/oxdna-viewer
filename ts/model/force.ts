@@ -206,7 +206,7 @@ function makeTrapsFromPairs() {
         }
     });
     if (nopairs) {
-        ask("No basepair info found", "Do you run an automatic basepair search?",
+        ask("No basepair info found", "Do you want to run an automatic basepair search?",
         ()=>{view.longCalculation(findBasepairs, view.basepairMessage,()=>{
             makeTrapsFromPairs(); listForces(); // recall this as we now have pairs
         })})
