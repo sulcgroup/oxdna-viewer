@@ -54,3 +54,6 @@ You need to download the following files to complete this example (GitHub does n
    external_forces_file = linkerforces.txt
    ```
    We use the slightly lower dt for DNANM simulations as proteins tend to be much denser than DNA, so require slower simulation to avoid excluded volume clashes which can cause the simulation to explode.
+
+   The final relaxed structure will look something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fprotein_example-tetrahedron%2Fcage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fprotein_example-tetrahedron%2Fcage.top):
+   ![fully_relaxed](fully_relaxed.png)
