@@ -351,6 +351,16 @@ function readTrap(system, trapReader) {
 }
 // Files can also be retrieved from a path
 function readFilesFromPath(paths) {
+    if (paths.pdbPath) {
+        let pdbReq = new XMLHttpRequest();
+        pdbReq.open("GET", paths.pdbPath);
+        pdbReq.responseType = "blob";
+        pdbReq.onload = () => {
+            let pdbFile = pdbReq.response;
+            readPdbFile(pdbFile);
+        };
+        pdbReq.send();
+    }
     if (paths.oxviewPath) {
         let oxviewReq = new XMLHttpRequest();
         oxviewReq.open("GET", paths.oxviewPath);
@@ -470,10 +480,11 @@ function readFilesFromPathArgs(args) {
 function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     const oxviewPath = url.searchParams.get("file");
+    const pdbPath = url.searchParams.get("pdb");
     const topologyPath = url.searchParams.get("topology");
     const configurationPath = url.searchParams.get("configuration");
     const overlayPath = url.searchParams.get("overlay");
-    readFilesFromPath({ oxviewPath, topologyPath, configurationPath, overlayPath });
+    readFilesFromPath({ pdbPath, oxviewPath, topologyPath, configurationPath, overlayPath });
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
