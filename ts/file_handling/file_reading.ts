@@ -394,18 +394,28 @@ function readTrap(system, trapReader) {
 
 
 // Files can also be retrieved from a path
-function readFilesFromPath(topologyPath:string, configurationPath:string, overlayPath:string=undefined) {
-    if(topologyPath && configurationPath) {
+function readFilesFromPath(paths: {oxviewPath: string; topologyPath: string; configurationPath: string; overlayPath: string}) {
+    if (paths.oxviewPath) {
+        let oxviewReq = new XMLHttpRequest();
+        oxviewReq.open("GET", paths.oxviewPath);
+        oxviewReq.responseType = "blob";
+        oxviewReq.onload = () => {
+            let oxviewFile = oxviewReq.response;
+            readOxViewJsonFile(oxviewFile);
+        }
+        oxviewReq.send();
+    }
+    if(paths.topologyPath && paths.configurationPath) {
         let topReq = new XMLHttpRequest();
-        topReq.open("GET", topologyPath);
+        topReq.open("GET", paths.topologyPath);
         topReq.responseType = "blob";
         topReq.onload = () => {
             const topFile = topReq.response;
 
             let overlayFile = undefined;
-            if (overlayPath != undefined) {
+            if (paths.overlayPath != undefined) {
                 var overlayReq = new XMLHttpRequest();
-                overlayReq.open("GET", overlayPath);
+                overlayReq.open("GET", paths.overlayPath);
                 overlayReq.responseType = "blob";
                 overlayReq.onload = () => {
                     overlayFile = overlayReq.response;
@@ -414,7 +424,7 @@ function readFilesFromPath(topologyPath:string, configurationPath:string, overla
             }
 
             var datReq = new XMLHttpRequest();
-            datReq.open("GET", configurationPath);
+            datReq.open("GET", paths.configurationPath);
             datReq.responseType = "blob";
             datReq.onload = () => {
                 const datFile = datReq.response;
@@ -505,11 +515,12 @@ function readFilesFromPathArgs(args){
 // And from the URL
 function readFilesFromURLParams() {
     const url = new URL(window.location.href);
+    const oxviewPath = url.searchParams.get("file");
     const topologyPath = url.searchParams.get("topology");
     const configurationPath = url.searchParams.get("configuration");
     const overlayPath = url.searchParams.get("overlay");
 
-    readFilesFromPath(topologyPath, configurationPath, overlayPath);
+    readFilesFromPath({oxviewPath, topologyPath, configurationPath, overlayPath});
 }
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
