@@ -10,7 +10,7 @@ You will also need these two JavaScript scripts, however they can just be copy a
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-death_star/extend_5.js" download>extend_5.js</a>  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-death_star/add_AuNP.js" download>add_AuNP.js</a>
 
-Or you can run this example from a pre-loaded file.  Click [here](https://sulcgroup.github.io/oxdna-viewer/?file=https%3A%2F%2Fraw.githubusercontent.com[…]mples%2Fscripting_example-death_star%2Fdeah_star.oxview) to begin (you will still need the scripts).
+Or you can run this example from a pre-loaded file.  Click [here](https://sulcgroup.github.io/oxdna-viewer/?file=https%3A%2F%2Fraw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-death_star/deah_star.oxview) to begin (you will still need the scripts).
 
 ### Protocol
 1.  Load death_star.oxview into OxView.
