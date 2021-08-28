@@ -30,10 +30,10 @@ simulation and analysis of the desiged structure.
 
 5. Use [oxDNA_analysis_tools](https://github.com/sulcgroup/oxdna_analysis_tools) to perform alignment.  This will make for a better visualization experience as well as shrink the file size for downloading.  
    Assuming the package has been added to your path, call the alignment script with 
- ```
- python align_trajectory.py trajectory_trap.dat aligned.dat
- ```
-6. Download the aligned file and load it in oxView and use the Create Video button to create a video of the trajectory.  It will be somewhat choppy because you generally do not want to save
+    ```
+    python align_trajectory.py trajectory_trap.dat aligned.dat
+    ```
+6. Download the aligned file and load it in oxView and use the Create Video button to create a video of the trajectory.  It will be somewhat choppy because you    generally do not want to save
   configurations too often for analysis.
 7. Compute the mean structure and RMSF of the structure.
    ```
