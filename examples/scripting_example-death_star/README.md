@@ -23,3 +23,4 @@ After running extend_5.js, you should end up with a structure that looks like [t
 ![extend_5](extend_5.png)
 
 After running add_AuNP.js, the scene will look something like this (Three objects are not saved in the oxview format): 
+![aunp](AuNP.png)
