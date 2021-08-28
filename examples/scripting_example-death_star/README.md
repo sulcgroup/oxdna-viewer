@@ -18,4 +18,8 @@ Or you can run this example from a pre-loaded file.  Click [here](https://sulcgr
 3.  Paste the script you would like to run into the opened console and press Enter. Please note that for some scripts (extend_5.js in this example), this can take a long time and you might get a notification from your browser that this tab is slowing down your browser. Don’t stop the page, let it complete.
 
 ### Output
-After running extend_5.js, you should end up with a structure that looks like [this]().
+After running extend_5.js, you should end up with a structure that looks like [this](https://sulcgroup.github.io/oxdna-viewer/?file=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-death_star/extend_5.oxview).
+
+![extend_5](extend_5.png)
+
+After running add_AuNP.js, the scene will look something like this (Three objects are not saved in the oxview format): 
