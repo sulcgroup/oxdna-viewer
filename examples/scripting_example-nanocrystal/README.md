@@ -10,6 +10,8 @@ You need to download the following files to complete this example (GitHub does n
 You will also need this JavaScript script, however it can just be copy and pasted when you get to it in the example:  
 <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/crystal_script3x3.js">crystal_script3x3.js</a>
 
+Or you can run this example from a pre-loaded file. Click [here](https://sulcgroup.github.io/oxdna-viewer/?configuration=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/tian_octahedron_ext.dat&topology=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_example-nanocrystal/tian_octahedron_ext.top) to begin (you will still need the scripts).
+
 ### Protocol
 1.  Click and drag tian_octahedron_ext.dat and tian_octahedron_ext.top into OxView to load the structure.
 2.  Open a JavaScript console. It is usually accessible through the browser menu or through a keyboard shortcut which varies by browser and operating system.
