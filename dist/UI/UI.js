@@ -522,7 +522,9 @@ class View {
         render();
     }
     update3pMarker(e, diameter = 5, length = 1, spacing = .25) {
-        console.assert(e == e.strand.end3, "Not a 3' end!");
+        //console.assert, "Not a 3' end!");
+        if (e !== e.strand.end3)
+            return;
         if (document.getElementById("marker3pToggle").checked) {
             // Place in front of backbone, pointing in the A3 direction
             const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length / 2 + spacing));
