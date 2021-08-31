@@ -9,7 +9,7 @@ simulation and analysis of the desiged structure.
 
 ### Protocol
 1. The structure from the other example is not quite relaxed.  You can view it 
-  [here](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Ftetra.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Ftetra.top)
+  [here](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Ftetra.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Ftetra.top)
 2. In order to relax it, you will first perform a relaxation with input_relax_MD.  Move the two structure files and the input files to the same directory, and 
    with oxDNA added to your path, type:
    ```
@@ -18,7 +18,7 @@ simulation and analysis of the desiged structure.
    This will only take a few minutes to finish.
   
 3. Once it is completed, you should see that the potential energy (first column of the print out) is below -1.4 and the
-  structure looks something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Flast_conf_MD.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Ftetra.top)
+  structure looks something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Flast_conf_MD.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Ftetra.top)
   Note that simulation is a stochastic process so your structure will not be exactly the same.
 4. You are now ready for the production simulation with input_run.  This one is much longer, so we highly recommend running the simulation either on your own HPC
   facility or on [oxdna.org](oxdna.org).  Create a submit script for your cluster in the same directory as before or fill out the input form on oxdna.org (the defaults there are very similar to the input_run file here).
@@ -39,7 +39,7 @@ simulation and analysis of the desiged structure.
    ```
    python compute_mean.py -p 4 -d devs.json aligned.dat
    ```
-   This will produce a [mean structure](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Fmean.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Ftetra.top&overlay=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2Fexternal_simulation-tetrahedron%2Fdevs.json)
+   This will produce a [mean structure](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Fmean.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Ftetra.top&overlay=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F4-external_simulation-tetrahedron%2Fdevs.json)
    with deviations, a deviations data file which can be loaded using the order parameter selector in the Trajectory tab alongside aligned.dat, and a plot of the RMSD over time:
    
  ![devs](devs_rmsd.png)
