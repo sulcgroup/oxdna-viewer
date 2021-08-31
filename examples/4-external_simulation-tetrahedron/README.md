@@ -4,8 +4,8 @@ This example extends the [freeform design](https://github.com/sulcgroup/oxdna-vi
 simulation and analysis of the desiged structure.
 
 ### Files
-<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/external_simulation-tetrahedron/input_relax_MD" download>input_relax_MD</a>
-<a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/external_simulation-tetrahedron/input_run" download>input_run</a>
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/4-external_simulation-tetrahedron/input_relax_MD" download>input_relax_MD</a>
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/4-external_simulation-tetrahedron/input_run" download>input_run</a>
 
 ### Protocol
 1. The structure from the other example is not quite relaxed.  You can view it 
