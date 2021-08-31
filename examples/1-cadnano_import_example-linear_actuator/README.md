@@ -5,8 +5,8 @@ In this example you will import and assemble a two-component caDNAno structure (
 
 ### Files
 You need to download the following files to complete this example (GitHub does not like downloading individual files, to download you need to right click these links and select "Save Link As"):  
- * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
- * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/1-cadnano_import_example-linear_actuator/rail.json" download>rail.json</a>  
+ * <a href="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/1-cadnano_import_example-linear_actuator/slider.json" download>slider.json</a>  
 
 ### Protocol
 
