@@ -449,7 +449,7 @@ function readFilesFromPathArgs(args) {
 // And from the URL
 function readFilesFromURLParams() {
     let paths = [];
-    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par'];
+    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json'];
     const url = new URL(window.location.href);
     types.forEach(t => {
         if (url.searchParams.get(t)) {
