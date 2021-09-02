@@ -31,6 +31,7 @@ function switchMaterial(material) {
         s.connector.material = material;
         s.bbconnector.material = material;
     });
+    render();
 }
 // Default colors for the backbones
 var backboneColors = [
