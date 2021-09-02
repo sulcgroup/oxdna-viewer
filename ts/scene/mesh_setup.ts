@@ -14,13 +14,34 @@ instancedConnector.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown 
 var instancedBBconnector = new THREE.InstancedBufferGeometry();
 instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1,.02,1, 8) as unknown as THREE.InstancedBufferGeometry);
 
-var instanceMaterial = new THREE.MeshLambertMaterial( {
-    vertexColors: THREE.VertexColors
+var instanceMaterial2 = new THREE.MeshPhysicalMaterial( {
+   vertexColors: THREE.VertexColors,
+	metalness: 0.1,
+	roughness: 0.6,
+	reflectivity: 1.0,
 });
+
+var instanceMaterial = new THREE.MeshLambertMaterial( {
+   vertexColors: THREE.VertexColors,
+});
+
 
 // Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
 instanceMaterial["defines"] = instanceMaterial["defines"] || {};
 instanceMaterial["defines"][ 'INSTANCED' ] = "";
+
+// Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
+instanceMaterial2["defines"] = instanceMaterial2["defines"] || {};
+instanceMaterial2["defines"][ 'INSTANCED' ] = "";
+
+function switchMaterial(material){
+   systems.forEach(s=>{
+      s.backbone.material = material;
+      s.nucleoside.material = material;
+      s.connector.material = material;
+      s.bbconnector.material = material;
+   });
+}
 
 // Default colors for the backbones
 var backboneColors = [
@@ -98,5 +119,3 @@ var nucleosideColors = [
 ];
 
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!
-
-
