@@ -12,16 +12,16 @@ You need to download the following files to complete this example (GitHub does n
 ### Protocol
 1. Prepare the DNA component.  
    1. Select "Import" under the "File" tab. Choose the input file as the Tiamat design in dnajson format, file format as "tiamat", version as 2, Nucleic acid type as DNA and default base as random.
-   2. Click Import and Load. The Tiamat design will be displayed in the viewer.
+   2. Click Import and Load. The Tiamat design will be displayed in the viewer.  It should look something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fdnacage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fdnacage.top). 
    3. Go to "Dynamics" and select "Forces".  These strands are already base paired but stretched bonds need to be relaxed, so the forces should be relativley strong. Set "Stiffness" to 3.1 followed by "Create Forces from Basepairs" to generate forces to relax the DNA cage.
    4. Close the forces window by again selecting "Forces" under "Dynamics".
-   5. Using oxServe (described in section B), launch an MC CPU job followed by an MD GPU job to relax the DNA cage.
+   5. Using oxServe (described in section B), launch an MC CPU job followed by an MD GPU job to relax the DNA cage.  The final structure should look something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Frelaxedcage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fdnacage.top). Simulation is a stochastic process, so your structure will look different, but strands should not be frayed and there should be no stretched bonds.
    6. Save the system by selecting "Simulation Files" under "File" to download the topology and configuration of the relaxed structure.  It doesn’t need to be perfect now as we will need to relax it again after adding the protein component.
    7. Go to "File" and select "Forces" to save the forces we generated previously. We will need this file to relax the full system later. Go ahead and rename it to "dnaforces.txt"
    8. Refresh the window, then reload the system by dragging and dropping the topology and configuration files we just downloaded.
 2.  Prepare the Protein component.
     1. Go to https://www.rcsb.org/ and download the desired protein (or the above link), in our case KDPG Aldolase (PDB ID:1EUA) in PDB format.
-    2. Drag and drop the PDB file onto the oxView window to load the protein structure into the scene.
+    2. Drag and drop the PDB file onto the oxView window to load the protein structure into the scene.  It will look like [this](https://sulcgroup.github.io/oxdna-viewer/?pdb=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2F1eua.pdb&configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Frelaxedcage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fdnacage.top) with the two structures.
     3. Select the protein. Go to the "Select" tab and select "System" in the top left corner. Now, click any amino acid to select the entire protein.
     4. Position the protein so it is not overlapping with the DNA cage. Use "T" and "R" (or Translate and Rotate underthe "Edit" tab) on the keyboard to switch between translation and rotation mode and position the protein awayfrom the DNA cage.
     5. Make an Anisotropic Network Model.
@@ -55,5 +55,5 @@ You need to download the following files to complete this example (GitHub does n
    ```
    We use the slightly lower dt for DNANM simulations as proteins tend to be much denser than DNA, so require slower simulation to avoid excluded volume clashes which can cause the simulation to explode.
 
-   The final relaxed structure will look something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fcage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fcage.top):
+   The final relaxed structure will look something like [this](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fcage.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fcage.top&par=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Fcomb.par&force=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna-viewer%2Fmaster%2Fexamples%2F7-protein_example-tetrahedron%2Flinker_forces.txt):
    ![fully_relaxed](fully_relaxed.png)
