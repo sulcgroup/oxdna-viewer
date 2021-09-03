@@ -4,9 +4,9 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
 
     let reorganized, counts;
     if (top) {
-        let {a, b, file_name, file, gs} = makeTopFile(name);
+        let {a, b, c, file_name, file, gs} = makeTopFile(name);
         reorganized = a;
-        counts = b;
+        counts = c;
         makeTextFile(file_name,file);
         if(gs.masses.length > 0){ // check for generic sphere presence
             makeMassFile(name+"_m.txt",reorganized,counts,gs);
@@ -243,7 +243,7 @@ function makeTopFile(name){
     //makeTextFile(name+".top", top.join("\n")); //make .top 
 
     //this is absolute abuse of ES6 and I feel a little bad about it
-    return {a: newElementIds, b: firstLine, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
+    return {a: newElementIds, b: firstLine, c: counts, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
 }
 function makeDatFile(name :string, altNumbering=undefined) {
     // Get largest absolute coordinate:
