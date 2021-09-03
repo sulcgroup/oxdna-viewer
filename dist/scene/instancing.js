@@ -58,37 +58,116 @@ THREE.ShaderLib.customDepthRGBA = {
 	`,
     fragmentShader: THREE.ShaderChunk.depth_frag
 };
-THREE.ShaderLib.lambert = {
-    uniforms: THREE.ShaderLib.lambert.uniforms,
+THREE.ShaderLib.physical = {
+    uniforms: THREE.ShaderLib.physical.uniforms,
     vertexShader: `
-		#define LAMBERT
+	#define PHYSICAL
+
+	#ifdef INSTANCED
+	attribute vec3 instanceOffset;
+	attribute vec4 instanceRotation;
+	attribute vec3 instanceColor;
+	attribute vec3 instanceScale;
+	attribute vec3 instanceVisibility;
+	vec3 rotate_vector( vec4 quat, vec3 vec );
+	vec3 rotate_vector( vec4 quat, vec3 vec ){ 
+		return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
+	}
+	#endif
+
+	varying vec3 vViewPosition;
+	#ifndef FLAT_SHADED
+	varying vec3 vNormal;
+	#ifdef USE_TANGENT
+	varying vec3 vTangent;
+	varying vec3 vBitangent;
+	#endif
+	#endif
+	#include <common>
+	#include <uv_pars_vertex>
+	#include <uv2_pars_vertex>
+	#include <displacementmap_pars_vertex>
+	#include <color_pars_vertex>
+	#include <fog_pars_vertex>
+	#include <morphtarget_pars_vertex>
+	#include <skinning_pars_vertex>
+	#include <shadowmap_pars_vertex>
+	#include <logdepthbuf_pars_vertex>
+	#include <clipping_planes_pars_vertex>
+	void main() {
+		#include <uv_vertex>
+		#include <uv2_vertex>
+		#include <color_vertex>
+
+		// vertex colors instanced
+		#ifdef INSTANCED
+			#ifdef USE_COLOR
+				vColor.xyz = instanceColor.xyz;
+			#endif
+		#endif
+
+		#include <beginnormal_vertex>
+		#include <morphnormal_vertex>
+		#include <skinbase_vertex>
+		#include <skinnormal_vertex>
+		#include <defaultnormal_vertex>
+		#ifndef FLAT_SHADED
+		vNormal = normalize( transformedNormal );
+		#ifdef USE_TANGENT
+		vTangent = normalize( transformedTangent );
+		vBitangent = normalize( cross( vNormal, vTangent ) * tangent.w );
+		#endif
+		#endif
+		#include <begin_vertex>
+
+		// position instanced
+		#ifdef INSTANCED
+			transformed *= instanceScale * instanceVisibility;
+			transformed = rotate_vector( instanceRotation, transformed);
+			transformed = transformed + instanceOffset;
+		#endif
+
+
+		#include <morphtarget_vertex>
+		#include <skinning_vertex>
+		#include <displacementmap_vertex>
+		#include <project_vertex>
+		#include <logdepthbuf_vertex>
+		#include <clipping_planes_vertex>
+		vViewPosition = - mvPosition.xyz;
+		#include <worldpos_vertex>
+		#include <shadowmap_vertex>
+		#include <fog_vertex>
+	}
+	`,
+    fragmentShader: THREE.ShaderLib.physical.fragmentShader
+};
+THREE.ShaderLib.phong = {
+    uniforms: THREE.ShaderLib.phong.uniforms,
+    vertexShader: `
+		#define PHONG
 
 		#ifdef INSTANCED
-			attribute vec3 instanceOffset;
-			attribute vec4 instanceRotation;
-			attribute vec3 instanceColor;
-			attribute vec3 instanceScale;
-			attribute vec3 instanceVisibility;
-			vec3 rotate_vector( vec4 quat, vec3 vec );
-			vec3 rotate_vector( vec4 quat, vec3 vec ){ 
-				return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
-			}
+		attribute vec3 instanceOffset;
+		attribute vec4 instanceRotation;
+		attribute vec3 instanceColor;
+		attribute vec3 instanceScale;
+		attribute vec3 instanceVisibility;
+		vec3 rotate_vector( vec4 quat, vec3 vec );
+		vec3 rotate_vector( vec4 quat, vec3 vec ){ 
+			return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
+		}
 		#endif
-
-		varying vec3 vLightFront;
-		varying vec3 vIndirectFront;
-
-		#ifdef DOUBLE_SIDED
-			varying vec3 vLightBack;
-			varying vec3 vIndirectBack;
+		
+		varying vec3 vViewPosition;
+		#ifndef FLAT_SHADED
+		varying vec3 vNormal;
 		#endif
-
 		#include <common>
 		#include <uv_pars_vertex>
 		#include <uv2_pars_vertex>
+		#include <displacementmap_pars_vertex>
 		#include <envmap_pars_vertex>
-		#include <bsdfs>
-		#include <lights_pars_begin>
 		#include <color_pars_vertex>
 		#include <fog_pars_vertex>
 		#include <morphtarget_pars_vertex>
@@ -96,49 +175,118 @@ THREE.ShaderLib.lambert = {
 		#include <shadowmap_pars_vertex>
 		#include <logdepthbuf_pars_vertex>
 		#include <clipping_planes_pars_vertex>
-
 		void main() {
-
 			#include <uv_vertex>
 			#include <uv2_vertex>
 			#include <color_vertex>
-
+		
 			// vertex colors instanced
 			#ifdef INSTANCED
 				#ifdef USE_COLOR
 					vColor.xyz = instanceColor.xyz;
 				#endif
 			#endif
-
+		
 			#include <beginnormal_vertex>
 			#include <morphnormal_vertex>
 			#include <skinbase_vertex>
 			#include <skinnormal_vertex>
-			vec3 transformedNormal = normalMatrix * rotate_vector(instanceRotation, objectNormal);
-
+			#include <defaultnormal_vertex>
+			#ifndef FLAT_SHADED
+			vNormal = normalize( transformedNormal );
+			#endif
 			#include <begin_vertex>
-
 			// position instanced
 			#ifdef INSTANCED
 				transformed *= instanceScale * instanceVisibility;
 				transformed = rotate_vector( instanceRotation, transformed);
 				transformed = transformed + instanceOffset;
 			#endif
-
+			
 			#include <morphtarget_vertex>
 			#include <skinning_vertex>
+			#include <displacementmap_vertex>
 			#include <project_vertex>
 			#include <logdepthbuf_vertex>
 			#include <clipping_planes_vertex>
-
+			vViewPosition = - mvPosition.xyz;
 			#include <worldpos_vertex>
 			#include <envmap_vertex>
-			#include <lights_lambert_vertex>
 			#include <shadowmap_vertex>
 			#include <fog_vertex>
-
+		}`,
+    fragmentShader: THREE.ShaderLib.phong.fragmentShader
+};
+THREE.ShaderLib.lambert = {
+    uniforms: THREE.ShaderLib.lambert.uniforms,
+    vertexShader: `
+	#define LAMBERT
+	#ifdef INSTANCED
+		attribute vec3 instanceOffset;
+		attribute vec4 instanceRotation;
+		attribute vec3 instanceColor;
+		attribute vec3 instanceScale;
+		attribute vec3 instanceVisibility;
+		vec3 rotate_vector( vec4 quat, vec3 vec );
+		vec3 rotate_vector( vec4 quat, vec3 vec ){ 
+			return vec + 2.0 * cross( cross( vec, quat.xyz ) + quat.w * vec, quat.xyz ); 
 		}
-		`,
+	#endif
+	varying vec3 vLightFront;
+	varying vec3 vIndirectFront;
+	#ifdef DOUBLE_SIDED
+		varying vec3 vLightBack;
+		varying vec3 vIndirectBack;
+	#endif
+	#include <common>
+	#include <uv_pars_vertex>
+	#include <uv2_pars_vertex>
+	#include <envmap_pars_vertex>
+	#include <bsdfs>
+	#include <lights_pars_begin>
+	#include <color_pars_vertex>
+	#include <fog_pars_vertex>
+	#include <morphtarget_pars_vertex>
+	#include <skinning_pars_vertex>
+	#include <shadowmap_pars_vertex>
+	#include <logdepthbuf_pars_vertex>
+	#include <clipping_planes_pars_vertex>
+	void main() {
+		#include <uv_vertex>
+		#include <uv2_vertex>
+		#include <color_vertex>
+		// vertex colors instanced
+		#ifdef INSTANCED
+			#ifdef USE_COLOR
+				vColor.xyz = instanceColor.xyz;
+			#endif
+		#endif
+		#include <beginnormal_vertex>
+		#include <morphnormal_vertex>
+		#include <skinbase_vertex>
+		#include <skinnormal_vertex>
+		#ifdef INSTANCED
+			vec3 transformedNormal = normalMatrix * rotate_vector(instanceRotation, objectNormal);
+		#endif
+		#include <begin_vertex>
+		// position instanced
+		#ifdef INSTANCED
+			transformed *= instanceScale * instanceVisibility;
+			transformed = rotate_vector( instanceRotation, transformed);
+			transformed = transformed + instanceOffset;
+		#endif
+		#include <morphtarget_vertex>
+		#include <skinning_vertex>
+		#include <project_vertex>
+		#include <logdepthbuf_vertex>
+		#include <clipping_planes_vertex>
+		#include <worldpos_vertex>
+		#include <envmap_vertex>
+		#include <lights_lambert_vertex>
+		#include <shadowmap_vertex>
+		#include <fog_vertex>
+	}
+	`,
     fragmentShader: THREE.ShaderLib.lambert.fragmentShader
 };
 //gpu picking allows us to interact with nucleotides without raycasting, which is very CPU-intensive

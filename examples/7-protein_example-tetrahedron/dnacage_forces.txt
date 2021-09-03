@@ -1,0 +1,3455 @@
+{ 
+type = mutual_trap
+particle = 0
+stiff = 0.9
+r0 = 1.2
+ref_particle = 97
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 1
+stiff = 0.9
+r0 = 1.2
+ref_particle = 96
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 2
+stiff = 0.9
+r0 = 1.2
+ref_particle = 95
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 3
+stiff = 0.9
+r0 = 1.2
+ref_particle = 94
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 4
+stiff = 0.9
+r0 = 1.2
+ref_particle = 93
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 5
+stiff = 0.9
+r0 = 1.2
+ref_particle = 92
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 6
+stiff = 0.9
+r0 = 1.2
+ref_particle = 91
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 7
+stiff = 0.9
+r0 = 1.2
+ref_particle = 90
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 8
+stiff = 0.9
+r0 = 1.2
+ref_particle = 89
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 9
+stiff = 0.9
+r0 = 1.2
+ref_particle = 88
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 10
+stiff = 0.9
+r0 = 1.2
+ref_particle = 87
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 11
+stiff = 0.9
+r0 = 1.2
+ref_particle = 86
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 12
+stiff = 0.9
+r0 = 1.2
+ref_particle = 85
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 13
+stiff = 0.9
+r0 = 1.2
+ref_particle = 84
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 14
+stiff = 0.9
+r0 = 1.2
+ref_particle = 83
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 15
+stiff = 0.9
+r0 = 1.2
+ref_particle = 82
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 16
+stiff = 0.9
+r0 = 1.2
+ref_particle = 81
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 17
+stiff = 0.9
+r0 = 1.2
+ref_particle = 80
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 18
+stiff = 0.9
+r0 = 1.2
+ref_particle = 79
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 19
+stiff = 0.9
+r0 = 1.2
+ref_particle = 78
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 20
+stiff = 0.9
+r0 = 1.2
+ref_particle = 77
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 21
+stiff = 0.9
+r0 = 1.2
+ref_particle = 174
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 22
+stiff = 0.9
+r0 = 1.2
+ref_particle = 173
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 23
+stiff = 0.9
+r0 = 1.2
+ref_particle = 172
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 24
+stiff = 0.9
+r0 = 1.2
+ref_particle = 171
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 25
+stiff = 0.9
+r0 = 1.2
+ref_particle = 170
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 26
+stiff = 0.9
+r0 = 1.2
+ref_particle = 169
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 27
+stiff = 0.9
+r0 = 1.2
+ref_particle = 168
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 28
+stiff = 0.9
+r0 = 1.2
+ref_particle = 167
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 29
+stiff = 0.9
+r0 = 1.2
+ref_particle = 166
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 30
+stiff = 0.9
+r0 = 1.2
+ref_particle = 165
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 31
+stiff = 0.9
+r0 = 1.2
+ref_particle = 164
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 33
+stiff = 0.9
+r0 = 1.2
+ref_particle = 309
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 34
+stiff = 0.9
+r0 = 1.2
+ref_particle = 308
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 35
+stiff = 0.9
+r0 = 1.2
+ref_particle = 307
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 36
+stiff = 0.9
+r0 = 1.2
+ref_particle = 306
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 37
+stiff = 0.9
+r0 = 1.2
+ref_particle = 305
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 38
+stiff = 0.9
+r0 = 1.2
+ref_particle = 304
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 39
+stiff = 0.9
+r0 = 1.2
+ref_particle = 303
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 40
+stiff = 0.9
+r0 = 1.2
+ref_particle = 302
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 41
+stiff = 0.9
+r0 = 1.2
+ref_particle = 301
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 42
+stiff = 0.9
+r0 = 1.2
+ref_particle = 300
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 43
+stiff = 0.9
+r0 = 1.2
+ref_particle = 299
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 44
+stiff = 0.9
+r0 = 1.2
+ref_particle = 298
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 45
+stiff = 0.9
+r0 = 1.2
+ref_particle = 297
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 46
+stiff = 0.9
+r0 = 1.2
+ref_particle = 296
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 47
+stiff = 0.9
+r0 = 1.2
+ref_particle = 295
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 48
+stiff = 0.9
+r0 = 1.2
+ref_particle = 294
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 49
+stiff = 0.9
+r0 = 1.2
+ref_particle = 392
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 50
+stiff = 0.9
+r0 = 1.2
+ref_particle = 391
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 51
+stiff = 0.9
+r0 = 1.2
+ref_particle = 390
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 52
+stiff = 0.9
+r0 = 1.2
+ref_particle = 389
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 53
+stiff = 0.9
+r0 = 1.2
+ref_particle = 388
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 54
+stiff = 0.9
+r0 = 1.2
+ref_particle = 387
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 55
+stiff = 0.9
+r0 = 1.2
+ref_particle = 386
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 56
+stiff = 0.9
+r0 = 1.2
+ref_particle = 385
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 57
+stiff = 0.9
+r0 = 1.2
+ref_particle = 384
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 58
+stiff = 0.9
+r0 = 1.2
+ref_particle = 383
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 59
+stiff = 0.9
+r0 = 1.2
+ref_particle = 382
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 60
+stiff = 0.9
+r0 = 1.2
+ref_particle = 381
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 61
+stiff = 0.9
+r0 = 1.2
+ref_particle = 380
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 62
+stiff = 0.9
+r0 = 1.2
+ref_particle = 379
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 63
+stiff = 0.9
+r0 = 1.2
+ref_particle = 378
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 64
+stiff = 0.9
+r0 = 1.2
+ref_particle = 377
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 66
+stiff = 0.9
+r0 = 1.2
+ref_particle = 227
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 67
+stiff = 0.9
+r0 = 1.2
+ref_particle = 226
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 68
+stiff = 0.9
+r0 = 1.2
+ref_particle = 225
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 69
+stiff = 0.9
+r0 = 1.2
+ref_particle = 224
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 70
+stiff = 0.9
+r0 = 1.2
+ref_particle = 223
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 71
+stiff = 0.9
+r0 = 1.2
+ref_particle = 222
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 72
+stiff = 0.9
+r0 = 1.2
+ref_particle = 221
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 73
+stiff = 0.9
+r0 = 1.2
+ref_particle = 220
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 74
+stiff = 0.9
+r0 = 1.2
+ref_particle = 219
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 75
+stiff = 0.9
+r0 = 1.2
+ref_particle = 218
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 76
+stiff = 0.9
+r0 = 1.2
+ref_particle = 217
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 77
+stiff = 0.9
+r0 = 1.2
+ref_particle = 20
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 78
+stiff = 0.9
+r0 = 1.2
+ref_particle = 19
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 79
+stiff = 0.9
+r0 = 1.2
+ref_particle = 18
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 80
+stiff = 0.9
+r0 = 1.2
+ref_particle = 17
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 81
+stiff = 0.9
+r0 = 1.2
+ref_particle = 16
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 82
+stiff = 0.9
+r0 = 1.2
+ref_particle = 15
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 83
+stiff = 0.9
+r0 = 1.2
+ref_particle = 14
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 84
+stiff = 0.9
+r0 = 1.2
+ref_particle = 13
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 85
+stiff = 0.9
+r0 = 1.2
+ref_particle = 12
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 86
+stiff = 0.9
+r0 = 1.2
+ref_particle = 11
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 87
+stiff = 0.9
+r0 = 1.2
+ref_particle = 10
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 88
+stiff = 0.9
+r0 = 1.2
+ref_particle = 9
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 89
+stiff = 0.9
+r0 = 1.2
+ref_particle = 8
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 90
+stiff = 0.9
+r0 = 1.2
+ref_particle = 7
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 91
+stiff = 0.9
+r0 = 1.2
+ref_particle = 6
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 92
+stiff = 0.9
+r0 = 1.2
+ref_particle = 5
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 93
+stiff = 0.9
+r0 = 1.2
+ref_particle = 4
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 94
+stiff = 0.9
+r0 = 1.2
+ref_particle = 3
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 95
+stiff = 0.9
+r0 = 1.2
+ref_particle = 2
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 96
+stiff = 0.9
+r0 = 1.2
+ref_particle = 1
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 97
+stiff = 0.9
+r0 = 1.2
+ref_particle = 0
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 98
+stiff = 0.9
+r0 = 1.2
+ref_particle = 195
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 99
+stiff = 0.9
+r0 = 1.2
+ref_particle = 194
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 100
+stiff = 0.9
+r0 = 1.2
+ref_particle = 193
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 101
+stiff = 0.9
+r0 = 1.2
+ref_particle = 192
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 102
+stiff = 0.9
+r0 = 1.2
+ref_particle = 191
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 103
+stiff = 0.9
+r0 = 1.2
+ref_particle = 190
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 104
+stiff = 0.9
+r0 = 1.2
+ref_particle = 189
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 105
+stiff = 0.9
+r0 = 1.2
+ref_particle = 188
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 106
+stiff = 0.9
+r0 = 1.2
+ref_particle = 187
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 107
+stiff = 0.9
+r0 = 1.2
+ref_particle = 186
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 108
+stiff = 0.9
+r0 = 1.2
+ref_particle = 185
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 109
+stiff = 0.9
+r0 = 1.2
+ref_particle = 184
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 110
+stiff = 0.9
+r0 = 1.2
+ref_particle = 183
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 111
+stiff = 0.9
+r0 = 1.2
+ref_particle = 182
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 112
+stiff = 0.9
+r0 = 1.2
+ref_particle = 181
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 113
+stiff = 0.9
+r0 = 1.2
+ref_particle = 180
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 114
+stiff = 0.9
+r0 = 1.2
+ref_particle = 179
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 115
+stiff = 0.9
+r0 = 1.2
+ref_particle = 178
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 116
+stiff = 0.9
+r0 = 1.2
+ref_particle = 177
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 117
+stiff = 0.9
+r0 = 1.2
+ref_particle = 176
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 118
+stiff = 0.9
+r0 = 1.2
+ref_particle = 175
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 119
+stiff = 0.9
+r0 = 1.2
+ref_particle = 272
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 120
+stiff = 0.9
+r0 = 1.2
+ref_particle = 271
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 121
+stiff = 0.9
+r0 = 1.2
+ref_particle = 270
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 122
+stiff = 0.9
+r0 = 1.2
+ref_particle = 269
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 123
+stiff = 0.9
+r0 = 1.2
+ref_particle = 268
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 124
+stiff = 0.9
+r0 = 1.2
+ref_particle = 267
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 125
+stiff = 0.9
+r0 = 1.2
+ref_particle = 266
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 126
+stiff = 0.9
+r0 = 1.2
+ref_particle = 265
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 127
+stiff = 0.9
+r0 = 1.2
+ref_particle = 264
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 128
+stiff = 0.9
+r0 = 1.2
+ref_particle = 263
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 129
+stiff = 0.9
+r0 = 1.2
+ref_particle = 262
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 131
+stiff = 0.9
+r0 = 1.2
+ref_particle = 342
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 132
+stiff = 0.9
+r0 = 1.2
+ref_particle = 341
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 133
+stiff = 0.9
+r0 = 1.2
+ref_particle = 340
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 134
+stiff = 0.9
+r0 = 1.2
+ref_particle = 339
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 135
+stiff = 0.9
+r0 = 1.2
+ref_particle = 338
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 136
+stiff = 0.9
+r0 = 1.2
+ref_particle = 337
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 137
+stiff = 0.9
+r0 = 1.2
+ref_particle = 336
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 138
+stiff = 0.9
+r0 = 1.2
+ref_particle = 335
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 139
+stiff = 0.9
+r0 = 1.2
+ref_particle = 334
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 140
+stiff = 0.9
+r0 = 1.2
+ref_particle = 333
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 141
+stiff = 0.9
+r0 = 1.2
+ref_particle = 332
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 142
+stiff = 0.9
+r0 = 1.2
+ref_particle = 331
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 143
+stiff = 0.9
+r0 = 1.2
+ref_particle = 330
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 144
+stiff = 0.9
+r0 = 1.2
+ref_particle = 329
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 145
+stiff = 0.9
+r0 = 1.2
+ref_particle = 328
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 146
+stiff = 0.9
+r0 = 1.2
+ref_particle = 327
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 147
+stiff = 0.9
+r0 = 1.2
+ref_particle = 326
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 148
+stiff = 0.9
+r0 = 1.2
+ref_particle = 325
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 149
+stiff = 0.9
+r0 = 1.2
+ref_particle = 324
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 150
+stiff = 0.9
+r0 = 1.2
+ref_particle = 323
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 151
+stiff = 0.9
+r0 = 1.2
+ref_particle = 322
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 152
+stiff = 0.9
+r0 = 1.2
+ref_particle = 321
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 153
+stiff = 0.9
+r0 = 1.2
+ref_particle = 320
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 154
+stiff = 0.9
+r0 = 1.2
+ref_particle = 319
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 155
+stiff = 0.9
+r0 = 1.2
+ref_particle = 318
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 156
+stiff = 0.9
+r0 = 1.2
+ref_particle = 317
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 157
+stiff = 0.9
+r0 = 1.2
+ref_particle = 316
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 158
+stiff = 0.9
+r0 = 1.2
+ref_particle = 315
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 159
+stiff = 0.9
+r0 = 1.2
+ref_particle = 314
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 160
+stiff = 0.9
+r0 = 1.2
+ref_particle = 313
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 161
+stiff = 0.9
+r0 = 1.2
+ref_particle = 312
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 162
+stiff = 0.9
+r0 = 1.2
+ref_particle = 311
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 164
+stiff = 0.9
+r0 = 1.2
+ref_particle = 31
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 165
+stiff = 0.9
+r0 = 1.2
+ref_particle = 30
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 166
+stiff = 0.9
+r0 = 1.2
+ref_particle = 29
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 167
+stiff = 0.9
+r0 = 1.2
+ref_particle = 28
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 168
+stiff = 0.9
+r0 = 1.2
+ref_particle = 27
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 169
+stiff = 0.9
+r0 = 1.2
+ref_particle = 26
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 170
+stiff = 0.9
+r0 = 1.2
+ref_particle = 25
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 171
+stiff = 0.9
+r0 = 1.2
+ref_particle = 24
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 172
+stiff = 0.9
+r0 = 1.2
+ref_particle = 23
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 173
+stiff = 0.9
+r0 = 1.2
+ref_particle = 22
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 174
+stiff = 0.9
+r0 = 1.2
+ref_particle = 21
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 175
+stiff = 0.9
+r0 = 1.2
+ref_particle = 118
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 176
+stiff = 0.9
+r0 = 1.2
+ref_particle = 117
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 177
+stiff = 0.9
+r0 = 1.2
+ref_particle = 116
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 178
+stiff = 0.9
+r0 = 1.2
+ref_particle = 115
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 179
+stiff = 0.9
+r0 = 1.2
+ref_particle = 114
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 180
+stiff = 0.9
+r0 = 1.2
+ref_particle = 113
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 181
+stiff = 0.9
+r0 = 1.2
+ref_particle = 112
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 182
+stiff = 0.9
+r0 = 1.2
+ref_particle = 111
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 183
+stiff = 0.9
+r0 = 1.2
+ref_particle = 110
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 184
+stiff = 0.9
+r0 = 1.2
+ref_particle = 109
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 185
+stiff = 0.9
+r0 = 1.2
+ref_particle = 108
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 186
+stiff = 0.9
+r0 = 1.2
+ref_particle = 107
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 187
+stiff = 0.9
+r0 = 1.2
+ref_particle = 106
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 188
+stiff = 0.9
+r0 = 1.2
+ref_particle = 105
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 189
+stiff = 0.9
+r0 = 1.2
+ref_particle = 104
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 190
+stiff = 0.9
+r0 = 1.2
+ref_particle = 103
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 191
+stiff = 0.9
+r0 = 1.2
+ref_particle = 102
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 192
+stiff = 0.9
+r0 = 1.2
+ref_particle = 101
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 193
+stiff = 0.9
+r0 = 1.2
+ref_particle = 100
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 194
+stiff = 0.9
+r0 = 1.2
+ref_particle = 99
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 195
+stiff = 0.9
+r0 = 1.2
+ref_particle = 98
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 196
+stiff = 0.9
+r0 = 1.2
+ref_particle = 293
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 197
+stiff = 0.9
+r0 = 1.2
+ref_particle = 292
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 198
+stiff = 0.9
+r0 = 1.2
+ref_particle = 291
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 199
+stiff = 0.9
+r0 = 1.2
+ref_particle = 290
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 200
+stiff = 0.9
+r0 = 1.2
+ref_particle = 289
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 201
+stiff = 0.9
+r0 = 1.2
+ref_particle = 288
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 202
+stiff = 0.9
+r0 = 1.2
+ref_particle = 287
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 203
+stiff = 0.9
+r0 = 1.2
+ref_particle = 286
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 204
+stiff = 0.9
+r0 = 1.2
+ref_particle = 285
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 205
+stiff = 0.9
+r0 = 1.2
+ref_particle = 284
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 206
+stiff = 0.9
+r0 = 1.2
+ref_particle = 283
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 207
+stiff = 0.9
+r0 = 1.2
+ref_particle = 282
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 208
+stiff = 0.9
+r0 = 1.2
+ref_particle = 281
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 209
+stiff = 0.9
+r0 = 1.2
+ref_particle = 280
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 210
+stiff = 0.9
+r0 = 1.2
+ref_particle = 279
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 211
+stiff = 0.9
+r0 = 1.2
+ref_particle = 278
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 212
+stiff = 0.9
+r0 = 1.2
+ref_particle = 277
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 213
+stiff = 0.9
+r0 = 1.2
+ref_particle = 276
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 214
+stiff = 0.9
+r0 = 1.2
+ref_particle = 275
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 215
+stiff = 0.9
+r0 = 1.2
+ref_particle = 274
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 216
+stiff = 0.9
+r0 = 1.2
+ref_particle = 273
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 217
+stiff = 0.9
+r0 = 1.2
+ref_particle = 76
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 218
+stiff = 0.9
+r0 = 1.2
+ref_particle = 75
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 219
+stiff = 0.9
+r0 = 1.2
+ref_particle = 74
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 220
+stiff = 0.9
+r0 = 1.2
+ref_particle = 73
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 221
+stiff = 0.9
+r0 = 1.2
+ref_particle = 72
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 222
+stiff = 0.9
+r0 = 1.2
+ref_particle = 71
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 223
+stiff = 0.9
+r0 = 1.2
+ref_particle = 70
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 224
+stiff = 0.9
+r0 = 1.2
+ref_particle = 69
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 225
+stiff = 0.9
+r0 = 1.2
+ref_particle = 68
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 226
+stiff = 0.9
+r0 = 1.2
+ref_particle = 67
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 227
+stiff = 0.9
+r0 = 1.2
+ref_particle = 66
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 229
+stiff = 0.9
+r0 = 1.2
+ref_particle = 375
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 230
+stiff = 0.9
+r0 = 1.2
+ref_particle = 374
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 231
+stiff = 0.9
+r0 = 1.2
+ref_particle = 373
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 232
+stiff = 0.9
+r0 = 1.2
+ref_particle = 372
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 233
+stiff = 0.9
+r0 = 1.2
+ref_particle = 371
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 234
+stiff = 0.9
+r0 = 1.2
+ref_particle = 370
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 235
+stiff = 0.9
+r0 = 1.2
+ref_particle = 369
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 236
+stiff = 0.9
+r0 = 1.2
+ref_particle = 368
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 237
+stiff = 0.9
+r0 = 1.2
+ref_particle = 367
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 238
+stiff = 0.9
+r0 = 1.2
+ref_particle = 366
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 239
+stiff = 0.9
+r0 = 1.2
+ref_particle = 365
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 240
+stiff = 0.9
+r0 = 1.2
+ref_particle = 364
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 241
+stiff = 0.9
+r0 = 1.2
+ref_particle = 363
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 242
+stiff = 0.9
+r0 = 1.2
+ref_particle = 362
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 243
+stiff = 0.9
+r0 = 1.2
+ref_particle = 361
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 244
+stiff = 0.9
+r0 = 1.2
+ref_particle = 360
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 245
+stiff = 0.9
+r0 = 1.2
+ref_particle = 359
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 246
+stiff = 0.9
+r0 = 1.2
+ref_particle = 358
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 247
+stiff = 0.9
+r0 = 1.2
+ref_particle = 357
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 248
+stiff = 0.9
+r0 = 1.2
+ref_particle = 356
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 249
+stiff = 0.9
+r0 = 1.2
+ref_particle = 355
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 250
+stiff = 0.9
+r0 = 1.2
+ref_particle = 354
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 251
+stiff = 0.9
+r0 = 1.2
+ref_particle = 353
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 252
+stiff = 0.9
+r0 = 1.2
+ref_particle = 352
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 253
+stiff = 0.9
+r0 = 1.2
+ref_particle = 351
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 254
+stiff = 0.9
+r0 = 1.2
+ref_particle = 350
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 255
+stiff = 0.9
+r0 = 1.2
+ref_particle = 349
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 256
+stiff = 0.9
+r0 = 1.2
+ref_particle = 348
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 257
+stiff = 0.9
+r0 = 1.2
+ref_particle = 347
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 258
+stiff = 0.9
+r0 = 1.2
+ref_particle = 346
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 259
+stiff = 0.9
+r0 = 1.2
+ref_particle = 345
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 260
+stiff = 0.9
+r0 = 1.2
+ref_particle = 344
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 262
+stiff = 0.9
+r0 = 1.2
+ref_particle = 129
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 263
+stiff = 0.9
+r0 = 1.2
+ref_particle = 128
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 264
+stiff = 0.9
+r0 = 1.2
+ref_particle = 127
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 265
+stiff = 0.9
+r0 = 1.2
+ref_particle = 126
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 266
+stiff = 0.9
+r0 = 1.2
+ref_particle = 125
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 267
+stiff = 0.9
+r0 = 1.2
+ref_particle = 124
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 268
+stiff = 0.9
+r0 = 1.2
+ref_particle = 123
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 269
+stiff = 0.9
+r0 = 1.2
+ref_particle = 122
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 270
+stiff = 0.9
+r0 = 1.2
+ref_particle = 121
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 271
+stiff = 0.9
+r0 = 1.2
+ref_particle = 120
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 272
+stiff = 0.9
+r0 = 1.2
+ref_particle = 119
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 273
+stiff = 0.9
+r0 = 1.2
+ref_particle = 216
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 274
+stiff = 0.9
+r0 = 1.2
+ref_particle = 215
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 275
+stiff = 0.9
+r0 = 1.2
+ref_particle = 214
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 276
+stiff = 0.9
+r0 = 1.2
+ref_particle = 213
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 277
+stiff = 0.9
+r0 = 1.2
+ref_particle = 212
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 278
+stiff = 0.9
+r0 = 1.2
+ref_particle = 211
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 279
+stiff = 0.9
+r0 = 1.2
+ref_particle = 210
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 280
+stiff = 0.9
+r0 = 1.2
+ref_particle = 209
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 281
+stiff = 0.9
+r0 = 1.2
+ref_particle = 208
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 282
+stiff = 0.9
+r0 = 1.2
+ref_particle = 207
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 283
+stiff = 0.9
+r0 = 1.2
+ref_particle = 206
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 284
+stiff = 0.9
+r0 = 1.2
+ref_particle = 205
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 285
+stiff = 0.9
+r0 = 1.2
+ref_particle = 204
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 286
+stiff = 0.9
+r0 = 1.2
+ref_particle = 203
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 287
+stiff = 0.9
+r0 = 1.2
+ref_particle = 202
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 288
+stiff = 0.9
+r0 = 1.2
+ref_particle = 201
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 289
+stiff = 0.9
+r0 = 1.2
+ref_particle = 200
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 290
+stiff = 0.9
+r0 = 1.2
+ref_particle = 199
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 291
+stiff = 0.9
+r0 = 1.2
+ref_particle = 198
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 292
+stiff = 0.9
+r0 = 1.2
+ref_particle = 197
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 293
+stiff = 0.9
+r0 = 1.2
+ref_particle = 196
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 294
+stiff = 0.9
+r0 = 1.2
+ref_particle = 48
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 295
+stiff = 0.9
+r0 = 1.2
+ref_particle = 47
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 296
+stiff = 0.9
+r0 = 1.2
+ref_particle = 46
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 297
+stiff = 0.9
+r0 = 1.2
+ref_particle = 45
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 298
+stiff = 0.9
+r0 = 1.2
+ref_particle = 44
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 299
+stiff = 0.9
+r0 = 1.2
+ref_particle = 43
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 300
+stiff = 0.9
+r0 = 1.2
+ref_particle = 42
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 301
+stiff = 0.9
+r0 = 1.2
+ref_particle = 41
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 302
+stiff = 0.9
+r0 = 1.2
+ref_particle = 40
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 303
+stiff = 0.9
+r0 = 1.2
+ref_particle = 39
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 304
+stiff = 0.9
+r0 = 1.2
+ref_particle = 38
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 305
+stiff = 0.9
+r0 = 1.2
+ref_particle = 37
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 306
+stiff = 0.9
+r0 = 1.2
+ref_particle = 36
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 307
+stiff = 0.9
+r0 = 1.2
+ref_particle = 35
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 308
+stiff = 0.9
+r0 = 1.2
+ref_particle = 34
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 309
+stiff = 0.9
+r0 = 1.2
+ref_particle = 33
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 311
+stiff = 0.9
+r0 = 1.2
+ref_particle = 162
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 312
+stiff = 0.9
+r0 = 1.2
+ref_particle = 161
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 313
+stiff = 0.9
+r0 = 1.2
+ref_particle = 160
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 314
+stiff = 0.9
+r0 = 1.2
+ref_particle = 159
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 315
+stiff = 0.9
+r0 = 1.2
+ref_particle = 158
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 316
+stiff = 0.9
+r0 = 1.2
+ref_particle = 157
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 317
+stiff = 0.9
+r0 = 1.2
+ref_particle = 156
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 318
+stiff = 0.9
+r0 = 1.2
+ref_particle = 155
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 319
+stiff = 0.9
+r0 = 1.2
+ref_particle = 154
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 320
+stiff = 0.9
+r0 = 1.2
+ref_particle = 153
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 321
+stiff = 0.9
+r0 = 1.2
+ref_particle = 152
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 322
+stiff = 0.9
+r0 = 1.2
+ref_particle = 151
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 323
+stiff = 0.9
+r0 = 1.2
+ref_particle = 150
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 324
+stiff = 0.9
+r0 = 1.2
+ref_particle = 149
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 325
+stiff = 0.9
+r0 = 1.2
+ref_particle = 148
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 326
+stiff = 0.9
+r0 = 1.2
+ref_particle = 147
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 327
+stiff = 0.9
+r0 = 1.2
+ref_particle = 146
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 328
+stiff = 0.9
+r0 = 1.2
+ref_particle = 145
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 329
+stiff = 0.9
+r0 = 1.2
+ref_particle = 144
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 330
+stiff = 0.9
+r0 = 1.2
+ref_particle = 143
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 331
+stiff = 0.9
+r0 = 1.2
+ref_particle = 142
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 332
+stiff = 0.9
+r0 = 1.2
+ref_particle = 141
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 333
+stiff = 0.9
+r0 = 1.2
+ref_particle = 140
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 334
+stiff = 0.9
+r0 = 1.2
+ref_particle = 139
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 335
+stiff = 0.9
+r0 = 1.2
+ref_particle = 138
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 336
+stiff = 0.9
+r0 = 1.2
+ref_particle = 137
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 337
+stiff = 0.9
+r0 = 1.2
+ref_particle = 136
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 338
+stiff = 0.9
+r0 = 1.2
+ref_particle = 135
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 339
+stiff = 0.9
+r0 = 1.2
+ref_particle = 134
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 340
+stiff = 0.9
+r0 = 1.2
+ref_particle = 133
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 341
+stiff = 0.9
+r0 = 1.2
+ref_particle = 132
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 342
+stiff = 0.9
+r0 = 1.2
+ref_particle = 131
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 344
+stiff = 0.9
+r0 = 1.2
+ref_particle = 260
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 345
+stiff = 0.9
+r0 = 1.2
+ref_particle = 259
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 346
+stiff = 0.9
+r0 = 1.2
+ref_particle = 258
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 347
+stiff = 0.9
+r0 = 1.2
+ref_particle = 257
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 348
+stiff = 0.9
+r0 = 1.2
+ref_particle = 256
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 349
+stiff = 0.9
+r0 = 1.2
+ref_particle = 255
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 350
+stiff = 0.9
+r0 = 1.2
+ref_particle = 254
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 351
+stiff = 0.9
+r0 = 1.2
+ref_particle = 253
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 352
+stiff = 0.9
+r0 = 1.2
+ref_particle = 252
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 353
+stiff = 0.9
+r0 = 1.2
+ref_particle = 251
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 354
+stiff = 0.9
+r0 = 1.2
+ref_particle = 250
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 355
+stiff = 0.9
+r0 = 1.2
+ref_particle = 249
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 356
+stiff = 0.9
+r0 = 1.2
+ref_particle = 248
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 357
+stiff = 0.9
+r0 = 1.2
+ref_particle = 247
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 358
+stiff = 0.9
+r0 = 1.2
+ref_particle = 246
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 359
+stiff = 0.9
+r0 = 1.2
+ref_particle = 245
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 360
+stiff = 0.9
+r0 = 1.2
+ref_particle = 244
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 361
+stiff = 0.9
+r0 = 1.2
+ref_particle = 243
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 362
+stiff = 0.9
+r0 = 1.2
+ref_particle = 242
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 363
+stiff = 0.9
+r0 = 1.2
+ref_particle = 241
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 364
+stiff = 0.9
+r0 = 1.2
+ref_particle = 240
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 365
+stiff = 0.9
+r0 = 1.2
+ref_particle = 239
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 366
+stiff = 0.9
+r0 = 1.2
+ref_particle = 238
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 367
+stiff = 0.9
+r0 = 1.2
+ref_particle = 237
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 368
+stiff = 0.9
+r0 = 1.2
+ref_particle = 236
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 369
+stiff = 0.9
+r0 = 1.2
+ref_particle = 235
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 370
+stiff = 0.9
+r0 = 1.2
+ref_particle = 234
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 371
+stiff = 0.9
+r0 = 1.2
+ref_particle = 233
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 372
+stiff = 0.9
+r0 = 1.2
+ref_particle = 232
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 373
+stiff = 0.9
+r0 = 1.2
+ref_particle = 231
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 374
+stiff = 0.9
+r0 = 1.2
+ref_particle = 230
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 375
+stiff = 0.9
+r0 = 1.2
+ref_particle = 229
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 377
+stiff = 0.9
+r0 = 1.2
+ref_particle = 64
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 378
+stiff = 0.9
+r0 = 1.2
+ref_particle = 63
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 379
+stiff = 0.9
+r0 = 1.2
+ref_particle = 62
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 380
+stiff = 0.9
+r0 = 1.2
+ref_particle = 61
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 381
+stiff = 0.9
+r0 = 1.2
+ref_particle = 60
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 382
+stiff = 0.9
+r0 = 1.2
+ref_particle = 59
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 383
+stiff = 0.9
+r0 = 1.2
+ref_particle = 58
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 384
+stiff = 0.9
+r0 = 1.2
+ref_particle = 57
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 385
+stiff = 0.9
+r0 = 1.2
+ref_particle = 56
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 386
+stiff = 0.9
+r0 = 1.2
+ref_particle = 55
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 387
+stiff = 0.9
+r0 = 1.2
+ref_particle = 54
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 388
+stiff = 0.9
+r0 = 1.2
+ref_particle = 53
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 389
+stiff = 0.9
+r0 = 1.2
+ref_particle = 52
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 390
+stiff = 0.9
+r0 = 1.2
+ref_particle = 51
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 391
+stiff = 0.9
+r0 = 1.2
+ref_particle = 50
+PBC=1
+}
+
+{ 
+type = mutual_trap
+particle = 392
+stiff = 0.9
+r0 = 1.2
+ref_particle = 49
+PBC=1
+}

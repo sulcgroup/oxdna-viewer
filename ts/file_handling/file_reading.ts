@@ -394,36 +394,26 @@ function readTrap(system, trapReader) {
 
 
 // Files can also be retrieved from a path
-function readFilesFromPath(topologyPath:string, configurationPath:string, overlayPath:string=undefined) {
-    if(topologyPath && configurationPath) {
-        let topReq = new XMLHttpRequest();
-        topReq.open("GET", topologyPath);
-        topReq.responseType = "blob";
-        topReq.onload = () => {
-            const topFile = topReq.response;
+function readFilesFromPath(paths: string[]) {
 
-            let overlayFile = undefined;
-            if (overlayPath != undefined) {
-                var overlayReq = new XMLHttpRequest();
-                overlayReq.open("GET", overlayPath);
-                overlayReq.responseType = "blob";
-                overlayReq.onload = () => {
-                    overlayFile = overlayReq.response;
-                }
-                overlayReq.send()
-            }
-
-            var datReq = new XMLHttpRequest();
-            datReq.open("GET", configurationPath);
-            datReq.responseType = "blob";
-            datReq.onload = () => {
-                const datFile = datReq.response;
-                readFiles(topFile, datFile, null, overlayFile);
-            }
-            datReq.send();
+    const promises = paths.map(p => new Promise (resolve => {
+        let req = new XMLHttpRequest();
+        req.open("GET", p);
+        req.responseType = "blob";
+        req.onload = () => {
+            let f = req.response;
+            f.name = p.split('/')
+            f.name = f.name[f.name.length -1]
+            f.type = ''
+            resolve(f);
         }
-        topReq.send();
-    }
+        req.send();
+    }));
+
+    //file list isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
+    Promise.all(promises).then((files) => {
+        handleFiles(files as unknown as FileList)
+    })
 }
 
 //fancy function to read files from args for electron parameters
@@ -504,13 +494,19 @@ function readFilesFromPathArgs(args){
 
 // And from the URL
 function readFilesFromURLParams() {
+    let paths = []
+    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json']
     const url = new URL(window.location.href);
-    const topologyPath = url.searchParams.get("topology");
-    const configurationPath = url.searchParams.get("configuration");
-    const overlayPath = url.searchParams.get("overlay");
-
-    readFilesFromPath(topologyPath, configurationPath, overlayPath);
+    types.forEach(t =>{
+        if (url.searchParams.get(t)) {
+            paths.push(url.searchParams.get(t))
+        }
+    })
+    if (paths.length > 0) {
+        readFilesFromPath(paths)
+    }
 }
+
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File) {
