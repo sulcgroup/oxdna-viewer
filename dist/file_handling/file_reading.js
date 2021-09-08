@@ -545,6 +545,7 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
             };
             r.readAsText(hbFile);
         }
+        document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
     render();
     return;

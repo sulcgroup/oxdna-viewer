@@ -599,6 +599,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
             }
             r.readAsText(hbFile);
         }
+        document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
     render();
     return
