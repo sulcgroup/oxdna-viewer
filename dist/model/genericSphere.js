@@ -18,6 +18,14 @@ class GenericSphere extends BasicElement {
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
     }
+    ;
+    updateSize(mass, radius) {
+        this.mass = mass;
+        this.radius = radius;
+        let sys = this.getSystem();
+        sys.fillVec('nsScales', 3, this.sid, [this.radius, this.radius, this.radius]);
+    }
+    ;
     calcPositions(p) {
         let sys = this.getSystem();
         if (this.dummySys !== null) {

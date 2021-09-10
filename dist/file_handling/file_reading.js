@@ -386,11 +386,11 @@ function readFilesFromPathArgs(args) {
         dom['style'].cursor = "auto";
         Metro.activity.close(activity);
     };
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile; //this sets them all to undefined.
     const get_request = (paths) => {
         if (paths.length == 0) {
             //read a topology/configuration pair and whatever else
-            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile);
             done();
         }
         else {
@@ -412,6 +412,8 @@ function readFilesFromPathArgs(args) {
                     jsonFile = file;
                 else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
                     trapFile = file;
+                else if (ext === "txt" && (fileName.includes("_m")))
+                    massFile = file;
                 else if (ext === "idx")
                     idxFile = file;
                 else if (ext === "par")
@@ -462,7 +464,7 @@ function readFilesFromURLParams() {
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile) {
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up
@@ -542,6 +544,13 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
             const r = new FileReader();
             r.onload = () => {
                 readHBondFile(hbFile);
+            };
+            r.readAsText(hbFile);
+        }
+        if (massFile) {
+            const r = new FileReader();
+            r.onload = () => {
+                readMassFile(hbFile);
             };
             r.readAsText(hbFile);
         }
@@ -964,6 +973,51 @@ window.addEventListener("message", (event) => {
         return;
     }
 }, false);
+// associates massfile with last loaded system (only needed for Generic Sphere Systems)
+function readMassFile(system, reader) {
+    let lines = reader.result.split(/[\n]+/g);
+    let key = {
+        indx: [],
+        mass: [],
+        radius: []
+    };
+    if (parseInt(lines[0]) > 27) { // subtypes 0-27 taken by
+        //remove the header
+        lines = lines.slice(1);
+        const size = lines.length;
+        for (let i = 0; i < size; i++) {
+            let l = lines[i].split(" ");
+            //extract values
+            const p = parseInt(l[0]), mass = parseInt(l[1]), radius = parseFloat(l[2]);
+            key.indx.push(p);
+            key.mass.push(mass);
+            key.radius.push(radius);
+        }
+        // change all generic sphere radius and mass according to mass file
+        let sub, indx, gs;
+        systems.forEach(sys => {
+            sys.strands.forEach(strand => {
+                if (strand.isGS()) {
+                    let mon = strand.getMonomers();
+                    mon.forEach(be => {
+                        sub = parseInt(gs.type.substring(2));
+                        indx = key.indx.indexOf(sub);
+                        if (indx == -1) {
+                            console.log("Subtype " + sub.toString() + " not found in the provided mass file");
+                        }
+                        else {
+                            gs = be;
+                            gs.updateSize(key.mass[indx], key.radius[indx]);
+                        }
+                    });
+                }
+            });
+        });
+    }
+    else {
+        console.log("No GS Masses in file, (no subtype over 27), double check header");
+    }
+}
 function readPdbFile(file) {
     let reader = new FileReader();
     var worker = new Worker('./dist/file_handling/pdb_worker.js');
@@ -1059,10 +1113,6 @@ function readPdbFile(file) {
                             }
                         }
                     }
-                    //
-                    // pdbtemp[0].forEach((monlist, strand)=>{
-                    //     // Amino Acid
-                    //     if(strandID[strand] == "pro"){
                     sys.initInstances(sys.systemLength());
                     // Load monomer info
                     let count = 0;
