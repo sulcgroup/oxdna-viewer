@@ -1,7 +1,19 @@
 # Examples
 Included in this directory is a set of example structures and tutorials to help you get started. Structures used in our [paper](https://doi.org/10.1101/2020.01.24.917419 "paper") are also included to help you reproduce them.
 
-## Analysis examples from the paper
+## OxView examples from an upcoming paper
+Following the protocols in our upcoming paper, the following directories contain structures and instructions for each of the examples
+1.  [Importing multiple components from CaDNAno](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/1-cadnano_import_example-linear_actuator)
+2.  [Freeform design of a tetrahedron](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/2-free-form_design_example-tetrahedron)
+3.  Is a continuation of 2. demonstrating RBD and oxServe dynamics
+4.  [An example of extending oxDNA Analysis Tools](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/4-scripting_example-python)
+5.  Two scripting examples  
+5a. [Two examples of using scripting to edit a structure](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/5-scripting_example-death_star)  
+5b. [Building a nanocrystal with scripting](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/5-scripting_example-nanocrystal)
+6.  Is a general protocol for creating ANM models
+7.  [Building a tetrahedral protein cage](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples/7-protein_example-tetrahedron)
+
+## Analysis examples from the NAR paper
 Examples reproducing the analysis figures of our paper can be found in the [`oxdna_analysis_tools`](https://github.com/sulcgroup/oxdna_analysis_tools/tree/master/paper_examples) repository. The structures are as follows:
  * [Holliday junction](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna_analysis_tools%2Fmaster%2Fpaper_examples%2FPCA%2Fholliday.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna_analysis_tools%2Fmaster%2Fpaper_examples%2FPCA%2Fholliday.top)
 * [Design 20](https://sulcgroup.github.io/oxdna-viewer/?configuration=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna_analysis_tools%2Fmaster%2Fpaper_examples%2Fangles%2F20.dat&topology=https%3A%2F%2Fraw.githubusercontent.com%2Fsulcgroup%2Foxdna_analysis_tools%2Fmaster%2Fpaper_examples%2Fangles%2F20.top)
