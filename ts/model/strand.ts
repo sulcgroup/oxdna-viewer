@@ -324,6 +324,7 @@ class Generic extends Strand {
         return new GenericSphere(id, this);
     };
 
+
     translateStrand(amount: THREE.Vector3) {
         const s = this.system;
         const monomers = this.getMonomers();
@@ -398,3 +399,8 @@ class Generic extends Strand {
 
 }
 
+class PatchyStrand extends Generic{
+    createBasicElement(id?: number) {
+        return new PatchySphere(id, this);
+    };
+}
