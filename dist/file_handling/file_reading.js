@@ -388,11 +388,11 @@ function readFilesFromPathArgs(args) {
         dom['style'].cursor = "auto";
         Metro.activity.close(activity);
     };
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
     const get_request = (paths) => {
         if (paths.length == 0) {
             //read a topology/configuration pair and whatever else
-            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
             done();
         }
         else {
@@ -422,6 +422,8 @@ function readFilesFromPathArgs(args) {
                     hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
                     pdbFile = file;
+                else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
+                    particleFile = file;
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");

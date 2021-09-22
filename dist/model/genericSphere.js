@@ -10,9 +10,8 @@ class GenericSphere extends BasicElement {
     }
     ;
     elemToColor(elem) {
-        return nucleosideColors[elem];
+        return GREY;
     }
-    ;
     calcPositionsFromConfLine(l, flag) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
