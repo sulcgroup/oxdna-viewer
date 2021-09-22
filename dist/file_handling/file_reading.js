@@ -406,6 +406,7 @@ function readFilesFromPathArgs(args) {
             req.responseType = "blob";
             req.onload = () => {
                 const file = req.response;
+                file.name = fileName; // we need to pass the fileName as it's missing in the file object from the get_request
                 //assign the file to the correct variable
                 if (["dat", "conf", "oxdna"].includes(ext))
                     datFile = file;
@@ -423,10 +424,8 @@ function readFilesFromPathArgs(args) {
                     hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
                     pdbFile = file;
-                else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) {
+                else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
                     particleFile = file;
-                    particleFile.name = fileName; // we need to pass the fileName as it's missing in the file object from the get_request
-                }
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");

@@ -20,7 +20,9 @@ class PatchyTopReader extends FileReader{
         this.elems = elems;
         this.callback = callback;
         this.LORO = false; 
-        if("name" in this.topFile && this.topFile.name.includes("LORO")) this.LORO = true;
+        if(this.topFile.name.toLowerCase().includes("loro")) {
+            this.LORO = true;
+        }    
     }
     onload = ((f) => {
         return () => {
