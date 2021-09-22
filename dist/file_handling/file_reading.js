@@ -153,7 +153,7 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -186,6 +186,8 @@ function handleFiles(files) {
             parFile = files[i];
         else if (ext === "hb")
             hbFile = files[i];
+        else if (ext === "txt")
+            particleFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
@@ -205,7 +207,7 @@ function handleFiles(files) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
     render();
     return;
 }
@@ -462,7 +464,7 @@ function readFilesFromURLParams() {
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile) {
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up
@@ -474,15 +476,28 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
         if (!idxFile) {
-            //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-            const topReader = new TopReader(topFile, system, elements, () => {
-                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                trajReader = new TrajectoryReader(datFile, topReader, system, elements);
-                trajReader.indexTrajectory();
-                //set up instancing data arrays
-                system.initInstances(system.systemLength());
-            });
-            topReader.read();
+            if (typeof particleFile === "undefined") {
+                //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+                const topReader = new TopReader(topFile, system, elements, () => {
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile, topReader, system, elements);
+                    trajReader.indexTrajectory();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                topReader.read();
+            }
+            else {
+                //we handle patchy files
+                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements, () => {
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile, patchyTopologyReader, system, elements);
+                    trajReader.indexTrajectory();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                patchyTopologyReader.read();
+            }
         }
         else {
             console.log("index provided");
