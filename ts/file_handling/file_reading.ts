@@ -200,7 +200,7 @@ function handleFiles(files: FileList) {
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
-        else if (ext === "txt") particleFile = files[i]; 
+        else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) particleFile = files[i]; 
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")

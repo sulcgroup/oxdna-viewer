@@ -186,7 +186,7 @@ function handleFiles(files) {
             parFile = files[i];
         else if (ext === "hb")
             hbFile = files[i];
-        else if (ext === "txt")
+        else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
             particleFile = files[i];
         // otherwise, what is this?
         else {
