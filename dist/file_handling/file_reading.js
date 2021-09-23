@@ -351,6 +351,9 @@ function readTrap(system, trapReader) {
     }
     render();
 }
+function readPBFromId(pdbID) {
+    readFilesFromPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
+}
 // Files can also be retrieved from a path
 function readFilesFromPath(paths) {
     const promises = paths.map(p => new Promise(resolve => {

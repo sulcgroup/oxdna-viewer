@@ -392,7 +392,9 @@ function readTrap(system, trapReader) {
     render()
 }
 
-
+function readPBFromId(pdbID: string) {
+    readFilesFromPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
+}
 
 // Files can also be retrieved from a path
 function readFilesFromPath(paths: string[]) {
