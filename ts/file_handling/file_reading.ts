@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -197,6 +197,7 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
+        else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
@@ -226,7 +227,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
 
     render();
     return

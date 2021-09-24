@@ -153,7 +153,7 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -180,6 +180,8 @@ function handleFiles(files) {
             jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
+        else if (ext === "txt" && (fileName.includes("_m")))
+            massFile = files[i];
         else if (ext === "idx")
             idxFile = files[i];
         else if (ext === "par")
@@ -207,7 +209,7 @@ function handleFiles(files) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
     render();
     return;
 }
