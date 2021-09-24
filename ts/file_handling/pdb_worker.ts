@@ -251,6 +251,8 @@ function prep_pdb(pdblines: string[]) : [pdbReadingList, [any, number, any, numb
 
 function pdb_step1(pdbLines: string[]): pdbinfowrapper{
     let [initList, dsbonds] = prep_pdb(pdbLines);
+    let chainSingleton = (initList.uniqueIDs.length + initList.repeatIDs.length) == 1;  // Boolean for if only single chain found in the entire pdb file
+    // used in loadpdbsection to trigger new chain creation upon nonsequential residue ids
     let uniqatoms : pdbatom[] = [];
     let uniqresidues : pdbresidue[] = []; // individual residue data parsed from Atomic Info
     let uniqchains : pdbchain[] = []; // individual chain data parsed from Atomic Info
@@ -444,7 +446,9 @@ function pdb_step1(pdbLines: string[]): pdbinfowrapper{
                 }
 
                 //checks if last read atom belongs to a different chain than the one before it, or if the Res Identifer has sudden jump
-                if (prevChainId !== na.chainID || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && !isNaN(parseInt(prevResId)) && rawPrevChainId !== tmpchainID)) {
+                if (prevChainId !== na.chainID
+                    || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && !isNaN(parseInt(prevResId)) && rawPrevChainId !== tmpchainID)
+                    || (Math.abs(parseInt(na.pdbResIdent) - parseInt(prevResId)) > 1 && chainSingleton)) {
                     //console.log("chain created");
                     chainindx += 1;
                     na.chainIndx = chainindx;

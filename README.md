@@ -98,7 +98,10 @@ The edit API can be accessed by typing `edit.<command>(<arguments>)` in the brow
  * `createStrand(<string>)`: Same as extendStrand, except a new strand is created 20 units in front of the camera. Hooked up to the "Create" button in the menu.
  * `interconnectDuplex3p(<Strand1>,<Strand2>,<string>)` : connects 2 strands with a duplex patch using their 3-primes.
  * `interconnectDuplex5p(<Strand1>,<Strand2>,<string>)` : connects 2 strands with a duplex patch using their 5-primes.
+
 Note that many of these require system, strand or nucleotide objects. The viewer has a simple object hierarchy where systems contain strands which contain elements. The elements are organised as a double-linked lists within the strands and can be iterated: `strand.forEach` or listed: `strand.getMonomers()`. Arrays in JavaScript are 0-indexed, so to access the 2nd nucleotide of the 6th strand in the 1st system, you would type systems[0].strands[5].getMonomers()[1].  There is also an array of all monomers indexed by global id (shown when an element is selected), so the 1000th monomer can be accessed by elements.get(999). If you hover above an element, you will see its system ID, its strand ID and its element ID respectively.
+
+Please see examples 5a and 5b in the [examples](https://github.com/sulcgroup/oxdna-viewer/tree/master/examples) directory for some examples of using the editing API to perform algorithmic mass edits on structures prior to simulation.
 
 ### Observable API
 The observable API can be accessed by typing `api.observable.(observable)` in the browser console.

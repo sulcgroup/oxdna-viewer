@@ -342,3 +342,9 @@ class Generic extends Strand {
         this.forEach(e => e.deselect());
     }
 }
+class PatchyStrand extends Generic {
+    createBasicElement(id) {
+        return new PatchySphere(id, this);
+    }
+    ;
+}

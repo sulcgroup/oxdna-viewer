@@ -550,9 +550,9 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         if (massFile) {
             const r = new FileReader();
             r.onload = () => {
-                readMassFile(hbFile);
+                readMassFile(r);
             };
-            r.readAsText(hbFile);
+            r.readAsText(massFile);
         }
         document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
@@ -974,7 +974,7 @@ window.addEventListener("message", (event) => {
     }
 }, false);
 // associates massfile with last loaded system (only needed for Generic Sphere Systems)
-function readMassFile(system, reader) {
+function readMassFile(reader) {
     let lines = reader.result.split(/[\n]+/g);
     let key = {
         indx: [],

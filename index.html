@@ -125,10 +125,20 @@
     </div>
 
     <div id='openFileDialog' class="dialog" data-role="dialog">
-        <input id='fileInput' type="file" multiple="multiple" data-role="file" data-mode="drop">    
+        <input id='fileInput' type="file" multiple="multiple" data-role="file" data-mode="drop">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
             <button onclick="handleFiles(document.getElementById('fileInput').files)" class="button primary js-dialog-close">Open</button>
+        </div>
+    </div>
+
+    <div id='importPDBDialog' class="dialog" data-role="dialog">
+        <h2>Import PDB</h2>
+        Type a PDB identifier below to load the corresponding structure into oxView. If you already have a PDB file on your computer you can simply drag and drop it (or use the "Open" dialog).
+        <input type="text" value="6KIX" data-role="input" data-prepend="PDB ID" id="importPDBID">
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="readPBFromId(document.getElementById('importPDBID').value)" class="button primary js-dialog-close">Import</button>
         </div>
     </div>
 
@@ -309,6 +319,11 @@
                     <span class="mif-file-upload mif-3x fg-green"></span>
                     <span class="caption">Import</span>
                 </button>
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID"
+                id="import-button">
+                <span class="mif-file-upload mif-3x"></span>
+                <span class="caption">PDB Import</span>
+            </button>
                 <div class="group">
                     <button class="ribbon-button"
                         onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited"
@@ -998,6 +1013,7 @@
         <script src="./dist/scene/instancing.js"></script>
         <script src="./dist/scene/mesh_setup.js"></script>
         <script src="./dist/file_handling/io.js"></script>
+        <script src="./dist/file_handling/ppio.js"></script>
         <script src="./dist/scene/PBC_switchbox.js"></script>
         <script src="./dist/file_handling/file_reading.js"></script>
         <script src="./dist/editing/editing.js"></script>

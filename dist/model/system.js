@@ -147,6 +147,13 @@ class System {
         this.strands.push(strand);
         return strand;
     }
+    addNewPatchySphereStrand() {
+        let id = this.getNextGenericSphereStrandID();
+        let strand = new PatchyStrand(id, this);
+        strand.system = this;
+        this.strands.push(strand);
+        return strand;
+    }
     addStrand(strand) {
         if (!this.strands.includes(strand)) {
             this.strands.push(strand);

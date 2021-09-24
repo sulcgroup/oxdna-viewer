@@ -53,6 +53,7 @@
       "ts/ox_serve/live_relax.ts",
       "ts/ox_serve/relax_scenarios.ts",
       "ts/file_handling/order_parameter_selector.ts",
-      "./ts/editing/distance.ts"
+      "./ts/editing/distance.ts",
+      "./ts/file_handling/ppio.ts"
     ]
 }
