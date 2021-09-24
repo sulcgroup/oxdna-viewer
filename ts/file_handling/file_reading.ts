@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -200,6 +200,7 @@ function handleFiles(files: FileList) {
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
+        else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) particleFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -225,7 +226,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
 
     render();
     return
@@ -391,7 +392,9 @@ function readTrap(system, trapReader) {
     render()
 }
 
-
+function readPBFromId(pdbID: string) {
+    readFilesFromPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
+}
 
 // Files can also be retrieved from a path
 function readFilesFromPath(paths: string[]) {
@@ -437,11 +440,11 @@ function readFilesFromPathArgs(args){
         Metro.activity.close(activity);
     }
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
     const  get_request = (paths) => {
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
-                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile);
+                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
                 done();
            }
            else {
@@ -451,10 +454,13 @@ function readFilesFromPathArgs(args){
             const fileName = path.toLowerCase();
             const ext = fileName.split('.').pop();
 
+            console.log("get_request://",fileName);
+
             req.open("GET", path);
             req.responseType = "blob";
             req.onload = () => {
                 const file = req.response;
+                file.name = fileName; // we need to pass the fileName as it's missing in the file object from the get_request
                 //assign the file to the correct variable
                 if (["dat", "conf", "oxdna"].includes(ext)) datFile = file;
                 else if (ext === "top") topFile = file;
@@ -465,6 +471,8 @@ function readFilesFromPathArgs(args){
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") pdbFile = file;
+                else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
+                    particleFile = file;
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -510,7 +518,7 @@ function readFilesFromURLParams() {
 
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -524,16 +532,30 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
         //TODO: is this really neaded?
         system.setDatFile(datFile); //store datFile in current System object
         if(!idxFile){
-            //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-            const topReader = new TopReader(topFile, system, elements,()=>{
-                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                trajReader = new TrajectoryReader(datFile,topReader,system,elements);
-                trajReader.indexTrajectory();
+            if(typeof particleFile === "undefined"){
+                //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+                const topReader = new TopReader(topFile, system, elements,()=>{
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile,topReader,system,elements);
+                    trajReader.indexTrajectory();
 
-                //set up instancing data arrays
-                system.initInstances(system.systemLength());
-            });
-            topReader.read();
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                topReader.read();
+            }
+            else{
+                //we handle patchy files
+                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements,()=>{
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile,patchyTopologyReader,system,elements);
+                    trajReader.indexTrajectory();
+
+                    //set up instancing data arrays
+                    system.initInstances(system.systemLength());
+                });
+                patchyTopologyReader.read();
+            }
         }
         else{
             console.log("index provided");
