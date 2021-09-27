@@ -141,6 +141,16 @@
             <button onclick="readPBFromId(document.getElementById('importPDBID').value)" class="button primary js-dialog-close">Import</button>
         </div>
     </div>
+    
+    <div id='importNanobaseDialog' class="dialog" data-role="dialog">
+        <h2>Import Nanobase</h2>
+        Type the link of a Nanobase structure to load it into oxView.
+        <input type="text" value="https://nanobase.org/structure/15" data-role="input" data-prepend="URL" id="importNanobase">
+        <div class="dialog-actions">
+            <button class="button js-dialog-close">Cancel</button>
+            <button onclick="readNanobaseFromURL(document.getElementById('importNanobase').value)" class="button primary js-dialog-close">Import</button>
+        </div>
+    </div>
 
     <div id='importFileDialog' class="dialog" data-role="dialog">
         <h2>TacoxDNA importer</h2>
@@ -323,6 +333,10 @@
                 id="import-button">
                 <span class="mif-file-upload mif-3x"></span>
                 <span class="caption">PDB Import</span>
+                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')" title="Import PDB from ID"
+                id="import-button">
+                <span class="mif-file-upload mif-3x"></span>
+                <span class="caption">Nanobase Import</span>
             </button>
                 <div class="group">
                     <button class="ribbon-button"

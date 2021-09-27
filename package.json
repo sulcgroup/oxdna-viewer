@@ -54,6 +54,7 @@
     "@types/jquery": "^3.5.6",
     "@types/moment": "^2.13.0",
     "@types/sizzle": "2.3.2",
+    "@zip.js/zip.js": "^2.3.17",
     "electron-settings": "^4.0.2",
     "electron-squirrel-startup": "^1.0.0",
     "rpmbuild": "0.0.23",

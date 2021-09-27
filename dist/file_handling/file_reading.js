@@ -354,6 +354,18 @@ function readTrap(system, trapReader) {
 function readPBFromId(pdbID) {
     readFilesFromPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
 }
+function readNanobaseFromURL(url) {
+    const id = url.split('/').pop();
+    const path = `https://nanobase.org/oxdna/${id}`;
+    let req = new XMLHttpRequest();
+    req.open("GET", path);
+    req.onload = () => {
+        let file_names = req.response.split('|');
+        file_names = file_names.map(file_name => `https://nanobase.org/file/${id}/structure/${file_name}`);
+        readFilesFromPath(file_names);
+    };
+    req.send();
+}
 // Files can also be retrieved from a path
 function readFilesFromPath(paths) {
     const promises = paths.map(p => new Promise(resolve => {
