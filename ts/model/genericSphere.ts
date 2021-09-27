@@ -4,6 +4,7 @@
  */
 class GenericSphere extends BasicElement {
     mass:number;
+    radius:number;
     constructor(id: number, strand: Strand) {
         super(id, strand);
         this.mass = 1.0;
@@ -18,6 +19,14 @@ class GenericSphere extends BasicElement {
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
     }
+    ;
+    updateSize(mass: number, radius: number){
+        this.mass = mass;
+        this.radius = radius;
+        let sys = this.getSystem();
+        sys.fillVec('nsScales', 3, this.sid, [this.radius, this.radius, this.radius]);
+    }
+    ;
     calcPositions(p: THREE.Vector3) { //mass Parameter should be set prior to calling this
         let sys = this.getSystem();
         if (this.dummySys !== null) {

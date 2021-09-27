@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile,particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -197,10 +197,11 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
+        else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
-        else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) particleFile = files[i]; 
+        else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) particleFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -226,7 +227,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, particleFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
 
     render();
     return
@@ -452,11 +453,11 @@ function readFilesFromPathArgs(args){
         Metro.activity.close(activity);
     }
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
     const  get_request = (paths) => {
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
-                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile,particleFile);
+                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
                 done();
            }
            else {
@@ -465,7 +466,7 @@ function readFilesFromPathArgs(args){
             // get file extension
             const fileName = path.toLowerCase();
             const ext = fileName.split('.').pop();
-            
+
             console.log("get_request://",fileName);
 
             req.open("GET", path);
@@ -478,12 +479,13 @@ function readFilesFromPathArgs(args){
                 else if (ext === "top") topFile = file;
                 else if (ext === "json") jsonFile = file;
                 else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = file;
+                else if (ext === "txt" && (fileName.includes("_m"))) massFile = file;
                 else if (ext === "idx") idxFile = file;
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") pdbFile = file;
-                else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) 
-                    particleFile = file; 
+                else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
+                    particleFile = file;
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -529,7 +531,7 @@ function readFilesFromURLParams() {
 
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, particleFile?:File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -632,6 +634,13 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
                 readHBondFile(hbFile);
             }
             r.readAsText(hbFile);
+        }
+        if (massFile){
+            const r = new FileReader();
+            r.onload = ()=> {
+                readMassFile(r);
+            }
+            r.readAsText(massFile);
         }
         document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
@@ -1105,6 +1114,56 @@ window.addEventListener("message", (event) => {
     }
 }, false);
 
+// associates massfile with last loaded system (only needed for Generic Sphere Systems)
+function readMassFile(reader){
+    let lines = (reader.result as string).split(/[\n]+/g);
+    let key ={
+        indx: [],
+        mass: [],
+        radius: []
+    }
+
+    if(parseInt(lines[0]) > 27){  // subtypes 0-27 taken by
+        //remove the header
+        lines = lines.slice(1)
+        const size = lines.length;
+        for (let i = 0; i < size; i++) {
+            let l = lines[i].split(" ")
+            //extract values
+            const p = parseInt(l[0]),
+                mass = parseInt(l[1]),
+                radius = parseFloat(l[2]);
+
+            key.indx.push(p);
+            key.mass.push(mass);
+            key.radius.push(radius);
+        }
+
+        // change all generic sphere radius and mass according to mass file
+        let sub, indx, gs;
+        systems.forEach(sys => {
+            sys.strands.forEach(strand => {
+                if(strand.isGS()){
+                    let mon = strand.getMonomers();
+                    mon.forEach(be => {
+                        sub = parseInt(gs.type.substring(2))
+                        indx = key.indx.indexOf(sub);
+                        if(indx == -1){
+                            console.log("Subtype " + sub.toString() + " not found in the provided mass file");
+                        } else {
+                            gs = <GenericSphere>be;
+                            gs.updateSize(key.mass[indx], key.radius[indx]);
+                        }
+                    })
+                }
+            })
+        })
+
+
+    } else {
+        console.log("No GS Masses in file, (no subtype over 27), double check header")
+    }
+}
 
 function readPdbFile(file) {
     let reader = new FileReader();
@@ -1117,8 +1176,6 @@ function readPdbFile(file) {
         let transfer = [pdbLines, pdbFileInfo.length, elements.getNextId(), sysCount];
         worker.postMessage(transfer);
     }
-
-
 
     function activate() {
         var promise = new Promise(function (resolve, reject) {
@@ -1212,11 +1269,6 @@ function readPdbFile(file) {
                             }
                         }
                     }
-                    //
-                    // pdbtemp[0].forEach((monlist, strand)=>{
-                    //     // Amino Acid
-                    //     if(strandID[strand] == "pro"){
-
 
                     sys.initInstances(sys.systemLength())
                     // Load monomer info

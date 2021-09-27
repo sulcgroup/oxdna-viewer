@@ -116,6 +116,16 @@ class System {
             return new NucleicAcidStrand(strID, this);
     }
     ;
+    createStrandTyped(strID, base) {
+        if (strID < 0)
+            if (base.includes('gs'))
+                return new Generic(strID, this);
+            else
+                return new Peptide(strID, this);
+        else
+            return new NucleicAcidStrand(strID, this);
+    }
+    ;
     addNewNucleicAcidStrand() {
         let id = this.getNextNucleicAcidStrandID();
         let strand = new NucleicAcidStrand(id, this);

@@ -16,7 +16,7 @@ class TopReader extends FileReader {
                 let l0 = lines[0].split(" ");
                 let strID = parseInt(l0[0]); //proteins are negative indexed
                 this.lastStrand = strID;
-                let currentStrand = this.system.createStrand(strID);
+                let currentStrand = this.system.createStrandTyped(strID, l0[1]);
                 this.system.addStrand(currentStrand);
                 // create empty list of elements with length equal to the topology
                 // Note: this is implemented such that we have the elements for the DAT reader 
@@ -37,7 +37,7 @@ class TopReader extends FileReader {
                     let l = line.split(" ");
                     strID = parseInt(l[0]);
                     if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                        currentStrand = this.system.createStrand(strID);
+                        currentStrand = this.system.createStrandTyped(strID, l[1]);
                         this.system.addStrand(currentStrand);
                         this.nucLocalID = 0;
                     }

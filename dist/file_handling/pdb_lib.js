@@ -51,7 +51,7 @@ class graphData {
 const recongizedProteinResidues = ["ALA", "ARG", "ASN", "ASP", "CYS", "CYX", "GLN",
     "GLU", "GLY", "HIS", "HSD", "ILE", "MET", "LEU", "LYS", "PHE", "PRO", "SER",
     "THR", "TRP", "TYR", "VAL", "SEC", "PYL", "ASX", "GLX", "UNK"];
-const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN"];
+const recongizedDNAResidues = ["DG", "DT", "DA", "DC", "DU", "DI", "DN", "ADE", "THY", "GUA", "CYT"];
 const recongizedDNAStrandEnds = ["DG3", "DG5", "DT3", "DT5", "DA3", "DA3", "DC3", "DC5"];
 const recongizedRNAResidues = ["A", "C", "G", "I", "U", "TU", "N"];
 const recongizedRNAStrandEnds = ["A3", "A5", "C3", "C5", "G3", "G5", "U3", "U5"];
@@ -62,7 +62,8 @@ let proelem = { "LYS": "K", "CYS": "C", "CYX": "C", "ALA": "A", "THR": "T", "GLU
 // Residue code (in pdb) to single letter type for Nucleotides
 let nucelem = { "DC": "C", "DC3": "C", "DC5": "C", "DG": "G", "DG3": "G", "DG5": "G", "DT": "T", "DT3": "T",
     "DT5": "T", "T": "T", "T3": "T", "T5": "T", "DA": "A", "DA3": "A", "DA5": "A", "U": "U", "U3": "U", "U5": "U",
-    "A": "A", "A3": "A", "A5": "A", "G": "G", "G3": "G", "G5": "G", "C": "C", "C3": "C", "C5": "C" };
+    "A": "A", "A3": "A", "A5": "A", "G": "G", "G3": "G", "G5": "G", "C": "C", "C3": "C", "C5": "C", "ADE": "A",
+    "THY": "T", "CYT": "C", "GUA": "G" };
 class pdbatom {
     constructor() {
         this.indx = "";
