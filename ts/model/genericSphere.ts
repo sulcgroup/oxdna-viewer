@@ -24,7 +24,9 @@ class GenericSphere extends BasicElement {
         this.mass = mass;
         this.radius = radius;
         let sys = this.getSystem();
-        sys.fillVec('nsScales', 3, this.sid, [this.radius, this.radius, this.radius]);
+        sys.fillVec('nsScales', 3, this.sid, [2*this.radius, 2*this.radius, 2*this.radius]);
+        sys.callUpdates(['instanceScale']);
+        // sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
     }
     ;
     calcPositions(p: THREE.Vector3) { //mass Parameter should be set prior to calling this

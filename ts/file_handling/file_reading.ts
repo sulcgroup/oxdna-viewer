@@ -1115,7 +1115,7 @@ function readMassFile(reader){
         //remove the header
         lines = lines.slice(1)
         const size = lines.length;
-        for (let i = 0; i < size; i++) {
+        for (let i = 0; i < size-1; i++) {
             let l = lines[i].split(" ")
             //extract values
             const p = parseInt(l[0]),
@@ -1134,7 +1134,7 @@ function readMassFile(reader){
                 if(strand.isGS()){
                     let mon = strand.getMonomers();
                     mon.forEach(be => {
-                        sub = parseInt(gs.type.substring(2))
+                        sub = parseInt(be.type.substring(2))
                         indx = key.indx.indexOf(sub);
                         if(indx == -1){
                             console.log("Subtype " + sub.toString() + " not found in the provided mass file");
