@@ -178,6 +178,8 @@ function handleFiles(files) {
             topFile = files[i];
         else if (ext === "json")
             jsonFile = files[i];
+        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
+            particleFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m")))
@@ -188,8 +190,6 @@ function handleFiles(files) {
             parFile = files[i];
         else if (ext === "hb")
             hbFile = files[i];
-        else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
-            particleFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
@@ -443,7 +443,7 @@ function readFilesFromPathArgs(args) {
                     hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
                     pdbFile = file;
-                else if (fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
+                else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
                     particleFile = file;
                 // otherwise, what is this?
                 else {

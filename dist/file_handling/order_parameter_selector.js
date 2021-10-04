@@ -54,7 +54,9 @@ let loadHyperSelector = () => {
                 duration: 0 // general animation time
             },
             hover: {
-                animationDuration: 0,
+                animationDuration: 0, // duration of animations when hovering an item
+                // mode:"dataset", // it is possible to remove the line view from the plot 
+                // intersect:true  // on hover, but i find it to distracting 
             },
             responsiveAnimationDuration: 0,
             scales: {
