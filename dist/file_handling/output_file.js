@@ -48,12 +48,16 @@ function make3dOutput() {
     }
     else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
-        const flattenHierarchy = view.getInputBool("3dExportFlat");
+        const flattenHierarchy = view.getInputBool("3dExport_flat");
         const bbMetalness = view.getSliderInputNumber("3dExport_bbMetalness");
         const nsMetalness = view.getSliderInputNumber("3dExport_nsMetalness");
         const bbRoughness = view.getSliderInputNumber("3dExport_bbRoughness");
         const nsRoughness = view.getSliderInputNumber("3dExport_nsRoughness");
+        const includeCamera = view.getInputBool("3dExport_camera");
         let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.connectorScale, view.bbconnectorScale, faces_mul, flattenHierarchy, nsRoughness, bbRoughness, nsMetalness, bbMetalness);
+        if (includeCamera) {
+            objects.push(camera);
+        }
         var exporter = new GLTFExporter();
         var options = { 'forceIndices': true, 'binary': binary };
         // Parse the input and generate the glTF output

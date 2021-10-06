@@ -124,10 +124,12 @@ function exportGLTF(systems, include_backbone, include_nucleoside, include_conne
         // Export just a flat list of the meshes
         let l = [];
         elements.forEach(e => {
-            let elemObj = handleElement(e);
-            elemObj.children.forEach(mesh => {
-                l.push(mesh);
-            });
+            if (systems.includes(e.getSystem())) {
+                let elemObj = handleElement(e);
+                elemObj.children.forEach(mesh => {
+                    l.push(mesh);
+                });
+            }
         });
         return l;
     }
