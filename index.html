@@ -229,8 +229,9 @@
     <div id='exportOxdnaDialog' class="dialog" data-role="dialog">
         <p>Save the current stucture to oxDNA configuration and/or topology files</p>
         <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
-        <input type="checkbox" id="topDownload" data-caption="Topology" title="identies and connections of particles" checked data-role="checkbox">
-        <input type="checkbox" id="datDownload" data-caption="Configuration" title="the xyz positions and rotations of particles" checked data-role="checkbox">
+        <input type="checkbox" id="topDownload" data-caption="Topology" title="Identies and connections of particles" checked data-role="checkbox">
+        <input type="checkbox" id="datDownload" data-caption="Configuration" title="The xyz positions and rotations of particles" checked data-role="checkbox">
+        <input type="checkbox" id="forceDownload" data-caption="External forces" title="External forces acting on particles" data-role="checkbox">
         <input type="text" data-role="input" data-prepend="Name" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
@@ -321,46 +322,42 @@
                 <button class="ribbon-button" onclick="makeOxViewJsonFile()"
                     title="Download a file JSON file storing the current design">
                     <span class="mif-floppy-disk mif-3x"></span>
-                    <span class="caption">Save .oxview</span>
+                    <span class="caption">Save</span>
                 </button>
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files"
-                    id="import-button">
-                    <span class="mif-file-upload mif-3x fg-green"></span>
-                    <span class="caption">Import</span>
-                </button>
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID"
-                id="import-button">
-                <span class="mif-file-upload mif-3x"></span>
-                <span class="caption">PDB Import</span>
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')" title="Import PDB from ID"
-                id="import-button">
-                <span class="mif-file-upload mif-3x"></span>
-                <span class="caption">Nanobase Import</span>
-            </button>
+                <div class="group">
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files"
+                        id="import-button">
+                        <span class="mif-file-upload mif-2x fg-green"></span>
+                        <span class="caption">Import</span>
+                    </button>
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID" id="import-button">
+                        <span class="mif-file-upload mif-2x"></span>
+                        <span class="caption">PDB Import</span>
+                    </button>
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')" title="Import PDB from ID" id="import-button">
+                        <span class="mif-file-upload mif-2x"></span>
+                        <span class="caption">Nanobase Import</span>
+                    </button>
+                    <span class="title">Import</span>
+                </div>
                 <div class="group">
                     <button class="ribbon-button"
-                        onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited"
+                        onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited; document.getElementById('forceDownload').checked = forces.length > 0"
                         title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)">
-                        <span class="mif-floppy-disk mif-2x"></span>
-                        <span class="caption">Simulation files</span>
-                    </button>
-                    <button onclick="makeForceFile()" class="ribbon-button"
-                        title="Download an oxDNA force file">
                         <span class="mif-file-download mif-2x"></span>
-                        <span class="caption">Forces</span>
+                        <span class="caption">oxDNA</span>
                     </button>
-                    <span class="title">oxDNA files</span>
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')" title="Options for 3d export of the scene.">
+                        <span class="mif-file-download mif-2x"></span>
+                        <span class="caption">3D Shape</span>
+                    </button>
+                    <button onclick="makeSequenceFile()" class="ribbon-button"
+                        title="Download a file containing all sequences">
+                        <span class="mif-file-download mif-2x"></span>
+                        <span class="caption">Sequence file</span>
+                    </button>
+                    <span class="title">Export</span>
                 </div>
-                <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')"
-                    title="Options for 3d export of the scene.">
-                    <span class="mif-file-download mif-3x"></span>
-                    <span class="caption">3D Export</span>
-                </button>
-                <button onclick="makeSequenceFile()" class="ribbon-button"
-                    title="Download a file containing all sequences">
-                    <span class="mif-file-download mif-3x"></span>
-                    <span class="caption">Sequence file</span>
-                </button>
                 <div class="ribbon-split-button">
                     <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')">
                         <span class="mif-photo-camera mif-3x"></span>

@@ -28,6 +28,17 @@ function makeOutputFiles() { //makes .dat and .top files with update position in
         let {file_name, file} = makeParFile(name, reorganized, counts);
         setTimeout(() => makeTextFile(file_name, file), 40);
     }
+
+
+    let force_download = view.getInputBool("forceDownload");
+    if (force_download) {
+        if (forces.length > 0) {
+            makeForceFile();
+        }
+        else {
+            notify('No forces to export. Use the forces editor in the "Dynamics" tab to add new forces.', "warning");
+        }
+    }
 }
 
 function makeArrayBuffer(buffer, filename) {
