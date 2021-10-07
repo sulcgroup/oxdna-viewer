@@ -106,7 +106,6 @@ abstract class Nucleotide extends BasicElement {
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, bb.toArray());
         sys.fillVec('nsOffsets', 3, sid, ns.toArray());
-        sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
         sys.fillVec('conOffsets', 3, sid, con.toArray());
         sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
