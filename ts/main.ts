@@ -130,6 +130,11 @@ function findBasepairs(min_length=0) {
     });
 };
 
+// Utility function to pick a random element from list
+function randomChoice(l: any[]): any {
+    return l[Math.floor(Math.random()*l.length)];
+}
+
 function findBasepairsOrigami(min_length=1000) {
     findBasepairs(min_length);
 }

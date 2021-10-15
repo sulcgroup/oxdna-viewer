@@ -64,6 +64,9 @@ class BasicElement {
     isPaired() {
         return false;
     }
+    setType(type) {
+        this.type = type;
+    }
     changeType(type) {
         this.type = type;
         // Get the dummy system if it exists, otherwise get the real system

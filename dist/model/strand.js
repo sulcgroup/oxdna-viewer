@@ -196,6 +196,40 @@ class NucleicAcidStrand extends Strand {
             });
         }
     }
+    /**
+     * Find all domains in the strand matching the provided sequence.
+     * @param sequence
+     * @returns List of list of nucleotides (empty if no match)
+     */
+    search(sequence) {
+        let matching = [];
+        let matchings = [];
+        this.forEach((e) => {
+            if (matching.length === sequence.length) {
+                // One full domain found, start looking for more
+                matchings.push(matching);
+                matching = [];
+            }
+            if (e.isType(sequence[matching.length])) {
+                // Add elements while they match the sequence
+                matching.push(e);
+            }
+            else {
+                // Not a match
+                matching = [];
+                // Maybe it matches the first element?
+                if (e.isType(sequence[matching.length])) {
+                    matching.push(e);
+                }
+            }
+        });
+        // Don't forget that the last one might be a match
+        if (matching.length === sequence.length) {
+            matchings.push(matching);
+        }
+        //console.log(matchings.map(m=>m.map(e=>e.type).join('')).join('|'));
+        return matchings;
+    }
     isNucleicAcid() {
         return true;
     }

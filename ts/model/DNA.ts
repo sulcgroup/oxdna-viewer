@@ -86,6 +86,10 @@ class DNANucleotide extends Nucleotide {
         return out;
     }
 
+    weakPyrimindine() {
+        return 'T';
+    }
+
     getComplementaryType(): string {
         var map = {A:'T',G:'C',C:'G', T:'A'}
         return map[this.type];

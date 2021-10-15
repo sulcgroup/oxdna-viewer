@@ -313,16 +313,9 @@ function findDomainWrapper(){
     let seq: string = view.getInputValue("sequence").toUpperCase();
     const search_func = system=>{
         system.strands.forEach(strand=>{
-            let strand_seq = strand.getSequence();
-            let idx = strand_seq.indexOf(seq);
-            if(idx >= 0){
-                let monomers = strand.getMonomers();
-                api.selectElements(
-                    monomers.slice(idx, idx+seq.length+1),
-                    true
-                );  
-                render();
-            }
+            let match = strand.search(seq).flat();
+            api.selectElements(match, true);
+            render();
         });
     };
     systems.forEach(search_func);

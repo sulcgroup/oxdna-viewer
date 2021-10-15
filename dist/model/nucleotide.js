@@ -211,6 +211,30 @@ class Nucleotide extends BasicElement {
     isPaired() {
         return this.pair ? true : false;
     }
+    typeOptions(type) {
+        // https://www.megasoftware.net/web_help_7/rh_iupac_single_letter_codes.htm
+        const wp = this.weakPyrimindine;
+        switch (type) {
+            case 'R': return ['A', 'G']; // Purine
+            case 'Y': return ['C', wp()]; // Pyrimindine
+            case 'M': return ['A', 'C'];
+            case 'K': return ['G', wp()];
+            case 'S': return ['C', 'G']; // String
+            case 'W': return ['A', wp()]; // Weak
+            case 'H': return ['A', 'C', wp()]; // Not G
+            case 'B': return ['C', 'G', wp()]; // Not A
+            case 'V': return ['A', 'C', 'G']; // Not U/T
+            case 'D': return ['A', 'G', wp()]; // Not C
+            case 'N': return ['A', 'C', 'G', wp()]; // Ambiguous
+            default: return [type];
+        }
+    }
+    setType(type) {
+        this.type = randomChoice(this.typeOptions(type));
+    }
+    isType(type) {
+        return this.typeOptions(type).includes(this.type);
+    }
     getA1() {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");

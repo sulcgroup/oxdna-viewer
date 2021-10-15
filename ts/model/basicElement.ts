@@ -96,6 +96,10 @@ abstract class BasicElement {
         return false;
     }
 
+    setType(type: string) {
+        this.type = type;
+    }
+
     changeType(type: string) {
         this.type = type;
         // Get the dummy system if it exists, otherwise get the real system
