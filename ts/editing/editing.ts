@@ -296,9 +296,17 @@ function getSelectedSeqWrapper(){
 }
 
 
-let complement_dict = {"A":"T","T":"A","C":"G","G":"C"};
+let complement_dict = {
+    "A":"T", "T":"A",
+    "C":"G", "G":"C",
+    "R":"Y", "Y":"R",
+    "S":"S",
+    "W":"W",
+    "N":"N"
+    // What to do about H, B, V and D? Also U?
+};
 function rc(seq:string){
-    let ret =[];
+    let ret = [];
     for(let i=seq.length-1;i>=0;i--)
         ret.push(complement_dict[seq[i]]);
     return ret.join("");

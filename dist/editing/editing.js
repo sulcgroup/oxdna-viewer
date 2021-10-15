@@ -247,7 +247,15 @@ function getSelectedSeqWrapper() {
     else
         notify("Selection only on 1 strand allowed");
 }
-let complement_dict = { "A": "T", "T": "A", "C": "G", "G": "C" };
+let complement_dict = {
+    "A": "T", "T": "A",
+    "C": "G", "G": "C",
+    "R": "Y", "Y": "R",
+    "S": "S",
+    "W": "W",
+    "N": "N"
+    // What to do about H, B, V and D? Also U?
+};
 function rc(seq) {
     let ret = [];
     for (let i = seq.length - 1; i >= 0; i--)
