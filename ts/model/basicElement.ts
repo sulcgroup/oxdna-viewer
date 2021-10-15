@@ -101,13 +101,13 @@ abstract class BasicElement {
     }
 
     changeType(type: string) {
-        this.type = type;
+        this.setType(type);
         // Get the dummy system if it exists, otherwise get the real system
         let sys = this.getSystem();
         if (this.dummySys) {
             sys = this.dummySys
         }
-        let newC = this.elemToColor(type);
+        let newC = this.elemToColor(this.type);
         sys.fillVec('nsColors', 3, this.sid, [newC.r, newC.g, newC.b])
     }
 
