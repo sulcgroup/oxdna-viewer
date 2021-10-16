@@ -233,7 +233,7 @@ function readUNFString(s) {
         allStrands.forEach((s) => {
             s[monomerName(s)].forEach((n) => {
                 let e = elements.get(newElementIds.get(n.id));
-                if (isNa(s)) {
+                if (isNa(s) && n.altPositions[0]) {
                     let a1 = new THREE.Vector3().fromArray(n.altPositions[0].hydrogenFaceDir);
                     let a3 = new THREE.Vector3().fromArray(n.altPositions[0].baseNormal);
                     let bb = new THREE.Vector3().fromArray(n.altPositions[0].backboneCenter);
@@ -296,7 +296,7 @@ function readUNFString(s) {
                     }
                     sys.fillVec('visibility', 3, sid, [1, 1, 1]);
                 }
-                else { //e must be a protein so we just need the a-carbon position
+                else if (n.altPositions[0]) { //e must be a protein so we just need the a-carbon position
                     let p = new THREE.Vector3().fromArray(n.altPositions[0]);
                     p.multiplyScalar(lenFactor);
                     e.calcPositions(p, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), true);
