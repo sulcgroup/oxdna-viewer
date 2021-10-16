@@ -37,14 +37,47 @@ function readUNFString(s: string) {
         }
     }
 
-    const newElementIds = new Map()
+    // geometry parameters
+    const HELIX_RADIUS = 1.5 * 0.8518; //1.5 nm in SU
+    const BP_RISE = 0.332 * 0.8518; //0.332 nm in SU
+    const BP_ROTATION = 34.3 * Math.PI / 180 // 34.3 deg in radians
+    const CM_CENTER_DIST = 0.6 //from base.py
+
+    function getLatticePos(row, col, z, layout, oPos) {
+
+        let pos = new THREE.Vector3();
+
+        if (layout === 'honeycomb') {
+            pos.fromArray([
+                col * HELIX_RADIUS * 1.7320508 + HELIX_RADIUS,
+                -((row + Math.floor((row + 1 - col % 2) / 2)) * HELIX_RADIUS * 2 + HELIX_RADIUS * 2 * (0.5 * (col % 2) * 0.5)),
+                z * BP_RISE
+            ]);
+        }
+        else if (layout === 'square') {
+            pos.fromArray(
+                [
+                    col * HELIX_RADIUS * 2 + HELIX_RADIUS,
+                    -(row * HELIX_RADIUS * 2 + HELIX_RADIUS),
+                    z * BP_RISE
+                ]
+            );
+        }
+
+        pos.add(oPos);
+
+        return pos
+    }
+
+    //create mapping between ids in the UNF file and the scene
+    const newElementIds = new Map();
 
     // Parse json string
     const data = JSON.parse(s);
 
     // UNF allows the user to specify the length scale
-    const lengthUnitsString = data.lengthUnits
-    let lenFactor: number
+    const lengthUnitsString = data.lengthUnits;
+    let lenFactor: number;
     switch(lengthUnitsString) {
         case 'A':
             lenFactor = 1/8.518;
@@ -60,12 +93,27 @@ function readUNFString(s: string) {
             lenFactor = 1/8.518;
     }
 
-    // Update box data, if provided
-    if (data.box) {
+    // anglular units as well, convert everything to radians
+    const angularUnitsString = data.angularUnits;
+    let angleFactor: number;
+    switch(angularUnitsString) {
+        case 'deg':
+            angleFactor = Math.PI / 180;
+            break;
+        case 'rad':
+            angleFactor = 1;
+            break;
+        default:
+            notify(`Unrecognized angle units ${angularUnitsString}.  Defaulting to degrees`, "alert");
+            angleFactor =  Math.PI / 180;
+    }
+
+    // Update box data, if provided.  I have seen it be [], which does exist but isn't useful.
+    if (data.simData.boxSize[0]) {
         // Don't make smaller than current
-        box.x = Math.max(box.x, data.box[0]);
-        box.y = Math.max(box.y, data.box[1]);
-        box.z = Math.max(box.z, data.box[2]);
+        box.x = Math.max(box.x, data.simData.boxSize[0]);
+        box.y = Math.max(box.y, data.simData.boxSize[1]);
+        box.z = Math.max(box.z, data.simData.boxSize[2]);
     }
     else {
         box.x = 1000;
@@ -76,61 +124,62 @@ function readUNFString(s: string) {
     // flag if there are custom colors
     let customColors: boolean = false;
 
-    // Create a system for our file
-    let sys = new System(sysCount, elements.getNextId());
-    sys.label = data.name;
-    let sidCounter = 0;
+    data.structures.forEach((struct, i) => {
 
-    let strandCounter = 0;
-    data.naStrands.forEach((s) => {
-        //parse the strand header
-        //This will be a NucleicAcidStrand since it's in the naStrand section.
-        let strand = new NucleicAcidStrand(strandCounter++, sys); //UNF has been known to not have sequential strand ids.
-        
-        strand.label = s.name
-        let naType: string = s.naType;
-        if (naType == 'XNA') {
-            notify(`Warning: XNA not supported by the oxDNA model.  Strand ${s.name} will be represented as an RNA for visualization purposes.`);
-            naType = 'RNA';
-        }
+        // Create a system for our file
+        let sys = new System(sysCount, elements.getNextId());
+        sys.label = struct.name;
+        let sidCounter = 0;
 
-        let strandColor: THREE.Color;
-        if(s.color) {
-            strandColor = new THREE.Color(s.color);
-            customColors = true;
-        }
+        let strandCounter = 0;
+        struct.naStrands.forEach((s) => {
+            //parse the strand header
+            //This will be a NucleicAcidStrand since it's in the naStrand section.
+            let strand = new NucleicAcidStrand(strandCounter++, sys); //UNF has been known to not have sequential strand ids.
 
-        sys.addStrand(strand)
-
-        s.nucleotides.forEach((n) => {
-            let e = strand.createBasicElementTyped(naType.toLowerCase(), elements.getNextId())
-            newElementIds.set(n.id, e.id);
-
-            e.type = n.nbAbbrev;
-            if (strandColor){
-                e.color = strandColor;
+            strand.label = s.name
+            let naType: string = s.naType;
+            if (naType == 'XNA') {
+                notify(`Warning: XNA not supported by the oxDNA model.  Strand ${s.name} will be represented as an RNA for visualization purposes.`);
+                naType = 'RNA';
             }
-            
-            e.sid = sidCounter++;
 
-            elements.push(e);
+            let strandColor: THREE.Color;
+            if (s.color) {
+                strandColor = new THREE.Color(s.color);
+                customColors = true;
+            }
 
+            sys.addStrand(strand)
+
+            s.nucleotides.forEach((n) => {
+                let e = strand.createBasicElementTyped(naType.toLowerCase(), elements.getNextId())
+                newElementIds.set(n.id, e.id);
+
+                e.type = n.nbAbbrev;
+                if (strandColor) {
+                    e.color = strandColor;
+                }
+
+                e.sid = sidCounter++;
+
+                elements.push(e);
+
+            });
         });
-    });
 
-    //start reading in proteins
-    //eventually these should be moved into clusters.
-    let chainCount = -1
-    data.proteins.forEach((p) => {
-        p.chains.forEach((s) =>{
-            s.naType = 'peptide' //this is a giant mess because I need all the strands, but can't actually tell what they are.
+        //start reading in proteins
+        //eventually these should be moved into clusters.
+        let chainCount = -1
+        struct.aaChains.forEach((s) => {
+            s.naType = 'peptide' //this is a giant mess because I need all the strands, but can't actually tell what they are without some sort of label.
 
             let strand = new Peptide(chainCount--, sys); //does this need to be -1?
 
             strand.label = s.name
 
             let strandColor: THREE.Color;
-            if(s.color) {
+            if (s.color) {
                 strandColor = new THREE.Color(s.color);
                 customColors = true;
             }
@@ -142,7 +191,7 @@ function readUNFString(s: string) {
                 newElementIds.set(a.id, e.id);
 
                 e.type = proelem[a.aaAbbrev];
-                if (strandColor){
+                if (strandColor) {
                     e.color = strandColor;
                 }
 
@@ -152,137 +201,188 @@ function readUNFString(s: string) {
             });
 
         });
-    });
 
-    sys.initInstances(sidCounter);
-    systems.push(sys);
-    sysCount++;
+        sys.initInstances(sidCounter);
+        systems.push(sys);
+        sysCount++;
 
-    let allStrands = data.naStrands
-    data.proteins.forEach((p) =>{
-        allStrands = allStrands.concat(p.chains)
-    })
+        let allStrands = struct.naStrands
+        struct.aaChains.forEach((p) => {
+            allStrands = allStrands.concat(p)
+        })
 
-    //now that all the nucleotides have been created and the instances initialized, we can create the topology.
-    allStrands.forEach((s, i) => {
-        let strand = sys.strands[i];
+        //now that all the nucleotides have been created and the instances initialized, we can create the topology.
+        allStrands.forEach((s, i) => {
+            let strand = sys.strands[i];
 
-        //set strand ends
-        strand.end5 = elements.get(newElementIds.get(s[startName(s)]));
-        strand.end3 = elements.get(newElementIds.get(s[endName(s)]));
+            //set strand ends
+            strand.end5 = elements.get(newElementIds.get(s[startName(s)]));
+            strand.end3 = elements.get(newElementIds.get(s[endName(s)]));
 
-        s[monomerName(s)].forEach((n) => {
-            let e = elements.get(newElementIds.get(n.id))
-            
-            //set interactions
-            e.n3 = elements.get(newElementIds.get(n.next));
-            e.n5 = elements.get(newElementIds.get(n.prev));
-            if (n.pair) {
-                (e as any).pair = elements.get(newElementIds.get(n.pair))
-            }
-            
+            s[monomerName(s)].forEach((n) => {
+                let e = elements.get(newElementIds.get(n.id))
+
+                //set interactions
+                e.n3 = elements.get(newElementIds.get(n.next));
+                e.n5 = elements.get(newElementIds.get(n.prev));
+                if (n.pair) {
+                    (e as any).pair = elements.get(newElementIds.get(n.pair))
+                }
+
+            });
         });
-    });
 
-    // lastly, position the nucleotides
-    allStrands.forEach((s) => {
-        s[monomerName(s)].forEach((n) => {
-            let e = elements.get(newElementIds.get(n.id))
-            if (isNa(s)) {
+        //position the nucleotides based on virtual helix position, if available
+        let l = data.lattices[i]; 
+        if (l) {
+            let layout: string = l.type;
+            let oPos = new THREE.Vector3().fromArray(l.position);
+            let latOrient: number = l.orientation * angleFactor; //convert to radians
 
-                let a1 = new THREE.Vector3().fromArray(n.altPositions[0].hydrogenFaceDir);
-                let a3 = new THREE.Vector3().fromArray(n.altPositions[0].baseNormal);
-                let bb = new THREE.Vector3().fromArray(n.altPositions[0].backboneCenter);
-                let ns = new THREE.Vector3().fromArray(n.altPositions[0].nucleobaseCenter);
+            l.virtualHelices.forEach((helix) => {
+                let latticePos = helix.latticePosition;
+                let row = latticePos[0];
+                let col = latticePos[1];
 
-                //apply length factor
-                bb.multiplyScalar(lenFactor);
-                ns.multiplyScalar(lenFactor);
+                let orient = helix.initialAngle * angleFactor;
 
-                //since bb and ns are explicitally defined rather than having a COM, I just copied this from Nucleotide.calcPositions.
+                helix.cells.forEach((cell) => {
+                    let z = cell.number;
+                    let id1 = cell.left;
+                    let id2 = cell.right;
 
-                let sid = e.sid
+                    //calculate the position of the cell edges
+                    let ntCenter = getLatticePos(row, col, z, layout, oPos);
+                    //let ntRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z*BP_ROTATION));
+                    let prevEdge = ntCenter.clone().sub(new THREE.Vector3(0, 0, BP_RISE / 2));
+                    let nextEdge = ntCenter.clone().add(new THREE.Vector3(0, 0, BP_RISE / 2));
 
-                // compute nucleoside rotation
-                const baseRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), a3);
+                    //This method of setting positions accounts for skips and deletions
+                    id1.forEach((e, i) => {
+                        // set position as edge of last cell + a linear interpolation of how many nucleotides are in the current cell
+                        let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1))
+                        // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
+                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z + (0.5 - (-(1 / (id1.length + 1))) * (i + 1)) * BP_ROTATION));
+                        //offset each nucleotide from the helix center
+                        ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST))
 
-                //compute connector position
-                const con = bb.clone().add(ns).divideScalar(2);
+                        let eA1 = eRot.clone().multiplyScalar(-1);
 
-                // compute connector rotation
-                const rotationCon = new THREE.Quaternion().setFromUnitVectors(
-                    new THREE.Vector3(0, 1, 0),
-                    con.clone().sub(ns).normalize());
+                        let sceneE = elements.get(newElementIds.get(e))
+                        sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
+                    });
+                    //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
+                    id2.forEach((e, i) => {
+                        let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1))
+                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z + (0.5 - ((1 / (id1.length + 1))) * (i + 1)) * BP_ROTATION));
+                        ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
 
-                // compute connector length
-                let conLen = bb.distanceTo(ns);
+                        let eA1 = eRot.clone();
 
-                // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
-                let sp: THREE.Vector3, spLen: number, spRotation;
-                if (e.n3) {
-                    let bbLast = e.n3.getInstanceParameter3('bbOffsets');
-                    sp = bb.clone().add(bbLast).divideScalar(2);
-                    spLen = bb.distanceTo(bbLast);
-                    //introduce distance based cutoff of the backbone connectors
-                    if (spLen >= box.x * .9 || spLen >= box.y * .9 || spLen >= box.z * .9) spLen = 0;
-                    spRotation = new THREE.Quaternion().setFromUnitVectors(
-                        new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize()
-                    );
+                        let sceneE = elements.get(newElementIds.get(e))
+                        sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
+                    });
+                });
+            });
+        
+        }
+        // lastly, position the nucleotides based off alt positions
+        allStrands.forEach((s) => {
+            s[monomerName(s)].forEach((n) => {
+                let e = elements.get(newElementIds.get(n.id))
+                if (isNa(s)) {
+
+                    let a1 = new THREE.Vector3().fromArray(n.altPositions[0].hydrogenFaceDir);
+                    let a3 = new THREE.Vector3().fromArray(n.altPositions[0].baseNormal);
+                    let bb = new THREE.Vector3().fromArray(n.altPositions[0].backboneCenter);
+                    let ns = new THREE.Vector3().fromArray(n.altPositions[0].nucleobaseCenter);
+
+                    //apply length factor
+                    bb.multiplyScalar(lenFactor);
+                    ns.multiplyScalar(lenFactor);
+
+                    //since bb and ns are explicitally defined rather than having a COM, I just copied this from Nucleotide.calcPositions.
+
+                    let sid = e.sid
+
+                    // compute nucleoside rotation
+                    const baseRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), a3);
+
+                    //compute connector position
+                    const con = bb.clone().add(ns).divideScalar(2);
+
+                    // compute connector rotation
+                    const rotationCon = new THREE.Quaternion().setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0),
+                        con.clone().sub(ns).normalize());
+
+                    // compute connector length
+                    let conLen = bb.distanceTo(ns);
+
+                    // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
+                    let sp: THREE.Vector3, spLen: number, spRotation;
+                    if (e.n3) {
+                        let bbLast = e.n3.getInstanceParameter3('bbOffsets');
+                        sp = bb.clone().add(bbLast).divideScalar(2);
+                        spLen = bb.distanceTo(bbLast);
+                        //introduce distance based cutoff of the backbone connectors
+                        if (spLen >= box.x * .9 || spLen >= box.y * .9 || spLen >= box.z * .9) spLen = 0;
+                        spRotation = new THREE.Quaternion().setFromUnitVectors(
+                            new THREE.Vector3(0, 1, 0), sp.clone().sub(bb).normalize()
+                        );
+                    }
+                    else {
+                        sp = new THREE.Vector3();
+                        spLen = 0;
+                        spRotation = new THREE.Quaternion(0, 0, 0, 0);
+                    }
+
+                    e.handleCircularStrands(sys, sid, bb);
+
+                    // determine the mesh color, either from a supplied colormap json or by the strand ID.
+                    const bbColor = e.strandToColor(e.strand.id);
+                    sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
+
+                    const nsColor = e.elemToColor(e.type);
+                    sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
+
+                    let idColor = new THREE.Color();
+                    idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
+                    sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+
+                    //fill the instance matrices with data
+                    sys.fillVec('cmOffsets', 3, sid, bb.toArray()); //this is silly and bad.
+                    sys.fillVec('bbOffsets', 3, sid, bb.toArray());
+                    sys.fillVec('nsOffsets', 3, sid, ns.toArray());
+                    sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
+                    sys.fillVec('conOffsets', 3, sid, con.toArray());
+                    sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
+                    sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
+                    sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
+                    sys.fillVec('scales', 3, sid, [1, 1, 1]);
+                    sys.fillVec('nsScales', 3, sid, [0.7, 0.3, 0.7]);
+                    sys.fillVec('conScales', 3, sid, [1, conLen, 1]);
+                    if (spLen == 0) {
+                        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
+                    } else {
+                        sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
+                    }
+                    sys.fillVec('visibility', 3, sid, [1, 1, 1]);
                 }
-                else {
-                    sp = new THREE.Vector3();
-                    spLen = 0;
-                    spRotation = new THREE.Quaternion(0, 0, 0, 0);
+                else { //e must be a protein so we just need the a-carbon position
+                    let p = new THREE.Vector3().fromArray(n.altPositions[0])
+                    p.multiplyScalar(lenFactor);
+                    e.calcPositions(p, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), true)
                 }
-
-                e.handleCircularStrands(sys, sid, bb);
-
-                // determine the mesh color, either from a supplied colormap json or by the strand ID.
-                const bbColor = e.strandToColor(e.strand.id);
-                sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
-
-                const nsColor = e.elemToColor(e.type);
-                sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
-
-                let idColor = new THREE.Color();
-                idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-                sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
-
-                //fill the instance matrices with data
-                sys.fillVec('cmOffsets', 3, sid, bb.toArray()); //this is silly and bad.
-                sys.fillVec('bbOffsets', 3, sid, bb.toArray());
-                sys.fillVec('nsOffsets', 3, sid, ns.toArray());
-                sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
-                sys.fillVec('conOffsets', 3, sid, con.toArray());
-                sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
-                sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
-                sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
-                sys.fillVec('scales', 3, sid, [1, 1, 1]);
-                sys.fillVec('nsScales', 3, sid, [0.7, 0.3, 0.7]);
-                sys.fillVec('conScales', 3, sid, [1, conLen, 1]);
-                if (spLen == 0) {
-                    sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-                } else {
-                    sys.fillVec('bbconScales', 3, sid, [1, spLen, 1]);
-                }
-                sys.fillVec('visibility', 3, sid, [1, 1, 1]);
-            }
-            else { //e must be a protein so we just need the a-carbon position
-                let p = new THREE.Vector3().fromArray(n.altPositions[0])
-                p.multiplyScalar(lenFactor);
-                e.calcPositions(p, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), true)
-            }
+            });
         });
+        // Finally, we can add the system to the scene
+        addSystemToScene(sys);
+
+        if (customColors) {
+            view.coloringMode.set("Custom");
+        }
+
+        centerAndPBC(sys.getMonomers())
     });
-
-    // Finally, we can add the system to the scene
-    addSystemToScene(sys);
-
-    if (customColors) {
-        view.coloringMode.set("Custom");
-    }
-
-    // Center the newly added systems as one
-    // Needs to be done after all systems are added to the scene
-    centerAndPBC(sys.getMonomers())
 }
