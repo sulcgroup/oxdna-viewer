@@ -43,6 +43,7 @@ function readUNFString(s: string) {
     const BP_ROTATION = 34.3 * Math.PI / 180 // 34.3 deg in radians
     const CM_CENTER_DIST = 0.6 //from base.py
 
+    //Calcuate helix position based on cadnano lattice type
     function getLatticePos(row, col, z, layout, oPos) {
 
         let pos = new THREE.Vector3();
@@ -109,6 +110,7 @@ function readUNFString(s: string) {
     }
 
     // Update box data, if provided.  I have seen it be [], which does exist but isn't useful.
+    // Should update this to be more intelligent at some point.
     if (data.simData.boxSize[0]) {
         // Don't make smaller than current
         box.x = Math.max(box.x, data.simData.boxSize[0]);
@@ -130,8 +132,9 @@ function readUNFString(s: string) {
         let sys = new System(sysCount, elements.getNextId());
         sys.label = struct.name;
         let sidCounter = 0;
-
         let strandCounter = 0;
+
+        // Create all the nucleotide objects
         struct.naStrands.forEach((s) => {
             //parse the strand header
             //This will be a NucleicAcidStrand since it's in the naStrand section.
@@ -174,7 +177,7 @@ function readUNFString(s: string) {
         struct.aaChains.forEach((s) => {
             s.naType = 'peptide' //this is a giant mess because I need all the strands, but can't actually tell what they are without some sort of label.
 
-            let strand = new Peptide(chainCount--, sys); //does this need to be -1?
+            let strand = new Peptide(chainCount--, sys);
 
             strand.label = s.name
 
@@ -202,10 +205,12 @@ function readUNFString(s: string) {
 
         });
 
+        // Now we know how many nucleotides there are, allocate the memory
         sys.initInstances(sidCounter);
         systems.push(sys);
         sysCount++;
 
+        // Create a list of all strands of all the nucleotides and peptides
         let allStrands = struct.naStrands
         struct.aaChains.forEach((p) => {
             allStrands = allStrands.concat(p)
@@ -222,7 +227,7 @@ function readUNFString(s: string) {
             s[monomerName(s)].forEach((n) => {
                 let e = elements.get(newElementIds.get(n.id))
 
-                //set interactions
+                //set neighbor connections
                 e.n3 = elements.get(newElementIds.get(n.next));
                 e.n5 = elements.get(newElementIds.get(n.prev));
                 if (n.pair) {
@@ -237,7 +242,7 @@ function readUNFString(s: string) {
         if (l) {
             let layout: string = l.type;
             let oPos = new THREE.Vector3().fromArray(l.position);
-            let latOrient: number = l.orientation * angleFactor; //convert to radians
+            let latOrient = new THREE.Vector3().fromArray(l.orientation).multiplyScalar(angleFactor); //convert to radians
 
             l.virtualHelices.forEach((helix) => {
                 let latticePos = helix.latticePosition;
@@ -253,7 +258,6 @@ function readUNFString(s: string) {
 
                     //calculate the position of the cell edges
                     let ntCenter = getLatticePos(row, col, z, layout, oPos);
-                    //let ntRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z*BP_ROTATION));
                     let prevEdge = ntCenter.clone().sub(new THREE.Vector3(0, 0, BP_RISE / 2));
                     let nextEdge = ntCenter.clone().add(new THREE.Vector3(0, 0, BP_RISE / 2));
 
@@ -284,8 +288,16 @@ function readUNFString(s: string) {
                     });
                 });
             });
+
+            // if the lattice has an orientation, rotate the system
+            if (latOrient.length() != 0) {
+                let q = new THREE.Quaternion;
+                q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), latOrient.normalize())
+                rotateElementsByQuaternion(sys.getMonomers(), q, sys.getCom())
+            }
         
         }
+
         // lastly, position the nucleotides based off alt positions
         allStrands.forEach((s) => {
             s[monomerName(s)].forEach((n) => {
