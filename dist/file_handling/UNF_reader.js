@@ -344,4 +344,9 @@ function readUNFString(s) {
         }
         centerAndPBC(sys.getMonomers());
     });
+    // Should probably change the PDB reader to have a function which takes a string...
+    // But whatever, this works
+    let blob = new Blob([appendedData], { type: 'text/plain' });
+    let f = new File([blob], 'tmp.pdb', { type: 'text/plain' });
+    readPdbFile(f);
 }
