@@ -70,11 +70,37 @@ function readUNFString(s: string) {
         return pos
     }
 
+    // Find the end of a json file
+    function findJsonEnd(s: string, startId: number) {
+        let closeStatus = 1;
+        let i = startId+1;
+        while (closeStatus) {
+            if (s.charAt(i) == '{') {
+                closeStatus += 1;
+            }
+            else if (s.charAt(i) == '}') {
+                closeStatus -= 1;
+            }
+            else if (s.charAt(i) == '') {
+                notify('Unable to find end of json.  Please check format')
+                return(-1)
+            }
+            i += 1;
+        }
+        return(i)
+    }
+
     //create mapping between ids in the UNF file and the scene
     const newElementIds = new Map();
 
+    // Find which parts are json and which are additional files
+    let jsonStart = s.indexOf('{');
+    let jsonEnd = findJsonEnd(s, jsonStart);
+    let jsonData = s.substr(jsonStart, jsonEnd-jsonStart);
+    let appendedData = s.substr(jsonEnd);
+
     // Parse json string
-    const data = JSON.parse(s);
+    const data = JSON.parse(jsonData);
 
     // UNF allows the user to specify the length scale
     const lengthUnitsString = data.lengthUnits;
@@ -388,6 +414,7 @@ function readUNFString(s: string) {
                 }
             });
         });
+        
         // Finally, we can add the system to the scene
         addSystemToScene(sys);
 
