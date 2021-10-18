@@ -233,7 +233,15 @@ class Nucleotide extends BasicElement {
         this.type = randomChoice(this.typeOptions(type));
     }
     isType(type) {
-        return this.typeOptions(type).includes(this.type);
+        if (type === this.type) {
+            return true;
+        }
+        else {
+            // We could skip the previous check and run this directly,
+            // but it is quicker to first check for equality since that
+            // is the most common.
+            return this.typeOptions(type).includes(this.type);
+        }
     }
     getA1() {
         const cm = this.getPos();

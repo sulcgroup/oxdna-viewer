@@ -318,16 +318,17 @@ function reverseComplementWrapper(){
 }
 
 function findDomainWrapper(){
-    let seq: string = view.getInputValue("sequence").toUpperCase();
-    const search_func = system=>{
-        system.strands.forEach(strand=>{
-            let match = strand.search(seq).flat();
-            api.selectElements(match, true);
-            render();
+    const seq: string = view.getInputValue("sequence").toUpperCase();
+    const search_func = system => {
+        system.strands.forEach(strand => {
+            strand.search(seq).forEach(match => {
+                api.selectElements(match, true);
+            });
         });
     };
     systems.forEach(search_func);
     tmpSystems.forEach(search_func);
+    render();
 }
 
 function skipWrapper() {
