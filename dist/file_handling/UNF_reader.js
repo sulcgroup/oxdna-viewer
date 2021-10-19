@@ -69,7 +69,7 @@ function readUNFString(s) {
                 closeStatus -= 1;
             }
             else if (s.charAt(i) == '') {
-                notify('Unable to find end of json.  Please check format');
+                notify('Unable to find end of json.  Please check format', 'alert');
                 return (-1);
             }
             i += 1;
@@ -81,6 +81,9 @@ function readUNFString(s) {
     // Find which parts are json and which are additional files
     let jsonStart = s.indexOf('{');
     let jsonEnd = findJsonEnd(s, jsonStart);
+    if (jsonEnd == -1) {
+        return;
+    }
     let jsonData = s.substr(jsonStart, jsonEnd - jsonStart);
     let appendedData = s.substr(jsonEnd);
     // Parse json string
@@ -227,8 +230,8 @@ function readUNFString(s) {
                 let orient = helix.initialAngle * angleFactor;
                 helix.cells.forEach((cell) => {
                     let z = cell.number;
-                    let id1 = cell.left;
-                    let id2 = cell.right;
+                    let id1 = cell.fiveToThreeNts;
+                    let id2 = cell.threeToFiveNts;
                     //calculate the position of the cell edges
                     let ntCenter = getLatticePos(row, col, z, layout, oPos);
                     let prevEdge = ntCenter.clone().sub(new THREE.Vector3(0, 0, BP_RISE / 2));
@@ -238,7 +241,7 @@ function readUNFString(s) {
                         // set position as edge of last cell + a linear interpolation of how many nucleotides are in the current cell
                         let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1));
                         // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
-                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z + (0.5 - (-(1 / (id1.length + 1))) * (i + 1)) * BP_ROTATION));
+                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION)));
                         //offset each nucleotide from the helix center
                         ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
                         let eA1 = eRot.clone().multiplyScalar(-1);
@@ -248,7 +251,7 @@ function readUNFString(s) {
                     //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
                     id2.forEach((e, i) => {
                         let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1));
-                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + z + (0.5 - ((1 / (id1.length + 1))) * (i + 1)) * BP_ROTATION));
+                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION)));
                         ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST));
                         let eA1 = eRot.clone();
                         let sceneE = elements.get(newElementIds.get(e));
