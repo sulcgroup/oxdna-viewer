@@ -319,7 +319,7 @@ class TrajectoryReader {
         }
         if (box === undefined)
             box = new THREE.Vector3(0, 0, 0);
-        let newBox = new THREE.Vector3(parseFloat(lines[1].split(" ")[2]), parseFloat(lines[1].split(" ")[3]), parseFloat(lines[1].split(" ")[4]));
+        let newBox = new THREE.Vector3(parseFloat(lines[1].split(/\s+/)[2]), parseFloat(lines[1].split(/\s+/)[3]), parseFloat(lines[1].split(/\s+/)[4]));
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, newBox.x);
         box.y = Math.max(box.y, newBox.y);
