@@ -221,8 +221,8 @@ function readUNFString(s) {
         let l = data.lattices[i];
         if (l) {
             let layout = l.type;
-            let oPos = new THREE.Vector3().fromArray(l.position);
-            let latOrient = new THREE.Vector3().fromArray(l.orientation).multiplyScalar(angleFactor); //convert to radians
+            let oPos = new THREE.Vector3().fromArray(l.position).multiplyScalar(lenFactor);
+            let latOrient = new THREE.Euler().setFromVector3(new THREE.Vector3().fromArray(l.orientation).multiplyScalar(angleFactor)); //convert the array to a euler in radians
             l.virtualHelices.forEach((helix) => {
                 let latticePos = helix.latticePosition;
                 let row = latticePos[0];
@@ -260,11 +260,9 @@ function readUNFString(s) {
                 });
             });
             // if the lattice has an orientation, rotate the system
-            if (latOrient.length() != 0) {
-                let q = new THREE.Quaternion;
-                q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), latOrient.normalize());
-                rotateElementsByQuaternion(sys.getMonomers(), q, sys.getCom());
-            }
+            let q = new THREE.Quaternion;
+            q.setFromEuler(latOrient);
+            rotateElementsByQuaternion(new Set(sys.getMonomers()), q, sys.getCom(), false);
         }
         // lastly, position the nucleotides based off alt positions
         allStrands.forEach((s) => {

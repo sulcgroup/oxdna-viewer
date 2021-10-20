@@ -12,7 +12,7 @@ function rotateElements(elements, axis, angle, about) {
     if (forceHandler)
         forceHandler.redraw();
 }
-function rotateElementsByQuaternion(elements, q, about) {
+function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
     let q2 = q.clone();
@@ -67,31 +67,33 @@ function rotateElementsByQuaternion(elements, q, about) {
         sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
         sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
     });
-    // Update backbone connections for bases with neigbours outside the selection set
-    elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
-            calcsp(base); //calculate sp between current and n3
+    if (updateScene) {
+        // Update backbone connections for bases with neigbours outside the selection set
+        elements.forEach((base) => {
+            if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
+                calcsp(base); //calculate sp between current and n3
+            }
+            if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
+                calcsp(base.n5); //calculate sp between current and n5
+            }
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].callUpdates(['instanceOffset', 'instanceRotation']);
         }
-        if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
-            calcsp(base.n5); //calculate sp between current and n5
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
         }
-    });
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceOffset', 'instanceRotation']);
-    }
-    for (let i = 0; i < tmpSystems.length; i++) {
-        tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
-    }
-    for (let i = 0; i < networks.length; i++) {
-        let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
-            return true;
-        } });
-        if (check.length != 0) {
-            networks[i].updatePositions();
-            networks[i].updateRotations(q2);
+        for (let i = 0; i < networks.length; i++) {
+            let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
+                return true;
+            } });
+            if (check.length != 0) {
+                networks[i].updatePositions();
+                networks[i].updateRotations(q2);
+            }
         }
+        render();
     }
-    render();
 }
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
