@@ -297,11 +297,11 @@ function readUNFString(s: string) {
                         // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
                         let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION)));
                         //offset each nucleotide from the helix center
-                        ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST))
+                        ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
 
                         let eA1 = eRot.clone().multiplyScalar(-1);
 
-                        let sceneE = elements.get(newElementIds.get(e))
+                        let sceneE = elements.get(newElementIds.get(e));
                         sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
                     });
                     //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
@@ -312,7 +312,7 @@ function readUNFString(s: string) {
 
                         let eA1 = eRot.clone();
 
-                        let sceneE = elements.get(newElementIds.get(e))
+                        let sceneE = elements.get(newElementIds.get(e));
                         sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
                     });
                 });
@@ -321,8 +321,8 @@ function readUNFString(s: string) {
             // if the lattice has an orientation, rotate the system
             if (latOrient.length() != 0) {
                 let q = new THREE.Quaternion;
-                q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), latOrient.normalize())
-                rotateElementsByQuaternion(sys.getMonomers(), q, sys.getCom())
+                q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), latOrient.normalize());
+                rotateElementsByQuaternion(sys.getMonomers(), q, sys.getCom());
             }
         
         }
@@ -330,7 +330,7 @@ function readUNFString(s: string) {
         // lastly, position the nucleotides based off alt positions
         allStrands.forEach((s) => {
             s[monomerName(s)].forEach((n) => {
-                let e = elements.get(newElementIds.get(n.id))
+                let e = elements.get(newElementIds.get(n.id));
                 if (isNa(s) && n.altPositions[0]) {
 
                     let a1 = new THREE.Vector3().fromArray(n.altPositions[0].hydrogenFaceDir);
@@ -424,13 +424,19 @@ function readUNFString(s: string) {
         if (customColors) {
             view.coloringMode.set("Custom");
         }
-
-        centerAndPBC(sys.getMonomers())
     });
+
+    let new_nucleotides:BasicElement[] = []
+    data.structures.forEach((_, i: number) => {
+        new_nucleotides.push(...systems[systems.length-i-1].getMonomers())
+    });
+    centerAndPBC(new_nucleotides);
 
     // Should probably change the PDB reader to have a function which takes a string...
     // But whatever, this works
-    let blob = new Blob([appendedData], {type: 'text/plain'});
-    let f = new File([blob], 'tmp.pdb', {type: 'text/plain'});
-    readPdbFile(f);
+    if (appendedData != ''){
+        let blob = new Blob([appendedData], {type: 'text/plain'});
+        let f = new File([blob], 'tmp.pdb', {type: 'text/plain'});
+        readPdbFile(f);
+    }
 }

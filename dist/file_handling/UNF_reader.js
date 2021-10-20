@@ -345,11 +345,17 @@ function readUNFString(s) {
         if (customColors) {
             view.coloringMode.set("Custom");
         }
-        centerAndPBC(sys.getMonomers());
     });
+    let new_nucleotides = [];
+    data.structures.forEach((_, i) => {
+        new_nucleotides.push(...systems[systems.length - i - 1].getMonomers());
+    });
+    centerAndPBC(new_nucleotides);
     // Should probably change the PDB reader to have a function which takes a string...
     // But whatever, this works
-    let blob = new Blob([appendedData], { type: 'text/plain' });
-    let f = new File([blob], 'tmp.pdb', { type: 'text/plain' });
-    readPdbFile(f);
+    if (appendedData != '') {
+        let blob = new Blob([appendedData], { type: 'text/plain' });
+        let f = new File([blob], 'tmp.pdb', { type: 'text/plain' });
+        readPdbFile(f);
+    }
 }
