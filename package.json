@@ -1,7 +1,7 @@
 {
   "name": "oxview",
   "productName": "oxview",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "OxDNA viewer and editor.",
   "main": "./index.js",
   "scripts": {
