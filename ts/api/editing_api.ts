@@ -351,7 +351,7 @@ module edit{
             c.writeToSystem(sid, tmpSys)
             e.dummySys = tmpSys;
             e.sid = sid;
-            e.type = c.type;
+            e.setType(c.type);
             e.color = c.color;
 
             // Add pasted elements to new cluster
@@ -540,7 +540,7 @@ module edit{
             e.dummySys = tmpSys;
             last[direction] = e;
             e[inverse] = last;
-            e.type = sequence[i];
+            e.setType(sequence[i]);
             e.strand = strand;
             last = e;
             sidCounter++;
@@ -597,7 +597,7 @@ module edit{
             e1.dummySys = tmpSys;
             last1[direction] = e1;
             e1[inverse] = last1;
-            e1.type = sequence[i];
+            e1.setType(sequence[i]);
             e1.strand = strand;
             last1 = e1;
             addedElems.push(e1);
@@ -611,7 +611,7 @@ module edit{
             e2.dummySys = tmpSys;
             last2[inverse] = e2;
             e2[direction] = last2;
-            e2.type = e1.getComplementaryType();
+            e2.setType(e1.getComplementaryType());
             e2.strand = strand2;
             last2 = e2;
             addedElems.push(e2);
@@ -847,7 +847,7 @@ module edit{
         elements.push(e); // Add element and assign id
         e.dummySys = tmpSys;
         e.sid = 0;
-        e.type = sequence[0];
+        e.setType(sequence[0]);
         e.n3 = null;
         e.strand = strand;
         strand.setFrom(e);
@@ -1209,7 +1209,7 @@ module edit{
             elements.push(be);
             be.sid = i;
             be.dummySys = dumb;
-            be.type = 'gs';
+            be.setType('gs');
             be.n5 = null;
             if(i != 0) {
                 let prev = newElems[i-1];
@@ -1336,7 +1336,7 @@ module edit{
             elements.push(be);
             be.sid = i;
             be.dummySys = dumb;
-            be.type = 'gs';
+            be.setType('gs');
             be.n5 = null;
             if(i != 0) {
                 let prev = newElems[i-1];
@@ -1383,7 +1383,7 @@ module edit{
         elements.push(e);
         e.dummySys = tmpSys;
         e.sid = 0;
-        e.type = elem.getComplementaryType();
+        e.setType(elem.getComplementaryType());
         e.n3 = null;
         e.n5 = null;
         e.pair = elem;

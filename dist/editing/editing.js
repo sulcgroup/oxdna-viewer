@@ -247,7 +247,15 @@ function getSelectedSeqWrapper() {
     else
         notify("Selection only on 1 strand allowed");
 }
-let complement_dict = { "A": "T", "T": "A", "C": "G", "G": "C" };
+let complement_dict = {
+    "A": "T", "T": "A",
+    "C": "G", "G": "C",
+    "R": "Y", "Y": "R",
+    "S": "S",
+    "W": "W",
+    "N": "N"
+    // What to do about H, B, V and D? Also U?
+};
 function rc(seq) {
     let ret = [];
     for (let i = seq.length - 1; i >= 0; i--)
@@ -260,20 +268,17 @@ function reverseComplementWrapper() {
     seqInp.value = seq;
 }
 function findDomainWrapper() {
-    let seq = view.getInputValue("sequence").toUpperCase();
+    const seq = view.getInputValue("sequence").toUpperCase();
     const search_func = system => {
         system.strands.forEach(strand => {
-            let strand_seq = strand.getSequence();
-            let idx = strand_seq.indexOf(seq);
-            if (idx >= 0) {
-                let monomers = strand.getMonomers();
-                api.selectElements(monomers.slice(idx, idx + seq.length + 1), true);
-                render();
-            }
+            strand.search(seq).forEach(match => {
+                api.selectElements(match, true);
+            });
         });
     };
     systems.forEach(search_func);
     tmpSystems.forEach(search_func);
+    render();
 }
 function skipWrapper() {
     let e = Array.from(selectedBases);

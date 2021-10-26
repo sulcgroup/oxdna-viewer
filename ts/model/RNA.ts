@@ -86,6 +86,10 @@ class RNANucleotide extends Nucleotide {
         return out;
     }
 
+    weakPyrimindine() {
+        return 'U';
+    }
+
     getComplementaryType(): string {
         var map = {A:'U',G:'C',C:'G', U:'A'}
         return map[this.type];

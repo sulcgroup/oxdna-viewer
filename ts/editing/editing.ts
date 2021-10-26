@@ -296,9 +296,17 @@ function getSelectedSeqWrapper(){
 }
 
 
-let complement_dict = {"A":"T","T":"A","C":"G","G":"C"};
+let complement_dict = {
+    "A":"T", "T":"A",
+    "C":"G", "G":"C",
+    "R":"Y", "Y":"R",
+    "S":"S",
+    "W":"W",
+    "N":"N"
+    // What to do about H, B, V and D? Also U?
+};
 function rc(seq:string){
-    let ret =[];
+    let ret = [];
     for(let i=seq.length-1;i>=0;i--)
         ret.push(complement_dict[seq[i]]);
     return ret.join("");
@@ -310,23 +318,17 @@ function reverseComplementWrapper(){
 }
 
 function findDomainWrapper(){
-    let seq: string = view.getInputValue("sequence").toUpperCase();
-    const search_func = system=>{
-        system.strands.forEach(strand=>{
-            let strand_seq = strand.getSequence();
-            let idx = strand_seq.indexOf(seq);
-            if(idx >= 0){
-                let monomers = strand.getMonomers();
-                api.selectElements(
-                    monomers.slice(idx, idx+seq.length+1),
-                    true
-                );  
-                render();
-            }
+    const seq: string = view.getInputValue("sequence").toUpperCase();
+    const search_func = system => {
+        system.strands.forEach(strand => {
+            strand.search(seq).forEach(match => {
+                api.selectElements(match, true);
+            });
         });
     };
     systems.forEach(search_func);
     tmpSystems.forEach(search_func);
+    render();
 }
 
 function skipWrapper() {
