@@ -95,6 +95,7 @@ var selectednetwork: number = 0; // Only used for networks
 const networks: Network[] = []; // Only used for networks, replaced anms
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
+var unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
 
 var lut, devs: number[]; //need for Lut coloring
 

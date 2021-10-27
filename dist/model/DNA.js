@@ -73,6 +73,9 @@ class DNANucleotide extends Nucleotide {
         }
         return out;
     }
+    isDNA() {
+        return true;
+    }
     weakPyrimindine() {
         return 'T';
     }

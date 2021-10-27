@@ -105,6 +105,15 @@ function readUNFString(s: string) {
     // Parse json string
     const data = JSON.parse(jsonData);
 
+    // Keep a copy of the file around to be able to save the parts that aren't visualized
+    unfFileInfo.push(data);
+
+    // Update metadata in the HTML
+    view.getInputElement('unfStructureName').value = data.name;
+    view.getInputElement('unfAuthorName').value = data.author;
+    view.getInputElement('unfDOI').value = data.doi;
+    //view.getInputElement('unfMisc').value = data.misc;
+
     // UNF allows the user to specify the length scale
     const lengthUnitsString = data.lengthUnits;
     let lenFactor: number;

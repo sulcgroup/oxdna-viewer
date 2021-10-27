@@ -426,3 +426,168 @@ function makeNetworkJSONFile(nid) {
 function makeFluctuationFile(gid) {
     makeTextFile("flux.json", JSON.stringify(graphDatasets[gid].toJson()));
 }
+
+function makeUNFOutput(name: string) {
+    const oxDNAToUNF = 0.8518; //oxDNA to nm conversion factor
+
+    function identifyClusters() { 
+        class unfGroup {
+            constructor(public name: string, public id: number, public includedObjects: number[]) {
+                this.name = name;
+                this.id = id;
+                this.includedObjects = includedObjects;
+            }
+        }
+        let groups: unfGroup[] = [];
+        for (let i = 0; i < clusterCounter; i++) {
+            groups.push(new unfGroup(`group${i}`, i, []));
+        }
+        systems.forEach(sys =>sys.strands.forEach(strand=>strand.forEach(e=>{
+                groups[e.clusterId].includedObjects.push(e.id);
+            }
+        )));
+        return groups
+    }
+
+    function makeFileSchema() {
+        let fileSchema = {
+            "id" : 0,
+            "path" : "",
+            "isIncluded" : false,
+            "hash" : ""
+        };
+        return fileSchema
+    }
+
+    function makeLatticeSchema() {
+        function makeVirtualHelixSchema() {
+            function makeCellsSchema() {
+                let cellsSchema = {
+                    "id" : 0,
+                    "number" : 0,
+                    "type" : "n",
+                    "fiveToThreeNts" : [],
+                    "threeToFiveNts" : []
+                };
+                return cellsSchema;
+            }
+
+            let virtualHelixSchema = {
+                "id" : 0,
+                "latticePosition" : [0, 0],
+                "firstActiveCell" : 0,
+                "lastActiveCell" : 0,
+                "lastCell" : 0,
+                "initialAngle" : [0, 0, 0],
+                "altPosition" : [0, 0, 0],
+                "cells" : []
+            };
+            return virtualHelixSchema
+        }
+
+        let latticeSchema = {
+            "id" : 0,
+            "name" : "",
+            "type" : "",
+            "position" : [0, 0, 0],
+            "orientation" : [0, 0, 0],
+            "virtualHelices" : []
+        };
+        return latticeSchema
+    }
+
+    function makeStructuresSchema(system: System) {
+        function makeNaStrandsSchema(strand: NucleicAcidStrand) {
+            function makeNucleotidesSchema(nuc: Nucleotide) {
+                let nucleotidesSchema = {
+                    "id" : nuc.id,
+                    "nbAbbrev" : nuc.type,
+                    "pair" : nuc.pair ? nuc.pair.id : undefined,
+                    "prev" : nuc.n5,
+                    "next" : nuc.n3,
+                    "pdbId" : 0,
+                    "altPositions" : [{
+                        "nucleobaseCenter" : nuc.getInstanceParameter3('nsOffsets').toArray(),
+                        "backboneCenter" : nuc.getInstanceParameter3('bbOffsets').toArray(),
+                        "baseNormal" : nuc.getA1().toArray(),
+                        "hydrogenFaceDir" : nuc.getA3().toArray()
+                    }]             
+                };
+                return nucleotidesSchema
+            }
+            let naStrandsSchema = {
+                "id" : strand.id,
+                "name" : strand.label,
+                "isScaffold" : strand.getLength() > 1000 ? true : false, //entirely arbitrary, but generally right.
+                "naType" : strand.end5.isDNA() ? "DNA" : "RNA", // Nucleotide type is actually pretty poorly defined in oxView, so this is the best I can do
+                "color" : strand.end5.color.toArray(), // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "fivePrimeId" : strand.end5.id,
+                "threePrimeId" : strand.end3.id,
+                "pdbFileId" : 0, 
+                "chainName" : "",
+                "nucleotides" : strand.map(makeNucleotidesSchema)
+            };
+            return naStrandsSchema
+        }
+        function makeAaChainsSchema(strand:Strand) {
+            function makeAminoAcidsSchema(aa: AminoAcid) {
+                let aminoAcidsSchema = {
+                    "id" : aa.id,
+                    "secondary" : "",
+                    "aaAbbrev" : aa.type,
+                    "prev" : aa.n5,
+                    "next" : aa.n3,
+                    "pdbId" : 0,
+                    "altPositions" : [aa.getInstanceParameter3('nsOffsets').toArray()]                
+                }
+                return aminoAcidsSchema
+            }
+            let aaChainSchema = {
+                "id" : strand.id,
+                "chainName" : strand.label,
+                "color" : strand.end5.color.toArray(), // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "pdbFileId" : 0, 
+                "nTerm" : strand.end5.id,
+                "cTerm" : strand.end3.id,
+                "aminoAcids" : strand.map(makeAminoAcidsSchema)
+            };
+            return aaChainSchema
+        }
+        
+        let structuresSchema = {
+            "id" : system.id,
+            "name" : system.label,
+            "naStrands" : system.strands.filter(strand => strand.isNucleicAcid()).map(makeNaStrandsSchema),
+            "aaChains" : system.strands.filter(strand => strand.isPeptide()).map(makeAaChainsSchema)
+        }
+        return structuresSchema
+    }
+
+    let unfSchema = {
+        "format" : "unf",
+        "version" : "0.71",
+        "idCounter" : elements.getNextId(),
+        "lengthUnits" : "nm",
+        "angularUnits" : "deg",
+        "name" : view.getInputElement('unfStructureName'),
+        "author" : view.getInputElement('unfAuthorName'),
+        "creationDate" : new Date().toISOString().split('T')[0],
+        "doi" : view.getInputElement('unfDOI'), 
+        "simData" : {
+            "boxSize" : box.toArray(),
+        },
+        "externalFiles" : [],
+        "lattices" : [],
+        "structures" : systems.map(makeStructuresSchema),
+        "molecules" : {
+            "ligands" : [],
+            "bonds" : [],
+            "nanostructures" : []
+        },
+        "groups" : clusterCounter > 0 ? identifyClusters() : [],
+        "connections" : [],
+        "modifications" : [],
+        "misc" : {}
+
+    }
+}

@@ -284,6 +284,10 @@ abstract class Nucleotide extends BasicElement {
         }
     }
 
+    isNucleotide() {
+        return true;
+    }
+
     getA1 () {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");

@@ -242,6 +242,9 @@ class Nucleotide extends BasicElement {
             return this.typeOptions(type).includes(this.type);
         }
     }
+    isNucleotide() {
+        return true;
+    }
     getA1() {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
