@@ -445,7 +445,7 @@ function makeUNFOutput(name) {
                 "name": strand.label,
                 "isScaffold": strand.getLength() > 1000 ? true : false,
                 "naType": strand.end5.isDNA() ? "DNA" : "RNA",
-                "color": strand.end5.color ? strand.end5.color.getHexString() : '',
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
                 "fivePrimeId": strand.end5.id,
                 "threePrimeId": strand.end3.id,
                 "pdbFileId": 0,
@@ -460,7 +460,7 @@ function makeUNFOutput(name) {
                     "id": aa.id,
                     "secondary": "",
                     "aaAbbrev": aa.type,
-                    "prev": aa.n5.id ? aa.n5.id : -1,
+                    "prev": aa.n5 ? aa.n5.id : -1,
                     "next": aa.n3 ? aa.n3.id : -1,
                     "pdbId": 0,
                     "altPositions": [aa.getInstanceParameter3('nsOffsets').multiplyScalar(oxDNAToUNF).toArray()]
@@ -470,7 +470,7 @@ function makeUNFOutput(name) {
             let aaChainSchema = {
                 "id": strand.id,
                 "chainName": strand.label,
-                "color": strand.end5.color ? strand.end5.color.getHexString() : '',
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
                 "pdbFileId": 0,
                 "nTerm": strand.end5.id,
                 "cTerm": strand.end3.id,

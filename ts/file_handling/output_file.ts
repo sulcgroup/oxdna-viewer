@@ -520,7 +520,7 @@ function makeUNFOutput(name: string) {
                 "name" : strand.label,
                 "isScaffold" : strand.getLength() > 1000 ? true : false, //entirely arbitrary, but generally right.
                 "naType" : strand.end5.isDNA() ? "DNA" : "RNA", // Nucleotide type is actually pretty poorly defined in oxView, so this is the best I can do
-                "color" : strand.end5.color ? strand.end5.color.getHexString() : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "color" : strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
                 "fivePrimeId" : strand.end5.id,
                 "threePrimeId" : strand.end3.id,
                 "pdbFileId" : 0, 
@@ -535,7 +535,7 @@ function makeUNFOutput(name: string) {
                     "id" : aa.id,
                     "secondary" : "",
                     "aaAbbrev" : aa.type,
-                    "prev" : aa.n5.id ? aa.n5.id : -1,
+                    "prev" : aa.n5 ? aa.n5.id : -1,
                     "next" : aa.n3 ? aa.n3.id : -1,
                     "pdbId" : 0,
                     "altPositions" : [aa.getInstanceParameter3('nsOffsets').multiplyScalar(oxDNAToUNF).toArray()]                
@@ -545,7 +545,7 @@ function makeUNFOutput(name: string) {
             let aaChainSchema = {
                 "id" : strand.id,
                 "chainName" : strand.label,
-                "color" : strand.end5.color ? strand.end5.color.getHexString() : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "color" : strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
                 "pdbFileId" : 0, 
                 "nTerm" : strand.end5.id,
                 "cTerm" : strand.end3.id,
