@@ -159,7 +159,7 @@ function readUNFString(s) {
                 naType = 'RNA';
             }
             let strandColor;
-            if (s.color) {
+            if (s.color != '') {
                 strandColor = new THREE.Color(s.color);
                 customColors = true;
             }

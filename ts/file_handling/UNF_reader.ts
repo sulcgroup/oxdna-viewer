@@ -186,7 +186,7 @@ function readUNFString(s: string) {
             }
 
             let strandColor: THREE.Color;
-            if (s.color) {
+            if (s.color != '') {
                 strandColor = new THREE.Color(s.color);
                 customColors = true;
             }
