@@ -48,8 +48,8 @@ function readUNFString(s: string) {
     }
 
     // geometry parameters
-    const HELIX_RADIUS = 1.5 * 0.8518; //1.5 nm in SU
-    const BP_RISE = 0.332 * 0.8518; //0.332 nm in SU
+    const HELIX_RADIUS = 1 / 0.8518;
+    const BP_RISE = 0.332 / 0.8518; //0.332 nm in SU
     const BP_ROTATION = 34.3 * Math.PI / 180 // 34.3 deg in radians
     const CM_CENTER_DIST = 0.6 //from base.py
 
@@ -61,7 +61,7 @@ function readUNFString(s: string) {
         if (layout === 'honeycomb') {
             pos.fromArray([
                 col * HELIX_RADIUS * 1.7320508 + HELIX_RADIUS,
-                -((row + Math.floor((row + 1 - col % 2) / 2)) * HELIX_RADIUS * 2 + HELIX_RADIUS * 2 * (0.5 * (col % 2) * 0.5)),
+                -((row + Math.floor((row + 1 - col % 2) / 2)) * HELIX_RADIUS * 2 + HELIX_RADIUS * 2 * (0.5 + (col % 2) * 0.5)),
                 z * BP_RISE
             ]);
         }
@@ -317,7 +317,7 @@ function readUNFString(s: string) {
                     // set position as edge of last cell + a linear interpolation of how many nucleotides are in the current cell
                     let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1))
                     // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
-                    let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION)));
+                    let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION));
                     //offset each nucleotide from the helix center
                     ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
 
@@ -330,7 +330,7 @@ function readUNFString(s: string) {
                 //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
                 id2.forEach((e, i) => {
                     let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1))
-                    let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION)));
+                    let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION));
                     ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
 
                     let eA1 = eRot.clone();
