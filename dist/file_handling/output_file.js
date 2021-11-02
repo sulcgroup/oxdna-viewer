@@ -488,7 +488,7 @@ function makeUNFOutput(name) {
     }
     let unfSchema = {
         "format": "unf",
-        "version": "0.71",
+        "version": "1.0.0",
         "idCounter": elements.getNextId(),
         "lengthUnits": "nm",
         "angularUnits": "deg",
