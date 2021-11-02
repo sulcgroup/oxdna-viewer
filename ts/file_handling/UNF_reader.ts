@@ -61,7 +61,7 @@ function readUNFString(s: string) {
         if (layout === 'honeycomb') {
             pos.fromArray([
                 col * HELIX_RADIUS * 1.7320508 + HELIX_RADIUS,
-                -((row + Math.floor((row + 1 - col % 2) / 2)) * HELIX_RADIUS * 2 + HELIX_RADIUS * 2 * (0.5 + (col % 2) * 0.5)),
+                ((row + Math.floor((row + 1 - col % 2) / 2)) * HELIX_RADIUS * 2 + HELIX_RADIUS * 2 * (0.5 + (col % 2) * 0.5)),
                 z * BP_RISE
             ]);
         }
@@ -69,7 +69,7 @@ function readUNFString(s: string) {
             pos.fromArray(
                 [
                     col * HELIX_RADIUS * 2 + HELIX_RADIUS,
-                    -(row * HELIX_RADIUS * 2 + HELIX_RADIUS),
+                    (row * HELIX_RADIUS * 2 + HELIX_RADIUS),
                     z * BP_RISE
                 ]
             );
