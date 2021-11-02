@@ -37,6 +37,16 @@ function readUNFString(s: string) {
         }
     }
 
+    function setCenter(s: Set<BasicElement>) {
+        let position = new THREE.Vector3();
+        s.forEach((e) => {
+            position.add(e.getPos());
+        });
+        position.divideScalar(s.size);
+
+        return position;
+    }
+
     // geometry parameters
     const HELIX_RADIUS = 1.5 * 0.8518; //1.5 nm in SU
     const BP_RISE = 0.332 * 0.8518; //0.332 nm in SU
@@ -249,13 +259,14 @@ function readUNFString(s: string) {
         sysCount++;
 
         // Create a list of all strands of all the nucleotides and peptides
-        let allStrands = struct.naStrands
+        // Really not great practice to be messing with the object, but I need to be able to come back to it later.
+        struct.allStrands = struct.naStrands
         struct.aaChains.forEach((p) => {
-            allStrands = allStrands.concat(p)
+            struct.allStrands = struct.allStrands.concat(p)
         })
 
         //now that all the nucleotides have been created and the instances initialized, we can create the topology.
-        allStrands.forEach((s, i) => {
+        struct.allStrands.forEach((s, i) => {
             let strand = sys.strands[i];
 
             //set strand ends
@@ -274,68 +285,77 @@ function readUNFString(s: string) {
 
             });
         });
+    });
 
+    data.lattices.forEach((l) => {
         //position the nucleotides based on virtual helix position, if available
-        let l = data.lattices[i]; 
-        if (l) {
-            let layout: string = l.type;
-            let oPos = new THREE.Vector3().fromArray(l.position).multiplyScalar(lenFactor);
-            let latOrient =  new THREE.Euler().setFromVector3(new THREE.Vector3().fromArray(l.orientation).multiplyScalar(angleFactor)); //convert the array to a euler in radians
+        let layout: string = l.type;
+        let oPos = new THREE.Vector3().fromArray(l.position).multiplyScalar(lenFactor);
+        let latOrient = new THREE.Euler().setFromVector3(new THREE.Vector3().fromArray(l.orientation).multiplyScalar(angleFactor)); //convert the array to a euler in radians
 
-            l.virtualHelices.forEach((helix) => {
-                let latticePos = helix.latticePosition;
-                let row = latticePos[0];
-                let col = latticePos[1];
+        let latticeElements = new Set<BasicElement>();
 
-                let orient = helix.initialAngle * angleFactor;
+        l.virtualHelices.forEach((helix) => {
+            let latticePos = helix.latticePosition;
+            let row = latticePos[0];
+            let col = latticePos[1];
 
-                helix.cells.forEach((cell) => {
-                    let z = cell.number;
-                    let id1 = cell.fiveToThreeNts;
-                    let id2 = cell.threeToFiveNts;
+            let orient = helix.initialAngle * angleFactor;
 
-                    //calculate the position of the cell edges
-                    let ntCenter = getLatticePos(row, col, z, layout, oPos);
-                    let prevEdge = ntCenter.clone().sub(new THREE.Vector3(0, 0, BP_RISE / 2));
-                    let nextEdge = ntCenter.clone().add(new THREE.Vector3(0, 0, BP_RISE / 2));
+            helix.cells.forEach((cell) => {
+                let z = cell.number;
+                let id1 = cell.fiveToThreeNts;
+                let id2 = cell.threeToFiveNts;
 
-                    //This method of setting positions accounts for skips and deletions
-                    id1.forEach((e, i) => {
-                        // set position as edge of last cell + a linear interpolation of how many nucleotides are in the current cell
-                        let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1))
-                        // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
-                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION)));
-                        //offset each nucleotide from the helix center
-                        ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
+                //calculate the position of the cell edges
+                let ntCenter = getLatticePos(row, col, z, layout, oPos);
+                let prevEdge = ntCenter.clone().sub(new THREE.Vector3(0, 0, BP_RISE / 2));
+                let nextEdge = ntCenter.clone().add(new THREE.Vector3(0, 0, BP_RISE / 2));
 
-                        let eA1 = eRot.clone().multiplyScalar(-1);
+                //This method of setting positions accounts for skips and deletions
+                id1.forEach((e, i) => {
+                    // set position as edge of last cell + a linear interpolation of how many nucleotides are in the current cell
+                    let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1))
+                    // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
+                    let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION)));
+                    //offset each nucleotide from the helix center
+                    ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
 
-                        let sceneE = elements.get(newElementIds.get(e));
-                        sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
-                    });
-                    //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
-                    id2.forEach((e, i) => {
-                        let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1))
-                        let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION)));
-                        ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
+                    let eA1 = eRot.clone().multiplyScalar(-1);
 
-                        let eA1 = eRot.clone();
+                    let sceneE = elements.get(newElementIds.get(e));
+                    latticeElements.add(sceneE);
+                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
+                });
+                //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
+                id2.forEach((e, i) => {
+                    let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1))
+                    let eRot = new THREE.Vector3(1, 0, 0).applyEuler(new THREE.Euler(0, 0, orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION)));
+                    ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
 
-                        let sceneE = elements.get(newElementIds.get(e));
-                        sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
-                    });
+                    let eA1 = eRot.clone();
+
+                    let sceneE = elements.get(newElementIds.get(e));
+                    latticeElements.add(sceneE);
+                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
                 });
             });
+        });
 
-            // if the lattice has an orientation, rotate the system
-            let q = new THREE.Quaternion;
-            q.setFromEuler(latOrient);
-            rotateElementsByQuaternion(new Set(sys.getMonomers()), q, sys.getCom(), false);
-        
-        }
+        // if the lattice has an orientation, rotate the system
+        let q = new THREE.Quaternion;
+        q.setFromEuler(latOrient);
+        rotateElementsByQuaternion(latticeElements, q, setCenter(latticeElements), false);
+    });
+
+    // go back to the structures and set positions via alt positions
+    data.structures.forEach((struct, i) => {
+
+        //we put each structure in a different system, need to find the right one via this horrible dereference
+        let sys = elements.get(struct.allStrands[0][monomerName(struct.allStrands[0])][0].id).getSystem();
 
         // lastly, position the nucleotides based off alt positions
-        allStrands.forEach((s) => {
+        struct.allStrands.forEach((s) => {
             s[monomerName(s)].forEach((n) => {
                 let e = elements.get(newElementIds.get(n.id));
                 if (isNa(s) && n.altPositions[0]) {
@@ -427,17 +447,12 @@ function readUNFString(s: string) {
         
         // Finally, we can add the system to the scene
         addSystemToScene(sys);
-
-        if (customColors) {
-            view.coloringMode.set("Custom");
-        }
+        centerAndPBC(sys.getMonomers())
     });
 
-    let new_nucleotides:BasicElement[] = []
-    data.structures.forEach((_, i: number) => {
-        new_nucleotides.push(...systems[systems.length-i-1].getMonomers())
-    });
-    centerAndPBC(new_nucleotides);
+    if (customColors) {
+        view.coloringMode.set("Custom");
+    }
 
     // Should probably change the PDB reader to have a function which takes a string...
     // But whatever, this works

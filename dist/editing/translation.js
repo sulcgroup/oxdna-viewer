@@ -157,6 +157,7 @@ function translateElements(elements, v) {
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
+    let affectedSystems = new Set();
     elements.forEach((base) => {
         if (base.n3 !== null && base.n3 !== undefined) {
             calcsp(base); //calculate sp between current and n3
@@ -164,10 +165,11 @@ function translateElements(elements, v) {
         if (base.n5 !== null && base.n5 !== undefined) {
             calcsp(base.n5); //calculate sp between current and n5
         }
+        affectedSystems.add(base.getSystem());
     });
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceOffset']);
-    }
+    affectedSystems.forEach((sys) => {
+        sys.callUpdates(['instanceOffset']);
+    });
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset']);
     }

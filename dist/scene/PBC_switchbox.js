@@ -34,9 +34,13 @@ function centerAndPBC(elems, targetBox) {
     centerElements(elems, targetBox);
     bringInBox(elems, getInboxingMode(), targetBox);
     // Update instances
-    elements.forEach(e => { if (e.n3)
-        calcsp(e); });
-    systems.forEach(s => s.callUpdates(['instanceOffset']));
+    let affectedSystems = new Set();
+    elems.forEach(e => {
+        if (e.n3)
+            calcsp(e);
+        affectedSystems.add(e.getSystem());
+    });
+    affectedSystems.forEach(s => s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
     if (forceHandler)
         forceHandler.redraw();
