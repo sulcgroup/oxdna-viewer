@@ -196,7 +196,19 @@ abstract class BasicElement {
         return this.getInstanceParameter3('cmOffsets');
     }
 
-    isAminoAcid() {
+    isAminoAcid(): boolean {
+        return false;
+    }
+
+    isNucleotide(): boolean {
+        return false;
+    }
+
+    isDNA(): boolean {
+        return false;
+    }
+
+    isRNA(): boolean {
         return false;
     }
 

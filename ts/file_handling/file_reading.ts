@@ -193,6 +193,10 @@ function handleFiles(files: FileList) {
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
             pdbFile = files[i];
         }
+        else if (ext === "unf") {
+            readUNFfile(files[i]);
+            return;
+        }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
         else if (ext === "top") topFile = files[i];
@@ -1315,5 +1319,13 @@ function readPdbFile(file) {
     activate();
     pdbtemp=[];
 
+}
+
+function readUNFfile(file: File) {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        readUNFString(e.target.result as string);
+    };
+    reader.readAsText(file);
 }
 

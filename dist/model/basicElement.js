@@ -135,6 +135,15 @@ class BasicElement {
     isAminoAcid() {
         return false;
     }
+    isNucleotide() {
+        return false;
+    }
+    isDNA() {
+        return false;
+    }
+    isRNA() {
+        return false;
+    }
     isGS() {
         return false;
     }

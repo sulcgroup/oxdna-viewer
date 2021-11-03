@@ -86,6 +86,10 @@ class RNANucleotide extends Nucleotide {
         return out;
     }
 
+    isRNA() {
+        return true;
+    }
+
     weakPyrimindine() {
         return 'U';
     }
