@@ -361,7 +361,7 @@
                     <img src="/img/ico/oxdna_logo.png" height="20px" >
                     <!-- <span class="caption">oxDNA</span> -->
                 </button>
-                <span class="title mif-floppy-disk mif-3x"> Save</span>
+                <span class="title mif-floppy-disk mif-3x"> <b>Save</b></span>
                 </div>
                 <div class="group">
                     <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files using Taco OxDNA"
@@ -385,7 +385,7 @@
                         <span class="caption"><b>Plate DB</b></span>
                     </button>
 
-                    <span class="title mif-file-upload mif-3x"> Import</span>
+                    <span class="title mif-file-upload mif-3x"> <b>Import</b></span>
                 </div>
                 <div class="group">
                     <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')" title="Options for 3d export of the scene." style="width: 50px;"> 
@@ -403,15 +403,15 @@
                         <span class="mif-file-text mif-2x"></span>
                         <!-- <span class="caption">Sequence file</span> -->
                     </button>
-                    <button class="ribbon-button primary"  title="Import Plate Information" id="export-button" style="width: 50px;"
-                    onclick="view.toggleWindow('plateDBWindow',loadHyperSelector)">
-                        <span class="caption"><b>Plate DB</b></span>
+                    <button class="ribbon-button primary"  title="Pipetting instructions." id="export-button" style="width: 50px;"
+                    onclick="view.toggleWindow('plateListSummary',reportSummary)">
+                        <span class="caption"><b>SPI</b></span>
                     </button>
                     <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')" style="width: 50px;">
                         <span class="mif-video-camera mif-2x"></span>
                         <!-- <span class="caption">Create video</span> -->
                     </button> 
-                    <span class="title mif-file-download mif-3x"> Export</span>
+                    <span class="title mif-file-download mif-3x"> <b>Export</b></span>
                 </div>
                 <!-- <div class="group"> -->
                 <div class="ribbon-split-button" height="70px">
