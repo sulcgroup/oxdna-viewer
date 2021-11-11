@@ -380,11 +380,6 @@
                         <img src="/img/ico/nanobase_logo.png" height="20px">
                         <!-- <span class="caption">Nanobase</span> -->
                     </button>
-                    <button class="ribbon-button primary"  title="Import Plate Information" id="import-button" style="width: 50px;"
-                        onclick="view.toggleWindow('plateDBWindow',loadPlateDBimport)">
-                        <span class="caption"><b>Plate DB</b></span>
-                    </button>
-
                     <span class="title mif-file-upload mif-3x"> <b>Import</b></span>
                 </div>
                 <div class="group">
@@ -403,15 +398,22 @@
                         <span class="mif-file-text mif-2x"></span>
                         <!-- <span class="caption">Sequence file</span> -->
                     </button>
-                    <button class="ribbon-button primary"  title="Pipetting instructions." id="export-button" style="width: 50px;"
-                    onclick="view.toggleWindow('plateListSummary',reportSummary)">
-                        <span class="caption"><b>SPI</b></span>
-                    </button>
                     <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')" style="width: 50px;">
                         <span class="mif-video-camera mif-2x"></span>
                         <!-- <span class="caption">Create video</span> -->
                     </button> 
                     <span class="title mif-file-download mif-3x"> <b>Export</b></span>
+                </div>
+                <div class="group">
+                    <button class="ribbon-button primary"  title="Import Plate Information" id="import-button" style="width: 50px;"
+                    onclick="view.toggleWindow('plateDBWindow',loadPlateDBimport)">
+                        <span class="caption"><b>Plate DB</b></span>
+                    </button>
+                    <button class="ribbon-button primary"  title="Pipetting instructions." id="export-button" style="width: 50px;"
+                    onclick="view.toggleWindow('plateListSummary',reportSummary)">
+                        <span class="caption"><b>SPI</b></span>
+                    </button>
+                    <span class="title "> <b>Sequence tools</b></span>
                 </div>
                 <!-- <div class="group"> -->
                 <div class="ribbon-split-button" height="70px">

@@ -125,9 +125,26 @@ const formatPlateList = (plate_list) => {
     }
     return out.join("");
 };
+const formatOrphanList = (orphans) => {
+    let out = [];
+    out.push('<p><b>Orphans:</b><p>');
+    clearSelection();
+    out.push('<ul>');
+    orphans.forEach(orf => {
+        // exclude scaffolds for now
+        if (orf.getLength() < 250) {
+            out.push('<li>' + orf.getSequence() + '</li>');
+            api.selectElements(orf.getMonomers(), true);
+        }
+    });
+    out.push('</ul>');
+    return out.join("");
+};
 const reportSummary = () => {
     let reportWindow = document.getElementById("reportWindow");
     let positions = fetchStrandInfo(systems[0].strands);
     let [plate_list, orphans] = groupByPlate(systems[0].strands, positions);
-    reportWindow.innerHTML = formatPlateList(plate_list);
+    let plate_info = formatPlateList(plate_list);
+    let orph_info = formatOrphanList(orphans);
+    reportWindow.innerHTML = plate_info + orph_info;
 };
