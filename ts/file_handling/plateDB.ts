@@ -173,6 +173,7 @@ const reportSummary = ()=>{
         selectedStrands.add(b.strand);
     });
     let strands = Array.from(selectedStrands);
+    strands = strands.length>0 ? strands:systems[0].strands;
     let positions = fetchStrandInfo(strands);
     let [plate_list,orphans] = groupByPlate(strands,positions);
     let plate_info = formatPlateList(plate_list);
