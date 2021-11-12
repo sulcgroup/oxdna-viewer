@@ -142,8 +142,13 @@ const formatOrphanList = (orphans) => {
 };
 const reportSummary = () => {
     let reportWindow = document.getElementById("reportWindow");
-    let positions = fetchStrandInfo(systems[0].strands);
-    let [plate_list, orphans] = groupByPlate(systems[0].strands, positions);
+    let selectedStrands = new Set();
+    selectedBases.forEach(b => {
+        selectedStrands.add(b.strand);
+    });
+    let strands = Array.from(selectedStrands);
+    let positions = fetchStrandInfo(strands);
+    let [plate_list, orphans] = groupByPlate(strands, positions);
     let plate_info = formatPlateList(plate_list);
     let orph_info = formatOrphanList(orphans);
     reportWindow.innerHTML = plate_info + orph_info;
