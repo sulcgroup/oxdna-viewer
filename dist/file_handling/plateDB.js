@@ -148,3 +148,51 @@ const reportSummary = () => {
     let orph_info = formatOrphanList(orphans);
     reportWindow.innerHTML = plate_info + orph_info;
 };
+const printReport = (elem) => {
+    //https://stackoverflow.com/questions/2255291/print-the-contents-of-a-div
+    const plate_style = `
+    <style>
+    /* 96 well plate table definitions */
+    table.plate96{
+        width: 390px;   /* needs to be number of colls multiplied by cell width */
+        height:270px;   /* needs to be number or rows multiplied by cell height */
+        table-layout: fixed;
+        border-collapse: expand;
+        /*border: 1px solid black;*/
+    
+    }
+    
+    /* make table with fixed cell size */
+    table.plate96 td tr th {
+        width: 30px;
+        height:30px;
+        overflow: hidden;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    
+    /* filled wells color*/
+    td.full {
+        background : #00FF00;
+        border-radius: 15px;
+    }
+    /* empty wells color */
+    td.empty {
+        background : lightgrey;
+        border-radius: 15px;
+    }
+    </style>
+    `;
+    var report = window.open('', 'PRINT', 'height=400,width=600');
+    report.document.write(plate_style);
+    report.document.write('<html><head><title>' + document.title + '</title>');
+    report.document.write('</head><body >');
+    report.document.write('<h1>' + document.title + '</h1>');
+    report.document.write(document.getElementById(elem).innerHTML);
+    report.document.write('</body></html>');
+    report.document.close(); // necessary for IE >= 10
+    report.focus(); // necessary for IE >= 10*/
+    report.print();
+    report.close();
+    return true;
+};
