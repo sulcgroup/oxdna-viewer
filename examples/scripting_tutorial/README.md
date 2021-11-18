@@ -2,8 +2,7 @@
 
 ##oxview data structure
 
-* drag and drop  **TetA_F.oxview** to the scene
-
+* drag and drop  **TetA_F.oxview** to the scene or follow the [link](https://sulcgroup.github.io/oxdna-viewer/?file=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/TetA_F.oxview)
 ```js
 //each loaded file gets a system
 systems
@@ -25,6 +24,7 @@ Array.from(strands).map(strand=>strand.getLength());
 ```
 ```js
 //Select strands by length
+clearSelection();
 systems[0].strands.forEach(strand=>{
 	if(strand.getLength()<40)
 		api.selectElements(strand.getMonomers(),true);
@@ -37,6 +37,7 @@ render();
 
 * now drag and drop **TetB_F.oxview** to the scene 
 * select by system and move one aside 
+alternatively follow this link
 
 ```js
 // adjust the simulation box size
