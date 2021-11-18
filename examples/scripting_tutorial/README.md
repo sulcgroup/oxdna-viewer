@@ -13,7 +13,7 @@ systems[0].strands[0].end3
 systems[0].strands[0].end5
 systems[0].strands[0].getMonomers()[0] 
 ```
-
+![oxdna-viewer interface](./cheat_data_structure.svg)
 ## working with selection on the scene
 
 ```js
