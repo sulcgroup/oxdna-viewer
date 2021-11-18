@@ -1,6 +1,6 @@
 # oxView scripting introduction 
-
-##oxview data structure
+* press **F12** to open the **JS developers console** and paste the code examples following the instructions
+## oxview data structure
 
 * drag and drop  **TetA_F.oxview** to the scene or follow the [link](https://sulcgroup.github.io/oxdna-viewer/?file=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/TetA_F.oxview)
 ```js
@@ -34,10 +34,10 @@ render();
 ```
 
 ## dimer example 
-
 * now drag and drop **TetB_F.oxview** to the scene 
 * select by system and move one aside 
-alternatively follow this link
+* you should see:
+<img src="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/two_tetrahedra.png" alt="two_tetrahedra" style="zoom:15%;" />
 
 ```js
 // adjust the simulation box size
@@ -69,6 +69,11 @@ for(let i=0; i<reds.length;i++){
 	edit.interconnectDuplex3p(bottom, top, "GATTACA");
 }
 ```
+* resulting in:
+<img src="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/two_tetrahedra_connected.png" alt="two_tetrahedra" style="zoom:15%;" />
 
 * now you can use **RBD**
-* and **oxServe** to relax the system. 
+* and **oxServe** to relax the system.
+* final [result](https://sulcgroup.github.io/oxdna-viewer/?file=https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/tetDimerRelaxed.oxview)
+ <img src="https://raw.githubusercontent.com/sulcgroup/oxdna-viewer/master/examples/scripting_tutorial/tetDimerRelaxed.png" alt="two_tetrahedra" style="zoom:15%;" />
+
