@@ -26,17 +26,19 @@ class DNANucleotide extends Nucleotide {
     ;
     // Uses method from generate-sa.py.  Needs to be relaxed since this is oxDNA1 helix
     extendStrand(len, direction, double) {
+        // Model constants
         const rot = 35.9 * Math.PI / 180; // 0.68940505
         let rise = 0.3897628551303122;
+        // current nucleotide information
         const startPos = this.getPos();
         const oldA1 = this.getA1();
         let dir = this.getA3();
-        // normalize dir
+        // normalize helix axis
         const dir_norm = Math.sqrt(dir.clone().dot(dir));
         dir.divideScalar(dir_norm);
         const a1 = oldA1.clone();
         const center = startPos.add(a1.clone().multiplyScalar(0.6));
-        // create rotational matrix
+        // create rotation matrix
         let R = new THREE.Matrix4;
         if (direction == "n3") {
             R.makeRotationAxis(dir.clone().negate(), rot);

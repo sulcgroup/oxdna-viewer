@@ -577,7 +577,7 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addDuplexBySeq (end:BasicElement, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
         let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
         const strand: Strand = end.strand;
@@ -857,7 +857,7 @@ module edit{
         let pos:THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3;
         if (blank) {
             // Place new strand at origin if the scene is empty
-            pos = new THREE.Vector3();
+            pos = new THREE.Vector3(0, 0, 0);
             a3 = new THREE.Vector3(0,0,-1);
             a1 = new THREE.Vector3(0,1,0);
         } else {

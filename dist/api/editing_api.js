@@ -773,7 +773,7 @@ var edit;
         let pos, a1, a3;
         if (blank) {
             // Place new strand at origin if the scene is empty
-            pos = new THREE.Vector3();
+            pos = new THREE.Vector3(0, 0, 0);
             a3 = new THREE.Vector3(0, 0, -1);
             a1 = new THREE.Vector3(0, 1, 0);
         }
