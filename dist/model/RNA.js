@@ -110,7 +110,7 @@ class RNANucleotide extends Nucleotide {
         rotAxis2.normalize();
         let rotAngle2 = r1_to_r2.clone().projectOnPlane(dir).angleTo(oldA1.clone().projectOnPlane(dir));
         let rotMat2 = new THREE.Matrix4();
-        rotMat2.makeRotationAxis(rotAxis2, -rotAngle2);
+        rotMat2.makeRotationAxis(rotAxis2, rotAngle2);
         r1.applyMatrix4(rotMat2);
         r2.applyMatrix4(rotMat2);
         // The angle between r1_to_r2 and A1 should be 0 but it's not
