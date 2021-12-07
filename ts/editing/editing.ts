@@ -135,7 +135,7 @@ function extendWrapper(double: boolean) {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = extendDuplex ? edit.extendDuplex(e, seq) : edit.extendStrand(e, seq);
+    let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
     elems.forEach(e=>pos.add(e.getPos()));

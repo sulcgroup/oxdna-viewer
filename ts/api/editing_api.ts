@@ -577,9 +577,14 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end:BasicElement, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addDuplexBySeq (end:Nucleotide, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
-        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+        let end2: Nucleotide;
+        if (!end.pair) {
+            end2 = end.findPair();
+        } else {
+            end2 = end.pair;
+        }
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
         const l = sequence.length;
@@ -591,7 +596,7 @@ module edit{
         let addedElems = [];
 
         for (let i = 0; i < l; i++) {
-            let e1 = strand.createBasicElement();
+            let e1 = <Nucleotide>strand.createBasicElement();
             elements.push(e1);
             e1.sid = sidCounter + i;
             e1.dummySys = tmpSys;
@@ -703,8 +708,8 @@ module edit{
      * @param end 
      * @param sequence 
      */
-    export function extendDuplex(end: BasicElement, sequence: string): BasicElement[] {
-        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+    export function extendDuplex(end: Nucleotide, sequence: string): BasicElement[] {
+        let end2 = end.findPair();
         // create base pair if end doesn't have one alreadyl
         let addedElems = [];
         if (!end2) {
@@ -803,6 +808,7 @@ module edit{
     export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
         if (sequence.includes('U')) {
             isRNA = true;
+            RNA_MODE = true;
         }
         // Assume the input sequence is 5' -> 3',
         // but oxDNA is 3' -> 5', so we reverse it.
@@ -838,9 +844,7 @@ module edit{
         realSys.addStrand(strand);
 
         // Initialise proper nucleotide
-        let e = isRNA ?
-            new RNANucleotide(undefined, strand):
-            new DNANucleotide(undefined, strand);
+        let e = isRNA ? new RNANucleotide(undefined, strand):new DNANucleotide(undefined, strand);
 
         let addedElems = [];
 
@@ -880,9 +884,9 @@ module edit{
                 e.pair = createBP(e);
                 addedElems.push(e.pair);
             }
-            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n3", "n5", 1));
         } else {
-            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         }
         strand.updateEnds();
 
@@ -1365,7 +1369,7 @@ module edit{
      * Creates complementary base pair for an element.
      * @param elem
      */
-    export function createBP(elem: DNANucleotide, undoable?: boolean): DNANucleotide {
+    export function createBP(elem: Nucleotide, undoable?: boolean): Nucleotide {
         if (elem.findPair()) {
             notify("Element already has a base pair")
             return;
@@ -1379,7 +1383,12 @@ module edit{
         const strand = elem.getSystem().addNewNucleicAcidStrand();
 
         // Add element and assign id
-        const e = new DNANucleotide(undefined, strand);
+        let e: Nucleotide;
+        if (elem.isDNA()) {
+            e = new DNANucleotide(undefined, strand);
+        } else if (elem.isRNA()) {
+            e = new RNANucleotide(undefined, strand);
+        }
         elements.push(e);
         e.dummySys = tmpSys;
         e.sid = 0;

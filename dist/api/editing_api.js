@@ -523,7 +523,13 @@ var edit;
     }
     function addDuplexBySeq(end, sequence, tmpSys, direction, inverse, sidCounter) {
         // variables ending in "2" correspond to complement strand
-        let end2 = end.findPair();
+        let end2;
+        if (!end.pair) {
+            end2 = end.findPair();
+        }
+        else {
+            end2 = end.pair;
+        }
         const strand = end.strand;
         const strand2 = end2.strand;
         const l = sequence.length;
@@ -727,6 +733,7 @@ var edit;
     function createStrand(sequence, createDuplex, isRNA) {
         if (sequence.includes('U')) {
             isRNA = true;
+            RNA_MODE = true;
         }
         // Assume the input sequence is 5' -> 3',
         // but oxDNA is 3' -> 5', so we reverse it.
@@ -758,9 +765,7 @@ var edit;
         let strand = realSys.createStrand(realSys.strands.length);
         realSys.addStrand(strand);
         // Initialise proper nucleotide
-        let e = isRNA ?
-            new RNANucleotide(undefined, strand) :
-            new DNANucleotide(undefined, strand);
+        let e = isRNA ? new RNANucleotide(undefined, strand) : new DNANucleotide(undefined, strand);
         let addedElems = [];
         elements.push(e); // Add element and assign id
         e.dummySys = tmpSys;
@@ -795,10 +800,10 @@ var edit;
                 e.pair = createBP(e);
                 addedElems.push(e.pair);
             }
-            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         }
         else {
-            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         }
         strand.updateEnds();
         // Make created strand(s) a new cluster, for convenience.
@@ -1243,7 +1248,13 @@ var edit;
         tmpSystems.push(tmpSys);
         const strand = elem.getSystem().addNewNucleicAcidStrand();
         // Add element and assign id
-        const e = new DNANucleotide(undefined, strand);
+        let e;
+        if (elem.isDNA()) {
+            e = new DNANucleotide(undefined, strand);
+        }
+        else if (elem.isRNA()) {
+            e = new RNANucleotide(undefined, strand);
+        }
         elements.push(e);
         e.dummySys = tmpSys;
         e.sid = 0;

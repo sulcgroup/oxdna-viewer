@@ -33,9 +33,9 @@ class RNANucleotide extends Nucleotide {
      * @returns Array[] of [position, A1, A3]
      */
     extendStrand(len, direction, double) {
-        let angleLut = new THREE.Lut('rainbow', 180);
-        angleLut.setMax(180);
-        angleLut.setMin(0);
+        //let angleLut = new THREE.Lut( 'rainbow', 180 );
+        //angleLut.setMax(180);
+        //angleLut.setMin(0);
         // Model constants
         const inclination = 15.5 * Math.PI / 180;
         const bp_backbone_distance = 2;
@@ -49,9 +49,18 @@ class RNANucleotide extends Nucleotide {
         const oldA2 = this.getA2();
         const oldA3 = this.getA3();
         // The helix axis is 15.5 degrees off from the a3 vector as rotated around a2
-        const a3todir = new THREE.Matrix4();
-        a3todir.makeRotationAxis(oldA2, -inclination);
-        let dir = oldA3.clone().applyMatrix4(a3todir);
+        const a3todir = new THREE.Quaternion();
+        let dir = oldA3.clone();
+        if (direction == "n5") {
+            dir.multiplyScalar(-1);
+            //oldA1.multiplyScalar(-1);
+            //oldA2.multiplyScalar(-1);
+            //oldA3.multiplyScalar(-1);
+        }
+        a3todir.setFromAxisAngle(oldA2, -inclination);
+        dir.applyQuaternion(a3todir);
+        dir.normalize();
+        //when extending from the n5 side, do I need to set the target position to r2 instead of r1?
         // RNA does not form a helix with bases pointed at a central axis like DNA does
         // instead, you have a chord between two points on a circle which defines the cm positions and the a1 vectors
         // This is the chord if the helix axis is the Z-axis
@@ -67,11 +76,6 @@ class RNANucleotide extends Nucleotide {
         //let r1_to_r2 = r2.clone().sub(r1);
         //r1_to_r2.normalize();
         //console.log(r1_to_r2.angleTo(new THREE.Vector3(0,1,0)) * 180/Math.PI);
-        // Helix axis needs to be reversed if we're extending towards the 3' end
-        if (direction == "n3") {
-            dir.multiplyScalar(-1);
-        }
-        dir.normalize();
         // there are two assumptions made by the previously defined r1 and r2:
         // 1. the helix axis is the z-axis
         // 2. a1 of the initial nucleotide is  (0, -0.9636304532086232, 0.2672383760782569).
@@ -79,44 +83,38 @@ class RNANucleotide extends Nucleotide {
         let rotAxis1 = new THREE.Vector3(0, 0, 1).cross(dir);
         rotAxis1.normalize();
         let rotAngle1 = new THREE.Vector3(0, 0, 1).angleTo(dir);
-        let rotMat1 = new THREE.Matrix4();
-        rotMat1.makeRotationAxis(rotAxis1, rotAngle1);
-        r1.applyMatrix4(rotMat1);
-        r2.applyMatrix4(rotMat1);
-        // This correctly set r1_to_r2 to be 90-15.5 deg off from the helix axis
-        //let r1_to_r2 = r2.clone().sub(r1);
-        //r1_to_r2.normalize();
-        //console.log(r1_to_r2.angleTo(dir) * 180/Math.PI);
-        // This is always correctly 90-15.5 deg off from the helix axis
-        //console.log(oldA1.angleTo(dir) * 180/Math.PI);
+        let rotMat1 = new THREE.Quaternion();
+        rotMat1.setFromAxisAngle(rotAxis1, rotAngle1);
+        r1.applyQuaternion(rotMat1);
+        r2.applyQuaternion(rotMat1);
         // r1_to_r2 and A1 are in the same plane relative to dir
-        //let r1_to_r2 = r2.clone().sub(r1);
-        //r1_to_r2.normalize();
-        //console.log(r1_to_r2.dot(dir), oldA1.dot(dir));
-        // then set a1 to the correct orientation
-        /*let r1_to_r2 = r2.clone().sub(r1);
-        r1_to_r2.normalize();
-        let rotAxis2 = oldA1.clone().cross(r1_to_r2);
-        rotAxis2.normalize().multiplyScalar(-1);
-        let rotAngle2 = r1_to_r2.clone().angleTo(oldA1);
-        let rotMat2 = new THREE.Matrix4();
-        rotMat2.makeRotationAxis(rotAxis2, rotAngle2);
-        r1.applyMatrix4(rotMat2);
-        r2.applyMatrix4(rotMat2);*/
-        // then set a1 to the correct orientation
         let r1_to_r2 = r2.clone().sub(r1);
         r1_to_r2.normalize();
-        let rotAxis2 = dir.clone();
+        r1_to_r2 = r2.clone().sub(r1);
+        r1_to_r2.normalize();
+        console.log("Are r1_to_r2 and the old a1 in the same plane? " + String(r1_to_r2.dot(dir) - oldA1.dot(dir)) + " : " + 0);
+        // then set a1 to the correct orientation
+        r1_to_r2 = r2.clone().sub(r1);
+        r1_to_r2.normalize();
+        //let rotAxis2 = dir.clone();
+        let rotAxis2 = r1_to_r2.clone().cross(oldA1);
         rotAxis2.normalize();
-        let rotAngle2 = r1_to_r2.clone().projectOnPlane(dir).angleTo(oldA1.clone().projectOnPlane(dir));
-        let rotMat2 = new THREE.Matrix4();
-        rotMat2.makeRotationAxis(rotAxis2, rotAngle2);
-        r1.applyMatrix4(rotMat2);
-        r2.applyMatrix4(rotMat2);
+        //let rotAngle2 = r1_to_r2.clone().projectOnPlane(dir).angleTo(oldA1.projectOnPlane(dir));
+        let rotAngle2 = r1_to_r2.clone().angleTo(oldA1);
+        let rotMat2 = new THREE.Quaternion();
+        rotMat2.setFromAxisAngle(rotAxis2, rotAngle2);
+        r1.applyQuaternion(rotMat2);
+        r2.applyQuaternion(rotMat2);
+        // This correctly set r1_to_r2 to be 90-15.5 deg off from the helix axis
+        r1_to_r2 = r2.clone().sub(r1);
+        r1_to_r2.normalize();
+        console.log("calculated r1_to_r2 to helix axis " + r1_to_r2.angleTo(dir) * 180 / Math.PI + " : " + (90 - 15.5));
+        // This is always correctly 90-15.5 deg off from the helix axis
+        console.log("old a1 to helix axis " + oldA1.angleTo(dir) * 180 / Math.PI + " : " + (90 - 15.5));
         // The angle between r1_to_r2 and A1 should be 0 but it's not
         r1_to_r2 = r2.clone().sub(r1);
         r1_to_r2.normalize();
-        console.log(r1_to_r2.angleTo(oldA1) * 180 / Math.PI);
+        console.log("angle between r1_to_r2 and old a1 " + String(r1_to_r2.angleTo(oldA1) * 180 / Math.PI) + " : " + 0);
         // center point of the helix axis
         // below, pos = r1 + start_pos + A1*0.4
         const start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
@@ -124,8 +122,8 @@ class RNANucleotide extends Nucleotide {
         //marker.position.copy(start_pos);
         //scene.add(marker);
         // create per-step rotation matrix
-        let R = new THREE.Matrix4;
-        R.makeRotationAxis(dir, rot);
+        let R = new THREE.Quaternion();
+        R.setFromAxisAngle(dir, rot);
         // initialize properties of new nucleotide
         let a1;
         let a1proj = new THREE.Vector3;
@@ -135,8 +133,8 @@ class RNANucleotide extends Nucleotide {
         // generate nucleotide positions and orientations
         for (let i = 0; i < len; i++) {
             //calculate rotation around central axis and step along axis
-            r1.applyMatrix4(R).add(dir.clone().multiplyScalar(base_base_distance));
-            r2.applyMatrix4(R).add(dir.clone().multiplyScalar(base_base_distance));
+            r1.applyQuaternion(R).add(dir.clone().multiplyScalar(base_base_distance));
+            r2.applyQuaternion(R).add(dir.clone().multiplyScalar(base_base_distance));
             //console.log(r1.clone().projectOnPlane(dir).angleTo(r2.clone().projectOnPlane(dir))*180/Math.PI);
             // calculate a1 orientation
             r1_to_r2 = r2.clone().sub(r1);
@@ -146,6 +144,7 @@ class RNANucleotide extends Nucleotide {
             a1proj.normalize();
             a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
             a3.normalize();
+            a3.multiplyScalar(-1);
             //the angle between a1 and a3 is correct
             //console.log(a1.angleTo(a3)*180/Math.PI);
             //the angle between a3 and dir is correct.
@@ -157,21 +156,23 @@ class RNANucleotide extends Nucleotide {
             out.push([p, a1.clone(), a3.clone()]);
         }
         if (double) {
-            R = R.transpose();
+            R = R.inverse();
             for (let i = 0; i < len; i++) {
                 r1_to_r2 = r2.clone().sub(r1);
                 a1 = r1_to_r2.clone().normalize().multiplyScalar(-1);
                 a1proj = a1.clone().projectOnPlane(dir);
                 a1proj.normalize();
-                a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).multiplyScalar(-1).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
+                a3 = dir.clone().multiplyScalar(Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
                 a3.normalize();
+                a3.multiplyScalar(-1);
                 RNA_fudge = a1.clone().multiplyScalar(0.4);
                 let p = r2.clone().add(start_pos).add(RNA_fudge);
                 out.push([p, a1.clone(), a3.clone()]);
-                r1.applyMatrix4(R).sub(dir.clone().multiplyScalar(base_base_distance));
-                r2.applyMatrix4(R).sub(dir.clone().multiplyScalar(base_base_distance));
+                r1.applyQuaternion(R).sub(dir.clone().multiplyScalar(base_base_distance));
+                r2.applyQuaternion(R).sub(dir.clone().multiplyScalar(base_base_distance));
             }
         }
+        console.log(' ');
         return out;
     }
     isRNA() {
