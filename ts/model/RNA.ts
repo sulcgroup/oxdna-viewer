@@ -60,16 +60,13 @@ class RNANucleotide extends Nucleotide {
         const oldA3 = this.getA3();
 
         // The helix axis is 15.5 degrees off from the a3 vector as rotated around a2
-        const a3todir = new THREE.Quaternion()
-        let dir = oldA3.clone()
+        const a3todir = new THREE.Quaternion();
+        let dir = oldA3.clone();
         if (direction == "n5") {
             dir.multiplyScalar(-1);
-            //oldA1.multiplyScalar(-1);
-            //oldA2.multiplyScalar(-1);
-            //oldA3.multiplyScalar(-1);
         }
-        a3todir.setFromAxisAngle(oldA2, -inclination)
-        dir.applyQuaternion(a3todir)
+        a3todir.setFromAxisAngle(oldA2, -inclination);
+        dir.applyQuaternion(a3todir);
         dir.normalize();
 
         //when extending from the n5 side, do I need to set the target position to r2 instead of r1?
@@ -152,8 +149,14 @@ class RNANucleotide extends Nucleotide {
         let a1: THREE.Vector3;
         let a1proj = new THREE.Vector3;
         let a3: THREE.Vector3;
-        let out = [];
+        let out;
         let RNA_fudge: THREE.Vector3;
+        if (double) {
+            out = new Array(len*2);
+        }
+        else {
+            out = new Array(len);
+        }
 
         // generate nucleotide positions and orientations
         for (let i = 0; i < len; i++) {
@@ -182,29 +185,22 @@ class RNANucleotide extends Nucleotide {
             // the COM is 0.4(6)? off from r1
             // also need to offset to account for the helix axis not being (0,0,0)
             RNA_fudge = a1.clone().multiplyScalar(0.4);
-            let p = r1.clone().add(start_pos).add(RNA_fudge);
-            out.push([p, a1.clone(), a3.clone()]) 
-        }
+            let p = r1.clone().add(RNA_fudge).add(start_pos);
+            out[i] = [p, a1.clone(), a3.clone()]
 
-        if (double) {
-            R = R.inverse();
-            for (let i = 0; i < len; i++) {
-                r1_to_r2 = r2.clone().sub(r1);
+            if (double) {
                 a1 = r1_to_r2.clone().normalize().multiplyScalar(-1);
                 a1proj = a1.clone().projectOnPlane(dir);
                 a1proj.normalize();
                 a3 = dir.clone().multiplyScalar(Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
                 a3.normalize();
                 a3.multiplyScalar(-1);
-
                 RNA_fudge = a1.clone().multiplyScalar(0.4);
-                let p = r2.clone().add(start_pos).add(RNA_fudge);
-                out.push([p, a1.clone(), a3.clone()])
-
-                r1.applyQuaternion(R).sub(dir.clone().multiplyScalar(base_base_distance));
-                r2.applyQuaternion(R).sub(dir.clone().multiplyScalar(base_base_distance));
+                let p = r2.clone().add(RNA_fudge).add(start_pos);
+                out[len*2-(i+1)] = [p, a1.clone(), a3.clone()] // yes, topology is backwards.  See comment in addDuplexBySeq() 
             }
         }
+        console.log(out)
         console.log(' ')
         return out;
     }

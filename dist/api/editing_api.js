@@ -549,6 +549,11 @@ var edit;
             last1 = e1;
             addedElems.push(e1);
         }
+        // the one thing about this is that it makes the second strand backwards
+        // this is generally fine because of the pre-export cleanup step
+        // however it is a little spooky...
+        // It is this way because otherwise it would require a lot of conditionals
+        // to correctly assign end2's neighbor
         for (let i = 0; i < l; i++) {
             let e1 = addedElems[i];
             let e2 = strand2.createBasicElement();
@@ -637,12 +642,13 @@ var edit;
     edit.extendStrand = extendStrand;
     /**
      * Create double helix of monomers extending from provided helix
-     * @param end
-     * @param sequence
+     * @param end Nucleotide to extend
+     * @param sequence String of base types
+     * @returns addedElems Nucleotide[]
      */
     function extendDuplex(end, sequence) {
         let end2 = end.findPair();
-        // create base pair if end doesn't have one alreadyl
+        // create base pair if end doesn't have one already
         let addedElems = [];
         if (!end2) {
             end2 = createBP(end);
