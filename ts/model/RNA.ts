@@ -53,19 +53,22 @@ class RNANucleotide extends Nucleotide {
         const rot = 32.7*Math.PI/180;
         const cord = Math.cos(inclination) * bp_backbone_distance;
         const center_to_cord = Math.sqrt(Math.pow(diameter/2, 2) - Math.pow(cord/2, 2));
-        
+        const fudge = 0.4;
+
         // Current nucleotide information
         const oldA1 = this.getA1();
         const oldA2 = this.getA2();
         const oldA3 = this.getA3();
 
+        console.log(direction);
+
         // The helix axis is 15.5 degrees off from the a3 vector as rotated around a2
         const a3todir = new THREE.Quaternion();
         let dir = oldA3.clone();
-        if (direction == "n5") {
+        if (direction == "n3") {
             dir.multiplyScalar(-1);
         }
-        a3todir.setFromAxisAngle(oldA2, -inclination);
+        a3todir.setFromAxisAngle(oldA2, inclination);
         dir.applyQuaternion(a3todir);
         dir.normalize();
 
@@ -128,7 +131,7 @@ class RNANucleotide extends Nucleotide {
         // This is always correctly 90-15.5 deg off from the helix axis
         console.log("old a1 to helix axis " + oldA1.angleTo(dir) * 180/Math.PI + " : " + (90-15.5));
 
-        // The angle between r1_to_r2 and A1 should be 0 but it's not
+        // The angle between r1_to_r2 and A1 should be 0
         r1_to_r2 = r2.clone().sub(r1);
         r1_to_r2.normalize();
         console.log("angle between r1_to_r2 and old a1 " + String(r1_to_r2.angleTo(oldA1) * 180/Math.PI) + " : " + 0);
@@ -174,7 +177,6 @@ class RNANucleotide extends Nucleotide {
             a1proj.normalize();
             a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
             a3.normalize();
-            a3.multiplyScalar(-1);
 
             //the angle between a1 and a3 is correct
             //console.log(a1.angleTo(a3)*180/Math.PI);
@@ -184,23 +186,21 @@ class RNANucleotide extends Nucleotide {
 
             // the COM is 0.4(6)? off from r1
             // also need to offset to account for the helix axis not being (0,0,0)
-            RNA_fudge = a1.clone().multiplyScalar(0.4);
+            RNA_fudge = a1.clone().multiplyScalar(fudge);
             let p = r1.clone().add(RNA_fudge).add(start_pos);
             out[i] = [p, a1.clone(), a3.clone()]
 
             if (double) {
                 a1 = r1_to_r2.clone().normalize().multiplyScalar(-1);
-                a1proj = a1.clone().projectOnPlane(dir);
+                a1proj = a1.clone().projectOnPlane(dir.clone().multiplyScalar(-1));
                 a1proj.normalize();
                 a3 = dir.clone().multiplyScalar(Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
                 a3.normalize();
-                a3.multiplyScalar(-1);
-                RNA_fudge = a1.clone().multiplyScalar(0.4);
+                RNA_fudge = a1.clone().multiplyScalar(fudge);
                 let p = r2.clone().add(RNA_fudge).add(start_pos);
                 out[len*2-(i+1)] = [p, a1.clone(), a3.clone()] // yes, topology is backwards.  See comment in addDuplexBySeq() 
             }
         }
-        console.log(out)
         console.log(' ')
         return out;
     }

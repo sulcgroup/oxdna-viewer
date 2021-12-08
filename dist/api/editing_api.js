@@ -647,7 +647,13 @@ var edit;
      * @returns addedElems Nucleotide[]
      */
     function extendDuplex(end, sequence) {
-        let end2 = end.findPair();
+        let end2;
+        if (!end.pair) {
+            end2 = end.findPair();
+        }
+        else {
+            end2 = end.pair;
+        }
         // create base pair if end doesn't have one already
         let addedElems = [];
         if (!end2) {

@@ -577,7 +577,7 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end:Nucleotide, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addDuplexBySeq (end:Nucleotide, sequence: String, tmpSys, direction, inverse, sidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
         let end2: Nucleotide;
         if (!end.pair) {
@@ -715,7 +715,14 @@ module edit{
      * @returns addedElems Nucleotide[]
      */
     export function extendDuplex(end: Nucleotide, sequence: string): BasicElement[] {
-        let end2 = end.findPair();
+        let end2: Nucleotide;
+        if (!end.pair) {
+            end2 = end.findPair();
+        } 
+        else {
+            end2 = end.pair;
+        }
+
         // create base pair if end doesn't have one already
         let addedElems = [];
         if (!end2) {
@@ -743,7 +750,6 @@ module edit{
         tmpSystems.push(tmpSys);
 
         addedElems = addedElems.concat(addDuplexBySeq(end, sequence, tmpSys, direction, inverse, 0));
-
         render();
         return addedElems;
     }
