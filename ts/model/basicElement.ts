@@ -33,7 +33,7 @@ abstract class BasicElement {
     abstract calcPositionsFromConfLine(l: string[], colorUpdate?: boolean): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
-    abstract extendStrand(len, direction, double): void;
+    abstract extendStrand(len: number, direction: string, double: boolean): void;
     abstract translatePosition(amount: THREE.Vector3): void;
     abstract getA1(): THREE.Vector3;
     abstract getA3(): THREE.Vector3;
