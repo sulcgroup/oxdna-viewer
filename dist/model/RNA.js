@@ -1,3 +1,8 @@
+function ourQuat(axis, q, v) {
+    q[axis] *= -1;
+    v.applyQuaternion(q);
+    return (v);
+}
 /**
  * Extends Nuculeotide with RNA-specific properties such as base position relative to backbone, and A-form helix creation
  */
@@ -58,6 +63,7 @@ class RNANucleotide extends Nucleotide {
         }
         a3todir.setFromAxisAngle(oldA2, inclination);
         dir.applyQuaternion(a3todir);
+        //dir = ourQuat("y", a3todir, dir);
         dir.normalize();
         //when extending from the n5 side, do I need to set the target position to r2 instead of r1?
         // RNA does not form a helix with bases pointed at a central axis like DNA does
@@ -71,6 +77,20 @@ class RNANucleotide extends Nucleotide {
         const z2 = (bp_backbone_distance / 2) * Math.sin(inclination);
         let r1 = new THREE.Vector3(x1, y1, z1);
         let r2 = new THREE.Vector3(x2, y2, z2);
+        let s1 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        s1.position.copy(r1.clone());
+        let s2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x00ff00 }));
+        s2.position.copy(r2.clone());
+        scene.add(s1);
+        scene.add(s2);
+        let c1 = new THREE.Mesh(new THREE.CylinderGeometry(r1.length(), r1.length(), 0.1, 10, 10), new THREE.MeshPhysicalMaterial({ color: 0x0000ff, metalness: 0.1, roughness: 0.6, reflectivity: 1.0, opacity: 0.5, transparent: true }));
+        let rc = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, 1).applyQuaternion(a3todir));
+        c1.quaternion.copy(rc.clone());
+        scene.add(c1);
+        let ha1 = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1), new THREE.Vector3(0, 0, 0), 1, 0xaaaaaa);
+        scene.add(ha1);
+        let a31 = new THREE.ArrowHelper(new THREE.Vector3(0, 0, 1).applyQuaternion(a3todir), new THREE.Vector3(0, 0, 0), 1, 0x000000);
+        scene.add(a31);
         // The angle between r1_to_r2 is 15.5 degrees off from the y axis.
         //let r1_to_r2 = r2.clone().sub(r1);
         //r1_to_r2.normalize();
@@ -86,6 +106,15 @@ class RNANucleotide extends Nucleotide {
         rotMat1.setFromAxisAngle(rotAxis1, rotAngle1);
         r1.applyQuaternion(rotMat1);
         r2.applyQuaternion(rotMat1);
+        let s12 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0xbb0044 }));
+        s12.position.copy(r1.clone());
+        let s22 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x00bb44 }));
+        s22.position.copy(r2.clone());
+        scene.add(s12);
+        scene.add(s22);
+        let c12 = new THREE.Mesh(new THREE.CylinderGeometry(r1.length(), r1.length(), 0.1, 10, 10), new THREE.MeshPhysicalMaterial({ color: 0x0000ff, metalness: 0.1, roughness: 0.6, reflectivity: 1.0, opacity: 0.5, transparent: true }));
+        c12.quaternion.copy(c1.quaternion.clone().multiply(rotMat1));
+        scene.add(c12);
         // r1_to_r2 and A1 are in the same plane relative to dir
         let r1_to_r2 = r2.clone().sub(r1);
         r1_to_r2.normalize();
@@ -102,8 +131,19 @@ class RNANucleotide extends Nucleotide {
         let rotAngle2 = r1_to_r2.clone().angleTo(oldA1);
         let rotMat2 = new THREE.Quaternion();
         rotMat2.setFromAxisAngle(rotAxis2, rotAngle2);
+        //r1 = ourQuat("y", rotMat2, r1);
+        //r2 = ourQuat("y", rotMat2, r2);
         r1.applyQuaternion(rotMat2);
         r2.applyQuaternion(rotMat2);
+        let s13 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x880088 }));
+        s13.position.copy(r1.clone());
+        let s23 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x008888 }));
+        s23.position.copy(r2.clone());
+        scene.add(s13);
+        scene.add(s23);
+        let c13 = new THREE.Mesh(new THREE.CylinderGeometry(r1.length(), r1.length(), 0.1, 10, 10), new THREE.MeshPhysicalMaterial({ color: 0x0000ff, metalness: 0.1, roughness: 0.6, reflectivity: 1.0, opacity: 0.5, transparent: true }));
+        c13.quaternion.copy(c12.quaternion.clone().multiply(rotMat2));
+        scene.add(c13);
         // This correctly set r1_to_r2 to be 90-15.5 deg off from the helix axis
         r1_to_r2 = r2.clone().sub(r1);
         r1_to_r2.normalize();
@@ -117,6 +157,16 @@ class RNANucleotide extends Nucleotide {
         // center point of the helix axis
         // below, pos = r1 + start_pos + A1*0.4
         const start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
+        let s14 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x880088 }));
+        s14.position.copy(s13.position.clone().add(start_pos));
+        let s24 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 10), new THREE.MeshBasicMaterial({ color: 0x008888 }));
+        s24.position.copy(s23.position.clone().add(start_pos));
+        scene.add(s14);
+        scene.add(s24);
+        let c14 = new THREE.Mesh(new THREE.CylinderGeometry(r1.length(), r1.length(), 0.1, 10, 10), new THREE.MeshPhysicalMaterial({ color: 0x0000ff, metalness: 0.1, roughness: 0.6, reflectivity: 1.0, opacity: 0.5, transparent: true }));
+        c14.quaternion.copy(c13.quaternion.clone());
+        c14.position.copy(c13.position.clone().add(start_pos));
+        scene.add(c14);
         //let marker = new THREE.Mesh(new THREE.SphereGeometry(1, 12, 12), new THREE.MeshBasicMaterial({color: angleLut.getColor(r1_to_r2.angleTo(oldA1) * 180/Math.PI)}));
         //marker.position.copy(start_pos);
         //scene.add(marker);
@@ -138,6 +188,10 @@ class RNANucleotide extends Nucleotide {
         // generate nucleotide positions and orientations
         for (let i = 0; i < len; i++) {
             //calculate rotation around central axis and step along axis
+            //r1 = ourQuat("y", R, r1);
+            //r2 = ourQuat("y", R, r2);
+            //r1.add(dir.clone().multiplyScalar(base_base_distance));
+            //r2.add(dir.clone().multiplyScalar(base_base_distance));
             r1.applyQuaternion(R).add(dir.clone().multiplyScalar(base_base_distance));
             r2.applyQuaternion(R).add(dir.clone().multiplyScalar(base_base_distance));
             //console.log(r1.clone().projectOnPlane(dir).angleTo(r2.clone().projectOnPlane(dir))*180/Math.PI);
