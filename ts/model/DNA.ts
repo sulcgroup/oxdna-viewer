@@ -20,13 +20,13 @@ class DNANucleotide extends Nucleotide {
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
 
-        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408);
+        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408).normalize();
     }
 
     getA3(): THREE.Vector3 {
         const a1 = this.getA1();
         const a2 = this.getA2();
-        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1));
+        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1)).normalize();
 
         return a3;
     };

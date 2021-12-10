@@ -19,7 +19,7 @@ class RNANucleotide extends Nucleotide {
     getA2(): THREE.Vector3 {
         const a1 = this.getA1();
         const a3 = this.getA3();
-        const a2 = a1.clone().cross(a3);
+        const a2 = a1.clone().cross(a3).normalize();
 
         return a2;
     }
@@ -28,7 +28,7 @@ class RNANucleotide extends Nucleotide {
         const cm = this.getPos();
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
-        const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(-0.2);
+        const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(-0.2).normalize();
 
         return a3;
     };

@@ -291,7 +291,7 @@ abstract class Nucleotide extends BasicElement {
     getA1 () {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
-        return ns.clone().sub(cm).divideScalar(0.4);
+        return ns.clone().sub(cm).divideScalar(0.4).normalize();
     }
 
     abstract getA2(): THREE.Vector3;

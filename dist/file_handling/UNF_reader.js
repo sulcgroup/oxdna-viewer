@@ -299,6 +299,17 @@ function readUNFString(s) {
                     //apply length factor
                     bb.multiplyScalar(lenFactor);
                     ns.multiplyScalar(lenFactor);
+                    //calculate real COM position
+                    let cm = new THREE.Vector3().copy(bb);
+                    if (e.isDNA()) {
+                        cm.add(a1.clone().multiplyScalar(0.34).add(a3.clone().multiplyScalar(0.3408)));
+                    }
+                    else if (e.isRNA()) {
+                        cm.add(a1.clone().multiplyScalar(0.4).add(a3.clone().multiplyScalar(0.2)));
+                    }
+                    else {
+                        notify("How did you make something that wasn't DNA or RNA?", 'alert');
+                    }
                     //since bb and ns are explicitally defined rather than having a COM, I just copied this from Nucleotide.calcPositions.
                     let sid = e.sid;
                     // compute nucleoside rotation
@@ -335,7 +346,7 @@ function readUNFString(s) {
                     idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
                     sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
                     //fill the instance matrices with data
-                    sys.fillVec('cmOffsets', 3, sid, bb.toArray()); //this is silly and bad.
+                    sys.fillVec('cmOffsets', 3, sid, cm.toArray());
                     sys.fillVec('bbOffsets', 3, sid, bb.toArray());
                     sys.fillVec('nsOffsets', 3, sid, ns.toArray());
                     sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
