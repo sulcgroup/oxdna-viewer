@@ -388,9 +388,13 @@
                         <img src="https://www.blender.org/favicon.ico" height="20px">
                         <!-- <span class="caption">3D Shape</span> -->
                     </button>
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#exportUNF')" title="Options for UNF export of the scene." style="width: 50px;">
-                        <!-- <span class="mif-file-download mif-2x"></span> -->
-                        <span class="caption"><b>UNF</b></span>
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#exportUNF')" title="Options for UNF export of the scene.">
+                        <span class="mif-file-download mif-2x"></span>
+                        <span class="caption">UNF</span>
+                    </button>
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')" title="Options for 3d export of the scene.">
+                        <span class="mif-file-download mif-2x"></span>
+                        <span class="caption">3D Shape</span>
                     </button>
                     <button onclick="makeSequenceFile()" class="ribbon-button"
                         title="Download a file containing all sequences" style="width: 50px;">

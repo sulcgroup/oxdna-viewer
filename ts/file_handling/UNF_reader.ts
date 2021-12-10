@@ -318,10 +318,10 @@ function readUNFString(s: string) {
                     let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1))
                     // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
                     let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION));
-                    //offset each nucleotide from the helix center
-                    ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
+                    //offset each nucleotide from the helix center\
+                    ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
 
-                    let eA1 = eRot.clone().multiplyScalar(-1);
+                    let eA1 = eRot.clone();
 
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
@@ -331,9 +331,9 @@ function readUNFString(s: string) {
                 id2.forEach((e, i) => {
                     let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1))
                     let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION));
-                    ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST))
+                    ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
 
-                    let eA1 = eRot.clone();
+                    let eA1 = eRot.clone().multiplyScalar(-1);
 
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
