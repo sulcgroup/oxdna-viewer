@@ -34,6 +34,7 @@ abstract class Nucleotide extends BasicElement {
     };
 
     calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3, colorUpdate?: boolean) {
+        
         let sys = this.getSystem(),
             sid = this.sid;
         if (this.dummySys !== null) {

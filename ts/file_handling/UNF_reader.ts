@@ -369,10 +369,13 @@ function readUNFString(s: string) {
                     bb.multiplyScalar(lenFactor);
                     ns.multiplyScalar(lenFactor);
 
+                    // calculate a2
+                    let a2 = a1.clone().cross(a3);
+
                     //calculate real COM position
                     let cm = new THREE.Vector3().copy(bb)
                     if (e.isDNA()) {
-                        cm.add(a1.clone().multiplyScalar(0.34).add(a3.clone().multiplyScalar(0.3408)));
+                        cm.add(a1.clone().multiplyScalar(0.34).add(a2.clone().multiplyScalar(0.3408)));
                     }
                     else if (e.isRNA()) {
                         cm.add(a1.clone().multiplyScalar(0.4).add(a3.clone().multiplyScalar(0.2)));
@@ -382,7 +385,6 @@ function readUNFString(s: string) {
                     }
 
                     //since bb and ns are explicitally defined rather than having a COM, I just copied this from Nucleotide.calcPositions.
-
                     let sid = e.sid
 
                     // compute nucleoside rotation
