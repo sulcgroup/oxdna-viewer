@@ -365,12 +365,23 @@ function makeSelectedBasesFile() { //make selected base file
 
 function makeSequenceFile() {
     let seqTxts = [];
-    systems.forEach((sys: System)=>{
-        sys.strands.forEach((strand: Strand)=>{
-            let label = strand.label ? strand.label : `strand_${strand.id}`;
-            seqTxts.push(`${label}, ${strand.getSequence()}`);
-      })
-    });
+    const handle_strand = (strand: Strand)=>{
+        let label = strand.label ? strand.label : `strand_${strand.id}`;
+        seqTxts.push(`${label}, ${strand.getSequence()}`);
+    }
+
+    let strands = new Set();
+    if(selectedBases.size > 0) {
+        selectedBases.forEach(e => {
+            strands.add(e.strand);
+        });
+        strands.forEach(handle_strand);
+    }
+    else {
+        systems.forEach((sys: System)=>{
+            sys.strands.forEach(handle_strand);
+        });
+    }
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
 
