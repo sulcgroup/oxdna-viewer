@@ -239,13 +239,16 @@ function replaceSelectionByDuplexWrapper() {
         end1 = selected_segments[0][seg_length-1].n3;
         end2 = selected_segments[1][seg_length-1].n3;
         is_3p = true;
+        console.log("extending 3'");
     }
     
     //kill of the selection we want to replace by Duplex
     edit.deleteElements(Array.from(selectedBases));
     //reconstiute the duplex
     //let cms = new api.observable.CMS([end1,end2],1,0x00ff00);
-    let duplex = edit.createStrand(selected_segments_seq[0],true);
+    let duplex = edit.createStrand(
+        selected_segments_seq[0].split("").reverse().join(""), //TODO: this is a hack, fix it
+        true);
 
     //shift the duplex to the center between the two strands
     let end_cms = new THREE.Vector3();
@@ -269,6 +272,7 @@ function replaceSelectionByDuplexWrapper() {
         edit.ligate(s2.end5,end2);
     }
     if(is_3p){
+        console.log("was here");
         // we need to ligate the 3p of strands
         edit.ligate(s1.end3,end1);
         edit.ligate(s2.end3,end2);
