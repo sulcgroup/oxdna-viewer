@@ -17,7 +17,6 @@ function makeOutputFiles() {
     }
     let dat = view.getInputBool("datDownload");
     if (dat) {
-        console.log(reorganized);
         let { file_name, file } = makeDatFile(name, reorganized);
         setTimeout(() => makeTextFile(file_name, file), 20);
     }
@@ -235,7 +234,6 @@ function makeDatFile(name, altNumbering = undefined) {
         systems.forEach(system => {
             system.strands.forEach((strand) => {
                 strand.forEach(e => {
-                    console.log(e.id);
                     dat += e.getDatFileOutput();
                 }, true); //oxDNA runs 3'-5'
             });

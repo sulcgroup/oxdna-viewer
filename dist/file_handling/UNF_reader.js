@@ -259,9 +259,9 @@ function readUNFString(s) {
                     let ePos = prevEdge.clone().add((nextEdge.clone().sub(prevEdge)).divideScalar(id1.length + 1).multiplyScalar(i + 1));
                     // like position, set rotation as a linear interpolation between the rotations of the neighboring cells
                     let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 - (-(1 / (id1.length + 1)) * (i + 1))) * BP_ROTATION));
-                    //offset each nucleotide from the helix center
-                    ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
-                    let eA1 = eRot.clone().multiplyScalar(-1);
+                    //offset each nucleotide from the helix center\
+                    ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST));
+                    let eA1 = eRot.clone();
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
                     sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
@@ -270,8 +270,8 @@ function readUNFString(s) {
                 id2.forEach((e, i) => {
                     let ePos = nextEdge.clone().sub((nextEdge.clone().sub(prevEdge)).divideScalar(id2.length + 1).multiplyScalar(i + 1));
                     let eRot = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), orient + (z * (0.5 + ((1 / (id2.length + 1)) * (i + 1))) * BP_ROTATION));
-                    ePos.sub(eRot.clone().multiplyScalar(CM_CENTER_DIST));
-                    let eA1 = eRot.clone();
+                    ePos.add(eRot.clone().multiplyScalar(CM_CENTER_DIST));
+                    let eA1 = eRot.clone().multiplyScalar(-1);
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
                     sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
@@ -299,6 +299,19 @@ function readUNFString(s) {
                     //apply length factor
                     bb.multiplyScalar(lenFactor);
                     ns.multiplyScalar(lenFactor);
+                    // calculate a2
+                    let a2 = a1.clone().cross(a3);
+                    //calculate real COM position
+                    let cm = new THREE.Vector3().copy(bb);
+                    if (e.isDNA()) {
+                        cm.add(a1.clone().multiplyScalar(0.34).add(a2.clone().multiplyScalar(0.3408)));
+                    }
+                    else if (e.isRNA()) {
+                        cm.add(a1.clone().multiplyScalar(0.4).add(a3.clone().multiplyScalar(0.2)));
+                    }
+                    else {
+                        notify("How did you make something that wasn't DNA or RNA?", 'alert');
+                    }
                     //since bb and ns are explicitally defined rather than having a COM, I just copied this from Nucleotide.calcPositions.
                     let sid = e.sid;
                     // compute nucleoside rotation
@@ -335,7 +348,7 @@ function readUNFString(s) {
                     idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
                     sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
                     //fill the instance matrices with data
-                    sys.fillVec('cmOffsets', 3, sid, bb.toArray()); //this is silly and bad.
+                    sys.fillVec('cmOffsets', 3, sid, cm.toArray());
                     sys.fillVec('bbOffsets', 3, sid, bb.toArray());
                     sys.fillVec('nsOffsets', 3, sid, ns.toArray());
                     sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
