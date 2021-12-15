@@ -14,23 +14,6 @@ module api{
         render();
         return strand;
     }
-    export function connectedSelect(strands : Set<Strand>):void{
-        if(!strands){
-            if(selectedBases.size==0){
-                notify("must provide a selection");
-                return
-            }
-            strands = new Set<Strand>();
-            selectedBases.forEach(p  =>{
-                if ((<Nucleotide>p).pair)
-                    strands.add((<Nucleotide>p).pair.strand);
-            });
-        }
-        strands.forEach(strand => {
-            strand.forEach(p => p.select());
-        });
-        updateView(systems[0]);
-    }
 
     // get a dictionary with every strand length : [strand] listed   
     export function countStrandLength(system = systems[0]) {

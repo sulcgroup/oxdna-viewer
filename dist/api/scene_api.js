@@ -13,24 +13,6 @@ var api;
         return strand;
     }
     api.toggleStrand = toggleStrand;
-    function connectedSelect(strands) {
-        if (!strands) {
-            if (selectedBases.size == 0) {
-                notify("must provide a selection");
-                return;
-            }
-            strands = new Set();
-            selectedBases.forEach(p => {
-                if (p.pair)
-                    strands.add(p.pair.strand);
-            });
-        }
-        strands.forEach(strand => {
-            strand.forEach(p => p.select());
-        });
-        updateView(systems[0]);
-    }
-    api.connectedSelect = connectedSelect;
     // get a dictionary with every strand length : [strand] listed   
     function countStrandLength(system = systems[0]) {
         let strandLength = {};
