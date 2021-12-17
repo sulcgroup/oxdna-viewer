@@ -42,7 +42,7 @@ class RNANucleotide extends Nucleotide {
      */
     extendStrand(len: number, direction:string, double: boolean) {
         // Model constants
-        const inclination = 15.5*Math.PI/180;
+        let inclination = 15.5*Math.PI/180;
         const bp_backbone_distance = 2;
         const diameter = 2.35;
         const base_base_distance = 0.3287;
@@ -88,15 +88,15 @@ class RNANucleotide extends Nucleotide {
         r1.applyQuaternion(q1);
         r2.applyQuaternion(q1);
 
-        // r1_to_r2 and A1 are in the same plane relative to dir
-        let r1_to_r2 = r2.clone().sub(r1);
-        r1_to_r2.normalize();
-        r1_to_r2 = r2.clone().sub(r1);
-        r1_to_r2.normalize();
-        console.log("Are r1_to_r2 and the old a1 in the same plane? " + String(r1_to_r2.dot(dir) - oldA1.dot(dir)) + " : " + 0);
-
         // then set a1 to the correct orientation
-        r1_to_r2 = r2.clone().sub(r1);
+        //r1_to_r2 = r2.clone().sub(r1);
+        let r1_to_r2;
+        if (direction == "n3") {
+            r1_to_r2 = r2.clone().sub(r1);
+        }
+        else{
+            r1_to_r2 = r1.clone().sub(r2);
+        }
         r1_to_r2.normalize();
         let rotAxis2 = dir.clone();
         rotAxis2.normalize();
@@ -112,8 +112,14 @@ class RNANucleotide extends Nucleotide {
 
         // center point of the helix axis
         // below, pos = r1 + start_pos + A1*0.4
-        const start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
-    
+        //const start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
+        let start_pos;  
+        if (direction == "n3") {
+            start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
+        } else {
+            start_pos = this.getPos().sub(r2).sub(oldA1.clone().multiplyScalar(0.4));
+        }
+
         // create per-step rotation matrix
         let R = new THREE.Quaternion();
         R.setFromAxisAngle(dir, rot);
@@ -146,11 +152,26 @@ class RNANucleotide extends Nucleotide {
             a1proj.normalize();
             a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
             a3.normalize();
+            console.log(dir.dot(a3)*180/Math.PI);
+
+            //if (direction == "n5") {
+            //    a3.multiplyScalar(-1);
+            //}
 
             // the COM is 0.4(6)? off from r1
             // also need to offset to account for the helix axis not being (0,0,0)
-            RNA_fudge = a1.clone().multiplyScalar(fudge);
-            let p = r1.clone().add(RNA_fudge).add(start_pos);
+            //RNA_fudge = a1.clone().multiplyScalar(fudge);
+            let p;
+            if (direction == "n3") {
+                RNA_fudge = a1.clone().multiplyScalar(fudge);
+                p = r1.clone().add(RNA_fudge).add(start_pos);
+            }
+            else {
+                a1.negate();
+                a3.negate();
+                RNA_fudge = a1.clone().multiplyScalar(fudge);
+                p = r2.clone().add(RNA_fudge).add(start_pos);
+            }
             out[i] = [p, a1.clone(), a3.clone()]
 
             if (double) {
@@ -160,7 +181,18 @@ class RNANucleotide extends Nucleotide {
                 a3 = dir.clone().multiplyScalar(Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
                 a3.normalize();
                 RNA_fudge = a1.clone().multiplyScalar(fudge);
-                let p = r2.clone().add(RNA_fudge).add(start_pos);
+                let p;
+                if (direction == "n3") {
+                    RNA_fudge = a1.clone().multiplyScalar(fudge);
+                    p = r2.clone().add(RNA_fudge).add(start_pos);
+                }
+                else {
+                    a1.negate();
+                    a3.negate();
+                    RNA_fudge = a1.clone().multiplyScalar(fudge);
+                    p = r1.clone().add(RNA_fudge).add(start_pos);
+
+                }
                 out[len*2-(i+1)] = [p, a1.clone(), a3.clone()] // yes, topology is backwards.  See comment in addDuplexBySeq() 
             }
         }
