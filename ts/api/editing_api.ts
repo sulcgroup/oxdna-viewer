@@ -822,11 +822,6 @@ module edit{
             isRNA = true;
             RNA_MODE = true;
         }
-        // Assume the input sequence is 5' -> 3',
-        // but oxDNA is 3' -> 5', so we reverse it.
-        let tmp:string[] = sequence.split(""); 
-        tmp = tmp.reverse(); 
-        sequence = tmp.join("");
 
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
