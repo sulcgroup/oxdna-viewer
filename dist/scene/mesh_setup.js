@@ -38,7 +38,7 @@ var backboneColors = [
     new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
-    new THREE.Color(0x6ea4cc), //light blue
+    new THREE.Color(0x6ea4cc),
 ];
 // define nucleoside colors
 var nucleosideColors = [
@@ -79,6 +79,11 @@ var nucleosideColors = [
     //Y
     new THREE.Color(0x8C704C),
     //W
-    new THREE.Color(0x4F4600), //Olive Brown
+    new THREE.Color(0x4F4600),
 ];
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!
+//Get a distinct color for each consecutive integer
+function colorFromInt(number) {
+    const hue = number * 137.508; // use golden angle approximation
+    return new THREE.Color(`hsl(${hue},50%,65%)`);
+}

@@ -120,3 +120,9 @@ var nucleosideColors = [
 ];
 
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!
+
+//Get a distinct color for each consecutive integer
+function colorFromInt(number) {
+   const hue = number * 137.508; // use golden angle approximation
+   return new THREE.Color(`hsl(${hue},50%,65%)`);
+}
