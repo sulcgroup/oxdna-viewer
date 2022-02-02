@@ -147,13 +147,6 @@ class System {
         this.strands.push(strand);
         return strand;
     }
-    addNewPatchySphereStrand() {
-        let id = this.getNextGenericSphereStrandID();
-        let strand = new PatchyStrand(id, this);
-        strand.system = this;
-        this.strands.push(strand);
-        return strand;
-    }
     addStrand(strand) {
         if (!this.strands.includes(strand)) {
             this.strands.push(strand);
@@ -225,6 +218,9 @@ class System {
         }
     }
     ;
+    isPatchySystem() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {
@@ -240,3 +236,51 @@ class System {
     ;
 }
 ;
+class PatchySystem extends System {
+    constructor(id) {
+        super(id, 0);
+        this.id = id;
+        this.particles = [];
+    }
+    ;
+    isPatchySystem() {
+        return true;
+    }
+    getMonomers() {
+        return this.particles;
+    }
+    systemLength() {
+        return this.particles.length;
+    }
+    ;
+    initPatchyInstances() {
+        const types = this.particles.map(p => parseInt(p.type));
+        const instanceCounts = [];
+        types.forEach(s => {
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1;
+            }
+            else {
+                instanceCounts[s]++;
+            }
+        });
+        this.offsets = instanceCounts.map(n => new Float32Array(n * 3));
+        this.rotations = instanceCounts.map(n => new Float32Array(n * 4));
+        this.colors = instanceCounts.map(n => new Float32Array(n * 3));
+        this.scalings = instanceCounts.map(n => new Float32Array(n * 3));
+        this.visibilities = instanceCounts.map(n => new Float32Array(n * 3));
+    }
+    callUpdates(names) {
+        names.forEach((name) => {
+            this.patchyMeshes.forEach(mesh => {
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+        });
+    }
+    fillPatchyVec(species, vecName, unitSize, pos, vals) {
+        for (let i = 0; i < unitSize; i++) {
+            this[vecName][species][pos * unitSize + i] = vals[i];
+        }
+    }
+    ;
+}

@@ -199,14 +199,6 @@ class System {
         return strand;
     }
 
-    addNewPatchySphereStrand(){
-        let id = this.getNextGenericSphereStrandID();
-        let strand = new PatchyStrand(id, this);
-        strand.system = this;
-        this.strands.push(strand);
-        return strand;
-    }
-
     addStrand(strand: Strand) {
         if(!this.strands.includes(strand)) {
             this.strands.push(strand);
@@ -284,6 +276,10 @@ class System {
         }
     };
 
+    isPatchySystem() {
+        return false;
+    }
+
     toJSON() {
         // Specify required attributes
         let json = {
@@ -298,3 +294,63 @@ class System {
         return json;
     };
 };
+
+class PatchySystem extends System {
+    patchyGeometries: THREE.InstancedBufferGeometry[];
+    patchyMeshes: THREE.Mesh[];
+    offsets: Float32Array[];
+    rotations: Float32Array[];
+    colors: Float32Array[];
+    scalings: Float32Array[];
+    visibilities: Float32Array[];
+
+    particles: PatchySphere[];
+
+    constructor(id: number) {
+        super(id, 0);
+        this.id = id;
+        this.particles = [];
+    };
+
+    isPatchySystem() {
+        return true;
+    }
+
+    getMonomers() {
+        return this.particles;
+    }
+
+    systemLength(): number {
+        return this.particles.length;
+    };
+
+    initPatchyInstances() {
+        const types = this.particles.map(p=>parseInt(p.type));
+        const instanceCounts = [];
+        types.forEach(s=>{
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1
+            } else {
+                instanceCounts[s]++;
+            }
+        });
+        this.offsets = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.rotations = instanceCounts.map(n=>new Float32Array(n * 4));
+        this.colors = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.scalings = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.visibilities = instanceCounts.map(n=>new Float32Array(n * 3));
+    }
+
+    callUpdates(names : string[]) {
+        names.forEach((name) => {
+            this.patchyMeshes.forEach(mesh=>{
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+        });
+    }
+    fillPatchyVec(species: number, vecName: string, unitSize: number, pos: number, vals: number[]) {
+        for (let i = 0; i < unitSize; i++) {
+            this[vecName][species][pos * unitSize + i] = vals[i]
+        }
+    };
+}

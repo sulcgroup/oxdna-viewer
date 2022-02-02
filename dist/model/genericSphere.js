@@ -12,7 +12,7 @@ class GenericSphere extends BasicElement {
     elemToColor(elem) {
         return GREY;
     }
-    calcPositionsFromConfLine(l, flag) {
+    calcPositionsFromConfLine(l, colorUpdate) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
@@ -212,19 +212,49 @@ class GenericSphere extends BasicElement {
     }
 }
 class PatchySphere extends GenericSphere {
-    constructor(id, strand) {
-        super(id, strand);
+    constructor(id, system) {
+        super(id, undefined);
+        this.system = system;
         this.mass = 10.0;
         this.type = 'ps';
     }
     elemToColor(elem) {
         return colorFromInt(parseInt(elem));
     }
-    calcPositions(p) {
-        let sys = this.getSystem();
-        if (this.dummySys !== null) {
-            sys = this.dummySys;
-        }
+    getSystem() {
+        return this.system;
+    }
+    getPos() {
+        return this.getInstanceParameter3('offsets');
+    }
+    getInstanceParameter3(name) {
+        const a = this.system[name][parseInt(this.type)];
+        return new THREE.Vector3(a[this.sid * 3], a[this.sid * 3 + 1], a[this.sid * 3 + 2]);
+    }
+    //retrieve this element's values in a 4-parameter instance array
+    //only rotations
+    getInstanceParameter4(name) {
+        const a = this.system[name][parseInt(this.type)];
+        return new THREE.Vector4(a[this.sid * 4], a[this.sid * 4 + 1], a[this.sid * 4 + 2], a[this.sid * 4 + 3]);
+    }
+    translatePosition(amount) {
+        const sys = this.system;
+        const id = (this.sid) * 3;
+        const s = parseInt(this.type);
+        sys.offsets[s][id] += amount.x;
+        sys.offsets[s][id + 1] += amount.y;
+        sys.offsets[s][id + 2] += amount.z;
+    }
+    calcPositionsFromConfLine(l, colorUpdate) {
+        //extract position
+        let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
+        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
+        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
+        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
+        this.calcPositions(p, a1, a3, colorUpdate);
+    }
+    ;
+    calcPositions(p, a1, a3, colorUpdate) {
         let sid = this.sid;
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
@@ -236,18 +266,26 @@ class PatchySphere extends GenericSphere {
         else {
             scale = 1;
         }
-        sys.fillVec('cmOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('nsOffsets', 3, sid, p.toArray());
-        sys.fillVec('nsRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('scales', 3, sid, [0, 0, 0]);
-        sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
-        sys.fillVec('conScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('visibility', 3, sid, [1, 1, 1]);
+        let q = rotateVectorsSimultaneously(new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0), a3, a1);
+        let species = parseInt(this.type);
+        this.system.fillPatchyVec(species, 'offsets', 3, sid, p.toArray());
+        this.system.fillPatchyVec(species, 'rotations', 4, sid, [q.w, q.z, q.y, q.x]);
+        this.system.fillPatchyVec(species, 'visibilities', 3, sid, [1, 1, 1]);
+        this.system.fillPatchyVec(species, 'scalings', 3, sid, [scale, scale, scale]);
         let color = this.elemToColor(this.type);
-        sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
-        sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+        this.system.fillPatchyVec(species, 'colors', 3, sid, [color.r, color.g, color.b]);
     }
+}
+function rotateVectorsSimultaneously(u0, v0, u2, v2) {
+    const q2 = new THREE.Quaternion().setFromUnitVectors(u0, u2);
+    const v1 = v2.clone().applyQuaternion(q2.clone().conjugate());
+    const v0_proj = v0.projectOnPlane(u0);
+    const v1_proj = v1.projectOnPlane(u0);
+    let angleInPlane = v0_proj.angleTo(v1_proj);
+    if (v1_proj.dot(new THREE.Vector3().crossVectors(u0, v0)) < 0) {
+        angleInPlane *= -1;
+    }
+    const q1 = new THREE.Quaternion().setFromAxisAngle(u0, angleInPlane);
+    const q = new THREE.Quaternion().multiplyQuaternions(q2, q1);
+    return q;
 }

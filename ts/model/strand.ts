@@ -433,9 +433,3 @@ class Generic extends Strand {
     }
 
 }
-
-class PatchyStrand extends Generic{
-    createBasicElement(id?: number) {
-        return new PatchySphere(id, this);
-    };
-}

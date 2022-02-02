@@ -350,7 +350,7 @@ class TrajectoryReader {
                 l = lines[i].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l, true);
                 //when a strand is finished, add it to the system
-                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
                     if (currentNucleotide.n5 == currentStrand.end3) {
                         currentStrand.end5 = currentNucleotide;
                     }

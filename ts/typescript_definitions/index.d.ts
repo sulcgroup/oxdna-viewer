@@ -24,6 +24,7 @@ export * from "./three-core";
 
 export * from "./three-canvasrenderer";
 export * from "./three-colladaLoader";
+export * from "./three-convexgeometry";
 export * from "./three-copyshader";
 export * from "./three-css3drenderer";
 export * from "./three-ctmloader";

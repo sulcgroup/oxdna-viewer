@@ -157,23 +157,30 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
             sys = e.dummySys;
         }
 
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-
-        cmPos.add(v);
-        bbPos.add(v);
-        nsPos.add(v);
-        conPos.add(v);
-        bbconPos.add(v);
-
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+        if (sys.isPatchySystem()) {
+            let p = e.getPos();
+            (sys as PatchySystem).fillPatchyVec(
+                parseInt(e.type), 'offsets', 3, e.sid, p.toArray()
+            )
+        } else {
+            let cmPos = e.getPos();
+            let bbPos = e.getInstanceParameter3("bbOffsets");
+            let nsPos = e.getInstanceParameter3("nsOffsets");
+            let conPos = e.getInstanceParameter3("conOffsets");
+            let bbconPos = e.getInstanceParameter3("bbconOffsets");
+    
+            cmPos.add(v);
+            bbPos.add(v);
+            nsPos.add(v);
+            conPos.add(v);
+            bbconPos.add(v);
+    
+            sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
+            sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
+            sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
+            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+        }
     });
 
     // Update backbone connections (is there a more clever way to do this than
