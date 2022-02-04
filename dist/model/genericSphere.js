@@ -248,25 +248,28 @@ class PatchySphere extends GenericSphere {
     calcPositionsFromConfLine(l, colorUpdate) {
         //extract position
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
-        // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
-        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
-        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
+        //extract orientation vectors
+        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5])).normalize();
+        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8])).normalize();
         this.calcPositions(p, a1, a3, colorUpdate);
     }
     ;
-    calcPositions(p, a1, a3, colorUpdate) {
+    calcPositions(p, a1, a3, _colorUpdate) {
         let sid = this.sid;
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
-        // fill in the instancing matrices
-        let scale;
-        if (this.mass > 4) { //More than 4 particles
-            scale = 1 + this.mass / 16;
-        }
-        else {
-            scale = 1;
-        }
-        let q = rotateVectorsSimultaneously(new THREE.Vector3(0, 0, 1), new THREE.Vector3(1, 0, 0), a3, a1);
+        //p.y *= -1;
+        //p.z *= -1;
+        //a1.y *= -1;
+        //a1.z *= -1;
+        //a3.y *= -1;
+        //a3.z *= -1;
+        let scale = 1;
+        const defaultA1 = new THREE.Vector3(1, 0, 0);
+        const defaultA3 = new THREE.Vector3(0, 0, 1);
+        const q = rotateVectorsSimultaneously(defaultA1, defaultA3, a1.clone(), a3.clone());
+        console.assert(defaultA1.clone().applyQuaternion(q).distanceTo(a1) < 1e-5, "a1 wrong");
+        console.assert(defaultA3.clone().applyQuaternion(q).distanceTo(a3) < 1e-5, "a3 wrong");
         let species = parseInt(this.type);
         this.system.fillPatchyVec(species, 'offsets', 3, sid, p.toArray());
         this.system.fillPatchyVec(species, 'rotations', 4, sid, [q.w, q.z, q.y, q.x]);
@@ -276,7 +279,13 @@ class PatchySphere extends GenericSphere {
         this.system.fillPatchyVec(species, 'colors', 3, sid, [color.r, color.g, color.b]);
     }
 }
+//https://stackoverflow.com/a/55248720
+//https://robokitchen.tumblr.com/post/67060392720/finding-a-quaternion-from-two-pairs-of-vectors
 function rotateVectorsSimultaneously(u0, v0, u2, v2) {
+    u0.normalize();
+    v0.normalize();
+    u2.normalize();
+    v2.normalize();
     const q2 = new THREE.Quaternion().setFromUnitVectors(u0, u2);
     const v1 = v2.clone().applyQuaternion(q2.clone().conjugate());
     const v0_proj = v0.projectOnPlane(u0);

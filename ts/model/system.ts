@@ -305,12 +305,93 @@ class PatchySystem extends System {
     visibilities: Float32Array[];
 
     particles: PatchySphere[];
+    species: {
+        type: number,
+        patches: any[]
+    }[];
 
-    constructor(id: number) {
+    constructor(id: number, particleFile: File, patchFile: File) {
         super(id, 0);
         this.id = id;
         this.particles = [];
+
+        if (patchFile) {
+            particleFile.text().then(particlesStr => {
+                patchFile.text().then(patchesStr => {
+                    this.initSpecies(particlesStr, patchesStr);
+                });
+            });
+        }
     };
+
+    initSpecies(particlesStr: string, patchesStr: string) {
+        // Remove whitespace
+        particlesStr = particlesStr.replaceAll(' ', '');
+        patchesStr = patchesStr.replaceAll(' ', '');
+
+        const getScalar = (name: string, s: string) => {
+            const m = s.match(new RegExp(`${name}=(-?\\d+)`));
+            if (m) {
+                return parseFloat(m[1]);
+            }
+            return false
+        }
+        const getArray = (name, s) => {
+            const m = s.match(new RegExp(`${name}=([\\,\\d\\.\\-\\+]+)`));
+            if (m) {
+                return m[1].split(',').map((v: string)=>parseFloat(v));
+            }
+            return false
+        }
+        let particles = [];
+        let currentParticle;
+        for (const line of particlesStr.split('\n')) {
+            const particleID = line.match(/particle_(\d+)/)
+            if (particleID) {
+                if (currentParticle) {
+                    particles.push(currentParticle);
+                }
+                currentParticle = {'id': parseInt(particleID[1])}
+            }
+            const type = getScalar('type', line);
+            if (type !== false) {
+                currentParticle['type'] = type
+            }
+            const patches = getArray('patches', line);
+            if (patches !== false) {
+                currentParticle['patches'] = patches;
+            }
+        }
+        particles.push(currentParticle);
+
+        let patches = new Map();
+
+        let currentId: number;
+        for (const line of patchesStr.split('\n')) {
+            const patchID = line.match(/patch_(\d+)/);
+            if (patchID) {
+                currentId = parseInt(patchID[1]);
+                patches.set(currentId, {});
+            }
+            const color = getScalar('color', line);
+            if (color !== false) {
+                patches.get(currentId)['color'] = color;
+            }
+            for (const k of ['position', 'a1', 'a2']) {
+                const a = getArray(k, line);
+                if (a) {
+                    const v = new THREE.Vector3().fromArray(a);
+                    patches.get(currentId)[k] = v;
+                }
+            }
+        }
+
+        for (const particle of particles) {
+            particle['patches'] = particle['patches'].map(id=>patches.get(id));
+        }
+
+        this.species = particles;
+    }
 
     isPatchySystem() {
         return true;

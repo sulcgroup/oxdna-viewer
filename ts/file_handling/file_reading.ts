@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -202,6 +202,7 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) particleFile = files[i];
+        else if ( fileName.includes("patches")) patchFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
         else if (ext === "idx") idxFile = files[i];
@@ -232,7 +233,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
 
     render();
     return
@@ -458,11 +459,11 @@ function readFilesFromPathArgs(args){
         Metro.activity.close(activity);
     }
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
     const  get_request = (paths) => {
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
-                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
+                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
                 done();
            }
            else {
@@ -489,8 +490,11 @@ function readFilesFromPathArgs(args){
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") pdbFile = file;
-                else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
+                else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
                     particleFile = file;
+                // otherwise, what is this?
+                else if (fileName.includes("patches"))
+                    patchFile = file;
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -536,7 +540,7 @@ function readFilesFromURLParams() {
 
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -546,7 +550,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
 
         if(typeof particleFile !== "undefined"){
             //make system to store the dropped files in
-            const system = new PatchySystem(sysCount);
+            const system = new PatchySystem(sysCount, particleFile, patchFile);
             systems.push(system); //add system to Systems[]
 
             //we handle patchy files
@@ -1035,11 +1039,54 @@ function addSystemToScene(system: System) {
 
     if (system.isPatchySystem()) {
         let s = system as PatchySystem;
-        s.patchyGeometries = s.offsets.map(p=>{
-            let g = new THREE.InstancedBufferGeometry();
-            g.copy(new THREE.BoxBufferGeometry(.4,.4,.4) as unknown as THREE.InstancedBufferGeometry);
-            return g;
-        });
+        if (s.species !== undefined) {
+
+            const patchResolution = 32;
+            const patchWidth = 0.2;
+            const patchAlignWidth = 0.3;
+
+            s.patchyGeometries = s.offsets.map((_,i)=>{
+                let g = new THREE.InstancedBufferGeometry();
+
+                const points = [new THREE.Vector3()];
+
+                s.species[i].patches.forEach(patch=>{
+                    const pos = patch.position.clone();
+                    //pos.x *= -1;
+                    //pos.y *= -1;
+                    //pos.z *= -1;
+
+                    const a1 = patch.a1.clone();
+                    //a1.y *= -1;
+                    //a1.z *= -1;
+
+                    const a2 = patch.a2.clone();
+                    //a2.y *= -1;
+                    //a2.z *= -1;
+                    for (let i=0; i<patchResolution; i++) {
+                        let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
+                        diff.applyAxisAngle(
+                            a1,
+                            i * 2*Math.PI/patchResolution
+                        );
+                        points.push(
+                            pos.clone().add(diff)
+                        );
+                    }
+                    console.log(`Patch at ${patch.position.toArray()}`);
+                });
+                let particleGeometry = new THREE.ConvexGeometry(points);
+
+                g.copy(particleGeometry as unknown as THREE.InstancedBufferGeometry);
+                return g;
+            });
+        } else {
+            s.patchyGeometries = s.offsets.map(_=>{
+                let g = new THREE.InstancedBufferGeometry();
+                g.copy(new THREE.SphereBufferGeometry(.3,10,10) as unknown as THREE.InstancedBufferGeometry);
+                return g;
+            });
+        }
         s.patchyGeometries.forEach((g,i)=>{
             g.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(s.offsets[i], 3));
             g.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(s.rotations[i], 4));

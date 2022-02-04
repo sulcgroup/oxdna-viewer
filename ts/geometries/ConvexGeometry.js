@@ -36,8 +36,11 @@
 			} // build geometry
 
 
-			this.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
-			this.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+			// Why this hack?
+			//this.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+			//this.setAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
+			this.addAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+			this.addAttribute( 'normal', new THREE.Float32BufferAttribute( normals, 3 ) );
 
 		}
 
