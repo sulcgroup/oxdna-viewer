@@ -741,6 +741,8 @@ var edit;
     /**
      * Creates a new strand with the provided sequence
      * @param sequence
+     * @param createDuplex (optional) Create a duplex?
+     * @param isRNA (optional) Is this an RNA strand?
      */
     function createStrand(sequence, createDuplex, isRNA) {
         if (sequence.includes('U')) {
@@ -749,7 +751,8 @@ var edit;
         }
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length * (createDuplex ? 2 : 1)); // Need to be x2 if duplex
+        // This looks weird, but createBP() makes that nucleotide in its own tmpSys so it's 2n-1 for the duplex case.
+        tmpSys.initInstances(sequence.length * (createDuplex ? 2 : 1) + (createDuplex ? -1 : 0));
         tmpSystems.push(tmpSys);
         // The strand gets added to the last-added system.
         // Or make a new system if you're crazy and trying to build something from scratch
@@ -786,8 +789,16 @@ var edit;
         if (blank) {
             // Place new strand at origin if the scene is empty
             pos = new THREE.Vector3(0, 0, 0);
-            a3 = new THREE.Vector3(0, 0, -1);
-            a1 = new THREE.Vector3(0, 1, 0);
+            if (isRNA) {
+                // This puts the helix axis up the Z axis
+                a1 = new THREE.Vector3(0, 0.9636304532086232, -0.2672383760782569);
+                a3 = a1.clone().cross(new THREE.Vector3(1, 0, 0));
+            }
+            else {
+                // DNA is so easy
+                a1 = new THREE.Vector3(0, 1, 0);
+                a3 = new THREE.Vector3(0, 0, -1);
+            }
         }
         else {
             // Otherwise, place the new strand 10 units in front of the camera
