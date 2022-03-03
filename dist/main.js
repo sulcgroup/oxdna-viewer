@@ -92,6 +92,104 @@ var topologyEdited = false;
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 render();
+// close to
+function find_continues() {
+    let angle_tollerance = 0.8; // 25 degrees
+    let distance_tollerance = 0.6; // 0.5 nm
+    //find the acos value between two vectors
+    let acos = (v1, v2) => v1.dot(v2) / (v1.length() * v2.length());
+    let check = (n1, n2) => acos(n1.getA3(), n2.getA3()) > angle_tollerance &&
+        n1.getA3().distanceTo(n2.getA3()) < distance_tollerance;
+    let output = new Set(); // our output
+    let output_bp = new Set();
+    let start = ([...selectedBases][0]); // our starting point
+    let n = start;
+    output.add(n);
+    // handle 3' end
+    while (n.n3 && check(n, n.n3)) {
+        n = n.n3;
+        output.add(n);
+    }
+    let last_n3 = n;
+    // handle 5' end
+    n = start;
+    while (n.n5 && check(n, n.n5)) {
+        n = n.n5;
+        output.add(n);
+    }
+    let last_n5 = n;
+    //now we need to handle the last paired bases (their continuity)
+    if (last_n3.pair) {
+        n = last_n3.pair;
+        // the possible continuity in 5' direction
+        if (n.n5) {
+            if (n.n5.isPaired() && n.n5.pair.strand == start.strand) {
+                let our_found_end = n.n5.pair;
+                //the direction of the continuity will be 3'
+                n = our_found_end;
+                output.add(n);
+                // handle 3' end
+                while (n.n3 && check(n, n.n3)) {
+                    n = n.n3;
+                    output.add(n);
+                }
+            }
+        }
+    }
+    if (last_n5.pair) {
+        n = last_n5.pair;
+        // the possible continuity in 5' direction
+        if (n.n3) {
+            if (n.n3.isPaired() && n.n3.pair.strand == start.strand) {
+                let our_found_end = n.n3.pair;
+                //the direction of the continuity will be 3'
+                n = our_found_end;
+                output.add(n);
+                // handle 5' end
+                while (n.n5 && check(n, n.n5)) {
+                    n = n.n5;
+                    output.add(n);
+                }
+                let last_n5 = n;
+            }
+        }
+    }
+    if (last_n3.pair) {
+        n = last_n3.pair;
+        // the possible continuity in 5' direction
+        if (n.n5) {
+            if (n.n5.isPaired() && n.n5.pair.strand == start.strand) {
+                let our_found_end = n.n5.pair;
+                //the direction of the continuity will be 5'
+                n = our_found_end;
+                output.add(n);
+                // handle 3' end
+                while (n.n3 && check(n, n.n3)) {
+                    n = n.n3;
+                    output.add(n);
+                }
+                let last_n3 = n;
+            }
+        }
+    }
+    //// add all the pairs for the bases we have found
+    output.forEach(n => {
+        if (n.pair)
+            output_bp.add(n.pair);
+    });
+    // now we still need to add the last baises of n5
+    if (last_n5.pair) {
+        n = last_n5.pair;
+        // but we need to check into 5' direction
+        while (n.n3 && check(n, n.n3)) {
+            n = n.n3;
+            output_bp.add(n);
+        }
+    }
+    api.selectElements([...output]);
+    api.selectElements([...output_bp], true);
+    render();
+}
 function findBasepairs(min_length = 0) {
     systems.forEach(system => {
         if (!system.checkedForBasepairs) {
