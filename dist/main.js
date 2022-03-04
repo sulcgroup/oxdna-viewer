@@ -93,7 +93,7 @@ var topologyEdited = false;
 readFilesFromURLParams();
 render();
 // close to
-function find_continues() {
+function find_continues2() {
     let angle_tollerance = 0.8; // 25 degrees
     let distance_tollerance = 0.6; // 0.5 nm
     //find the acos value between two vectors
@@ -186,6 +186,82 @@ function find_continues() {
             output_bp.add(n);
         }
     }
+    api.selectElements([...output]);
+    api.selectElements([...output_bp], true);
+    render();
+}
+var Direction;
+(function (Direction) {
+    Direction[Direction["threePrime"] = 0] = "threePrime";
+    Direction[Direction["fivePrime"] = 1] = "fivePrime";
+})(Direction || (Direction = {}));
+function find_continues() {
+    console.log("me here");
+    let angle_tollerance = 0.8; // 25 degrees
+    let distance_tollerance = 0.6; // 0.5 nm
+    //find the acos value between two vectors
+    let acos = (v1, v2) => v1.dot(v2) / (v1.length() * v2.length());
+    let check = (n1, n2) => acos(n1.getA3(), n2.getA3()) > angle_tollerance &&
+        n1.getA3().distanceTo(n2.getA3()) < distance_tollerance;
+    let check_direction = (n, direction) => check(n, n.n3) && direction == Direction.threePrime || check(n, n.n5) && direction == Direction.fivePrime;
+    let output = new Set(); // our output
+    let output_bp = new Set();
+    let start = ([...selectedBases][0]); // our starting point
+    let n = start;
+    let dir = Direction.threePrime;
+    while (n) {
+        output.add(n);
+        if (dir == Direction.threePrime) {
+            if (n.n3 && check_direction(n, dir)) {
+                n = n.n3;
+            }
+            else {
+                dir = Direction.fivePrime;
+                n = n.pair;
+            }
+        }
+        else {
+            if (n.n5 && check_direction(n, dir)) {
+                n = n.n5;
+            }
+            else {
+                dir = Direction.threePrime;
+                n = n.pair;
+            }
+        }
+        if (output.has(n)) {
+            break;
+        }
+    }
+    n = start;
+    dir = Direction.fivePrime;
+    while (n) {
+        output.add(n);
+        if (dir == Direction.threePrime) {
+            if (n.n3 && check_direction(n, dir)) {
+                n = n.n3;
+            }
+            else {
+                dir = Direction.fivePrime;
+                n = n.pair;
+            }
+        }
+        else {
+            if (n.n5 && check_direction(n, dir)) {
+                n = n.n5;
+            }
+            else {
+                dir = Direction.threePrime;
+                n = n.pair;
+            }
+        }
+        if (output.has(n)) {
+            break;
+        }
+    }
+    //// and the bp's 
+    output.forEach(n => { if (n.pair)
+        output_bp.add(n.pair); });
     api.selectElements([...output]);
     api.selectElements([...output_bp], true);
     render();

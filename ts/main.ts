@@ -111,7 +111,7 @@ readFilesFromURLParams();
 render();
 
 // close to
-function find_continues(){
+function find_continues2(){
     let angle_tollerance = 0.8; // 25 degrees
     let distance_tollerance = 0.6; // 0.5 nm
     //find the acos value between two vectors
@@ -215,6 +215,84 @@ function find_continues(){
     api.selectElements([...output_bp],true);
     render();
 }
+
+enum Direction {
+    threePrime,
+    fivePrime
+}
+
+function find_continues(){
+    console.log("me here");
+    let angle_tollerance = 0.8; // 25 degrees
+    let distance_tollerance = 0.6; // 0.5 nm
+    //find the acos value between two vectors
+    let acos = (v1:THREE.Vector3, v2:THREE.Vector3) => v1.dot(v2) / (v1.length() * v2.length());
+    let check = (n1: Nucleotide, n2: Nucleotide) => acos(n1.getA3(), n2.getA3()) > angle_tollerance &&
+                                                     n1.getA3().distanceTo(n2.getA3()) < distance_tollerance;
+    let check_direction =  (n: Nucleotide, direction: Direction) => 
+        check(n, <Nucleotide>n.n3) && direction == Direction.threePrime || check(n, <Nucleotide>n.n5) && direction == Direction.fivePrime;
+
+    let output = new Set<Nucleotide>();              // our output
+    let output_bp = new Set<Nucleotide>();
+    let start = <Nucleotide>([...selectedBases][0]); // our starting point
+    
+    let n = start;
+    let dir = Direction.threePrime;
+    while(n){
+        output.add(n);
+        if(dir == Direction.threePrime){
+            if(n.n3 && check_direction(n, dir)){
+                n = <Nucleotide> n.n3;
+            }else{
+                dir = Direction.fivePrime;
+                n = n.pair;
+            }
+        }
+        else{
+            if(n.n5 && check_direction(n, dir)){
+                n = <Nucleotide> n.n5;
+            }else{
+                dir = Direction.threePrime;
+                n = n.pair;
+            }
+        }
+        if (output.has(n)) {
+            break;
+        }
+    }
+    n = start;
+    dir = Direction.fivePrime;
+    while(n){
+        output.add(n);
+        if(dir == Direction.threePrime){
+            if(n.n3 && check_direction(n, dir)){
+                n = <Nucleotide> n.n3;
+            }else{
+                dir = Direction.fivePrime;
+                n = n.pair;
+            }
+        }
+        else{
+            if(n.n5 && check_direction(n, dir)){
+                n = <Nucleotide> n.n5;
+            }else{
+                dir = Direction.threePrime;
+                n = n.pair;
+            }
+        }
+        if (output.has(n)) {
+            break;
+        }
+    }
+    
+    
+    //// and the bp's 
+    output.forEach(n =>{if(n.pair) output_bp.add(n.pair)});
+    api.selectElements([...output]);
+    api.selectElements([...output_bp],true);
+    render();
+}
+
 
 function findBasepairs(min_length=0) {
     systems.forEach(system=>{
