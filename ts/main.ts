@@ -221,7 +221,7 @@ enum Direction {
     fivePrime
 }
 
-function find_continues(){
+function find_continues(start: Nucleotide) {
     console.log("me here");
     let angle_tollerance = 0.8; // 25 degrees
     let distance_tollerance = 0.6; // 0.5 nm
@@ -234,7 +234,7 @@ function find_continues(){
 
     let output = new Set<Nucleotide>();              // our output
     let output_bp = new Set<Nucleotide>();
-    let start = <Nucleotide>([...selectedBases][0]); // our starting point
+    //let start = <Nucleotide>([...selectedBases][0]); // our starting point
     
     let n = start;
     let dir = Direction.threePrime;
@@ -288,9 +288,39 @@ function find_continues(){
     
     //// and the bp's 
     output.forEach(n =>{if(n.pair) output_bp.add(n.pair)});
-    api.selectElements([...output]);
-    api.selectElements([...output_bp],true);
-    render();
+    //api.selectElements([...output]);
+    //api.selectElements([...output_bp],true);
+    //render();
+    
+    return [...output].concat(...output_bp);
+}
+
+function partition_helices(){
+    //first find the scaffold/s
+    let scaffolds = new Array<NucleicAcidStrand>();
+    systems.forEach(s => {
+        s.strands.forEach(strand => {
+            if(strand.getLength() > 150 ){ // kinda arbitrary
+                scaffolds.push(<NucleicAcidStrand>strand);
+            }
+        });
+    })
+    // now the idea  is that we will go over all scaffold bases keeping a set of unused ones for further processing 
+    scaffolds.forEach(scaffold => {
+        console.log("was here");
+        let bases = <Nucleotide[]>scaffold.getMonomers(true);
+        let used_bases = new Array<Nucleotide>();
+        while(bases.length > 0){
+            bases = bases.filter(n => !used_bases.includes(n));
+            let helix = find_continues(<Nucleotide>bases[5]); //TODO figure out the 3' bug
+            api.selectElements(helix);
+            selectionToCluster();
+            used_bases = used_bases.concat(helix);
+        }
+        
+    });
+
+    console.log(scaffolds);
 }
 
 
