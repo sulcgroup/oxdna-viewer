@@ -177,6 +177,9 @@ class Cluster {
      * Calculate spring forces between inter-cluster backbone bonds
      */
     computeConnectionForces() {
+        let intersect = new Set([...selectedBases].filter(i => this.clusterElements.has(i)));
+        if (intersect.size != 0)
+            return; // don't touch the cluster if it is selected
         this.conPoints.forEach((p) => {
             let scalar = this.sim.connectionSpringConst * (p.getDist() - this.sim.connectionRelaxedLength);
             let f = p.getToPos().clone().sub(p.getFromPos());
