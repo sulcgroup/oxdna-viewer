@@ -324,6 +324,21 @@ function partition_helices(){
 }
 
 
+function go_back_from3p(n: Nucleotide, len = 5){
+    let output = new Array<Nucleotide>();
+    let ptr = n;
+    let i = 1;
+    while(ptr && i < len){
+        output.push(ptr);
+        ptr = <Nucleotide>ptr.n5;
+        i++;
+    }
+    output.splice(0,1);
+    api.selectElements(output,true);
+    render();
+}
+
+
 function findBasepairs(min_length=0) {
     systems.forEach(system=>{
         if (!system.checkedForBasepairs) {
