@@ -1,3 +1,36 @@
+let rbd_worker : Worker;
+let startWorker=()=>{
+    let rbd_worker = new Worker("./dist/editing/rbd_worker.js");
+    console.time();
+   
+    //let positions :Array<THREE.Vector3> = new Array<THREE.Vector3>();
+    //elements.forEach((b:DNANucleotide,i:Number)=>{
+    //    //console.log(b,i);
+    //    positions.push(
+    //        b.getPos()
+    //    );
+    //});
+    rbd_worker.postMessage("post",
+    [
+        systems[0].bbOffsets.buffer,
+        systems[0].bbRotation.buffer,
+        systems[0].nsOffsets.buffer,
+        //systems[0].nsRotation.buffer,
+        //systems[0].conOffsets.buffer,
+        //systems[0].conRotation.buffer,
+        //systems[0].bbconOffsets.buffer,
+        //systems[0].bbconRotation.buffer,
+        //systems[0].bbconScales.buffer,
+        //systems[0].cmOffsets.buffer,
+        //systems[0].scales.buffer,
+        //systems[0].nsScales.buffer,
+        //systems[0].conScales.buffer
+    ]);
+    console.timeEnd();
+}
+
+
+
 // Global variable for simulator
 let rigidClusterSimulator: RigidClusterSimulator;
 

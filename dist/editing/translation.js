@@ -132,42 +132,49 @@ function calcsp(currentNuc) {
     sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 function translateElements(elements, v) {
+    //console.time();
+    let affected_elements = new Array();
     elements.forEach((e) => {
         let sys = e.getSystem();
-        let sid = e.sid;
         if (e.dummySys !== null) {
             sys = e.dummySys;
         }
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-        cmPos.add(v);
-        bbPos.add(v);
-        nsPos.add(v);
-        conPos.add(v);
-        bbconPos.add(v);
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+        const xp = e.sid * 3;
+        const yp = e.sid * 3 + 1;
+        const zp = e.sid * 3 + 2;
+        sys.cmOffsets[xp] += v.x;
+        sys.cmOffsets[yp] += v.y;
+        sys.cmOffsets[zp] += v.z;
+        sys.bbOffsets[xp] += v.x;
+        sys.bbOffsets[yp] += v.y;
+        sys.bbOffsets[zp] += v.z;
+        sys.nsOffsets[xp] += v.x;
+        sys.nsOffsets[yp] += v.y;
+        sys.nsOffsets[zp] += v.z;
+        sys.conOffsets[xp] += v.x;
+        sys.conOffsets[yp] += v.y;
+        sys.conOffsets[zp] += v.z;
+        sys.bbconOffsets[xp] += v.x;
+        sys.bbconOffsets[yp] += v.y;
+        sys.bbconOffsets[zp] += v.z;
+        if (e.n3 !== null && e.n3 !== undefined) {
+            if (e.n3.getSystem() !== sys)
+                affected_elements.push(e);
+            //calcsp(base); //calculate sp between current and n3
+        }
+        if (e.n5 !== null && e.n5 !== undefined) {
+            //calcsp(base.n5); //calculate sp between current and n5
+            if (e.n5.getSystem() !== sys)
+                affected_elements.push(e.n5);
+        }
     });
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
-    let affectedSystems = new Set();
-    elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined) {
-            calcsp(base); //calculate sp between current and n3
-        }
-        if (base.n5 !== null && base.n5 !== undefined) {
-            calcsp(base.n5); //calculate sp between current and n5
-        }
-        affectedSystems.add(base.getSystem());
-    });
-    affectedSystems.forEach((sys) => {
+    affected_elements.forEach(e => {
+        calcsp(e);
+    }); //better way, but there's still more room at the bottom
+    systems.forEach((sys) => {
         sys.callUpdates(['instanceOffset']);
     });
     for (let i = 0; i < tmpSystems.length; i++) {
