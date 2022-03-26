@@ -15,31 +15,38 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
 
 
 function _applyQuaternion(arr,xp,yp,zp, q ) {
-
     const x = arr[xp], y = arr[yp], z = arr[zp];
     const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
-
     // calculate quat * vector
-
     const ix = qw * x + qy * z - qz * y;
     const iy = qw * y + qz * x - qx * z;
     const iz = qw * z + qx * y - qy * x;
     const iw = - qx * x - qy * y - qz * z;
-
     // calculate result * inverse quat
-
     arr[xp] = ix * qw + iw * - qx + iy * - qz - iz * - qy;
     arr[yp] = iy * qw + iw * - qy + iz * - qx - ix * - qz;
     arr[zp] = iz * qw + iw * - qz + ix * - qy - iy * - qx;
-
-    //return this;
-
 }
 function _applyV3(arr,xp,yp,zp, v){
     arr[xp]+=v.x;
     arr[yp]+=v.y;
     arr[zp]+=v.z;
 }
+function _multiplyQuaternions( arr,xp,yp,zp,wp, b ) {
+    // from http://www.euclideanspace.com/maths/algebra/realNormedAlgebra/quaternions/code/index.htm
+    const qax = arr[wp], qay = arr[zp], qaz = arr[yp], qaw = arr[xp];
+    const qbx = b._x, qby = b._y, qbz = b._z, qbw = b._w;
+    let _x = qax * qbw + qaw * qbx + qay * qbz - qaz * qby;
+    let _y = qay * qbw + qaw * qby + qaz * qbx - qax * qbz;
+    let _z = qaz * qbw + qaw * qbz + qax * qby - qay * qbx;
+    let _w = qaw * qbw - qax * qbx - qay * qby - qaz * qbz;
+    arr[xp] = _w;
+    arr[yp] = _z;
+    arr[zp] = _y;
+    arr[wp] = _x;
+}
+
+
 
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3, updateScene: Boolean=true) {
     // For some reason, we have to rotate the orientations
@@ -54,50 +61,42 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
             sys = e.dummySys;
         }
 
-        const xp = e.sid*3;
-        const yp = e.sid*3+1;
-        const zp = e.sid*3+2;
+        const xp3 = e.sid*3;
+        const yp3 = e.sid*3+1;
+        const zp3 = e.sid*3+2;
+        
+        const xp4 = e.sid*4;
+        const yp4 = e.sid*4+1;
+        const zp4 = e.sid*4+2;
+        const wp4 = e.sid*4+3;
+        
+
         //the rotation center needs to be (0,0,0)
         let nabout = about.clone().negate();
-        _applyV3(sys.cmOffsets,xp,yp,zp,nabout);
-        _applyV3(sys.bbOffsets,xp,yp,zp,nabout);
-        _applyV3(sys.nsOffsets,xp,yp,zp,nabout);
-        _applyV3(sys.conOffsets,xp,yp,zp,nabout);
-        _applyV3(sys.bbconOffsets,xp,yp,zp,nabout);
+        _applyV3(sys.cmOffsets,xp3,yp3,zp3,nabout);
+        _applyV3(sys.bbOffsets,xp3,yp3,zp3,nabout);
+        _applyV3(sys.nsOffsets,xp3,yp3,zp3,nabout);
+        _applyV3(sys.conOffsets,xp3,yp3,zp3,nabout);
+        _applyV3(sys.bbconOffsets,xp3,yp3,zp3,nabout);
 
-        
         //apply the rotation
-        _applyQuaternion(sys.cmOffsets,xp,yp,zp,q);
-        _applyQuaternion(sys.bbOffsets,xp,yp,zp,q);
-        _applyQuaternion(sys.nsOffsets,xp,yp,zp,q);
-        _applyQuaternion(sys.conOffsets,xp,yp,zp,q);
-        _applyQuaternion(sys.bbconOffsets,xp,yp,zp,q);
+        _applyQuaternion(sys.cmOffsets,xp3,yp3,zp3,q);
+        _applyQuaternion(sys.bbOffsets,xp3,yp3,zp3,q);
+        _applyQuaternion(sys.nsOffsets,xp3,yp3,zp3,q);
+        _applyQuaternion(sys.conOffsets,xp3,yp3,zp3,q);
+        _applyQuaternion(sys.bbconOffsets,xp3,yp3,zp3,q);
  
-
-        //get current rotations and convert to THREE coordinates
-        let nsRotationV = e.getInstanceParameter4("nsRotation");
-        let nsRotation =  glsl2three(nsRotationV);
-        let conRotationV = e.getInstanceParameter4("conRotation");
-        let conRotation = glsl2three(conRotationV);
-        let bbconRotationV = e.getInstanceParameter4("bbconRotation");
-        let bbconRotation = glsl2three(bbconRotationV);
-
         //apply individual object rotation
-        nsRotation.multiply(q2);
-        conRotation.multiply(q2);
-        bbconRotation.multiply(q2);
+        _multiplyQuaternions(sys.nsRotation,xp4,yp4,zp4,wp4,q2);
+        _multiplyQuaternions(sys.conRotation,xp4,yp4,zp4,wp4,q2);
+        _multiplyQuaternions(sys.bbconRotation,xp4,yp4,zp4,wp4,q2);
 
         //move the object back to its original position
-        _applyV3(sys.cmOffsets,xp,yp,zp,about);
-        _applyV3(sys.bbOffsets,xp,yp,zp,about);
-        _applyV3(sys.nsOffsets,xp,yp,zp,about);
-        _applyV3(sys.conOffsets,xp,yp,zp,about);
-        _applyV3(sys.bbconOffsets,xp,yp,zp,about);
-
-        //update the instancing matrices
-        sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
-        sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
-        sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
+        _applyV3(sys.cmOffsets,xp3,yp3,zp3,about);
+        _applyV3(sys.bbOffsets,xp3,yp3,zp3,about);
+        _applyV3(sys.nsOffsets,xp3,yp3,zp3,about);
+        _applyV3(sys.conOffsets,xp3,yp3,zp3,about);
+        _applyV3(sys.bbconOffsets,xp3,yp3,zp3,about);
     });
     
 
@@ -125,7 +124,7 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
                 networks[i].updateRotations(q2);
             }
         }
-        //render();
+        render();
     }
     console.timeEnd("rot");
 }
@@ -229,7 +228,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     }
     if(forceHandler) forceHandler.redraw();
    
-    //render();
+    render();
     console.timeEnd("tran");
 }
 
