@@ -13,6 +13,34 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     if(forceHandler) forceHandler.redraw();
 }
 
+
+function _applyQuaternion(arr,xp,yp,zp, q ) {
+
+    const x = arr[xp], y = arr[yp], z = arr[zp];
+    const qx = q.x, qy = q.y, qz = q.z, qw = q.w;
+
+    // calculate quat * vector
+
+    const ix = qw * x + qy * z - qz * y;
+    const iy = qw * y + qz * x - qx * z;
+    const iz = qw * z + qx * y - qy * x;
+    const iw = - qx * x - qy * y - qz * z;
+
+    // calculate result * inverse quat
+
+    arr[xp] = ix * qw + iw * - qx + iy * - qz - iz * - qy;
+    arr[yp] = iy * qw + iw * - qy + iz * - qx - ix * - qz;
+    arr[zp] = iz * qw + iw * - qz + ix * - qy - iy * - qx;
+
+    //return this;
+
+}
+function _applyV3(arr,xp,yp,zp, v){
+    arr[xp]+=v.x;
+    arr[yp]+=v.y;
+    arr[zp]+=v.z;
+}
+
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3, updateScene: Boolean=true) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
@@ -26,25 +54,25 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
             sys = e.dummySys;
         }
 
-        //get current positions
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-
+        const xp = e.sid*3;
+        const yp = e.sid*3+1;
+        const zp = e.sid*3+2;
         //the rotation center needs to be (0,0,0)
-        cmPos.sub(about);
-        bbPos.sub(about);
-        nsPos.sub(about);
-        conPos.sub(about);
-        bbconPos.sub(about);
+        let nabout = about.clone().negate();
+        _applyV3(sys.cmOffsets,xp,yp,zp,nabout);
+        _applyV3(sys.bbOffsets,xp,yp,zp,nabout);
+        _applyV3(sys.nsOffsets,xp,yp,zp,nabout);
+        _applyV3(sys.conOffsets,xp,yp,zp,nabout);
+        _applyV3(sys.bbconOffsets,xp,yp,zp,nabout);
 
-        cmPos.applyQuaternion(q);
-        bbPos.applyQuaternion(q);
-        nsPos.applyQuaternion(q);
-        conPos.applyQuaternion(q);
-        bbconPos.applyQuaternion(q);
+        
+        //apply the rotation
+        _applyQuaternion(sys.cmOffsets,xp,yp,zp,q);
+        _applyQuaternion(sys.bbOffsets,xp,yp,zp,q);
+        _applyQuaternion(sys.nsOffsets,xp,yp,zp,q);
+        _applyQuaternion(sys.conOffsets,xp,yp,zp,q);
+        _applyQuaternion(sys.bbconOffsets,xp,yp,zp,q);
+ 
 
         //get current rotations and convert to THREE coordinates
         let nsRotationV = e.getInstanceParameter4("nsRotation");
@@ -60,24 +88,18 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         bbconRotation.multiply(q2);
 
         //move the object back to its original position
-        cmPos.add(about);
-        bbPos.add(about);
-        nsPos.add(about);
-        conPos.add(about);
-        bbconPos.add(about);
+        _applyV3(sys.cmOffsets,xp,yp,zp,about);
+        _applyV3(sys.bbOffsets,xp,yp,zp,about);
+        _applyV3(sys.nsOffsets,xp,yp,zp,about);
+        _applyV3(sys.conOffsets,xp,yp,zp,about);
+        _applyV3(sys.bbconOffsets,xp,yp,zp,about);
 
         //update the instancing matrices
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
-        
         sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
         sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
         sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
     });
-    console.timeEnd("rot");
+    
 
     if (updateScene){
         // Update backbone connections for bases with neigbours outside the selection set
@@ -103,8 +125,9 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
                 networks[i].updateRotations(q2);
             }
         }
-        render();
+        //render();
     }
+    console.timeEnd("rot");
 }
 
 //adjust the backbone after the move. Copied from DragControls
@@ -165,25 +188,11 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         const yp = e.sid*3+1;
         const zp = e.sid*3+2;
 
-        sys.cmOffsets[xp]+=v.x;
-        sys.cmOffsets[yp]+=v.y;
-        sys.cmOffsets[zp]+=v.z;
-
-        sys.bbOffsets[xp]+=v.x;
-        sys.bbOffsets[yp]+=v.y;
-        sys.bbOffsets[zp]+=v.z;
-
-        sys.nsOffsets[xp]+=v.x;
-        sys.nsOffsets[yp]+=v.y;
-        sys.nsOffsets[zp]+=v.z;
-
-        sys.conOffsets[xp]+=v.x;
-        sys.conOffsets[yp]+=v.y;
-        sys.conOffsets[zp]+=v.z;
-
-        sys.bbconOffsets[xp]+=v.x;
-        sys.bbconOffsets[yp]+=v.y;
-        sys.bbconOffsets[zp]+=v.z;
+        _applyV3(sys.cmOffsets,xp,yp,zp,v);
+        _applyV3(sys.bbOffsets,xp,yp,zp,v);
+        _applyV3(sys.nsOffsets,xp,yp,zp,v);
+        _applyV3(sys.conOffsets,xp,yp,zp,v);
+        _applyV3(sys.bbconOffsets,xp,yp,zp,v);
 
         if (e.n3 !== null && e.n3 !== undefined) {
             if(e.n3.getSystem()!==sys) {
@@ -219,8 +228,9 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         }
     }
     if(forceHandler) forceHandler.redraw();
-    console.timeEnd("tran")
-    render();
+   
+    //render();
+    console.timeEnd("tran");
 }
 
 //dragControls.activate();
