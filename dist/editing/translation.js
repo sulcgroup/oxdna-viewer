@@ -17,6 +17,7 @@ function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
     // around an axis with inverted y-value...
     let q2 = q.clone();
     q2.y *= -1;
+    console.time("rot");
     elements.forEach((e) => {
         let sys = e.getSystem();
         let sid = e.sid;
@@ -67,6 +68,7 @@ function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
         sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
         sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
     });
+    console.timeEnd("rot");
     if (updateScene) {
         // Update backbone connections for bases with neigbours outside the selection set
         elements.forEach((base) => {
@@ -132,8 +134,9 @@ function calcsp(currentNuc) {
     sys.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
 }
 function translateElements(elements, v) {
-    //console.time();
+    console.time("tran");
     let affected_elements = new Array();
+    let affected_systems = new Set();
     elements.forEach((e) => {
         let sys = e.getSystem();
         if (e.dummySys !== null) {
@@ -158,14 +161,17 @@ function translateElements(elements, v) {
         sys.bbconOffsets[yp] += v.y;
         sys.bbconOffsets[zp] += v.z;
         if (e.n3 !== null && e.n3 !== undefined) {
-            if (e.n3.getSystem() !== sys)
+            if (e.n3.getSystem() !== sys) {
                 affected_elements.push(e);
-            //calcsp(base); //calculate sp between current and n3
+                affected_systems.add(sys);
+            } //calculate sp between current and n3
         }
         if (e.n5 !== null && e.n5 !== undefined) {
-            //calcsp(base.n5); //calculate sp between current and n5
-            if (e.n5.getSystem() !== sys)
+            //calculate sp between current and n5
+            if (e.n5.getSystem() !== sys) {
                 affected_elements.push(e.n5);
+                affected_systems.add(e.n5.getSystem());
+            }
         }
     });
     // Update backbone connections (is there a more clever way to do this than
@@ -174,7 +180,7 @@ function translateElements(elements, v) {
     affected_elements.forEach(e => {
         calcsp(e);
     }); //better way, but there's still more room at the bottom
-    systems.forEach((sys) => {
+    affected_systems.forEach((sys) => {
         sys.callUpdates(['instanceOffset']);
     });
     for (let i = 0; i < tmpSystems.length; i++) {
@@ -190,6 +196,7 @@ function translateElements(elements, v) {
     }
     if (forceHandler)
         forceHandler.redraw();
+    console.timeEnd("tran");
     render();
 }
 //dragControls.activate();

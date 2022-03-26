@@ -320,6 +320,7 @@ THREE.TransformControls = function ( camera, domElement ) {
 		}
 
 	};
+	this.zeroRot = new THREE.Quaternion(0,0,0,1);
 
 	this.pointerMove = function ( pointer ) {
 
@@ -476,10 +477,10 @@ THREE.TransformControls = function ( camera, domElement ) {
 			}
 
 		}
-
+		//TODO: call only if we actually change stuff
 		let posDiff = position.clone().sub(currentPosition);
 		translateElements(selectedBases, posDiff);
-
+		
 		let rotDiff = quaternion.clone().multiply(currentQuaternion.clone().inverse());
 		rotateElementsByQuaternion(
 			selectedBases,
@@ -492,6 +493,7 @@ THREE.TransformControls = function ( camera, domElement ) {
 		this.dispatchEvent( changeEvent );
 		this.dispatchEvent( objectChangeEvent );
 	};
+	
 
 	this.pointerUp = function ( pointer ) {
 

@@ -126,7 +126,6 @@ class RigidClusterSimulator {
             forceHandler.redraw();
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
-            console.log("hi");
             requestAnimationFrame(this.simulate.bind(this));
         }
         else {
