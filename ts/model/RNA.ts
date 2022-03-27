@@ -42,7 +42,7 @@ class RNANucleotide extends Nucleotide {
      */
     extendStrand(len: number, direction:string, double: boolean) {
         // Model constants
-        let inclination = 15.5*Math.PI/180;
+        let inclination = -15.5*Math.PI/180;
         const bp_backbone_distance = 2;
         const diameter = 2.35;
         const base_base_distance = 0.3287;
@@ -53,29 +53,28 @@ class RNANucleotide extends Nucleotide {
 
         // Current nucleotide information
         const oldA1 = this.getA1();
-        const oldA2 = this.getA2();
         const oldA3 = this.getA3();
 
-        // The helix axis is 15.5 degrees off from the a3 vector as rotated around a2
-        const a3todir = new THREE.Quaternion();
-        let dir = oldA3.clone();
-        if (direction == "n3") {
+        // You can define the helix axis based on a1 and a3.  This is the inverse of how a3 is assigned below.
+        dir = (oldA3.clone().sub(oldA1.clone().multiplyScalar(Math.sin(inclination))).divideScalar(-(Math.cos(inclination) - Math.pow(Math.sin(inclination),2)))); 
+        dir.normalize();
+
+        // Correctly orient the helix for the direction you're going
+        if (direction == "n5") {
             dir.multiplyScalar(-1);
         }
-        a3todir.setFromAxisAngle(oldA2, inclination);
-        dir.applyQuaternion(a3todir);
-        dir.normalize();
 
         //when extending from the n5 side, do I need to set the target position to r2 instead of r1?
 
         // RNA does not form a helix with bases pointed at a central axis like DNA does
         // instead, you have a chord between two points on a circle which defines the cm positions and the a1 vectors
         // This is the chord if the helix axis is the Z-axis
+        // The y (and the inclination, above) are inverted from generate-RNA.py because this generates 5'-3' while it generates 3'-5'.
         const x1 = center_to_cord;
-        const y1 = cord/2;
+        const y1 = -cord/2;
         const z1 = -(bp_backbone_distance/2) * Math.sin(inclination);
         const x2 = center_to_cord;
-        const y2 = -cord/2;
+        const y2 = cord/2;
         const z2 = (bp_backbone_distance/2) * Math.sin(inclination);
         let r1 = new THREE.Vector3(x1, y1, z1);
         let r2 = new THREE.Vector3(x2, y2, z2);
@@ -112,12 +111,11 @@ class RNANucleotide extends Nucleotide {
 
         // center point of the helix axis
         // below, pos = r1 + start_pos + A1*0.4
-        //const start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
         let start_pos;  
         if (direction == "n3") {
-            start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(0.4));
+            start_pos = this.getPos().sub(r1).sub(oldA1.clone().multiplyScalar(fudge));
         } else {
-            start_pos = this.getPos().sub(r2).sub(oldA1.clone().multiplyScalar(0.4));
+            start_pos = this.getPos().sub(r2).sub(oldA1.clone().multiplyScalar(fudge));
         }
 
         // create per-step rotation matrix
@@ -152,15 +150,9 @@ class RNANucleotide extends Nucleotide {
             a1proj.normalize();
             a3 = dir.clone().multiplyScalar(-Math.cos(inclination)).add(a1proj.clone().multiplyScalar(Math.sin(inclination)));
             a3.normalize();
-            console.log(dir.dot(a3)*180/Math.PI);
 
-            //if (direction == "n5") {
-            //    a3.multiplyScalar(-1);
-            //}
-
-            // the COM is 0.4(6)? off from r1
+            // the COM is 0.4 off from r1
             // also need to offset to account for the helix axis not being (0,0,0)
-            //RNA_fudge = a1.clone().multiplyScalar(fudge);
             let p;
             if (direction == "n3") {
                 RNA_fudge = a1.clone().multiplyScalar(fudge);
@@ -174,6 +166,7 @@ class RNANucleotide extends Nucleotide {
             }
             out[i] = [p, a1.clone(), a3.clone()]
 
+            // Do it all again if there's a double helix.
             if (double) {
                 a1 = r1_to_r2.clone().normalize().multiplyScalar(-1);
                 a1proj = a1.clone().projectOnPlane(dir.clone().multiplyScalar(-1));
