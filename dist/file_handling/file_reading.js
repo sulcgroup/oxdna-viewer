@@ -951,6 +951,7 @@ function addSystemToScene(system) {
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     // This will force the gpu to check the vectors again when redrawing.
     if (system.isPatchySystem()) {
+        // Patchy particle geometries
         let s = system;
         if (s.species !== undefined) {
             const patchResolution = 4;
@@ -960,6 +961,7 @@ function addSystemToScene(system) {
                 let g = new THREE.InstancedBufferGeometry();
                 const points = [new THREE.Vector3()];
                 s.species[i].patches.forEach(patch => {
+                    // Need to invert y and z axis for mysterious reasons
                     const pos = patch.position.clone();
                     pos.y *= -1;
                     pos.z *= -1;
@@ -1005,6 +1007,7 @@ function addSystemToScene(system) {
         });
     }
     else {
+        // Classic nucleic acid geometries
         // Add the geometries to the systems
         system.backboneGeometry = instancedBackbone.clone();
         system.nucleosideGeometry = instancedNucleoside.clone();

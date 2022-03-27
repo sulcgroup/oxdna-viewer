@@ -1038,6 +1038,7 @@ function addSystemToScene(system: System) {
     // This will force the gpu to check the vectors again when redrawing.
 
     if (system.isPatchySystem()) {
+        // Patchy particle geometries
         let s = system as PatchySystem;
         if (s.species !== undefined) {
 
@@ -1051,6 +1052,7 @@ function addSystemToScene(system: System) {
                 const points = [new THREE.Vector3()];
 
                 s.species[i].patches.forEach(patch=>{
+                    // Need to invert y and z axis for mysterious reasons
                     const pos = patch.position.clone();
                     pos.y *= -1;
                     pos.z *= -1;
@@ -1105,6 +1107,8 @@ function addSystemToScene(system: System) {
         });
 
     } else {
+        // Classic nucleic acid geometries
+
         // Add the geometries to the systems
         system.backboneGeometry = instancedBackbone.clone();
         system.nucleosideGeometry = instancedNucleoside.clone();

@@ -262,7 +262,6 @@ class PatchySphere extends GenericSphere {
         const defaultA1 = new THREE.Vector3(1, 0, 0);
         const defaultA3 = new THREE.Vector3(0, 0, 1);
         const q = rotateVectorsSimultaneously(defaultA1, defaultA3, a1.clone(), a3.clone());
-        //const q = new THREE.Quaternion();
         console.assert(defaultA1.clone().applyQuaternion(q).distanceTo(a1) < 1e-5, "a1 wrong");
         console.assert(defaultA3.clone().applyQuaternion(q).distanceTo(a3) < 1e-5, "a3 wrong");
         // For some reason, we have to rotate the orientations
