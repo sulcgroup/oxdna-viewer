@@ -377,15 +377,7 @@ class TrajectoryReader {
                 l = lines[lineNum].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l);
             }
-            system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-            system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.callUpdates(['instanceOffset', 'instanceRotation']);
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)

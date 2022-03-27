@@ -258,12 +258,6 @@ class PatchySphere extends GenericSphere {
         let sid = this.sid;
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
-        //p.y *= -1;
-        //p.z *= -1;
-        //a1.y *= -1;
-        //a1.z *= -1;
-        //a3.y *= -1;
-        //a3.z *= -1;
         let scale = 1;
         const defaultA1 = new THREE.Vector3(1, 0, 0);
         const defaultA3 = new THREE.Vector3(0, 0, 1);
