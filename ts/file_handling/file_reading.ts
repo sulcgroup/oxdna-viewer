@@ -1041,7 +1041,7 @@ function addSystemToScene(system: System) {
         let s = system as PatchySystem;
         if (s.species !== undefined) {
 
-            const patchResolution = 32;
+            const patchResolution = 4;
             const patchWidth = 0.2;
             const patchAlignWidth = 0.3;
 
@@ -1052,17 +1052,16 @@ function addSystemToScene(system: System) {
 
                 s.species[i].patches.forEach(patch=>{
                     const pos = patch.position.clone();
-                    //pos.x *= -1;
-                    //pos.y *= -1;
-                    //pos.z *= -1;
+                    pos.y *= -1;
+                    pos.z *= -1;
 
                     const a1 = patch.a1.clone();
-                    //a1.y *= -1;
-                    //a1.z *= -1;
+                    a1.y *= -1;
+                    a1.z *= -1;
 
                     const a2 = patch.a2.clone();
-                    //a2.y *= -1;
-                    //a2.z *= -1;
+                    a2.y *= -1;
+                    a2.z *= -1;
                     for (let i=0; i<patchResolution; i++) {
                         let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
                         diff.applyAxisAngle(
