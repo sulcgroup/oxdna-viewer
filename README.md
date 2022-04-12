@@ -4,7 +4,7 @@
 
 ![oxdna-viewer interface](img/editing.gif)
 
-A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.2 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and open index.html in a browser window. To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later.
+A browser-based visualization tool that uses the [Three.js](https://threejs.org/) JavaScript library to create a smooth, seamless oxDNA configuration viewing and editing experience, even for very large configuration files (current record is 1.2 million nucleotides). To begin, either hit the "Try it" link above, or clone the repository and   [follow these steps](#updates-and-writing-your-own-extensions-or-running-oxView-locally). To use, simply drag and drop a topology and configuration/trajectory file pair into the browser window. If you have JSON overlay files, they can be dragged in together with the topology and configuration, or dragged separately later.
 
 ---
 
@@ -23,7 +23,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
   * [3D Printing Export](#3d-printing-export)
   * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
   * [Known issues](#known-issues)
-  * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions)
+  * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions-or-running-oxView-locally)
   * [Citation](#citation)
   * [Acknowledgements](#acknowledgements)
 
@@ -176,7 +176,7 @@ See a tutorial [here](https://www.youtube.com/watch?v=FtU-Sr3aLdI).
 ## Known issues
 oxView relies on WebGL hardware acceleration, if you have turned this feature off, oxView will run very slowly.  [Here's an example](https://www.howtogeek.com/412738/how-to-turn-hardware-acceleration-on-and-off-in-chrome/) of how to check if you have hardware acceleration disabled and how to enable it on Chrome.
 
-## Updates and writing your own extensions
+## Updates and writing your own extensions or running oxView locally 
 This software is still in active development, so features remain in high flux.  If you would like to make a feature request or to report a bug, please let us know in the Issues tab!  Remember to pull often if you're running the viewer locally to get the newest features.
 
 If you want to extend the code for your own purposes, you will also need to install Typescript, Three.js and Typescript bindings for Three.  Full download instructions:
@@ -184,18 +184,22 @@ If you want to extend the code for your own purposes, you will also need to inst
 1) `git clone -b master https://github.com/sulcgroup/oxdna-viewer.git`
 2) Download Typescript and Node.js 
    ts and npm ask for different name of node.js: one is node and another is nodejs, you may need to change the name of it accordingly or get an extra copy  
-3) `npm install --save @types/three`
-   If it goes wrong, open the package.json file and change "name", into "types/three-test" and try again  
-   Refer to https://thisdavej.com/node-newbie-error-npm-refusing-to-install-package-as-a-dependency-of-itself  
-4) Go to oxdna-viewer folder  
-5) `npm install --save @types/webvr-api`
-   These previous two steps install the necessary Typescript bindings for Three.js  
-6) `tsc`  
+3) Go to oxdna-viewer folder  
+4) `npm install` will install the rest dependencies.
+5) `tsc`  
    This is the command to run the typescript compiler.  Output directory and adding new files to the compiler can be found in tsconfig.json  
    tsc needs to be run every time you make changes to the Typescript.  If you run tsc with the -w flag it will continuously watch for file changes.  
-7) The compiled Javascript will be in the dist/ directory  
-8) Open index.html in any browser (Chrome works best)
+6) The compiled Javascript will be in the dist/ directory  
+7) use your favorite development webserver to access the page:
+* https://www.npmjs.com/package/reload is a server with live update of the page (detecting compiled code changes)  
+  after installation usage is `reload -b` run in the oxView intallation directory. The server will output a the link to 
+  the page on the command line. 
+* alternatively if you have python installed on your system you can use (https://docs.python.org/3/library/http.server.html)
+  usage is `python -m http.server 8000`, providing access to the page on localhost:8000  
 
+Alternatively if you are just interested in using oxView locally, do step 1 and proceed straight to step 7. 
+Or check out the release section 
+ 
 ## Citation
 If you use oxView or our oxDNA analysis package in your research, please cite:  
 

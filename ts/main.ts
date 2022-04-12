@@ -95,6 +95,7 @@ var selectednetwork: number = 0; // Only used for networks
 const networks: Network[] = []; // Only used for networks, replaced anms
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
+var unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
 
 var lut, devs: number[]; //need for Lut coloring
 
@@ -129,6 +130,41 @@ function findBasepairs(min_length=0) {
         system.checkedForBasepairs = true;
     });
 };
+
+function connectedSelectorWrapper():void{
+    let strands = new Set<Strand>();
+    let selected_nucleotides  = [... selectedBases].filter(e=>e instanceof Nucleotide);
+    // go over our selection and recheck base pairing for every suspecious nucleotide
+    selected_nucleotides.forEach(e =>{
+        if(e instanceof Nucleotide && !e.strand.system.checkedForBasepairs && !e.pair) {
+            e.pair = e.findPair();
+                if(e.pair) {
+                    e.pair.pair = e;
+            }
+        }
+    });
+    // decompose nucleotides into strands
+    selected_nucleotides.forEach(p  =>{
+        if (p instanceof Nucleotide && p.pair)
+            strands.add(p.pair.strand);
+    });
+    // now we have all the strands that are making up the selected bases
+    // if we don't have base pairs in the fist strand, we have to search for pairs
+    strands.forEach(strand => {
+        strand.forEach(p => p.select());
+    });
+    //update the visuals 
+    systems.forEach(updateView);
+    tmpSystems.forEach(updateView);
+    
+}
+
+
+
+// Utility function to pick a random element from list
+function randomChoice(l: any[]): any {
+    return l[Math.floor(Math.random()*l.length)];
+}
 
 function findBasepairsOrigami(min_length=1000) {
     findBasepairs(min_length);

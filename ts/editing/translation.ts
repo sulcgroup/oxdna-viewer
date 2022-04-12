@@ -13,7 +13,7 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     if(forceHandler) forceHandler.redraw();
 }
 
-function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3) {
+function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3, updateScene: Boolean=true) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
     let q2 = q.clone();
@@ -78,30 +78,32 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
         sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
     });
 
-    // Update backbone connections for bases with neigbours outside the selection set
-    elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
-            calcsp(base); //calculate sp between current and n3
-        }
-        if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
-            calcsp(base.n5); //calculate sp between current and n5
-        }
-    });
+    if (updateScene){
+        // Update backbone connections for bases with neigbours outside the selection set
+        elements.forEach((base) => {
+            if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
+                calcsp(base); //calculate sp between current and n3
+            }
+            if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
+                calcsp(base.n5); //calculate sp between current and n5
+            }
+        });
 
-    for (let i = 0; i < systems.length; i++){
-        systems[i].callUpdates(['instanceOffset', 'instanceRotation'])
-    }
-    for (let i = 0; i < tmpSystems.length; i++){
-        tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation'])
-    }
-    for ( let i = 0; i< networks.length; i++){
-        let check = [...elements].filter(e => {if(networks[i].particles.indexOf(e) > -1) {return true;}})
-        if(check.length != 0){
-            networks[i].updatePositions();
-            networks[i].updateRotations(q2);
+        for (let i = 0; i < systems.length; i++){
+            systems[i].callUpdates(['instanceOffset', 'instanceRotation'])
         }
+        for (let i = 0; i < tmpSystems.length; i++){
+            tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation'])
+        }
+        for ( let i = 0; i< networks.length; i++){
+            let check = [...elements].filter(e => {if(networks[i].particles.indexOf(e) > -1) {return true;}})
+            if(check.length != 0){
+                networks[i].updatePositions();
+                networks[i].updateRotations(q2);
+            }
+        }
+        render();
     }
-    render();
 }
 
 //adjust the backbone after the move. Copied from DragControls
@@ -177,6 +179,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
+    let affectedSystems = new Set<System>();
     elements.forEach((base) => {
         if (base.n3 !== null && base.n3 !== undefined) {
             calcsp(base); //calculate sp between current and n3
@@ -184,11 +187,13 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
         if (base.n5 !== null && base.n5 !== undefined) {
             calcsp(base.n5); //calculate sp between current and n5
         }
+        affectedSystems.add(base.getSystem());
+        
     });
 
-    for (let i = 0; i < systems.length; i++){
-        systems[i].callUpdates(['instanceOffset'])
-    }
+    affectedSystems.forEach((sys) => {
+        sys.callUpdates(['instanceOffset'])
+    });
     for (let i = 0; i < tmpSystems.length; i++){
         tmpSystems[i].callUpdates(['instanceOffset'])
     }

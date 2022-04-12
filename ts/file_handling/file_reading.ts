@@ -176,6 +176,7 @@ function handleFiles(files: FileList) {
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
+       
         // get file extension
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
@@ -192,16 +193,20 @@ function handleFiles(files: FileList) {
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
             pdbFile = files[i];
         }
+        else if (ext === "unf") {
+            readUNFfile(files[i]);
+            return;
+        }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext)) datFile = files[i];
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
+        else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) particleFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
-        else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix")) particleFile = files[i];
         // otherwise, what is this?
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -397,9 +402,21 @@ function readPBFromId(pdbID: string) {
     readFilesFromPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
 }
 
+function readNanobaseFromURL(url: string) {
+    const id = url.split('/').pop();
+    const path = `https://nanobase.org/oxdna/${id}`
+    let req = new XMLHttpRequest();
+    req.open("GET", path);
+    req.onload = () => {
+        let file_names = req.response.split('|');
+        file_names = file_names.map(file_name => `https://nanobase.org/file/${id}/structure/${file_name}`)
+        readFilesFromPath(file_names);
+    }
+    req.send();
+}
+
 // Files can also be retrieved from a path
 function readFilesFromPath(paths: string[]) {
-
     const promises = paths.map(p => new Promise (resolve => {
         let req = new XMLHttpRequest();
         req.open("GET", p);
@@ -472,7 +489,7 @@ function readFilesFromPathArgs(args){
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") pdbFile = file;
-                else if ( fileName.includes("particles") || fileName.includes("LORO") || fileName.includes("matrix"))
+                else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
                     particleFile = file;
                 // otherwise, what is this?
                 else {
@@ -1302,5 +1319,13 @@ function readPdbFile(file) {
     activate();
     pdbtemp=[];
 
+}
+
+function readUNFfile(file: File) {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        readUNFString(e.target.result as string);
+    };
+    reader.readAsText(file);
 }
 

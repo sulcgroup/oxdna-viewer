@@ -34,6 +34,7 @@ abstract class Nucleotide extends BasicElement {
     };
 
     calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3, colorUpdate?: boolean) {
+        
         let sys = this.getSystem(),
             sid = this.sid;
         if (this.dummySys !== null) {
@@ -105,7 +106,6 @@ abstract class Nucleotide extends BasicElement {
         //fill the instance matrices with data
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, bb.toArray());
-        sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
         sys.fillVec('conOffsets', 3, sid, con.toArray());
@@ -249,10 +249,50 @@ abstract class Nucleotide extends BasicElement {
         return this.pair? true : false;
     }
 
+    abstract weakPyrimindine(): string;
+
+    typeOptions(type: string) {
+        // https://www.megasoftware.net/web_help_7/rh_iupac_single_letter_codes.htm
+        const wp = this.weakPyrimindine;
+        switch (type) {
+            case 'R': return ['A','G']; // Purine
+            case 'Y': return ['C', wp()]; // Pyrimindine
+            case 'M': return ['A','C'];
+            case 'K': return ['G', wp()];
+            case 'S': return ['C','G']; // String
+            case 'W': return ['A', wp()]; // Weak
+            case 'H': return ['A','C', wp()]; // Not G
+            case 'B': return ['C','G', wp()]; // Not A
+            case 'V': return ['A','C','G']; // Not U/T
+            case 'D': return ['A','G', wp()]; // Not C
+            case 'N': return ['A','C','G',wp()]; // Ambiguous
+            default: return [type];
+        }
+    }
+
+    setType(type: string) {
+        this.type = randomChoice(this.typeOptions(type));
+    }
+
+    isType(type: string) {
+        if (type === this.type) {
+            return true;
+        } else {
+            // We could skip the previous check and run this directly,
+            // but it is quicker to first check for equality since that
+            // is the most common.
+            return this.typeOptions(type).includes(this.type);
+        }
+    }
+
+    isNucleotide() {
+        return true;
+    }
+
     getA1 () {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
-        return ns.clone().sub(cm).divideScalar(0.4);
+        return ns.clone().sub(cm).divideScalar(0.4).normalize();
     }
 
     abstract getA2(): THREE.Vector3;
