@@ -338,17 +338,6 @@ function makeMassFile(name: string, altNumbering, counts, gsSubtypes){ //mass fi
         makeTextFile(name, text);
 }
 
-
-
-function writeMutTrapText(base1: number, base2: number): string { //create string to be inserted into mutual trap file
-	return "{\n" + "type = mutual_trap\n" +
-		"particle = " + base1 + "\n" +
-		"ref_particle = " + base2 + "\n" +
-		"stiff = 0.09\n" +
-		"r0 = 1.2 \n" + 
-		"PBC = 1" + "\n}\n\n";
-}
-
 function makeForceFile() {
     if(forces.length > 0) {
         makeTextFile("external_forces.txt", forcesToString());

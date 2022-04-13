@@ -127,7 +127,7 @@ class Cluster {
         // http://scienceworld.wolfram.com/physics/MomentofInertiaSphere.html
         this.momentOfInertia_inv = new THREE.Matrix3(); // Identity matrix
         this.momentOfInertia_inv.multiplyScalar(5 / (2 * this.mass * Math.pow(this.radius, 2)));
-        let traps = forces.filter(f => f.type == 'mutual_trap');
+        let traps = forces.filter(f => f instanceof PairwiseForce);
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
             if (e.n3 && e.n3.clusterId !== e.clusterId) {
