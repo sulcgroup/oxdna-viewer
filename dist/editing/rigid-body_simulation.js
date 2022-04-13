@@ -62,6 +62,9 @@ class RigidClusterSimulator {
      */
     integrate(dt) {
         this.clusters.forEach((c) => {
+            let intersect = new Set([...selectedBases].filter(i => c.getClusterElements().has(i)));
+            if (intersect.size != 0)
+                return; // don't touch the cluster if it is selected
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
             // Calculate simple linear repulsion between clusters
@@ -158,6 +161,9 @@ class Cluster {
         });
         this.position.divideScalar(this.clusterElements.size);
     }
+    getClusterElements() {
+        return this.clusterElements;
+    }
     getPosition() {
         return this.position.clone();
     }
@@ -172,6 +178,9 @@ class Cluster {
     }
     getElements() {
         return this.clusterElements;
+    }
+    getRotationAxis() {
+        return this.rot_axis.clone();
     }
     /**
      * Calculate spring forces between inter-cluster backbone bonds
@@ -201,6 +210,8 @@ class Cluster {
         this.linearVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaP = this.linearVelocity.clone().multiplyScalar(dt);
         this.position.add(deltaP);
+        //rotation axis for undos
+        this.rot_axis = this.position.clone();
         // Calculate rotation
         let angularMomentum = this.torque.clone().applyMatrix3(this.momentOfInertia_inv);
         this.angularVelocity.add(angularMomentum.clone().multiplyScalar(dt));

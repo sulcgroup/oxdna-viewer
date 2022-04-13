@@ -278,12 +278,13 @@ class RevertableClusterSim extends RevertableEdit {
                 "transl": c.getTotalTranslation(),
                 "rot": c.getTotalRotation(),
                 "pos": c.getPosition(),
+                "rot_axis": c.getRotationAxis(),
             });
         });
         let undo = function() {
             cs.forEach((c) => {
                 rotateElementsByQuaternion(
-                    c["elems"], c["rot"].clone().conjugate(), c["pos"]
+                    c["elems"], c["rot"].clone().conjugate(), c["rot_axis"]
                 );
                 translateElements(
                     c["elems"], c["transl"].clone().negate()
@@ -296,7 +297,7 @@ class RevertableClusterSim extends RevertableEdit {
                     c["elems"], c["transl"]
                 );
                 rotateElementsByQuaternion(
-                    c["elems"], c["rot"], c["pos"]
+                    c["elems"], c["rot"], c["rot_axis"]
                 );
             });
         }
