@@ -1042,9 +1042,10 @@ function addSystemToScene(system: System) {
         let s = system as PatchySystem;
         if (s.species !== undefined) {
 
-            const patchResolution = 4;
-            const patchWidth = 0.2;
-            const patchAlignWidth = 0.3;
+            const patchResolution = 4; // Number of points defining each patch
+            const patchWidth = 0.2; // Radius of patch "circle"
+            const patchAlignWidth = 0.3; // Widest radius of patch circle
+                                         // (indicating patch alignment)
 
             s.patchyGeometries = s.offsets.map((_,i)=>{
                 let g = new THREE.InstancedBufferGeometry();
@@ -1064,17 +1065,23 @@ function addSystemToScene(system: System) {
                     const a2 = patch.a2.clone();
                     a2.y *= -1;
                     a2.z *= -1;
-                    for (let i=0; i<patchResolution; i++) {
-                        let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
-                        diff.applyAxisAngle(
-                            a1,
-                            i * 2*Math.PI/patchResolution
-                        );
-                        points.push(
-                            pos.clone().add(diff)
-                        );
+
+                    // Too many patches.txt files fail to set a1 and a2 correctly.
+                    if (Math.abs(a1.dot(a2)) > 1e-5) {
+                        console.warn(`The a1 and a2 vectors are incorrectly defined in species ${i}. Using patch position instead`);
+                        points.push(pos.clone());
+                    } else {
+                        for (let i=0; i<patchResolution; i++) {
+                            let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
+                            diff.applyAxisAngle(
+                                a1,
+                                i * 2*Math.PI/patchResolution
+                            );
+                            points.push(
+                                pos.clone().add(diff)
+                            );
+                        }
                     }
-                    console.log(`Patch at ${patch.position.toArray()}`);
                 });
                 let particleGeometry = new THREE.ConvexGeometry(points);
 
