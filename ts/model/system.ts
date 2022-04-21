@@ -278,6 +278,12 @@ class System {
         render();
     };
 
+    doVisuals(action:Function){
+        action();
+        this.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility']);
+        render();
+    };
+
     fillVec(vecName, unitSize, pos, vals) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i]
