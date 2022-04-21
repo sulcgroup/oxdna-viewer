@@ -1,3 +1,4 @@
+"use strict";
 /**
  * The abstract class that all drawn monomers inherit from
  * @param id - The global id of the element.  Also its key in the elements map

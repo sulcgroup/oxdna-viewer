@@ -1,3 +1,4 @@
+"use strict";
 // <reference path="./three/index.d.ts" />
 // <reference path="./controls/three-trackballcontrols.d.ts" />
 // <reference path="./lib/stats.js" />

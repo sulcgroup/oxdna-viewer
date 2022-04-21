@@ -68,6 +68,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					break;
 				case "Strand" :
 					let orderFlag: boolean = true ? nucleotide.strand.isNucleicAcid() : false;
+					if(nucleotide)
 					nucleotide.strand.forEach(e=>{
 						e.toggle();
 						if(view.selectPairs()) {

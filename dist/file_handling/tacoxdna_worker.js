@@ -1,3 +1,4 @@
+"use strict";
 importScripts('../../ts/lib/three.js');
 var tacoxdna; // Make typescript happy
 importScripts('../../ts/lib/tacoxdna.js');

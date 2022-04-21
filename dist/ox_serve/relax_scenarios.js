@@ -1,3 +1,4 @@
+"use strict";
 var relax_scenarios = {
     "MC": {
         "const": {

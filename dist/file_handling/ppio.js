@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 class PatchyTopReader extends FileReader {
     constructor(topFile, system, elems, callback) {

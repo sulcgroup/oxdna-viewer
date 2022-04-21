@@ -1,3 +1,4 @@
+"use strict";
 function createVideo() {
     // Get canvas
     const canvas = document.getElementById("threeCanvas");

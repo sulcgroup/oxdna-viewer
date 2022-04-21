@@ -1,26 +1,42 @@
-"use strict";
+let run_simulation = false;
+let i = 0;
+this.onmessage = function (e) {
+    let data = e.data;
+    if (data) {
+        run_simulation = !run_simulation;
+        if (run_simulation) {
+            simulate();
+        }
+    }
+};
+let simulate = () => {
+    if (run_simulation) {
+        console.log(i++);
+        setTimeout(simulate, 0);
+    }
+};
 // Global variable for simulator
-let rigidClusterSimulator;
+let rigidClusterSimulatorW;
 /**
  * Start rigid-body simulator if it's not already running
  */
-function toggleClusterSim() {
-    if (!view.getInputBool("clusterSim")) {
-        rigidClusterSimulator = null;
-        return;
-    }
-    if (!rigidClusterSimulator) {
-        rigidClusterSimulator = new RigidClusterSimulator();
-        if (rigidClusterSimulator.getNumberOfClusters() < 2) {
-            notify("Please create at least 2 clusters");
-            view.toggleWindow("clusteringWindow");
-            document.getElementById("clusterSim")["checked"] = false;
-            rigidClusterSimulator = null;
-            return;
-        }
-    }
-    rigidClusterSimulator.simulate();
-}
+//function toggleClusterSimW() {
+//    if (!view.getInputBool("clusterSim")) {
+//        rigidClusterSimulatorW = null;
+//        return;
+//    }
+//    if (!rigidClusterSimulatorW) {
+//        rigidClusterSimulatorW = new RigidClusterSimulatorW();
+//        if (rigidClusterSimulatorW.getNumberOfClusters() < 2) {
+//            notify("Please create at least 2 clusters");
+//            view.toggleWindow("clusteringWindow");
+//            document.getElementById("clusterSim")["checked"] = false;
+//            rigidClusterSimulatorW = null;
+//            return;
+//        }
+//    }
+//    rigidClusterSimulatorW.simulate();
+//}
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
 // https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics
 /**
@@ -28,7 +44,7 @@ function toggleClusterSim() {
  *  as well as a repulsive force at the centre of each cluster, then simulate
  *  the system with rigid-body dynamics.
  */
-class RigidClusterSimulator {
+class RigidClusterSimulatorW {
     constructor() {
         this.clusters = [];
         // load settings from view:
@@ -50,7 +66,7 @@ class RigidClusterSimulator {
             m.get(c).add(e);
         });
         m.forEach((clusterElements) => {
-            this.clusters.push(new Cluster(clusterElements, this));
+            this.clusters.push(new ClusterW(clusterElements, this));
         });
     }
     ;
@@ -63,6 +79,9 @@ class RigidClusterSimulator {
      */
     integrate(dt) {
         this.clusters.forEach((c) => {
+            let intersect = new Set([...selectedBases].filter(i => c.getClusterElements().has(i)));
+            if (intersect.size != 0)
+                return; // don't touch the cluster if it is selected
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
             // Calculate simple linear repulsion between clusters
@@ -99,13 +118,13 @@ class RigidClusterSimulator {
             requestAnimationFrame(this.simulate.bind(this));
         }
         else {
-            editHistory.add(new RevertableClusterSim(this.clusters));
+            //editHistory.add(new RevertableClusterSim(this.clusters));
             console.log("Added simulation result to edit history");
         }
     }
     ;
 }
-class Cluster {
+class ClusterW {
     /**
      * Create a rigid-body cluster from the given set of elements
      * @param clusterElements Set of BasicElements making up the cluster
@@ -159,6 +178,9 @@ class Cluster {
         });
         this.position.divideScalar(this.clusterElements.size);
     }
+    getClusterElements() {
+        return this.clusterElements;
+    }
     getPosition() {
         return this.position.clone();
     }
@@ -174,13 +196,13 @@ class Cluster {
     getElements() {
         return this.clusterElements;
     }
+    getRotationAxis() {
+        return this.rot_axis.clone();
+    }
     /**
      * Calculate spring forces between inter-cluster backbone bonds
      */
     computeConnectionForces() {
-        let intersect = new Set([...selectedBases].filter(i => this.clusterElements.has(i)));
-        if (intersect.size != 0)
-            return; // don't touch the cluster if it is selected
         this.conPoints.forEach((p) => {
             let scalar = this.sim.connectionSpringConst * (p.getDist() - this.sim.connectionRelaxedLength);
             let f = p.getToPos().clone().sub(p.getFromPos());
@@ -205,6 +227,8 @@ class Cluster {
         this.linearVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaP = this.linearVelocity.clone().multiplyScalar(dt);
         this.position.add(deltaP);
+        //rotation axis for undos
+        this.rot_axis = this.position.clone();
         // Calculate rotation
         let angularMomentum = this.torque.clone().applyMatrix3(this.momentOfInertia_inv);
         this.angularVelocity.add(angularMomentum.clone().multiplyScalar(dt));
@@ -243,7 +267,7 @@ class Cluster {
 /**
  * Cluster helper class, defines a connection between clusters
  */
-class ClusterConnectionPoint {
+class ClusterConnectionPointW {
     constructor(from, to) {
         this.from = from;
         this.to = to;

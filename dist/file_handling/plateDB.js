@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 let dbinfo = localStorage.getItem("plateDB");
 let plateDB = dbinfo ? JSON.parse(dbinfo) : {};

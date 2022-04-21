@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Extends Nuculeotide with RNA-specific properties such as base position relative to backbone, and A-form helix creation
  */

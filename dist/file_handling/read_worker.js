@@ -1,3 +1,4 @@
+"use strict";
 importScripts('./io.js');
 let offset = 0;
 let cur_offset = 0;

@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Bits of code that handle structure editing
  */

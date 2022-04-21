@@ -1,3 +1,4 @@
+"use strict";
 //THREE quaternions are in (x, y, z, w) order
 //GLSL quaternions are in (w, z, y, x) order
 //So when you need to convert between them...

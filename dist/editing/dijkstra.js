@@ -1,3 +1,4 @@
+"use strict";
 // Modified from https://github.com/mburst/dijkstras-algorithm
 /**
  * A node for priorioty linked list / stack and such

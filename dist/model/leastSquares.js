@@ -1,3 +1,4 @@
+"use strict";
 function findLineByLeastSquares(values_x, values_y) {
     let sum_x = 0;
     let sum_y = 0;

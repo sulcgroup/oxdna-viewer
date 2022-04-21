@@ -1,3 +1,4 @@
+"use strict";
 /**
  * extends BasicElement with nucleotide properties.  This mostly involves any function that takes orientation into account.
  * This also specifies the visual structure of a nucleotide.

@@ -1,3 +1,4 @@
+"use strict";
 function forcesToString() {
     let [newElementIds, ,] = getNewIds();
     return forces.map(f => f.toString(newElementIds)).join('\n\n');

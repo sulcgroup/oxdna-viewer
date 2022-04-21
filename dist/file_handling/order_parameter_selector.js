@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 function getRandomInt(max) {
     return Math.floor(Math.random() * Math.floor(max));

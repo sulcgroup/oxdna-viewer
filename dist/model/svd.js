@@ -1,3 +1,4 @@
+"use strict";
 /** SVD procedure as explained in "Singular Value Decomposition and Least Squares Solutions. By G.H. Golub et al."
  *
  * Edited by Jonah Procyk 2/16/21, Major edits to properly sort the eigenvalues and eigenvectors

@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../model/basicElement.ts" />
 /// <reference path="../scene/scene_setup.ts" />

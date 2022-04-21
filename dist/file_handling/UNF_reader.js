@@ -1,3 +1,4 @@
+"use strict";
 function readUNFString(s) {
     //the peptide and nucleic acid strands actually have almost the same structure, but different names...
     function isNa(obj) {

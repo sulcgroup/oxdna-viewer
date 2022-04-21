@@ -1,3 +1,4 @@
+"use strict";
 importScripts('./pdb_lib.js');
 importScripts("../../ts/lib/three.js");
 importScripts("../model/basicElement.js");

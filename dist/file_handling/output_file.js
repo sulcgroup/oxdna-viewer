@@ -1,3 +1,4 @@
+"use strict";
 function makeOutputFiles() {
     let name = view.getInputValue("outputFilename");
     let top = view.getInputBool("topDownload");

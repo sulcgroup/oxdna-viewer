@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../api/observable_api.ts" />
 /// <reference path="../file_handling/file_reading.ts" />

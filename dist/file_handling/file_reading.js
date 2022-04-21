@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 // Only show options for the selected input format
 function toggleInputOpts(value) {

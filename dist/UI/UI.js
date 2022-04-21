@@ -1,3 +1,4 @@
+"use strict";
 var VRButton;
 function select3psWrapper() {
     if (selectedBases.size == 0) {
@@ -1410,7 +1411,7 @@ class fluxGraph {
                     });
                     return promise;
                 }
-                activate().then(r => mainWorker.terminate());
+                activate().then(_ => mainWorker.terminate());
             }
             else {
                 console.log("No Webworker Found");

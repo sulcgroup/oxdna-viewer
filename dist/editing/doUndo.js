@@ -1,3 +1,4 @@
+"use strict";
 class EditHistory {
     constructor() {
         this.undoStack = new Stack();

@@ -1,3 +1,4 @@
+"use strict";
 /**
  * A collection of strands that were loaded as a single file.
  * Systems contain all the data arrays that specify the properties of every monomer contained in their strands.

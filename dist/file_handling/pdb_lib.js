@@ -1,3 +1,4 @@
+"use strict";
 // Helper Objects for pdb parsing
 class graphData {
     constructor(l, d, x, dt, u) {

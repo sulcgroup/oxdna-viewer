@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Two simple classes meant for easy generation, viewing, and deletion of networks
  */

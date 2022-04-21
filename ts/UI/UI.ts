@@ -1495,7 +1495,7 @@ class fluxGraph {
                     return promise;
                 }
 
-                activate().then(r => mainWorker.terminate());
+                activate().then(_ => mainWorker.terminate());
 
             } else {
                 console.log("No Webworker Found");

@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Bits of code to facilitate querying structures from the browser console
  */

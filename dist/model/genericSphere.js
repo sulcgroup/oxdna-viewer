@@ -1,3 +1,4 @@
+"use strict";
 /**
  * Extends BasicElement with amino acid-specific properties such as the larger colormap to account for 20 types.
  * This class is incomplete and only supports visualization right now.  Editing will not work.

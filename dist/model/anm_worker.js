@@ -1,3 +1,4 @@
+"use strict";
 // helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
 function matrixDot(A, radim, cadim, B, rbdim, cbdim) {
     // var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));

@@ -1,3 +1,4 @@
+"use strict";
 const instanceParams = new Map([
     ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
     ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],

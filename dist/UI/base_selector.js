@@ -1,3 +1,4 @@
+"use strict";
 /// <reference path="../typescript_definitions/index.d.ts" />
 let mouse3D;
 let raycaster = new THREE.Raycaster();
@@ -61,17 +62,18 @@ canvas.addEventListener('mousedown', event => {
                     break;
                 case "Strand":
                     let orderFlag = true ? nucleotide.strand.isNucleicAcid() : false;
-                    nucleotide.strand.forEach(e => {
-                        e.toggle();
-                        if (view.selectPairs()) {
-                            if (!nucleotide.isPaired()) {
-                                view.longCalculation(findBasepairs, view.basepairMessage, () => { selectPaired(e); updateView(sys); });
+                    if (nucleotide)
+                        nucleotide.strand.forEach(e => {
+                            e.toggle();
+                            if (view.selectPairs()) {
+                                if (!nucleotide.isPaired()) {
+                                    view.longCalculation(findBasepairs, view.basepairMessage, () => { selectPaired(e); updateView(sys); });
+                                }
+                                else {
+                                    selectPaired(e);
+                                }
                             }
-                            else {
-                                selectPaired(e);
-                            }
-                        }
-                    }, orderFlag);
+                        }, orderFlag);
                     updateView(sys);
                     break;
                 case "Monomer":
