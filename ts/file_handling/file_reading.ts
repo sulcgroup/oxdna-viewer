@@ -385,6 +385,12 @@ function readTrap(system, trapReader) {
                 mutTrap.update();
                 forces.push(mutTrap);
                 break;
+            case "skew_trap":
+                let skewTrap = new SkewTrap();
+                skewTrap.setFromParsedJson(f);
+                skewTrap.update();
+                forces.push(skewTrap);
+                break;
             default:
                 notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                 break;
@@ -902,6 +908,12 @@ function readOxViewString(s: string) {
                     mutTrap.setFromParsedJson(f);
                     mutTrap.update();
                     forces.push(mutTrap);
+                    break;
+                case "skew_trap":
+                    let skewTrap = new SkewTrap();
+                    skewTrap.setFromParsedJson(f);
+                    skewTrap.update();
+                    forces.push(skewTrap);
                     break;
                 default:
                     notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);

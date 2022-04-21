@@ -276,14 +276,6 @@ function makeMassFile(name, altNumbering, counts, gsSubtypes) {
     let text = gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString()).join('\n');
     makeTextFile(name, text);
 }
-function writeMutTrapText(base1, base2) {
-    return "{\n" + "type = mutual_trap\n" +
-        "particle = " + base1 + "\n" +
-        "ref_particle = " + base2 + "\n" +
-        "stiff = 0.09\n" +
-        "r0 = 1.2 \n" +
-        "PBC = 1" + "\n}\n\n";
-}
 function makeForceFile() {
     if (forces.length > 0) {
         makeTextFile("external_forces.txt", forcesToString());

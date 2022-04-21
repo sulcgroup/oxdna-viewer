@@ -165,7 +165,7 @@ class Cluster {
             5 / (2 * this.mass * Math.pow(this.radius, 2)));
 
 
-        let traps = forces.filter(f=>f.type == 'mutual_trap');
+        let traps = forces.filter(f=>f instanceof PairwiseForce);
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
             if (e.n3 && e.n3.clusterId !== e.clusterId) {
@@ -175,7 +175,7 @@ class Cluster {
                 this.conPoints.push(new ClusterConnectionPoint(e, e.n5));
             }
             // Pull together inter-cluster traps
-            traps.forEach((t: MutualTrap)=>{
+            traps.forEach((t: PairwiseForce)=>{
                 if (t.particle == e) {
                     this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
                 }
