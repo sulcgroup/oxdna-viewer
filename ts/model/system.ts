@@ -298,6 +298,7 @@ class System {
 class PatchySystem extends System {
     patchyGeometries: THREE.InstancedBufferGeometry[];
     patchyMeshes: THREE.Mesh[];
+    pickingMeshes: THREE.Mesh[];
     offsets: Float32Array[];
     rotations: Float32Array[];
     colors: Float32Array[];
@@ -427,6 +428,9 @@ class PatchySystem extends System {
     callUpdates(names : string[]) {
         names.forEach((name) => {
             this.patchyMeshes.forEach(mesh=>{
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+            this.pickingMeshes.forEach(mesh=>{
                 mesh.geometry["attributes"][name].needsUpdate = true;
             });
         });

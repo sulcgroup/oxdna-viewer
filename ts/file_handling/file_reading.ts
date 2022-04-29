@@ -1114,15 +1114,17 @@ function addSystemToScene(system: System) {
         });
 
         // Picking
-        s.patchyGeometries.forEach((g,i)=>{
+        s.pickingMeshes = s.patchyGeometries.map((g,i)=>{
             const pickingGeometry = g.clone();
             pickingGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(s.labels[i], 3));
             pickingGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(s.offsets[i], 3));
             pickingGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(s.visibilities[i], 3));
-            const dummyBackbone = new THREE.Mesh(pickingGeometry, pickingMaterial);
-            dummyBackbone.frustumCulled = false;
-
-            pickingScene.add(dummyBackbone);
+            const pickingMesh = new THREE.Mesh(pickingGeometry, pickingMaterial);
+            pickingMesh.frustumCulled = false;
+            return pickingMesh;
+        });
+        s.pickingMeshes.forEach(m=>{
+            pickingScene.add(m);
         });
 
     } else {

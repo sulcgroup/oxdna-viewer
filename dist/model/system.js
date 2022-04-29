@@ -346,6 +346,9 @@ class PatchySystem extends System {
             this.patchyMeshes.forEach(mesh => {
                 mesh.geometry["attributes"][name].needsUpdate = true;
             });
+            this.pickingMeshes.forEach(mesh => {
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
         });
     }
     fillPatchyVec(species, vecName, unitSize, pos, vals) {
