@@ -1,4 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+let patchyMode = false;
 class PatchyTopReader extends FileReader {
     constructor(topFile, system, elems, callback) {
         super();
@@ -21,6 +22,7 @@ class PatchyTopReader extends FileReader {
                             sphere.id = i;
                             this.elems.set(nucCount + i, sphere);
                             sphere.type = t;
+                            clusterCounter++;
                             sphere.clusterId = clusterCounter;
                         }
                     });
@@ -37,6 +39,7 @@ class PatchyTopReader extends FileReader {
                             sphere.id = nucCount + i;
                             this.elems.set(nucCount + i, sphere);
                             sphere.type = t.toString();
+                            clusterCounter++;
                             sphere.clusterId = clusterCounter;
                         }
                     });
@@ -65,6 +68,7 @@ class PatchyTopReader extends FileReader {
         if (this.topFile.name.toLowerCase().includes("loro")) {
             this.LORO = true;
         }
+        patchyMode = true;
     }
     read() {
         this.readAsText(this.topFile);

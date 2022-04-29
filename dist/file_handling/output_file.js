@@ -225,17 +225,30 @@ function makeDatFile(name, altNumbering = undefined) {
         `E = 0 0 0\n`
     ].join('\n');
     // get coordinates for all elements, in the correct order
-    if (altNumbering) {
-        altNumbering.forEach((_id, e) => {
-            dat += e.getDatFileOutput();
-        });
+    if (!patchyMode) {
+        if (altNumbering) {
+            altNumbering.forEach((_id, e) => {
+                dat += e.getDatFileOutput();
+            });
+        }
+        else {
+            systems.forEach(system => {
+                system.strands.forEach((strand) => {
+                    strand.forEach(e => {
+                        dat += e.getDatFileOutput();
+                        console.log(strand, e);
+                    }, true); //oxDNA runs 3'-5'
+                });
+            });
+        }
     }
-    else {
+    else { //TODO: figure out what the hell is broken with the forEach function and PPStrand
         systems.forEach(system => {
             system.strands.forEach((strand) => {
-                strand.forEach(e => {
+                strand.getMonomers().forEach(e => {
                     dat += e.getDatFileOutput();
-                }, true); //oxDNA runs 3'-5'
+                    console.log(strand, e);
+                });
             });
         });
     }

@@ -237,13 +237,8 @@ class PatchySphere extends GenericSphere{
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
-        let scale;
-        if(this.mass > 4){ //More than 4 particles
-            scale = 1+this.mass/16;
-        } else {
-            scale = 1;
-        }
-
+        let scale = 1.5;
+        
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
