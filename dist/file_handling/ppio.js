@@ -16,7 +16,7 @@ class PatchyTopReader extends FileReader {
                 if (!this.LORO) {
                     lines[0].split(" ").forEach((t, i) => {
                         if (t) {
-                            let sphere = new PatchySphere(nucCount + i, this.system);
+                            let sphere = new PatchyParticle(nucCount + i, this.system);
                             this.system.particles.push(sphere);
                             sphere.id = i;
                             this.elems.set(nucCount + i, sphere);
@@ -39,7 +39,7 @@ class PatchyTopReader extends FileReader {
                         let info = line.split(" ");
                         const pcount = parseInt(info[0]);
                         for (let i = pcount * t; i < pcount * (t + 1); i++) {
-                            let sphere = new PatchySphere(nucCount + i, this.system);
+                            let sphere = new PatchyParticle(nucCount + i, this.system);
                             this.system.particles.push(sphere);
                             sphere.sid = this.sidCounter++;
                             sphere.id = nucCount + i;

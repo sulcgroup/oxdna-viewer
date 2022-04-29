@@ -339,6 +339,7 @@ class PatchySystem extends System {
         this.colors = instanceCounts.map(n => new Float32Array(n * 3));
         this.scalings = instanceCounts.map(n => new Float32Array(n * 3));
         this.visibilities = instanceCounts.map(n => new Float32Array(n * 3));
+        this.labels = instanceCounts.map(n => new Float32Array(n * 3));
     }
     callUpdates(names) {
         names.forEach((name) => {

@@ -993,7 +993,7 @@ function addSystemToScene(system) {
         else {
             s.patchyGeometries = s.offsets.map(_ => {
                 let g = new THREE.InstancedBufferGeometry();
-                g.copy(new THREE.SphereBufferGeometry(.3, 10, 10));
+                g.copy(new THREE.SphereBufferGeometry(.5, 10, 10));
                 return g;
             });
         }
@@ -1011,6 +1011,16 @@ function addSystemToScene(system) {
             mesh.frustumCulled = false;
             scene.add(mesh);
             return mesh;
+        });
+        // Picking
+        s.patchyGeometries.forEach((g, i) => {
+            const pickingGeometry = g.clone();
+            pickingGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(s.labels[i], 3));
+            pickingGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(s.offsets[i], 3));
+            pickingGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(s.visibilities[i], 3));
+            const dummyBackbone = new THREE.Mesh(pickingGeometry, pickingMaterial);
+            dummyBackbone.frustumCulled = false;
+            pickingScene.add(dummyBackbone);
         });
     }
     else {

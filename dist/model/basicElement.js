@@ -147,6 +147,9 @@ class BasicElement {
     isGS() {
         return false;
     }
+    isPatchyParticle() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {

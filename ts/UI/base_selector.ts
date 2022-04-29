@@ -151,12 +151,14 @@ function updateView(sys: System) {
 			//store global ids for BaseList view
 			listBases.push(base.id);
 
-			//assign each of the selected bases to a strand
-			let strandID = base.strand.id;
-			if(strandID in baseInfoStrands)
-				baseInfoStrands[strandID].push(base);
-			else
-				baseInfoStrands[strandID] = [base];
+			if (!base.isPatchyParticle) {
+				//assign each of the selected bases to a strand
+				let strandID = base.strand.id;
+				if(strandID in baseInfoStrands)
+					baseInfoStrands[strandID].push(base);
+				else
+					baseInfoStrands[strandID] = [base];
+			}
 		}
 	);
 

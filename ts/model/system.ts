@@ -303,8 +303,9 @@ class PatchySystem extends System {
     colors: Float32Array[];
     scalings: Float32Array[];
     visibilities: Float32Array[];
+    labels: Float32Array[];
 
-    particles: PatchySphere[];
+    particles: PatchyParticle[];
     species: {
         type: number,
         patches: any[]
@@ -420,6 +421,7 @@ class PatchySystem extends System {
         this.colors = instanceCounts.map(n=>new Float32Array(n * 3));
         this.scalings = instanceCounts.map(n=>new Float32Array(n * 3));
         this.visibilities = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.labels = instanceCounts.map(n=>new Float32Array(n * 3));
     }
 
     callUpdates(names : string[]) {

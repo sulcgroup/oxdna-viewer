@@ -23,49 +23,61 @@ function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
         if (e.dummySys !== null) {
             sys = e.dummySys;
         }
-        //get current positions
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-        //the rotation center needs to be (0,0,0)
-        cmPos.sub(about);
-        bbPos.sub(about);
-        nsPos.sub(about);
-        conPos.sub(about);
-        bbconPos.sub(about);
-        cmPos.applyQuaternion(q);
-        bbPos.applyQuaternion(q);
-        nsPos.applyQuaternion(q);
-        conPos.applyQuaternion(q);
-        bbconPos.applyQuaternion(q);
-        //get current rotations and convert to THREE coordinates
-        let nsRotationV = e.getInstanceParameter4("nsRotation");
-        let nsRotation = glsl2three(nsRotationV);
-        let conRotationV = e.getInstanceParameter4("conRotation");
-        let conRotation = glsl2three(conRotationV);
-        let bbconRotationV = e.getInstanceParameter4("bbconRotation");
-        let bbconRotation = glsl2three(bbconRotationV);
-        //apply individual object rotation
-        nsRotation.multiply(q2);
-        conRotation.multiply(q2);
-        bbconRotation.multiply(q2);
-        //move the object back to its original position
-        cmPos.add(about);
-        bbPos.add(about);
-        nsPos.add(about);
-        conPos.add(about);
-        bbconPos.add(about);
-        //update the instancing matrices
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
-        sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
-        sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
-        sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
+        if (sys.isPatchySystem()) {
+            let p = e.getPos();
+            p.sub(about);
+            p.applyQuaternion(q);
+            let rotation = glsl2three(e.getInstanceParameter4("rotations"));
+            rotation.multiply(q2);
+            p.add(about);
+            sys.fillPatchyVec(parseInt(e.type), 'offsets', 3, e.sid, p.toArray());
+            sys.fillPatchyVec(parseInt(e.type), 'rotations', 4, e.sid, [rotation.w, rotation.z, rotation.y, rotation.x]);
+        }
+        else {
+            //get current positions
+            let cmPos = e.getPos();
+            let bbPos = e.getInstanceParameter3("bbOffsets");
+            let nsPos = e.getInstanceParameter3("nsOffsets");
+            let conPos = e.getInstanceParameter3("conOffsets");
+            let bbconPos = e.getInstanceParameter3("bbconOffsets");
+            //the rotation center needs to be (0,0,0)
+            cmPos.sub(about);
+            bbPos.sub(about);
+            nsPos.sub(about);
+            conPos.sub(about);
+            bbconPos.sub(about);
+            cmPos.applyQuaternion(q);
+            bbPos.applyQuaternion(q);
+            nsPos.applyQuaternion(q);
+            conPos.applyQuaternion(q);
+            bbconPos.applyQuaternion(q);
+            //get current rotations and convert to THREE coordinates
+            let nsRotationV = e.getInstanceParameter4("nsRotation");
+            let nsRotation = glsl2three(nsRotationV);
+            let conRotationV = e.getInstanceParameter4("conRotation");
+            let conRotation = glsl2three(conRotationV);
+            let bbconRotationV = e.getInstanceParameter4("bbconRotation");
+            let bbconRotation = glsl2three(bbconRotationV);
+            //apply individual object rotation
+            nsRotation.multiply(q2);
+            conRotation.multiply(q2);
+            bbconRotation.multiply(q2);
+            //move the object back to its original position
+            cmPos.add(about);
+            bbPos.add(about);
+            nsPos.add(about);
+            conPos.add(about);
+            bbconPos.add(about);
+            //update the instancing matrices
+            sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
+            sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
+            sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
+            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+            sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
+            sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
+            sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
+        }
     });
     if (updateScene) {
         // Update backbone connections for bases with neigbours outside the selection set
@@ -140,6 +152,7 @@ function translateElements(elements, v) {
         }
         if (sys.isPatchySystem()) {
             let p = e.getPos();
+            p.add(v);
             sys.fillPatchyVec(parseInt(e.type), 'offsets', 3, e.sid, p.toArray());
         }
         else {

@@ -218,7 +218,7 @@ class GenericSphere extends BasicElement {
 }
 
 
-class PatchySphere extends GenericSphere{
+class PatchyParticle extends GenericSphere{
     system: PatchySystem;
 
     constructor(id, system) {
@@ -295,9 +295,6 @@ class PatchySphere extends GenericSphere{
 
     calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3, _colorUpdate?: boolean) {
         let sid = this.sid;
-  
-        let idColor = new THREE.Color();
-        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
 
         let scale = 1;
 
@@ -326,6 +323,56 @@ class PatchySphere extends GenericSphere{
 
         let color = this.elemToColor(this.type);
         this.system.fillPatchyVec(species,'colors', 3, sid, [color.r, color.g, color.b]);
+
+        let idColor = new THREE.Color();
+        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
+        this.system.fillPatchyVec(species,'labels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+    }
+
+    updateColor() {
+        let color: THREE.Color;
+        switch (view.coloringMode.get()) {
+            case "System":
+                color = backboneColors[this.getSystem().id % backboneColors.length];
+                break;
+            case "Cluster":
+                if (!this.clusterId || this.clusterId < 0) {
+                    color = new THREE.Color(0xE60A0A);
+                }
+                else {
+                    color = backboneColors[this.clusterId % backboneColors.length];
+                }
+                break;
+            case "Overlay":
+                color = this.system.lutCols[this.sid];
+                break;
+            case "Custom":
+                if (!this.color) {
+                    // Use overlay color if overlay is loaded, otherwise color gray
+                    if (lut) {
+                        color = this.system.lutCols[this.sid];
+                    } else {
+                        color = GREY;
+                    }
+                }
+                else {
+                    color = this.color;
+                }
+                break;
+            default:
+                color = this.elemToColor(this.type)
+                break;
+        }
+        if (selectedBases.has(this)) {
+            color = color.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
+        }
+
+        let species = parseInt(this.type);
+        this.system.fillPatchyVec(species,'colors', 3, this.sid, [color.r, color.g, color.b]);
+    }
+
+    isPatchyParticle() {
+        return true;
     }
 }
 
