@@ -12,7 +12,7 @@ class GenericSphere extends BasicElement {
     elemToColor(elem) {
         return GREY;
     }
-    calcPositionsFromConfLine(l, flag) {
+    calcPositionsFromConfLine(l, colorUpdate) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
@@ -211,43 +211,132 @@ class GenericSphere extends BasicElement {
         return json;
     }
 }
-class PatchySphere extends GenericSphere {
-    constructor(id, strand) {
-        super(id, strand);
+class PatchyParticle extends GenericSphere {
+    constructor(id, system) {
+        super(id, undefined);
+        this.system = system;
         this.mass = 10.0;
         this.type = 'ps';
     }
     elemToColor(elem) {
         return colorFromInt(parseInt(elem));
     }
-    calcPositions(p) {
-        let sys = this.getSystem();
-        if (this.dummySys !== null) {
-            sys = this.dummySys;
-        }
+    getSystem() {
+        return this.system;
+    }
+    getPos() {
+        return this.getInstanceParameter3('offsets');
+    }
+    getInstanceParameter3(name) {
+        const a = this.system[name][parseInt(this.type)];
+        return new THREE.Vector3(a[this.sid * 3], a[this.sid * 3 + 1], a[this.sid * 3 + 2]);
+    }
+    //retrieve this element's values in a 4-parameter instance array
+    //only rotations
+    getInstanceParameter4(name) {
+        const a = this.system[name][parseInt(this.type)];
+        return new THREE.Vector4(a[this.sid * 4], a[this.sid * 4 + 1], a[this.sid * 4 + 2], a[this.sid * 4 + 3]);
+    }
+    translatePosition(amount) {
+        const sys = this.system;
+        const id = (this.sid) * 3;
+        const s = parseInt(this.type);
+        sys.offsets[s][id] += amount.x;
+        sys.offsets[s][id + 1] += amount.y;
+        sys.offsets[s][id + 2] += amount.z;
+    }
+    calcPositionsFromConfLine(l, colorUpdate) {
+        //extract position
+        let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
+        //extract orientation vectors
+        let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5])).normalize();
+        let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8])).normalize();
+        this.calcPositions(p, a1, a3, colorUpdate);
+    }
+    ;
+    calcPositions(p, a1, a3, _colorUpdate) {
         let sid = this.sid;
+        let scale = 1;
+        const defaultA1 = new THREE.Vector3(1, 0, 0);
+        const defaultA3 = new THREE.Vector3(0, 0, 1);
+        const q = rotateVectorsSimultaneously(defaultA1, defaultA3, a1.clone(), a3.clone());
+        console.assert(defaultA1.clone().applyQuaternion(q).distanceTo(a1) < 1e-5, "a1 wrong");
+        console.assert(defaultA3.clone().applyQuaternion(q).distanceTo(a3) < 1e-5, "a3 wrong");
+        // For some reason, we have to rotate the orientations
+        // around an axis with inverted y-value...
+        q.y *= -1;
+        let species = parseInt(this.type);
+        this.system.fillPatchyVec(species, 'offsets', 3, sid, p.toArray());
+        this.system.fillPatchyVec(species, 'rotations', 4, sid, [q.w, q.z, q.y, q.x]);
+        this.system.fillPatchyVec(species, 'visibilities', 3, sid, [1, 1, 1]);
+        this.system.fillPatchyVec(species, 'scalings', 3, sid, [scale, scale, scale]);
+        let color = this.elemToColor(this.type);
+        this.system.fillPatchyVec(species, 'colors', 3, sid, [color.r, color.g, color.b]);
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
-        // fill in the instancing matrices
-        let scale;
-        if (this.mass > 4) { //More than 4 particles
-            scale = 1 + this.mass / 16;
-        }
-        else {
-            scale = 1;
-        }
-        sys.fillVec('cmOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbOffsets', 3, sid, p.toArray());
-        sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('nsOffsets', 3, sid, p.toArray());
-        sys.fillVec('nsRotation', 4, sid, [0, 0, 0, 0]);
-        sys.fillVec('scales', 3, sid, [0, 0, 0]);
-        sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
-        sys.fillVec('conScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('visibility', 3, sid, [1, 1, 1]);
-        let color = this.elemToColor(this.type);
-        sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
-        sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+        this.system.fillPatchyVec(species, 'labels', 3, sid, [idColor.r, idColor.g, idColor.b]);
     }
+    updateColor() {
+        let color;
+        switch (view.coloringMode.get()) {
+            case "System":
+                color = backboneColors[this.getSystem().id % backboneColors.length];
+                break;
+            case "Cluster":
+                if (!this.clusterId || this.clusterId < 0) {
+                    color = new THREE.Color(0xE60A0A);
+                }
+                else {
+                    color = backboneColors[this.clusterId % backboneColors.length];
+                }
+                break;
+            case "Overlay":
+                color = this.system.lutCols[this.sid];
+                break;
+            case "Custom":
+                if (!this.color) {
+                    // Use overlay color if overlay is loaded, otherwise color gray
+                    if (lut) {
+                        color = this.system.lutCols[this.sid];
+                    }
+                    else {
+                        color = GREY;
+                    }
+                }
+                else {
+                    color = this.color;
+                }
+                break;
+            default:
+                color = this.elemToColor(this.type);
+                break;
+        }
+        if (selectedBases.has(this)) {
+            color = color.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
+        }
+        let species = parseInt(this.type);
+        this.system.fillPatchyVec(species, 'colors', 3, this.sid, [color.r, color.g, color.b]);
+    }
+    isPatchyParticle() {
+        return true;
+    }
+}
+//https://stackoverflow.com/a/55248720
+//https://robokitchen.tumblr.com/post/67060392720/finding-a-quaternion-from-two-pairs-of-vectors
+function rotateVectorsSimultaneously(u0, v0, u2, v2) {
+    u0.normalize();
+    v0.normalize();
+    u2.normalize();
+    v2.normalize();
+    const q2 = new THREE.Quaternion().setFromUnitVectors(u0, u2);
+    const v1 = v2.clone().applyQuaternion(q2.clone().conjugate());
+    const v0_proj = v0.clone().projectOnPlane(u0);
+    const v1_proj = v1.clone().projectOnPlane(u0);
+    let angleInPlane = v0_proj.angleTo(v1_proj);
+    if (v1_proj.dot(new THREE.Vector3().crossVectors(u0, v0)) < 0) {
+        angleInPlane *= -1;
+    }
+    const q1 = new THREE.Quaternion().setFromAxisAngle(u0, angleInPlane);
+    const q = new THREE.Quaternion().multiplyQuaternions(q2, q1);
+    return q;
 }

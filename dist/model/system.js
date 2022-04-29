@@ -147,13 +147,6 @@ class System {
         this.strands.push(strand);
         return strand;
     }
-    addNewPatchySphereStrand() {
-        let id = this.getNextGenericSphereStrandID();
-        let strand = new PatchyStrand(id, this);
-        strand.system = this;
-        this.strands.push(strand);
-        return strand;
-    }
     addStrand(strand) {
         if (!this.strands.includes(strand)) {
             this.strands.push(strand);
@@ -231,6 +224,9 @@ class System {
         }
     }
     ;
+    isPatchySystem() {
+        return false;
+    }
     toJSON() {
         // Specify required attributes
         let json = {
@@ -246,3 +242,125 @@ class System {
     ;
 }
 ;
+class PatchySystem extends System {
+    constructor(id, particleFile, patchFile) {
+        super(id, 0);
+        this.id = id;
+        this.particles = [];
+        if (patchFile) {
+            particleFile.text().then(particlesStr => {
+                patchFile.text().then(patchesStr => {
+                    this.initSpecies(particlesStr, patchesStr);
+                });
+            });
+        }
+    }
+    ;
+    initSpecies(particlesStr, patchesStr) {
+        // Remove whitespace
+        particlesStr = particlesStr.replaceAll(' ', '');
+        patchesStr = patchesStr.replaceAll(' ', '');
+        const getScalar = (name, s) => {
+            const m = s.match(new RegExp(`${name}=(-?\\d+)`));
+            if (m) {
+                return parseFloat(m[1]);
+            }
+            return false;
+        };
+        const getArray = (name, s) => {
+            const m = s.match(new RegExp(`${name}=([\\,\\d\\.\\-\\+]+)`));
+            if (m) {
+                return m[1].split(',').map((v) => parseFloat(v));
+            }
+            return false;
+        };
+        let particles = [];
+        let currentParticle;
+        for (const line of particlesStr.split('\n')) {
+            const particleID = line.match(/particle_(\d+)/);
+            if (particleID) {
+                if (currentParticle) {
+                    particles.push(currentParticle);
+                }
+                currentParticle = { 'id': parseInt(particleID[1]) };
+            }
+            const type = getScalar('type', line);
+            if (type !== false) {
+                currentParticle['type'] = type;
+            }
+            const patches = getArray('patches', line);
+            if (patches !== false) {
+                currentParticle['patches'] = patches;
+            }
+        }
+        particles.push(currentParticle);
+        let patches = new Map();
+        let currentId;
+        for (const line of patchesStr.split('\n')) {
+            const patchID = line.match(/patch_(\d+)/);
+            if (patchID) {
+                currentId = parseInt(patchID[1]);
+                patches.set(currentId, {});
+            }
+            const color = getScalar('color', line);
+            if (color !== false) {
+                patches.get(currentId)['color'] = color;
+            }
+            for (const k of ['position', 'a1', 'a2']) {
+                const a = getArray(k, line);
+                if (a) {
+                    const v = new THREE.Vector3().fromArray(a);
+                    patches.get(currentId)[k] = v;
+                }
+            }
+        }
+        for (const particle of particles) {
+            particle['patches'] = particle['patches'].map(id => patches.get(id));
+        }
+        this.species = particles;
+    }
+    isPatchySystem() {
+        return true;
+    }
+    getMonomers() {
+        return this.particles;
+    }
+    systemLength() {
+        return this.particles.length;
+    }
+    ;
+    initPatchyInstances() {
+        const types = this.particles.map(p => parseInt(p.type));
+        const instanceCounts = [];
+        types.forEach(s => {
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1;
+            }
+            else {
+                instanceCounts[s]++;
+            }
+        });
+        this.offsets = instanceCounts.map(n => new Float32Array(n * 3));
+        this.rotations = instanceCounts.map(n => new Float32Array(n * 4));
+        this.colors = instanceCounts.map(n => new Float32Array(n * 3));
+        this.scalings = instanceCounts.map(n => new Float32Array(n * 3));
+        this.visibilities = instanceCounts.map(n => new Float32Array(n * 3));
+        this.labels = instanceCounts.map(n => new Float32Array(n * 3));
+    }
+    callUpdates(names) {
+        names.forEach((name) => {
+            this.patchyMeshes.forEach(mesh => {
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+            this.pickingMeshes.forEach(mesh => {
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+        });
+    }
+    fillPatchyVec(species, vecName, unitSize, pos, vals) {
+        for (let i = 0; i < unitSize; i++) {
+            this[vecName][species][pos * unitSize + i] = vals[i];
+        }
+    }
+    ;
+}

@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -202,6 +202,7 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) particleFile = files[i];
+        else if ( fileName.includes("patches")) patchFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
         else if (ext === "idx") idxFile = files[i];
@@ -232,7 +233,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
 
     render();
     return
@@ -464,11 +465,11 @@ function readFilesFromPathArgs(args){
         Metro.activity.close(activity);
     }
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
     const  get_request = (paths) => {
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
-                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile);
+                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
                 done();
            }
            else {
@@ -495,8 +496,11 @@ function readFilesFromPathArgs(args){
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") pdbFile = file;
-                else if ( fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
+                else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
                     particleFile = file;
+                // otherwise, what is this?
+                else if (fileName.includes("patches"))
+                    patchFile = file;
                 // otherwise, what is this?
                 else {
                     notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
@@ -542,7 +546,7 @@ function readFilesFromURLParams() {
 
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
@@ -550,54 +554,58 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
         //prevents async issues with par and overlay files
         document.addEventListener('setupComplete', readAuxiliaryFiles)
 
-        //make system to store the dropped files in
-        const system = new System(sysCount, elements.getNextId());
-        systems.push(system); //add system to Systems[]
-        //TODO: is this really neaded?
-        system.setDatFile(datFile); //store datFile in current System object
-        if(!idxFile){
-            if(typeof particleFile === "undefined"){
+        if(typeof particleFile !== "undefined"){
+            //make system to store the dropped files in
+            const system = new PatchySystem(sysCount, particleFile, patchFile);
+            systems.push(system); //add system to Systems[]
+
+            //we handle patchy files
+            const patchyTopologyReader = new PatchyTopReader(topFile, system, elements,()=>{
+                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                trajReader = new TrajectoryReader(datFile,patchyTopologyReader, system, elements);
+                trajReader.indexTrajectory();
+
+                //set up patchy instancing data arrays
+                system.initPatchyInstances();
+            });
+            patchyTopologyReader.read();
+        } else {
+    
+            //make system to store the dropped files in
+            const system = new System(sysCount, elements.getNextId());
+            systems.push(system); //add system to Systems[]
+            //TODO: is this really neaded?
+            system.setDatFile(datFile); //store datFile in current System object
+            if(!idxFile){
                 //read topology file, the configuration file is read once the topology is loaded to avoid async errors
                 const topReader = new TopReader(topFile, system, elements,()=>{
                     //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
                     trajReader = new TrajectoryReader(datFile,topReader,system,elements);
                     trajReader.indexTrajectory();
-
+    
                     //set up instancing data arrays
                     system.initInstances(system.systemLength());
                 });
                 topReader.read();
             }
             else{
-                //we handle patchy files
-                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements,()=>{
-                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                    trajReader = new TrajectoryReader(datFile,patchyTopologyReader,system,elements);
-                    trajReader.indexTrajectory();
-
-                    //set up instancing data arrays
-                    system.initInstances(system.systemLength());
-                });
-                patchyTopologyReader.read();
+                console.log("index provided");
+                const idxReader = new FileReader(); //read .json
+                idxReader.onload = () => {
+                    let file = idxReader.result as string;
+                    let indexes = JSON.parse(file);
+    
+                    const topReader = new TopReader(topFile, system, elements,()=>{
+                        //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                        trajReader = new TrajectoryReader(datFile,topReader,system,elements,indexes);
+                        trajReader.nextConfig();
+                        //set up instancing data arrays
+                        system.initInstances(system.systemLength());
+                    });
+                    topReader.read();
+                };
+                idxReader.readAsText(idxFile);
             }
-        }
-        else{
-            console.log("index provided");
-            const idxReader = new FileReader(); //read .json
-            idxReader.onload = () => {
-                let file = idxReader.result as string;
-                let indexes = JSON.parse(file);
-
-                const topReader = new TopReader(topFile, system, elements,()=>{
-                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                    trajReader = new TrajectoryReader(datFile,topReader,system,elements,indexes);
-                    trajReader.nextConfig();
-                    //set up instancing data arrays
-                    system.initInstances(system.systemLength());
-                });
-                topReader.read();
-            };
-            idxReader.readAsText(idxFile);
         }
     }
     else if (pdbFile) {
@@ -1041,67 +1049,163 @@ function addSystemToScene(system: System) {
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     // This will force the gpu to check the vectors again when redrawing.
 
-    // Add the geometries to the systems
-    system.backboneGeometry = instancedBackbone.clone();
-    system.nucleosideGeometry = instancedNucleoside.clone();
-    system.connectorGeometry = instancedConnector.clone();
-    system.spGeometry = instancedBBconnector.clone();
+    if (system.isPatchySystem()) {
+        // Patchy particle geometries
+        let s = system as PatchySystem;
+        if (s.species !== undefined) {
 
-    system.pickingGeometry = instancedBackbone.clone();
+            const patchResolution = 4; // Number of points defining each patch
+            const patchWidth = 0.2; // Radius of patch "circle"
+            const patchAlignWidth = 0.3; // Widest radius of patch circle
+                                         // (indicating patch alignment)
 
-    // Feed data arrays to the geometries
-    system.backboneGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
-    system.backboneGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbRotation, 4));
-    system.backboneGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-    system.backboneGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3 ) );
-    system.backboneGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+            s.patchyGeometries = s.offsets.map((_,i)=>{
+                let g = new THREE.InstancedBufferGeometry();
 
-    system.nucleosideGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.nsOffsets, 3));
-    system.nucleosideGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.nsRotation, 4));
-    system.nucleosideGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.nsColors, 3));
-    system.nucleosideGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.nsScales, 3 ) );
-    system.nucleosideGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+                const points = [new THREE.Vector3()];
 
-    system.connectorGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.conOffsets, 3));
-    system.connectorGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));
-    system.connectorGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-    system.connectorGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));
-    system.connectorGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+                s.species[i].patches.forEach(patch=>{
+                    // Need to invert y and z axis for mysterious reasons
+                    const pos = patch.position.clone();
+                    pos.y *= -1;
+                    pos.z *= -1;
 
-    system.spGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbconOffsets, 3));
-    system.spGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbconRotation, 4));
-    system.spGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-    system.spGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbconScales, 3));
-    system.spGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+                    const a1 = patch.a1.clone();
+                    a1.y *= -1;
+                    a1.z *= -1;
 
-    system.pickingGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbLabels, 3));
-    system.pickingGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
-    system.pickingGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+                    const a2 = patch.a2.clone();
+                    a2.y *= -1;
+                    a2.z *= -1;
 
-    // Those were geometries, the mesh is actually what gets drawn
-    system.backbone = new THREE.Mesh(system.backboneGeometry, instanceMaterial);
-    system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
+                    // Too many patches.txt files fail to set a1 and a2 correctly.
+                    if (Math.abs(a1.dot(a2)) > 1e-5) {
+                        console.warn(`The a1 and a2 vectors are incorrectly defined in species ${i}. Using patch position instead`);
+                        points.push(pos.clone());
+                    } else {
+                        for (let i=0; i<patchResolution; i++) {
+                            let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
+                            diff.applyAxisAngle(
+                                a1,
+                                i * 2*Math.PI/patchResolution
+                            );
+                            points.push(
+                                pos.clone().add(diff)
+                            );
+                        }
+                    }
+                });
+                let particleGeometry = new THREE.ConvexGeometry(points);
 
-    system.nucleoside = new THREE.Mesh(system.nucleosideGeometry, instanceMaterial);
-    system.nucleoside.frustumCulled = false;
+                g.copy(particleGeometry as unknown as THREE.InstancedBufferGeometry);
+                return g;
+            });
+        } else {
+            s.patchyGeometries = s.offsets.map(_=>{
+                let g = new THREE.InstancedBufferGeometry();
+                g.copy(new THREE.SphereBufferGeometry(.5,10,10) as unknown as THREE.InstancedBufferGeometry);
+                return g;
+            });
+        }
+        s.patchyGeometries.forEach((g,i)=>{
+            g.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(s.offsets[i], 3));
+            g.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(s.rotations[i], 4));
+            g.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(s.scalings[i], 3));
+            g.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(s.colors[i], 3));
+            g.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(s.visibilities[i], 3));
+        });
 
-    system.connector = new THREE.Mesh(system.connectorGeometry, instanceMaterial);
-    system.connector.frustumCulled = false;
+        // Those were geometries, the mesh is actually what gets drawn
+        s.patchyMeshes = s.patchyGeometries.map(g=>{
+            const mesh = new THREE.Mesh(g, instanceMaterial);
+            //you have to turn off culling because instanced materials all exist at (0, 0, 0)
+            mesh.frustumCulled = false;
 
-    system.bbconnector = new THREE.Mesh(system.spGeometry, instanceMaterial);
-    system.bbconnector.frustumCulled = false;
+            scene.add(mesh);
+            return mesh;
+        });
 
-    system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
-    system.dummyBackbone.frustumCulled = false;
+        // Picking
+        s.pickingMeshes = s.patchyGeometries.map((g,i)=>{
+            const pickingGeometry = g.clone();
+            pickingGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(s.labels[i], 3));
+            pickingGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(s.offsets[i], 3));
+            pickingGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(s.visibilities[i], 3));
+            const pickingMesh = new THREE.Mesh(pickingGeometry, pickingMaterial);
+            pickingMesh.frustumCulled = false;
+            return pickingMesh;
+        });
+        s.pickingMeshes.forEach(m=>{
+            pickingScene.add(m);
+        });
 
-    // Add everything to the scene (if they are toggled)
+    } else {
+        // Classic nucleic acid geometries
 
-    view.setPropertyInScene('backbone', system);
-    view.setPropertyInScene('nucleoside', system);
-    view.setPropertyInScene('connector', system);
-    view.setPropertyInScene('bbconnector', system);
+        // Add the geometries to the systems
+        system.backboneGeometry = instancedBackbone.clone();
+        system.nucleosideGeometry = instancedNucleoside.clone();
+        system.connectorGeometry = instancedConnector.clone();
+        system.spGeometry = instancedBBconnector.clone();
 
-    pickingScene.add(system.dummyBackbone);
+        system.pickingGeometry = instancedBackbone.clone();
+
+        // Feed data arrays to the geometries
+        system.backboneGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
+        system.backboneGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbRotation, 4));
+        system.backboneGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.backboneGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.scales, 3 ) );
+        system.backboneGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+
+        system.nucleosideGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.nsOffsets, 3));
+        system.nucleosideGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.nsRotation, 4));
+        system.nucleosideGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.nsColors, 3));
+        system.nucleosideGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.nsScales, 3 ) );
+        system.nucleosideGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+
+        system.connectorGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.conOffsets, 3));
+        system.connectorGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));
+        system.connectorGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.connectorGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));
+        system.connectorGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+
+        system.spGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbconOffsets, 3));
+        system.spGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.bbconRotation, 4));
+        system.spGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.spGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.bbconScales, 3));
+        system.spGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+
+        system.pickingGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbLabels, 3));
+        system.pickingGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
+        system.pickingGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+
+        // Those were geometries, the mesh is actually what gets drawn
+        system.backbone = new THREE.Mesh(system.backboneGeometry, instanceMaterial);
+        system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
+
+        system.nucleoside = new THREE.Mesh(system.nucleosideGeometry, instanceMaterial);
+        system.nucleoside.frustumCulled = false;
+
+        system.connector = new THREE.Mesh(system.connectorGeometry, instanceMaterial);
+        system.connector.frustumCulled = false;
+
+        system.bbconnector = new THREE.Mesh(system.spGeometry, instanceMaterial);
+        system.bbconnector.frustumCulled = false;
+
+        system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
+        system.dummyBackbone.frustumCulled = false;
+
+        // Add everything to the scene (if they are toggled)
+
+        view.setPropertyInScene('backbone', system);
+        view.setPropertyInScene('nucleoside', system);
+        view.setPropertyInScene('connector', system);
+        view.setPropertyInScene('bbconnector', system);
+
+        pickingScene.add(system.dummyBackbone);
+    }
+
+
 
     // Let the other file readers know that it's safe to reference system properties
     document.dispatchEvent(new Event('setupComplete'))

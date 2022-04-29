@@ -16,7 +16,16 @@ canvas.addEventListener("keydown", event =>{
 
         // Copy, cut, paste and delete. Holding shift pastes with preserved location
         case 'c': if (event.ctrlKey || event.metaKey) {copyWrapper();} break;
-        case 'x': if (event.ctrlKey || event.metaKey) {cutWrapper();} break;
+        case 'x':
+            if (event.ctrlKey || event.metaKey) {
+                cutWrapper();
+            } else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(-1,0,0))
+                } else {
+                    shiftWithinBox(new THREE.Vector3(1,0,0))
+                }
+            } break;
         case 'v': if (event.ctrlKey || event.metaKey) {
             pasteWrapper(!event.shiftKey); // Hold down shift to paste in front of camera
             view.transformMode.set('Translate'); // Show translate gizmo
@@ -29,11 +38,27 @@ canvas.addEventListener("keydown", event =>{
 
         // Undo: ctrl-z, cmd-z
         // Redo: ctrl-shift-z, ctrl-y, cmd-shift-z, cmd-y
-        case 'z': if (event.ctrlKey || event.metaKey) {
+        case 'z':
+            if (event.ctrlKey || event.metaKey) {
                 if (event.shiftKey) {editHistory.redo();}
                 else {editHistory.undo();}
+            } else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(0,0,-1))
+                } else {
+                    shiftWithinBox(new THREE.Vector3(0,0,1))
+                }
             } break;
-        case 'y': if (event.ctrlKey || event.metaKey) {editHistory.redo();} break;
+        case 'y':
+            if (event.ctrlKey || event.metaKey) {
+                editHistory.redo();
+            } else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(0,-1,0))
+                } else {
+                    shiftWithinBox(new THREE.Vector3(0,1,0))
+                }
+            } break;
 
         // Select everything not selected:
         case 'i': if (event.ctrlKey || event.metaKey) {event.preventDefault(); invertSelection()} break;

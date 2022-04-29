@@ -437,13 +437,13 @@ class TrajectoryReader {
                 };
                 // get the nucleotide associated with the line
                 currentNucleotide = elements.get(i+system.globalStartId);
-            
+
                 // consume a new line from the file
                 l = lines[i].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l, true);
-            
+
                 //when a strand is finished, add it to the system
-                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
                     if (currentNucleotide.n5 == currentStrand.end3) {
                         currentStrand.end5 = currentNucleotide;
                     }
@@ -453,7 +453,7 @@ class TrajectoryReader {
                         currentStrand = elements.get(currentNucleotide.id+1).strand;
                     }
                 }
-            
+
             }
             addSystemToScene(system);
             sysCount++;
@@ -470,15 +470,7 @@ class TrajectoryReader {
                 l = lines[lineNum].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l);
             }
-            system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-            system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.callUpdates(['instanceOffset','instanceRotation']);
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();

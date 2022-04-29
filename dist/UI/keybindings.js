@@ -25,6 +25,14 @@ canvas.addEventListener("keydown", event => {
             if (event.ctrlKey || event.metaKey) {
                 cutWrapper();
             }
+            else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(-1, 0, 0));
+                }
+                else {
+                    shiftWithinBox(new THREE.Vector3(1, 0, 0));
+                }
+            }
             break;
         case 'v':
             if (event.ctrlKey || event.metaKey) {
@@ -53,10 +61,26 @@ canvas.addEventListener("keydown", event => {
                     editHistory.undo();
                 }
             }
+            else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(0, 0, -1));
+                }
+                else {
+                    shiftWithinBox(new THREE.Vector3(0, 0, 1));
+                }
+            }
             break;
         case 'y':
             if (event.ctrlKey || event.metaKey) {
                 editHistory.redo();
+            }
+            else {
+                if (event.shiftKey) {
+                    shiftWithinBox(new THREE.Vector3(0, -1, 0));
+                }
+                else {
+                    shiftWithinBox(new THREE.Vector3(0, 1, 0));
+                }
             }
             break;
         // Select everything not selected:
