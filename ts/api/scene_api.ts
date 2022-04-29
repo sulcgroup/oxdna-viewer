@@ -192,7 +192,7 @@ module api{
      * Show the specified element in the viewport
      * @param element Element to center view at
      */
-    export function findElement(element: BasicElement, steps=50) {
+    export function findElement(element: BasicElement, steps=20) {
         let targetPos: THREE.Vector3;
         if (element.isNucleotide()) {
             targetPos = element.getInstanceParameter3('bbOffsets');

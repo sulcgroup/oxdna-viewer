@@ -190,7 +190,7 @@ var api;
      * Show the specified element in the viewport
      * @param element Element to center view at
      */
-    function findElement(element, steps = 50) {
+    function findElement(element, steps = 20) {
         let targetPos;
         if (element.isNucleotide()) {
             targetPos = element.getInstanceParameter3('bbOffsets');
