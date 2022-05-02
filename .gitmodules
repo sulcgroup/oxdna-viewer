@@ -1,0 +1,3 @@
+[submodule "oxDNA-mod"]
+	path = oxDNA-mod
+	url = git@github.com:misterluna/oxDNA-mod.git
