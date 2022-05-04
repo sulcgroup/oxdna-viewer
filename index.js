@@ -24,17 +24,17 @@ const createWindow = () => {
 
   //invoke updates
   require('update-electron-app')({
-    repo: 'sulcgroup/oxdna-viewer',
+    repo: 'misterluna/oxdna-viewer',
     updateInterval: '1 hour',
   });
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
 
-  global.sharedObject = {argv: process.argv.splice(1)}; //first arg is the name of the app so we remove it
+  global.sharedObject = { argv: process.argv.splice(1) }; //first arg is the name of the app so we remove it
   mainWindow.removeMenu();
   // adding optional scripting interface
-  if(global.sharedObject.argv.includes('--js')){
+  if (global.sharedObject.argv.includes('--js')) {
     mainWindow.openDevTools();
   }
 };
