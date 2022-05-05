@@ -3,16 +3,16 @@
 import { Camera } from "./three-core";
 
 export class VRControls {
-    constructor(camera: Camera, callback?: (param: string) => void);
+  constructor(camera: Camera, callback?: (param: string) => void);
 
-    /**
-     * Update VR Instance Tracking
-     */
-    update(): void;
+  /**
+   * Update VR Instance Tracking
+   */
+  update(): void;
 
-    zeroSensor(): void;
+  zeroSensor(): void;
 
-    scale: number;
+  scale: number;
 
-    setVRDisplay(display: VRDisplay): void;
+  setVRDisplay(display: any): void;
 }

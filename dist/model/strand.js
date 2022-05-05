@@ -5,16 +5,21 @@
  * @param system - The strand's parent system
  */
 class Strand {
+    id; //system location
+    system;
+    pos;
+    label;
+    end3;
+    end5;
     constructor(id, system) {
         this.id = id;
         this.system = system;
     }
-    ;
     setFrom(e) {
         if (e) {
             this.end3 = this.end5 = e;
             this.updateEnds();
-            this.forEach(e => {
+            this.forEach((e) => {
                 e.strand = this;
             });
         }
@@ -29,7 +34,7 @@ class Strand {
         throw "Cannot create a basic element, need to be a nucleotide, amino acid, etc.";
     }
     getSequence() {
-        return this.map(e => e.type).join('');
+        return this.map((e) => e.type).join("");
     }
     getLength() {
         let e = this.end3;
@@ -52,7 +57,6 @@ class Strand {
                 return;
             }
         }
-        ;
         start = this.end5;
         while (this.end5.n5 && this.end3.n5 != this.end3) {
             this.end5 = this.end5.n5;
@@ -62,14 +66,13 @@ class Strand {
                 return;
             }
         }
-        ;
     }
     /**
      * Return a list of all monomers in strand, in 5' to 3' order
      * @param reverse If set to true, return list in 3' to 5' order instead
      */
     getMonomers(reverse) {
-        return this.map(e => e, reverse);
+        return this.map((e) => e, reverse);
     }
     /**
      * Performs the specified action for each element of the strand.
@@ -96,7 +99,9 @@ class Strand {
      */
     map(callbackfn, reverse) {
         let list = [];
-        this.forEach((e, i) => { list.push(callbackfn(e, i)); }, reverse);
+        this.forEach((e, i) => {
+            list.push(callbackfn(e, i));
+        }, reverse);
         return list;
     }
     /**
@@ -115,13 +120,13 @@ class Strand {
     }
     //reverse is set to true so things select in standard oxDNA d3'-5' order
     toggleMonomers() {
-        this.forEach(e => e.toggle(), true);
+        this.forEach((e) => e.toggle(), true);
     }
     select() {
-        this.forEach(e => e.select(), true);
+        this.forEach((e) => e.select(), true);
     }
     deselect() {
-        this.forEach(e => e.deselect(), true);
+        this.forEach((e) => e.deselect(), true);
     }
     isEmpty() {
         //console.assert(this.end3 ? true : !this.end5, "Stand incorrectly empty");
@@ -130,13 +135,12 @@ class Strand {
     getPos() {
         let com = new THREE.Vector3();
         let length = 0;
-        this.forEach(e => {
+        this.forEach((e) => {
             com.add(e.getPos());
             length++;
         });
         return com.divideScalar(length);
     }
-    ;
     isPeptide() {
         return false;
     }
@@ -152,35 +156,30 @@ class Strand {
             id: this.id,
             monomers: this.getMonomers(),
             end3: this.end3.id,
-            end5: this.end5.id
+            end5: this.end5.id,
         };
         // Specify optional attributes
         if (this.label)
-            json['label'] = this.label;
+            json["label"] = this.label;
         return json;
     }
-    ;
 }
-;
 class NucleicAcidStrand extends Strand {
     constructor(id, system) {
         super(id, system);
     }
-    ;
     createBasicElement(id) {
         if (RNA_MODE)
             return new RNANucleotide(id, this);
         else
             return new DNANucleotide(id, this);
     }
-    ;
     createBasicElementTyped(type, id) {
-        if (type == 'rna')
+        if (type == "rna")
             return new RNANucleotide(id, this);
-        else if (type == 'dna')
+        else if (type == "dna")
             return new DNANucleotide(id, this);
     }
-    ;
     /**
      * Translate the strand by a given amount
      * @param amount Vector3 with the amount to translate the strand
@@ -188,11 +187,11 @@ class NucleicAcidStrand extends Strand {
     translateStrand(amount) {
         const s = this.system;
         const monomers = this.getMonomers(true);
-        monomers.forEach(e => e.translatePosition(amount));
-        s.callUpdates(['instanceOffset']);
+        monomers.forEach((e) => e.translatePosition(amount));
+        s.callUpdates(["instanceOffset"]);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceOffset']);
+                s.callUpdates(["instanceOffset"]);
             });
         }
     }
@@ -236,20 +235,17 @@ class NucleicAcidStrand extends Strand {
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
-        json['class'] = 'NucleicAcidStrand';
+        json["class"] = "NucleicAcidStrand";
         return json;
     }
-    ;
 }
 class Peptide extends Strand {
     constructor(id, system) {
         super(id, system);
     }
-    ;
     createBasicElement(id) {
         return new AminoAcid(id, this);
     }
-    ;
     translateStrand(amount) {
         const s = this.system;
         const monomers = this.getMonomers();
@@ -267,24 +263,22 @@ class Peptide extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         }
-        s.callUpdates(['instanceOffset']);
+        s.callUpdates(["instanceOffset"]);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceOffset']);
+                s.callUpdates(["instanceOffset"]);
             });
         }
     }
-    ;
     isPeptide() {
         return true;
     }
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
-        json['class'] = 'Peptide';
+        json["class"] = "Peptide";
         return json;
     }
-    ;
     //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
     getMonomers(reverse) {
         return super.getMonomers(!reverse);
@@ -299,13 +293,13 @@ class Peptide extends Strand {
         return super.filter(callbackfn, !reverse);
     }
     toggleMonomers() {
-        this.forEach(e => e.toggle());
+        this.forEach((e) => e.toggle());
     }
     select() {
-        this.forEach(e => e.select());
+        this.forEach((e) => e.select());
     }
     deselect() {
-        this.forEach(e => e.deselect());
+        this.forEach((e) => e.deselect());
     }
 }
 // Meant to hold multi-sized generic spheres representing arbitrary particle types
@@ -313,11 +307,9 @@ class Generic extends Strand {
     constructor(id, system) {
         super(id, system);
     }
-    ;
     createBasicElement(id) {
         return new GenericSphere(id, this);
     }
-    ;
     translateStrand(amount) {
         const s = this.system;
         const monomers = this.getMonomers();
@@ -335,14 +327,13 @@ class Generic extends Strand {
             s.cmOffsets[i + 1] += amount.y;
             s.cmOffsets[i + 2] += amount.z;
         }
-        s.callUpdates(['instanceOffset']);
+        s.callUpdates(["instanceOffset"]);
         if (tmpSystems.length > 0) {
             tmpSystems.forEach((s) => {
-                s.callUpdates(['instanceOffset']);
+                s.callUpdates(["instanceOffset"]);
             });
         }
     }
-    ;
     // is Generic Sphere method
     isGS() {
         return true;
@@ -350,7 +341,7 @@ class Generic extends Strand {
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
-        json['class'] = 'GS';
+        json["class"] = "GS";
         return json;
     }
     //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
@@ -367,12 +358,12 @@ class Generic extends Strand {
         return super.filter(callbackfn, !reverse);
     }
     toggleMonomers() {
-        this.forEach(e => e.toggle());
+        this.forEach((e) => e.toggle());
     }
     select() {
-        this.forEach(e => e.select());
+        this.forEach((e) => e.select());
     }
     deselect() {
-        this.forEach(e => e.deselect());
+        this.forEach((e) => e.deselect());
     }
 }

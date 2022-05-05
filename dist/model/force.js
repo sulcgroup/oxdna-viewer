@@ -3,20 +3,21 @@ function forcesToString() {
     return forces.map(f => f.toString(newElementIds)).join('\n\n');
 }
 class Force {
-    constructor() {
-        this.sceneObjects = [];
-    }
+    type;
+    sceneObjects = [];
 }
 // Forces which can be drawn as a line between two particles
 class PairwiseForce extends Force {
 }
 class MutualTrap extends PairwiseForce {
-    constructor() {
-        super(...arguments);
-        this.type = 'mutual_trap';
-        this.force = [];
-        this.eqDists = [];
-    }
+    type = 'mutual_trap';
+    particle; // the particle on which to exert the force.
+    ref_particle; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
+    stiff; // stiffness of the trap.
+    r0; // equilibrium distance of the trap.
+    PBC;
+    force = [];
+    eqDists = [];
     set(particle, ref_particle, stiff = 0.09, r0 = 1.2, PBC = 1) {
         this.particle = particle;
         this.ref_particle = ref_particle;
@@ -82,12 +83,15 @@ class MutualTrap extends PairwiseForce {
     }
 }
 class SkewTrap extends PairwiseForce {
-    constructor() {
-        super(...arguments);
-        this.type = 'skew_trap';
-        this.eqDists = [];
-        this.force = [];
-    }
+    type = 'skew_trap';
+    particle; // the particle on which to exert the force.
+    ref_particle; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
+    stdev; // width of the trap potential
+    shape; // skew of the trap potential
+    r0; // equilibrium distance of the trap.
+    PBC;
+    eqDists = [];
+    force = [];
     set(particle, ref_particle, stdev = 3.0, shape = -15, r0 = 1.2, PBC = 1) {
         this.particle = particle;
         this.ref_particle = ref_particle;
@@ -156,14 +160,17 @@ class SkewTrap extends PairwiseForce {
     }
 }
 class ForceHandler {
+    traps;
+    types;
+    sceneObjects = [];
+    forceLines = [];
+    eqDistLines;
+    forceColors = [
+        new THREE.Color(0x0000FF),
+        new THREE.Color(0xFF0000),
+    ];
+    knownForces = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw
     constructor(forces) {
-        this.sceneObjects = [];
-        this.forceLines = [];
-        this.forceColors = [
-            new THREE.Color(0x0000FF),
-            new THREE.Color(0xFF0000),
-        ];
-        this.knownForces = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw
         this.set(forces);
     }
     set(forces) {

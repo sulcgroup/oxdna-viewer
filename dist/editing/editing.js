@@ -6,6 +6,31 @@ const instanceParams = new Map([
     ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
 ]);
 class InstanceCopy {
+    type;
+    id;
+    clusterId;
+    n3id;
+    n5id;
+    bpid;
+    elemType;
+    system;
+    color;
+    cmOffsets;
+    bbOffsets;
+    nsOffsets;
+    nsRotation;
+    conOffsets;
+    conRotation;
+    bbconOffsets;
+    bbconRotation;
+    bbColors;
+    scales;
+    nsScales;
+    conScales;
+    bbconScales;
+    visibility;
+    nsColors;
+    bbLabels;
     constructor(e) {
         instanceParams.forEach((size, attr) => {
             if (size == 3) {

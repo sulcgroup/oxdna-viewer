@@ -1,0 +1,35 @@
+Simulation settings:
+
+<fieldset>
+    <button class="button" id="oxIP${id}_1" onclick="if(connection) connection.stopSimulation()"
+        title="Delete entry">x</button>
+    <button class="button" id="oxIP${id}_2" onclick="if(connection) connection.startSimulation()"
+        title="Establish connection">►</button>
+    <fieldset>
+
+        <fieldset id="relax_MC_settings">
+            <label for="solutionTemperature">T: </label>
+            <input type="number" value="30" id="solutionTemperature" title="Simulation temperature">
+
+            <label for="saltConcentration">Salt: </label>
+            <input type="number" value="1" id="saltConcentration" title="Na concentration">
+
+            <label for="simulationTime">Simulation Time: </label>
+            <input type="number" value="20" id="simulationTime" title="">
+
+            <label for="timeGranuality">Time Granuality (fps): </label>
+            <input type="number" value="30" id="timeGranuality" title="">
+
+            <label for="boxSize">Box Size: </label>
+            <input type="number" value="100" id="boxSize" title="">
+
+            <label for="stapleFileInput">Staple File: </label>
+            <input type="file" id="stapleFileInput" title="">
+
+            <label for="scaffoldFileInput">Scaffold File: </label>
+            <input type="file" id="scaffoldFileInput" title="">
+
+            <label for="baseThreshold">Base Threshold: </label>
+            <input type="number" value="10" id="baseThreshold" title="">
+
+        </fieldset>

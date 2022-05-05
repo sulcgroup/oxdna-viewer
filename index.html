@@ -7,7 +7,7 @@
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
+        function gtag() { dataLayer.push(arguments); }
         gtag('js', new Date());
         gtag('config', 'UA-171800090-1');
     </script>
@@ -26,8 +26,7 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body onload="view.updateImageResolutionText()"
->
+<body onload="view.updateImageResolutionText()">
     <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
         data-shift=".shifted-content">
         <div class="sidebar-header bg-grayMouse">
@@ -52,47 +51,155 @@
     <div id="keybindingsDialog" class="dialog" data-role="dialog" style="overflow-y: auto; overflow-x: hidden;">
         <table data-role="table" class="table striped">
             <thead>
-            <tr>
-                <th>Key</th>
-                <th>Action</th>
-            </tr>
+                <tr>
+                    <th>Key</th>
+                    <th>Action</th>
+                </tr>
             </thead>
-            <tr><td>P</td><td>Save image</td></tr>
-            <tr><td>S</td><td>Toggle selection</td></tr>
-            <tr><td>D</td><td>Toggle transformation</td></tr>
-            <tr><td>T</td><td>Translate mode</td></tr>
-            <tr><td>R</td><td>Rotate mode</td></tr>
-            <tr><td>L</td><td>Ligate</td></tr>
-            <tr><td>N</td><td>Nick</td></tr>
-            <tr><td>Right arrow</td><td>Next configuration</td></tr>
-            <tr><td>Left arrow</td><td>Previous configuration</td></tr>
-            <tr><td>Ctrl/⌘-S</td><td>Save topology and configuration</td></tr>
-            <tr><td>Ctrl/⌘-Z</td><td>Undo edit</td></tr>
-            <tr><td>Ctrl/⌘-Shift-Z (or Ctrl/⌘-Y)</td><td>Redo edit</td></tr>
-            <tr><td>Ctrl/⌘-A</td><td>Select all elements</td></tr>
-            <tr><td>Ctrl/⌘-I</td><td>Invert selection</td></tr>
-            <tr><td>Ctrl/⌘-click</td><td>Select multiple elements</td></tr>
-            <tr><td>Shift-click</td><td>Select intermediate by gid</td></tr>
-            <tr><td>Shift-alt-click</td><td>Select intermediate by shortest path</td></tr>
-            <tr><td>Ctrl/⌘-C</td><td>Copy selection</td></tr>
-            <tr><td>Ctrl/⌘-B</td><td>Paste selection</td></tr>
-            <tr><td>Ctrl/⌘-Shift-V</td><td>Paste selection in-place</td></tr>
-            <tr><td>Delete</td><td>Delete selected elements</td></tr>
-            <tr><td>Numpad0</td><td>Reset camera</td></tr>
-            <tr><td>Numpad1</td><td>Move camera to x-axis (Ctrl/⌘ to invert)</td></tr>
-            <tr><td>Numpad2</td><td>Rotate camera down</td></tr>
-            <tr><td>Numpad3</td><td>Move camera to y-axis (Ctrl/⌘ to invert)</td></tr>
-            <tr><td>Numpad4</td><td>Rotate camera left</td></tr>
-            <tr><td>Numpad5</td><td>Toggle orthographic/perspective</td></tr>
-            <tr><td>Numpad6</td><td>Rotate camera right</td></tr>
-            <tr><td>Numpad7</td><td>Move camera to z-axis (Ctrl/⌘ to invert)</td></tr>
-            <tr><td>Numpad8</td><td>Rotate camera up</td></tr>
-            <tr><td>x</td><td>Shift along x-axis (with PBC)</td></tr>
-            <tr><td>Shift-x</td><td>Shift along negative x-axis (with PBC)</td></tr>
-            <tr><td>y</td><td>Shift along y-axis (with PBC)</td></tr>
-            <tr><td>Shift-y</td><td>Shift along negative y-axis (with PBC)</td></tr>
-            <tr><td>z</td><td>Shift along z-axis (with PBC)</td></tr>
-            <tr><td>Shift-z</td><td>Shift along negative z-axis (with PBC)</td></tr>
+            <tr>
+                <td>P</td>
+                <td>Save image</td>
+            </tr>
+            <tr>
+                <td>S</td>
+                <td>Toggle selection</td>
+            </tr>
+            <tr>
+                <td>D</td>
+                <td>Toggle transformation</td>
+            </tr>
+            <tr>
+                <td>T</td>
+                <td>Translate mode</td>
+            </tr>
+            <tr>
+                <td>R</td>
+                <td>Rotate mode</td>
+            </tr>
+            <tr>
+                <td>L</td>
+                <td>Ligate</td>
+            </tr>
+            <tr>
+                <td>N</td>
+                <td>Nick</td>
+            </tr>
+            <tr>
+                <td>Right arrow</td>
+                <td>Next configuration</td>
+            </tr>
+            <tr>
+                <td>Left arrow</td>
+                <td>Previous configuration</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-S</td>
+                <td>Save topology and configuration</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-Z</td>
+                <td>Undo edit</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-Shift-Z (or Ctrl/⌘-Y)</td>
+                <td>Redo edit</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-A</td>
+                <td>Select all elements</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-I</td>
+                <td>Invert selection</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-click</td>
+                <td>Select multiple elements</td>
+            </tr>
+            <tr>
+                <td>Shift-click</td>
+                <td>Select intermediate by gid</td>
+            </tr>
+            <tr>
+                <td>Shift-alt-click</td>
+                <td>Select intermediate by shortest path</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-C</td>
+                <td>Copy selection</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-B</td>
+                <td>Paste selection</td>
+            </tr>
+            <tr>
+                <td>Ctrl/⌘-Shift-V</td>
+                <td>Paste selection in-place</td>
+            </tr>
+            <tr>
+                <td>Delete</td>
+                <td>Delete selected elements</td>
+            </tr>
+            <tr>
+                <td>Numpad0</td>
+                <td>Reset camera</td>
+            </tr>
+            <tr>
+                <td>Numpad1</td>
+                <td>Move camera to x-axis (Ctrl/⌘ to invert)</td>
+            </tr>
+            <tr>
+                <td>Numpad2</td>
+                <td>Rotate camera down</td>
+            </tr>
+            <tr>
+                <td>Numpad3</td>
+                <td>Move camera to y-axis (Ctrl/⌘ to invert)</td>
+            </tr>
+            <tr>
+                <td>Numpad4</td>
+                <td>Rotate camera left</td>
+            </tr>
+            <tr>
+                <td>Numpad5</td>
+                <td>Toggle orthographic/perspective</td>
+            </tr>
+            <tr>
+                <td>Numpad6</td>
+                <td>Rotate camera right</td>
+            </tr>
+            <tr>
+                <td>Numpad7</td>
+                <td>Move camera to z-axis (Ctrl/⌘ to invert)</td>
+            </tr>
+            <tr>
+                <td>Numpad8</td>
+                <td>Rotate camera up</td>
+            </tr>
+            <tr>
+                <td>x</td>
+                <td>Shift along x-axis (with PBC)</td>
+            </tr>
+            <tr>
+                <td>Shift-x</td>
+                <td>Shift along negative x-axis (with PBC)</td>
+            </tr>
+            <tr>
+                <td>y</td>
+                <td>Shift along y-axis (with PBC)</td>
+            </tr>
+            <tr>
+                <td>Shift-y</td>
+                <td>Shift along negative y-axis (with PBC)</td>
+            </tr>
+            <tr>
+                <td>z</td>
+                <td>Shift along z-axis (with PBC)</td>
+            </tr>
+            <tr>
+                <td>Shift-z</td>
+                <td>Shift along negative z-axis (with PBC)</td>
+            </tr>
         </table>
     </div>
 
@@ -101,17 +208,18 @@
         <p>List of available servers:</p>
         <div id="predefinedServerList" class="items-list" style="padding-top: 0;padding-bottom: 0;">
             <div id="oxIp1">
-                <button class="square button secondary" title="Establish connection" onclick="establishNanobaseConnection()">
+                <button class="square button secondary" title="Establish connection"
+                    onclick="establishNanobaseConnection()">
                     <span class="mif-play"></span>
-                </button><span class="label"><a href="https://nanobase.org/" title="Database Server for DNA/RNA and Protein nanotechnology.">NANOBASE.org</a></span>
+                </button><span class="label"><a href="https://nanobase.org/"
+                        title="Database Server for DNA/RNA and Protein nanotechnology.">NANOBASE.org</a></span>
             </div>
         </div>
         <div id="serverList" class="items-list" style="padding-top: 0;"></div>
         <div>
             <div class="inline-form">
-                <input type="text" data-role="input" id="newHostText"
-                    data-prepend="Add host:"
-                    value="ws://some_host" title="ox-serve url address">
+                <input type="text" data-role="input" id="newHostText" data-prepend="Add host:" value="ws://some_host"
+                    title="ox-serve url address">
                 <button class="button primary" onclick="addOXServeURL()" title="Add ox-serve url address.">+</button>
             </div>
         </div>
@@ -122,7 +230,8 @@
 
     <div id='backgroundDialog' class="dialog" data-role="dialog">
         Pick a background color:
-        <input type="color" id="backgroundColor" value="#ffffff" title="Background color" onchange="setBackgroundColor()">
+        <input type="color" id="backgroundColor" value="#ffffff" title="Background color"
+            onchange="setBackgroundColor()">
         Or upload a background image:
         <input id='backgroundInput' type="file" data-role="file" onchange="setBackgroundImage()">
         <div class="dialog-actions">
@@ -134,27 +243,32 @@
         <input id='fileInput' type="file" multiple="multiple" data-role="file" data-mode="drop">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="handleFiles(document.getElementById('fileInput').files)" class="button primary js-dialog-close">Open</button>
+            <button onclick="handleFiles(document.getElementById('fileInput').files)"
+                class="button primary js-dialog-close">Open</button>
         </div>
     </div>
 
     <div id='importPDBDialog' class="dialog" data-role="dialog">
         <h2>Import PDB</h2>
-        Type a PDB identifier below to load the corresponding structure into oxView. If you already have a PDB file on your computer you can simply drag and drop it (or use the "Open" dialog).
+        Type a PDB identifier below to load the corresponding structure into oxView. If you already have a PDB file on
+        your computer you can simply drag and drop it (or use the "Open" dialog).
         <input type="text" value="6KIX" data-role="input" data-prepend="PDB ID" id="importPDBID">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="readPBFromId(document.getElementById('importPDBID').value)" class="button primary js-dialog-close">Import</button>
+            <button onclick="readPBFromId(document.getElementById('importPDBID').value)"
+                class="button primary js-dialog-close">Import</button>
         </div>
     </div>
-    
+
     <div id='importNanobaseDialog' class="dialog" data-role="dialog">
         <h2>Import Nanobase</h2>
         Type the link of a Nanobase structure to load it into oxView.
-        <input type="text" value="https://nanobase.org/structure/15" data-role="input" data-prepend="URL" id="importNanobase">
+        <input type="text" value="https://nanobase.org/structure/15" data-role="input" data-prepend="URL"
+            id="importNanobase">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="readNanobaseFromURL(document.getElementById('importNanobase').value)" class="button primary js-dialog-close">Import</button>
+            <button onclick="readNanobaseFromURL(document.getElementById('importNanobase').value)"
+                class="button primary js-dialog-close">Import</button>
         </div>
     </div>
 
@@ -166,7 +280,8 @@
         <form>
             <div class="form-group">
                 <label>Select file</label>
-                <input id='importFilesInput' type="file" data-role="file" multiple="true" onchange="guessInputFormat(this.files)">
+                <input id='importFilesInput' type="file" data-role="file" multiple="true"
+                    onchange="guessInputFormat(this.files)">
             </div>
             <div class="form-group">
                 <label>File format</label>
@@ -228,17 +343,23 @@
 
         <div class="dialog-actions">
             <button id="importFileDialogCancel" class="button js-dialog-close">Cancel</button>
-            <button onclick="importFiles(document.getElementById('importFilesInput').files)" class="button primary">Import and load</button>
+            <button onclick="importFiles(document.getElementById('importFilesInput').files)"
+                class="button primary">Import and load</button>
         </div>
     </div>
 
     <div id='exportOxdnaDialog' class="dialog" data-role="dialog">
         <p>Save the current stucture to oxDNA configuration and/or topology files</p>
-        <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
-        <input type="checkbox" id="topDownload" data-caption="Topology" title="Identies and connections of particles" checked data-role="checkbox">
-        <input type="checkbox" id="datDownload" data-caption="Configuration" title="The xyz positions and rotations of particles" checked data-role="checkbox">
-        <input type="checkbox" id="forceDownload" data-caption="External forces" title="External forces acting on particles" data-role="checkbox">
-        <input type="text" data-role="input" data-prepend="Name" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">
+        <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files
+            since the topology has been edited.</p>
+        <input type="checkbox" id="topDownload" data-caption="Topology" title="Identies and connections of particles"
+            checked data-role="checkbox">
+        <input type="checkbox" id="datDownload" data-caption="Configuration"
+            title="The xyz positions and rotations of particles" checked data-role="checkbox">
+        <input type="checkbox" id="forceDownload" data-caption="External forces"
+            title="External forces acting on particles" data-role="checkbox">
+        <input type="text" data-role="input" data-prepend="Name" id="outputFilename" value="output"
+            title="The prefix to name the .dat and .top files">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
             <button onclick="makeOutputFiles()" class="button primary js-dialog-close">Export</button>
@@ -257,30 +378,35 @@
             <hr>
             <div id="gltfOptions">
                 <fieldset>
-                <legend>Material options for glTF:</legend>
-                <div class="row">
-                    <div class="cell-md-6" title="Set high for a metal look">
-                        <label class="cell">Backbone metalness</label>
-                        <input id="3dExport_bbMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                    <legend>Material options for glTF:</legend>
+                    <div class="row">
+                        <div class="cell-md-6" title="Set high for a metal look">
+                            <label class="cell">Backbone metalness</label>
+                            <input id="3dExport_bbMetalness" data-role="slider" data-hint-position="left"
+                                data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                        </div>
+                        <div class="cell-md-6" title="Set low for a polished look">
+                            <label class="cell">Backbone roughness</label>
+                            <input id="3dExport_bbRoughness" data-role="slider" data-hint-position="left"
+                                data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                        </div>
                     </div>
-                    <div class="cell-md-6" title="Set low for a polished look">
-                        <label class="cell">Backbone roughness</label>
-                        <input id="3dExport_bbRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                    <div class="row">
+                        <div class="cell-md-6" title="Set high for a metal look">
+                            <label class="cell">Nucleoside metalness</label>
+                            <input id="3dExport_nsMetalness" data-role="slider" data-hint-position="left"
+                                data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
+                        </div>
+                        <div class="cell-md-6" title="Set low for a polished look">
+                            <label class="cell">Nucleoside roughness</label>
+                            <input id="3dExport_nsRoughness" data-role="slider" data-hint-position="left"
+                                data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
+                        </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="cell-md-6" title="Set high for a metal look">
-                        <label class="cell">Nucleoside metalness</label>
-                        <input id="3dExport_nsMetalness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0">
-                    </div>
-                    <div class="cell-md-6" title="Set low for a polished look">
-                        <label class="cell">Nucleoside roughness</label>
-                        <input id="3dExport_nsRoughness" data-role="slider" data-hint-position="left" data-hint-mask="$2%" data-min="0" data-max="1" data-value="0.2">
-                    </div>
-                </div>
                 </fieldset>
                 <div class="row">
-                    <input type="checkbox" id="3dExport_flat" data-role="switch" data-caption="Export flat hierarchy" title="Ignore system hierarchy and export all object on the same level (makes faster import)"><br>
+                    <input type="checkbox" id="3dExport_flat" data-role="switch" data-caption="Export flat hierarchy"
+                        title="Ignore system hierarchy and export all object on the same level (makes faster import)"><br>
                     <input type="checkbox" id="3dExport_camera" data-role="switch" data-caption="Export camera"><br>
                 </div>
             </div>
@@ -298,7 +424,8 @@
                 </div>
             </div>
 
-            <p>To hide or change the scaling of the backbones, nucleosides, etc. before export, use the "Visual Components" tool in the "View" menu.</p>
+            <p>To hide or change the scaling of the backbones, nucleosides, etc. before export, use the "Visual
+                Components" tool in the "View" menu.</p>
         </div>
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
@@ -334,8 +461,9 @@
     <nav id="menu" data-role="ribbonmenu" class="shifted-content">
         <ul class="tabs-holder flex-wrap">
             <li id='sidebar-toggle' class="static"><a href="#">oxView</a></li>
-            <li ondblclick="view.sectionClicked()"><a id="fileSectionLink"href="#section-file">File</a></li>
-            <li ondblclick="view.sectionClicked()" hidden="true" id="trajControls"><a id="trajControlsLink" href="#section-trajectory">Trajectory</a></li>
+            <li ondblclick="view.sectionClicked()"><a id="fileSectionLink" href="#section-file">File</a></li>
+            <li ondblclick="view.sectionClicked()" hidden="true" id="trajControls"><a id="trajControlsLink"
+                    href="#section-trajectory">Trajectory</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-select">Select</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-edit">Edit</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-view">View</a></li>
@@ -344,44 +472,46 @@
         </ul>
 
         <div class="content-holder">
-            <div class="section" id="section-file" >
+            <div class="section" id="section-file">
                 <div class="group">
-                <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')" title="Open files (Ctrl/⌘-O)" style="width: 50px;"
-                    id="open-button">
-                    <span class="mif-folder-open mif-2x"></span>
-                    <!-- <span class="caption">Open</span> -->
-                </button>
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#openFileDialog')"
+                        title="Open files (Ctrl/⌘-O)" style="width: 50px;" id="open-button">
+                        <span class="mif-folder-open mif-2x"></span>
+                        <!-- <span class="caption">Open</span> -->
+                    </button>
                 </div>
                 <div class="group">
-                <button class="ribbon-button" onclick="makeOxViewJsonFile()"
-                    title="Download a file JSON file storing the current design" style="width: 50px;">
-                    <!-- <span class="mif-floppy-disk mif-2x"></span> -->
-                    <img src="./favicon.png" height="20px">
-                    <!-- <span class="caption">oxView</span> -->
-                   
-                </button>
-                <button class="ribbon-button"
-                    onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited; document.getElementById('forceDownload').checked = forces.length > 0"
-                    title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)" style="width: 50px;">
-                    <!-- <span class="mif-file-download mif-2x"></span> -->
-                    <img src="./img/ico/oxdna_logo.png" height="20px" >
-                    <!-- <span class="caption">oxDNA</span> -->
-                </button>
-                <span class="title mif-floppy-disk mif-3x"> <b>Save</b></span>
+                    <button class="ribbon-button" onclick="makeOxViewJsonFile()"
+                        title="Download a file JSON file storing the current design" style="width: 50px;">
+                        <!-- <span class="mif-floppy-disk mif-2x"></span> -->
+                        <img src="./favicon.png" height="20px">
+                        <!-- <span class="caption">oxView</span> -->
+
+                    </button>
+                    <button class="ribbon-button"
+                        onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited; document.getElementById('forceDownload').checked = forces.length > 0"
+                        title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)" style="width: 50px;">
+                        <!-- <span class="mif-file-download mif-2x"></span> -->
+                        <img src="./img/ico/oxdna_logo.png" height="20px">
+                        <!-- <span class="caption">oxDNA</span> -->
+                    </button>
+                    <span class="title mif-floppy-disk mif-3x"> <b>Save</b></span>
                 </div>
                 <div class="group">
-                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files using Taco OxDNA"
-                        id="import-button" style="width: 50px;">
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')"
+                        title="Import files using Taco OxDNA" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x fg-green"></span> -->
                         <img src="img/ico/taco_logo.png" height="20px">
                         <!-- <span class="caption">Taco</span> -->
                     </button>
-                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID" id="import-button" style="width: 50px;">
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')"
+                        title="Import PDB from ID" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x"></span> -->
                         <img src="https://www.rcsb.org/favicon.ico" height="40px" width="30px">
                         <!--<span class="caption">PDB</span>-->
                     </button>
-                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')" title="Import PDB from ID" id="import-button" style="width: 50px;">
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')"
+                        title="Import PDB from ID" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x"></span> -->
                         <img src="./img/ico/nanobase_logo.png" height="20px">
                         <!-- <span class="caption">Nanobase</span> -->
@@ -389,16 +519,19 @@
                     <span class="title mif-file-upload mif-3x"> <b>Import</b></span>
                 </div>
                 <div class="group">
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')" title="Options for 3d export of the scene." style="width: 50px;"> 
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')"
+                        title="Options for 3d export of the scene." style="width: 50px;">
                         <!-- <span class="mif-file-download mif-2x"></span> -->
                         <img src="https://www.blender.org/favicon.ico" height="20px">
                         <!-- <span class="caption">3D Shape</span> -->
                     </button>
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#exportUNF')" title="Options for UNF export of the scene.">
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#exportUNF')"
+                        title="Options for UNF export of the scene.">
                         <span class="mif-file-download mif-2x"></span>
                         <span class="caption">UNF</span>
                     </button>
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')" title="Options for 3d export of the scene.">
+                    <button class="ribbon-button" onclick="Metro.dialog.open('#export3DDialog')"
+                        title="Options for 3d export of the scene.">
                         <span class="mif-file-download mif-2x"></span>
                         <span class="caption">3D Shape</span>
                     </button>
@@ -408,20 +541,21 @@
                         <span class="mif-file-text mif-2x"></span>
                         <!-- <span class="caption">Sequence file</span> -->
                     </button>
-                    <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')" style="width: 50px;">
+                    <button id="videoCreateButton" class="ribbon-button"
+                        onclick="view.toggleWindow('videoCreationWindow')" style="width: 50px;">
                         <span class="mif-video-camera mif-2x"></span>
                         <!-- <span class="caption">Create video</span> -->
-                    </button> 
+                    </button>
                     <span class="title mif-file-download mif-3x"> <b>Export</b></span>
                 </div>
                 <div class="group">
-                    <button class="ribbon-button primary"  title="Import Plate Information" id="import-button" style="width: 50px;"
-                    onclick="view.toggleWindow('plateDBWindow',loadPlateDBimport)">
+                    <button class="ribbon-button primary" title="Import Plate Information" id="import-button"
+                        style="width: 50px;" onclick="view.toggleWindow('plateDBWindow',loadPlateDBimport)">
                         <span class="caption"><b>Plate DB</b></span>
                     </button>
-                    <button class="ribbon-button primary"  title="Pipetting instructions." id="export-button" style="width: 50px;"
-                    
-                    onclick="setTimeout(()=>{reportSummary();printReport('reportWindow')},1000)">
+                    <button class="ribbon-button primary" title="Pipetting instructions." id="export-button"
+                        style="width: 50px;"
+                        onclick="setTimeout(()=>{reportSummary();printReport('reportWindow')},1000)">
                         <span class="caption"><b>SPI</b></span>
                     </button>
                     <div id="reportWindow" style="margin-left:10px" hidden="true">
@@ -430,17 +564,17 @@
                 </div>
                 <!-- <div class="group"> -->
                 <div class="ribbon-split-button" height="70px">
-                    <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')" style="width: 50px;">
+                    <button class="ribbon-button" onclick="view.saveCanvasImage()"
+                        title="Save current view as an image ('P')" style="width: 50px;">
                         <span class="mif-photo-camera mif-3x"></span>
                         <!-- <span class="caption">Save image</span> -->
                     </button>
                     <span class="ribbon-split dropdown-toggle">Image size</span>
                     <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
                         <label for="fogNear">Scaling factor: </label>
-                        <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2" id="saveImageScalingFactor"
-                            title="Factor with which to scale the current canvas." min=1
-                            onchange="view.updateImageResolutionText()"
-                        >
+                        <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2"
+                            id="saveImageScalingFactor" title="Factor with which to scale the current canvas." min=1
+                            onchange="view.updateImageResolutionText()">
                         <hr>
                         <span>Resolution: <small id="saveImageResolution">? x ?</small></span>
                     </ul>
@@ -456,284 +590,51 @@
                             <span class="mif-previous mif-2x"></span>
                             <!--<span class="caption">Previous</span>-->
                         </button>
-                        <button class="button" id="playTrajectory" onclick="trajReader.playTrajectory();" title="Play current trajectory.">►</button>
-                        
+                        <button class="button" id="playTrajectory" onclick="trajReader.playTrajectory();"
+                            title="Play current trajectory.">►</button>
+
                         <button class="button" onclick="trajReader.nextConfig()"
-                        title="Next config (Right keyboard arrow)">
-                        <span class="mif-next mif-2x"></span>
-                        <!--<span class="caption">Next</span>-->
+                            title="Next config (Right keyboard arrow)">
+                            <span class="mif-next mif-2x"></span>
+                            <!--<span class="caption">Next</span>-->
                         </button>
 
                         <div class="row flex-align-center" style="width: 300px; margin: 10px;">
 
                             <input id="trajectorySlider" type="range" min="0" max="100" value="0" class="slider"
-                               oninput="trajReader.retrieveByIdx(this.value);">
-                            
-                            <div id="trajIndexingProgressControls"  hidden="true"  >
-                                <label id="trajIndexingProgressLabel"  for="trajIndexingProgress">Indexing progress:</label>
-                                <progress id="trajIndexingProgress" value="0" max="100" > </progress>
-                                <a id="downloadIndex" onclick="trajReader.downloadIndexFile()" href="#" hidden ="true">download index file</a>
+                                oninput="trajReader.retrieveByIdx(this.value);">
+
+                            <div id="trajIndexingProgressControls" hidden="true">
+                                <label id="trajIndexingProgressLabel" for="trajIndexingProgress">Indexing
+                                    progress:</label>
+                                <progress id="trajIndexingProgress" value="0" max="100"> </progress>
+                                <a id="downloadIndex" onclick="trajReader.downloadIndexFile()" href="#"
+                                    hidden="true">download index file</a>
                             </div>
                         </div>
                         <div id="trajTimestep"></div>
 
-                        <button id="hyperSelectorBtnId" class="button" disabled onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
+                        <button id="hyperSelectorBtnId" class="button" disabled
+                            onclick="view.toggleWindow('hyperSelectWindow',loadHyperSelector)"
                             title="Previous config (left keyboard arrow)" style="margin: 10px;">
                             <!--<span class="mif-down mif-2x"></span>-->
                             <span class="caption">Order parameter selector.</span>
-                        </button>                     
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!--Select-->
-            <div class="section" id="section-select"><div class="d-flex flex-wrap">
-                <div class="group">
-                    <div class="ribbon-toggle-group toggleGroup_w2" id="selectionScope">
-                        <button class="ribbon-icon-button">
-                            <span class="icon">
-                                <span class="mif-not"></span>
-                            </span>
-                            <span class="caption">Disabled</span>
-                        </button>
-                        <button class="ribbon-icon-button active">
-                            <span class="icon">
-                                <span class="mif-location"></span>
-                            </span>
-                            <span class="caption">Monomer</span>
-                        </button>
-
-                        <button class="ribbon-icon-button">
-                            <span class="icon">
-                                <span class="mif-flow-line"></span>
-                            </span>
-                            <span class="caption">Strand</span>
-                        </button>
-
-                        <button class="ribbon-icon-button">
-                            <span class="icon">
-                                <span class="mif-flow-tree"></span>
-                            </span>
-                            <span class="caption">System</span>
-                        </button>
-
-                        <button class="ribbon-icon-button">
-                            <span class="icon">
-                                <span class="mif-cloudy4"></span>
-                            </span>
-                            <span class="caption">Cluster</span>
-                        </button>
-
-                        <button class="ribbon-icon-button">
-                            <span class="icon">
-                                <span class="mif-crop"></span>
-                            </span>
-                            <span class="caption">Box</span>
-                        </button>
-                    </div>
-                    <span class="title">Selection mode</span>
-                </div>
-                <button class="ribbon-button" onclick="view.toggleWindow('clusteringWindow')">
-                    <span class="mif-cloudy4 mif-3x"></span>
-                    <span class="caption">Clustering</span>
-                </button>
-                <textarea id="baseList" cols="25" rows="3" readonly> Selected Bases List </textarea>
-                <div class="tight group flex-column">
-                    <span>Select<br>pairs</span>
-                    <input type="checkbox" id="selectPairs" data-role="switch" title="Automatically select basepairs">
-                </div>
-                <div class="tight group flex-column">
-                    <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (Ctrl/⌘-A)">
-                        <span class="mif-done_all mif-1x"></span>
-                        <span class="caption">Select all</span>
-                    </button>
-                    <button class="ribbon-icon-button" onclick="invertSelection()" title="Invert selection (Ctrl/⌘-I)">
-                        <span class="mif-contrast mif-1x"></span>
-                        <span class="caption">Invert selection</span>
-                    </button>
-                    <button class="ribbon-icon-button" onclick="clearSelection()" title="Clear selection">
-                        <span class="mif-not mif-1x"></span>
-                        <span class="caption">Clear selection</span>
-                    </button>
-                </div>
-                <div class="tight group">
-                <button class="ribbon-button" onclick="view.toggleWindow('baseInfoWindow', ()=>{if(systems.length>0){updateView(systems[0])}})">
-                    <span class="mif-list mif-3x"></span>
-                    <span class="caption">Selected base info</span>
-                </button>
-                <button class="ribbon-button" onclick="makeSelectedBasesFile()"
-                    title="Download plain-text file of selected bases">
-                    <span class="mif-file-download mif-3x"></span>
-                    <span class="caption">Selected base list</span>
-                </button>
-                </div>
-                <div class="tight group">
-                    <button class="ribbon-button" onclick="view.toggleWindow('distanceWindow', distanceSetup)" title="Distance information window.">
-                        <span class="mif-settings-ethernet mif-2x"></span>
-                        <span class="caption">Distance</span>
-                    </button>
-                    <button class="ribbon-button" onclick="select3psWrapper()" title="select 3p's">
-                        <img src="img/ico/s3p.svg" height="30px">
-                        <span class="caption">3'</span>
-                    </button>
-                    <button class="ribbon-button" onclick="select5psWrapper()" title="select 5p's">
-                        <img src="img/ico/s5p.svg" height="30px">
-                        <span class="caption">5'</span>
-                    </button>
-                    <button class="ribbon-button" onclick="connectedSelectorWrapper()" title="Select things connected to current selection.">
-                        <span class="mif-magic-wand mif-3x"></span>
-                    </button>
-
-
-                </div>
-            </div></div>
-
-            <!--Edit-->
-            <div class="section" id="section-edit"><div class="d-flex flex-wrap">
-                <div class="tight group">
-                    <button class="ribbon-button" title="Undo (Ctrl/⌘-Z)" onclick="editHistory.undo()">
-                        <span class="mif-undo mif-2x"></span>
-                        <span class="caption">Undo</span>
-                    </button>
-                    <button class="ribbon-button" title="Redo (Ctrl/⌘-Y)" onclick="editHistory.redo()">
-                        <span class="mif-redo mif-2x"></span>
-                        <span class="caption">Redo</span>
-                    </button>
-                </div>
-                <div class="tight group">
-                    <button class="ribbon-button" title="Cut selection (Ctrl/⌘-X)" onclick="cutWrapper()">
-                        <span class="mif-cut mif-2x"></span>
-                        <span class="caption">Cut</span>
-                    </button>
-                    <button class="ribbon-button" title="Copy selection (Ctrl/⌘-C)" onclick="copyWrapper()">
-                        <span class="mif-copy mif-2x"></span>
-                        <span class="caption">Copy</span>
-                    </button>
-                    <button class="ribbon-button" title="Paste (Ctrl/⌘-V)" onclick="pasteWrapper()">
-                        <span class="mif-paste mif-2x"></span>
-                        <span class="caption">Paste</span>
-                    </button>
-                </div>
-
-                <div class="tight group">
-                    <div class="ribbon-toggle-group toggleGroup_w1" id="transform">
-                        <button class="ribbon-icon-button active" onclick="view.transformMode.set('None')" title="Toggle with 'D'">
-                            <span class="icon">
-                                <span class="mif-not"></span>
-                            </span>
-                            <span class="caption">None</span>
-                        </button>
-
-                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Translate')" title="Toggle with 'T'">
-                            <span class="icon">
-                                <span class="mif-enlarge"></span>
-                            </span>
-                            <span class="caption">Translate</span>
-                        </button>
-
-                        <button class="ribbon-icon-button" onclick="view.transformMode.set('Rotate')" title="Toggle with 'R'">
-                            <span class="icon">
-                                <span class="mif-3d-rotation"></span>
-                            </span>
-                            <span class="caption">Rotate</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="tight group">
-                    <button class="ribbon-button" onclick="nickWrapper()" title="Break the upstream connection of the last selected particle (N)">
-                        <img src="img/ico/nick.svg" height="18px">
-                        <span class="caption">Nick</span>
-                    </button>
-                    <button class="ribbon-button" onclick="deleteWrapper()" title="Delete the selected monomers (Delete)">
-                        <img src="img/ico/delete.svg" height="18px">
-                        <span class="caption">Delete</span>
-                    </button>
-                    <button class="ribbon-button" onclick="ligateWrapper()" title="Ligate the last two selected particles together (L)">
-                        <img src="img/ico/ligate.svg" height="18px" >
-                        <span class="caption">Ligate</span>
-                    </button>
-                    <button class="ribbon-button" onclick="replaceSelectionByDuplexWrapper()" title="Take 2 selected sticky ends and replace them by a formed duplex.">
-                        <img src="img/ico/connectDuplex.svg" height="18px">
-                        <span class="caption">Connect SE</span>
-                    </button>
-                    <button class="ribbon-button" onclick="moveToWrapper()" title="Move a group of elements towards the last selected element">
-                        <span class="icon" height="18px">
-                            <span class="mif-vertical-align-bottom"></span>
-                        </span>
-                        <span class="caption">Move To</span>
-                    </button>
-                </div>
-
-                
-                <div class="tight group flex-column">
-                    <div>
-                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
-                        <button class="ribbon-icon-button" onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">
-                            <img src="img/ico/extend.svg">
-                            <span class="caption"> Extend</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="createWrapper()" title="Create a new strand (or duplex) with the provided sequences">
-                            <img src="img/ico/create.svg">
-                            <span class="caption"> Create</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="insertWrapper()" title="Insert elements of the provided sequences upstream of the last selected particle">
-                            <img src="img/ico/insert.svg">
-                            <span class="caption"> Insert</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="skipWrapper()" title="Remove selected elements and connect neigbours">
-                            <img src="img/ico/skip.svg">
-                            <span class="caption"> Skip</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()" title="Join the 3' ends of two selected strands with a duplex, generated from the sequence input.">
-                            <img src="img/ico/connect3s.svg">
-                            <span class="caption"> Join 3'</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()" title="Join the 5' ends of two selected strands with a duplex, generated from the sequence input.">
-                            <img src="img/ico/connect5s.svg">
-                            <span class="caption"> Join 5'</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="setSeqWrapper()" title="Apply the given sequence to the selected monomers">
-                            <img src="img/ico/set.svg">
-                            <span class="caption"> Set</span>
-                        </button>
-                        <button class="ribbon-icon-button" onclick="getSelectedSeqWrapper()" title="Gets sequence from selection.(5'->3')">
-                            <span class="mif-file-upload mif-2x"></span>
-                            <span class="caption"> Get</span>
-                        </button>
-
-                        <button class="ribbon-icon-button" onclick="reverseComplementWrapper()" title="Reverse complement of input sequence.">
-                            <img src="img/ico/rc.svg"width="28px">
-                            <span class="caption">RC</span>
-                        </button>
-
-                        <button class="ribbon-icon-button" onclick="findDomainWrapper()" title="Searches for a provided sequence.">
-                            <span class="mif-search mif-2x"></span>
-                            <span class="caption"> Search</span>
-                        </button>
-
-                    </div>
-                    <input type="text" data-role="input" id="sequence" class="mb-1"
-                        data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
-                        data-history="true" data-prevent-submit="true"
-                        placeholder="Type a sequence here"
-                        style="text-transform: uppercase;"
-                        onchange='document.getElementById("seqLen").innerHTML = this.value.length'>
-                </div>
-            </div></div>
-
-            <!-- View -->
-            <div class="section" id="section-view"><div class="d-flex flex-wrap-r">
-                <div class="tight group">
+            <div class="section" id="section-select">
+                <div class="d-flex flex-wrap">
                     <div class="group">
-                        <div id="inboxing" class="ribbon-toggle-group toggleGroup_w1">
+                        <div class="ribbon-toggle-group toggleGroup_w2" id="selectionScope">
                             <button class="ribbon-icon-button">
                                 <span class="icon">
                                     <span class="mif-not"></span>
                                 </span>
-                                <span class="caption">None</span>
+                                <span class="caption">Disabled</span>
                             </button>
-
                             <button class="ribbon-icon-button active">
                                 <span class="icon">
                                     <span class="mif-location"></span>
@@ -747,16 +648,19 @@
                                 </span>
                                 <span class="caption">Strand</span>
                             </button>
-                        </div>
-                        <span class="title">PBC</span>
-                    </div>
-                    <div class="group">
-                        <div id="centering" class="ribbon-toggle-group toggleGroup_w1">
+
                             <button class="ribbon-icon-button">
                                 <span class="icon">
-                                    <span class="mif-not"></span>
+                                    <span class="mif-flow-tree"></span>
                                 </span>
-                                <span class="caption">None</span>
+                                <span class="caption">System</span>
+                            </button>
+
+                            <button class="ribbon-icon-button">
+                                <span class="icon">
+                                    <span class="mif-cloudy4"></span>
+                                </span>
+                                <span class="caption">Cluster</span>
                             </button>
 
                             <button class="ribbon-icon-button">
@@ -765,182 +669,471 @@
                                 </span>
                                 <span class="caption">Box</span>
                             </button>
+                        </div>
+                        <span class="title">Selection mode</span>
+                    </div>
+                    <button class="ribbon-button" onclick="view.toggleWindow('clusteringWindow')">
+                        <span class="mif-cloudy4 mif-3x"></span>
+                        <span class="caption">Clustering</span>
+                    </button>
+                    <textarea id="baseList" cols="25" rows="3" readonly> Selected Bases List </textarea>
+                    <div class="tight group flex-column">
+                        <span>Select<br>pairs</span>
+                        <input type="checkbox" id="selectPairs" data-role="switch"
+                            title="Automatically select basepairs">
+                    </div>
+                    <div class="tight group flex-column">
+                        <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (Ctrl/⌘-A)">
+                            <span class="mif-done_all mif-1x"></span>
+                            <span class="caption">Select all</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="invertSelection()"
+                            title="Invert selection (Ctrl/⌘-I)">
+                            <span class="mif-contrast mif-1x"></span>
+                            <span class="caption">Invert selection</span>
+                        </button>
+                        <button class="ribbon-icon-button" onclick="clearSelection()" title="Clear selection">
+                            <span class="mif-not mif-1x"></span>
+                            <span class="caption">Clear selection</span>
+                        </button>
+                    </div>
+                    <div class="tight group">
+                        <button class="ribbon-button"
+                            onclick="view.toggleWindow('baseInfoWindow', ()=>{if(systems.length>0){updateView(systems[0])}})">
+                            <span class="mif-list mif-3x"></span>
+                            <span class="caption">Selected base info</span>
+                        </button>
+                        <button class="ribbon-button" onclick="makeSelectedBasesFile()"
+                            title="Download plain-text file of selected bases">
+                            <span class="mif-file-download mif-3x"></span>
+                            <span class="caption">Selected base list</span>
+                        </button>
+                    </div>
+                    <div class="tight group">
+                        <button class="ribbon-button" onclick="view.toggleWindow('distanceWindow', distanceSetup)"
+                            title="Distance information window.">
+                            <span class="mif-settings-ethernet mif-2x"></span>
+                            <span class="caption">Distance</span>
+                        </button>
+                        <button class="ribbon-button" onclick="select3psWrapper()" title="select 3p's">
+                            <img src="img/ico/s3p.svg" height="30px">
+                            <span class="caption">3'</span>
+                        </button>
+                        <button class="ribbon-button" onclick="select5psWrapper()" title="select 5p's">
+                            <img src="img/ico/s5p.svg" height="30px">
+                            <span class="caption">5'</span>
+                        </button>
+                        <button class="ribbon-button" onclick="connectedSelectorWrapper()"
+                            title="Select things connected to current selection.">
+                            <span class="mif-magic-wand mif-3x"></span>
+                        </button>
 
-                            <button class="ribbon-icon-button active">
+
+                    </div>
+                </div>
+            </div>
+
+            <!--Edit-->
+            <div class="section" id="section-edit">
+                <div class="d-flex flex-wrap">
+                    <div class="tight group">
+                        <button class="ribbon-button" title="Undo (Ctrl/⌘-Z)" onclick="editHistory.undo()">
+                            <span class="mif-undo mif-2x"></span>
+                            <span class="caption">Undo</span>
+                        </button>
+                        <button class="ribbon-button" title="Redo (Ctrl/⌘-Y)" onclick="editHistory.redo()">
+                            <span class="mif-redo mif-2x"></span>
+                            <span class="caption">Redo</span>
+                        </button>
+                    </div>
+                    <div class="tight group">
+                        <button class="ribbon-button" title="Cut selection (Ctrl/⌘-X)" onclick="cutWrapper()">
+                            <span class="mif-cut mif-2x"></span>
+                            <span class="caption">Cut</span>
+                        </button>
+                        <button class="ribbon-button" title="Copy selection (Ctrl/⌘-C)" onclick="copyWrapper()">
+                            <span class="mif-copy mif-2x"></span>
+                            <span class="caption">Copy</span>
+                        </button>
+                        <button class="ribbon-button" title="Paste (Ctrl/⌘-V)" onclick="pasteWrapper()">
+                            <span class="mif-paste mif-2x"></span>
+                            <span class="caption">Paste</span>
+                        </button>
+                    </div>
+
+                    <div class="tight group">
+                        <div class="ribbon-toggle-group toggleGroup_w1" id="transform">
+                            <button class="ribbon-icon-button active" onclick="view.transformMode.set('None')"
+                                title="Toggle with 'D'">
                                 <span class="icon">
-                                    <span>+</span>
+                                    <span class="mif-not"></span>
                                 </span>
-                                <span class="caption">Origin</span>
+                                <span class="caption">None</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="view.transformMode.set('Translate')"
+                                title="Toggle with 'T'">
+                                <span class="icon">
+                                    <span class="mif-enlarge"></span>
+                                </span>
+                                <span class="caption">Translate</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="view.transformMode.set('Rotate')"
+                                title="Toggle with 'R'">
+                                <span class="icon">
+                                    <span class="mif-3d-rotation"></span>
+                                </span>
+                                <span class="caption">Rotate</span>
                             </button>
                         </div>
-                        <span class="title">Centering</span>
                     </div>
-                    <button class="ribbon-button" onclick="centerAndPBCBtnClick()" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">
-                        <span class="mif-done mif-3x"></span>
-                        <span class="caption">Apply</span>
-                    </button>
-                </div>
-                <div class="tight group flex-column">
-                    <div style="height: 18px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
-                            data-role="switch" data-caption="Arrows" checked>
-                    </div>
-                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
-                            data-role="switch" data-caption="Box">
-                    </div>
-                    <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
-                            data-role="switch" data-caption="Fog">
-                        <span class="ribbon-split dropdown-toggle"></span>
-                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
-                            <label for="fogNear">Near: </label>
-                            <input type="text" data-role="spinner" class="input-small" value="1" id="fogNear"
-                                title="Minimum distance to apply fog" min=0
-                                onchange="if(scene.fog!=null){setFog();}"><br>
-                            <label for="fogNear">Far: </label>
-                            <input type="text" data-role="spinner" class="input-small" value="200" id="fogFar"
-                                title="Maximum distance to apply fog" min=0
-                                onchange="if(scene.fog!=null){setFog();}"><br>
-                        </ul>
-                    </div>
-                    <div style="height: 18px;">
-                        <input type="checkbox" id="marker3pToggle" onchange="api.update3primeMarkers()"
-                        data-role="switch" data-caption="3' markers">
-                    </div>
-                </div>
-                <div class="group">
-                    <div id="coloringMode" class="ribbon-toggle-group toggleGroup_w2">
-                        <button class="ribbon-icon-button active" onclick="updateColoring('Strand')">
-                            <span class="icon">
-                                <span class="mif-flow-line"></span>
-                            </span>
-                            <span class="caption">Strand</span>
-                        </button>
 
-                        <button class="ribbon-icon-button" onclick="updateColoring('Cluster')">
-                            <span class="icon">
-                                <span class="mif-cloudy4"></span>
-                            </span>
-                            <span class="caption">Cluster</span>
+                    <div class="tight group">
+                        <button class="ribbon-button" onclick="nickWrapper()"
+                            title="Break the upstream connection of the last selected particle (N)">
+                            <img src="img/ico/nick.svg" height="18px">
+                            <span class="caption">Nick</span>
                         </button>
-
-                        <button class="ribbon-icon-button" onclick="updateColoring('System')">
-                            <span class="icon">
-                                <span class="mif-flow-tree"></span>
-                            </span>
-                            <span class="caption">System</span>
+                        <button class="ribbon-button" onclick="deleteWrapper()"
+                            title="Delete the selected monomers (Delete)">
+                            <img src="img/ico/delete.svg" height="18px">
+                            <span class="caption">Delete</span>
                         </button>
-
-                        <button class="ribbon-icon-button" onclick="updateColoring('Overlay')">
-                            <span class="icon">
-                                <span class="mif-chart-dots"></span>
-                            </span>
-                            <span class="caption">Overlay</span>
+                        <button class="ribbon-button" onclick="ligateWrapper()"
+                            title="Ligate the last two selected particles together (L)">
+                            <img src="img/ico/ligate.svg" height="18px">
+                            <span class="caption">Ligate</span>
                         </button>
-
-                        <button class="ribbon-icon-button" onclick="updateColoring('Custom')">
-                            <span class="icon">
-                                <span class="mif-pencil"></span>
+                        <button class="ribbon-button" onclick="replaceSelectionByDuplexWrapper()"
+                            title="Take 2 selected sticky ends and replace them by a formed duplex.">
+                            <img src="img/ico/connectDuplex.svg" height="18px">
+                            <span class="caption">Connect SE</span>
+                        </button>
+                        <button class="ribbon-button" onclick="moveToWrapper()"
+                            title="Move a group of elements towards the last selected element">
+                            <span class="icon" height="18px">
+                                <span class="mif-vertical-align-bottom"></span>
                             </span>
-                            <span class="caption">Custom</span>
+                            <span class="caption">Move To</span>
                         </button>
                     </div>
-                    <button class="ribbon-button" onclick="view.toggleWindow('colorPaletteWindow', updateColorPalette)">
-                        <span class="mif-palette mif-2x"></span>
-                        <span class="caption">Edit color palette</span>
-                    </button>
+
+
                     <div class="tight group flex-column">
-                        <span>
-                            <button class="ribbon-icon-button" id="setCustomColor"
-                                onclick="colorElements()"
-                                title="Color selected elements">
-                                <span class="mif-pencil"></span>
+                        <div>
+                            <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode"
+                                title="Set also complementary bases">
+                            <button class="ribbon-icon-button" onclick="extendWrapper(false)"
+                                title="Extend strand (or duplex) from the selected monomer with the given sequence">
+                                <img src="img/ico/extend.svg">
+                                <span class="caption"> Extend</span>
                             </button>
-                            <button class="ribbon-icon-button" id="resetCustomColor"
-                                onclick="resetCustomColoring()"
-                                title="Reset coloring on selected elements">
-                                <span class="mif-undo"></span>
+                            <button class="ribbon-icon-button" onclick="createWrapper()"
+                                title="Create a new strand (or duplex) with the provided sequences">
+                                <img src="img/ico/create.svg">
+                                <span class="caption"> Create</span>
                             </button>
-                        </span>
-                        <input type="color" id="customColor" value="#ff0000" title="Custom color">
+                            <button class="ribbon-icon-button" onclick="insertWrapper()"
+                                title="Insert elements of the provided sequences upstream of the last selected particle">
+                                <img src="img/ico/insert.svg">
+                                <span class="caption"> Insert</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="skipWrapper()"
+                                title="Remove selected elements and connect neigbours">
+                                <img src="img/ico/skip.svg">
+                                <span class="caption"> Skip</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="interconnectDuplex3pWrapper()"
+                                title="Join the 3' ends of two selected strands with a duplex, generated from the sequence input.">
+                                <img src="img/ico/connect3s.svg">
+                                <span class="caption"> Join 3'</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="interconnectDuplex5pWrapper()"
+                                title="Join the 5' ends of two selected strands with a duplex, generated from the sequence input.">
+                                <img src="img/ico/connect5s.svg">
+                                <span class="caption"> Join 5'</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="setSeqWrapper()"
+                                title="Apply the given sequence to the selected monomers">
+                                <img src="img/ico/set.svg">
+                                <span class="caption"> Set</span>
+                            </button>
+                            <button class="ribbon-icon-button" onclick="getSelectedSeqWrapper()"
+                                title="Gets sequence from selection.(5'->3')">
+                                <span class="mif-file-upload mif-2x"></span>
+                                <span class="caption"> Get</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="reverseComplementWrapper()"
+                                title="Reverse complement of input sequence.">
+                                <img src="img/ico/rc.svg" width="28px">
+                                <span class="caption">RC</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="findDomainWrapper()"
+                                title="Searches for a provided sequence.">
+                                <span class="mif-search mif-2x"></span>
+                                <span class="caption"> Search</span>
+                            </button>
+
+                        </div>
+                        <input type="text" data-role="input" id="sequence" class="mb-1"
+                            data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
+                            data-history="true" data-prevent-submit="true" placeholder="Type a sequence here"
+                            style="text-transform: uppercase;"
+                            onchange='document.getElementById("seqLen").innerHTML = this.value.length'>
                     </div>
-                    <span class="title">Colors</span>
                 </div>
-                <div class="tight group flex-wrap">
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
-                        <span class="mif-image mif-3x"></span>
-                        <span class="caption">Background</span>
-                    </button>
-                    <button class="ribbon-button" onclick="toggleVisArbitrary()" title="Hide selected elements. If selection is empty all elements will become visible again.">
-                        <span class="mif-eye mif-3x"></span>
-                        <span class="caption">Hide selection</span>
-                    </button>
-                    <div>
-                        <button class="ribbon-button dropdown-toggle">
-                            <span class="mif-eye mif-3x"></span>
-                            <span class="caption">Visible components</span>
+            </div>
+
+            <!-- View -->
+            <div class="section" id="section-view">
+                <div class="d-flex flex-wrap-r">
+                    <div class="tight group">
+                        <div class="group">
+                            <div id="inboxing" class="ribbon-toggle-group toggleGroup_w1">
+                                <button class="ribbon-icon-button">
+                                    <span class="icon">
+                                        <span class="mif-not"></span>
+                                    </span>
+                                    <span class="caption">None</span>
+                                </button>
+
+                                <button class="ribbon-icon-button active">
+                                    <span class="icon">
+                                        <span class="mif-location"></span>
+                                    </span>
+                                    <span class="caption">Monomer</span>
+                                </button>
+
+                                <button class="ribbon-icon-button">
+                                    <span class="icon">
+                                        <span class="mif-flow-line"></span>
+                                    </span>
+                                    <span class="caption">Strand</span>
+                                </button>
+                            </div>
+                            <span class="title">PBC</span>
+                        </div>
+                        <div class="group">
+                            <div id="centering" class="ribbon-toggle-group toggleGroup_w1">
+                                <button class="ribbon-icon-button">
+                                    <span class="icon">
+                                        <span class="mif-not"></span>
+                                    </span>
+                                    <span class="caption">None</span>
+                                </button>
+
+                                <button class="ribbon-icon-button">
+                                    <span class="icon">
+                                        <span class="mif-crop"></span>
+                                    </span>
+                                    <span class="caption">Box</span>
+                                </button>
+
+                                <button class="ribbon-icon-button active">
+                                    <span class="icon">
+                                        <span>+</span>
+                                    </span>
+                                    <span class="caption">Origin</span>
+                                </button>
+                            </div>
+                            <span class="title">Centering</span>
+                        </div>
+                        <button class="ribbon-button" onclick="centerAndPBCBtnClick()"
+                            title="Note that this only works if you're going from none to something else or if you want to re-center after moving">
+                            <span class="mif-done mif-3x"></span>
+                            <span class="caption">Apply</span>
                         </button>
-                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: max-content;">
-                            <input type="checkbox" id="nucleoside_toggle" onchange="view.setPropertyInScene('nucleoside')" data-role="switch" data-caption="Nucleoside sphere" checked><br>
-                            <input type="checkbox" id="connector_toggle" onchange="view.setPropertyInScene('connector')" data-role="switch" data-caption="Nucleoside connector" checked><br>
-                            <input type="checkbox" id="backbone_toggle" onchange="view.setPropertyInScene('backbone')" data-role="switch" data-caption="Backbone sphere" checked><br>
-                            <input type="checkbox" id="bbconnector_toggle" onchange="view.setPropertyInScene('bbconnector')" data-role="switch" data-caption="Backbone connector" checked><br>
-                            <details>
-                                <summary onclick="event.stopPropagation()">Change sizes</summary>
-                                <div>
-                                    <div class="flexBetween">
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1/1.1)"><span class="mif-minus"></span></button>
-                                        Nucleoside sphere size
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1.1)"><span class="mif-plus"></span></button>
-                                    </div>
-                                    <div class="flexBetween">
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1/1.1)"><span class="mif-minus"></span></button>
-                                        Nucleoside connector thickness
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('connector', 1.1)"><span class="mif-plus"></span></button>
-                                    </div>
-                                    <div class="flexBetween">
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1/1.1)"><span class="mif-minus"></span></button>
-                                        Backbone sphere size
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('backbone', 1.1)"><span class="mif-plus"></span></button>
-                                    </div>
-                                    <div class="flexBetween">
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1/1.1)"><span class="mif-minus"></span></button>
-                                        Backbone connector thickness
-                                        <button class="ribbon-tool-button" onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span class="mif-plus"></span></button>
-                                    </div>
-                                    <hr>
-                                    <button class="ribbon-icon-button" onclick="['backbone', 'nucleoside','connector', 'bbconnector'].forEach(v=>view.resetComponentScale(v))">
-                                        <span class="mif-undo"></span>
-                                        <span class="caption">Reset</span>
-                                    </button>
-                                </div>
-                            </details>
-                        </ul>
                     </div>
-                    <button class="ribbon-button" onclick="api.switchCamera()">
-                        <span class="mif-video-camera mif-3x"></span>
-                        <span id="cameraSwitch" class="caption">Orthographic</span>
-                    </button>
-                    <button class="ribbon-button" onclick="view.toggleWindow('systemHierarchyWindow', drawSystemHierarchy)">
-                        <span class="mif-flow-cascade mif-3x"></span>
-                        <span class="caption">System hierarchy</span>
-                    </button>
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#keybindingsDialog')"
-                        title="Show the available keyboard shortcuts">
-                        <span class="mif-keyboard mif-3x"></span>
-                        <span class="caption">Keyboard shortcuts</span>
-                    </button>
-                    <button class="ribbon-button" onclick="controls.reset();"
-                        title="Reset the camera view">
-                        <span class="mif-video-camera mif-2x"></span>
-                        <span class="mif-undo mif-2x"></span>
-                        <span class="caption">Reset camera</span>
-                    </button>
-                    <button class="ribbon-button" onclick="view.enableVR()"
-                        title="Reset the camera view">
-                        <span class="mif-2x">VR</span>
-                        <span class="caption">Enable VR</span>
-                    </button>
+                    <div class="tight group flex-column">
+                        <div style="height: 18px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
+                                data-role="switch" data-caption="Arrows" checked>
+                        </div>
+                        <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleBox(this)"
+                                data-role="switch" data-caption="Box">
+                        </div>
+                        <div style="height: 18px;"><input type="checkbox" id="boxToggle" onchange="toggleFog()"
+                                data-role="switch" data-caption="Fog">
+                            <span class="ribbon-split dropdown-toggle"></span>
+                            <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
+                                <label for="fogNear">Near: </label>
+                                <input type="text" data-role="spinner" class="input-small" value="1" id="fogNear"
+                                    title="Minimum distance to apply fog" min=0
+                                    onchange="if(scene.fog!=null){setFog();}"><br>
+                                <label for="fogNear">Far: </label>
+                                <input type="text" data-role="spinner" class="input-small" value="200" id="fogFar"
+                                    title="Maximum distance to apply fog" min=0
+                                    onchange="if(scene.fog!=null){setFog();}"><br>
+                            </ul>
+                        </div>
+                        <div style="height: 18px;">
+                            <input type="checkbox" id="marker3pToggle" onchange="api.update3primeMarkers()"
+                                data-role="switch" data-caption="3' markers">
+                        </div>
+                    </div>
+                    <div class="group">
+                        <div id="coloringMode" class="ribbon-toggle-group toggleGroup_w2">
+                            <button class="ribbon-icon-button active" onclick="updateColoring('Strand')">
+                                <span class="icon">
+                                    <span class="mif-flow-line"></span>
+                                </span>
+                                <span class="caption">Strand</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="updateColoring('Cluster')">
+                                <span class="icon">
+                                    <span class="mif-cloudy4"></span>
+                                </span>
+                                <span class="caption">Cluster</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="updateColoring('System')">
+                                <span class="icon">
+                                    <span class="mif-flow-tree"></span>
+                                </span>
+                                <span class="caption">System</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="updateColoring('Overlay')">
+                                <span class="icon">
+                                    <span class="mif-chart-dots"></span>
+                                </span>
+                                <span class="caption">Overlay</span>
+                            </button>
+
+                            <button class="ribbon-icon-button" onclick="updateColoring('Custom')">
+                                <span class="icon">
+                                    <span class="mif-pencil"></span>
+                                </span>
+                                <span class="caption">Custom</span>
+                            </button>
+                        </div>
+                        <button class="ribbon-button"
+                            onclick="view.toggleWindow('colorPaletteWindow', updateColorPalette)">
+                            <span class="mif-palette mif-2x"></span>
+                            <span class="caption">Edit color palette</span>
+                        </button>
+                        <div class="tight group flex-column">
+                            <span>
+                                <button class="ribbon-icon-button" id="setCustomColor" onclick="colorElements()"
+                                    title="Color selected elements">
+                                    <span class="mif-pencil"></span>
+                                </button>
+                                <button class="ribbon-icon-button" id="resetCustomColor" onclick="resetCustomColoring()"
+                                    title="Reset coloring on selected elements">
+                                    <span class="mif-undo"></span>
+                                </button>
+                            </span>
+                            <input type="color" id="customColor" value="#ff0000" title="Custom color">
+                        </div>
+                        <span class="title">Colors</span>
+                    </div>
+                    <div class="tight group flex-wrap">
+                        <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
+                            <span class="mif-image mif-3x"></span>
+                            <span class="caption">Background</span>
+                        </button>
+                        <button class="ribbon-button" onclick="toggleVisArbitrary()"
+                            title="Hide selected elements. If selection is empty all elements will become visible again.">
+                            <span class="mif-eye mif-3x"></span>
+                            <span class="caption">Hide selection</span>
+                        </button>
+                        <div>
+                            <button class="ribbon-button dropdown-toggle">
+                                <span class="mif-eye mif-3x"></span>
+                                <span class="caption">Visible components</span>
+                            </button>
+                            <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100"
+                                style="width: max-content;">
+                                <input type="checkbox" id="nucleoside_toggle"
+                                    onchange="view.setPropertyInScene('nucleoside')" data-role="switch"
+                                    data-caption="Nucleoside sphere" checked><br>
+                                <input type="checkbox" id="connector_toggle"
+                                    onchange="view.setPropertyInScene('connector')" data-role="switch"
+                                    data-caption="Nucleoside connector" checked><br>
+                                <input type="checkbox" id="backbone_toggle"
+                                    onchange="view.setPropertyInScene('backbone')" data-role="switch"
+                                    data-caption="Backbone sphere" checked><br>
+                                <input type="checkbox" id="bbconnector_toggle"
+                                    onchange="view.setPropertyInScene('bbconnector')" data-role="switch"
+                                    data-caption="Backbone connector" checked><br>
+                                <details>
+                                    <summary onclick="event.stopPropagation()">Change sizes</summary>
+                                    <div>
+                                        <div class="flexBetween">
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1/1.1)"><span
+                                                    class="mif-minus"></span></button>
+                                            Nucleoside sphere size
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('nucleoside', 1.1)"><span
+                                                    class="mif-plus"></span></button>
+                                        </div>
+                                        <div class="flexBetween">
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('connector', 1/1.1)"><span
+                                                    class="mif-minus"></span></button>
+                                            Nucleoside connector thickness
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('connector', 1.1)"><span
+                                                    class="mif-plus"></span></button>
+                                        </div>
+                                        <div class="flexBetween">
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('backbone', 1/1.1)"><span
+                                                    class="mif-minus"></span></button>
+                                            Backbone sphere size
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('backbone', 1.1)"><span
+                                                    class="mif-plus"></span></button>
+                                        </div>
+                                        <div class="flexBetween">
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1/1.1)"><span
+                                                    class="mif-minus"></span></button>
+                                            Backbone connector thickness
+                                            <button class="ribbon-tool-button"
+                                                onclick="event.stopPropagation(); view.scaleComponent('bbconnector', 1.1)"><span
+                                                    class="mif-plus"></span></button>
+                                        </div>
+                                        <hr>
+                                        <button class="ribbon-icon-button"
+                                            onclick="['backbone', 'nucleoside','connector', 'bbconnector'].forEach(v=>view.resetComponentScale(v))">
+                                            <span class="mif-undo"></span>
+                                            <span class="caption">Reset</span>
+                                        </button>
+                                    </div>
+                                </details>
+                            </ul>
+                        </div>
+                        <button class="ribbon-button" onclick="api.switchCamera()">
+                            <span class="mif-video-camera mif-3x"></span>
+                            <span id="cameraSwitch" class="caption">Orthographic</span>
+                        </button>
+                        <button class="ribbon-button"
+                            onclick="view.toggleWindow('systemHierarchyWindow', drawSystemHierarchy)">
+                            <span class="mif-flow-cascade mif-3x"></span>
+                            <span class="caption">System hierarchy</span>
+                        </button>
+                        <button class="ribbon-button" onclick="Metro.dialog.open('#keybindingsDialog')"
+                            title="Show the available keyboard shortcuts">
+                            <span class="mif-keyboard mif-3x"></span>
+                            <span class="caption">Keyboard shortcuts</span>
+                        </button>
+                        <button class="ribbon-button" onclick="controls.reset();" title="Reset the camera view">
+                            <span class="mif-video-camera mif-2x"></span>
+                            <span class="mif-undo mif-2x"></span>
+                            <span class="caption">Reset camera</span>
+                        </button>
+                        <button class="ribbon-button" onclick="view.enableVR()" title="Reset the camera view">
+                            <span class="mif-2x">VR</span>
+                            <span class="caption">Enable VR</span>
+                        </button>
+                    </div>
                 </div>
-            </div></div>
+            </div>
 
             <div class="section" id="section-dynamics">
                 <div class="group">
@@ -956,17 +1149,28 @@
                             <span class="caption">Settings</span>
                         </button>
                         <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: 200px;">
-                        <p>Cluster repulsion constant</p><input id='rbd_clusterRepulsionConst' value = 1000 onchange="if(rigidClusterSimulator){rigidClusterSimulator.clusterRepulsionConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1000>
-                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value = 10 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionSpringConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=10>
-                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value = 3 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionRelaxedLength = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Friction</p><input id='rbd_friction' value = 0.25 onchange="if(rigidClusterSimulator){rigidClusterSimulator.friction = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.1 data-fixed="1">
-                            <p>dt</p><input id='rbd_dt' value = 0.1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.dt = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.01 data-fixed="2">
+                            <p>Cluster repulsion constant</p><input id='rbd_clusterRepulsionConst' value=1000
+                                onchange="if(rigidClusterSimulator){rigidClusterSimulator.clusterRepulsionConst = this.value;}"
+                                type="text" data-role="spinner" class="input-small" data-step=1000>
+                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value=10
+                                onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionSpringConst = this.value;}"
+                                type="text" data-role="spinner" class="input-small" data-step=10>
+                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value=3
+                                onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionRelaxedLength = this.value;}"
+                                type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Friction</p><input id='rbd_friction' value=0.25
+                                onchange="if(rigidClusterSimulator){rigidClusterSimulator.friction = this.value;}"
+                                type="text" data-role="spinner" class="input-small" data-step=.1 data-fixed="1">
+                            <p>dt</p><input id='rbd_dt' value=0.1
+                                onchange="if(rigidClusterSimulator){rigidClusterSimulator.dt = this.value;}" type="text"
+                                data-role="spinner" class="input-small" data-step=.01 data-fixed="2">
                         </ul>
                     </div>
                     <span class="title">Rigid-body</span>
                 </div>
                 <div class="group">
-                    <button class="ribbon-button" id="btnConnect" onclick="openConnections()" title="Live interactions.">
+                    <button class="ribbon-button" id="btnConnect" onclick="openConnections()"
+                        title="Live interactions.">
                         <span class="mif-cast mif-3x"></span>
                         <span class="caption">Connect</span>
                     </button>
@@ -977,10 +1181,17 @@
                     <span class="title">Ox-Serve</span>
                 </div>
                 <div class="group">
-                    <button class="ribbon-button" id="btnConnect" onclick="view.toggleWindow('forcesWindow', listForces)" title="View and edit external forces">
+                    <button class="ribbon-button" id="btnConnect"
+                        onclick="view.toggleWindow('forcesWindow', listForces)" title="View and edit external forces">
                         <span class="mif-shrink2 mif-3x"></span>
                     </button>
                     <span class="title">Forces</span>
+                </div>
+                <div class="group">
+                    <button class="ribbon-button" id="btnConnect" onclick="view.toggleWindow('origamiWindow')">
+                        <span class="mif-microscope mif-3x"></span>
+                    </button>
+                    <span class="title">Origami</span>
                 </div>
             </div>
             <!-- Separate Protein section-->
@@ -989,63 +1200,63 @@
                     <div class="tight group flex-column">
                         <div>
                             <button class="ribbon-icon-button" onclick="discretizeMassWrapper(0)"
-                                    title="Discretize Selected Masses">
+                                title="Discretize Selected Masses">
                                 <span class="mif-compass"></span>
                                 <span class="caption"> Coarse-Grain Voxel</span>
                             </button>
-<!--                            Once I get this working I may add it back, we'll see -Jonah-->
-<!--                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper(1)"-->
-<!--                                    title="Discretize Selected Masses">-->
-<!--                                <span class="mif-compass"></span>-->
-<!--                                <span class="caption"> Coarse-Grain Density</span>-->
-<!--                            </button>-->
+                            <!--                            Once I get this working I may add it back, we'll see -Jonah-->
+                            <!--                            <button class="ribbon-icon-button" onclick="discretizeMassWrapper(1)"-->
+                            <!--                                    title="Discretize Selected Masses">-->
+                            <!--                                <span class="mif-compass"></span>-->
+                            <!--                                <span class="caption"> Coarse-Grain Density</span>-->
+                            <!--                            </button>-->
                             <button class="ribbon-icon-button" id="jsonbutton"
-                                    title="Download JSON File to solve the network using our scripts">
+                                title="Download JSON File to solve the network using our scripts">
                                 <span class="caption"> Download Network JSON File</span>
                             </button>
                             <button class="ribbon-icon-button" id="indxbutton"
-                                    title="Download Index File for Generated Particles">
+                                title="Download Index File for Generated Particles">
                                 <span class="caption"> Download Index File</span>
                             </button>
                         </div>
                         <input type="text" data-role="input" title="cellSize" class="mb-1" id="cellSize"
-                               data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
-                               data-history="true" data-prevent-submit="true"
-                               placeholder="Input Cell Size">
+                            data-append="<span>Angstroms</span>" data-prepend="<span'>Cell Size</span>"
+                            data-history="true" data-prevent-submit="true" placeholder="Input Cell Size">
                     </div>
                 </div>
 
                 <div class="group">
                     <div class="tight group flex-column">
                         <div>
-                            <button class="ribbon-icon-button" onclick="createNetworkWrapper()"
-                                    title="Create Network">
+                            <button class="ribbon-icon-button" onclick="createNetworkWrapper()" title="Create Network">
                                 <span class="mif-lightning5 mif-1x"></span>
                                 <span class="caption">Create Network</span>
                             </button>
 
                             <button class="ribbon-icon-button" onclick="deleteNetworkWrapper(selectednetwork)"
-                                    title="Delete Network">
+                                title="Delete Network">
                                 <span class="mif-lightning5 mif-1x"></span>
                                 <span class="caption">Delete Network</span>
                             </button>
 
                             <button class="ribbon-icon-button" onclick="visualizeNetworkWrapper(selectednetwork)"
-                                    title="Delete Network">
+                                title="Delete Network">
                                 <span class="mif-lightning5 mif-1x"></span>
                                 <span class="caption">View Network</span>
                             </button>
 
                             <div class="dropdown-button">
                                 <button class="button dropdown-toggle">Network Select</button>
-                                <ul class="d-menu put-left" data-role="dropdown" id="networks" title="Select a Created Network">
+                                <ul class="d-menu put-left" data-role="dropdown" id="networks"
+                                    title="Select a Created Network">
                                     <!-- Dynamically Filled by view.createNetwork and view.deleteNetwork-->
                                 </ul>
                             </div>
 
                             <div class="dropdown-button">
                                 <button class="button dropdown-toggle">Assign Edges</button>
-                                <ul class="d-menu put-left" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
+                                <ul class="d-menu put-left" data-role="dropdown" id="edges"
+                                    title="Assigns Edges to Network Selected by Network Selector">
                                     <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
                                     <li onclick="fillEdgesWrapper(selectednetwork, 1)">MWCENM</li>
                                     <li onclick="fillEdgesWrapper(selectednetwork, 2)">ANMT</li>
@@ -1054,14 +1265,15 @@
 
                         </div>
                         <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"
-                           data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
-                           data-history="true" data-prevent-submit="true"
-                           placeholder="Input Cutoff Value">
+                            data-append="<span>Angstroms</span>" data-prepend="<span'>Edge Cutoff</span>"
+                            data-history="true" data-prevent-submit="true" placeholder="Input Cutoff Value">
                     </div>
                 </div>
 
                 <div class="tight group flex-column">
-                    <button class="ribbon-button" onclick="view.toggleFluxWindow('fluctuationWindow', flux.initChart());" title="Preview expected fluctuations of networks">
+                    <button class="ribbon-button"
+                        onclick="view.toggleFluxWindow('fluctuationWindow', flux.initChart());"
+                        title="Preview expected fluctuations of networks">
                         <span class="mif-flow-cascade mif-3x"></span>
                         <span class="caption">Fluctuation Solver</span>
                     </button>
