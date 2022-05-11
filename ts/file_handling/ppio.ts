@@ -23,9 +23,7 @@ class PatchyTopReader extends FileReader{
         if(this.topFile.name.toLowerCase().includes("loro")) {
             this.LORO = true;
         }
-    }
-    onload = ((f) => {
-        return () => {
+        this.onload = () => {
             let nucCount = this.elems.getNextId();
 
             let file = this.result as string
@@ -91,7 +89,8 @@ class PatchyTopReader extends FileReader{
             // usually the place where the DatReader gets fired
             this.callback();
 
-        }})(this.topFile);
+        };
+    }
     
     read(){
         this.readAsText(this.topFile);

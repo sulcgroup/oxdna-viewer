@@ -18,10 +18,7 @@ class TopReader extends FileReader{
         this.system = system;
         this.elems = elems;
         this.callback = callback;
-
-    }
-    onload = ((f) => {
-        return () => {
+        this.onload = () => {
             let nucCount = this.elems.getNextId();
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
@@ -110,7 +107,8 @@ class TopReader extends FileReader{
             nucCount = this.elems.getNextId();
             // usually the place where the DatReader gets fired
             this.callback();
-        }})(this.topFile);
+        };
+    }
     
     read(){
         this.readAsText(this.topFile);
@@ -184,6 +182,12 @@ class  LookupReader extends FileReader {
         this.chunker = chunker;
         this.confLength = confLength;
         this.callback = callback;
+        this.onload = (evt) =>{ // extract configuration
+            let file = this.result as string;
+            let lines = file.split(/[\n]+/g);
+            // we need to pass down idx to sync with the DatReader
+            this.callback(this.idx, lines, this.size);
+        };
     }
 
     addIndex(offset,size,time){
@@ -211,14 +215,6 @@ class  LookupReader extends FileReader {
             );
         }
     }
-
-    onload = ((evt) =>{ // extract configuration
-        return () =>{
-        let file = this.result as string;
-        let lines = file.split(/[\n]+/g);
-        // we need to pass down idx to sync with the DatReader
-        this.callback(this.idx, lines, this.size);
-    }})();
 }
 
 
