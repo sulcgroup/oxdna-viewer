@@ -9,6 +9,7 @@
 // scene update call definition
 function render() {
     renderer.render(scene, camera);
+    pointlight.position.copy(camera.position);
     //renderer.render(pickingScene, camera);
 }
 function renderColorbar() {
@@ -84,11 +85,13 @@ const colorbarCamera = new THREE.OrthographicCamera(-7, 7, 1.8, -2.5, -1, 1);
 const colorbarScene = new THREE.Scene();
 // set scene lighting 
 // The point light follows the camera so lighting is always uniform.
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.5);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
 scene.add(hemiLight);
-const pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
-pointlight.position.set(0, 50, 0);
-camera.add(pointlight);
+const pointlight = new THREE.PointLight(0xffffff, 1.1, 0);
+pointlight.position.copy(camera.position);
+//pointlight.position.set(0, 50, 0);
+//camera.add(pointlight);
+scene.add(pointlight);
 scene.add(camera);
 // Add coordinate axes to scene
 let dir = new THREE.Vector3(1, 0, 0);
