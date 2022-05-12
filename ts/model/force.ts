@@ -242,7 +242,7 @@ class ForceHandler{
         });
 
         forceGeoms.forEach((g, i) => g.addAttribute('position', new THREE.Float32BufferAttribute(v1[i], 3)));
-        let materials = this.types.map((t, i) => new THREE.LineBasicMaterial({color: nucleosideColors[i]}));
+        let materials = this.types.map((t, i) => new THREE.LineBasicMaterial({color: this.forceColors[i]}));
         this.forceLines = <THREE.LineSegments[]>forceGeoms.map((g, i) => new THREE.LineSegments(g, materials[i]));
         this.forceLines.forEach(fl => {
             scene.add(fl);

@@ -100,7 +100,7 @@ class TopReader extends FileReader{
 
                 let base = l[1]; // get base id
                 nuc.type = base;
-                //if we meet a U, we have an RNsibleA (its dumb, but its all we got)
+                //if we meet a U, we have an RNA (its dumb, but its all we got)
                 //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                 if (base === "U") RNA_MODE = true;
                     
