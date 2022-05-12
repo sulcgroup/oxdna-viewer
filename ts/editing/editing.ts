@@ -163,6 +163,7 @@ function createWrapper() {
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
     topologyEdited = true;
+    render();
 }
 
 function deleteWrapper() {

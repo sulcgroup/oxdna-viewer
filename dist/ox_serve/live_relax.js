@@ -63,35 +63,35 @@ class OXServeSocket extends WebSocket {
     abort = true;
     constructor(url) {
         super(url);
+        this.onmessage = (response) => {
+            if (!this.abort) { //ignore all incomming messages when we stop the simulation
+                let message = JSON.parse(response.data);
+                if ("console_log" in message) {
+                    console.log(message["console_log"]);
+                }
+                if ("dat_file" in message) {
+                    updateConfFromFile(message["dat_file"]);
+                    if (forceHandler)
+                        forceHandler.redraw();
+                }
+            }
+        };
+        this.onopen = (resonse) => {
+            console.log(resonse);
+            let connect_button = document.getElementById("btnConnect");
+            connect_button.style.backgroundColor = "green";
+            connect_button.textContent = "Connected!";
+            Metro.dialog.close('#socketConnectionsDialog');
+            this.abort = false;
+        };
+        this.onclose = (resonse) => {
+            let connect_button = document.getElementById("btnConnect");
+            connect_button.style.backgroundColor = "";
+            connect_button.textContent = "Connect to oxServe";
+            notify("lost oxServe Connection", "warn");
+            this.abort = true;
+        };
     }
-    onmessage = (response) => {
-        if (!this.abort) { //ignore all incomming messages when we stop the simulation
-            let message = JSON.parse(response.data);
-            if ("console_log" in message) {
-                console.log(message["console_log"]);
-            }
-            if ("dat_file" in message) {
-                updateConfFromFile(message["dat_file"]);
-                if (forceHandler)
-                    forceHandler.redraw();
-            }
-        }
-    };
-    onopen = (resonse) => {
-        console.log(resonse);
-        let connect_button = document.getElementById("btnConnect");
-        connect_button.style.backgroundColor = "green";
-        connect_button.textContent = "Connected!";
-        Metro.dialog.close('#socketConnectionsDialog');
-        this.abort = false;
-    };
-    onclose = (resonse) => {
-        let connect_button = document.getElementById("btnConnect");
-        connect_button.style.backgroundColor = "";
-        connect_button.textContent = "Connect to oxServe";
-        notify("lost oxServe Connection", "warn");
-        this.abort = true;
-    };
     stop_simulation = () => {
         this.send("abort");
         this.abort = true;
