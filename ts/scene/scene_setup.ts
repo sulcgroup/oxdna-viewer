@@ -10,8 +10,8 @@
 
 // scene update call definition
 function render() {
-    renderer.render(scene, camera);
     pointlight.position.copy(camera.position);
+    renderer.render(scene, camera);
     //renderer.render(pickingScene, camera);
 }
 function renderColorbar() {
