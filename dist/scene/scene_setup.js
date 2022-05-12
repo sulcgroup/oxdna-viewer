@@ -85,7 +85,7 @@ const colorbarCamera = new THREE.OrthographicCamera(-7, 7, 1.8, -2.5, -1, 1);
 const colorbarScene = new THREE.Scene();
 // set scene lighting 
 // The point light follows the camera so lighting is always uniform.
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.2);
+const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.1);
 scene.add(hemiLight);
 const pointlight = new THREE.PointLight(0xffffff, 1.1, 0);
 pointlight.position.copy(camera.position);
