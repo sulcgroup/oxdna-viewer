@@ -10,7 +10,14 @@
 
 // scene update call definition
 function render() {
+    pointlight1.position.copy(camera.position);
+    pointlight1.position= pointlight1.position.add(new THREE.Vector3(0,50,50));
+    pointlight2.position.copy(camera.position);
+    pointlight2.position= pointlight2.position.add(new THREE.Vector3(0,-50,50));
+
     renderer.render(scene, camera);
+
+
     //renderer.render(pickingScene, camera);
 }
 function renderColorbar() {
@@ -101,11 +108,20 @@ const colorbarScene = new THREE.Scene();
 
 // set scene lighting 
 // The point light follows the camera so lighting is always uniform.
-const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.5 );
+const hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.1 );
 scene.add( hemiLight );
-const pointlight = new THREE.PointLight(0xffffff, 0.5, 0);
-pointlight.position.set(0, 50, 0);
-camera.add(pointlight);
+const pointlight1 = new THREE.PointLight(0xffffff, 1, 0)
+const pointlight2 = new THREE.PointLight(0xffffff, 1, 0)
+
+//pointlight.position.set(0, 50, 0);
+//camera.add(pointlight);
+
+scene.add(pointlight1);
+pointlight1.position.copy(camera.position);
+pointlight1.position= pointlight1.position.add(new THREE.Vector3(0,50,50));
+scene.add(pointlight2);
+pointlight2.position.copy(camera.position);
+pointlight2.position= pointlight2.position.add(new THREE.Vector3(0,-50,50));
 
 scene.add(camera);
 
