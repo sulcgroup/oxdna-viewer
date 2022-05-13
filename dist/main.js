@@ -21,6 +21,7 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 class ElementMap extends Map {
+    idCounter;
     constructor() {
         super();
         this.idCounter = 0;
@@ -113,6 +114,33 @@ function findBasepairs(min_length = 0) {
     });
 }
 ;
+function colorSelectorWrapper() {
+    let colors = new Set();
+    //go through selectedBases and fetch our reference colors
+    selectedBases.forEach(b => {
+        if (b.color)
+            colors.add(b.color.getHex());
+    });
+    console.log(colors);
+    const match_color = (b) => {
+        if (b.color)
+            return colors.has(b.color.getHex());
+        return false;
+    };
+    let toSelect = [];
+    systems.forEach(system => {
+        system.strands.forEach(strand => {
+            strand.filter(match_color).forEach(b => toSelect.push(b));
+        });
+    });
+    tmpSystems.forEach(system => {
+        system.strands.forEach(strand => {
+            strand.filter(match_color).forEach(b => toSelect.push(b));
+        });
+    });
+    api.selectElements(toSelect);
+    render();
+}
 function connectedSelectorWrapper() {
     let strands = new Set();
     let selected_nucleotides = [...selectedBases].filter(e => e instanceof Nucleotide);
