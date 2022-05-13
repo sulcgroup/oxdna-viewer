@@ -117,9 +117,11 @@ function makeLut(data, key) {
     //update every system's color map
     for (let i = 0; i < systems.length; i++) {
         const system = systems[i];
-        const end = system.systemLength();
-        for (let i = 0; i < end; i++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-            system.lutCols[i] = lut.getColor(Number(system.colormapFile[key][i]));
+        if (system.colormapFile) {
+            const end = system.systemLength();
+            for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(systems[i].globalStartId + j).sid]));
+            }
         }
     }
 }

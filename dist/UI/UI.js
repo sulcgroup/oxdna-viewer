@@ -367,9 +367,6 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
-    id;
-    doc;
-    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -396,8 +393,6 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
-    lastActive;
-    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -424,19 +419,13 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
-    doc;
-    coloringMode;
-    centeringMode;
-    inboxingMode;
-    selectionMode;
-    transformMode;
-    basepairMessage = "Locating basepairs, please be patient...";
-    vrEnabled = false;
-    backboneScale = 1;
-    nucleosideScale = 1;
-    connectorScale = 1;
-    bbconnectorScale = 1;
     constructor(doc) {
+        this.basepairMessage = "Locating basepairs, please be patient...";
+        this.vrEnabled = false;
+        this.backboneScale = 1;
+        this.nucleosideScale = 1;
+        this.connectorScale = 1;
+        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -892,24 +881,6 @@ class View {
 let view = new View(document);
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
-    title;
-    xaxislabel;
-    yaxislabel;
-    data;
-    fluxWindowOpen;
-    type;
-    temp;
-    chart; // chartjs main chart object
-    units;
-    colors;
-    colorarr; // just stores colors for the graph
-    charttype;
-    chartdata;
-    chartoptions;
-    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
-    datasetCount; // how many datasets are currently displayed on the graph
-    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
-    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
