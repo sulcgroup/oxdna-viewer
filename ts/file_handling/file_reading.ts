@@ -171,7 +171,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, scriptFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -184,6 +184,10 @@ function handleFiles(files: FileList) {
         // oxview files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
+            return;
+        }
+        else if (ext=="js"){
+            readScriptFile(files[i]);
             return;
         }
         else if (ext === "mgl"){
@@ -726,6 +730,14 @@ function readJson(system, jsonReader) {
             return;
         }
     }
+}
+
+function readScriptFile(file: File){
+    let reader = new FileReader();
+    reader.onload=(e)=>{
+        eval(e.target.result as string); // hacky, but should do the trick 
+    };
+    reader.readAsText(file);
 }
 
 function readOxViewJsonFile(file: File) {

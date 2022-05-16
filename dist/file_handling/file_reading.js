@@ -153,7 +153,7 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, scriptFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -162,6 +162,10 @@ function handleFiles(files) {
         // oxview files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
+            return;
+        }
+        else if (ext == "js") {
+            readScriptFile(files[i]);
             return;
         }
         else if (ext === "mgl") {
@@ -667,6 +671,13 @@ function readJson(system, jsonReader) {
             return;
         }
     }
+}
+function readScriptFile(file) {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        eval(e.target.result); // hacky, but should do the trick 
+    };
+    reader.readAsText(file);
 }
 function readOxViewJsonFile(file) {
     let reader = new FileReader();
