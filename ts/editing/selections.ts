@@ -31,6 +31,13 @@ class SelectionListHandler{
             entry=>[`${entry.name}`, entry.selectedBases.map(e=>e.id)]
         );
     }
+    getSelectionByName(name : string){
+        for(let i =0; i < this.selectionList.length; i++){
+            if(this.selectionList[i].name === name)
+                return this.selectionList[i].selectedBases;
+        }
+        return null;
+    }
 }
 
 
