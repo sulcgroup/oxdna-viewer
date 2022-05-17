@@ -117,20 +117,6 @@ function listSelections() {
     selectionListHandler.getHTML().forEach(
         s => selectionsDOM.appendChild(s)
     );
-    
-    //distanceHandler.getHTML().forEach(
-        //d => distanceDOM.appendChild(d)
-    //);
-    render();
-
-    ////call all updates and spit out the distance HTML
-    //distanceHandler.update();
-    //let distanceDOM = document.getElementById("distances");
-    //distanceDOM.innerText = "";
-    //distanceHandler.getHTML().forEach(
-    //    d => distanceDOM.appendChild(d)
-    //);
-    //render();
 }
 
 
