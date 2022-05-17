@@ -55,6 +55,7 @@
       "ts/file_handling/order_parameter_selector.ts",
       "./ts/editing/distance.ts",
       "./ts/file_handling/ppio.ts",
-      "./ts/file_handling/plateDB.ts"
+      "./ts/file_handling/plateDB.ts",
+      "./ts/editing/selections.ts"
     ]
 }

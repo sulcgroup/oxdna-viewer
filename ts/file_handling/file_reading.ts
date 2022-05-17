@@ -906,7 +906,15 @@ function readOxViewString(s: string) {
             });
             // Finally, we can add the system to the scene
             addSystemToScene(sys);
-
+            
+            if(data.selections){
+                data.selections.forEach((selection_element) =>{
+                    selectionListHandler.append(
+                        new Set(api.getElements(selection_element[1])),
+                                selection_element[0]
+                    )
+                })
+            }
             if (customColors) {
                 view.coloringMode.set("Custom");
             }

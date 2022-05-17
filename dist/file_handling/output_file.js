@@ -312,7 +312,8 @@ function makeOxViewJsonFile(space) {
         date: new Date(),
         box: box.toArray(),
         systems: systems,
-        forces: forces
+        forces: forces,
+        selections: selectionListHandler.serialize()
     }, null, space));
 }
 //let textFile: string;
