@@ -307,8 +307,9 @@ function makeSequenceFile() {
     }
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
-function makeOxViewJsonFile(space) {
-    makeTextFile("output.oxview", JSON.stringify({
+function makeOxViewJsonFile(name, space) {
+    let file_name = name ? name + ".oxview" : "output.oxview";
+    makeTextFile(file_name, JSON.stringify({
         date: new Date(),
         box: box.toArray(),
         systems: systems,
