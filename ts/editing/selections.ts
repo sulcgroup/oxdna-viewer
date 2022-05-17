@@ -1,6 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../main.ts" />
 
+
 class SelectionListHandler{
     selectionList = new Array<ViewSelection>();
 
@@ -39,10 +40,13 @@ class ViewSelection{
     parent : SelectionListHandler;
     name : string;
     selectedBases : Array<BasicElement>;
+    selected = false;
 
     html : HTMLDivElement;
+    checkbox : HTMLInputElement;
     label : HTMLLabelElement;
     selNameInput : HTMLInputElement;
+    checked = false;
 
     constructor(name: string, selectedBases:Array<BasicElement>, parent : SelectionListHandler){
         this.parent = parent;
@@ -56,8 +60,11 @@ class ViewSelection{
         let delete_button = document.createElement('button');
         this.label = document.createElement('label');
         this.label.style.width="90%";
-
-        this.label.ondblclick = ()=>{
+        this.checkbox = document.createElement('input');
+        this.checkbox.type="checkbox";
+        this.checkbox.checked = false;
+        
+        this.label.click = ()=>{
             this.label.hidden=true;
             if (!this.selNameInput){
                 this.selNameInput = document.createElement('input');
@@ -85,11 +92,27 @@ class ViewSelection{
             else
                 this.selNameInput.hidden= false;
         };
-
-        this.label.onclick = ()=>{
-            api.selectElements(this.selectedBases,true);
+        const toggle_action = ()=>{
+            let changed_systems = new Set<System>();
+            this.selectedBases.forEach(s=>{
+                changed_systems.add(s.getSystem());
+                s.toggle();
+            });
+            changed_systems.forEach(s=>{
+                s.callUpdates(['instanceColor'])
+            });
+            if(this.checked){
+                this.checkbox.checked = false;
+                this.checked = false;
+            }
+            else{
+                this.checkbox.checked = true;
+                this.checked = true;
+            }
             render();
         }
+        this.checkbox.onclick = toggle_action;
+
 
         this.label.innerText = this.name;
         delete_button.innerText ="x";
@@ -98,6 +121,7 @@ class ViewSelection{
             listSelections();
         }
         this.html.append(delete_button);
+        this.html.append(this.checkbox);
         this.html.append(this.label);
     }
 
