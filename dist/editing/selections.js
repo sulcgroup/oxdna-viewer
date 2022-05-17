@@ -15,7 +15,7 @@ class SelectionListHandler {
         let s = Array.from(selectedBases);
         let name_string;
         if (name === "")
-            name_string = `\t${s[0].sid}-${s[s.length - 1].sid}`;
+            name_string = `${s[0].sid}-${s[s.length - 1].sid}`;
         else
             name_string = name;
         this.selectionList.push(new ViewSelection(name_string, s, this));
@@ -48,14 +48,15 @@ class ViewSelection {
         this.checkbox = document.createElement('input');
         this.checkbox.type = "checkbox";
         this.checkbox.checked = false;
-        this.label.click = () => {
+        this.label.ondblclick = () => {
             this.label.hidden = true;
             if (!this.selNameInput) {
                 this.selNameInput = document.createElement('input');
                 this.selNameInput.type = "text";
+                this.selNameInput.value = this.label.innerHTML.trim();
                 this.html.append(this.selNameInput);
                 const handle = () => {
-                    this.label.innerHTML = "\t" + this.selNameInput.value;
+                    this.label.innerHTML = this.selNameInput.value;
                     this.name = this.label.innerHTML;
                     this.label.hidden = false;
                     this.selNameInput.hidden = true;
