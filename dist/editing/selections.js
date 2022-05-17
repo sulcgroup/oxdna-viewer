@@ -21,7 +21,7 @@ class SelectionListHandler {
         this.selectionList.push(new ViewSelection(name_string, s, this));
     }
     serialize() {
-        return this.selectionList.map(entry => [`${entry.name}`, entry.selectedBases.map(e => e.sid)]);
+        return this.selectionList.map(entry => [`${entry.name}`, entry.selectedBases.map(e => e.id)]);
     }
 }
 class ViewSelection {
@@ -91,18 +91,6 @@ function listSelections() {
     const selectionsDOM = document.getElementById("selectionLST");
     selectionsDOM.innerText = "";
     selectionListHandler.getHTML().forEach(s => selectionsDOM.appendChild(s));
-    //distanceHandler.getHTML().forEach(
-    //d => distanceDOM.appendChild(d)
-    //);
-    render();
-    ////call all updates and spit out the distance HTML
-    //distanceHandler.update();
-    //let distanceDOM = document.getElementById("distances");
-    //distanceDOM.innerText = "";
-    //distanceHandler.getHTML().forEach(
-    //    d => distanceDOM.appendChild(d)
-    //);
-    //render();
 }
 function addSelectionToList() {
     let s = Array.from(selectedBases);

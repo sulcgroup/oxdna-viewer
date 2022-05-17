@@ -27,7 +27,7 @@ class SelectionListHandler{
     }
     serialize(){
         return this.selectionList.map(
-            entry=>[`${entry.name}`, entry.selectedBases.map(e=>e.sid)]
+            entry=>[`${entry.name}`, entry.selectedBases.map(e=>e.id)]
         );
     }
 }
