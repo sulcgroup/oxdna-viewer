@@ -77,7 +77,14 @@ Simulation settings:
     <input type="number" value="10000" id="mdPrintEnergyInterval" title="Output energy every # of steps.">
 
     <label for="mdThermostat">Thermostat: </label>
-    <input type="text" value="john" id="mdThermostat" title="Thermostat to use.">
+    <!--<input type="text" value="john" id="mdThermostat" title="Thermostat to use.">-->
+    <select id="mdThermostat">
+      <option value="brownian">Brownian</option>
+      <!--<option value="refresh"> Anderson</option>-->
+      <option value="bussi">Bussi-Donadio-Parrinello</option>
+      <option value="langevin">Langevin</option>
+      <option value="no">No</option>
+    </select>
 
     <label for="mdDT">dt: </label>
     <input type="number" value="0.003" id="mdDT" title="dt value.">
