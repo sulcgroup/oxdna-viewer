@@ -3,7 +3,6 @@
  * This also specifies the visual structure of a nucleotide.
  */
 class Nucleotide extends BasicElement {
-    pair;
     constructor(id, strand) {
         super(id, strand);
     }

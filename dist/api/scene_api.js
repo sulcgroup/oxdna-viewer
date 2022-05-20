@@ -346,11 +346,9 @@ var api;
             let newCam = createOrthographicCamera(-width / 2, width / 2, height / 2, -height / 2, near, far, pos.toArray());
             newCam.up = up;
             newCam.lookAt(focus);
-            let light = pointlight;
             scene.remove(camera);
             camera = newCam;
             controls.object = camera;
-            camera.add(light);
             scene.add(camera);
             document.getElementById("cameraSwitch").innerHTML = "Perspective";
         }
@@ -370,11 +368,9 @@ var api;
             let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
             newCam.up = up;
             newCam.lookAt(focus);
-            let light = pointlight;
             scene.remove(camera);
             camera = newCam;
             controls.object = camera;
-            camera.add(light);
             scene.add(camera);
             document.getElementById("cameraSwitch").innerHTML = "Orthographic";
         }
