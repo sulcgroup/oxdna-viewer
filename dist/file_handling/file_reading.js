@@ -1111,21 +1111,23 @@ function addSystemToScene(system) {
     canvas.focus();
 }
 window.addEventListener("message", (event) => {
-    if (event.data.message === 'drop') {
-        handleFiles(event.data.files);
-    }
-    else if (event.data.message === 'download') {
-        makeOutputFiles();
-    }
-    else if (event.data.message === 'remove-event') {
-        target.removeEventListener("drop", handleDrop);
-        target.addEventListener("drop", function () { notify("Dragging onto embedded viewer does not allow form completion"); });
-        const openButton = document.getElementById('open-button');
-        openButton.disabled = true;
-    }
-    else {
-        console.log(event.data.message, "is not a recognized message");
-        return;
+    if (event.data.message) { // do we have a message ?
+        if (event.data.message === 'drop') {
+            handleFiles(event.data.files);
+        }
+        else if (event.data.message === 'download') {
+            makeOutputFiles();
+        }
+        else if (event.data.message === 'remove-event') {
+            target.removeEventListener("drop", handleDrop);
+            target.addEventListener("drop", function () { notify("Dragging onto embedded viewer does not allow form completion"); });
+            const openButton = document.getElementById('open-button');
+            openButton.disabled = true;
+        }
+        else {
+            console.log(event.data.message, "is not a recognized message");
+            return;
+        }
     }
 }, false);
 // associates massfile with last loaded system (only needed for Generic Sphere Systems)
