@@ -156,7 +156,7 @@ function handleFiles(files) {
     let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, scriptFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
-        if (files[i].name) {
+        if (typeof (files[i].name) !== "undefined") {
             // get file extension
             const fileName = files[i].name.toLowerCase();
             const ext = fileName.split('.').pop();

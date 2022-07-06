@@ -176,7 +176,7 @@ function handleFiles(files: FileList) {
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
-        if(files[i].name){
+        if(typeof(files[i].name) !== "undefined"){
         // get file extension
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
