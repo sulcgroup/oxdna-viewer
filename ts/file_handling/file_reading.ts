@@ -176,7 +176,7 @@ function handleFiles(files: FileList) {
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
-        if(typeof(files[i].name) !== "undefined"){
+       
         // get file extension
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
@@ -220,10 +220,6 @@ function handleFiles(files: FileList) {
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
             return
-        }
-        }
-        else{
-            readXYZfile(files[i]); //test way
         }
     }
 
