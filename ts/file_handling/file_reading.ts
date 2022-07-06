@@ -1254,6 +1254,9 @@ window.addEventListener("message", (event) => {
             const openButton : HTMLInputElement = <HTMLInputElement>document.getElementById('open-button')
             openButton.disabled = true;
         }
+        else if (event.data.message === 'remove-event'){
+            readXYZfile(event.data.dataTransfer.files[0]);
+        }
         else {
             console.log(event.data.message, "is not a recognized message")
             return

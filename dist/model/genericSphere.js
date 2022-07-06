@@ -58,7 +58,7 @@ class GenericSphere extends BasicElement {
             scale = 1 + this.mass / 16;
         }
         else {
-            scale = 3;
+            scale = 1;
         }
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
