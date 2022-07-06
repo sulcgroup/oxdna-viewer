@@ -156,58 +156,63 @@ function handleFiles(files) {
     let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, scriptFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
-        // get file extension
-        const fileName = files[i].name.toLowerCase();
-        const ext = fileName.split('.').pop();
-        // oxview files had better be dropped alone because that's all that's loading.
-        if (ext === "oxview") {
-            readOxViewJsonFile(files[i]);
-            return;
+        if (files[i].name) {
+            // get file extension
+            const fileName = files[i].name.toLowerCase();
+            const ext = fileName.split('.').pop();
+            // oxview files had better be dropped alone because that's all that's loading.
+            if (ext === "oxview") {
+                readOxViewJsonFile(files[i]);
+                return;
+            }
+            else if (ext == "js") {
+                readScriptFile(files[i]);
+                return;
+            }
+            else if (ext === "mgl") {
+                readMGL(files[i]);
+                return;
+            }
+            else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
+                pdbFile = files[i];
+            }
+            else if (ext === "unf") {
+                readUNFfile(files[i]);
+                return;
+            }
+            else if (ext === "xyz") {
+                readXYZfile(files[i]);
+                return;
+            }
+            // everything else is read in the context of other files so we need to check what we have.
+            else if (["dat", "conf", "oxdna"].includes(ext))
+                datFile = files[i];
+            else if (ext === "top")
+                topFile = files[i];
+            else if (ext === "json")
+                jsonFile = files[i];
+            else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
+                particleFile = files[i];
+            else if (fileName.includes("patches"))
+                patchFile = files[i];
+            else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
+                trapFile = files[i];
+            else if (ext === "txt" && (fileName.includes("_m")))
+                massFile = files[i];
+            else if (ext === "idx")
+                idxFile = files[i];
+            else if (ext === "par")
+                parFile = files[i];
+            else if (ext === "hb")
+                hbFile = files[i];
+            // otherwise, what is this?
+            else {
+                notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+                return;
+            }
         }
-        else if (ext == "js") {
-            readScriptFile(files[i]);
-            return;
-        }
-        else if (ext === "mgl") {
-            readMGL(files[i]);
-            return;
-        }
-        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
-            pdbFile = files[i];
-        }
-        else if (ext === "unf") {
-            readUNFfile(files[i]);
-            return;
-        }
-        else if (ext === "xyz") {
-            readXYZfile(files[i]);
-            return;
-        }
-        // everything else is read in the context of other files so we need to check what we have.
-        else if (["dat", "conf", "oxdna"].includes(ext))
-            datFile = files[i];
-        else if (ext === "top")
-            topFile = files[i];
-        else if (ext === "json")
-            jsonFile = files[i];
-        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
-            particleFile = files[i];
-        else if (fileName.includes("patches"))
-            patchFile = files[i];
-        else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
-            trapFile = files[i];
-        else if (ext === "txt" && (fileName.includes("_m")))
-            massFile = files[i];
-        else if (ext === "idx")
-            idxFile = files[i];
-        else if (ext === "par")
-            parFile = files[i];
-        else if (ext === "hb")
-            hbFile = files[i];
-        // otherwise, what is this?
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
-            return;
+            readXYZfile(files[i]); //test way
         }
     }
     // If a new system is being loaded, there will be a dat and top file pair
@@ -1127,9 +1132,6 @@ window.addEventListener("message", (event) => {
             target.addEventListener("drop", function () { notify("Dragging onto embedded viewer does not allow form completion"); });
             const openButton = document.getElementById('open-button');
             openButton.disabled = true;
-        }
-        else if (event.data.message === 'xyz') {
-            readXYZfile(event.data.dataTransfer.files[0]);
         }
         else {
             console.log(event.data.message, "is not a recognized message");

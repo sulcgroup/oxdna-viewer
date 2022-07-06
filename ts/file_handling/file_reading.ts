@@ -176,7 +176,7 @@ function handleFiles(files: FileList) {
 
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
-       
+        if(files[i].name){
         // get file extension
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
@@ -220,6 +220,10 @@ function handleFiles(files: FileList) {
         else {
             notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.")
             return
+        }
+        }
+        else{
+            readXYZfile(files[i]); //test way
         }
     }
 
@@ -1253,9 +1257,6 @@ window.addEventListener("message", (event) => {
             target.addEventListener("drop", function () {notify("Dragging onto embedded viewer does not allow form completion")});
             const openButton : HTMLInputElement = <HTMLInputElement>document.getElementById('open-button')
             openButton.disabled = true;
-        }
-        else if (event.data.message === 'xyz'){
-            readXYZfile(event.data.dataTransfer.files[0]);
         }
         else {
             console.log(event.data.message, "is not a recognized message")
