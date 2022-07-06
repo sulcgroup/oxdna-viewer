@@ -1128,6 +1128,10 @@ window.addEventListener("message", (event) => {
             const openButton = document.getElementById('open-button');
             openButton.disabled = true;
         }
+        else if (event.data.message === 'xyz_drop') {
+            readXYZfile(event.data.files[0]);
+            return;
+        }
         else {
             console.log(event.data.message, "is not a recognized message");
             return;
