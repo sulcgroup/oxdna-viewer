@@ -179,6 +179,10 @@ function handleFiles(files) {
             readUNFfile(files[i]);
             return;
         }
+        else if (ext === "xyz") {
+            readXYZfile(files[i]);
+            return;
+        }
         // everything else is read in the context of other files so we need to check what we have.
         else if (["dat", "conf", "oxdna"].includes(ext))
             datFile = files[i];
@@ -202,7 +206,7 @@ function handleFiles(files) {
             hbFile = files[i];
         // otherwise, what is this?
         else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, mgl, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
+            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
             return;
         }
     }
@@ -1312,6 +1316,13 @@ function readUNFfile(file) {
     let reader = new FileReader();
     reader.onload = (e) => {
         readUNFString(e.target.result);
+    };
+    reader.readAsText(file);
+}
+function readXYZfile(file) {
+    let reader = new FileReader();
+    reader.onload = (e) => {
+        readXYZString(e.target.result);
     };
     reader.readAsText(file);
 }

@@ -134,7 +134,7 @@ class System {
     getAAMonomers() {
         return [].concat.apply([],
             this.strands.map(s=>{
-                if(s.isPeptide()) {
+                if(s.isPeptide() || s.isGS()) {
                     return s.getMonomers();
                 } else {
                     return [];

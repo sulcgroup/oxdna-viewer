@@ -163,10 +163,12 @@ class GenericSphere extends BasicElement {
                         aaColor = sys.lutCols[sid];
                     } else {
                         bbColor = GREY;
+                        aaColor = GREY;
                     }
                 }
                 else {
                     bbColor = this.color;
+                    aaColor = this.color;
                 }
                 break;
         }

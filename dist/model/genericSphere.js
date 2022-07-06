@@ -56,7 +56,7 @@ class GenericSphere extends BasicElement {
             scale = 1 + this.mass / 16;
         }
         else {
-            scale = 1;
+            scale = 3;
         }
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
@@ -161,10 +161,12 @@ class GenericSphere extends BasicElement {
                     }
                     else {
                         bbColor = GREY;
+                        aaColor = GREY;
                     }
                 }
                 else {
                     bbColor = this.color;
+                    aaColor = this.color;
                 }
                 break;
         }

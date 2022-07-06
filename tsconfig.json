@@ -29,6 +29,7 @@
       "./ts/file_handling/video.ts",
       "./ts/file_handling/stl_exporter.ts",
       "./ts/file_handling/GLTFExporter.ts",
+      "./ts/file_handling/xyz_reader.ts",
       "./ts/model/aminoAcid.ts",
       "./ts/model/basicElement.ts",
       "./ts/model/DNA.ts",

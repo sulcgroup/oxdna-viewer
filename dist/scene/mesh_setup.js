@@ -24,6 +24,9 @@ instanceMaterial["defines"]['INSTANCED'] = "";
 // Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
 instanceMaterial2["defines"] = instanceMaterial2["defines"] || {};
 instanceMaterial2["defines"]['INSTANCED'] = "";
+let instanceMaterial3 = instanceMaterial2.clone();
+instanceMaterial3["defines"] = instanceMaterial3["defines"] || {};
+instanceMaterial3["defines"]['INSTANCED'] = "";
 function switchMaterial(material) {
     systems.forEach(s => {
         s.backbone.material = material;
