@@ -1254,11 +1254,28 @@ window.addEventListener("message", (event) => {
             const openButton : HTMLInputElement = <HTMLInputElement>document.getElementById('open-button')
             openButton.disabled = true;
         }
-        else if(event.data.message === 'xyz_drop'){
-            readXYZfile(event.data.files[0]);
+        else if(event.data.message === 'iframe_drop'){
+            let files = event.data.files;
+            let ext = event.data.ext;
+            let inbox_settings = event.data.inbox_settings;
+            if(files.length != ext.length){
+                notify("make sure you pass all files with extenstions");
+                return
+            }
+            //if present change the preference for inboxing
+            if(inbox_settings){
+                view.inboxingMode.set(inbox_settings[0]);
+                view.centeringMode.set(inbox_settings[1]);
+                centerAndPBCBtnClick();
+            }
+            //set the names and extensions for every passed file
+            for(let i =0; i< files.length; i++){
+                files[i].name = `${i}.${ext[i]}`;
+                
+            }
+            handleFiles(files);
             return
         }
-        
         else {
             console.log(event.data.message, "is not a recognized message")
             return
