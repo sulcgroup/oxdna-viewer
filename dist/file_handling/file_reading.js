@@ -1128,7 +1128,7 @@ window.addEventListener("message", (event) => {
             const openButton = document.getElementById('open-button');
             openButton.disabled = true;
         }
-        else if (event.data.message === 'remove-event') {
+        else if (event.data.message === 'xyz') {
             readXYZfile(event.data.dataTransfer.files[0]);
         }
         else {
