@@ -351,10 +351,25 @@ function makeSelectedBasesFile() { //make selected base file
 }
 
 function makeSequenceFile() {
-    let seqTxts = [];
+    let seqTxts = [
+        'name, seq, len, RGB'
+    ];
     const handle_strand = (strand: Strand)=>{
         let label = strand.label ? strand.label : `strand_${strand.id}`;
-        seqTxts.push(`${label}, ${strand.getSequence()}`);
+        let line = `${label},${strand.getSequence()}`;
+        // add the length info
+        line += `,${strand.getLength()}` 
+        // assume that the strand color is the same from top to bottom. 
+        let color = null;
+        if (typeof(strand.end5.color) !=="undefined")
+            color = `,${Math.round(strand.end5.color.r*255)}/${Math.round(strand.end5.color.g*255)}/${Math.round(strand.end5.color.b*255)}`;
+        else if (typeof(strand.end3.color) !=="undefined")
+            color = `,${Math.round(strand.end3.color.r*255)}/${Math.round(strand.end3.color.g*255)}/${Math.round(strand.end3.color.b*255)}`;
+        if(color)
+            line += color;
+        else 
+            line += `, `
+        seqTxts.push(line);
     }
 
     let strands = new Set();

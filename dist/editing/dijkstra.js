@@ -3,6 +3,8 @@
  * A node for priorioty linked list / stack and such
  */
 class PriorityNode {
+    key;
+    priority;
     constructor(key, priority) {
         this.key = key;
         this.priority = priority;
@@ -13,9 +15,7 @@ class PriorityNode {
  * This queue is sorted by priority for each enqueue
  */
 class PriorityQueue {
-    constructor() {
-        this.nodes = [];
-    }
+    nodes = [];
     /**
      * Enqueue a new node
      * @param {[type]} priority
@@ -44,6 +44,9 @@ class PriorityQueue {
  * Computes the shortest path between two nodes
  */
 class Dijkstra {
+    infinity = 1 / 0;
+    vertices;
+    crossPairs;
     /**
      * Add a new vertex and related edges
      * @param {[type]} name  [description]
@@ -53,7 +56,6 @@ class Dijkstra {
     //		this.vertices[name] = edges;
     //	}
     constructor(vertices, crossPairs) {
-        this.infinity = 1 / 0;
         this.vertices = vertices.map(e => e.id);
         this.crossPairs = crossPairs;
     }

@@ -39,7 +39,7 @@ class PatchyTopReader extends FileReader{
                     if(t){
                         let sphere = new PatchyParticle(nucCount+i, this.system);
                         this.system.particles.push(sphere);
-                        sphere.id = i;
+                        sphere.id = nucCount+i;
                         this.elems.set(nucCount+i, sphere);
 
                         sphere.type = t;
@@ -57,18 +57,18 @@ class PatchyTopReader extends FileReader{
                 });
             }
             else {
+                let idCounter = 0;
                 lines.forEach((line, t)=>{
                     console.log(line)
                     let info = line.split(" ");
                     const pcount = parseInt(info[0]);
-                    for(let i = pcount * t; i < pcount * (t+1); i++){
-
-                        let sphere = new PatchyParticle(nucCount+i, this.system);
+                    for(let p=0; p<pcount; p++) {
+                        const id = idCounter++
+                        let sphere = new PatchyParticle(id, this.system);
                         this.system.particles.push(sphere);
                         sphere.sid = this.sidCounter++;
-                        sphere.id = nucCount+i;
-                        sphere.sid = i;
-                        this.elems.set(nucCount+i, sphere);
+                        sphere.id = id;
+                        this.elems.set(id, sphere);
 
                         sphere.type = t.toString();
 
