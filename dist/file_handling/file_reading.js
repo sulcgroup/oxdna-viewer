@@ -153,7 +153,7 @@ target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, scriptFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile; //this sets them all to undefined.
     // assign files to the extentions
     for (let i = 0; i < filesLen; i++) {
         // get file extension
@@ -194,6 +194,12 @@ function handleFiles(files) {
             particleFile = files[i];
         else if (fileName.includes("patches"))
             patchFile = files[i];
+        else if (ext === "patchspec") {
+            if (loroPatchFiles == undefined) {
+                loroPatchFiles = [];
+            }
+            loroPatchFiles.push(files[i]);
+        }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m")))
@@ -223,7 +229,7 @@ function handleFiles(files) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
     render();
     return;
 }
@@ -425,11 +431,11 @@ function readFilesFromPathArgs(args) {
         dom['style'].cursor = "auto";
         Metro.activity.close(activity);
     };
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles; //this sets them all to undefined.
     const get_request = (paths) => {
         if (paths.length == 0) {
             //read a topology/configuration pair and whatever else
-            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile);
+            readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
             done();
         }
         else {
@@ -463,6 +469,12 @@ function readFilesFromPathArgs(args) {
                     hbFile = file;
                 else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2")
                     pdbFile = file;
+                else if (ext === "patchspec") {
+                    if (loroPatchFiles == undefined) {
+                        loroPatchFiles = [];
+                    }
+                    loroPatchFiles.push(file);
+                }
                 else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
                     particleFile = file;
                 // otherwise, what is this?
@@ -510,15 +522,15 @@ function readFilesFromURLParams() {
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile) {
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
         document.addEventListener('setupComplete', readAuxiliaryFiles);
-        if (typeof particleFile !== "undefined") {
+        if (typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined") {
             //make system to store the dropped files in
-            const system = new PatchySystem(sysCount, particleFile, patchFile);
+            const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles);
             systems.push(system); //add system to Systems[]
             //we handle patchy files
             const patchyTopologyReader = new PatchyTopReader(topFile, system, elements, () => {
@@ -998,23 +1010,36 @@ function addSystemToScene(system) {
                     const pos = patch.position.clone();
                     pos.y *= -1;
                     pos.z *= -1;
-                    const a1 = patch.a1.clone();
+                    let a1 = patch.a1.clone();
                     a1.y *= -1;
                     a1.z *= -1;
-                    const a2 = patch.a2.clone();
+                    let a2 = patch.a2.clone();
                     a2.y *= -1;
                     a2.z *= -1;
+                    let aw = patchAlignWidth;
                     // Too many patches.txt files fail to set a1 and a2 correctly.
                     if (Math.abs(a1.dot(a2)) > 1e-5) {
                         console.warn(`The a1 and a2 vectors are incorrectly defined in species ${i}. Using patch position instead`);
-                        points.push(pos.clone());
-                    }
-                    else {
-                        for (let i = 0; i < patchResolution; i++) {
-                            let diff = a2.clone().multiplyScalar(i == 0 ? patchAlignWidth : patchWidth);
-                            diff.applyAxisAngle(a1, i * 2 * Math.PI / patchResolution);
-                            points.push(pos.clone().add(diff));
+                        a1 = pos.clone();
+                        a1.normalize();
+                        // Create a2 vector othogonal to a1
+                        for (let i of [0, 1, 2]) {
+                            let v = new THREE.Vector3();
+                            v.setComponent(i, 1);
+                            v.projectOnPlane(a1);
+                            v.normalize();
+                            if (v.length() > 0) {
+                                a2.copy(v);
+                                break;
+                            }
                         }
+                        console.assert(a2.length() > 0);
+                        aw = patchWidth; // Remove alignment protrusion
+                    }
+                    for (let i = 0; i < patchResolution; i++) {
+                        let diff = a2.clone().multiplyScalar(i == 0 ? aw : patchWidth);
+                        diff.applyAxisAngle(a1, i * 2 * Math.PI / patchResolution);
+                        points.push(pos.clone().add(diff));
                     }
                 });
                 let particleGeometry = new THREE.ConvexGeometry(points);

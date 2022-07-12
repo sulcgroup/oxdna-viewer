@@ -4,45 +4,9 @@
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
 class System {
-    id;
-    globalStartId; //1st nucleotide's id
-    datFile;
-    colormapFile;
-    lutCols;
-    strands = [];
-    label;
-    //the system contains all the data from a dat file in its instancing arrays
-    //the system also owns the actual meshes that get sent to the scene.
-    INSTANCES;
-    bbOffsets;
-    bbRotation;
-    nsOffsets;
-    nsRotation;
-    conOffsets;
-    conRotation;
-    bbconOffsets;
-    bbconRotation;
-    bbconScales;
-    cmOffsets;
-    bbColors;
-    nsColors;
-    scales;
-    nsScales;
-    conScales;
-    visibility;
-    bbLabels;
-    backboneGeometry;
-    nucleosideGeometry;
-    connectorGeometry;
-    spGeometry;
-    pickingGeometry;
-    backbone;
-    nucleoside;
-    connector;
-    bbconnector;
-    dummyBackbone;
-    checkedForBasepairs = false;
     constructor(id, startID) {
+        this.strands = [];
+        this.checkedForBasepairs = false;
         this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];
@@ -279,18 +243,7 @@ class System {
 }
 ;
 class PatchySystem extends System {
-    patchyGeometries;
-    patchyMeshes;
-    pickingMeshes;
-    offsets;
-    rotations;
-    colors;
-    scalings;
-    visibilities;
-    labels;
-    particles;
-    species;
-    constructor(id, particleFile, patchFile) {
+    constructor(id, particleFile, patchFile, loroPatchFiles) {
         super(id, 0);
         this.id = id;
         this.particles = [];
@@ -301,8 +254,38 @@ class PatchySystem extends System {
                 });
             });
         }
+        else if (loroPatchFiles) {
+            let patchStrs = [];
+            loroPatchFiles.forEach(f => f.text().then(s => {
+                patchStrs.push(s);
+                if (patchStrs.length == loroPatchFiles.length) {
+                    // All files loaded
+                    this.initLoroSpecies(patchStrs);
+                }
+            }));
+        }
+        else {
+            notify("Missing patch information for patchy particle system", "warning", true);
+        }
     }
     ;
+    initLoroSpecies(patchStrs) {
+        patchStrs.map(() => { }); // Why is this needed???
+        this.species = patchStrs.map((str, speciesId) => {
+            return {
+                'type': speciesId,
+                'patches': str.split('\n').map(vs => {
+                    let pos = new THREE.Vector3().fromArray(vs.split(' ').map(v => parseFloat(v)));
+                    return {
+                        'position': pos,
+                        'a1': pos.clone().normalize(),
+                        'a2': pos.clone().normalize(),
+                    };
+                })
+            };
+        });
+        console.log(this.species.length);
+    }
     initSpecies(particlesStr, patchesStr) {
         // Remove whitespace
         particlesStr = particlesStr.replaceAll(' ', '');

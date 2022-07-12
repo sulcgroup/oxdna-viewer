@@ -318,7 +318,7 @@ class PatchySystem extends System {
         patches: any[]
     }[];
 
-    constructor(id: number, particleFile: File, patchFile: File) {
+    constructor(id: number, particleFile?: File, patchFile?: File, loroPatchFiles?: File[]) {
         super(id, 0);
         this.id = id;
         this.particles = [];
@@ -329,8 +329,39 @@ class PatchySystem extends System {
                     this.initSpecies(particlesStr, patchesStr);
                 });
             });
+        } else if (loroPatchFiles) {
+            let patchStrs: string[] = [];
+            loroPatchFiles.forEach(f=>f.text().then(s=>{
+                patchStrs.push(s);
+                if (patchStrs.length == loroPatchFiles.length) {
+                    // All files loaded
+                    this.initLoroSpecies(patchStrs)
+                }
+            }));
+        } else {
+            notify("Missing patch information for patchy particle system", "warning", true);
         }
     };
+
+    initLoroSpecies(patchStrs: string[]) {
+        patchStrs.map(()=>{}); // Why is this needed???
+        this.species = patchStrs.map((str, speciesId)=>{
+            return {
+                'type': speciesId,
+                'patches': str.split('\n').map(vs=>{
+                    let pos = new THREE.Vector3().fromArray(
+                        vs.split(' ').map(v=>parseFloat(v))
+                    );
+                    return {
+                        'position': pos,
+                        'a1': pos.clone().normalize(),
+                        'a2': pos.clone().normalize(), // No actual orientation available
+                    }
+                })
+            }
+        });
+        console.log(this.species.length)
+    }
 
     initSpecies(particlesStr: string, patchesStr: string) {
         // Remove whitespace
