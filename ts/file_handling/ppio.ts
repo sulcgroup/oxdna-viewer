@@ -60,15 +60,17 @@ class PatchyTopReader extends FileReader{
                 let idCounter = 0;
                 lines.forEach((line, t)=>{
                     console.log(line)
-                    let info = line.split(" ");
-                    const pcount = parseInt(info[0]);
-                    for(let p=0; p<pcount; p++) {
+                    // Split on one or more spaces
+                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/ +/g);
+                    let pCount = parseInt(pCountStr);
+                    for(let p=0; p<pCount; p++) {
                         const id = idCounter++
                         let sphere = new PatchyParticle(id, this.system);
                         this.system.particles.push(sphere);
                         sphere.sid = this.sidCounter++;
                         sphere.id = id;
                         this.elems.set(id, sphere);
+                        sphere['patchSpec'] = patchSpec;
 
                         sphere.type = t.toString();
 

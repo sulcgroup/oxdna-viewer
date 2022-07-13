@@ -184,6 +184,14 @@ function handleFiles(files) {
             return;
         }
         // everything else is read in the context of other files so we need to check what we have.
+        else if (ext === "patchspec" ||
+            fileName.match(/p_my\w+\.dat/g) // Why do multiple files need to end with dat?
+        ) {
+            if (loroPatchFiles == undefined) {
+                loroPatchFiles = [];
+            }
+            loroPatchFiles.push(files[i]);
+        }
         else if (["dat", "conf", "oxdna"].includes(ext))
             datFile = files[i];
         else if (ext === "top")
@@ -194,12 +202,6 @@ function handleFiles(files) {
             particleFile = files[i];
         else if (fileName.includes("patches"))
             patchFile = files[i];
-        else if (ext === "patchspec") {
-            if (loroPatchFiles == undefined) {
-                loroPatchFiles = [];
-            }
-            loroPatchFiles.push(files[i]);
-        }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
             trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m")))
@@ -530,17 +532,19 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         document.addEventListener('setupComplete', readAuxiliaryFiles);
         if (typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined") {
             //make system to store the dropped files in
-            const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles);
-            systems.push(system); //add system to Systems[]
-            //we handle patchy files
-            const patchyTopologyReader = new PatchyTopReader(topFile, system, elements, () => {
-                //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                trajReader = new TrajectoryReader(datFile, patchyTopologyReader, system, elements);
-                trajReader.indexTrajectory();
-                //set up patchy instancing data arrays
-                system.initPatchyInstances();
+            const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles, (callback) => {
+                //we handle patchy files
+                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements, () => {
+                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                    trajReader = new TrajectoryReader(datFile, patchyTopologyReader, system, elements);
+                    trajReader.indexTrajectory();
+                    //set up patchy instancing data arrays
+                    system.initPatchyInstances();
+                    callback();
+                });
+                patchyTopologyReader.read();
             });
-            patchyTopologyReader.read();
+            systems.push(system); //add system to Systems[]
         }
         else {
             //make system to store the dropped files in

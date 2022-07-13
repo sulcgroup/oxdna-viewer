@@ -243,24 +243,28 @@ class System {
 }
 ;
 class PatchySystem extends System {
-    constructor(id, particleFile, patchFile, loroPatchFiles) {
+    constructor(id, particleFile, patchFile, loroPatchFiles, callback) {
         super(id, 0);
         this.id = id;
         this.particles = [];
         if (patchFile) {
             particleFile.text().then(particlesStr => {
                 patchFile.text().then(patchesStr => {
-                    this.initSpecies(particlesStr, patchesStr);
+                    callback(() => {
+                        this.initSpecies(particlesStr, patchesStr);
+                    });
                 });
             });
         }
         else if (loroPatchFiles) {
-            let patchStrs = [];
+            let patchStrMap = new Map();
             loroPatchFiles.forEach(f => f.text().then(s => {
-                patchStrs.push(s);
-                if (patchStrs.length == loroPatchFiles.length) {
-                    // All files loaded
-                    this.initLoroSpecies(patchStrs);
+                patchStrMap.set(f.name, s);
+                if (patchStrMap.size == loroPatchFiles.length) {
+                    callback(() => {
+                        // All files loaded
+                        this.initLoroSpecies(patchStrMap);
+                    });
                 }
             }));
         }
@@ -269,13 +273,26 @@ class PatchySystem extends System {
         }
     }
     ;
-    initLoroSpecies(patchStrs) {
-        patchStrs.map(() => { }); // Why is this needed???
-        this.species = patchStrs.map((str, speciesId) => {
+    initLoroSpecies(patchStrMap) {
+        this.particles.map(() => { });
+        const types = this.particles.map(p => parseInt(p.type));
+        const instanceCounts = [];
+        const patchSpecs = [];
+        types.forEach((s, i) => {
+            patchSpecs[s] = this.particles[i]['patchSpec'];
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1;
+            }
+            else {
+                instanceCounts[s]++;
+            }
+        });
+        this.species = [...new Set(types)].map(s => {
+            let patchStrs = patchStrMap.get(patchSpecs[s]);
             return {
-                'type': speciesId,
-                'patches': str.split('\n').map(vs => {
-                    let pos = new THREE.Vector3().fromArray(vs.split(' ').map(v => parseFloat(v)));
+                'type': s,
+                'patches': patchStrs.split('\n').map(vs => {
+                    let pos = new THREE.Vector3().fromArray(vs.trim().split(/ +/g).map(v => parseFloat(v)));
                     return {
                         'position': pos,
                         'a1': pos.clone().normalize(),
