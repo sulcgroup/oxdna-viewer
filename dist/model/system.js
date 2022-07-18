@@ -270,6 +270,8 @@ class PatchySystem extends System {
         }
         else {
             notify("Missing patch information for patchy particle system", "warning", true);
+            // This is a really ugly hack to fix a race condition
+            new Promise(resolve => setTimeout(resolve, 1000)).then(() => callback(() => { }));
         }
     }
     ;
