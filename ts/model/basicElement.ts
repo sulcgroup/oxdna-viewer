@@ -33,7 +33,7 @@ abstract class BasicElement {
     abstract calcPositionsFromConfLine(l: string[], colorUpdate?: boolean): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
-    abstract extendStrand(len, direction, double): void;
+    abstract extendStrand(len: number, direction: string, double: boolean): void;
     abstract translatePosition(amount: THREE.Vector3): void;
     abstract getA1(): THREE.Vector3;
     abstract getA3(): THREE.Vector3;
@@ -96,14 +96,18 @@ abstract class BasicElement {
         return false;
     }
 
-    changeType(type: string) {
+    setType(type: string) {
         this.type = type;
+    }
+
+    changeType(type: string) {
+        this.setType(type);
         // Get the dummy system if it exists, otherwise get the real system
         let sys = this.getSystem();
         if (this.dummySys) {
             sys = this.dummySys
         }
-        let newC = this.elemToColor(type);
+        let newC = this.elemToColor(this.type);
         sys.fillVec('nsColors', 3, this.sid, [newC.r, newC.g, newC.b])
     }
 
@@ -192,11 +196,27 @@ abstract class BasicElement {
         return this.getInstanceParameter3('cmOffsets');
     }
 
-    isAminoAcid() {
+    isAminoAcid(): boolean {
+        return false;
+    }
+
+    isNucleotide(): boolean {
+        return false;
+    }
+
+    isDNA(): boolean {
+        return false;
+    }
+
+    isRNA(): boolean {
         return false;
     }
 
     isGS() {
+        return false;
+    }
+
+    isPatchyParticle() {
         return false;
     }
 

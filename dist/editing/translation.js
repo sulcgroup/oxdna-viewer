@@ -12,7 +12,7 @@ function rotateElements(elements, axis, angle, about) {
     if (forceHandler)
         forceHandler.redraw();
 }
-function rotateElementsByQuaternion(elements, q, about) {
+function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
     let q2 = q.clone();
@@ -23,75 +23,89 @@ function rotateElementsByQuaternion(elements, q, about) {
         if (e.dummySys !== null) {
             sys = e.dummySys;
         }
-        //get current positions
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-        //the rotation center needs to be (0,0,0)
-        cmPos.sub(about);
-        bbPos.sub(about);
-        nsPos.sub(about);
-        conPos.sub(about);
-        bbconPos.sub(about);
-        cmPos.applyQuaternion(q);
-        bbPos.applyQuaternion(q);
-        nsPos.applyQuaternion(q);
-        conPos.applyQuaternion(q);
-        bbconPos.applyQuaternion(q);
-        //get current rotations and convert to THREE coordinates
-        let nsRotationV = e.getInstanceParameter4("nsRotation");
-        let nsRotation = glsl2three(nsRotationV);
-        let conRotationV = e.getInstanceParameter4("conRotation");
-        let conRotation = glsl2three(conRotationV);
-        let bbconRotationV = e.getInstanceParameter4("bbconRotation");
-        let bbconRotation = glsl2three(bbconRotationV);
-        //apply individual object rotation
-        nsRotation.multiply(q2);
-        conRotation.multiply(q2);
-        bbconRotation.multiply(q2);
-        //move the object back to its original position
-        cmPos.add(about);
-        bbPos.add(about);
-        nsPos.add(about);
-        conPos.add(about);
-        bbconPos.add(about);
-        //update the instancing matrices
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
-        sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
-        sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
-        sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
+        if (sys.isPatchySystem()) {
+            let p = e.getPos();
+            p.sub(about);
+            p.applyQuaternion(q);
+            let rotation = glsl2three(e.getInstanceParameter4("rotations"));
+            rotation.multiply(q2);
+            p.add(about);
+            sys.fillPatchyVec(parseInt(e.type), 'offsets', 3, e.sid, p.toArray());
+            sys.fillPatchyVec(parseInt(e.type), 'rotations', 4, e.sid, [rotation.w, rotation.z, rotation.y, rotation.x]);
+        }
+        else {
+            //get current positions
+            let cmPos = e.getPos();
+            let bbPos = e.getInstanceParameter3("bbOffsets");
+            let nsPos = e.getInstanceParameter3("nsOffsets");
+            let conPos = e.getInstanceParameter3("conOffsets");
+            let bbconPos = e.getInstanceParameter3("bbconOffsets");
+            //the rotation center needs to be (0,0,0)
+            cmPos.sub(about);
+            bbPos.sub(about);
+            nsPos.sub(about);
+            conPos.sub(about);
+            bbconPos.sub(about);
+            cmPos.applyQuaternion(q);
+            bbPos.applyQuaternion(q);
+            nsPos.applyQuaternion(q);
+            conPos.applyQuaternion(q);
+            bbconPos.applyQuaternion(q);
+            //get current rotations and convert to THREE coordinates
+            let nsRotationV = e.getInstanceParameter4("nsRotation");
+            let nsRotation = glsl2three(nsRotationV);
+            let conRotationV = e.getInstanceParameter4("conRotation");
+            let conRotation = glsl2three(conRotationV);
+            let bbconRotationV = e.getInstanceParameter4("bbconRotation");
+            let bbconRotation = glsl2three(bbconRotationV);
+            //apply individual object rotation
+            nsRotation.multiply(q2);
+            conRotation.multiply(q2);
+            bbconRotation.multiply(q2);
+            //move the object back to its original position
+            cmPos.add(about);
+            bbPos.add(about);
+            nsPos.add(about);
+            conPos.add(about);
+            bbconPos.add(about);
+            //update the instancing matrices
+            sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
+            sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
+            sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
+            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+            sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
+            sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
+            sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
+        }
     });
-    // Update backbone connections for bases with neigbours outside the selection set
-    elements.forEach((base) => {
-        if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
-            calcsp(base); //calculate sp between current and n3
+    if (updateScene) {
+        // Update backbone connections for bases with neigbours outside the selection set
+        elements.forEach((base) => {
+            if (base.n3 !== null && base.n3 !== undefined && !elements.has(base.n3)) {
+                calcsp(base); //calculate sp between current and n3
+            }
+            if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
+                calcsp(base.n5); //calculate sp between current and n5
+            }
+        });
+        for (let i = 0; i < systems.length; i++) {
+            systems[i].callUpdates(['instanceOffset', 'instanceRotation']);
         }
-        if (base.n5 !== null && base.n5 !== undefined && !elements.has(base.n5)) {
-            calcsp(base.n5); //calculate sp between current and n5
+        for (let i = 0; i < tmpSystems.length; i++) {
+            tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
         }
-    });
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceOffset', 'instanceRotation']);
-    }
-    for (let i = 0; i < tmpSystems.length; i++) {
-        tmpSystems[i].callUpdates(['instanceOffset', 'instanceRotation']);
-    }
-    for (let i = 0; i < networks.length; i++) {
-        let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
-            return true;
-        } });
-        if (check.length != 0) {
-            networks[i].updatePositions();
-            networks[i].updateRotations(q2);
+        for (let i = 0; i < networks.length; i++) {
+            let check = [...elements].filter(e => { if (networks[i].particles.indexOf(e) > -1) {
+                return true;
+            } });
+            if (check.length != 0) {
+                networks[i].updatePositions();
+                networks[i].updateRotations(q2);
+            }
         }
+        render();
     }
-    render();
 }
 //adjust the backbone after the move. Copied from DragControls
 function calcsp(currentNuc) {
@@ -136,25 +150,33 @@ function translateElements(elements, v) {
         if (e.dummySys !== null) {
             sys = e.dummySys;
         }
-        let cmPos = e.getPos();
-        let bbPos = e.getInstanceParameter3("bbOffsets");
-        let nsPos = e.getInstanceParameter3("nsOffsets");
-        let conPos = e.getInstanceParameter3("conOffsets");
-        let bbconPos = e.getInstanceParameter3("bbconOffsets");
-        cmPos.add(v);
-        bbPos.add(v);
-        nsPos.add(v);
-        conPos.add(v);
-        bbconPos.add(v);
-        sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
-        sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
-        sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-        sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
-        sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+        if (sys.isPatchySystem()) {
+            let p = e.getPos();
+            p.add(v);
+            sys.fillPatchyVec(parseInt(e.type), 'offsets', 3, e.sid, p.toArray());
+        }
+        else {
+            let cmPos = e.getPos();
+            let bbPos = e.getInstanceParameter3("bbOffsets");
+            let nsPos = e.getInstanceParameter3("nsOffsets");
+            let conPos = e.getInstanceParameter3("conOffsets");
+            let bbconPos = e.getInstanceParameter3("bbconOffsets");
+            cmPos.add(v);
+            bbPos.add(v);
+            nsPos.add(v);
+            conPos.add(v);
+            bbconPos.add(v);
+            sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
+            sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
+            sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
+            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
+        }
     });
     // Update backbone connections (is there a more clever way to do this than
     // to loop through all? We only need to update bases with neigbours
     // outside the selection set)
+    let affectedSystems = new Set();
     elements.forEach((base) => {
         if (base.n3 !== null && base.n3 !== undefined) {
             calcsp(base); //calculate sp between current and n3
@@ -162,10 +184,11 @@ function translateElements(elements, v) {
         if (base.n5 !== null && base.n5 !== undefined) {
             calcsp(base.n5); //calculate sp between current and n5
         }
+        affectedSystems.add(base.getSystem());
     });
-    for (let i = 0; i < systems.length; i++) {
-        systems[i].callUpdates(['instanceOffset']);
-    }
+    affectedSystems.forEach((sys) => {
+        sys.callUpdates(['instanceOffset']);
+    });
     for (let i = 0; i < tmpSystems.length; i++) {
         tmpSystems[i].callUpdates(['instanceOffset']);
     }

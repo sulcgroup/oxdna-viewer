@@ -17,13 +17,21 @@ function makeOutputFiles() {
     }
     let dat = view.getInputBool("datDownload");
     if (dat) {
-        console.log(reorganized);
         let { file_name, file } = makeDatFile(name, reorganized);
         setTimeout(() => makeTextFile(file_name, file), 20);
     }
     if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
         setTimeout(() => makeTextFile(file_name, file), 40);
+    }
+    let force_download = view.getInputBool("forceDownload");
+    if (force_download) {
+        if (forces.length > 0) {
+            makeForceFile();
+        }
+        else {
+            notify('No forces to export. Use the forces editor in the "Dynamics" tab to add new forces.', "warning");
+        }
     }
 }
 function makeArrayBuffer(buffer, filename) {
@@ -48,12 +56,16 @@ function make3dOutput() {
     }
     else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
-        const flattenHierarchy = view.getInputBool("3dExportFlat");
+        const flattenHierarchy = view.getInputBool("3dExport_flat");
         const bbMetalness = view.getSliderInputNumber("3dExport_bbMetalness");
         const nsMetalness = view.getSliderInputNumber("3dExport_nsMetalness");
         const bbRoughness = view.getSliderInputNumber("3dExport_bbRoughness");
         const nsRoughness = view.getSliderInputNumber("3dExport_nsRoughness");
+        const includeCamera = view.getInputBool("3dExport_camera");
         let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.connectorScale, view.bbconnectorScale, faces_mul, flattenHierarchy, nsRoughness, bbRoughness, nsMetalness, bbMetalness);
+        if (includeCamera) {
+            objects.push(camera);
+        }
         var exporter = new GLTFExporter();
         var options = { 'forceIndices': true, 'binary': binary };
         // Parse the input and generate the glTF output
@@ -222,7 +234,6 @@ function makeDatFile(name, altNumbering = undefined) {
         systems.forEach(system => {
             system.strands.forEach((strand) => {
                 strand.forEach(e => {
-                    console.log(e.id);
                     dat += e.getDatFileOutput();
                 }, true); //oxDNA runs 3'-5'
             });
@@ -265,14 +276,6 @@ function makeMassFile(name, altNumbering, counts, gsSubtypes) {
     let text = gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString()).join('\n');
     makeTextFile(name, text);
 }
-function writeMutTrapText(base1, base2) {
-    return "{\n" + "type = mutual_trap\n" +
-        "particle = " + base1 + "\n" +
-        "ref_particle = " + base2 + "\n" +
-        "stiff = 0.09\n" +
-        "r0 = 1.2 \n" +
-        "PBC = 1" + "\n}\n\n";
-}
 function makeForceFile() {
     if (forces.length > 0) {
         makeTextFile("external_forces.txt", forcesToString());
@@ -285,21 +288,48 @@ function makeSelectedBasesFile() {
     makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));
 }
 function makeSequenceFile() {
-    let seqTxts = [];
-    systems.forEach((sys) => {
-        sys.strands.forEach((strand) => {
-            let label = strand.label ? strand.label : `strand_${strand.id}`;
-            seqTxts.push(`${label}, ${strand.getSequence()}`);
+    let seqTxts = [
+        'name, seq, len, RGB'
+    ];
+    const handle_strand = (strand) => {
+        let label = strand.label ? strand.label : `strand_${strand.id}`;
+        let line = `${label},${strand.getSequence()}`;
+        // add the length info
+        line += `,${strand.getLength()}`;
+        // assume that the strand color is the same from top to bottom. 
+        let color = null;
+        if (typeof (strand.end5.color) !== "undefined")
+            color = `,${Math.round(strand.end5.color.r * 255)}/${Math.round(strand.end5.color.g * 255)}/${Math.round(strand.end5.color.b * 255)}`;
+        else if (typeof (strand.end3.color) !== "undefined")
+            color = `,${Math.round(strand.end3.color.r * 255)}/${Math.round(strand.end3.color.g * 255)}/${Math.round(strand.end3.color.b * 255)}`;
+        if (color)
+            line += color;
+        else
+            line += `, `;
+        seqTxts.push(line);
+    };
+    let strands = new Set();
+    if (selectedBases.size > 0) {
+        selectedBases.forEach(e => {
+            strands.add(e.strand);
         });
-    });
+        strands.forEach(handle_strand);
+    }
+    else {
+        systems.forEach((sys) => {
+            sys.strands.forEach(handle_strand);
+        });
+    }
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
-function makeOxViewJsonFile(space) {
-    makeTextFile("output.oxview", JSON.stringify({
+function makeOxViewJsonFile(name, space) {
+    let file_name = name ? name + ".oxview" : "output.oxview";
+    makeTextFile(file_name, JSON.stringify({
         date: new Date(),
         box: box.toArray(),
         systems: systems,
-        forces: forces
+        forces: forces,
+        selections: selectionListHandler.serialize()
     }, null, space));
 }
 //let textFile: string;
@@ -342,4 +372,165 @@ function makeNetworkJSONFile(nid) {
 }
 function makeFluctuationFile(gid) {
     makeTextFile("flux.json", JSON.stringify(graphDatasets[gid].toJson()));
+}
+function makeUNFOutput(name) {
+    const oxDNAToUNF = 0.8518; //oxDNA to nm conversion factor
+    function identifyClusters() {
+        class unfGroup {
+            name;
+            id;
+            includedObjects;
+            constructor(name, id, includedObjects) {
+                this.name = name;
+                this.id = id;
+                this.includedObjects = includedObjects;
+                this.name = name;
+                this.id = id;
+                this.includedObjects = includedObjects;
+            }
+        }
+        let groups = [];
+        for (let i = 0; i < clusterCounter; i++) {
+            groups.push(new unfGroup(`group${i}`, i, []));
+        }
+        systems.forEach(sys => sys.strands.forEach(strand => strand.forEach(e => {
+            groups[e.clusterId - 1].includedObjects.push(e.id); //apparently clusters are 1-indexed
+        })));
+        return groups;
+    }
+    function makeFileSchema() {
+        let fileSchema = {
+            "id": 0,
+            "path": "",
+            "isIncluded": false,
+            "hash": ""
+        };
+        return fileSchema;
+    }
+    function makeLatticeSchema() {
+        function makeVirtualHelixSchema() {
+            function makeCellsSchema() {
+                let cellsSchema = {
+                    "id": 0,
+                    "number": 0,
+                    "type": "n",
+                    "fiveToThreeNts": [],
+                    "threeToFiveNts": []
+                };
+                return cellsSchema;
+            }
+            let virtualHelixSchema = {
+                "id": 0,
+                "latticePosition": [0, 0],
+                "firstActiveCell": 0,
+                "lastActiveCell": 0,
+                "lastCell": 0,
+                "initialAngle": [0, 0, 0],
+                "altPosition": [0, 0, 0],
+                "cells": []
+            };
+            return virtualHelixSchema;
+        }
+        let latticeSchema = {
+            "id": 0,
+            "name": "",
+            "type": "",
+            "position": [0, 0, 0],
+            "orientation": [0, 0, 0],
+            "virtualHelices": []
+        };
+        return latticeSchema;
+    }
+    function makeStructuresSchema(system) {
+        function makeNaStrandsSchema(strand) {
+            function makeNucleotidesSchema(nuc) {
+                let nucleotidesSchema = {
+                    "id": nuc.id,
+                    "nbAbbrev": nuc.type,
+                    "pair": nuc.pair ? nuc.pair.id : -1,
+                    "prev": nuc.n5 ? nuc.n5.id : -1,
+                    "next": nuc.n3 ? nuc.n3.id : -1,
+                    "pdbId": 0,
+                    "altPositions": [{
+                            "nucleobaseCenter": nuc.getInstanceParameter3('nsOffsets').multiplyScalar(oxDNAToUNF).toArray(),
+                            "backboneCenter": nuc.getInstanceParameter3('bbOffsets').multiplyScalar(oxDNAToUNF).toArray(),
+                            "baseNormal": nuc.getA3().toArray(),
+                            "hydrogenFaceDir": nuc.getA1().toArray()
+                        }]
+                };
+                return nucleotidesSchema;
+            }
+            let naStrandsSchema = {
+                "id": strand.id,
+                "name": strand.label,
+                "isScaffold": strand.getLength() > 1000 ? true : false,
+                "naType": strand.end5.isDNA() ? "DNA" : "RNA",
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
+                "fivePrimeId": strand.end5.id,
+                "threePrimeId": strand.end3.id,
+                "pdbFileId": 0,
+                "chainName": "",
+                "nucleotides": strand.map(makeNucleotidesSchema)
+            };
+            return naStrandsSchema;
+        }
+        function makeAaChainsSchema(strand) {
+            function makeAminoAcidsSchema(aa) {
+                let aminoAcidsSchema = {
+                    "id": aa.id,
+                    "secondary": "",
+                    "aaAbbrev": aa.type,
+                    "prev": aa.n5 ? aa.n5.id : -1,
+                    "next": aa.n3 ? aa.n3.id : -1,
+                    "pdbId": 0,
+                    "altPositions": [aa.getInstanceParameter3('nsOffsets').multiplyScalar(oxDNAToUNF).toArray()]
+                };
+                return aminoAcidsSchema;
+            }
+            let aaChainSchema = {
+                "id": strand.id,
+                "chainName": strand.label,
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
+                "pdbFileId": 0,
+                "nTerm": strand.end5.id,
+                "cTerm": strand.end3.id,
+                "aminoAcids": strand.map(makeAminoAcidsSchema)
+            };
+            return aaChainSchema;
+        }
+        let structuresSchema = {
+            "id": system.id,
+            "name": system.label,
+            "naStrands": system.strands.filter(strand => strand.isNucleicAcid()).map(makeNaStrandsSchema),
+            "aaChains": system.strands.filter(strand => strand.isPeptide()).map(makeAaChainsSchema)
+        };
+        return structuresSchema;
+    }
+    let unfSchema = {
+        "format": "unf",
+        "version": "1.0.0",
+        "idCounter": elements.getNextId(),
+        "lengthUnits": "nm",
+        "angularUnits": "deg",
+        "name": view.getInputElement('unfStructureName'),
+        "author": view.getInputElement('unfAuthorName'),
+        "creationDate": new Date().toISOString().split('T')[0],
+        "doi": view.getInputElement('unfDOI'),
+        "simData": {
+            "boxSize": box.toArray(),
+        },
+        "externalFiles": [],
+        "lattices": [],
+        "structures": systems.map(makeStructuresSchema),
+        "molecules": {
+            "ligands": [],
+            "bonds": [],
+            "nanostructures": []
+        },
+        "groups": clusterCounter > 0 ? identifyClusters() : [],
+        "connections": [],
+        "modifications": [],
+        "misc": {}
+    };
+    makeTextFile(view.getInputValue("UNFexportFileName").concat(".unf"), JSON.stringify(unfSchema));
 }

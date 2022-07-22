@@ -18,10 +18,7 @@ class TopReader extends FileReader{
         this.system = system;
         this.elems = elems;
         this.callback = callback;
-
-    }
-    onload = ((f) => {
-        return () => {
+        this.onload = () => {
             let nucCount = this.elems.getNextId();
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
@@ -100,7 +97,7 @@ class TopReader extends FileReader{
 
                 let base = l[1]; // get base id
                 nuc.type = base;
-                //if we meet a U, we have an RNsibleA (its dumb, but its all we got)
+                //if we meet a U, we have an RNA (its dumb, but its all we got)
                 //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
                 if (base === "U") RNA_MODE = true;
                     
@@ -110,7 +107,8 @@ class TopReader extends FileReader{
             nucCount = this.elems.getNextId();
             // usually the place where the DatReader gets fired
             this.callback();
-        }})(this.topFile);
+        };
+    }
     
     read(){
         this.readAsText(this.topFile);
@@ -184,6 +182,12 @@ class  LookupReader extends FileReader {
         this.chunker = chunker;
         this.confLength = confLength;
         this.callback = callback;
+        this.onload = (evt) =>{ // extract configuration
+            let file = this.result as string;
+            let lines = file.split(/[\n]+/g);
+            // we need to pass down idx to sync with the DatReader
+            this.callback(this.idx, lines, this.size);
+        };
     }
 
     addIndex(offset,size,time){
@@ -211,14 +215,6 @@ class  LookupReader extends FileReader {
             );
         }
     }
-
-    onload = ((evt) =>{ // extract configuration
-        return () =>{
-        let file = this.result as string;
-        let lines = file.split(/[\n]+/g);
-        // we need to pass down idx to sync with the DatReader
-        this.callback(this.idx, lines, this.size);
-    }})();
 }
 
 
@@ -405,7 +401,7 @@ class TrajectoryReader {
         }
         if( box === undefined)
             box = new THREE.Vector3(0,0,0);
-        let newBox = new THREE.Vector3(parseFloat(lines[1].split(" ")[2]), parseFloat(lines[1].split(" ")[3]), parseFloat(lines[1].split(" ")[4]))
+        let newBox = new THREE.Vector3(parseFloat(lines[1].split(/\s+/)[2]), parseFloat(lines[1].split(/\s+/)[3]), parseFloat(lines[1].split(/\s+/)[4]))
         // Increase the simulation box size if larger than current
         box.x = Math.max(box.x, newBox.x);
         box.y = Math.max(box.y, newBox.y);
@@ -437,13 +433,13 @@ class TrajectoryReader {
                 };
                 // get the nucleotide associated with the line
                 currentNucleotide = elements.get(i+system.globalStartId);
-            
+
                 // consume a new line from the file
                 l = lines[i].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l, true);
-            
+
                 //when a strand is finished, add it to the system
-                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
                     if (currentNucleotide.n5 == currentStrand.end3) {
                         currentStrand.end5 = currentNucleotide;
                     }
@@ -453,7 +449,7 @@ class TrajectoryReader {
                         currentStrand = elements.get(currentNucleotide.id+1).strand;
                     }
                 }
-            
+
             }
             addSystemToScene(system);
             sysCount++;
@@ -470,15 +466,7 @@ class TrajectoryReader {
                 l = lines[lineNum].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l);
             }
-            system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-            system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.callUpdates(['instanceOffset','instanceRotation']);
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();

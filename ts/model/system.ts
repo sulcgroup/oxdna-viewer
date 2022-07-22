@@ -134,7 +134,7 @@ class System {
     getAAMonomers() {
         return [].concat.apply([],
             this.strands.map(s=>{
-                if(s.isPeptide()) {
+                if(s.isPeptide() || s.isGS()) {
                     return s.getMonomers();
                 } else {
                     return [];
@@ -194,14 +194,6 @@ class System {
     addNewGenericSphereStrand() {
         let id = this.getNextGenericSphereStrandID();
         let strand = new Generic(id, this);
-        strand.system = this;
-        this.strands.push(strand);
-        return strand;
-    }
-
-    addNewPatchySphereStrand(){
-        let id = this.getNextGenericSphereStrandID();
-        let strand = new PatchyStrand(id, this);
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -278,11 +270,21 @@ class System {
         render();
     };
 
+    doVisuals(action:Function){
+        action();
+        this.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility']);
+        render();
+    };
+
     fillVec(vecName, unitSize, pos, vals) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i]
         }
     };
+
+    isPatchySystem() {
+        return false;
+    }
 
     toJSON() {
         // Specify required attributes
@@ -298,3 +300,202 @@ class System {
         return json;
     };
 };
+
+class PatchySystem extends System {
+    patchyGeometries: THREE.InstancedBufferGeometry[];
+    patchyMeshes: THREE.Mesh[];
+    pickingMeshes: THREE.Mesh[];
+    offsets: Float32Array[];
+    rotations: Float32Array[];
+    colors: Float32Array[];
+    scalings: Float32Array[];
+    visibilities: Float32Array[];
+    labels: Float32Array[];
+
+    particles: PatchyParticle[];
+    species: {
+        type: number,
+        patches: any[]
+    }[];
+
+    constructor(id: number, particleFile?: File, patchFile?: File, loroPatchFiles?: File[],
+        callback?: (any)=>void
+    ) {
+        super(id, 0);
+        this.id = id;
+        this.particles = [];
+
+        if (patchFile) {
+            particleFile.text().then(particlesStr => {
+                patchFile.text().then(patchesStr => {
+                    callback(()=>{
+                        this.initSpecies(particlesStr, patchesStr);
+                    });
+                });
+            });
+        } else if (loroPatchFiles) {
+            let patchStrMap = new Map();
+            loroPatchFiles.forEach(f=>f.text().then(s=>{
+                patchStrMap.set(f.name, s);
+                if (patchStrMap.size == loroPatchFiles.length) {
+                    callback(()=>{
+                        // All files loaded
+                        this.initLoroSpecies(patchStrMap);
+                    });
+                }
+            }));
+        } else {
+            notify("Missing patch information for patchy particle system", "warning", true);
+
+            // This is a really ugly hack to fix a race condition
+            new Promise(resolve => setTimeout(resolve, 1000)).then(()=>callback(()=>{}));
+        }
+    };
+
+    initLoroSpecies(patchStrMap: Map<string, string>) {
+        this.particles.map(()=>{});
+        const types = this.particles.map(p=>parseInt(p.type));
+        const instanceCounts = [];
+        const patchSpecs = []
+        types.forEach((s,i)=>{
+            patchSpecs[s] = this.particles[i]['patchSpec'];
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1;
+            } else {
+                instanceCounts[s]++;
+            }
+        });
+        this.species = [...new Set(types)].map(s=>{
+            let patchStrs = patchStrMap.get(patchSpecs[s]);
+            return {
+                'type': s,
+                'patches': patchStrs.split('\n').map(vs=>{
+                    let pos = new THREE.Vector3().fromArray(
+                        vs.trim().split(/ +/g).map(v=>parseFloat(v))
+                    );
+                    return {
+                        'position': pos,
+                        'a1': pos.clone().normalize(),
+                        'a2': pos.clone().normalize(), // No actual orientation available
+                    }
+                })
+            }
+        });
+        console.log(this.species.length)
+    }
+
+    initSpecies(particlesStr: string, patchesStr: string) {
+        // Remove whitespace
+        particlesStr = particlesStr.replaceAll(' ', '');
+        patchesStr = patchesStr.replaceAll(' ', '');
+
+        const getScalar = (name: string, s: string) => {
+            const m = s.match(new RegExp(`${name}=(-?\\d+)`));
+            if (m) {
+                return parseFloat(m[1]);
+            }
+            return false
+        }
+        const getArray = (name, s) => {
+            const m = s.match(new RegExp(`${name}=([\\,\\d\\.\\-\\+]+)`));
+            if (m) {
+                return m[1].split(',').map((v: string)=>parseFloat(v));
+            }
+            return false
+        }
+        let particles = [];
+        let currentParticle;
+        for (const line of particlesStr.split('\n')) {
+            const particleID = line.match(/particle_(\d+)/)
+            if (particleID) {
+                if (currentParticle) {
+                    particles.push(currentParticle);
+                }
+                currentParticle = {'id': parseInt(particleID[1])}
+            }
+            const type = getScalar('type', line);
+            if (type !== false) {
+                currentParticle['type'] = type
+            }
+            const patches = getArray('patches', line);
+            if (patches !== false) {
+                currentParticle['patches'] = patches;
+            }
+        }
+        particles.push(currentParticle);
+
+        let patches = new Map();
+
+        let currentId: number;
+        for (const line of patchesStr.split('\n')) {
+            const patchID = line.match(/patch_(\d+)/);
+            if (patchID) {
+                currentId = parseInt(patchID[1]);
+                patches.set(currentId, {});
+            }
+            const color = getScalar('color', line);
+            if (color !== false) {
+                patches.get(currentId)['color'] = color;
+            }
+            for (const k of ['position', 'a1', 'a2']) {
+                const a = getArray(k, line);
+                if (a) {
+                    const v = new THREE.Vector3().fromArray(a);
+                    patches.get(currentId)[k] = v;
+                }
+            }
+        }
+
+        for (const particle of particles) {
+            particle['patches'] = particle['patches'].map(id=>patches.get(id));
+        }
+
+        this.species = particles;
+    }
+
+    isPatchySystem() {
+        return true;
+    }
+
+    getMonomers() {
+        return this.particles;
+    }
+
+    systemLength(): number {
+        return this.particles.length;
+    };
+
+    initPatchyInstances() {
+        const types = this.particles.map(p=>parseInt(p.type));
+        const instanceCounts = [];
+        types.forEach(s=>{
+            if (instanceCounts[s] === undefined) {
+                instanceCounts[s] = 1
+            } else {
+                instanceCounts[s]++;
+            }
+        });
+        this.offsets = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.rotations = instanceCounts.map(n=>new Float32Array(n * 4));
+        this.colors = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.scalings = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.visibilities = instanceCounts.map(n=>new Float32Array(n * 3));
+        this.labels = instanceCounts.map(n=>new Float32Array(n * 3));
+    }
+
+    callUpdates(names : string[]) {
+        names.forEach((name) => {
+            this.patchyMeshes.forEach(mesh=>{
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+            this.pickingMeshes.forEach(mesh=>{
+                mesh.geometry["attributes"][name].needsUpdate = true;
+            });
+        });
+    }
+    fillPatchyVec(species: number, vecName: string, unitSize: number, pos: number, vals: number[]) {
+        for (let i = 0; i < unitSize; i++) {
+            this[vecName][species][pos * unitSize + i] = vals[i]
+        }
+    };
+}

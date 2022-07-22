@@ -23,6 +23,27 @@ function centerAndPBCBtnClick(elems?: BasicElement[]){
     centerAndPBC(elems);
 }
 
+function shiftWithinBox(v: THREE.Vector3, elems?: BasicElement[], targetBox?: THREE.Vector3) {
+    if (!elems) {
+        elems = Array.from(elements.values());
+    }
+    if (!targetBox) {
+        targetBox = box;
+    }
+    translateElements(new Set(elems), v);
+    bringInBox(elems, getInboxingMode(), targetBox);
+    // Update instances
+    let affectedSystems = new Set<System>();
+    elems.forEach(e=>{
+        if (e.n3) calcsp(e);
+        affectedSystems.add(e.getSystem());
+    });
+    affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
+    tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
+    if(forceHandler) forceHandler.redraw();
+    render();
+}
+
 /**
  * Center elements in the simulation box and then apply periodic boundary conditions to bring them all in the same box instance.
  * @param elems Optional parameter defining which particles to apply the centering and PBC to.  Defaults to all particles.
@@ -39,8 +60,12 @@ function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
     bringInBox(elems, getInboxingMode(), targetBox);
 
     // Update instances
-    elements.forEach(e=>{if (e.n3) calcsp(e);})
-    systems.forEach(s=>s.callUpdates(['instanceOffset']));
+    let affectedSystems = new Set<System>();
+    elems.forEach(e=>{
+        if (e.n3) calcsp(e); 
+        affectedSystems.add(e.getSystem());
+    });
+    affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     if(forceHandler) forceHandler.redraw();
     render();

@@ -114,3 +114,41 @@ function createLemniscateVideo(canvas, capturer, framerate, duration, onComplete
     animate();
 }
 ;
+function nyancat(seq = "NYANCAT", framerate = 24, duration = 5) {
+    const elems = edit.createStrand(seq, true);
+    centerAndPBC(elems);
+    camera.position.set(10, 0, 0);
+    scene.background = new THREE.Color().setHex(0x043864);
+    backboneColors[0].setHex(0xfa6dfd);
+    backboneColors[1].setHex(0xfcce9d);
+    const arrows = document.getElementById("arrowToggle");
+    arrows.checked = false;
+    toggleArrows(arrows);
+    updateColoring();
+    const s = new Set(elems[0].strand.getMonomers());
+    const capturer = new CCapture({
+        format: 'gif', framerate: framerate,
+        name: seq, display: true, workersPath: 'ts/lib/'
+    });
+    let nFrames = duration * framerate;
+    capturer.start();
+    let t = 0;
+    var animate = function () {
+        if (t >= nFrames) {
+            capturer.stop();
+            capturer.save();
+            scene.background = null;
+            return;
+        }
+        if (t % 10 == 0) {
+            edit.setSequence(s, seq, true);
+        }
+        requestAnimationFrame(animate);
+        controls.stepAroundAxis(new THREE.Vector3(1, 0, 0), -2 * Math.PI / framerate);
+        render();
+        capturer.capture(canvas);
+        t++;
+    };
+    animate();
+}
+;

@@ -24,6 +24,9 @@ instanceMaterial["defines"]['INSTANCED'] = "";
 // Tell the webGL compiler that meshes using the instanceMaterial should execute the instancing portion of the code.
 instanceMaterial2["defines"] = instanceMaterial2["defines"] || {};
 instanceMaterial2["defines"]['INSTANCED'] = "";
+let instanceMaterial3 = instanceMaterial2.clone();
+instanceMaterial3["defines"] = instanceMaterial3["defines"] || {};
+instanceMaterial3["defines"]['INSTANCED'] = "";
 function switchMaterial(material) {
     systems.forEach(s => {
         s.backbone.material = material;
@@ -38,7 +41,7 @@ var backboneColors = [
     new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
-    new THREE.Color(0x6ea4cc),
+    new THREE.Color(0x6ea4cc), //light blue
 ];
 // define nucleoside colors
 var nucleosideColors = [
@@ -79,6 +82,11 @@ var nucleosideColors = [
     //Y
     new THREE.Color(0x8C704C),
     //W
-    new THREE.Color(0x4F4600),
+    new THREE.Color(0x4F4600), //Olive Brown
 ];
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!
+//Get a distinct color for each consecutive integer
+function colorFromInt(number) {
+    const hue = number * 137.508; // use golden angle approximation
+    return new THREE.Color(`hsl(${hue},50%,65%)`);
+}

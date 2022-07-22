@@ -34,6 +34,10 @@ instanceMaterial["defines"][ 'INSTANCED' ] = "";
 instanceMaterial2["defines"] = instanceMaterial2["defines"] || {};
 instanceMaterial2["defines"][ 'INSTANCED' ] = "";
 
+let instanceMaterial3 = instanceMaterial2.clone()
+instanceMaterial3["defines"] = instanceMaterial3["defines"] || {};
+instanceMaterial3["defines"][ 'INSTANCED' ] = "";
+
 function switchMaterial(material){
    systems.forEach(s=>{
       s.backbone.material = material;
@@ -120,3 +124,9 @@ var nucleosideColors = [
 ];
 
 var selectionColor = new THREE.Color(0xFF00FF); //PINK!
+
+//Get a distinct color for each consecutive integer
+function colorFromInt(number) {
+   const hue = number * 137.508; // use golden angle approximation
+   return new THREE.Color(`hsl(${hue},50%,65%)`);
+}

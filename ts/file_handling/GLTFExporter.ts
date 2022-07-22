@@ -69,10 +69,12 @@ function exportGLTF (
 	nsMetalness=0, bbMetalness=0)
 {
 	// Setup geometries
-	const backbone    = new THREE.SphereBufferGeometry(.2 * backboneScale ,5 * faces_mul,5* faces_mul);
-	const nucleoside  = new THREE.SphereBufferGeometry(.3 * nucleosideScale ,5 * faces_mul,5* faces_mul);
-	const connector   = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1  * connectorScale, 1, 4* faces_mul);
-	const bbConnector = new THREE.CylinderBufferGeometry(.1 * bbconnectorScale, .05 * bbconnectorScale, 1, 4* faces_mul);
+	const backbone    = new THREE.SphereBufferGeometry(.2 * backboneScale , 10 * faces_mul, 10 * faces_mul);
+	const nucleoside  = new THREE.SphereBufferGeometry(.3 * nucleosideScale , 10 * faces_mul, 10 * faces_mul);
+	const connector   = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1  * connectorScale, 1, 8 * faces_mul);
+	// Open question, why does the top and bottom radius need to be flipped here compared to the definition in mesh_setup.ts?
+	// This solves the problem of having the backbones point in the correct direction, but it is a pretty ugly fix...
+	const bbConnector = new THREE.CylinderBufferGeometry(.02 * bbconnectorScale, .1 * bbconnectorScale, 1, 8 * faces_mul);
 
 	// Setup materials
 	let materialMap: Map<number, THREE.Material> = new Map();
@@ -146,11 +148,13 @@ function exportGLTF (
 		// Export just a flat list of the meshes
 		let l = []
 		elements.forEach(e => {
-			let elemObj = handleElement(e);
-			elemObj.children.forEach(mesh => {
-				l.push(mesh);
-			})
-		})
+			if (systems.includes(e.getSystem())) {
+				let elemObj = handleElement(e);
+				elemObj.children.forEach(mesh => {
+					l.push(mesh);
+				});
+			}
+		});
 		return l;
 	} else {
 		// Export the whole system hierarchy

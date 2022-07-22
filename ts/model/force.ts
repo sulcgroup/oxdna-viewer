@@ -13,16 +13,23 @@ abstract class Force {
     abstract description(): string;
 }
 
-class MutualTrap extends Force {
+// Forces which can be drawn as a line between two particles
+abstract class PairwiseForce extends Force {
+    abstract particle: BasicElement;
+    abstract ref_particle: BasicElement;
+    abstract force: THREE.Vector3[];
+    abstract eqDists: THREE.Vector3[];
+}
+
+class MutualTrap extends PairwiseForce {
     type = 'mutual_trap'
     particle: BasicElement; // the particle on which to exert the force.
     ref_particle: BasicElement; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
     stiff: number; // stiffness of the trap.
     r0: number; // equilibrium distance of the trap.
     PBC: number;
-
-    equilibrium_distances : THREE.Vector3[];
-    force: THREE.Vector3[];
+    force = [];
+    eqDists = [];
 
     set(particle: BasicElement, ref_particle: BasicElement,
         stiff=0.09, r0=1.2, PBC=1)
@@ -76,7 +83,7 @@ class MutualTrap extends Force {
     }
 
     description(): string {
-        return `Trap pulling ${this.particle.id} towards ${this.ref_particle.id}`;
+        return `Mutual trap pulling ${this.particle.id} towards ${this.ref_particle.id}`;
     }
 
     update() {
@@ -85,7 +92,7 @@ class MutualTrap extends Force {
                  
         let dir = p2.clone().sub(p1).normalize();
         
-        this.equilibrium_distances = [
+        this.eqDists = [
             p1, p1.clone().add(dir.clone().multiplyScalar(this.r0))
         ];        
         
@@ -101,11 +108,109 @@ class MutualTrap extends Force {
     }
 }
 
+class SkewTrap extends PairwiseForce {
+    type = 'skew_trap'
+    particle: BasicElement; // the particle on which to exert the force.
+    ref_particle: BasicElement; // particle to pull towards. Please note that this particle will not feel any force (the name mutual trap is thus misleading).
+    stdev: number; // width of the trap potential
+    shape: number; // skew of the trap potential
+    r0: number; // equilibrium distance of the trap.
+    PBC: number;
+
+    eqDists = [];
+    force = [];
+
+    set(particle: BasicElement, ref_particle: BasicElement,
+        stdev=3.0, shape=-15, r0=1.2, PBC=1) // defaults for SMCC
+    {
+        this.particle = particle;
+        this.ref_particle = ref_particle;
+        this.stdev = stdev;
+        this.shape = shape;
+        this.r0 = r0;
+        this.PBC = PBC;
+        this.update()
+    }
+
+    setFromParsedJson(parsedjson) {
+        for (var param in parsedjson) {
+            if (['particle', 'ref_particle'].includes(param)) {
+                this[param] = elements.get(parsedjson[param]);
+            } else {
+                this[param] = parsedjson[param];
+            }
+        }
+        this.update();
+    }
+
+    toJSON() {
+        return {
+            type: this.type,
+            particle: this.particle.id,
+            ref_particle: this.ref_particle.id,
+            stdev: this.stdev,
+            shape: this.shape,
+            r0: this.r0,
+            PBC: this.PBC
+        }
+    }
+
+    toString(idMap?: Map<BasicElement, number>): string {
+        if (elements.has(this.particle.id) && elements.has(this.ref_particle.id)) {
+            return (
+`{
+    type = ${this.type}
+    particle = ${idMap ? idMap.get(this.particle) : this.particle.id}
+    ref_particle = ${idMap ? idMap.get(this.ref_particle) : this.ref_particle.id}
+    stdev = ${this.stdev}
+    shape = ${this.shape}
+    r0 = ${this.r0}
+    PBC = ${this.PBC}
+}`
+            )
+        } else {
+            notify(`${this.description()} includes a particle that no longer exists`, 'alert', true);
+            return "";
+        }
+    }
+
+    description(): string {
+        return `Skew trap pulling ${this.particle.id} towards ${this.ref_particle.id}`;
+    }
+
+    update() {
+        const p1 = this.particle.getInstanceParameter3("bbOffsets"); // position from which to exert the force.
+        const p2 = this.ref_particle.getInstanceParameter3("bbOffsets"); // position to pull towards.
+                 
+        let dir = p2.clone().sub(p1).normalize();
+        
+        this.eqDists = [
+            p1, p1.clone().add(dir.clone().multiplyScalar(this.r0))
+        ];        
+        
+        //draw force 
+        dir = p2.clone().sub(p1);
+        let force_v = dir.clone().normalize().multiplyScalar(
+            (dir.length() - this.r0 )* this.stdev
+        );
+        dir.normalize();
+        this.force = [
+            p1, p1.clone().add(dir.multiplyScalar(force_v.length()))
+        ];
+    }
+}
+
 class ForceHandler{
-    mutual_traps :MutualTrap[];
+    traps: PairwiseForce[];
+    types: string[];
     sceneObjects: THREE.Object3D[] = [];
-    force_lines: THREE.LineSegments;
-    equilibrium_distances_lines: THREE.LineSegments;
+    forceLines: THREE.LineSegments[] = [];
+    eqDistLines: THREE.LineSegments;
+    forceColors: THREE.Color[] = [ //add more if you implement more forces
+        new THREE.Color(0x0000FF),
+        new THREE.Color(0xFF0000),
+    ];
+    knownForces: string[] = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw
 
     constructor(forces :Force[]) {
         this.set(forces);
@@ -113,33 +218,42 @@ class ForceHandler{
 
     set(forces: Force[]) {
         // Remove any old geometry (nothing happens if undefined)
-        scene.remove(this.equilibrium_distances_lines);
-        scene.remove(this.force_lines);
-        // We can only draw mutual traps so far:
-        this.mutual_traps = <MutualTrap[]> forces.filter(f=>f.type == 'mutual_trap');
+        scene.remove(this.eqDistLines);
+        this.forceLines.forEach(fl => scene.remove(fl));
+        // We can only draw pairwise traps so far:
+        this.traps = <PairwiseForce[]> forces.filter(f=>this.knownForces.includes(f.type));
+        // find out how many different types there are
+        this.types = Array.from((new Set(this.traps.map(trap=>trap.type))));
         let v1 = [];
         let v2 = [];
-        let force_geometry = new THREE.BufferGeometry();
-        let equilibrium_distances_geometry = new THREE.BufferGeometry();
+        let forceGeoms = [];
+        for (let i = 0; i < this.types.length; i++) {
+            v1.push([]);
+            forceGeoms.push(new THREE.BufferGeometry());
+        }
+        let eqDistGeom = new THREE.BufferGeometry();
         
-        this.mutual_traps.forEach(f => {
-            v1.push(f.force[0].x,f.force[0].y,f.force[0].z );
-            v1.push(f.force[1].x,f.force[1].y,f.force[1].z );
-            v2.push(f.equilibrium_distances[0].x,f.equilibrium_distances[0].y,f.equilibrium_distances[0].z );
-            v2.push(f.equilibrium_distances[1].x,f.equilibrium_distances[1].y,f.equilibrium_distances[1].z );
+        this.traps.forEach(f => {
+            let idx = this.types.findIndex(t => t == f.type);
+            v1[idx].push(f.force[0].x,f.force[0].y,f.force[0].z );
+            v1[idx].push(f.force[1].x,f.force[1].y,f.force[1].z );
+            v2.push(f.eqDists[0].x,f.eqDists[0].y,f.eqDists[0].z );
+            v2.push(f.eqDists[1].x,f.eqDists[1].y,f.eqDists[1].z );
         });
 
-        force_geometry.addAttribute('position', new THREE.Float32BufferAttribute(v1, 3));
-        let material = new THREE.LineBasicMaterial({color: 0x050505});
-        this.force_lines = new THREE.LineSegments(force_geometry, material);
-        scene.add(this.force_lines);
-        this.sceneObjects.push(this.force_lines);
+        forceGeoms.forEach((g, i) => g.addAttribute('position', new THREE.Float32BufferAttribute(v1[i], 3)));
+        let materials = this.types.map((t, i) => new THREE.LineBasicMaterial({color: this.forceColors[i]}));
+        this.forceLines = <THREE.LineSegments[]>forceGeoms.map((g, i) => new THREE.LineSegments(g, materials[i]));
+        this.forceLines.forEach(fl => {
+            scene.add(fl);
+            this.sceneObjects.push(fl);
+        });
         
-        equilibrium_distances_geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
-        material = new THREE.LineBasicMaterial({color: 0x0000ff, opacity:.5});
-        this.equilibrium_distances_lines = new THREE.LineSegments(equilibrium_distances_geometry, material);
-        scene.add(this.equilibrium_distances_lines);
-        this.sceneObjects.push(this.equilibrium_distances_lines);
+        eqDistGeom.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        materials[0] = new THREE.LineBasicMaterial({color: 0x0000ff, opacity:.5});
+        this.eqDistLines = new THREE.LineSegments(eqDistGeom, materials[0]);
+        scene.add(this.eqDistLines);
+        this.sceneObjects.push(this.eqDistLines);
 
         //possibly a better way to fire update
         //trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, this.update);
@@ -149,19 +263,26 @@ class ForceHandler{
     redraw() {
         let v1 = [];
         let v2 = [];
+        for (let i = 0; i < this.types.length; i++) {
+            v1.push([]);
+        }
 
-        this.mutual_traps.forEach( f=>{
+        this.traps.forEach( f=>{
             f.update();
-            v1.push(f.force[0].x,f.force[0].y,f.force[0].z);
-            v1.push(f.force[1].x,f.force[1].y,f.force[1].z);
-            v2.push(f.equilibrium_distances[0].x,f.equilibrium_distances[0].y,f.equilibrium_distances[0].z);
-            v2.push(f.equilibrium_distances[1].x,f.equilibrium_distances[1].y,f.equilibrium_distances[1].z);
+            let idx = this.types.findIndex(t => t == f.type);
+            v1[idx].push(f.force[0].x,f.force[0].y,f.force[0].z);
+            v1[idx].push(f.force[1].x,f.force[1].y,f.force[1].z);
+            v2.push(f.eqDists[0].x,f.eqDists[0].y,f.eqDists[0].z);
+            v2.push(f.eqDists[1].x,f.eqDists[1].y,f.eqDists[1].z);
         });
-        this.force_lines.geometry = new THREE.BufferGeometry();
-        this.equilibrium_distances_lines.geometry = new THREE.BufferGeometry();
-
-        this.force_lines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v1, 3));
-        this.equilibrium_distances_lines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        this.types.forEach((t, i) => {
+            this.forceLines[i].geometry = new THREE.BufferGeometry();
+            let a = this.forceLines[i].geometry as THREE.BufferGeometry;
+            a.addAttribute('position', new THREE.Float32BufferAttribute(v1[i], 3));
+        });
+        
+        this.eqDistLines.geometry = new THREE.BufferGeometry();
+        this.eqDistLines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
         render();
     }
 }

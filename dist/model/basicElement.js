@@ -5,8 +5,20 @@
  * @param dummySys - If created during editing, the data arrays for instancing are stored in a dummy system
  */
 class BasicElement {
+    id; //location in world - all systems
+    sid; //in-system ID, only used if in a temporary system
+    label;
+    n3;
+    n5;
+    connections = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
+    strand;
+    bbnsDist;
+    type; // Base as string
+    clusterId;
+    dummySys;
+    color;
+    pdbindices; //Only Intialized if loaded from a PDB structure
     constructor(id, strand) {
-        this.connections = []; // ref all elements it's 'connected' to via harmonic potential (mainly for AA + networks)
         this.id = id;
         this.strand = strand;
         if (strand && strand.isEmpty()) {
@@ -64,14 +76,17 @@ class BasicElement {
     isPaired() {
         return false;
     }
-    changeType(type) {
+    setType(type) {
         this.type = type;
+    }
+    changeType(type) {
+        this.setType(type);
         // Get the dummy system if it exists, otherwise get the real system
         let sys = this.getSystem();
         if (this.dummySys) {
             sys = this.dummySys;
         }
-        let newC = this.elemToColor(type);
+        let newC = this.elemToColor(this.type);
         sys.fillVec('nsColors', 3, this.sid, [newC.r, newC.g, newC.b]);
     }
     //retrieve this element's values in a 3-parameter instance array
@@ -132,7 +147,19 @@ class BasicElement {
     isAminoAcid() {
         return false;
     }
+    isNucleotide() {
+        return false;
+    }
+    isDNA() {
+        return false;
+    }
+    isRNA() {
+        return false;
+    }
     isGS() {
+        return false;
+    }
+    isPatchyParticle() {
         return false;
     }
     toJSON() {

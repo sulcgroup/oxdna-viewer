@@ -85,8 +85,8 @@ class OXServeSocket extends WebSocket{
     abort = true;
     constructor(url : string){
         super(url);
-    }
-    onmessage = (response) => {
+    
+    this.onmessage = (response) => {
         if(!this.abort){ //ignore all incomming messages when we stop the simulation
             let message = JSON.parse(response.data);
             if ("console_log" in message){
@@ -100,7 +100,7 @@ class OXServeSocket extends WebSocket{
     };
 
 
-    onopen = (resonse) => {
+    this.onopen = (resonse) => {
         console.log(resonse);
         let connect_button =  (document.getElementById("btnConnect") as HTMLSelectElement);
         connect_button.style.backgroundColor = "green";
@@ -109,7 +109,7 @@ class OXServeSocket extends WebSocket{
         this.abort = false; 
     }
 
-    onclose = (resonse) => {
+    this.onclose = (resonse) => {
         let connect_button =  (document.getElementById("btnConnect") as HTMLSelectElement);
         connect_button.style.backgroundColor = "";
         connect_button.textContent = "Connect to oxServe";
@@ -117,7 +117,7 @@ class OXServeSocket extends WebSocket{
         this.abort=true;
     }
 
-    
+    }
     stop_simulation = () =>{
         this.send("abort");
         this.abort = true;
@@ -196,5 +196,6 @@ function establishConnection(id){
 }
 
 function establishNanobaseConnection(){
-    socket = new OXServeSocket("wss://nanobase.org:8989");   
+    socket = new OXServeSocket("wss://nanobase.org:8989");
+
 }

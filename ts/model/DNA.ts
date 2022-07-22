@@ -20,32 +20,35 @@ class DNANucleotide extends Nucleotide {
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
 
-        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408);
+        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408).normalize();
     }
 
     getA3(): THREE.Vector3 {
         const a1 = this.getA1();
         const a2 = this.getA2();
-        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1));
+        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1)).normalize();
 
         return a3;
     };
 
     // Uses method from generate-sa.py.  Needs to be relaxed since this is oxDNA1 helix
     extendStrand(len: number, direction: string, double: boolean) {
+        // Model constants
         const rot = 35.9*Math.PI/180 // 0.68940505
         let rise = 0.3897628551303122;
+
+        // current nucleotide information
         const startPos = this.getPos();
         const oldA1 = this.getA1();
         let dir = this.getA3();
 
-        // normalize dir
+        // normalize helix axis
         const dir_norm = Math.sqrt(dir.clone().dot(dir));
         dir.divideScalar(dir_norm);
         const a1 = oldA1.clone();
         const center = startPos.add(a1.clone().multiplyScalar(0.6));
         
-        // create rotational matrix
+        // create rotation matrix
         let R = new THREE.Matrix4;
         if (direction == "n3") {
             R.makeRotationAxis(dir.clone().negate(), rot);
@@ -84,6 +87,14 @@ class DNANucleotide extends Nucleotide {
             }
         }
         return out;
+    }
+
+    isDNA() {
+        return true;
+    }
+
+    weakPyrimindine() {
+        return 'T';
     }
 
     getComplementaryType(): string {

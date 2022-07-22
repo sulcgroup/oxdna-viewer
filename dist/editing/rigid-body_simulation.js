@@ -28,8 +28,13 @@ function toggleClusterSim() {
  *  the system with rigid-body dynamics.
  */
 class RigidClusterSimulator {
+    clusters = [];
+    clusterRepulsionConst; // = 1000;
+    connectionRelaxedLength; // = 3;
+    connectionSpringConst; // = 10;
+    friction; // = 0.25;
+    dt; // = 0.1;
     constructor() {
-        this.clusters = [];
         // load settings from view:
         this.clusterRepulsionConst = view.getInputNumber('rbd_clusterRepulsionConst');
         this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
@@ -62,6 +67,9 @@ class RigidClusterSimulator {
      */
     integrate(dt) {
         this.clusters.forEach((c) => {
+            let intersect = new Set([...selectedBases].filter(i => c.getClusterElements().has(i)));
+            if (intersect.size != 0)
+                return; // don't touch the cluster if it is selected
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
             // Calculate simple linear repulsion between clusters
@@ -105,16 +113,25 @@ class RigidClusterSimulator {
     ;
 }
 class Cluster {
+    conPoints = [];
+    clusterElements;
+    sim;
+    radius;
+    mass;
+    momentOfInertia_inv;
+    force;
+    torque;
+    linearVelocity = new THREE.Vector3(); // v
+    angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
+    position; // x
+    totalTranslation = new THREE.Vector3();
+    totalRotation = new THREE.Quaternion();
+    rot_axis;
     /**
      * Create a rigid-body cluster from the given set of elements
      * @param clusterElements Set of BasicElements making up the cluster
      */
     constructor(clusterElements, simulator) {
-        this.conPoints = [];
-        this.linearVelocity = new THREE.Vector3(); // v
-        this.angularVelocity = new THREE.Vector3(); // ω,  Direction is rot axis, magnitude is rot velocity
-        this.totalTranslation = new THREE.Vector3();
-        this.totalRotation = new THREE.Quaternion();
         this.clusterElements = clusterElements;
         this.sim = simulator;
         this.mass = 25;
@@ -127,7 +144,7 @@ class Cluster {
         // http://scienceworld.wolfram.com/physics/MomentofInertiaSphere.html
         this.momentOfInertia_inv = new THREE.Matrix3(); // Identity matrix
         this.momentOfInertia_inv.multiplyScalar(5 / (2 * this.mass * Math.pow(this.radius, 2)));
-        let traps = forces.filter(f => f.type == 'mutual_trap');
+        let traps = forces.filter(f => f instanceof PairwiseForce);
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
             if (e.n3 && e.n3.clusterId !== e.clusterId) {
@@ -158,6 +175,9 @@ class Cluster {
         });
         this.position.divideScalar(this.clusterElements.size);
     }
+    getClusterElements() {
+        return this.clusterElements;
+    }
     getPosition() {
         return this.position.clone();
     }
@@ -172,6 +192,9 @@ class Cluster {
     }
     getElements() {
         return this.clusterElements;
+    }
+    getRotationAxis() {
+        return this.rot_axis.clone();
     }
     /**
      * Calculate spring forces between inter-cluster backbone bonds
@@ -201,6 +224,8 @@ class Cluster {
         this.linearVelocity.multiplyScalar(1 - this.sim.friction);
         let deltaP = this.linearVelocity.clone().multiplyScalar(dt);
         this.position.add(deltaP);
+        //rotation axis for undos
+        this.rot_axis = this.position.clone();
         // Calculate rotation
         let angularMomentum = this.torque.clone().applyMatrix3(this.momentOfInertia_inv);
         this.angularVelocity.add(angularMomentum.clone().multiplyScalar(dt));
@@ -240,6 +265,8 @@ class Cluster {
  * Cluster helper class, defines a connection between clusters
  */
 class ClusterConnectionPoint {
+    from; // Local cluster
+    to; // Other cluster
     constructor(from, to) {
         this.from = from;
         this.to = to;

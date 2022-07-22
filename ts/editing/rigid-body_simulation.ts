@@ -73,6 +73,8 @@ class RigidClusterSimulator {
      */
     public integrate(dt:number) {
         this.clusters.forEach((c) => {
+            let intersect = new Set([...selectedBases].filter(i => c.getClusterElements().has(i)));
+            if(intersect.size != 0)  return; // don't touch the cluster if it is selected
             // Calculate spring forces between inter-cluster backbone bonds
             c.computeConnectionForces();
 
@@ -138,6 +140,7 @@ class Cluster {
 
     private totalTranslation = new THREE.Vector3();
     private totalRotation = new THREE.Quaternion();
+    private rot_axis: THREE.Vector3;
 
     /**
      * Create a rigid-body cluster from the given set of elements
@@ -162,7 +165,7 @@ class Cluster {
             5 / (2 * this.mass * Math.pow(this.radius, 2)));
 
 
-        let traps = forces.filter(f=>f.type == 'mutual_trap');
+        let traps = forces.filter(f=>f instanceof PairwiseForce);
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
             if (e.n3 && e.n3.clusterId !== e.clusterId) {
@@ -172,7 +175,7 @@ class Cluster {
                 this.conPoints.push(new ClusterConnectionPoint(e, e.n5));
             }
             // Pull together inter-cluster traps
-            traps.forEach((t: MutualTrap)=>{
+            traps.forEach((t: PairwiseForce)=>{
                 if (t.particle == e) {
                     this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
                 }
@@ -195,6 +198,10 @@ class Cluster {
         this.position.divideScalar(this.clusterElements.size);
     }
 
+    public getClusterElements(): Set<BasicElement> {
+        return this.clusterElements;
+    }
+
     public getPosition(): THREE.Vector3 {
         return this.position.clone();
     }
@@ -213,6 +220,10 @@ class Cluster {
 
     public getElements(): Set<BasicElement> {
         return this.clusterElements;
+    }
+
+    public getRotationAxis(): THREE.Vector3 {
+        return this.rot_axis.clone();
     }
 
     /**
@@ -246,6 +257,9 @@ class Cluster {
         this.linearVelocity.multiplyScalar(1-this.sim.friction);
         let deltaP = this.linearVelocity.clone().multiplyScalar(dt);
         this.position.add(deltaP);
+
+        //rotation axis for undos
+        this.rot_axis = this.position.clone();
 
         // Calculate rotation
         let angularMomentum = this.torque.clone().applyMatrix3(this.momentOfInertia_inv);

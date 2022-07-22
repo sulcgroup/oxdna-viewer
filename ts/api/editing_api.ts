@@ -325,6 +325,7 @@ module edit{
         }
         return elems;
     }
+
     /**
      * Add elements from saved instance copies
      * @param instCopies Instance copies of elements to add
@@ -351,7 +352,7 @@ module edit{
             c.writeToSystem(sid, tmpSys)
             e.dummySys = tmpSys;
             e.sid = sid;
-            e.type = c.type;
+            e.setType(c.type);
             e.color = c.color;
 
             // Add pasted elements to new cluster
@@ -540,7 +541,7 @@ module edit{
             e.dummySys = tmpSys;
             last[direction] = e;
             e[inverse] = last;
-            e.type = sequence[i];
+            e.setType(sequence[i]);
             e.strand = strand;
             last = e;
             sidCounter++;
@@ -577,9 +578,14 @@ module edit{
         return addedElems;
     }
 
-    function addDuplexBySeq (end, sequence, tmpSys, direction, inverse, sidCounter): BasicElement[] {
+    function addDuplexBySeq (end:Nucleotide, sequence: String, tmpSys, direction, inverse, sidCounter): BasicElement[] {
         // variables ending in "2" correspond to complement strand
-        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
+        let end2: Nucleotide;
+        if (!end.pair) {
+            end2 = end.findPair();
+        } else {
+            end2 = end.pair;
+        }
         const strand: Strand = end.strand;
         const strand2: Strand = end2.strand;
         const l = sequence.length;
@@ -591,18 +597,23 @@ module edit{
         let addedElems = [];
 
         for (let i = 0; i < l; i++) {
-            let e1 = strand.createBasicElement();
+            let e1 = <Nucleotide>strand.createBasicElement();
             elements.push(e1);
             e1.sid = sidCounter + i;
             e1.dummySys = tmpSys;
             last1[direction] = e1;
             e1[inverse] = last1;
-            e1.type = sequence[i];
+            e1.setType(sequence[i]);
             e1.strand = strand;
             last1 = e1;
             addedElems.push(e1);
         }
 
+        // the one thing about this is that it makes the second strand backwards
+        // this is generally fine because of the pre-export cleanup step
+        // however it is a little spooky...
+        // It is this way because otherwise it would require a lot of conditionals
+        // to correctly assign end2's neighbor
         for (let i = 0; i < l; i++) {
             let e1 = addedElems[i] as Nucleotide;
             let e2 = strand2.createBasicElement() as Nucleotide;
@@ -611,7 +622,7 @@ module edit{
             e2.dummySys = tmpSys;
             last2[inverse] = e2;
             e2[direction] = last2;
-            e2.type = e1.getComplementaryType();
+            e2.setType(e1.getComplementaryType());
             e2.strand = strand2;
             last2 = e2;
             addedElems.push(e2);
@@ -700,15 +711,23 @@ module edit{
 
     /**
      * Create double helix of monomers extending from provided helix
-     * @param end 
-     * @param sequence 
+     * @param end Nucleotide to extend
+     * @param sequence String of base types
+     * @returns addedElems Nucleotide[]
      */
-    export function extendDuplex(end: BasicElement, sequence: string): BasicElement[] {
-        let end2: BasicElement = (end as Nucleotide).findPair() as BasicElement;
-        // create base pair if end doesn't have one alreadyl
+    export function extendDuplex(end: Nucleotide, sequence: string): BasicElement[] {
+        let end2: Nucleotide;
+        if (!end.pair) {
+            end2 = end.findPair();
+        } 
+        else {
+            end2 = end.pair;
+        }
+
+        // create base pair if end doesn't have one already
         let addedElems = [];
         if (!end2) {
-            end2 = createBP(end as DNANucleotide);
+            end2 = createBP(end);
             addedElems.push(end2);
         }
         let direction: string;
@@ -732,7 +751,6 @@ module edit{
         tmpSystems.push(tmpSys);
 
         addedElems = addedElems.concat(addDuplexBySeq(end, sequence, tmpSys, direction, inverse, 0));
-
         render();
         return addedElems;
     }
@@ -799,20 +817,19 @@ module edit{
     /**
      * Creates a new strand with the provided sequence
      * @param sequence
+     * @param createDuplex (optional) Create a duplex?
+     * @param isRNA (optional) Is this an RNA strand?
      */
     export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
         if (sequence.includes('U')) {
             isRNA = true;
+            RNA_MODE = true;
         }
-        // Assume the input sequence is 5' -> 3',
-        // but oxDNA is 3' -> 5', so we reverse it.
-        let tmp:string[] = sequence.split(""); 
-        tmp = tmp.reverse(); 
-        sequence = tmp.join("");
 
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
-        tmpSys.initInstances(sequence.length * (createDuplex ? 2:1)); // Need to be x2 if duplex
+        // This looks weird, but createBP() makes that nucleotide in its own tmpSys so it's 2n-1 for the duplex case.
+        tmpSys.initInstances(sequence.length * (createDuplex ? 2:1) + (createDuplex ? -1:0));
         tmpSystems.push(tmpSys);
 
         // The strand gets added to the last-added system.
@@ -838,16 +855,14 @@ module edit{
         realSys.addStrand(strand);
 
         // Initialise proper nucleotide
-        let e = isRNA ?
-            new RNANucleotide(undefined, strand):
-            new DNANucleotide(undefined, strand);
+        let e = isRNA ? new RNANucleotide(undefined, strand):new DNANucleotide(undefined, strand);
 
         let addedElems = [];
 
         elements.push(e); // Add element and assign id
         e.dummySys = tmpSys;
         e.sid = 0;
-        e.type = sequence[0];
+        e.setType(sequence[0]);
         e.n3 = null;
         e.strand = strand;
         strand.setFrom(e);
@@ -857,9 +872,17 @@ module edit{
         let pos:THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3;
         if (blank) {
             // Place new strand at origin if the scene is empty
-            pos = new THREE.Vector3();
-            a3 = new THREE.Vector3(0,0,-1);
-            a1 = new THREE.Vector3(0,1,0);
+            pos = new THREE.Vector3(0, 0, 0);
+            if (isRNA) {
+                // This puts the helix axis up the Z axis
+                a1 = new THREE.Vector3(0, 0.9636304532086232, -0.2672383760782569);
+                a3 = a1.clone().cross(new THREE.Vector3(1, 0, 0));
+            }
+            else {
+                // DNA is so easy
+                a1 = new THREE.Vector3(0,1,0);
+                a3 = new THREE.Vector3(0,0,-1);
+            }
         } else {
             // Otherwise, place the new strand 10 units in front of the camera
             // with its a1 vector parallel to the camera heading
@@ -880,9 +903,9 @@ module edit{
                 e.pair = createBP(e);
                 addedElems.push(e.pair);
             }
-            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n3", "n5", 1));
         } else {
-            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n5", "n3", 1));
+            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         }
         strand.updateEnds();
 
@@ -1209,7 +1232,7 @@ module edit{
             elements.push(be);
             be.sid = i;
             be.dummySys = dumb;
-            be.type = 'gs';
+            be.setType('gs');
             be.n5 = null;
             if(i != 0) {
                 let prev = newElems[i-1];
@@ -1336,7 +1359,7 @@ module edit{
             elements.push(be);
             be.sid = i;
             be.dummySys = dumb;
-            be.type = 'gs';
+            be.setType('gs');
             be.n5 = null;
             if(i != 0) {
                 let prev = newElems[i-1];
@@ -1365,7 +1388,7 @@ module edit{
      * Creates complementary base pair for an element.
      * @param elem
      */
-    export function createBP(elem: DNANucleotide, undoable?: boolean): DNANucleotide {
+    export function createBP(elem: Nucleotide, undoable?: boolean): Nucleotide {
         if (elem.findPair()) {
             notify("Element already has a base pair")
             return;
@@ -1379,11 +1402,16 @@ module edit{
         const strand = elem.getSystem().addNewNucleicAcidStrand();
 
         // Add element and assign id
-        const e = new DNANucleotide(undefined, strand);
+        let e: Nucleotide;
+        if (elem.isDNA()) {
+            e = new DNANucleotide(undefined, strand);
+        } else if (elem.isRNA()) {
+            e = new RNANucleotide(undefined, strand);
+        }
         elements.push(e);
         e.dummySys = tmpSys;
         e.sid = 0;
-        e.type = elem.getComplementaryType();
+        e.setType(elem.getComplementaryType());
         e.n3 = null;
         e.n5 = null;
         e.pair = elem;
