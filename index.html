@@ -358,7 +358,7 @@
                 <button class="ribbon-button" onclick="makeOxViewJsonFile()"
                     title="Download a file JSON file storing the current design" style="width: 50px;">
                     <!-- <span class="mif-floppy-disk mif-2x"></span> -->
-                    <img src="./favicon.png" height="20px">
+                    <img src="./favicon.png" height="30px">
                     <!-- <span class="caption">oxView</span> -->
                    
                 </button>
@@ -366,7 +366,7 @@
                     onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited; document.getElementById('forceDownload').checked = forces.length > 0"
                     title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)" style="width: 50px;">
                     <!-- <span class="mif-file-download mif-2x"></span> -->
-                    <img src="./img/ico/oxdna_logo.png" height="20px" >
+                    <img src="./img/ico/oxdna_logo.png" height="30px" >
                     <!-- <span class="caption">oxDNA</span> -->
                 </button>
                 <span class="title mif-floppy-disk mif-3x"> <b>Save</b></span>
@@ -375,7 +375,7 @@
                     <button class="ribbon-button primary" onclick="Metro.dialog.open('#importFileDialog')" title="Import files using Taco OxDNA"
                         id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x fg-green"></span> -->
-                        <img src="img/ico/taco_logo.png" height="20px">
+                        <img src="img/ico/taco_logo.png" height="30px">
                         <!-- <span class="caption">Taco</span> -->
                     </button>
                     <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID" id="import-button" style="width: 50px;">
@@ -430,23 +430,34 @@
                     </div>
                     <span class="title "> <b>Sequence tools</b></span>
                 </div>
-                <!-- <div class="group"> -->
-                <div class="ribbon-split-button" height="70px">
-                    <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')" style="width: 50px;">
-                        <span class="mif-photo-camera mif-3x"></span>
-                        <!-- <span class="caption">Save image</span> -->
-                    </button>
-                    <span class="ribbon-split dropdown-toggle">Image size</span>
-                    <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
-                        <label for="fogNear">Scaling factor: </label>
-                        <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2" id="saveImageScalingFactor"
-                            title="Factor with which to scale the current canvas." min=1
-                            onchange="view.updateImageResolutionText()"
-                        >
-                        <hr>
-                        <span>Resolution: <small id="saveImageResolution">? x ?</small></span>
+                
+                <div class="group" height="70px"> </div>
+                
+                <div class="ribbon-split-button" height="60px">
+                        <button class="ribbon-button" onclick="view.saveCanvasImage()" title="Save current view as an image ('P')" style="width: 50px;">
+                            <span class="mif-photo-camera mif-3x"></span>
+                            <!-- <span class="caption">Save image</span> -->
+                        </button>
+                        <span class="ribbon-split dropdown-toggle">Image size</span>
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100">
+                            <label for="fogNear">Scaling factor: </label>
+                            <input style="width: 2em;" type="text" data-role="spinner" class="input-small" value="2" id="saveImageScalingFactor"
+                                title="Factor with which to scale the current canvas." min=1
+                                onchange="view.updateImageResolutionText()"
+                            >
+                            <hr>
+                            <span>Resolution: <small id="saveImageResolution">? x ?</small></span>
+                        </ul>
+                </div>
+                <div class="group" height="70px"> </div>
+                <div class="group" >
+                    <ul style="list-style-type:none" height="70px">
+                        <li> <b>Please cite:</b> </li>
+                        <li><a href="https://doi.org/10.1038/s41596-022-00688-5"><span class="mif-file-text icon"></span>&nbsp; Nature Protocols 2022</a></li>
+                        <li><a href="https://doi.org/10.1093/nar/gkaa417"><span class="mif-file-text icon"></span>&nbsp; Nucleic Acids Research 2020</a></li>
                     </ul>
                 </div>
+                
             </div>
 
             <!--Trajectory-->
