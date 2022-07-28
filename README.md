@@ -208,7 +208,7 @@ Erik Poppleton, Joakim Bohlin, Michael Matthies, Shuchi Sharma, Fei Zhang, Petr 
 
 and
 
-Joakim Bohlin, Michael Matthies, Jonah Procyk, Erik Poppleton, Aatmik Mallya, Hao Yan, Petr Šulc: Design and simulation of DNA, RNA and hybrid protein–nucleic acid nanostructures with oxView. *Nature Protocols*, (2022). [https://doi.org/10.1038/s41596-022-00688-5)](https://doi.org/10.1038/s41596-022-00688-5) 
+Joakim Bohlin, Michael Matthies, Jonah Procyk, Erik Poppleton, Aatmik Mallya, Hao Yan, Petr Šulc: Design and simulation of DNA, RNA and hybrid protein–nucleic acid nanostructures with oxView. *Nature Protocols*, (2022). [https://doi.org/10.1038/s41596-022-00688-5](https://doi.org/10.1038/s41596-022-00688-5) 
 
 ## Acknowledgements
 We gratefully acknowledge support from NSF grant no 1931487, ONR grant no N000142012094 and MSCA grant no 765703. We thank to all the users for submitting their feedback, bug reports and feature requests, as well as all members of Sulc, Yan, Doye, Turberfield, and Louis groups who participate in testing of the tool.
