@@ -1141,7 +1141,9 @@ function addSystemToScene(system) {
     document.dispatchEvent(new Event('setupComplete'));
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
-    canvas.focus();
+    if (!inIframe()) {
+        canvas.focus();
+    }
 }
 window.addEventListener("message", (event) => {
     if (event.data.message) { // do we have a message ?

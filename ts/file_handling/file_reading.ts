@@ -1273,7 +1273,9 @@ function addSystemToScene(system: System) {
 
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
-    canvas.focus();
+    if (!inIframe()){
+        canvas.focus();
+    }
 }
 
 
