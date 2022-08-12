@@ -34,6 +34,10 @@ instanceMaterial["defines"][ 'INSTANCED' ] = "";
 instanceMaterial2["defines"] = instanceMaterial2["defines"] || {};
 instanceMaterial2["defines"][ 'INSTANCED' ] = "";
 
+let instanceMaterial3 = instanceMaterial2.clone()
+instanceMaterial3["defines"] = instanceMaterial3["defines"] || {};
+instanceMaterial3["defines"][ 'INSTANCED' ] = "";
+
 function switchMaterial(material){
    systems.forEach(s=>{
       s.backbone.material = material;

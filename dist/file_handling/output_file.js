@@ -276,14 +276,6 @@ function makeMassFile(name, altNumbering, counts, gsSubtypes) {
     let text = gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString()).join('\n');
     makeTextFile(name, text);
 }
-function writeMutTrapText(base1, base2) {
-    return "{\n" + "type = mutual_trap\n" +
-        "particle = " + base1 + "\n" +
-        "ref_particle = " + base2 + "\n" +
-        "stiff = 0.09\n" +
-        "r0 = 1.2 \n" +
-        "PBC = 1" + "\n}\n\n";
-}
 function makeForceFile() {
     if (forces.length > 0) {
         makeTextFile("external_forces.txt", forcesToString());
@@ -296,10 +288,25 @@ function makeSelectedBasesFile() {
     makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));
 }
 function makeSequenceFile() {
-    let seqTxts = [];
+    let seqTxts = [
+        'name, seq, len, RGB'
+    ];
     const handle_strand = (strand) => {
         let label = strand.label ? strand.label : `strand_${strand.id}`;
-        seqTxts.push(`${label}, ${strand.getSequence()}`);
+        let line = `${label},${strand.getSequence()}`;
+        // add the length info
+        line += `,${strand.getLength()}`;
+        // assume that the strand color is the same from top to bottom. 
+        let color = null;
+        if (typeof (strand.end5.color) !== "undefined")
+            color = `,${Math.round(strand.end5.color.r * 255)}/${Math.round(strand.end5.color.g * 255)}/${Math.round(strand.end5.color.b * 255)}`;
+        else if (typeof (strand.end3.color) !== "undefined")
+            color = `,${Math.round(strand.end3.color.r * 255)}/${Math.round(strand.end3.color.g * 255)}/${Math.round(strand.end3.color.b * 255)}`;
+        if (color)
+            line += color;
+        else
+            line += `, `;
+        seqTxts.push(line);
     };
     let strands = new Set();
     if (selectedBases.size > 0) {
@@ -315,12 +322,14 @@ function makeSequenceFile() {
     }
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
-function makeOxViewJsonFile(space) {
-    makeTextFile("output.oxview", JSON.stringify({
+function makeOxViewJsonFile(name, space) {
+    let file_name = name ? name + ".oxview" : "output.oxview";
+    makeTextFile(file_name, JSON.stringify({
         date: new Date(),
         box: box.toArray(),
         systems: systems,
-        forces: forces
+        forces: forces,
+        selections: selectionListHandler.serialize()
     }, null, space));
 }
 //let textFile: string;

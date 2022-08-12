@@ -6,92 +6,90 @@ class TopReader extends FileReader {
         this.topFile = null;
         this.sidCounter = 0;
         this.nucLocalID = 0;
-        this.onload = ((f) => {
-            return () => {
-                let nucCount = this.elems.getNextId();
-                let file = this.result;
-                let lines = file.split(/[\n]+/g);
-                lines = lines.slice(1); // discard the header
-                this.configurationLength = lines.length;
-                let l0 = lines[0].split(" ");
-                let strID = parseInt(l0[0]); //proteins are negative indexed
-                this.lastStrand = strID;
-                let currentStrand = this.system.createStrandTyped(strID, l0[1]);
-                this.system.addStrand(currentStrand);
-                // create empty list of elements with length equal to the topology
-                // Note: this is implemented such that we have the elements for the DAT reader 
-                let nuc; //DNANucleotide | RNANucleotide | AminoAcid;
-                for (let j = 0; j < lines.length; j++) {
-                    this.elems.set(nucCount + j, nuc);
-                }
-                // Create new cluster for loaded structure:
-                let cluster = ++clusterCounter;
-                lines.forEach((line, i) => {
-                    if (line == "") {
-                        // Delete last element
-                        this.configurationLength -= 1;
-                        this.elems.delete(this.elems.getNextId() - 1);
-                        return;
-                    }
-                    //split the file and read each column, format is: "strID base n3 n5"
-                    let l = line.split(" ");
-                    strID = parseInt(l[0]);
-                    if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                        currentStrand = this.system.createStrandTyped(strID, l[1]);
-                        this.system.addStrand(currentStrand);
-                        this.nucLocalID = 0;
-                    }
-                    ;
-                    //create a new element
-                    if (!this.elems.get(nucCount + i))
-                        this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
-                    let nuc = this.elems.get(nucCount + i);
-                    // Set systemID
-                    nuc.sid = this.sidCounter++;
-                    // Set cluster id;
-                    nuc.clusterId = cluster;
-                    //create neighbor 3 element if it doesn't exist
-                    let n3 = parseInt(l[2]);
-                    if (n3 != -1) {
-                        if (!this.elems.get(nucCount + n3)) {
-                            this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
-                        }
-                        nuc.n3 = this.elems.get(nucCount + n3);
-                    }
-                    else {
-                        nuc.n3 = null;
-                        currentStrand.end3 = nuc;
-                    }
-                    //create neighbor 5 element if it doesn't exist
-                    let n5 = parseInt(l[3]);
-                    if (n5 != -1) {
-                        if (!this.elems.get(nucCount + n5)) {
-                            this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
-                        }
-                        nuc.n5 = this.elems.get(nucCount + n5);
-                    }
-                    else {
-                        nuc.n5 = null;
-                        currentStrand.end5 = nuc;
-                    }
-                    let base = l[1]; // get base id
-                    nuc.type = base;
-                    //if we meet a U, we have an RNsibleA (its dumb, but its all we got)
-                    //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
-                    if (base === "U")
-                        RNA_MODE = true;
-                    this.nucLocalID += 1;
-                    this.lastStrand = strID;
-                });
-                nucCount = this.elems.getNextId();
-                // usually the place where the DatReader gets fired
-                this.callback();
-            };
-        })(this.topFile);
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
         this.callback = callback;
+        this.onload = () => {
+            let nucCount = this.elems.getNextId();
+            let file = this.result;
+            let lines = file.split(/[\n]+/g);
+            lines = lines.slice(1); // discard the header
+            this.configurationLength = lines.length;
+            let l0 = lines[0].split(" ");
+            let strID = parseInt(l0[0]); //proteins are negative indexed
+            this.lastStrand = strID;
+            let currentStrand = this.system.createStrandTyped(strID, l0[1]);
+            this.system.addStrand(currentStrand);
+            // create empty list of elements with length equal to the topology
+            // Note: this is implemented such that we have the elements for the DAT reader 
+            let nuc; //DNANucleotide | RNANucleotide | AminoAcid;
+            for (let j = 0; j < lines.length; j++) {
+                this.elems.set(nucCount + j, nuc);
+            }
+            // Create new cluster for loaded structure:
+            let cluster = ++clusterCounter;
+            lines.forEach((line, i) => {
+                if (line == "") {
+                    // Delete last element
+                    this.configurationLength -= 1;
+                    this.elems.delete(this.elems.getNextId() - 1);
+                    return;
+                }
+                //split the file and read each column, format is: "strID base n3 n5"
+                let l = line.split(" ");
+                strID = parseInt(l[0]);
+                if (strID != this.lastStrand) { //if new strand id, make new strand                        
+                    currentStrand = this.system.createStrandTyped(strID, l[1]);
+                    this.system.addStrand(currentStrand);
+                    this.nucLocalID = 0;
+                }
+                ;
+                //create a new element
+                if (!this.elems.get(nucCount + i))
+                    this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
+                let nuc = this.elems.get(nucCount + i);
+                // Set systemID
+                nuc.sid = this.sidCounter++;
+                // Set cluster id;
+                nuc.clusterId = cluster;
+                //create neighbor 3 element if it doesn't exist
+                let n3 = parseInt(l[2]);
+                if (n3 != -1) {
+                    if (!this.elems.get(nucCount + n3)) {
+                        this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
+                    }
+                    nuc.n3 = this.elems.get(nucCount + n3);
+                }
+                else {
+                    nuc.n3 = null;
+                    currentStrand.end3 = nuc;
+                }
+                //create neighbor 5 element if it doesn't exist
+                let n5 = parseInt(l[3]);
+                if (n5 != -1) {
+                    if (!this.elems.get(nucCount + n5)) {
+                        this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
+                    }
+                    nuc.n5 = this.elems.get(nucCount + n5);
+                }
+                else {
+                    nuc.n5 = null;
+                    currentStrand.end5 = nuc;
+                }
+                let base = l[1]; // get base id
+                nuc.type = base;
+                //if we meet a U, we have an RNA (its dumb, but its all we got)
+                //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
+                if (base === "U")
+                    RNA_MODE = true;
+                this.nucLocalID += 1;
+                this.lastStrand = strID;
+            });
+            nucCount = this.elems.getNextId();
+            // usually the place where the DatReader gets fired
+            this.callback();
+        };
     }
     read() {
         this.readAsText(this.topFile);
@@ -142,17 +140,15 @@ class LookupReader extends FileReader {
         super();
         this.position_lookup = []; // store offset and size
         this.idx = -1;
-        this.onload = ((evt) => {
-            return () => {
-                let file = this.result;
-                let lines = file.split(/[\n]+/g);
-                // we need to pass down idx to sync with the DatReader
-                this.callback(this.idx, lines, this.size);
-            };
-        })();
         this.chunker = chunker;
         this.confLength = confLength;
         this.callback = callback;
+        this.onload = (evt) => {
+            let file = this.result;
+            let lines = file.split(/[\n]+/g);
+            // we need to pass down idx to sync with the DatReader
+            this.callback(this.idx, lines, this.size);
+        };
     }
     addIndex(offset, size, time) {
         this.position_lookup.push([offset, size, time]);
@@ -350,7 +346,7 @@ class TrajectoryReader {
                 l = lines[i].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l, true);
                 //when a strand is finished, add it to the system
-                if (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3) { //if last nucleotide in straight strand
+                if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
                     if (currentNucleotide.n5 == currentStrand.end3) {
                         currentStrand.end5 = currentNucleotide;
                     }
@@ -377,15 +373,7 @@ class TrajectoryReader {
                 l = lines[lineNum].split(" ");
                 currentNucleotide.calcPositionsFromConfLine(l);
             }
-            system.backbone.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.nucleoside.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.connector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceOffset.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceRotation.needsUpdate = true;
-            system.bbconnector.geometry["attributes"].instanceScale.needsUpdate = true;
-            system.dummyBackbone.geometry["attributes"].instanceOffset.needsUpdate = true;
+            system.callUpdates(['instanceOffset', 'instanceRotation']);
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)

@@ -135,7 +135,30 @@ function extendWrapper(double: boolean) {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
+    //let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
+    let elems = [];
+    if(extendDuplex){
+        let c;
+        if(e.strand.end5 == e){
+            //input is 5->3
+            c = seq[seq.length-1];
+            seq = seq.slice(0,seq.length-1)
+        }else{ // we must have end3
+            c = seq[0];
+            seq = seq.slice(1);
+        }
+        elems = edit.extendStrand(e, c);
+        e = elems[0];
+        elems = elems.concat(
+            edit.extendDuplex(<Nucleotide>e, seq)
+        );
+    }else{
+        elems = elems.concat(
+            edit.extendStrand(e, seq)
+        )
+    }
+
+
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
     elems.forEach(e=>pos.add(e.getPos()));
@@ -163,6 +186,7 @@ function createWrapper() {
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
     topologyEdited = true;
+    render();
 }
 
 function deleteWrapper() {

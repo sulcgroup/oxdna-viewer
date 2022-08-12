@@ -131,6 +131,34 @@ function findBasepairs(min_length=0) {
     });
 };
 
+function colorSelectorWrapper(){
+    let colors = new Set();
+    //go through selectedBases and fetch our reference colors
+    selectedBases.forEach(b =>{
+        if(b.color)
+            colors.add(b.color.getHex());
+    });
+    console.log(colors);
+    const match_color = (b:Nucleotide)=>{
+      if(b.color)
+        return colors.has(b.color.getHex());
+      return false;
+    };
+    let toSelect= [];
+    systems.forEach(system=>{
+        system.strands.forEach(strand=>{
+            strand.filter(match_color).forEach(b=>toSelect.push(b));
+        });
+    });
+    tmpSystems.forEach(system=>{
+        system.strands.forEach(strand=>{
+            strand.filter(match_color).forEach(b=>toSelect.push(b));
+        });
+    });
+    api.selectElements(toSelect);
+    render();
+}
+
 function connectedSelectorWrapper():void{
     let strands = new Set<Strand>();
     let selected_nucleotides  = [... selectedBases].filter(e=>e instanceof Nucleotide);
@@ -187,4 +215,12 @@ if (window.sessionStorage.inboxingOption) {
     view.inboxingMode.set(window.sessionStorage.inboxingOption);
 }
 
+//https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
 

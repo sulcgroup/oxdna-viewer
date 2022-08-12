@@ -192,16 +192,36 @@ module api{
      * Show the specified element in the viewport
      * @param element Element to center view at
      */
-    export function findElement(element: BasicElement) {
-        let targetPos = element.getInstanceParameter3('bbOffsets');
+    export function findElement(element: BasicElement, steps=20) {
+        let targetPos: THREE.Vector3;
+        if (element.isNucleotide()) {
+            targetPos = element.getInstanceParameter3('bbOffsets');
+        } else {
+            targetPos = element.getPos()
+        }
 
         // Target trackball controls at element position
-        controls.target = targetPos;
+        //controls.target = targetPos;
 
         // Move in close to the element
-        let targetDist = 3;
+        let targetDist = 10;
         let dist = (camera.position.distanceTo(targetPos));
-        camera.position.lerp(targetPos, 1-(targetDist/dist));
+
+        let endPos = camera.position.clone().sub(targetPos).setLength(targetDist).add(targetPos);
+
+        if (steps > 1) {
+            camera.position.lerp(endPos, 1/steps);
+            controls.target.lerp(targetPos, 1/steps);
+        } else {
+            camera.position.lerp(endPos, 1-(targetDist/dist));
+            controls.target = targetPos;
+        }
+
+        if (steps > 1) {
+            requestAnimationFrame(()=>{
+                api.findElement(element, steps-1);
+            });
+        }
     }
 
     export function selectElements(elems: BasicElement[], keepPrevious?: boolean) {
@@ -334,11 +354,9 @@ module api{
             let newCam = createOrthographicCamera(-width/2, width/2, height/2, -height/2, near, far, pos.toArray());
             newCam.up = up
             newCam.lookAt(focus);
-            let light = pointlight;
             scene.remove(camera);
             camera = newCam;
             controls.object = camera;
-            camera.add(light);
             scene.add(camera);
 
             document.getElementById("cameraSwitch").innerHTML = "Perspective";
@@ -361,11 +379,9 @@ module api{
             let newCam = createPerspectiveCamera(fov, near, far, pos.toArray());
             newCam.up = up;
             newCam.lookAt(focus);
-            let light = pointlight;
             scene.remove(camera);
             camera = newCam;
             controls.object = camera;
-            camera.add(light);
             scene.add(camera);
 
             document.getElementById("cameraSwitch").innerHTML = "Orthographic";

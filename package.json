@@ -58,6 +58,7 @@
     "electron-settings": "^4.0.2",
     "electron-squirrel-startup": "^1.0.0",
     "rpmbuild": "0.0.23",
+    "typescript": "^2.8.1",
     "update-electron-app": "^2.0.1"
   },
   "devDependencies": {
