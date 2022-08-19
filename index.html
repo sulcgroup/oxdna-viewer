@@ -736,7 +736,12 @@
                         data-history="true" data-prevent-submit="true"
                         placeholder="Type a sequence here"
                         style="text-transform: uppercase;"
-                        onchange='document.getElementById("seqLen").innerHTML = this.value.length'>
+                        
+                        onchange = 'document.getElementById("seqLen").innerHTML = this.value.length;'
+                        onkeydown= 'document.getElementById("seqLen").innerHTML = this.value.length;'
+                        onpaste  = 'document.getElementById("seqLen").innerHTML = this.value.length;'
+                        oninput  = 'document.getElementById("seqLen").innerHTML = this.value.length;'
+                    >
                 </div>
             </div></div>
 
