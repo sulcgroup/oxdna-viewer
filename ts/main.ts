@@ -215,4 +215,12 @@ if (window.sessionStorage.inboxingOption) {
     view.inboxingMode.set(window.sessionStorage.inboxingOption);
 }
 
+//https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
+function inIframe () {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
 
