@@ -38,7 +38,8 @@ function importFiles(files) {
     if (from === "cadnano") {
         opts = {
             grid: document.getElementById("importCadnanoLatticeSelect").value,
-            sequence: document.getElementById("importCadnanoScaffoldSeq").value
+            sequence: document.getElementById("importCadnanoScaffoldSeq").value,
+            default_val: document.getElementById("importCadnanoDefaultVal").value
         };
     }
     else if (from === "rpoly") {
