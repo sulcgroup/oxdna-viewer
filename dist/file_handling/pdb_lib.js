@@ -1,5 +1,13 @@
 // Helper Objects for pdb parsing
 class graphData {
+    label;
+    data;
+    xdata;
+    datatype; // msf or bfactor
+    units; // A_sqr or nm_sqr
+    gammaSim; // Spring force constant only used if graphData is generated as a Fit
+    cutoff; // Cutoff (A) for edges, only used if graphData is generated as a Fit
+    oDatatype; // Stores (original datatype) for the labels on the Fluctuation window (used in UI-> view)
     constructor(l, d, x, dt, u) {
         this.label = l;
         this.data = d;
@@ -65,6 +73,22 @@ let nucelem = { "DC": "C", "DC3": "C", "DC5": "C", "DG": "G", "DG3": "G", "DG5":
     "A": "A", "A3": "A", "A5": "A", "G": "G", "G3": "G", "G5": "G", "C": "C", "C3": "C", "C5": "C", "ADE": "A",
     "THY": "T", "CYT": "C", "GUA": "G" };
 class pdbatom {
+    // store most info as strings to make robust against more interestingly formulated PDB files
+    indx;
+    atomType;
+    altLoc;
+    resType;
+    chainID;
+    chainIndx;
+    pdbResIdent;
+    iCode;
+    x;
+    y;
+    z;
+    occupancy;
+    tempFactor; // make optional?
+    element;
+    charge;
     constructor() {
         this.indx = "";
         this.atomType = "";
@@ -84,6 +108,12 @@ class pdbatom {
     }
 }
 class pdbresidue {
+    resType;
+    pdbResIdent;
+    chainID;
+    chainIndx;
+    type;
+    atoms;
     constructor() {
         this.resType = "";
         this.chainIndx = -1;
@@ -94,6 +124,10 @@ class pdbresidue {
     }
 }
 class pdbchain {
+    chainID;
+    chainIndx;
+    residues;
+    strandtype;
     constructor() {
         this.chainIndx = -1;
         this.chainID = "";
@@ -103,6 +137,14 @@ class pdbchain {
 }
 // Stores locations of unique and repeated chains throughout the provided PDB file
 class pdbReadingList {
+    uniqueIDs; // unique chain Identifiers
+    uniqueStart; // starting line number of
+    uniqueEnd;
+    repeatIDs;
+    repeatStart;
+    repeatEnd;
+    repeatCoords; // coordinates for repeated chains
+    repeatQuatRots; // Rotation Quaternion for Repeated chain a1/a3 vectors
     constructor() {
         this.uniqueIDs = [];
         this.uniqueStart = [];
@@ -115,6 +157,11 @@ class pdbReadingList {
     }
 }
 class pdbinfowrapper {
+    pdbfilename;
+    pdbsysinfo;
+    initlist;
+    disulphideBonds;
+    hydrogenBonds;
     constructor(pi, chains, initlist) {
         this.pdbfilename = pi;
         this.pdbsysinfo = chains;
