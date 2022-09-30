@@ -3,8 +3,6 @@
  * This class is incomplete and only supports visualization right now.  Editing will not work.
  */
 class AminoAcid extends BasicElement {
-    a1;
-    a3;
     constructor(id, strand) {
         super(id, strand);
         this.a1 = new THREE.Vector3();
