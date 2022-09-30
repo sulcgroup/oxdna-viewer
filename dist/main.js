@@ -21,7 +21,6 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 class ElementMap extends Map {
-    idCounter;
     constructor() {
         super();
         this.idCounter = 0;
@@ -188,4 +187,13 @@ if (window.sessionStorage.centerOption) {
 }
 if (window.sessionStorage.inboxingOption) {
     view.inboxingMode.set(window.sessionStorage.inboxingOption);
+}
+//https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
+function inIframe() {
+    try {
+        return window.self !== window.top;
+    }
+    catch (e) {
+        return true;
+    }
 }

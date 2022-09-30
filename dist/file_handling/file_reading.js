@@ -38,7 +38,8 @@ function importFiles(files) {
     if (from === "cadnano") {
         opts = {
             grid: document.getElementById("importCadnanoLatticeSelect").value,
-            sequence: document.getElementById("importCadnanoScaffoldSeq").value
+            sequence: document.getElementById("importCadnanoScaffoldSeq").value,
+            default_val: document.getElementById("importCadnanoDefaultVal").value
         };
     }
     else if (from === "rpoly") {
@@ -1141,7 +1142,9 @@ function addSystemToScene(system) {
     document.dispatchEvent(new Event('setupComplete'));
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";
-    canvas.focus();
+    if (!inIframe()) {
+        canvas.focus();
+    }
 }
 window.addEventListener("message", (event) => {
     if (event.data.message) { // do we have a message ?
