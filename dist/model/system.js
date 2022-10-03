@@ -4,9 +4,45 @@
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
 class System {
+    id;
+    globalStartId; //1st nucleotide's id
+    datFile;
+    colormapFile;
+    lutCols;
+    strands = [];
+    label;
+    //the system contains all the data from a dat file in its instancing arrays
+    //the system also owns the actual meshes that get sent to the scene.
+    INSTANCES;
+    bbOffsets;
+    bbRotation;
+    nsOffsets;
+    nsRotation;
+    conOffsets;
+    conRotation;
+    bbconOffsets;
+    bbconRotation;
+    bbconScales;
+    cmOffsets;
+    bbColors;
+    nsColors;
+    scales;
+    nsScales;
+    conScales;
+    visibility;
+    bbLabels;
+    backboneGeometry;
+    nucleosideGeometry;
+    connectorGeometry;
+    spGeometry;
+    pickingGeometry;
+    backbone;
+    nucleoside;
+    connector;
+    bbconnector;
+    dummyBackbone;
+    checkedForBasepairs = false;
     constructor(id, startID) {
-        this.strands = [];
-        this.checkedForBasepairs = false;
         this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];
@@ -243,6 +279,17 @@ class System {
 }
 ;
 class PatchySystem extends System {
+    patchyGeometries;
+    patchyMeshes;
+    pickingMeshes;
+    offsets;
+    rotations;
+    colors;
+    scalings;
+    visibilities;
+    labels;
+    particles;
+    species;
     constructor(id, particleFile, patchFile, loroPatchFiles, callback) {
         super(id, 0);
         this.id = id;
@@ -298,7 +345,7 @@ class PatchySystem extends System {
                     return {
                         'position': pos,
                         'a1': pos.clone().normalize(),
-                        'a2': pos.clone().normalize(),
+                        'a2': pos.clone().normalize(), // No actual orientation available
                     };
                 })
             };

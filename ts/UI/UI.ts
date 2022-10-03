@@ -1134,20 +1134,21 @@ class fluxGraph {
         let rmsfkey = "RMSF (nm)";
         let masskey = "simMasses";
         let coordkey = "coordinates";
-        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix"];
+        let radiikey = "radii";
+        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix", radiikey];
         if(rmsfkey in data){
             this.loadfluxjson(data[rmsfkey])
-        } else if(masskey in data && coordkey in data){
-            this.loadnetworkjson(data[masskey], data[coordkey])
+        } else if(masskey in data && coordkey in data && radiikey in data){
+            this.loadnetworkjson(data[masskey], data[coordkey], data[radiikey])
         } else if(cgkeys[0] in data && cgkeys[4] in data) {
-            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]])
+            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]], data[cgkeys[5]])
         } else {
             notify('Could Not Load Json File');
         }
     }
 
-    loadcgjson(bfactors, masses, coords, temp, fc_matrix){
-        this.loadnetworkjson(masses, coords);
+    loadcgjson(bfactors, masses, coords, temp, fc_matrix, radii){
+        this.loadnetworkjson(masses, coords, radii);
         let monomers = systems[systems.length-1].getMonomers();
         const net = new Network(networks.length, monomers);
 
@@ -1185,7 +1186,7 @@ class fluxGraph {
         graphDatasets.push(GD);
     }
 
-    loadnetworkjson(masses, coordinates){
+    loadnetworkjson(masses, coordinates, radii){
         coordinates = coordinates.map(x => x.map(y => y/ 8.518)) //convert to simulation units
         //find center of mass
         let com = coordinates.reduce((a, b) => {return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]});
@@ -1248,6 +1249,7 @@ class fluxGraph {
             }
             be.strand = gstrand;
             be.mass = masses[i];
+            be.radius = radii[i];
             newElems.push(be);
             last = be;
         }

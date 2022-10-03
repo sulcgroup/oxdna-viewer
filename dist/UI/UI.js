@@ -367,6 +367,9 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
+    id;
+    doc;
+    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -393,6 +396,8 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
+    lastActive;
+    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -419,13 +424,19 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
+    doc;
+    coloringMode;
+    centeringMode;
+    inboxingMode;
+    selectionMode;
+    transformMode;
+    basepairMessage = "Locating basepairs, please be patient...";
+    vrEnabled = false;
+    backboneScale = 1;
+    nucleosideScale = 1;
+    connectorScale = 1;
+    bbconnectorScale = 1;
     constructor(doc) {
-        this.basepairMessage = "Locating basepairs, please be patient...";
-        this.vrEnabled = false;
-        this.backboneScale = 1;
-        this.nucleosideScale = 1;
-        this.connectorScale = 1;
-        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -881,6 +892,24 @@ class View {
 let view = new View(document);
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
+    title;
+    xaxislabel;
+    yaxislabel;
+    data;
+    fluxWindowOpen;
+    type;
+    temp;
+    chart; // chartjs main chart object
+    units;
+    colors;
+    colorarr; // just stores colors for the graph
+    charttype;
+    chartdata;
+    chartoptions;
+    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
+    datasetCount; // how many datasets are currently displayed on the graph
+    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
+    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
@@ -1066,22 +1095,23 @@ class fluxGraph {
         let rmsfkey = "RMSF (nm)";
         let masskey = "simMasses";
         let coordkey = "coordinates";
-        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix"];
+        let radiikey = "radii";
+        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix", radiikey];
         if (rmsfkey in data) {
             this.loadfluxjson(data[rmsfkey]);
         }
-        else if (masskey in data && coordkey in data) {
-            this.loadnetworkjson(data[masskey], data[coordkey]);
+        else if (masskey in data && coordkey in data && radiikey in data) {
+            this.loadnetworkjson(data[masskey], data[coordkey], data[radiikey]);
         }
         else if (cgkeys[0] in data && cgkeys[4] in data) {
-            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]]);
+            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]], data[cgkeys[5]]);
         }
         else {
             notify('Could Not Load Json File');
         }
     }
-    loadcgjson(bfactors, masses, coords, temp, fc_matrix) {
-        this.loadnetworkjson(masses, coords);
+    loadcgjson(bfactors, masses, coords, temp, fc_matrix, radii) {
+        this.loadnetworkjson(masses, coords, radii);
         let monomers = systems[systems.length - 1].getMonomers();
         const net = new Network(networks.length, monomers);
         let N = masses.length;
@@ -1111,7 +1141,7 @@ class fluxGraph {
         let GD = new graphData('tmp', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
         graphDatasets.push(GD);
     }
-    loadnetworkjson(masses, coordinates) {
+    loadnetworkjson(masses, coordinates, radii) {
         coordinates = coordinates.map(x => x.map(y => y / 8.518)); //convert to simulation units
         //find center of mass
         let com = coordinates.reduce((a, b) => { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; });
@@ -1176,6 +1206,7 @@ class fluxGraph {
             }
             be.strand = gstrand;
             be.mass = masses[i];
+            be.radius = radii[i];
             newElems.push(be);
             last = be;
         }
