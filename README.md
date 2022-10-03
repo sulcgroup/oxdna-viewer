@@ -125,14 +125,16 @@ trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, updat
 render();
 ```
 
-* `api.observable.NickOrientation(bases : BasicElement[])` provided two flanking bases at a nick site
+* `api.observable.MeanOrientation(bases: BasicElement[], len=10, color =0xFF0000)` provided two flanking bases at a nick site
 this observable draws a vector, emphasizing the orientation of the nick.
 #### Example: 
 Type following lines in the browser console, assuming two bases are selected.
 ```js
-let nick =  new api.observable.NickOrientation(Array.from(selectedBases));
-render = api.observable.wrap(render, () => {nick.calculate()});
-render(); 
+let strands = edit.createStrand("NNNNNNNNNNNNNNNNNNNNN",true);
+ 
+let ori =  new api.observable.MeanOrientation(strands.slice(2,4));
+render = api.observable.wrap(render, () => {ori.update()});
+render();
 ```
 
 ---

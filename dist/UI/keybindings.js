@@ -6,6 +6,11 @@ canvas.addEventListener("keydown", event => {
         case 'p':
             view.saveCanvasImage();
             break;
+        //show/hide menu
+        case 'm':
+            let menu = document.getElementById('menu');
+            menu.hidden = !menu.hidden;
+            break;
         // Mapping the next and prev to the arrow keys
         case 'arrowright':
             if (trajReader.lookupReader.readyState != 1)

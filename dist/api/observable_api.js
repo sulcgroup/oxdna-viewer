@@ -47,48 +47,31 @@ var api;
             }
         }
         observable.Track = Track;
-        class NickOrientation extends THREE.ArrowHelper {
-            constructor(bases) {
-                if (bases.length != 2) {
-                    throw new Error("Nick Orientation requiles 2 bases to work");
-                }
-                let b1 = bases[0];
-                let b2 = bases[1];
-                let origin = mean_point([
-                    b1.getInstanceParameter3('nsOffsets'),
-                    b2.getInstanceParameter3('nsOffsets')
-                ]);
-                let dir = mean_point([
-                    b1.getInstanceParameter3('bbOffsets'),
-                    b2.getInstanceParameter3('bbOffsets'),
-                ]).sub(origin).normalize();
-                super(dir, origin, 10, 0x000000);
+        class MeanOrientation extends THREE.ArrowHelper {
+            constructor(bases, len = 10, color = 0xFF0000) {
+                // as we inheret from Arrow helper we need to set dummy values
+                super(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), len, color);
                 this.bases = bases;
+                this.update();
                 scene.add(this);
             }
-            calculate() {
-                let b1 = this.bases[0];
-                let b2 = this.bases[1];
-                let origin = mean_point([
-                    b1.getInstanceParameter3('nsOffsets'),
-                    b2.getInstanceParameter3('nsOffsets')
-                ]);
-                let dir = mean_point([
-                    b1.getInstanceParameter3('bbOffsets'),
-                    b2.getInstanceParameter3('bbOffsets'),
-                ]).sub(origin).normalize();
-                this.position.set(origin.x, origin.y, origin.z);
+            update() {
+                let origin = new THREE.Vector3();
+                let dir = new THREE.Vector3();
+                let l = this.bases.length;
+                //get the mean value
+                for (let i = 0; i < l; i++) {
+                    origin.add(this.bases[i].getInstanceParameter3('nsOffsets'));
+                    dir.add(this.bases[i].getInstanceParameter3('bbOffsets'));
+                }
+                origin.divideScalar(l);
+                //direction goes from ori and needs to be normalized
+                dir.divideScalar(l).sub(origin).normalize();
+                this.position.copy(origin);
                 this.setDirection(dir);
             }
         }
-        observable.NickOrientation = NickOrientation;
-        function mean_point(vs) {
-            let mean = new THREE.Vector3(0, 0, 0);
-            vs.forEach(v => {
-                mean.add(v);
-            });
-            return mean.divideScalar(vs.length);
-        }
+        observable.MeanOrientation = MeanOrientation;
         function wrap(fn, fn_wrap) {
             https: //dzone.com/articles/javascript-wrap-all-methods 
              return function () {

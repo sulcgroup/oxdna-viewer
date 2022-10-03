@@ -255,7 +255,10 @@ var api;
     //turns out that lut doesn't save the sprites so you have to completley remake it
     function showColorbar() {
         colorbarScene.add(lut.legend.mesh);
-        let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
+        let notation, decimal;
+        lut.maxV - lut.minV > 0.09 ? notation = 'decimal' : notation = 'scientific';
+        notation == 'scientific' ? decimal = 1 : decimal = 2;
+        let labels = lut.setLegendLabels({ 'title': lut.legend.labels.title, 'ticks': lut.legend.labels.ticks, 'notation': notation, 'decimal': decimal }); //don't ask, lut stores the values but doesn't actually save the sprites anywhere so you have to make them again...
         colorbarScene.add(labels["title"]);
         for (let i = 0; i < Object.keys(labels['ticks']).length; i++) {
             colorbarScene.add(labels['ticks'][i]);
@@ -272,11 +275,15 @@ var api;
             let key = lut.legend.labels.title;
             let min = lut.minV;
             let max = lut.maxV;
+            let notation, decimal;
             lut = lut.changeColorMap(name);
+            console.log(max - min);
+            max - min > 0.09 ? notation = 'decimal' : notation = 'scientific'; //if max and min are too close together, nothing shows up.
+            notation == 'scientific' ? decimal = 1 : decimal = 2; //scientific notation is too big for the colorbar scene, so make it smaller.
             lut.setMax(max);
             lut.setMin(min);
             lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
-            lut.setLegendLabels({ 'title': key, 'ticks': 5 });
+            lut.setLegendLabels({ 'title': key, 'ticks': 5, 'notation': notation, 'decimal': decimal });
             for (let i = 0; i < systems.length; i++) {
                 let system = systems[i];
                 let end = system.systemLength();
