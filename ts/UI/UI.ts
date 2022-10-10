@@ -595,6 +595,19 @@ class View {
         this.scaleComponent(name, scale);
     }
 
+    public setCenteringElementsFromSelection() {
+        this.setCenteringElements([...selectedBases]);
+        clearSelection();
+    }
+
+    public setCenteringElements(centeringElements) {
+        if (centeringElements.length > 0) {
+            this.centeringElements = centeringElements;
+        } else {
+            this.centeringElements = undefined;
+        }
+    }
+
     public enableVR() {
         if (!this.vrEnabled) {
             let vrRenderer: any;

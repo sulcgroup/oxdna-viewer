@@ -571,6 +571,18 @@ class View {
         }
         this.scaleComponent(name, scale);
     }
+    setCenteringElementsFromSelection() {
+        this.setCenteringElements([...selectedBases]);
+        clearSelection();
+    }
+    setCenteringElements(centeringElements) {
+        if (centeringElements.length > 0) {
+            this.centeringElements = centeringElements;
+        }
+        else {
+            this.centeringElements = undefined;
+        }
+    }
     enableVR() {
         if (!this.vrEnabled) {
             let vrRenderer;

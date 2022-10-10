@@ -146,7 +146,7 @@ function createWrapper() {
 function deleteWrapper() {
     let e = Array.from(selectedBases);
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to delete");
         return;
     }
@@ -302,7 +302,7 @@ function skipWrapper() {
     let e = Array.from(selectedBases);
     ;
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to skip");
         return;
     }
