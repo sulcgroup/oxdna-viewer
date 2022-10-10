@@ -456,6 +456,8 @@ class View {
     selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
 
+    centeringElements: BasicElement[];
+
     basepairMessage = "Locating basepairs, please be patient...";
     vrEnabled = false;
     backboneScale = 1;
