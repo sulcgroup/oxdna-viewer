@@ -188,8 +188,9 @@ function handleFiles(files: FileList) {
             return;
         }
         else if (ext=="js"){
-            readScriptFile(files[i]);
-            return;
+            scriptFile = files[i];
+            //readScriptFile(files[i]);
+            //return;
         }
         else if (ext === "mgl"){
             readMGL(files[i]);
@@ -251,7 +252,7 @@ function handleFiles(files: FileList) {
     }
 
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles,scriptFile);
 
     render();
     return
@@ -570,13 +571,18 @@ function readFilesFromURLParams() {
 
 var trajReader :TrajectoryReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[]) {
+function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[],scriptFile?:File) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
 
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
         document.addEventListener('setupComplete', readAuxiliaryFiles)
+        document.addEventListener('setupComplete', ()=>{
+            if(scriptFile){
+                readScriptFile(scriptFile);
+            }
+        })
 
         if(typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined"){
             //make system to store the dropped files in
@@ -642,6 +648,9 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
     }
     else {
         readAuxiliaryFiles()
+        if(scriptFile){
+            readScriptFile(scriptFile);
+        }
     }
 
     function readAuxiliaryFiles() {

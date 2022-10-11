@@ -166,8 +166,9 @@ function handleFiles(files) {
             return;
         }
         else if (ext == "js") {
-            readScriptFile(files[i]);
-            return;
+            scriptFile = files[i];
+            //readScriptFile(files[i]);
+            //return;
         }
         else if (ext === "mgl") {
             readMGL(files[i]);
@@ -232,7 +233,7 @@ function handleFiles(files) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile);
     render();
     return;
 }
@@ -525,12 +526,17 @@ function readFilesFromURLParams() {
 }
 var trajReader;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles) {
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile) {
     if (topFile && datFile) {
         renderer.domElement.style.cursor = "wait";
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
         document.addEventListener('setupComplete', readAuxiliaryFiles);
+        document.addEventListener('setupComplete', () => {
+            if (scriptFile) {
+                readScriptFile(scriptFile);
+            }
+        });
         if (typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined") {
             //make system to store the dropped files in
             const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles, (callback) => {
@@ -589,6 +595,9 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
     }
     else {
         readAuxiliaryFiles();
+        if (scriptFile) {
+            readScriptFile(scriptFile);
+        }
     }
     function readAuxiliaryFiles() {
         if (jsonFile) {
