@@ -250,7 +250,9 @@ function handleFiles(files: FileList) {
     if (!newSystem && !addition) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
-
+    // same dirty logic as the event fix 
+    // we ensure this way that the script is not handeled 2ce
+    handledScript = false;
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles,scriptFile);
 
@@ -570,19 +572,33 @@ function readFilesFromURLParams() {
 }
 
 var trajReader :TrajectoryReader;
+let initFileReading = true; // dirty hack to keep the event handling in check 
+let handledScript = false;
+
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[],scriptFile?:File) {
-    if (topFile && datFile) {
-        renderer.domElement.style.cursor = "wait";
-
+    
+    if(initFileReading){
+        // TODO: apart from a drastic rewrite... 
+        // Figure out if any other places have the bug of adding N event handlers ...
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
-        document.addEventListener('setupComplete', readAuxiliaryFiles)
+        
+        
+        document.addEventListener('setupComplete', readAuxiliaryFiles);
+        
         document.addEventListener('setupComplete', ()=>{
-            if(scriptFile){
+            if(scriptFile && !handledScript){
+                
                 readScriptFile(scriptFile);
             }
-        })
+        });
+
+        initFileReading = false;
+    }
+    
+    if (topFile && datFile) {
+        renderer.domElement.style.cursor = "wait";
 
         if(typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined"){
             //make system to store the dropped files in
@@ -641,16 +657,21 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
                 idxReader.readAsText(idxFile);
             }
         }
+        return;
     }
     else if (pdbFile) {
         readPdbFile(pdbFile);
-        document.addEventListener('setupComplete', readAuxiliaryFiles)
+        //document.addEventListener('setupComplete', readAuxiliaryFiles)
+        return;
     }
     else {
-        readAuxiliaryFiles()
-        if(scriptFile){
-            readScriptFile(scriptFile);
-        }
+        readAuxiliaryFiles();
+    }        
+    
+    // now due to async issues this will fire whenever, 
+    // but that's better than not at all 
+    if(scriptFile  && !handledScript){
+        readScriptFile(scriptFile);
     }
 
     function readAuxiliaryFiles() {
@@ -698,7 +719,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
             }
             r.readAsText(massFile);
         }
-        document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
+        //document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
     render();
     return
@@ -766,8 +787,10 @@ function readJson(system, jsonReader) {
 }
 
 function readScriptFile(file: File){
+
     let reader = new FileReader();
     reader.onload=(e)=>{
+        handledScript=true;
         eval(e.target.result as string); // hacky, but should do the trick 
     };
     reader.readAsText(file);
