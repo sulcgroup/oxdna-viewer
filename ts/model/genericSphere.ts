@@ -260,6 +260,19 @@ class PatchyParticle extends GenericSphere{
         );
     }
 
+    //poof
+     toggleVisibility() {
+        let sys = this.getSystem() as PatchySystem;
+        if (this.dummySys !== null) {
+            sys = this.dummySys as PatchySystem;
+        }
+
+        const visibility = this.getInstanceParameter3('visibilities');
+        visibility.addScalar(-1);
+
+        sys.fillPatchyVec(parseInt(this.type), 'visibilities', 3, this.sid, [Math.abs(visibility.x), Math.abs(visibility.y), Math.abs(visibility.z)]);
+    }
+
     translatePosition(amount: THREE.Vector3) {
         const sys = this.system;
         const id = (this.sid) * 3;

@@ -1,13 +1,7 @@
-const instanceParams = new Map([
-    ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-    ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
-    ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-    ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
-    ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
-]);
 class InstanceCopy {
     constructor(e) {
-        instanceParams.forEach((size, attr) => {
+        this.instanceParams = e.getSystem().instanceParams;
+        this.instanceParams.forEach((size, attr) => {
             if (size == 3) {
                 this[attr] = e.getInstanceParameter3(attr);
             }
@@ -26,9 +20,10 @@ class InstanceCopy {
         }
         this.elemType = e.constructor;
         this.system = e.getSystem();
+        this.isPatchy = e.isPatchyParticle();
     }
     writeToSystem(sid, sys) {
-        instanceParams.forEach((size, attr) => {
+        this.instanceParams.forEach((size, attr) => {
             sys.fillVec(attr, size, sid, this[attr].toArray());
         });
     }
@@ -151,7 +146,7 @@ function createWrapper() {
 function deleteWrapper() {
     let e = Array.from(selectedBases);
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to delete");
         return;
     }
@@ -307,7 +302,7 @@ function skipWrapper() {
     let e = Array.from(selectedBases);
     ;
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to skip");
         return;
     }

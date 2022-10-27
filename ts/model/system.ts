@@ -13,6 +13,14 @@ class System {
     strands: Strand[] = [];
     label: string;
 
+    instanceParams = new Map([
+        ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+        ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+        ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+        ['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+        ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+    ]);
+
     //the system contains all the data from a dat file in its instancing arrays
     //the system also owns the actual meshes that get sent to the scene.
     INSTANCES: number;
@@ -311,6 +319,11 @@ class PatchySystem extends System {
     scalings: Float32Array[];
     visibilities: Float32Array[];
     labels: Float32Array[];
+
+    instanceParams = new Map([
+        ['offsets', 3], ['rotations', 4], ['colors', 3],
+        ['scalings', 3], ['visibilities', 3], ['labels', 3]
+    ]);
 
     particles: PatchyParticle[];
     species: {
