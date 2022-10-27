@@ -367,9 +367,6 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
-    id;
-    doc;
-    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -396,8 +393,6 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
-    lastActive;
-    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -424,19 +419,13 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
-    doc;
-    coloringMode;
-    centeringMode;
-    inboxingMode;
-    selectionMode;
-    transformMode;
-    basepairMessage = "Locating basepairs, please be patient...";
-    vrEnabled = false;
-    backboneScale = 1;
-    nucleosideScale = 1;
-    connectorScale = 1;
-    bbconnectorScale = 1;
     constructor(doc) {
+        this.basepairMessage = "Locating basepairs, please be patient...";
+        this.vrEnabled = false;
+        this.backboneScale = 1;
+        this.nucleosideScale = 1;
+        this.connectorScale = 1;
+        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
@@ -892,24 +881,6 @@ class View {
 let view = new View(document);
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
-    title;
-    xaxislabel;
-    yaxislabel;
-    data;
-    fluxWindowOpen;
-    type;
-    temp;
-    chart; // chartjs main chart object
-    units;
-    colors;
-    colorarr; // just stores colors for the graph
-    charttype;
-    chartdata;
-    chartoptions;
-    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
-    datasetCount; // how many datasets are currently displayed on the graph
-    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
-    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';
@@ -1074,10 +1045,16 @@ class fluxGraph {
             this.loadjson(jsonReader); //loads single dataset
         };
         jsonReader.onloadend = () => {
-            if (graphDatasets.length > oldGDIndx) {
-                graphDatasets[graphDatasets.length - 1].label = filearr.pop().name; //rename
-                if (this.fluxWindowOpen)
-                    view.addGraphData(graphDatasets.length - 1); //add to flux window sidebar if its displayed
+            let num_gds = graphDatasets.length - oldGDIndx;
+            if (num_gds > 0) {
+                let filename = (filearr.pop().name).split(".")[0];
+                for (let i = 0; i < num_gds; i++) {
+                    let old_label = graphDatasets[oldGDIndx + i].label;
+                    graphDatasets[oldGDIndx + i].label = old_label + filename; //rename
+                    if (this.fluxWindowOpen)
+                        view.addGraphData(oldGDIndx + i); //add to flux window sidebar if its displayed
+                }
+                oldGDIndx = graphDatasets.length;
             }
         };
         if (files.length == 0)
@@ -1093,24 +1070,28 @@ class fluxGraph {
         const data = JSON.parse(file);
         // const data = JSON.parse(jsonfile);
         let rmsfkey = "RMSF (nm)";
+        let rmsdkey = "RMSD (nm)";
         let masskey = "simMasses";
         let coordkey = "coordinates";
         let radiikey = "radii";
-        let cgkeys = ["Bfactor", "Masses (amu)", coordkey, "temp", "force constant matrix", radiikey];
+        let cgkeys = ["Bfactor", "Bfactor (exp)", "Masses (ox units)", coordkey, "temp", "force constant matrix (ox units)", radiikey];
         if (rmsfkey in data) {
             this.loadfluxjson(data[rmsfkey]);
+        }
+        else if (rmsdkey in data) {
+            this.loadfluxjson(data[rmsdkey]);
         }
         else if (masskey in data && coordkey in data && radiikey in data) {
             this.loadnetworkjson(data[masskey], data[coordkey], data[radiikey]);
         }
-        else if (cgkeys[0] in data && cgkeys[4] in data) {
-            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]], data[cgkeys[5]]);
+        else if (cgkeys[0] in data && cgkeys[5] in data) {
+            this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]], data[cgkeys[5]], data[cgkeys[6]]);
         }
         else {
             notify('Could Not Load Json File');
         }
     }
-    loadcgjson(bfactors, masses, coords, temp, fc_matrix, radii) {
+    loadcgjson(bfactors, bfactors_exp, masses, coords, temp, fc_matrix, radii) {
         this.loadnetworkjson(masses, coords, radii);
         let monomers = systems[systems.length - 1].getMonomers();
         const net = new Network(networks.length, monomers);
@@ -1131,18 +1112,21 @@ class fluxGraph {
         selectednetwork = net.nid; // auto select network just loaded
         view.addNetwork(net.nid);
         let xdata = bfactors.map((val, ind) => ind + 1);
-        let GD = new graphData('cg_system', bfactors, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
+        let GD = new graphData('cg_analytical', bfactors, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
+        graphDatasets.push(GD);
+        GD = new graphData('cg_target', bfactors_exp, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
         graphDatasets.push(GD);
         notify("Coarse Grained System Loaded");
     }
     loadfluxjson(fluxdata) {
         let msddata = fluxdata.map(x => x ** 2); //rmsf to msf
         let xdata = msddata.map((val, ind) => ind + 1);
-        let GD = new graphData('tmp', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
+        let GD = new graphData('flux', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
         graphDatasets.push(GD);
     }
     loadnetworkjson(masses, coordinates, radii) {
         coordinates = coordinates.map(x => x.map(y => y / 8.518)); //convert to simulation units
+        radii = radii.map(x => x / 8.518); //convert to simulation units
         //find center of mass
         let com = coordinates.reduce((a, b) => { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; });
         com = com.map(x => x / masses.length);

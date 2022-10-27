@@ -3,11 +3,10 @@
  * This class is incomplete and only supports visualization right now.  Editing will not work.
  */
 class GenericSphere extends BasicElement {
-    mass;
-    radius;
     constructor(id, strand) {
         super(id, strand);
         this.mass = 1.0;
+        this.radius = 1.0;
         this.type = 'gs';
     }
     ;
@@ -55,13 +54,7 @@ class GenericSphere extends BasicElement {
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
-        let scale;
-        if (this.mass > 4) { //More than 4 particles
-            scale = 1 + this.mass / 16;
-        }
-        else {
-            scale = 1;
-        }
+        let scale = this.radius * 2;
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);
@@ -218,7 +211,6 @@ class GenericSphere extends BasicElement {
     }
 }
 class PatchyParticle extends GenericSphere {
-    system;
     constructor(id, system) {
         super(id, undefined);
         this.system = system;

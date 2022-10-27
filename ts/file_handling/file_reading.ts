@@ -1332,20 +1332,23 @@ function readMassFile(reader){
         radius: []
     }
 
-    if(parseInt(lines[0]) > 27){  // subtypes 0-27 taken by
+    if(parseInt(lines[0]) > 27){  // subtypes 0-27 taken by dna/protein subtypes
         //remove the header
         lines = lines.slice(1)
         const size = lines.length;
-        for (let i = 0; i < size-1; i++) {
+        for (let i = 0; i < size; i++) {
             let l = lines[i].split(" ")
             //extract values
             const p = parseInt(l[0]),
                 mass = parseInt(l[1]),
                 radius = parseFloat(l[2]);
 
-            key.indx.push(p);
-            key.mass.push(mass);
-            key.radius.push(radius);
+            if(p > 26){
+                key.indx.push(p-27);
+                key.mass.push(mass);
+                key.radius.push(radius);
+            }
+
         }
 
         // change all generic sphere radius and mass according to mass file
