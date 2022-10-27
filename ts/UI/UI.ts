@@ -456,6 +456,8 @@ class View {
     selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
 
+    centeringElements: BasicElement[];
+
     basepairMessage = "Locating basepairs, please be patient...";
     vrEnabled = false;
     backboneScale = 1;
@@ -591,6 +593,19 @@ class View {
             default: console.error("Unknown component name: "+name); break;
         }
         this.scaleComponent(name, scale);
+    }
+
+    public setCenteringElementsFromSelection() {
+        this.setCenteringElements([...selectedBases]);
+        clearSelection();
+    }
+
+    public setCenteringElements(centeringElements) {
+        if (centeringElements.length > 0) {
+            this.centeringElements = centeringElements;
+        } else {
+            this.centeringElements = undefined;
+        }
     }
 
     public enableVR() {

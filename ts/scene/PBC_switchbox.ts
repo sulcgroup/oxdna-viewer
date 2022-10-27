@@ -177,7 +177,13 @@ function centerElements(elems: BasicElement[], targetBox, origin?: THREE.Vector3
     }
 
     // Calculate Centre of mass, taking periodic boundary conditions into account
-    let com = calcCOM(elems, targetBox);
+    let com: THREE.Vector3
+    if (view.centeringElements !== undefined) {
+        // If defined, only calc COM of these specific elements
+        com = calcCOM(view.centeringElements, targetBox);
+    } else {
+        com = calcCOM(elems, targetBox);
+    }
 
     // Move COM to desired origin point
     translateElements(new Set(elems), origin.clone().sub(com));

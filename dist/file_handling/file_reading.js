@@ -166,8 +166,9 @@ function handleFiles(files) {
             return;
         }
         else if (ext == "js") {
-            readScriptFile(files[i]);
-            return;
+            scriptFile = files[i];
+            //readScriptFile(files[i]);
+            //return;
         }
         else if (ext === "mgl") {
             readMGL(files[i]);
@@ -231,8 +232,11 @@ function handleFiles(files) {
     if (!newSystem && !addition) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
+    // same dirty logic as the event fix 
+    // we ensure this way that the script is not handeled 2ce
+    handledScript = false;
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
+    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile);
     render();
     return;
 }
@@ -524,13 +528,25 @@ function readFilesFromURLParams() {
     }
 }
 var trajReader;
+let initFileReading = true; // dirty hack to keep the event handling in check 
+let handledScript = false;
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles) {
-    if (topFile && datFile) {
-        renderer.domElement.style.cursor = "wait";
+function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile) {
+    if (initFileReading) {
+        // TODO: apart from a drastic rewrite... 
+        // Figure out if any other places have the bug of adding N event handlers ...
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
         document.addEventListener('setupComplete', readAuxiliaryFiles);
+        document.addEventListener('setupComplete', () => {
+            if (scriptFile && !handledScript) {
+                readScriptFile(scriptFile);
+            }
+        });
+        initFileReading = false;
+    }
+    if (topFile && datFile) {
+        renderer.domElement.style.cursor = "wait";
         if (typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined") {
             //make system to store the dropped files in
             const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles, (callback) => {
@@ -582,13 +598,20 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
                 idxReader.readAsText(idxFile);
             }
         }
+        return;
     }
     else if (pdbFile) {
         readPdbFile(pdbFile);
-        document.addEventListener('setupComplete', readAuxiliaryFiles);
+        //document.addEventListener('setupComplete', readAuxiliaryFiles)
+        return;
     }
     else {
         readAuxiliaryFiles();
+    }
+    // now due to async issues this will fire whenever, 
+    // but that's better than not at all 
+    if (scriptFile && !handledScript) {
+        readScriptFile(scriptFile);
     }
     function readAuxiliaryFiles() {
         if (jsonFile) {
@@ -633,7 +656,7 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
             };
             r.readAsText(massFile);
         }
-        document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
+        //document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
     }
     render();
     return;
@@ -696,6 +719,7 @@ function readJson(system, jsonReader) {
 function readScriptFile(file) {
     let reader = new FileReader();
     reader.onload = (e) => {
+        handledScript = true;
         eval(e.target.result); // hacky, but should do the trick 
     };
     reader.readAsText(file);

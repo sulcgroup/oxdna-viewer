@@ -1,10 +1,3 @@
-const instanceParams = new Map([
-    ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-    ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
-    ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-    ['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
-    ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
-]);
 
 class InstanceCopy {
     type: string;
@@ -17,18 +10,12 @@ class InstanceCopy {
     system: System;
     color: THREE.Color;
 
-
-    cmOffsets: THREE.Vector3; bbOffsets: THREE.Vector3;
-    nsOffsets: THREE.Vector3; nsRotation: THREE.Vector4;
-    conOffsets: THREE.Vector3; conRotation: THREE.Vector4;
-    bbconOffsets: THREE.Vector3; bbconRotation: THREE.Vector4;
-    bbColors: THREE.Vector3; scales: THREE.Vector3;
-    nsScales: THREE.Vector3; conScales: THREE.Vector3;
-    bbconScales: THREE.Vector3; visibility: THREE.Vector3;
-    nsColors: THREE.Vector3; bbLabels: THREE.Vector3;
+    instanceParams: Map<string, number>;
+    isPatchy: boolean;
 
     constructor(e: BasicElement) {
-        instanceParams.forEach((size, attr)=>{
+        this.instanceParams = e.getSystem().instanceParams;
+        this.instanceParams.forEach((size, attr)=>{
             if (size == 3){
                 this[attr] = e.getInstanceParameter3(attr);
             } else { // 4
@@ -46,10 +33,11 @@ class InstanceCopy {
         }
         this.elemType = e.constructor;
         this.system = e.getSystem();
+        this.isPatchy = e.isPatchyParticle();
     }
 
     writeToSystem(sid: number, sys: System) {
-        instanceParams.forEach((size, attr)=>{
+        this.instanceParams.forEach((size, attr)=>{
             sys.fillVec(attr, size, sid, this[attr].toArray());
         });
     }
@@ -192,7 +180,7 @@ function createWrapper() {
 function deleteWrapper() {
     let e: BasicElement[] = Array.from(selectedBases);
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to delete");
         return;
     }
@@ -362,7 +350,7 @@ function findDomainWrapper(){
 function skipWrapper() {
     let e: BasicElement[] = Array.from(selectedBases);;
     clearSelection();
-    if (e == []) {
+    if (e.length === 0) {
         notify("Please select monomers to skip");
         return;
     }

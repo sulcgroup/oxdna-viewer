@@ -13,7 +13,13 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     if(forceHandler) forceHandler.redraw();
 }
 
-function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about: THREE.Vector3, updateScene: Boolean=true) {
+function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about?: THREE.Vector3, updateScene: Boolean=true) {
+    // Rotate about center of mass if nothing else is specified
+    if (about === undefined) {
+        about = new THREE.Vector3();
+        elements.forEach(e => about.add(e.getPos()));
+        about.divideScalar(elements.size);
+    }
     // For some reason, we have to rotate the orientations
     // around an axis with inverted y-value...
     let q2 = q.clone();

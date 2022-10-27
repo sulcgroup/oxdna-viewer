@@ -168,7 +168,14 @@ function centerElements(elems, targetBox, origin) {
         }
     }
     // Calculate Centre of mass, taking periodic boundary conditions into account
-    let com = calcCOM(elems, targetBox);
+    let com;
+    if (view.centeringElements !== undefined) {
+        // If defined, only calc COM of these specific elements
+        com = calcCOM(view.centeringElements, targetBox);
+    }
+    else {
+        com = calcCOM(elems, targetBox);
+    }
     // Move COM to desired origin point
     translateElements(new Set(elems), origin.clone().sub(com));
 }

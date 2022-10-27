@@ -6,6 +6,13 @@
 class System {
     constructor(id, startID) {
         this.strands = [];
+        this.instanceParams = new Map([
+            ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+            ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+            ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+            ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+            ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+        ]);
         this.checkedForBasepairs = false;
         this.id = id;
         this.globalStartId = startID;
@@ -245,6 +252,10 @@ class System {
 class PatchySystem extends System {
     constructor(id, particleFile, patchFile, loroPatchFiles, callback) {
         super(id, 0);
+        this.instanceParams = new Map([
+            ['offsets', 3], ['rotations', 4], ['colors', 3],
+            ['scalings', 3], ['visibilities', 3], ['labels', 3]
+        ]);
         this.id = id;
         this.particles = [];
         if (patchFile) {
