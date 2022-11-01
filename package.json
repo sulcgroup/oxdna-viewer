@@ -10,7 +10,7 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
-    "load": "tsc -w && reload -b"
+    "load": "tsc -w & reload -b"
   },
   "repository": {
     "type": "git",
