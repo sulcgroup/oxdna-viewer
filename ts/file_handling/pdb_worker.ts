@@ -258,7 +258,6 @@ function pdb_step1(pdbLines: string[]): pdbinfowrapper{
     let uniqchains : pdbchain[] = []; // individual chain data parsed from Atomic Info
 
     // bookkeeping
-
     let label = "pdb";
 
     // Search Just the Header for PDB code ex. (1BU4), label used for graph datasets
@@ -314,7 +313,6 @@ function pdb_step1(pdbLines: string[]): pdbinfowrapper{
                 return scHAcom.clone().sub(CApos).normalize(); // this is the a1 vector
             } else {
                 console.log("No CA coordinate found in Repeat Chain");
-                // console.log("No CA coordinate found in Repeat Chain");
                 return new THREE.Vector3(1, 0, 0);
             }
 
@@ -363,7 +361,7 @@ function pdb_step1(pdbLines: string[]): pdbinfowrapper{
 
                 let chaincheck = pdbLine.substring(21, 22).trim() != ""; // chain is legit if filled at 21st character
                 if(!chaincheck){ // fill missing chain data
-                    if(prevChainId == chainindx.toString()){
+                    if(prevChainId == chainindx.toString()){ //check if chainindx is the same. This gets iterated based off criteria below
                         na.chainID = chainindx.toString();
                         tmpchainID = na.chainID;
                     }
@@ -741,7 +739,7 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
         checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
 
         if (checker.mutantStrand) {
-            console.log("Strand BLANK contains more thank one macromolecule type, no thanks"); //lol
+            console.log("Strand " + strand.chainID + " contains more thank one macromolecule type, no thanks"); //lol
             strand.strandtype = 'bastard';
         } else {
             if (checker.proteinPresent) strand.strandtype = 'pro';
@@ -778,8 +776,10 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
         let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
         if(CA) {
             let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
-            let CABfactor = parseFloat(CA.tempFactor);
-
+            let CABfactor = 0;
+            if(!isNaN(parseFloat(CA.tempFactor))) {
+                CABfactor = parseFloat(CA.tempFactor);
+            }
             let a1 = scHAcom.clone().sub(CApos).normalize();
             if (a1.dot(bv1) < 0.99) {
                 a3 = a1.clone().cross(bv1);

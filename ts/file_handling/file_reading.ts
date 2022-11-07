@@ -1364,7 +1364,7 @@ function readMassFile(reader){
         radius: []
     }
 
-    if(parseInt(lines[0]) > 27){  // subtypes 0-27 taken by
+    if(parseInt(lines[0]) > 27){  // subtypes 0-27 taken by dna/protein subtypes
         //remove the header
         lines = lines.slice(1)
         const size = lines.length;
@@ -1375,9 +1375,12 @@ function readMassFile(reader){
                 mass = parseInt(l[1]),
                 radius = parseFloat(l[2]);
 
-            key.indx.push(p);
-            key.mass.push(mass);
-            key.radius.push(radius);
+            if(p > 26){
+                key.indx.push(p-27);
+                key.mass.push(mass);
+                key.radius.push(radius);
+            }
+
         }
 
         // change all generic sphere radius and mass according to mass file
@@ -1387,7 +1390,7 @@ function readMassFile(reader){
                 if(strand.isGS()){
                     let mon = strand.getMonomers();
                     mon.forEach(be => {
-                        sub = parseInt(gs.type.substring(2))
+                        sub = parseInt(be.type.substring(2))
                         indx = key.indx.indexOf(sub);
                         if(indx == -1){
                             console.log("Subtype " + sub.toString() + " not found in the provided mass file");

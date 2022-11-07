@@ -6,6 +6,7 @@ class GenericSphere extends BasicElement {
     constructor(id, strand) {
         super(id, strand);
         this.mass = 1.0;
+        this.radius = 1.0;
         this.type = 'gs';
     }
     ;
@@ -22,7 +23,9 @@ class GenericSphere extends BasicElement {
         this.mass = mass;
         this.radius = radius;
         let sys = this.getSystem();
-        sys.fillVec('nsScales', 3, this.sid, [this.radius, this.radius, this.radius]);
+        sys.fillVec('nsScales', 3, this.sid, [2 * this.radius, 2 * this.radius, 2 * this.radius]);
+        sys.callUpdates(['instanceScale']);
+        // sys.nucleoside.geometry["attributes"].instanceColor.needsUpdate = true;
     }
     ;
     calcPositions(p) {
@@ -51,13 +54,7 @@ class GenericSphere extends BasicElement {
         let idColor = new THREE.Color();
         idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
-        let scale;
-        if (this.mass > 4) { //More than 4 particles
-            scale = 1 + this.mass / 16;
-        }
-        else {
-            scale = 1;
-        }
+        let scale = this.radius * 2;
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, p.toArray());
         sys.fillVec('bbRotation', 4, sid, [0, 0, 0, 0]);

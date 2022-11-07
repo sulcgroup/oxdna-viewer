@@ -321,7 +321,7 @@ class Network {
         let uniqdatasets = new Set(pdbindices.map((a) => { return a[0]; }));
         // let uniqstrands = new Set<Strand>(this.particles.map(x => {return x.strand}));
         // let uniqchains = new Set<any>(pdbindices.map((a) => {return a[1]}));
-        this.addBackboneConnections();
+        this.addBackboneConnections(100);
         this.addHydrogenBonds(uniqdatasets, pdbindices);
         this.addDisulphideBonds(uniqdatasets, pdbindices);
         this.addNonpolarBonds();
@@ -510,9 +510,9 @@ class Network {
         });
     }
     ;
-    addBackboneConnections() {
+    addBackboneConnections(kb) {
         // adds every particles n3 connection if n3 is in the particles array
-        let covalentk = 100;
+        let covalentk = kb;
         for (let i = 0; i < this.particles.length; i++) {
             let p = this.particles[i];
             if (p.n3 != null) {

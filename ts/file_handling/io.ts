@@ -26,14 +26,14 @@ class TopReader extends FileReader{
             this.configurationLength = lines.length;
 
             let l0 = lines[0].split(" "); 
-            let strID = parseInt(l0[0]); //proteins are negative indexed
+            let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
             this.lastStrand = strID;
             let currentStrand: Strand = this.system.createStrandTyped(strID, l0[1]);
             this.system.addStrand(currentStrand);
             
             // create empty list of elements with length equal to the topology
             // Note: this is implemented such that we have the elements for the DAT reader 
-            let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid;
+            let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
             for (let j = 0; j < lines.length; j++) {
                 this.elems.set(nucCount+j, nuc);
             }

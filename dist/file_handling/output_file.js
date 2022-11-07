@@ -125,7 +125,8 @@ function getNewIds() {
     let gsSubtypes = {
         subtypelist: [],
         masses: [],
-        subtype: 26 // default assignment (DNA +Protein use subtypes 0->26) Only for DNANM and CGDNA particles
+        radii: [],
+        subtype: -1
     };
     gstrands.forEach(strand => {
         newStrandIds.set(strand, sidCounter--);
@@ -142,6 +143,8 @@ function getNewIds() {
                 gsSubtypes.subtype++;
                 gsSubtypes.subtypelist.push(gsSubtypes.subtype);
                 gsSubtypes.masses.push(f.mass); //masses will be indexed by the subtype ex. masses[2] Gathers all unique mass values
+                gsSubtypes.radii.push(f.radius);
+                // gsSubtypes.radii.push((3*f.mass/(2*4*Math.PI))**(1/3)) // assuming density of 2, r = cube root( (3m/(4 D Pi)) )
             }
             totGS++;
         });
@@ -273,7 +276,11 @@ function makeParFile(name, altNumbering, counts) {
     // return {file_name: name+".par", file: par.join('\n') };
 }
 function makeMassFile(name, altNumbering, counts, gsSubtypes) {
-    let text = gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString()).join('\n');
+    let text = (gsSubtypes.subtype + 27).toString() + "\n";
+    for (let i = 0; i < 27; i++) {
+        text += i.toString() + " 1 1\n"; // Mass and radius defaults for DNA/ AA, Radius values are unused by oxDNA
+    }
+    text += gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString() + " " + gsSubtypes.radii[idx].toString()).join('\n');
     makeTextFile(name, text);
 }
 function makeForceFile() {
