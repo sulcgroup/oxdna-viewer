@@ -37,6 +37,7 @@ function distanceSetup() {
 function listDistances() {
     //call all updates and spit out the distance HTML
     distanceHandler.update();
+    // console.log(distanceHandler.distances[0].dist)
     let distanceDOM = document.getElementById("distances");
     distanceDOM.innerText = "";
     distanceHandler.getHTML().forEach(d => distanceDOM.appendChild(d));
@@ -53,13 +54,16 @@ function measureDistanceFromSelection() {
     clearSelection();
 }
 function measureDistanceForces() {
-    let s = Array.from(selectedBases);
-    if (s.length != 2) {
+    let s = Array.from(selectedBases); // s will contain the base selected in UI
+    if (s.length != 2) { // Make sure only two of them are selected
         notify("please use 2 elements for distance selection");
         return;
     }
-    clearSelection();
-    console.log(s[0], s[1]);
+    // clearSelection();
+    distanceHandler.append(s[0], s[1]); // Report selection to distanceHandler
+    distanceHandler.update(); // Calculate the distance.
+    document.getElementById("r0").value = distanceHandler.distances[0].dist; //Ids should be unique so just grab them and replace with new value.
+    // The above is js format seems to be working in ts.
 }
 class DistanceObservable {
     constructor(e1, e2, parent) {
