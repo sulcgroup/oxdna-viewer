@@ -70,6 +70,16 @@ function measureDistanceFromSelection(){
     clearSelection();
 }
 
+function measureDistanceForces(){
+    let s = Array.from(selectedBases);
+    if(s.length!=2){
+        notify("please use 2 elements for distance selection");
+        return;
+    }
+    clearSelection();
+    console.log(s[0],s[1]);
+}
+
 class DistanceObservable {
     e1:BasicElement;
     e2:BasicElement;
@@ -95,6 +105,7 @@ class DistanceObservable {
     
     compute(){
 
+        
         if(this.label) {
             const nm_dist = 0.8518 * this.dist;
             this.label.innerText = `${this.e1.id}\t-\t${this.e2.id}\t | \t${this.round_num(this.dist,3)}\t SU | \t${this.round_num(nm_dist,3)} nm`;

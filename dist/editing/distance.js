@@ -52,6 +52,15 @@ function measureDistanceFromSelection() {
     distanceHandler.append(s[0], s[1]);
     clearSelection();
 }
+function measureDistanceForces() {
+    let s = Array.from(selectedBases);
+    if (s.length != 2) {
+        notify("please use 2 elements for distance selection");
+        return;
+    }
+    clearSelection();
+    console.log(s[0], s[1]);
+}
 class DistanceObservable {
     constructor(e1, e2, parent) {
         this.e1 = e1;
