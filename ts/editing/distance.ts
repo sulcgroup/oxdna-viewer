@@ -19,6 +19,10 @@ class DistanceHandler{
         );
     }
 
+    overwrite(e1:BasicElement,e2:BasicElement){
+        this.distances[0] = new DistanceObservable(e1,e2,this);
+    }
+
     delete(caller:DistanceObservable){
         const index = this.distances.indexOf(caller);
         if (index > -1) {
@@ -78,7 +82,7 @@ function measureDistanceForces(){   // Subho: Obtain mean distance from selectio
         return;
     }
     // clearSelection();
-    distanceHandler.append(s[0],s[1]);  // Report selection to distanceHandler
+    distanceHandler.overwrite(s[0],s[1]);  // Report selection to distanceHandler
     distanceHandler.update(); // Calculate the distance.
     document.getElementById("r0").value = distanceHandler.distances[0].dist;    //Ids should be unique so just grab them and replace with new value.
     // The above is js format seems to be working in ts.

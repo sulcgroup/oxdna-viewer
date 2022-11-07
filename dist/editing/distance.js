@@ -12,6 +12,9 @@ class DistanceHandler {
     append(e1, e2) {
         this.distances.push(new DistanceObservable(e1, e2, this));
     }
+    overwrite(e1, e2) {
+        this.distances[0] = new DistanceObservable(e1, e2, this);
+    }
     delete(caller) {
         const index = this.distances.indexOf(caller);
         if (index > -1) {
@@ -60,7 +63,7 @@ function measureDistanceForces() {
         return;
     }
     // clearSelection();
-    distanceHandler.append(s[0], s[1]); // Report selection to distanceHandler
+    distanceHandler.overwrite(s[0], s[1]); // Report selection to distanceHandler
     distanceHandler.update(); // Calculate the distance.
     document.getElementById("r0").value = distanceHandler.distances[0].dist; //Ids should be unique so just grab them and replace with new value.
     // The above is js format seems to be working in ts.
