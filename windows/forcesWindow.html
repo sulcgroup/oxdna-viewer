@@ -15,6 +15,15 @@
 title="Delete all forces selected below">Delete selected
 </button>
 
+<div style="margin-top: 3%;">
+<label>Relaxed distance in SU</label>
+<input type="number" id="r0" value="1.2">
+
+<button onclick="measureDistanceForces()" class="button outline" title="Setting relaxed distance from selection">
+    Get distance from selection
+</button>
+</div>
+
 <p>
     Current forces:
     <div id="forces">
