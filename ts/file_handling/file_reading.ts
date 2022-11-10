@@ -563,7 +563,7 @@ function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     types.forEach(t =>{
         if (url.searchParams.get(t)) {
-            paths.push(url.searchParams.get(t))
+            paths.push(...url.searchParams.getAll(t))
         }
     })
     if (paths.length > 0) {
