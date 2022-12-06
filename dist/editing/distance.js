@@ -65,7 +65,7 @@ function measureDistanceForces() {
     // clearSelection();
     distanceHandler.overwrite(s[0], s[1]); // Report selection to distanceHandler
     distanceHandler.update(); // Calculate the distance.
-    document.getElementById("r0").value = distanceHandler.distances[0].dist; //Ids should be unique so just grab them and replace with new value.
+    document.getElementById("r0").value = distanceHandler.distances[0].dist.toString(); //Ids should be unique so just grab them and replace with new value.
     // The above is js format seems to be working in ts.
 }
 class DistanceObservable {
