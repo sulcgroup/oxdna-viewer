@@ -483,7 +483,7 @@ module edit{
                     let strand: Strand;
                     if (e.isAminoAcid()) {
                         strand = sys.addNewPeptideStrand();
-                    } else if (e.type == 'gs') {
+                    } else if (e.isGS()) {
                         strand = sys.addNewGenericSphereStrand();
                     } else {
                         strand = sys.addNewNucleicAcidStrand();

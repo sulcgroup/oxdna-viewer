@@ -1013,6 +1013,7 @@ function readParFile(system, reader) {
     net.initInstances(net.reducedEdges.total);
     net.initEdges();
     net.fillConnections(); // fills connection array for
+    net.networktype = "par";
     net.prepVis(); // Creates Mesh for visualization
     networks.push(net); // Any network added here shows up in UI network selector
     selectednetwork = net.nid; // auto select network just loaded
