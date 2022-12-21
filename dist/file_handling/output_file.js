@@ -136,15 +136,15 @@ function getNewIds() {
             newElementIds.set(e, idCounter++);
             // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle1
             // resulting subtypes start from 0
-            if (f.mass in gsSubtypes.masses) {
-                gsSubtypes.subtypelist.push(gsSubtypes.subtype);
+            let ind = gsSubtypes.masses.indexOf(f.mass);
+            if (ind > -1) {
+                gsSubtypes.subtypelist.push(gsSubtypes.subtypelist[ind]);
             }
             else {
                 gsSubtypes.subtype++;
                 gsSubtypes.subtypelist.push(gsSubtypes.subtype);
                 gsSubtypes.masses.push(f.mass); //masses will be indexed by the subtype ex. masses[2] Gathers all unique mass values
                 gsSubtypes.radii.push(f.radius);
-                // gsSubtypes.radii.push((3*f.mass/(2*4*Math.PI))**(1/3)) // assuming density of 2, r = cube root( (3m/(4 D Pi)) )
             }
             totGS++;
         });
@@ -203,7 +203,7 @@ function makeTopFile(name) {
             }
         }
         if (e.isGS()) {
-            top.push([newStrandIds.get(e.strand), e.type + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+            top.push([newStrandIds.get(e.strand), "gs" + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
         }
         else {
             top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));

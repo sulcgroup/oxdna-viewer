@@ -153,6 +153,22 @@ class Network {
         api.selectElements(this.particles, false);
     }
     ;
+    copyNetwork(targetNid) {
+        // copies this network info to network specified by targetNid
+        let newNet = networks[targetNid];
+        newNet.networktype = this.networktype;
+        newNet.cutoff = this.cutoff;
+        newNet.reducedEdges = this.reducedEdges;
+        newNet.networktype = this.networktype;
+        if (newNet.reducedEdges.total != 0) {
+            newNet.initInstances(newNet.reducedEdges.total);
+            newNet.fillConnections();
+            newNet.initEdges();
+            newNet.prepVis();
+            newNet.sendtoUI();
+        }
+    }
+    ;
     sendtoUI() {
         this.fittingReady = true;
         let name = "Network " + (this.nid + 1).toString();

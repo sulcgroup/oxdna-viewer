@@ -408,6 +408,7 @@ function createNetworkWrapper() {
     editHistory.do(new RevertableNetworkCreation(bases, nid));
     view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
 }
+
 function deleteNetworkWrapper(nid: number) {
     let net = networks[nid];
     if(net.onscreen){
@@ -418,7 +419,13 @@ function deleteNetworkWrapper(nid: number) {
     } catch (e) {}
 
     networks.splice(nid, 1);
-    if(selectednetwork == nid) selectednetwork = -1;
+    if(selectednetwork == nid) {
+        if(networks.length >= 1){
+            selectednetwork = networks[networks.length-1].nid;
+        } else {
+            selectednetwork = -1;
+        }
+    }
     view.removeNetwork(nid);
 }
 
@@ -472,6 +479,32 @@ function selectNetworkWrapper(nid: number) {
     }
     selectednetwork = nid; // global declared in main
     net.selectNetwork();
+}
+
+function copyNetworkWrapper(nid: number) {
+    let net;
+    try{
+        net = networks[nid];
+    } catch (e) {
+        notify("Network " + (nid+1).toString() + " Does Not Exist");
+        return;
+    }
+    if (selectedBases.size == 0) { // Need Elements
+        notify("Please select Bases");
+        return;
+    }
+
+    let elems = Array.from(selectedBases);
+    if (selectedBases.size != net.particles.length){
+        notify("Source Network Elements and Target Elements do not match in Size");
+        return;
+    }
+
+    let newNid = networks.length;
+    editHistory.do(new RevertableNetworkCreation(elems, newNid));
+    net.copyNetwork(newNid);
+    view.addNetwork(newNid) // don't know if it's a good idea to call this here or not?
+    clearSelection();
 }
 
 function discretizeMassWrapper(option: number){
