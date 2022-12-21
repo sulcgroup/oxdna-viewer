@@ -3,6 +3,8 @@
  * This class is incomplete and only supports visualization right now.  Editing will not work.
  */
 class GenericSphere extends BasicElement {
+    mass;
+    radius;
     constructor(id, strand) {
         super(id, strand);
         this.mass = 1.0;
@@ -211,6 +213,7 @@ class GenericSphere extends BasicElement {
     }
 }
 class PatchyParticle extends GenericSphere {
+    system;
     constructor(id, system) {
         super(id, undefined);
         this.system = system;

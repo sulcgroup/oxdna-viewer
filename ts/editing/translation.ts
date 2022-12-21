@@ -13,6 +13,14 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     if(forceHandler) forceHandler.redraw();
 }
 
+function getRandomRotation(): THREE.Quaternion {
+    let u = Math.random()
+    let v = Math.random()
+    let w = Math.random()
+    let q = new THREE.Quaternion(Math.sqrt(1-u)*Math.sin(2*Math.PI*v), Math.sqrt(1-u)*Math.cos(2*Math.PI*v), Math.sqrt(u)*Math.sin(2*Math.PI*w), Math.sqrt(u)*Math.cos(2*Math.PI*w))
+    return q
+}
+
 function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quaternion, about?: THREE.Vector3, updateScene: Boolean=true) {
     // Rotate about center of mass if nothing else is specified
     if (about === undefined) {

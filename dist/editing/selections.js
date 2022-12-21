@@ -1,9 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../main.ts" />
 class SelectionListHandler {
-    constructor() {
-        this.selectionList = new Array();
-    }
+    selectionList = new Array();
     delete(caller) {
         const index = this.selectionList.indexOf(caller);
         if (index > -1) {
@@ -34,9 +32,16 @@ class SelectionListHandler {
     }
 }
 class ViewSelection {
+    parent;
+    name;
+    selectedBases;
+    selected = false;
+    html;
+    checkbox;
+    label;
+    selNameInput;
+    checked = false;
     constructor(name, selectedBases, parent) {
-        this.selected = false;
-        this.checked = false;
         this.parent = parent;
         this.name = name;
         this.selectedBases = selectedBases;

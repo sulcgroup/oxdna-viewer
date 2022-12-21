@@ -12,6 +12,13 @@ function rotateElements(elements, axis, angle, about) {
     if (forceHandler)
         forceHandler.redraw();
 }
+function getRandomRotation() {
+    let u = Math.random();
+    let v = Math.random();
+    let w = Math.random();
+    let q = new THREE.Quaternion(Math.sqrt(1 - u) * Math.sin(2 * Math.PI * v), Math.sqrt(1 - u) * Math.cos(2 * Math.PI * v), Math.sqrt(u) * Math.sin(2 * Math.PI * w), Math.sqrt(u) * Math.cos(2 * Math.PI * w));
+    return q;
+}
 function rotateElementsByQuaternion(elements, q, about, updateScene = true) {
     // Rotate about center of mass if nothing else is specified
     if (about === undefined) {
