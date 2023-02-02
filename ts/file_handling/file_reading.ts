@@ -207,6 +207,10 @@ function handleFiles(files: FileList) {
             readXYZfile(files[i]);
             return;
         }
+        else if (ext === "csv"){
+            handleCSV(files[i]);
+            return;
+        }
         // everything else is read in the context of other files so we need to check what we have.
         else if (
             ext === "patchspec" ||
@@ -258,6 +262,45 @@ function handleFiles(files: FileList) {
 
     render();
     return
+}
+
+const handleCSV = (file:File)=>{
+    // highlight all the sequences complying with the cadnano file
+    // or a line by line sequence file 
+    const search_func = (system,seq) => {
+        system.strands.forEach(strand => {
+            strand.search(seq).forEach(match => {
+                api.selectElements(match, true);
+            });
+        });
+    };
+
+    const cadnano_line_to_seq = (line)=> line.split(",")[2].replaceAll("?","N").toUpperCase().trim();
+    const reg_line = (line)=> line.replaceAll("?","N").toUpperCase().trim();
+
+    //read in a cadnano csv sequence file and highlight them in the scene
+    file.text().then(txt=>{
+        let lines = txt.split("\n");
+        let len = lines.length;
+        let start_id = 0;
+
+        //we handle bothe cadnano and just regular lists
+        let processor = reg_line;
+        if (lines[0].startsWith("Start,End,Sequence,Length,Color")){
+            start_id=1;
+            processor= cadnano_line_to_seq;
+        }
+        for(let i=start_id; i<len;i++){
+            if(lines[i]){
+            let seq = processor(lines[i]);
+            console.log(seq)
+            systems.forEach(sys => search_func(sys,seq));
+            tmpSystems.forEach(sys => search_func(sys,seq));
+            }
+        }
+        render();
+            
+    });
 }
 
 const cylinderMesh = function (pointX, pointY, r, material) {
