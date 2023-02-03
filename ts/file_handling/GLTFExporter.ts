@@ -155,6 +155,9 @@ function exportGLTF (
 				});
 			}
 		});
+		// save all the normal meshes objects
+		// dirty hack, TODO: FIX AT SOME POINT  
+		scene.children.slice(7).forEach(e=>l.push(e));
 		return l;
 	} else {
 		// Export the whole system hierarchy
