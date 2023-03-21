@@ -340,7 +340,7 @@ function readMGL(file:File){
         box.set(x,y,z);
         //lines = lines.slice(0,1);
         lines.forEach(str =>{
-            if (str){
+            if (str && !str.includes("I")){
                 let line = str.split(" ");
                 // setup the size of the particles
                 const MGL_D =  parseFloat(line[4]) * MGL_SCALE;

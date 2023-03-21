@@ -311,7 +311,7 @@ function readMGL(file) {
         box.set(x, y, z);
         //lines = lines.slice(0,1);
         lines.forEach(str => {
-            if (str) {
+            if (str && !str.includes("I")) {
                 let line = str.split(" ");
                 // setup the size of the particles
                 const MGL_D = parseFloat(line[4]) * MGL_SCALE;
@@ -1076,24 +1076,17 @@ function addSystemToScene(system) {
                 s.species[i].patches.forEach(patch => {
                     // Need to invert y and z axis for mysterious reasons
                     const pos = patch.position.clone();
-                    let a1, a2;
+                    pos.y *= -1;
+                    pos.z *= -1;
+                    let a1 = patch.a1.clone();
+                    a1.y *= -1;
+                    a1.z *= -1;
+                    let a2 = patch.a2.clone();
+                    a2.y *= -1;
+                    a2.z *= -1;
                     let aw = patchAlignWidth;
-                    if (('a1' in patch) && ('a2' in patch)){
-                        pos.y *= -1;
-                        pos.z *= -1;
-                        a1 = patch.a1.clone();
-                        a1.y *= -1;
-                        a1.z *= -1;
-                        a2 = patch.a2.clone();
-                        a2.y *= -1;
-                        a2.z *= -1;
-                    }
-                    else {
-                        a1 = new THREE.Vector3();
-                        a2 = new THREE.Vector3();
-                    }
                     // Too many patches.txt files fail to set a1 and a2 correctly.
-                    if (!('a1' in patch) || !('a2' in patch) || Math.abs(a1.dot(a2)) > 1e-5) {
+                    if (Math.abs(a1.dot(a2)) > 1e-5) {
                         console.warn(`The a1 and a2 vectors are incorrectly defined in species ${i}. Using patch position instead`);
                         a1 = pos.clone();
                         a1.normalize();
