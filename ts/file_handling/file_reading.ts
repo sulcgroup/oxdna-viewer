@@ -340,7 +340,7 @@ function readMGL(file:File){
         box.set(x,y,z);
         //lines = lines.slice(0,1);
         lines.forEach(str =>{
-            if (str){
+            if (str && !str.includes("I")){
                 let line = str.split(" ");
                 // setup the size of the particles
                 const MGL_D =  parseFloat(line[4]) * MGL_SCALE;
@@ -606,7 +606,11 @@ function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     types.forEach(t =>{
         if (url.searchParams.get(t)) {
-            paths.push(...url.searchParams.getAll(t))
+            if (t == 'pdb') {
+                paths.push(...url.searchParams.getAll(t).map(pdbID=>`https://files.rcsb.org/download/${pdbID}.pdb`))
+            } else {
+                paths.push(...url.searchParams.getAll(t))
+            }
         }
     })
     if (paths.length > 0) {
