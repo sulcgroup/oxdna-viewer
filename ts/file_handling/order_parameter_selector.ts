@@ -75,6 +75,7 @@ let loadHyperSelector = ()=>{
                 xAxes:[{display:true, scaleLabel:{display:true, labelString:'Time'},gridLines:{ drawOnChartArea:false}}],
                 yAxes:[{display:true, gridLines:{drawOnChartArea:false}}],
             },
+            spanGaps: true, // handle null in the chart data
             annotation: {
                 events: ["click"],
                 annotations: [
@@ -172,7 +173,7 @@ let handleParameterDrop = (files)=>{
             let data = [];
 
             trajReader.lookupReader.position_lookup.forEach((p,i) =>{
-                data.push(parameters[parameter_name][i]);
+                data.push({x:i, y:parameters[parameter_name][i]});
             });
             
             if (myChart.data.datasets.length == 0 ){

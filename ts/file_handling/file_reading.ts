@@ -718,6 +718,9 @@ function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, 
     }
 
     function readAuxiliaryFiles() {
+        // This is super haunted
+        // up to this point, jsonFile was either undeclared or declared and undefined
+        // Suddenly, here, it's defined as the existing old file.
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {

@@ -2,6 +2,7 @@
 .vscode/
 .cache/
 .ts/.vscode
+.ts/.DS_Store
 //node_modules/
 # Logs
 logs
