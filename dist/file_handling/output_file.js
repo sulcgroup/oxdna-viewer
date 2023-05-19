@@ -6,7 +6,8 @@ function makeOutputFiles() {
         let { a, b, c, file_name, file, gs } = makeTopFile(name);
         reorganized = a;
         counts = c;
-        makeTextFile(file_name, file);
+        // add timeout because if you try to download multiple files at the same time, the browser often misses the second one.
+        setTimeout(() => makeTextFile(file_name, file), 10);
         if (gs.masses.length > 0) { // check for generic sphere presence
             makeMassFile(name + "_m.txt", reorganized, counts, gs);
         }
@@ -22,12 +23,14 @@ function makeOutputFiles() {
     }
     if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
-        setTimeout(() => makeTextFile(file_name, file), 40);
+        setTimeout(() => makeTextFile(file_name, file), 30);
     }
     let force_download = view.getInputBool("forceDownload");
     if (force_download) {
         if (forces.length > 0) {
-            makeForceFile();
+            let file_name = name.concat('_force.txt');
+            let contents = forcesToString();
+            setTimeout(() => makeTextFile(file_name, contents), 40);
         }
         else {
             notify('No forces to export. Use the forces editor in the "Dynamics" tab to add new forces.', "warning");
@@ -339,15 +342,14 @@ function makeOxViewJsonFile(name, space) {
         selections: selectionListHandler.serialize()
     }, null, space));
 }
-//let textFile: string;
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });
-    var elem = window.document.createElement('a'); //
-    elem.href = window.URL.createObjectURL(blob); //
-    elem.download = filename; //
-    document.body.appendChild(elem); //
-    elem.click(); //
-    document.body.removeChild(elem); //
+    var elem = window.document.createElement('a');
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
     //window.parent.FakeDataDownload(blob, filename);
 }
 ;
