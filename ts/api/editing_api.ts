@@ -825,6 +825,9 @@ module edit{
             isRNA = true;
             RNA_MODE = true;
         }
+        else {
+            RNA_MODE = false;
+        }
 
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
@@ -851,8 +854,7 @@ module edit{
         }
 
         // Create a new strand
-        let strand = realSys.createStrand(realSys.strands.length);
-        realSys.addStrand(strand);
+       let strand = realSys.addNewNucleicAcidStrand()
 
         // Initialise proper nucleotide
         let e = isRNA ? new RNANucleotide(undefined, strand):new DNANucleotide(undefined, strand);

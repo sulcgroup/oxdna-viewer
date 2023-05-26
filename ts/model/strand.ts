@@ -19,6 +19,7 @@ abstract class Strand {
     constructor(id: number, system: System) {
         this.id = id;
         this.system = system;
+        this.kwdata = {}
     };
 
     setFrom(e: BasicElement) {
@@ -192,17 +193,21 @@ class NucleicAcidStrand extends Strand {
     };
 
     createBasicElement(id?: number) {
-        if (RNA_MODE)
+        if (this.kwdata['type'] == 'RNA')
             return new RNANucleotide(id, this);
         else
             return new DNANucleotide(id, this);
     };
 
     createBasicElementTyped(type: string, id?: number) {
-        if (type == 'rna')
+        if (type.toLowerCase() == 'rna')
             return new RNANucleotide(id, this);
-        else if (type == 'dna')
+        else if (type.toLowerCase() == 'dna')
             return new DNANucleotide(id, this);
+        else{
+            notify(type+" is not a recognized nucleic acid type, oxView only supports 'dna' or 'rna' at the moment.")
+            return
+        }
     };
 
     /**

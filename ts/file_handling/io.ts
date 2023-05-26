@@ -22,12 +22,7 @@ class TopReader extends FileReader{
         this.onload = () => {
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
-            if (lines[0].indexOf('5->3') > 0) {
-                this.read_new_top_file(lines)
-            }
-            else {
-                this.read_old_top_file(lines)
-            }
+            (lines[0].indexOf('5->3') > 0)? this.read_new_top_file(lines) :this.read_old_top_file(lines);
             // fire dat reader
             this.callback();
         };
@@ -71,6 +66,14 @@ class TopReader extends FileReader{
                 
             if (strID != this.lastStrand) { //if new strand id, make new strand                        
                 currentStrand = this.system.createStrandTyped(strID, l[1]);
+
+                // I hate this but kwdata['type'] needs to be set for file output
+                if (currentStrand.isPeptide()) { currentStrand.kwdata['type'] = 'peptide'; }
+                else if (currentStrand.isGS()) { currentStrand.kwdata['type'] = 'generic'; }
+                else if (currentStrand.isNucleicAcid()) { 
+                    if (RNA_MODE) {currentStrand.kwdata['type'] = 'RNA'; }
+                    else {currentStrand.kwdata['type'] = 'DNA'}
+                }
                 this.system.addStrand(currentStrand);
                 this.nucLocalID = 0;
             };

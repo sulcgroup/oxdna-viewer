@@ -152,26 +152,20 @@ class System {
             id--;
         return id;
     }
-    createStrand(strID) {
-        if (strID < 0)
-            return new Peptide(strID, this);
-        else
-            return new NucleicAcidStrand(strID, this);
-    }
-    ;
     createStrandTyped(strID, base) {
         if (strID < 0)
             if (base.includes('gs'))
-                return new Generic(strID, this);
+                return this.addNewGenericSphereStrand();
             else
-                return new Peptide(strID, this);
+                return this.addNewPeptideStrand();
         else
-            return new NucleicAcidStrand(strID, this);
+            return this.addNewNucleicAcidStrand();
     }
     ;
     addNewNucleicAcidStrand() {
         let id = this.getNextNucleicAcidStrandID();
         let strand = new NucleicAcidStrand(id, this);
+        strand.kwdata['type'] = RNA_MODE ? 'RNA' : 'DNA';
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -179,6 +173,7 @@ class System {
     addNewPeptideStrand() {
         let id = this.getNextPeptideStrandID();
         let strand = new Peptide(id, this);
+        strand.kwdata['type'] = 'peptide';
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -186,6 +181,7 @@ class System {
     addNewGenericSphereStrand() {
         let id = this.getNextGenericSphereStrandID();
         let strand = new Generic(id, this);
+        strand.kwdata['type'] = 'generic';
         strand.system = this;
         this.strands.push(strand);
         return strand;
