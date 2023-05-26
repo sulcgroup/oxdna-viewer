@@ -1,5 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="./order_parameter_selector.ts" />
+
 class TopReader extends FileReader{
     topFile: File = null;
     system: System;
@@ -7,7 +8,7 @@ class TopReader extends FileReader{
 
     sidCounter = 0;
     nucLocalID: number = 0;
-    lastStrand: number; //strands are 1-indexed in oxDNA .top files
+    lastStrand: number; //strands are 1-indexed in old oxDNA .top files
     n3: number;
     callback : Function;
     configurationLength : number;
@@ -19,95 +20,194 @@ class TopReader extends FileReader{
         this.elems = elems;
         this.callback = callback;
         this.onload = () => {
-            let nucCount = this.elems.getNextId();
             let file = this.result as string
             let lines = file.split(/[\n]+/g);
-            lines = lines.slice(1); // discard the header
-            this.configurationLength = lines.length;
-
-            let l0 = lines[0].split(" "); 
-            let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
-            this.lastStrand = strID;
-            let currentStrand: Strand = this.system.createStrandTyped(strID, l0[1]);
-            this.system.addStrand(currentStrand);
-            
-            // create empty list of elements with length equal to the topology
-            // Note: this is implemented such that we have the elements for the DAT reader 
-            let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
-            for (let j = 0; j < lines.length; j++) {
-                this.elems.set(nucCount+j, nuc);
+            if (lines[0].indexOf('5->3') > 0) {
+                this.read_new_top_file(lines)
             }
-
-            // Create new cluster for loaded structure:
-            let cluster = ++clusterCounter;
-            
-            lines.forEach((line, i) => {
-                if (line == "") {
-                    // Delete last element
-                    this.configurationLength -= 1;
-                    this.elems.delete(this.elems.getNextId()-1);
-                    return;
-                }
-                //split the file and read each column, format is: "strID base n3 n5"
-                let l = line.split(" "); 
-                strID = parseInt(l[0]);
-                    
-                if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                    currentStrand = this.system.createStrandTyped(strID, l[1]);
-                    this.system.addStrand(currentStrand);
-                    this.nucLocalID = 0;
-                };
-                    
-                //create a new element
-                if (!this.elems.get(nucCount + i))
-                    this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
-                let nuc = this.elems.get(nucCount + i);
-
-                // Set systemID
-                nuc.sid = this.sidCounter++;
-
-                // Set cluster id;
-                nuc.clusterId = cluster;
-
-                //create neighbor 3 element if it doesn't exist
-                let n3 = parseInt(l[2]);
-                if (n3 != -1) {
-                    if (!this.elems.get(nucCount + n3)) {
-                        this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
-                    }
-                    nuc.n3 = this.elems.get(nucCount + n3);
-                }
-                else {
-                    nuc.n3 = null;
-                    currentStrand.end3 = nuc;
-                }
-
-                //create neighbor 5 element if it doesn't exist
-                let n5 = parseInt(l[3]);
-                if (n5 != -1) {
-                    if (!this.elems.get(nucCount + n5)) {
-                        this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
-                    }
-                    nuc.n5 = this.elems.get(nucCount + n5);
-                }
-                else {
-                    nuc.n5 = null;
-                    currentStrand.end5 = nuc;
-                }
-
-                let base = l[1]; // get base id
-                nuc.type = base;
-                //if we meet a U, we have an RNA (its dumb, but its all we got)
-                //this has an unfortunate side effect that the first few nucleotides in an RNA strand are drawn as DNA (before the first U)
-                if (base === "U") RNA_MODE = true;
-                    
-                this.nucLocalID += 1;
-                this.lastStrand = strID;
-            });
-            nucCount = this.elems.getNextId();
-            // usually the place where the DatReader gets fired
+            else {
+                this.read_old_top_file(lines)
+            }
+            // fire dat reader
             this.callback();
         };
+    }
+
+    read_old_top_file(lines) {
+        let nucCount = this.elems.getNextId();
+        
+        lines = lines.slice(1); // discard the header
+        this.configurationLength = lines.length;
+    
+        let l0 = lines[0].split(" "); 
+        let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
+        this.lastStrand = strID;
+        let currentStrand: Strand = this.system.createStrandTyped(strID, l0[1]);
+        this.system.addStrand(currentStrand);
+        
+        // create empty list of elements with length equal to the topology
+        // Note: this is implemented such that we have the elements for the DAT reader 
+        let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
+        for (let j = 0; j < lines.length; j++) {
+            this.elems.set(nucCount+j, nuc);
+            if (lines.includes("U")){
+                RNA_MODE = true;
+            }
+        }
+    
+        // Create new cluster for loaded structure:
+        let cluster = ++clusterCounter;
+        
+        lines.forEach((line, i) => {
+            if (line == "") {
+                // Delete last element
+                this.configurationLength -= 1;
+                this.elems.delete(this.elems.getNextId()-1);
+                return;
+            }
+            //split the file and read each column, format is: "strID base n3 n5"
+            let l = line.split(" "); 
+            strID = parseInt(l[0]);
+                
+            if (strID != this.lastStrand) { //if new strand id, make new strand                        
+                currentStrand = this.system.createStrandTyped(strID, l[1]);
+                this.system.addStrand(currentStrand);
+                this.nucLocalID = 0;
+            };
+                
+            // create a new element
+            if (!this.elems.get(nucCount + i))
+                this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
+            let nuc = this.elems.get(nucCount + i);
+    
+            // Set systemID
+            nuc.sid = this.sidCounter++;
+    
+            // Set cluster id;
+            nuc.clusterId = cluster;
+    
+            //create neighbor 3 element if it doesn't exist
+            let n3 = parseInt(l[2]);
+            if (n3 != -1) {
+                if (!this.elems.get(nucCount + n3)) {
+                    this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
+                }
+                nuc.n3 = this.elems.get(nucCount + n3);
+            }
+            else {
+                nuc.n3 = null;
+                currentStrand.end3 = nuc;
+            }
+    
+            //create neighbor 5 element if it doesn't exist
+            let n5 = parseInt(l[3]);
+            if (n5 != -1) {
+                if (!this.elems.get(nucCount + n5)) {
+                    this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
+                }
+                nuc.n5 = this.elems.get(nucCount + n5);
+            }
+            else {
+                nuc.n5 = null;
+                currentStrand.end5 = nuc;
+            }
+    
+            let base = l[1]; // get base id
+            nuc.type = base;
+                
+            this.nucLocalID += 1;
+            this.lastStrand = strID;
+        });
+        nucCount = this.elems.getNextId();
+    }
+
+    read_new_top_file(lines) {
+        // TODO: This does not work with (#) formatted base types
+        // TODO: What to do with keywords other than type and circular?
+        let nucCount = this.elems.getNextId();
+        let cluster = ++clusterCounter;
+        let l0 = lines[0].split(" ");
+        let nMonomers = l0[0];
+        let nStrands = l0[0];
+        lines = lines.slice(1);
+
+        lines.forEach((line, i) => {
+            if (!line) { return }// skip empty lines
+            let l:string[] = line.split(' ');
+            let seq:string = l[0];
+            let kwdata:object = {
+                id: i,
+                type : "DNA",
+                circular : false
+            };
+
+            l.slice(1).forEach(kv => {
+                let split = kv.split('=');
+                // Turn values representing bools into JS bools
+                if (split[1].toLowerCase() === 'true' || split[1].toLowerCase() === 'false') {
+                    kwdata[split[0]] = (split[1].toLocaleLowerCase() === 'true');
+                }
+                // Keep everything else as strings
+                else{
+                    kwdata[split[0]] = split[1];
+                }
+            })
+
+            // create strand
+            let strand_type = kwdata["type"]
+            let new_strand: Strand
+
+            if (strand_type == "DNA" || strand_type == "RNA") {
+                new_strand = this.system.addNewNucleicAcidStrand();
+            }
+            else if (strand_type == "peptide") {
+                new_strand = this.system.addNewPeptideStrand();
+            }
+            else if (strand_type == "generic") {
+                new_strand = this.system.addNewGenericSphereStrand();
+            }
+            else {
+                notify("Unrecognized strand type: " + strand_type);
+                return
+            }
+
+            new_strand.kwdata = kwdata;
+
+            // Should strands maintain negative indexing on peptide strands for compatibility with the old writer.
+            // Or should I re-index here to have nicely 0-indexed strings
+
+            // create monomers in strand
+            let last_nuc: BasicElement = null;
+            let nuc: BasicElement = null;
+            for (let j=0; j<seq.length; j++) {
+                if (new_strand instanceof NucleicAcidStrand) {
+                    nuc = new_strand.createBasicElementTyped(strand_type.toLowerCase(), nucCount)
+                }
+                else {
+                    nuc = new_strand.createBasicElement(nucCount)
+                }
+                this.elems.set(nucCount, nuc)
+
+                // set nucleotide properties
+                nuc.sid = this.sidCounter++;
+                nuc.clusterId = cluster;
+                nuc.n5 = last_nuc;
+                if (last_nuc) { last_nuc.n3 = nuc;}
+                nuc.type = seq[j];
+
+                last_nuc = nuc;
+                nucCount = this.elems.getNextId();
+            }
+
+            new_strand.end3 = nuc;
+
+            if (kwdata["circular"]) {
+                new_strand.end3.n3 = new_strand.end5;
+                new_strand.end5.n5 = new_strand.end3;
+            }
+            new_strand.updateEnds();
+
+        })
     }
     
     read(){
@@ -220,7 +320,7 @@ class  LookupReader extends FileReader {
 
 
 class TrajectoryReader {
-    topReader : TopReader;
+    topReader : TopReader|PatchyTopReader;
     system : System;
     elems : ElementMap;
     chunker : FileChunker;
@@ -238,7 +338,7 @@ class TrajectoryReader {
     indexProgress :HTMLProgressElement;
     trajControls:HTMLElement;
 
-    constructor(datFile:File, topReader: TopReader, system: System, elems: ElementMap,indexes?:[]){
+    constructor(datFile:File, topReader: TopReader|PatchyTopReader, system: System, elems: ElementMap,indexes?:[]){
         this.topReader = topReader;
         this.system = system;
         this.elems = elems;

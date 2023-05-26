@@ -13,6 +13,7 @@ abstract class Strand {
     label: string;
     end3: BasicElement;
     end5: BasicElement;
+    kwdata: Object;
 
 
     constructor(id: number, system: System) {

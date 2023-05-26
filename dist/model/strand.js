@@ -11,6 +11,7 @@ class Strand {
     label;
     end3;
     end5;
+    kwdata;
     constructor(id, system) {
         this.id = id;
         this.system = system;
