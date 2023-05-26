@@ -112,7 +112,7 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     }
 }
 
-function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
+function getNewIds(oldFormat:Boolean=true): [Map<BasicElement, number>, Map<Strand, number>, {
     totParticles: number;
     totStrands: number;
     totNuc: number;
@@ -201,7 +201,7 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
         strand.forEach((e: BasicElement) => {
             newElementIds.set(e, idCounter++);
             totNuc++;
-        }, true // Iterate in 3' to 5' direction, per oxDNA convention
+        }, oldFormat // Iterate in 3' to 5' direction, per oxDNA convention
         );
     });
 
@@ -222,52 +222,100 @@ function getNewIds(): [Map<BasicElement, number>, Map<Strand, number>, {
     return [newElementIds, newStrandIds, counts, gsSubtypes];
  }
 
-function makeTopFile(name){
-    const top: string[] = []; // string of contents of .top file
+function makeTopFile(name, useNew:Boolean|undefined=undefined){
 
-    // remove any gaps in the particle numbering
-    let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
+    function makeTopFileOld(name){
+        const top: string[] = []; // string of contents of .top file
 
-    let firstLine = [counts['totParticles'], counts['totStrands']];
+        // remove any gaps in the particle numbering
+        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
 
-    if (counts['totGS'] > 0) {
-        // Add extra counts for protein/DNA/ cg DNA simulation
-        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v]));
-    } else if (counts['totAA'] > 0) {
-        // Add extra counts needed in protein simulation
-        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v=>counts[v]));
-    }
+        let firstLine = [counts['totParticles'], counts['totStrands']];
 
-    top.push(firstLine.join(" "));
+        if (counts['totGS'] > 0) {
+            // Add extra counts for protein/DNA/ cg DNA simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v]));
+        } else if (counts['totAA'] > 0) {
+            // Add extra counts needed in protein simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v=>counts[v]));
+        }
 
-    newElementIds.forEach((_id, e) => { //for each nucleotide
-        let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
-        let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
-        let cons: number[] = []
-        
-        // Protein mode
-        if (counts['totAA'] > 0 || counts['totGS'] > 0) {
-            if (e.isAminoAcid() || e.isGS()) {
-                for (let i = 0; i < e.connections.length; i++) {
-                    let c = e.connections[i];
-                    if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
-                        cons.push(newElementIds.get(c));
+        top.push(firstLine.join(" "));
+
+        newElementIds.forEach((_id, e) => { //for each nucleotide
+            let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
+            let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
+            let cons: number[] = []
+
+            // Protein mode
+            if (counts['totAA'] > 0 || counts['totGS'] > 0) {
+                if (e.isAminoAcid() || e.isGS()) {
+                    for (let i = 0; i < e.connections.length; i++) {
+                        let c = e.connections[i];
+                        if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
+                            cons.push(newElementIds.get(c));
+                        }
                     }
                 }
             }
-        }
-        if(e.isGS()){
-            top.push([newStrandIds.get(e.strand), "gs"+gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
-        }else{
-            top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
-        }
-    });
-    //makeTextFile(name+".top", top.join("\n")); //make .top 
+            if(e.isGS()){
+                top.push([newStrandIds.get(e.strand), "gs"+gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+            }else{
+                top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+            }
+        });
 
-    //this is absolute abuse of ES6 and I feel a little bad about it
-    return {a: newElementIds, b: firstLine, c: counts, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
+        //this is absolute abuse of ES6 and I feel a little bad about it
+        return {a: newElementIds, b: firstLine, c: counts, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
+    }
+
+    function makeTopFileNew(name){
+        const top: string[] = []; // string of contents of .top file
+        let default_props = ['id', 'type', 'circular']
+
+        // remove any gaps in the particle numbering
+        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds(false);
+
+        let firstLine:string[] = [counts['totParticles'].toString(), counts['totStrands'].toString()];
+
+        if (counts['totGS'] > 0) {
+            // Add extra counts for protein/DNA/ cg DNA simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v].toString()));
+        } else if (counts['totAA'] > 0) {
+            // Add extra counts needed in protein simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v=>counts[v].toString()));
+        }
+        firstLine.push('5->3')
+        top.push(firstLine.join(" "));
+
+        systems.forEach(sys => {
+            sys.strands.forEach(s => {
+                let seq = s.getSequence();
+                let type = s.kwdata['type'];
+                let circ = s.isCircular();
+                let id = newStrandIds.get(s);
+                let extra_keys = Object.keys(s.kwdata).filter(x => !default_props.includes(x));
+                let line = [seq, "id="+id.toString(), "type="+type, "circular="+circ];
+                extra_keys.forEach(k =>{
+                    line.push(k+"="+s.kwdata[k]);
+                })
+
+                top.push(line.join(" "));
+            })
+        })
+        top.push('') // topology has to end in an empty line
+
+        return {a: newElementIds, b: firstLine, c: counts, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};
+    }
+
+    // Determine which format to write and generate the file
+    useNew = (useNew === undefined? useNew = view.getInputBool("topFormat") : useNew);
+    let topOut = (useNew? makeTopFileNew(name) : makeTopFileOld(name))
+
+    return topOut
+
 }
-function makeDatFile(name :string, altNumbering=undefined) {
+function makeDatFile(name:string, altNumbering=undefined) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => { //for all elements

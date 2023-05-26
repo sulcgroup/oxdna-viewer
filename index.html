@@ -266,9 +266,18 @@
     <div id='exportOxdnaDialog' class="dialog" data-role="dialog">
         <p>Save the current stucture to oxDNA configuration and/or topology files</p>
         <p id="gidUpdateWarning" hidden=true>Please note that new nucleotide IDs will be generated in the exported files since the topology has been edited.</p>
-        <input type="checkbox" id="topDownload" data-caption="Topology" title="Identies and connections of particles" checked data-role="checkbox">
-        <input type="checkbox" id="datDownload" data-caption="Configuration" title="The xyz positions and rotations of particles" checked data-role="checkbox">
-        <input type="checkbox" id="forceDownload" data-caption="External forces" title="External forces acting on particles" data-role="checkbox">
+        <div style="display: table-column">
+            <div style="display: table-row-group">
+                <input type="checkbox" id="topDownload" data-caption="Topology" title="Identies and connections of particles" checked data-role="checkbox">
+                <input type="checkbox" id="topFormat" data-caption="Use new top format (experimental)" title="New 5'-3' topology format" data-role="checkbox">
+            </div>
+            <div style="display: table-row-group">
+                <input type="checkbox" id="datDownload" data-caption="Configuration" title="The xyz positions and rotations of particles" checked data-role="checkbox">
+            </div>
+            <div style="display: table-row-group">
+                <input type="checkbox" id="forceDownload" data-caption="External forces" title="External forces acting on particles" data-role="checkbox">
+            </div>
+        </div>
         <input type="text" data-role="input" data-prepend="Name" id="outputFilename" value="output" title="The prefix to name the .dat and .top files">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
