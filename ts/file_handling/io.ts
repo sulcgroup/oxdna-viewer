@@ -45,9 +45,16 @@ class TopReader extends FileReader{
         let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
         for (let j = 0; j < lines.length; j++) {
             this.elems.set(nucCount+j, nuc);
-            if (lines.includes("U")){
+            if (lines[j].includes("U")){
                 RNA_MODE = true;
             }
+        }
+        // I hate this but kwdata['type'] needs to be set for file output
+        if (currentStrand.isPeptide()) { currentStrand.kwdata['type'] = 'peptide'; }
+        else if (currentStrand.isGS()) { currentStrand.kwdata['type'] = 'generic'; }
+        else if (currentStrand.isNucleicAcid()) { 
+            if (RNA_MODE) {currentStrand.kwdata['type'] = 'RNA'; }
+            else {currentStrand.kwdata['type'] = 'DNA'}
         }
     
         // Create new cluster for loaded structure:
