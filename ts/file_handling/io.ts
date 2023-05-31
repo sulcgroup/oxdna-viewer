@@ -133,7 +133,7 @@ class TopReader extends FileReader{
 
     read_new_top_file(lines) {
         // TODO: This does not work with (#) formatted base types
-        // TODO: What to do with keywords other than type and circular?
+        // TODO: What to do with keywords other than type and circular? color, label
         let nucCount = this.elems.getNextId();
         let cluster = ++clusterCounter;
         let l0 = lines[0].split(" ");

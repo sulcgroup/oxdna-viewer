@@ -1543,6 +1543,7 @@ function readPdbFile(file) {
                                 currentstrand.updateEnds();
                             }
                         } else if (['dna', 'rna'].includes(strandID[i])){ //DNA or RNA
+                            RNA_MODE = ['rna'].includes(strandID[i]);
                             let currentstrand = sys.addNewNucleicAcidStrand();
                             for(let j = 0; j < pdbtemp[0][i].length; j++){
                                 let nc = currentstrand.createBasicElementTyped(strandID[i], id);
