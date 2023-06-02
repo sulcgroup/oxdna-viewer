@@ -745,7 +745,7 @@ class View {
                 var url = URL.createObjectURL(blob);
                 a.href = url;
                 a.download = 'canvas.png';
-                a.click();
+                setTimeout(() => a.click(), 10);
             }, 'image/png', 1.0);
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
@@ -755,7 +755,7 @@ class View {
                     var url = URL.createObjectURL(blob);
                     a.href = url;
                     a.download = 'colorbar.png';
-                    a.click();
+                    setTimeout(() => a.click(), 20);
                 }, 'image/png', 1.0);
             }
         }

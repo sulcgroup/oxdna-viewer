@@ -773,12 +773,12 @@ class View {
             scaleFactor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
         }
         function saveImage() {
-            canvas.toBlob(function(blob){
+            canvas.toBlob(function(blob) {
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
                 a.download = 'canvas.png';
-                a.click();
+                setTimeout(() => a.click(), 10);
             }, 'image/png', 1.0);
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
@@ -788,7 +788,7 @@ class View {
                     var url = URL.createObjectURL(blob);
                     a.href = url;
                     a.download = 'colorbar.png';
-                    a.click();
+                    setTimeout(() => a.click(), 20);
                 }, 'image/png', 1.0);
             }
         }
