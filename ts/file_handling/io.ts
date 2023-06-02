@@ -143,7 +143,7 @@ class TopReader extends FileReader{
 
         lines.forEach((line, i) => {
             if (!line) { return }// skip empty lines
-            let l:string[] = line.split(' ');
+            let l:string[] = line.trim().split(' ');
             let seq:string = l[0];
             let kwdata:object = {
                 id: i,

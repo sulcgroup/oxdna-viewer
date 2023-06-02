@@ -57,6 +57,14 @@ abstract class Strand {
         return i;
     }
 
+    getKwdataString(dni: string[]) { //dni stands for "do not include"
+        let outStr: string[] = []
+        for (const [key, value] of Object.entries(this.kwdata)) {
+            if (!dni.includes(key)) { outStr.push(key+"="+value) }
+        }
+        return (outStr.join (" "))
+    }  
+
     updateEnds() {
         let start = this.end3;
         while(this.end3.n3 && this.end3.n3 != this.end5) {

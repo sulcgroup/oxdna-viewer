@@ -288,21 +288,11 @@ function makeTopFile(name, useNew:Boolean|undefined=undefined){
         firstLine.push('5->3')
         top.push(firstLine.join(" "));
 
-        systems.forEach(sys => {
-            sys.strands.forEach(s => {
-                let seq = s.getSequence();
-                let type = s.kwdata['type'];
-                let circ = s.isCircular();
-                let id = newStrandIds.get(s);
-                let extra_keys = Object.keys(s.kwdata).filter(x => !default_props.includes(x));
-                let line = [seq, "id="+id.toString(), "type="+type, "circular="+circ];
-                extra_keys.forEach(k =>{
-                    line.push(k+"="+s.kwdata[k]);
-                })
-
-                top.push(line.join(" "));
-            })
+        newStrandIds.forEach((_id, s) => {
+            let line = [s.getSequence(), "id="+_id.toString(), "type="+s.kwdata['type'], "circular="+s.isCircular(), s.getKwdataString(default_props)]
+            top.push(line.join(" "))
         })
+        
         top.push('') // topology has to end in an empty line
 
         return {a: newElementIds, b: firstLine, c: counts, file_name: name+".top", file:top.join("\n"), gs:gsSubtypes};

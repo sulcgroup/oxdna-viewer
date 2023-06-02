@@ -142,7 +142,7 @@ class TopReader extends FileReader {
             if (!line) {
                 return;
             } // skip empty lines
-            let l = line.split(' ');
+            let l = line.trim().split(' ');
             let seq = l[0];
             let kwdata = {
                 id: i,
