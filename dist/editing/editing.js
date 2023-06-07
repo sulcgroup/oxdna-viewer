@@ -298,6 +298,16 @@ function reverseComplementWrapper() {
 }
 function findDomainWrapper() {
     const seq = view.getInputValue("sequence").toUpperCase();
+    //if number is given, finds element with that ID
+    if (!isNaN(parseInt(seq)) && !isNaN(Number(seq))) {
+        const nucleotide = elements.get(Number(seq));
+        if (nucleotide != undefined) {
+            nucleotide.select();
+            api.findElement(nucleotide);
+            systems.forEach(system => { updateView(system); });
+        }
+        return;
+    }
     const search_func = system => {
         system.strands.forEach(strand => {
             strand.search(seq).forEach(match => {

@@ -336,7 +336,7 @@ function reverseComplementWrapper(){
 function findDomainWrapper() {
     const seq: string = view.getInputValue("sequence").toUpperCase();
     //if number is given, finds element with that ID
-    if (!isNaN(parseInt(seq)) && !isNaN(Number(seq))) {
+    if (!isNaN(parseInt(seq))) {
         const nucleotide: BasicElement = elements.get(Number(seq));
         if (nucleotide != undefined) {
             nucleotide.select();
