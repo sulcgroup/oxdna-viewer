@@ -333,8 +333,18 @@ function reverseComplementWrapper(){
     seqInp.value = seq;
 }
 
-function findDomainWrapper(){
+function findDomainWrapper() {
     const seq: string = view.getInputValue("sequence").toUpperCase();
+    //if number is given, finds element with that ID
+    if (!isNaN(parseInt(seq)) && !isNaN(Number(seq))) {
+        const nucleotide: BasicElement = elements.get(Number(seq));
+        if (nucleotide != undefined) {
+            nucleotide.select();
+            api.findElement(nucleotide);
+            systems.forEach(system => {updateView(system)});
+        }
+        return;
+    }  
     const search_func = system => {
         system.strands.forEach(strand => {
             strand.search(seq).forEach(match => {
@@ -342,9 +352,9 @@ function findDomainWrapper(){
             });
         });
     };
-    systems.forEach(search_func);
-    tmpSystems.forEach(search_func);
-    render();
+        systems.forEach(search_func);
+        tmpSystems.forEach(search_func);
+        render();
 }
 
 function skipWrapper() {
