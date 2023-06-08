@@ -305,6 +305,10 @@ function findDomainWrapper() {
             const nucleotide = elements.get(parseInt(input));
             if (nucleotide != undefined) {
                 nucleotide.select();
+                // zoom into nucleotide if it is the only input given
+                if (inputs.length == 1) {
+                    api.findElement(nucleotide);
+                }
             }
             return;
         }
