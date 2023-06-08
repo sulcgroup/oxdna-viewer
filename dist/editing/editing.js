@@ -297,26 +297,33 @@ function reverseComplementWrapper() {
     seqInp.value = seq;
 }
 function findDomainWrapper() {
-    const seq = view.getInputValue("sequence").toUpperCase();
-    //if number is given, finds element with that ID
-    if (!isNaN(parseInt(seq)) && !isNaN(Number(seq))) {
-        const nucleotide = elements.get(Number(seq));
-        if (nucleotide != undefined) {
-            nucleotide.select();
-            api.findElement(nucleotide);
-            systems.forEach(system => { updateView(system); });
+    // create array of comma-separated inputs with no whitespaces
+    const inputs = view.getInputValue("sequence").toUpperCase().replace(/\s/g, "").split(",");
+    inputs.forEach(input => {
+        // select nucleotide if given an ID
+        if (/^[0-9]+$/.test(input)) {
+            const nucleotide = elements.get(parseInt(input));
+            if (nucleotide != undefined) {
+                nucleotide.select();
+                // zoom into nucleotide if it is the only input given
+                if (inputs.length == 1) {
+                    api.findElement(nucleotide);
+                }
+            }
+            return;
         }
-        return;
-    }
-    const search_func = system => {
-        system.strands.forEach(strand => {
-            strand.search(seq).forEach(match => {
-                api.selectElements(match, true);
+        // else select sequences
+        const search_func = system => {
+            system.strands.forEach(strand => {
+                strand.search(input).forEach(match => {
+                    api.selectElements(match, true);
+                });
             });
-        });
-    };
-    systems.forEach(search_func);
-    tmpSystems.forEach(search_func);
+        };
+        systems.forEach(search_func);
+        tmpSystems.forEach(search_func);
+    });
+    systems.forEach(system => { updateView(system); });
     render();
 }
 function skipWrapper() {
