@@ -326,6 +326,13 @@ function findDomainWrapper() {
     systems.forEach(system => { updateView(system); });
     render();
 }
+// enter key functions same as search button
+document.getElementById("sequence").addEventListener('keydown', function (event) {
+    if (event.code === "Enter") {
+        event.preventDefault();
+        findDomainWrapper();
+    }
+});
 function skipWrapper() {
     let e = Array.from(selectedBases);
     ;
