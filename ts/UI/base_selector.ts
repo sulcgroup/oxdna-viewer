@@ -533,3 +533,18 @@ class BoxSelector {
 		planes[5].normal.multiplyScalar(-1);
 	};
 };
+
+let selectionFloat = document.getElementById("selection-floater");
+for (let button of document.getElementById('selectionScope').children) {
+	button.addEventListener('mousedown', () => {
+		for(let mode of selectionFloat.children) {
+			if (mode.getAttribute('title') != button.querySelector('.caption').innerHTML) {
+				mode.classList.remove('active');
+			}
+			else {
+				mode.classList.add('active');
+			}
+		}
+	})
+  }
+

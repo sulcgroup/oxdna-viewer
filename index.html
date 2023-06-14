@@ -1140,6 +1140,39 @@
         </div>
     </nav>
 
+    <div class="metro-round-rect" id="selection-floater" data-role="button-group">
+        <button class="button cycle" title="Disabled" onclick="view.selectionMode.set('Disabled')">
+            <span class="icon">
+                <span class="mif-not"></span>
+            </span>
+        </button>
+        <button class="button cycle active" title="Monomer" onclick="view.selectionMode.set('Monomer')">
+            <span class="icon">
+                <span class="mif-location"></span>
+            </span>
+        </button>
+        <button class="button cycle" title="Strand" onclick="view.selectionMode.set('Strand')">
+            <span class="icon">
+                <span class="mif-flow-line"></span>
+            </span>
+        </button>
+        <button class="button cycle" title="System" onclick="view.selectionMode.set('System')">
+            <span class="icon">
+                <span class="mif-flow-tree"></span>
+            </span>
+        </button>
+        <button class="button cycle" title="Cluster" onclick="view.selectionMode.set('Cluster')">
+            <span class="icon">
+                <span class="mif-cloudy4"></span>
+            </span>
+        </button>
+        <button class="button cycle" title="Box" onclick="view.selectionMode.set('Box')">
+            <span class="icon">
+                <span class="mif-crop"></span>
+            </span>
+        </button>
+    </div>
+
     <div hidden=true id="hoverInfo">Description</div>
 
     <!--Canvas-->
