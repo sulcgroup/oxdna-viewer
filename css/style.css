@@ -106,3 +106,24 @@ td.empty {
     background : lightgrey;
     border-radius: 15px;
 }
+
+/* floating selection menu */
+.metro-round-rect {
+    height: 56px;
+    width: 286px;
+    position: fixed;
+    bottom: 1%;
+    left: 50%;
+    margin-left: -143px;
+    z-index: 999;
+    background-color: #dcddde;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .button.cycle.active {
+    background-color: #61AFEF;
+  }
