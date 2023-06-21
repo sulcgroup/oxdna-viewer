@@ -251,8 +251,8 @@ function handleFiles(files) {
 const exportCam = () => {
     const cam = {
         position: camera.position,
-        up: camera.up,
-        quaternion: camera.quaternion,
+        rotation: camera.rotation,
+        target: controls.target,
     };
     const camJSON = JSON.stringify(cam);
     makeTextFile("camera.cam", camJSON);
@@ -261,8 +261,8 @@ const readCamFile = (file) => {
     file.text().then(txt => {
         const cam = JSON.parse(txt);
         camera.position.set(cam.position.x, cam.position.y, cam.position.z);
-        camera.up.set(cam.up.x, cam.up.y, cam.up.z);
-        camera.quaternion.set(cam.quaternion._x, cam.quaternion._y, cam.quaternion._z, cam.quaternion._w);
+        camera.rotation.set(cam.rotation.x, cam.rotation.y, cam.rotation.z);
+        controls.target.set(cam.target.x, cam.target.y, cam.target.z);
     });
 };
 const handleCSV = (file) => {
