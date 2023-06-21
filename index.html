@@ -379,6 +379,7 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-select">Select</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-edit">Edit</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-view">View</a></li>
+            <li ondblclick="view.sectionClicked()"><a href="#section-camera">Camera</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
         </ul>
@@ -495,6 +496,57 @@
                     </ul>
                 </div>
                 
+            </div>
+
+            <!--Cam-->
+            <div class="section" id="section-camera">
+                <div class=" group" style="height: 100px">
+                    <!-- <div class="row flex-align-center"> -->
+
+                        <div class="row">   
+                            <div class="group">
+                                <div >
+                                    <button class="ribbon-button" onclick="view.setCenteringElementsFromSelection(); centerAndPBCBtnClick()" title="Calculate center from the current selection only">
+                                        <span class="mif-list mif-1x"></span>
+                                        <span class="caption">Selected center</span>
+                                    </button>
+
+                                    <button class="ribbon-button" onclick="exportCam()" title="Save the camera state.">
+                                        <span class="mif-file-download mif-2x"></span>
+                                        <span class="caption">Export Camera</span>
+                                    </button>
+
+                                    <button class="ribbon-button" onclick="api.switchCamera()">
+                                        <span class="mif-video-camera mif-3x"></span>
+                                        <span id="cameraSwitch" class="caption">Orthographic</span>
+                                    </button>
+
+                                    <button class="ribbon-button" onclick="controls.reset();"
+                                        title="Reset the camera view">
+                                        <span class="mif-video-camera mif-2x"></span>
+                                        <span class="mif-undo mif-2x"></span>
+                                        <span class="caption">Reset camera</span>
+                                    </button>
+                                    <button class="ribbon-button" onclick="view.enableVR()"
+                                        title="Reset the camera view">
+                                        <span class="mif-2x">VR</span>
+                                        <span class="caption">Enable VR</span>
+                                    </button>
+
+                                </div>
+                                <span class="title">Camera controls</span>
+                            </div>
+                            <div class="group">
+                                <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
+                                    <span class="mif-image mif-3x"></span>
+                                    <span class="caption">Background</span>
+                                </button>
+                                <span class="title">Scene controls</span>
+                            </div>
+
+                        </div>
+                
+                </div>
             </div>
 
             <!--Trajectory-->
@@ -835,14 +887,11 @@
                         </div>
                         <span class="title">Centering</span>
                     </div>
-                    <button class="ribbon-button" onclick="view.setCenteringElementsFromSelection(); centerAndPBCBtnClick()" title="Calculate center from the current selection only">
-                        <span class="mif-list mif-1x"></span>
-                        <span class="caption">Selected center</span>
-                    </button>
                     <button class="ribbon-button" onclick="centerAndPBCBtnClick()" title="Note that this only works if you're going from none to something else or if you want to re-center after moving">
                         <span class="mif-done mif-3x"></span>
                         <span class="caption">Apply</span>
                     </button>
+
                 </div>
                 <div class="tight group flex-column">
                     <div style="height: 18px;"><input type="checkbox" id="arrowToggle" onchange="toggleArrows(this)"
@@ -929,10 +978,6 @@
                     <span class="title">Colors</span>
                 </div>
                 <div class="tight group flex-wrap">
-                    <button class="ribbon-button" onclick="Metro.dialog.open('#backgroundDialog')">
-                        <span class="mif-image mif-3x"></span>
-                        <span class="caption">Background</span>
-                    </button>
                     <button class="ribbon-button" onclick="toggleVisArbitrary()" title="Hide selected elements. If selection is empty all elements will become visible again.">
                         <span class="mif-eye mif-3x"></span>
                         <span class="caption">Hide selection</span>
@@ -979,10 +1024,7 @@
                             </details>
                         </ul>
                     </div>
-                    <button class="ribbon-button" onclick="api.switchCamera()">
-                        <span class="mif-video-camera mif-3x"></span>
-                        <span id="cameraSwitch" class="caption">Orthographic</span>
-                    </button>
+
                     <button class="ribbon-button" onclick="view.toggleWindow('systemHierarchyWindow', drawSystemHierarchy)">
                         <span class="mif-flow-cascade mif-3x"></span>
                         <span class="caption">System hierarchy</span>
@@ -992,17 +1034,8 @@
                         <span class="mif-keyboard mif-3x"></span>
                         <span class="caption">Keyboard shortcuts</span>
                     </button>
-                    <button class="ribbon-button" onclick="controls.reset();"
-                        title="Reset the camera view">
-                        <span class="mif-video-camera mif-2x"></span>
-                        <span class="mif-undo mif-2x"></span>
-                        <span class="caption">Reset camera</span>
-                    </button>
-                    <button class="ribbon-button" onclick="view.enableVR()"
-                        title="Reset the camera view">
-                        <span class="mif-2x">VR</span>
-                        <span class="caption">Enable VR</span>
-                    </button>
+
+
                 </div>
             </div></div>
 

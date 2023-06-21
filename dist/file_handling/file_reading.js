@@ -165,6 +165,10 @@ function handleFiles(files) {
             readOxViewJsonFile(files[i]);
             return;
         }
+        else if (ext === "cam") {
+            readCamFile(files[i]);
+            return;
+        }
         else if (ext == "js") {
             scriptFile = files[i];
             //readScriptFile(files[i]);
@@ -244,6 +248,23 @@ function handleFiles(files) {
     render();
     return;
 }
+const exportCam = () => {
+    const cam = {
+        position: camera.position,
+        up: camera.up,
+        quaternion: camera.quaternion,
+    };
+    const camJSON = JSON.stringify(cam);
+    makeTextFile("camera.cam", camJSON);
+};
+const readCamFile = (file) => {
+    file.text().then(txt => {
+        const cam = JSON.parse(txt);
+        camera.position.set(cam.position.x, cam.position.y, cam.position.z);
+        camera.up.set(cam.up.x, cam.up.y, cam.up.z);
+        camera.quaternion.set(cam.quaternion._x, cam.quaternion._y, cam.quaternion._z, cam.quaternion._w);
+    });
+};
 const handleCSV = (file) => {
     // highlight all the sequences complying with the cadnano file
     // or a line by line sequence file 
