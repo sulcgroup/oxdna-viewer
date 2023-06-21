@@ -272,8 +272,8 @@ const exportCam = ()=>{
     const cam = {
         position: camera.position,
         rotation: camera.rotation,
+        up: camera.up,
         target: controls.target,
-
     }
     const camJSON = JSON.stringify(cam);
     makeTextFile("camera.cam", camJSON);
@@ -283,6 +283,7 @@ const readCamFile = (file:File)=>{
         const cam = JSON.parse(txt);
         camera.position.set(cam.position.x,cam.position.y,cam.position.z);
         camera.rotation.set(cam.rotation.x,cam.rotation.y,cam.rotation.z);
+        camera.up.set(cam.up.x,cam.up.y,cam.up.z);
         controls.target.set(cam.target.x,cam.target.y,cam.target.z);
     })
 }
