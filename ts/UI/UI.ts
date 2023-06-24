@@ -745,7 +745,8 @@ class View {
     }
 
     public selectPairs(): boolean {
-        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).classList.contains("active");
     }
 
     public updateImageResolutionText() {

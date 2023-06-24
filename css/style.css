@@ -110,13 +110,14 @@ td.empty {
 /* floating selection menu */
 .metro-round-rect {
     height: 56px;
-    width: 286px;
+    min-width: 356px;
     position: fixed;
     bottom: 1%;
     left: 50%;
-    margin-left: -143px;
+    margin-left: -178px;
     z-index: 999;
     background-color: #dcddde;
+    opacity: 0.95;
     border-radius: 10px;
     display: flex;
     justify-content: center;
@@ -127,3 +128,47 @@ td.empty {
   .button.cycle.active {
     background-color: #61AFEF;
   }
+
+  .button.cycle.active * {
+    color: #FFFFFF;
+    filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(140deg) brightness(106%) contrast(103%);
+  }
+
+  .selection.modes{
+    display: flex;
+    height: 36px;
+    max-width: 266px;
+    z-index: 9999;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .divider{
+    display: block;
+    background-color: #b6b7b8;
+    height: 40px;
+    width: 2px;
+  }
+
+  .selection-options-drop{
+    display: none;
+  }
+
+  .selection-options-drop.show{
+    display: flex;
+    min-height: 148px;
+    min-width: 194px;
+    position: absolute;
+    left: -79px;
+    bottom: 58px;
+    z-index: 9999;
+    border-radius: 10px;
+    background-color: #dcddde;
+    flex-direction: column;
+    gap: 10px;
+    justify-content: center;
+    align-items: left;
+    padding: 10px;
+  }
+
