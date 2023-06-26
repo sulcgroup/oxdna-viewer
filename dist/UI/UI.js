@@ -428,7 +428,7 @@ class View {
     coloringMode;
     centeringMode;
     inboxingMode;
-    selectionMode;
+    // selectionMode: ToggleGroupWithDisable;
     transformMode;
     centeringElements;
     basepairMessage = "Locating basepairs, please be patient...";
@@ -443,7 +443,7 @@ class View {
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
-        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        // this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
             // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
@@ -716,7 +716,8 @@ class View {
         document.getElementById('hoverInfo').hidden = true;
     }
     selectPairs() {
-        return this.doc.getElementById("selectPairs").checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return this.doc.getElementById("selectPairs").classList.contains("active");
     }
     updateImageResolutionText() {
         // Utility function to display the image resolution for saving canvas images
