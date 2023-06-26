@@ -642,7 +642,7 @@
                 <textarea id="baseList" cols="25" rows="3" readonly> Selected Bases List </textarea>
                 <div class="tight group flex-column">
                     <span>Select<br>pairs</span>
-                    <input type="checkbox" id="selectPairs" data-role="switch" title="Automatically select basepairs">
+                    <input type="checkbox" id="selectPairs2" data-role="switch" title="Automatically select basepairs">
                 </div>
                 <div class="tight group flex-column">
                     <button class="ribbon-icon-button" onclick="selectAll()" title="Select all (Ctrl/⌘-A)">
@@ -1173,37 +1173,88 @@
         </div>
     </nav>
 
-    <div class="metro-round-rect" id="selection-floater" data-role="button-group">
-        <button class="button cycle" title="Disabled" onclick="view.selectionMode.set('Disabled')">
-            <span class="icon">
-                <span class="mif-not"></span>
-            </span>
+    <div class="metro-round-rect">
+        <div class="selection modes" id="selection-modes">
+            <button class="button cycle active" title="Monomer" onclick="changeSelectionMode('Monomer')">
+                <span class="icon">
+                    <span class="mif-location"></span>
+                </span>
+            </button>
+            <button class="button cycle" title="Strand" onclick="changeSelectionMode('Strand')">
+                <span class="icon">
+                    <span class="mif-flow-line"></span>
+                </span>
+            </button>
+            <button class="button cycle" title="System" onclick="changeSelectionMode('System')">
+                <span class="icon">
+                    <span class="mif-flow-tree"></span>
+                </span>
+            </button>
+            <button class="button cycle" title="Cluster" onclick="changeSelectionMode('Cluster')">
+                <span class="icon">
+                    <span class="mif-cloudy4"></span>
+                </span>
+            </button>
+            <button class="button cycle" title="Box" onclick="changeSelectionMode('Box')">
+                <span class="icon">
+                    <span class="mif-crop"></span>
+                </span>
+            </button>
+        </div>
+        
+        <div class="divider"></div>
+
+        <button class="button cycle" onclick="document.getElementById('selectPairs').classList.toggle('active')"
+         title="Select pairs." id="selectPairs">
+            <img src="img/ico/select_pairs_icon.png" style="height:20px">
         </button>
-        <button class="button cycle active" title="Monomer" onclick="view.selectionMode.set('Monomer')">
-            <span class="icon">
-                <span class="mif-location"></span>
-            </span>
-        </button>
-        <button class="button cycle" title="Strand" onclick="view.selectionMode.set('Strand')">
-            <span class="icon">
-                <span class="mif-flow-line"></span>
-            </span>
-        </button>
-        <button class="button cycle" title="System" onclick="view.selectionMode.set('System')">
-            <span class="icon">
-                <span class="mif-flow-tree"></span>
-            </span>
-        </button>
-        <button class="button cycle" title="Cluster" onclick="view.selectionMode.set('Cluster')">
-            <span class="icon">
-                <span class="mif-cloudy4"></span>
-            </span>
-        </button>
-        <button class="button cycle" title="Box" onclick="view.selectionMode.set('Box')">
-            <span class="icon">
-                <span class="mif-crop"></span>
-            </span>
-        </button>
+
+        <div class="divider"></div>
+
+        <div>
+            <button class="dropdown-toggle button cycle" onclick="document.getElementById('selection-options-drop').classList.toggle('show'); toggleSelectionDropper()"
+            title="Selection options." id="selection-options-dropper">
+                <span class="icon">
+                    <span class="mif-arrow-drop-down mif-2x"></span>
+                </span>
+            </button>
+            <div class="selection-options-drop" id="selection-options-drop">
+                <div style="display:flex;gap:10px;">
+                    <button class="button cycle" onclick="select5psWrapper()" title="select 5p's">
+                        <img src="img/ico/s5p.svg" height="30px">
+                    </button>
+                    <button class="button cycle" onclick="select3psWrapper()" title="select 3p's">
+                        <img src="img/ico/s3p.svg" height="30px">
+                    </button>
+                    <button class="button cycle" onclick="connectedSelectorWrapper()" title="Select things connected to current selection.">
+                        <span class="mif-magic-wand mif-2x"></span>
+                    </button>
+                    <button class="button cycle" onclick="colorSelectorWrapper()" title="Select things matching by color. Works only for custom colored strands.">
+                        <span class="mif-palette mif-2x"></span>
+                    </button>
+                </div>
+                <button class="image-button outline" onclick="view.toggleWindow('selectionWindow', selectionsSetup)" title="Select all (Ctrl/⌘-A)">
+                    <span class="mif-list mif"></span>
+                    <span class="caption">Selections</span>
+                </button>
+                <button class="image-button outline" onclick="view.toggleWindow('distanceWindow', distanceSetup)" title="Select all (Ctrl/⌘-A)">
+                    <span class="mif-settings-ethernet"></span>
+                    <span class="caption">Distance</span>
+                </button>
+                <button class="image-button outline" onclick="selectAll()" title="Select all (Ctrl/⌘-A)">
+                    <span class="mif-done_all mif-1x"></span>
+                    <span class="caption">Select all</span>
+                </button>
+                <button class="image-button outline" onclick="invertSelection()" title="Invert selection (Ctrl/⌘-I)">
+                    <span class="mif-contrast mif-1x"></span>
+                    <span class="caption">Invert selection</span>
+                </button>
+                <button class="image-button outline" onclick="clearSelection()" title="Clear selection">
+                    <span class="mif-not mif-1x"></span>
+                    <span class="caption">Clear selection</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <div hidden=true id="hoverInfo">Description</div>

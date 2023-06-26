@@ -716,7 +716,8 @@ class View {
         document.getElementById('hoverInfo').hidden = true;
     }
     selectPairs() {
-        return this.doc.getElementById("selectPairs").checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return this.doc.getElementById("selectPairs").classList.contains("active");
     }
     updateImageResolutionText() {
         // Utility function to display the image resolution for saving canvas images

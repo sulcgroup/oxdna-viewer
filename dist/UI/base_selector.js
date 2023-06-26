@@ -4,7 +4,7 @@ let raycaster = new THREE.Raycaster();
 ;
 let intersects;
 canvas.addEventListener('mousemove', event => {
-    if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
+    if (boxSelector && selectionMode === "Box") {
         // Box selection
         event.preventDefault();
         boxSelector.redrawBox(new THREE.Vector2(event.clientX, event.clientY));
@@ -38,7 +38,7 @@ canvas.addEventListener('mousedown', event => {
         }
         return;
     }
-    if (view.selectionMode.enabled()) {
+    if (selectionMode != 'Disabled') {
         let id = gpuPicker(event);
         //if something was clicked, toggle the coloration of the appropriate things.
         if (id > -1 && !transformControls.isHovered()) {
@@ -52,7 +52,7 @@ canvas.addEventListener('mousedown', event => {
                 clearSelection();
             }
             let strandCount = sys.strands.length;
-            switch (view.selectionMode.get()) {
+            switch (selectionMode) {
                 case "System":
                     sys.strands.forEach(strand => {
                         strand.toggleMonomers();
@@ -296,7 +296,7 @@ function makeTextArea(bases, id) {
 }
 let boxSelector;
 canvas.addEventListener('mousedown', event => {
-    if (view.selectionMode.enabled() && view.selectionMode.get() === "Box" && !transformControls.isHovered()) {
+    if (selectionMode === "Box" && !transformControls.isHovered()) {
         // Box selection
         event.preventDefault();
         // Disable trackball controlls
@@ -310,7 +310,7 @@ canvas.addEventListener('mousedown', event => {
     }
 }, false);
 let onDocumentMouseCancel = event => {
-    if (boxSelector && view.selectionMode.enabled() && view.selectionMode.get() === "Box") {
+    if (boxSelector && selectionMode === "Box") {
         // Box selection
         event.preventDefault();
         // Calculate which elements are in the drawn box
@@ -471,16 +471,58 @@ class BoxSelector {
     ;
 }
 ;
-let selectionFloat = document.getElementById("selection-floater");
-for (let button of document.getElementById('selectionScope').children) {
-    button.addEventListener('mousedown', () => {
-        for (let mode of selectionFloat.children) {
-            if (mode.getAttribute('title') != button.querySelector('.caption').innerHTML) {
-                mode.classList.remove('active');
-            }
-            else {
-                mode.classList.add('active');
-            }
+// Selection menu
+let selectionMode = 'Monomer';
+function changeSelectionMode(mode) {
+    for (let button of document.getElementById("selection-modes").children) {
+        if (mode != button.getAttribute('title')) {
+            button.classList.remove('active');
         }
-    });
+        else if (selectionMode != mode) {
+            button.classList.add('active');
+        }
+        else {
+            selectionMode = 'Disabled';
+            view.selectionMode.set(selectionMode);
+            document.getElementById('selection-modes').querySelector('.active').classList.remove('active');
+            return;
+        }
+    }
+    selectionMode = mode;
+    view.selectionMode.set(selectionMode);
 }
+function toggleSelectionDropper() {
+    const selectionDropper = document.getElementById("selection-options-dropper");
+    if (document.getElementById("selection-options-drop").classList.contains("show")) {
+        selectionDropper.getElementsByClassName('icon')[0].children[0].className = "mif-arrow-drop-up mif-2x";
+        selectionDropper.style.backgroundColor = "#c9c9ca";
+    }
+    else {
+        selectionDropper.getElementsByClassName('icon')[0].children[0].className = "mif-arrow-drop-down mif-2x";
+        selectionDropper.style.backgroundColor = "#ebebeb";
+    }
+}
+document.addEventListener('keydown', function (event) {
+    const target = event.target;
+    if (target && target.tagName === 'INPUT') {
+        return;
+    }
+    if (event.code === "Digit1") {
+        changeSelectionMode('Monomer');
+    }
+    else if (event.code === "Digit2") {
+        changeSelectionMode('Strand');
+    }
+    else if (event.code === "Digit3") {
+        changeSelectionMode('System');
+    }
+    else if (event.code === "Digit4") {
+        changeSelectionMode('Cluster');
+    }
+    else if (event.code === "Digit5") {
+        changeSelectionMode('Box');
+    }
+    else if (event.code === "Digit6") {
+        document.getElementById('selectPairs').classList.toggle('active');
+    }
+});
