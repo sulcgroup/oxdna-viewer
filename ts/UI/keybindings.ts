@@ -109,7 +109,7 @@ canvas.addEventListener("keydown", event =>{
             }
 
             // Toggle selection:
-            view.selectionMode.toggle();
+            // view.selectionMode.toggle();
 
             break;
 
