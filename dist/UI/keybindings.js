@@ -139,7 +139,7 @@ canvas.addEventListener("keydown", event => {
                 break;
             }
             // Toggle selection:
-            view.selectionMode.toggle();
+            // view.selectionMode.toggle();
             break;
         // Toggle dragging:
         case 'd':

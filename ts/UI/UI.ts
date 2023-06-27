@@ -453,7 +453,7 @@ class View {
     coloringMode: ToggleGroup;
     centeringMode: ToggleGroupWithDisable;
     inboxingMode: ToggleGroupWithDisable;
-    selectionMode: ToggleGroupWithDisable;
+    // selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
 
     centeringElements: BasicElement[];
@@ -472,7 +472,7 @@ class View {
         this.coloringMode = new ToggleGroup('coloringMode', doc, ()=>{updateColoring()});
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
-        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        // this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
         // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
@@ -745,7 +745,8 @@ class View {
     }
 
     public selectPairs(): boolean {
-        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).classList.contains("active");
     }
 
     public updateImageResolutionText() {
