@@ -544,13 +544,13 @@ function changeSelectionMode(mode: string) {
 			button.classList.add('active');
 		} else {
 			selectionMode = 'Disabled';
-			view.selectionMode.set(selectionMode);
+			// view.selectionMode.set(selectionMode);
 			document.getElementById('selection-modes').querySelector('.active').classList.remove('active');
 			return;
 		}
 	}
 	selectionMode = mode;
-	view.selectionMode.set(selectionMode)
+	// view.selectionMode.set(selectionMode)
 }
 
 function toggleSelectionDropper() {

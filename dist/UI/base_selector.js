@@ -483,13 +483,13 @@ function changeSelectionMode(mode) {
         }
         else {
             selectionMode = 'Disabled';
-            view.selectionMode.set(selectionMode);
+            // view.selectionMode.set(selectionMode);
             document.getElementById('selection-modes').querySelector('.active').classList.remove('active');
             return;
         }
     }
     selectionMode = mode;
-    view.selectionMode.set(selectionMode);
+    // view.selectionMode.set(selectionMode)
 }
 function toggleSelectionDropper() {
     const selectionDropper = document.getElementById("selection-options-dropper");
