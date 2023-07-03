@@ -27,7 +27,7 @@ class PatchyTopReader extends FileReader{
             let nucCount = this.elems.getNextId();
 
             let file = this.result as string;
-            file = file.replace("  ", " ") // remove double spaces (cause Josh likes them)
+            file = file.replace(/ {2,}/g, " ") // remove double spaces (cause Josh likes them)
             let lines = file.split(/[\n]+/g);
 
             this.configurationLength = parseInt(lines[0].split(" ")[0]);
