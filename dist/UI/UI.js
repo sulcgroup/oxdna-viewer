@@ -302,7 +302,6 @@ function updateColoring(mode) {
         }
         catch (TypeError) {
             console.log(Error().stack);
-            console.log("jover");
         }
     });
     systems.forEach(s => s.callUpdates(['instanceColor']));
