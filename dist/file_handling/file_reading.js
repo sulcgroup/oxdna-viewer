@@ -91,7 +91,7 @@ function importFiles(files) {
     }
 }
 // Creates color overlays
-function makeLut(data, key) {
+function makeLut(data, key, system) {
     let arr = data[key];
     let min = arr[0], max = arr[0];
     for (let i = 0; i < arr.length; i++) {
@@ -116,12 +116,9 @@ function makeLut(data, key) {
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
     //update every system's color map
-    for (let i = 0; i < systems.length; i++) {
-        const system = systems[i];
-        const end = system.systemLength();
-        for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-            system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(systems[i].globalStartId + j).sid]));
-        }
+    const end = system.systemLength();
+    for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+        system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
     }
 }
 // define the drag and drop behavior of the scene
@@ -243,10 +240,22 @@ function handleFiles(files) {
     // same dirty logic as the event fix 
     // we ensure this way that the script is not handeled 2ce
     handledScript = false;
+    // set list of auxiliary files for the readAuxiliaryFiles function
+    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile);
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile);
     render();
     return;
+}
+// auxiliary files array for readAuxiliaryFiles function
+let auxiliaryFiles = {};
+function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile) {
+    auxiliaryFiles.topFile = topFile;
+    auxiliaryFiles.datFile = datFile;
+    auxiliaryFiles.jsonFile = jsonFile;
+    auxiliaryFiles.trapFile = trapFile;
+    auxiliaryFiles.hbFile = hbFile;
+    auxiliaryFiles.massFile = massFile;
 }
 const exportCam = () => {
     const cam = {
@@ -596,6 +605,8 @@ function readFilesFromURLParams() {
 var trajReader;
 let initFileReading = true; // dirty hack to keep the event handling in check 
 let handledScript = false;
+// addEventListener is outside function so multiple EventListeners aren't created, which bugs the function
+document.addEventListener('setupComplete', readAuxiliaryFiles);
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile) {
     if (initFileReading) {
@@ -603,7 +614,7 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         // Figure out if any other places have the bug of adding N event handlers ...
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
-        document.addEventListener('setupComplete', readAuxiliaryFiles);
+        //document.addEventListener('setupComplete', readAuxiliaryFiles);
         document.addEventListener('setupComplete', () => {
             if (scriptFile && !handledScript) {
                 readScriptFile(scriptFile);
@@ -679,56 +690,73 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
     if (scriptFile && !handledScript) {
         readScriptFile(scriptFile);
     }
-    function readAuxiliaryFiles() {
-        // This is super haunted
-        // up to this point, jsonFile was either undeclared or declared and undefined
-        // Suddenly, here, it's defined as the existing old file.
-        if (jsonFile) {
-            const jsonReader = new FileReader(); //read .json
-            jsonReader.onload = () => {
-                readJson(systems[systems.length - 1], jsonReader);
-            };
-            jsonReader.readAsText(jsonFile);
-        }
-        if (trapFile) {
-            const trapReader = new FileReader(); //read .trap file
-            trapReader.onload = () => {
-                readTrap(systems[systems.length - 1], trapReader);
-            };
-            trapReader.readAsText(trapFile);
-        }
-        if (parFile) {
-            let parReader = new FileReader();
-            parReader.onload = () => {
-                readParFile(systems[systems.length - 1], parReader);
-            };
-            parReader.readAsText(parFile);
-        }
-        if (datFile && !topFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                updateConfFromFile(r.result);
-            };
-            r.readAsText(datFile);
-        }
-        if (hbFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                readHBondFile(hbFile);
-            };
-            r.readAsText(hbFile);
-        }
-        if (massFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                readMassFile(r);
-            };
-            r.readAsText(massFile);
-        }
-        //document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
-    }
     render();
     return;
+}
+function readAuxiliaryFiles() {
+    // This is super haunted
+    // up to this point, jsonFile was either undeclared or declared and undefined
+    // Suddenly, here, it's defined as the existing old file.
+    const topFile = auxiliaryFiles.topFile;
+    const datFile = auxiliaryFiles.datFile;
+    const jsonFile = auxiliaryFiles.jsonFile;
+    const trapFile = auxiliaryFiles.trapFile;
+    const parFile = auxiliaryFiles.parFile;
+    const hbFile = auxiliaryFiles.hbFile;
+    const massFile = auxiliaryFiles.massFile;
+    // if .top, .dat, and .json file are dragged on, the json file is only read on the new system
+    if (jsonFile && topFile && datFile) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            readJson(systems[systems.length - 1], jsonReader);
+        };
+        jsonReader.readAsText(jsonFile);
+    }
+    else if (jsonFile) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            systems.forEach((system) => {
+                readJson(system, jsonReader);
+            });
+        };
+        jsonReader.readAsText(jsonFile);
+    }
+    if (trapFile) {
+        const trapReader = new FileReader(); //read .trap file
+        trapReader.onload = () => {
+            readTrap(systems[systems.length - 1], trapReader);
+        };
+        trapReader.readAsText(trapFile);
+    }
+    if (parFile) {
+        let parReader = new FileReader();
+        parReader.onload = () => {
+            readParFile(systems[systems.length - 1], parReader);
+        };
+        parReader.readAsText(parFile);
+    }
+    if (datFile && !topFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            updateConfFromFile(r.result);
+        };
+        r.readAsText(datFile);
+    }
+    if (hbFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            readHBondFile(hbFile);
+        };
+        r.readAsText(hbFile);
+    }
+    if (massFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            readMassFile(r);
+        };
+        r.readAsText(massFile);
+    }
+    //document.removeEventListener('setupComplete', readAuxiliaryFiles);
 }
 function updateConfFromFile(dat_file) {
     let lines = dat_file.split("\n");
@@ -755,7 +783,7 @@ function readJson(system, jsonReader) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
-                makeLut(data, key);
+                makeLut(data, key, system);
                 view.coloringMode.set("Overlay");
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
