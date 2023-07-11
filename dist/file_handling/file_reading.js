@@ -91,7 +91,7 @@ function importFiles(files) {
     }
 }
 // Creates color overlays
-function makeLut(data, key) {
+function makeLut(data, key, system) {
     let arr = data[key];
     let min = arr[0], max = arr[0];
     for (let i = 0; i < arr.length; i++) {
@@ -116,12 +116,9 @@ function makeLut(data, key) {
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
     //update every system's color map
-    for (let i = 0; i < systems.length; i++) {
-        const system = systems[i];
-        const end = system.systemLength();
-        for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-            system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(systems[i].globalStartId + j).sid]));
-        }
+    const end = system.systemLength();
+    for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+        system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
     }
 }
 // define the drag and drop behavior of the scene
@@ -686,7 +683,9 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         if (jsonFile) {
             const jsonReader = new FileReader(); //read .json
             jsonReader.onload = () => {
-                readJson(systems[systems.length - 1], jsonReader);
+                systems.forEach((system) => {
+                    readJson(system, jsonReader);
+                });
             };
             jsonReader.readAsText(jsonFile);
         }
@@ -755,7 +754,7 @@ function readJson(system, jsonReader) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
-                makeLut(data, key);
+                makeLut(data, key, system);
                 view.coloringMode.set("Overlay");
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion

@@ -294,8 +294,19 @@ function updateColoring(mode) {
     else if (lut && mode !== 'Custom') {
         api.removeColorbar();
     }
-    elements.forEach(e => e.updateColor());
+    systems.forEach(s => {
+        try {
+            s.getMonomers().forEach(e => {
+                e.updateColor();
+            });
+        }
+        catch (TypeError) {
+            console.log(Error().stack);
+            console.log("jover");
+        }
+    });
     systems.forEach(s => s.callUpdates(['instanceColor']));
+    //systems[systems.length - 1].callUpdates(['instanceColor']);
     if (tmpSystems.length > 0) {
         tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
     }
