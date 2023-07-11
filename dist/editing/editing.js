@@ -297,8 +297,21 @@ function reverseComplementWrapper() {
     seqInp.value = seq;
 }
 function findDomainWrapper() {
+    //first get the input
+    const input = view.getInputValue("sequence").toUpperCase();
+    // replace all multiple whitespaces with a single space
+    const search_str = input.replace(/\s+/g, " ").trim();
+    //check if input has commas if so we use comma as a delimiter
+    // else we use space
+    let search_arr = search_str.split(",");
+    if (search_arr.length == 1) {
+        search_arr = search_str.split(" ");
+    }
+    //now we have an array of search strings
+    // which we want to trim 
+    const inputs = search_arr.map(s => s.trim());
     // create array of comma-separated inputs with no whitespaces
-    const inputs = view.getInputValue("sequence").toUpperCase().replace(/\s/g, "").split(",");
+    //const inputs: Array<string> = view.getInputValue("sequence").toUpperCase().replace(/\s/g,"").split(",");
     inputs.forEach(input => {
         // select nucleotide if given an ID
         if (/^[0-9]+$/.test(input)) {
