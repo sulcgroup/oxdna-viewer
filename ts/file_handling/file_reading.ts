@@ -376,6 +376,7 @@ function readMGL(file:File){
         box.set(x,y,z);
         //lines = lines.slice(0,1);
         lines.forEach(str =>{
+            let t_flag = false; // to keep track of transparancy
             if (str && !str.includes("I")){
                 let line = str.split(" ");
                 // setup the size of the particles
@@ -398,6 +399,11 @@ function readMGL(file:File){
                 // main particle
                 const geometry = new THREE.SphereGeometry( MGL_D, 10, 10 );
                 const material = new THREE.MeshPhongMaterial( {color: color_value} );
+                if(color === "magenta"){
+                    material.transparent = true;
+                    material.opacity = 0.5;
+                    t_flag = true;
+                }
                 const sphere = new THREE.Mesh( geometry, material );
                 sphere.position.set(xpos,ypos,zpos);
                 scene.add( sphere );
@@ -427,6 +433,10 @@ function readMGL(file:File){
 
 
                     const material = new THREE.MeshPhongMaterial( {color: color_value} );
+                    if(t_flag){
+                        material.transparent = true;
+                        material.opacity = 0.5;
+                    }
                     const cylinder = cylinderMesh(
                         new THREE.Vector3(xpos, ypos,zpos),
                         new THREE.Vector3(xpos + patch_x,ypos + patch_y,zpos + patch_z),
