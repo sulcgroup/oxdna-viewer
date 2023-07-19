@@ -198,3 +198,30 @@ function inIframe() {
         return true;
     }
 }
+fetch(`https://api.github.com/repos/sulcgroup/oxdna-viewer/commits`)
+    .then(response => response.json())
+    .then(data => {
+    // Process the commit history data
+    const commitHistory = data.map(commit => ({
+        date: commit.commit.author.date,
+        message: commit.commit.message
+    }));
+    // Use the commit history data in website's changelog
+    const changelog = document.getElementById("changelog");
+    for (let i = commitHistory.length - 1; i > 0; i--) {
+        let list = document.createElement("ul");
+        list.style.listStyle = "none";
+        let date = document.createElement("li");
+        let message = document.createElement("li");
+        date.appendChild(document.createTextNode(commitHistory[i].date));
+        message.appendChild(document.createTextNode(commitHistory[i].message));
+        list.appendChild(date);
+        list.appendChild(message);
+        changelog.appendChild(list);
+    }
+    const changelogScrollBar = document.querySelector('#changelog');
+    changelogScrollBar.scrollTop = changelogScrollBar.scrollHeight - changelogScrollBar.clientHeight;
+})
+    .catch(error => {
+    console.error('Error fetching commit history:', error);
+});
