@@ -26,8 +26,130 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 
-<body onload="view.updateImageResolutionText()"
->
+<body onload="view.updateImageResolutionText()">
+    
+    <div id="landing_popup" class="landing_popup show">
+
+        <div id="main-menu" class="d-flex container-fluid align-items-center justify-content-center align-self-center">
+            
+            <div id="title" class="d-flex container-fluid">
+                <!--<img src="img/ico/oxview_text.png" max-width="50%" max-height="50%">-->
+                <span style="display: flex;">
+                    <!--<img src="img/ico/oxview_text.png" width="50%" height="50%">-->
+                    <img src="favicon.png" height="100px">
+                    <h1 style="font-size: 80px; font-weight: 400; line-height: 50px; margin: 10px; padding-top: 10px">
+                        oxView
+                    </h1>
+                </span>
+                <h5 style="text-align: center; font-weight: 400">
+                    Visualization and editing tool for DNA/RNA nanotechnology and oxDNA/oxRNA configuration analysis
+                </h5>
+            </div>
+
+            <button id="github-button" class="standard-box button shadowed" onclick="location.href = 'https://github.com/sulcgroup/oxdna-viewer/';">
+                <style>
+                    #github-button {
+                        top: 29%;
+                        left: 0px;
+                    }
+                </style>
+                <span class="mif-github icon mif-5x"></span>
+                <h6 class="marginless-text">
+                    Github
+                </h6>
+            </button>
+
+            <button id="documentation-button" class="standard-box button shadowed" onclick="location.href = 'https://github.com/sulcgroup/oxdna-viewer/blob/master/README.md';">
+                <style>
+                    #documentation-button {
+                        top: 29%;
+                        left: 33%;
+                    }
+                </style>
+                <span class="mif-books icon mif-4x"></span>
+                <h6 class="marginless-text">
+                    Documentation
+                </h6>
+            </button>
+
+            <div id="cite-papers" class="d-flex container-fluid">
+                <h6 style="font-size: 20px;">
+                    Please cite our papers!
+                </h6>
+                <button id="paper1" class="small-box button shadowed dark" onclick="location.href = 'https://doi.org/10.1038/s41596-022-00688-5';">
+                    <style>
+                        #paper1 {
+                            top: 30%;
+                            border-radius: 10px;
+                            justify-content: left;
+                        }
+                    </style>
+                    <span class="mif-file-text icon mif-2x"></span>
+                    <p class="marginless-text" style="margin: 15px; font-size: 14px;">
+                    Nature Protocols 2022
+                    </p>
+                </button>
+                <button id="paper2" class="small-box button shadowed dark" onclick="location.href = 'https://doi.org/10.1093/nar/gkaa417';">
+                    <style>
+                        #paper2 {
+                            top: 63%;
+                            border-radius: 10px;
+                            justify-content: left;
+                        }
+                    </style>
+                    <span class="mif-file-text icon mif-2x"></span>
+                    <div>
+                        <p style="line-height: 5px; margin: 15px; font-size: 14px">
+                            Nucleic Acids Research 2020
+                        </p>
+                    </div>
+                </button>
+            </div>
+            
+            <button id="examples" class="standard-box button shadowed" onclick="location.href = 'https://github.com/sulcgroup/oxdna-viewer/tree/master/examples';">
+                <style>
+                    #examples {
+                        top: 45%;
+                        left: 0%;
+                    }
+                </style>
+                <span class="mif-files-empty icon mif-4x"></span>
+                <h6 class="marginless-text">
+                    Examples
+                </h6>
+            </button>
+
+            <button id="video-tutorials" class=" standard-box button shadowed" onclick="location.href = 'https://www.youtube.com/channel/UC4ClrQ8xMypSbDZG2QCehpA';">
+                <style>
+                    #video-tutorials {
+                        top: 45%;
+                        left: 33%;
+                    }
+                </style>
+                <span class="mif-youtube-play icon mif-4x"></span>
+                <h6 class="marginless-text">
+                    Video Tutorials
+                </h6>
+            </button>
+
+            <button id="launch_button" class="small-box button shadowed success" onclick="document.getElementById('landing_popup').classList.toggle('show')">
+                <!--<img src="favicon.png" style="position: absolute; width: 30px; height: auto; right: 170px;">-->
+                <span class="mif-play icon mif-3x"></span>
+                <h3 style="padding-bottom: 0px; font-size: 30px; font-weight: 700">
+                    Launch
+                </h3>
+            </button>
+
+            <h3 id="changelog_header">
+                Changelog
+            </h3>
+            <div id="changelog">
+                <br><br>
+            </div>
+
+        </div>
+    </div>
+
     <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
         data-shift=".shifted-content">
         <div class="sidebar-header bg-grayMouse">
