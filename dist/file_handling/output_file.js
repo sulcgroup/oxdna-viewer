@@ -414,9 +414,6 @@ function makeUNFOutput(name) {
     const oxDNAToUNF = 0.8518; //oxDNA to nm conversion factor
     function identifyClusters() {
         class unfGroup {
-            name;
-            id;
-            includedObjects;
             constructor(name, id, includedObjects) {
                 this.name = name;
                 this.id = id;

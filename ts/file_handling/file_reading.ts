@@ -260,7 +260,7 @@ function handleFiles(files: FileList) {
     handledScript = false;
     
     // set list of auxiliary files for the readAuxiliaryFiles function
-    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile);
+    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile);
     
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles,scriptFile);
@@ -271,13 +271,14 @@ function handleFiles(files: FileList) {
 
 // auxiliary files array for readAuxiliaryFiles function
 let auxiliaryFiles: { [key: string]: any} = {}
-function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile) {
+function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile) {
     auxiliaryFiles.topFile = topFile;
     auxiliaryFiles.datFile = datFile;
     auxiliaryFiles.jsonFile = jsonFile;
     auxiliaryFiles.trapFile = trapFile;
     auxiliaryFiles.hbFile = hbFile;
     auxiliaryFiles.massFile = massFile;
+    auxiliaryFiles.parFile = parFile;
 }
 
 const exportCam = ()=>{

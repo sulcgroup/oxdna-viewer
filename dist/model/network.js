@@ -2,13 +2,6 @@
  * Two simple classes meant for easy generation, viewing, and deletion of networks
  */
 class Edges {
-    p1; // particle 1 indices, the p1 indices are always lower than p2
-    p2; // particle 2 indices
-    ks; // spring constants
-    types;
-    eqDist;
-    total; // number of edges
-    extraParams;
     constructor() {
         this.total = 0;
         this.p1 = [];
@@ -83,31 +76,6 @@ class Edges {
     ;
 }
 class Network {
-    nid; // network id number as these are stored separate to actual systems
-    system;
-    INSTANCES;
-    offsets;
-    rotations;
-    colors;
-    scales;
-    visibility;
-    //removed children
-    geometry;
-    network; // not sure what this does yet
-    // network implementation
-    particles;
-    reducedEdges;
-    masses;
-    types;
-    kb;
-    simFC;
-    elemcoords;
-    networktype; //networktype defined in any edge fill call
-    fittingReady; //Tells UI whether this network is ready to be displayed
-    onscreen; // Tells UI whether this network is in the scene or not
-    hydrogenbondinginfo;
-    cutoff; // keeps track of current cutoff value used to fill edges of network
-    center;
     // id is used by the visualizer as it is a system object (sorta)
     // nid is the network identifier only
     constructor(nid, selectedMonomers) {

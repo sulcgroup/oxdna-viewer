@@ -3,7 +3,6 @@
 /// <reference path="../file_handling/file_reading.ts" />
 /// <reference path="../main.ts" />
 class DistanceHandler {
-    distances;
     constructor() {
         this.distances = new Array();
     }
@@ -70,13 +69,6 @@ function measureDistanceForces() {
     // The above is js format seems to be working in ts.
 }
 class DistanceObservable {
-    e1;
-    e2;
-    dist;
-    parent;
-    html;
-    label;
-    line;
     constructor(e1, e2, parent) {
         this.e1 = e1;
         this.e2 = e2;

@@ -241,7 +241,7 @@ function handleFiles(files) {
     // we ensure this way that the script is not handeled 2ce
     handledScript = false;
     // set list of auxiliary files for the readAuxiliaryFiles function
-    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile);
+    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile);
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile);
     render();
@@ -249,13 +249,14 @@ function handleFiles(files) {
 }
 // auxiliary files array for readAuxiliaryFiles function
 let auxiliaryFiles = {};
-function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile) {
+function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile) {
     auxiliaryFiles.topFile = topFile;
     auxiliaryFiles.datFile = datFile;
     auxiliaryFiles.jsonFile = jsonFile;
     auxiliaryFiles.trapFile = trapFile;
     auxiliaryFiles.hbFile = hbFile;
     auxiliaryFiles.massFile = massFile;
+    auxiliaryFiles.parFile = parFile;
 }
 const exportCam = () => {
     const cam = {

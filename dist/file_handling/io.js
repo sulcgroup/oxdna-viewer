@@ -1,17 +1,11 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="./order_parameter_selector.ts" />
 class TopReader extends FileReader {
-    topFile = null;
-    system;
-    elems;
-    sidCounter = 0;
-    nucLocalID = 0;
-    lastStrand; //strands are 1-indexed in old oxDNA .top files
-    n3;
-    callback;
-    configurationLength;
     constructor(topFile, system, elems, callback) {
         super();
+        this.topFile = null;
+        this.sidCounter = 0;
+        this.nucLocalID = 0;
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
@@ -214,9 +208,6 @@ class TopReader extends FileReader {
     }
 }
 class FileChunker {
-    file;
-    current_chunk;
-    chunk_size;
     constructor(file, chunk_size) {
         this.file = file;
         this.chunk_size = chunk_size;
@@ -257,14 +248,10 @@ class FileChunker {
     }
 }
 class LookupReader extends FileReader {
-    chunker;
-    position_lookup = []; // store offset and size
-    idx = -1;
-    confLength;
-    callback;
-    size;
     constructor(chunker, confLength, callback) {
         super();
+        this.position_lookup = []; // store offset and size
+        this.idx = -1;
         this.chunker = chunker;
         this.confLength = confLength;
         this.callback = callback;
@@ -293,24 +280,13 @@ class LookupReader extends FileReader {
     }
 }
 class TrajectoryReader {
-    topReader;
-    system;
-    elems;
-    chunker;
-    datFile;
-    confLength;
-    firstConf = true;
-    numNuc;
-    lookupReader;
-    idx = 0;
-    offset = 0;
-    time;
-    firstRead = true;
-    trajectorySlider;
-    indexProgressControls;
-    indexProgress;
-    trajControls;
     constructor(datFile, topReader, system, elems, indexes) {
+        this.firstConf = true;
+        this.idx = 0;
+        this.offset = 0;
+        this.firstRead = true;
+        this.playFlag = false;
+        this.intervalId = null;
         this.topReader = topReader;
         this.system = system;
         this.elems = elems;
@@ -423,8 +399,6 @@ class TrajectoryReader {
         this.trajectorySlider.setAttribute("value", this.idx.toString());
         this.lookupReader.getConf(this.idx);
     }
-    playFlag = false;
-    intervalId = null;
     playTrajectory() {
         this.playFlag = !this.playFlag;
         if (this.playFlag) {
