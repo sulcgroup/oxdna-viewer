@@ -1174,7 +1174,7 @@
         </div>
     </nav>
 
-    <div class="metro-round-rect">
+    <div class="metro-round-rect" id ="floatingMenu">
         <div class="selection modes" id="selection-modes">
             <button class="button cycle active" title="Monomer" onclick="changeSelectionMode('Monomer')">
                 <span class="icon">
@@ -1342,8 +1342,12 @@
                 }
             }
             let menu = document.getElementById('menu');
-            if(inIframe())
+            let floatingMenu = document.getElementById('floatingMenu');
+
+            if(inIframe()){
                 menu.hidden=true;
+                floatingMenu.hidden=true;
+            }
         </script>
         <!-- electron interaction  -->
         <script src="./renderer.js"></script>
