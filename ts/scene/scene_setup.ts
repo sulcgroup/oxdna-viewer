@@ -232,7 +232,6 @@ function drawBox(size: THREE.Vector3, position: THREE.Vector3): THREE.LineSegmen
 
 // adding mouse control to the scene 
 const controls = new THREE.TrackballControls(camera, canvas);
-controls.target.set(0, 5, 0);
 controls.rotateSpeed = 1.5;
 controls.zoomSpeed = 2; //frequently structures are large so turned this up
 controls.panSpeed = 1.5;
