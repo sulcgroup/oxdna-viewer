@@ -346,18 +346,22 @@ canvas.addEventListener('mouseleave', onDocumentMouseCancel, false);
  * Used for box selection functionality in DragControls
  */
 class BoxSelector {
+    frustum = new THREE.Frustum();
+    startPoint = new THREE.Vector3();
+    endPoint = new THREE.Vector3();
+    collection = [];
+    camera;
+    domElement;
+    deep;
+    drawnBox;
+    screenStart = new THREE.Vector2();
+    screenEnd = new THREE.Vector2();
     /**
      * @param startPoint Start position x,y,z
      * @param camera Camera, to calculate frustum
      * @param deep Optional depth of frustum
      */
     constructor(screenStart, camera, domElement, deep) {
-        this.frustum = new THREE.Frustum();
-        this.startPoint = new THREE.Vector3();
-        this.endPoint = new THREE.Vector3();
-        this.collection = [];
-        this.screenStart = new THREE.Vector2();
-        this.screenEnd = new THREE.Vector2();
         this.camera = camera;
         this.domElement = domElement;
         this.deep = deep || Number.MAX_VALUE;

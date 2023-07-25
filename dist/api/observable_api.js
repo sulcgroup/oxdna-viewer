@@ -10,6 +10,8 @@ var api;
     var observable;
     (function (observable) {
         class CMS extends THREE.Mesh {
+            // displayes the CMS of a given array of basic elements 
+            elements;
             constructor(elements, size, color) {
                 var geometry = new THREE.SphereGeometry(size, 32, 32);
                 var material = new THREE.MeshPhongMaterial({ color: color });
@@ -30,6 +32,20 @@ var api;
         }
         observable.CMS = CMS;
         class Track extends THREE.Line {
+            // draw displacements of a selected mesh 
+            // Example usage, assuming one creates as CMS object from selected bases to track:
+            //
+            // let cms = new api.observable.CMS(selectedBases, 1, 0xFF0000);
+            // let track =  new api.observable.Track(cms);
+            // let update_func =()=>{
+            //     cms.calculate();
+            //     track.calculate(); 
+            // };
+            // trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, update_func);
+            // trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, update_func);
+            // render();
+            points;
+            particle;
             constructor(particle) {
                 let points = [];
                 let pos = particle.position;
@@ -48,6 +64,9 @@ var api;
         }
         observable.Track = Track;
         class MeanOrientation extends THREE.ArrowHelper {
+            // let orientation =  new api.observable.MeanOrientation([...selectedBases]);
+            // render = api.observable.wrap(render, () => {orientation.update()});
+            bases;
             constructor(bases, len = 10, color = 0xFF0000) {
                 // as we inheret from Arrow helper we need to set dummy values
                 super(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), len, color);

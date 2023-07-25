@@ -23,7 +23,7 @@ var backboneColors = [
     new THREE.Color(0xfdd291),
     new THREE.Color(0xffb322),
     new THREE.Color(0x437092),
-    new THREE.Color(0x6ea4cc),
+    new THREE.Color(0x6ea4cc), //light blue
 ];
 var nucleosideColors = [
     new THREE.Color(0x4747B8),
@@ -63,7 +63,7 @@ var nucleosideColors = [
     //Y
     new THREE.Color(0x8C704C),
     //W
-    new THREE.Color(0x4F4600),
+    new THREE.Color(0x4F4600), //Olive Brown
 ];
 function prep_pdb(pdblines) {
     //Checks for repeated chains, Biological Assemblies etc.
