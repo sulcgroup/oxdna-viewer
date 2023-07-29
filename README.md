@@ -20,7 +20,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
     + [Edit API](#edit-api)
     + [Observable API](#observable-api)
   * [Rigid Body Simulations](#rigid-body-simulations)
-  * [3D Printing Export](#3d-export)
+  * [3D Export](#3d-export)
   * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
   * [Known issues](#known-issues)
   * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions-or-running-oxview-locally)
