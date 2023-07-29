@@ -20,10 +20,10 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
     + [Edit API](#edit-api)
     + [Observable API](#observable-api)
   * [Rigid Body Simulations](#rigid-body-simulations)
-  * [3D Printing Export](#3d-printing-export)
+  * [3D Printing Export](#3d-export)
   * [Live relaxation of oxDNA configurations](#live-relaxation-of-oxdna-configurations)
   * [Known issues](#known-issues)
-  * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions-or-running-oxView-locally)
+  * [Updates and writing your own extensions](#updates-and-writing-your-own-extensions-or-running-oxview-locally)
   * [Citation](#citation)
   * [Acknowledgements](#acknowledgements)
 
@@ -201,7 +201,7 @@ If you want to extend the code for your own purposes, you will also need to inst
 
 Alternatively if you are just interested in using oxView locally, do step 1 and proceed straight to step 7. 
 Or check out the release section 
- 
+
 ## Citation
 If you use oxView or our oxDNA analysis package in your research, please cite:  
 
