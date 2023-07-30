@@ -1450,6 +1450,7 @@ window.addEventListener("message", (event) => {
             let files = event.data.files;
             let ext = event.data.ext;
             let inbox_settings = event.data.inbox_settings;
+            let view_settings = event.data.view_settings;
             if(files.length != ext.length){
                 notify("make sure you pass all files with extenstions");
                 return
@@ -1460,6 +1461,16 @@ window.addEventListener("message", (event) => {
                 view.centeringMode.set(inbox_settings[1]);
                 centerAndPBCBtnClick();
             }
+            // if present, change the preferences for the visiblity of box, arrows and fog
+            if(view_settings) {
+				if("Box" in view_settings) {
+					redrawBox();
+					boxObj.visible = view_settings["Box"];
+				}
+				if("Arrows" in view_settings) {
+					setArrowsVisibility(view_settings["Arrows"]);
+				}
+			}
             //set the names and extensions for every passed file
             for(let i =0; i< files.length; i++){
                 files[i].name = `${i}.${ext[i]}`;
