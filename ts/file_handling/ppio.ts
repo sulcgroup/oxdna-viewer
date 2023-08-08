@@ -36,7 +36,7 @@ class PatchyTopReader extends FileReader{
             let speciesCounts = [];
 
             if(!this.LORO){
-                lines[0].split(" ").forEach((t,i)=>{
+                lines[0].trim().split(" ").forEach((t,i)=>{
                     if(t){
                         let sphere = new PatchyParticle(nucCount+i, this.system);
                         this.system.particles.push(sphere);
@@ -62,7 +62,7 @@ class PatchyTopReader extends FileReader{
                 lines.forEach((line, t)=>{
                     console.log(line)
                     // Split on one or more spaces
-                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/ +/g);
+                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/\s+/g);
                     let pCount = parseInt(pCountStr);
                     for(let p=0; p<pCount; p++) {
                         const id = idCounter++
