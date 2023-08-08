@@ -6,7 +6,8 @@ function makeOutputFiles() {
         let { a, b, c, file_name, file, gs } = makeTopFile(name);
         reorganized = a;
         counts = c;
-        makeTextFile(file_name, file);
+        // add timeout because if you try to download multiple files at the same time, the browser often misses the second one.
+        setTimeout(() => makeTextFile(file_name, file), 10);
         if (gs.masses.length > 0) { // check for generic sphere presence
             makeMassFile(name + "_m.txt", reorganized, counts, gs);
         }
@@ -22,12 +23,14 @@ function makeOutputFiles() {
     }
     if (networks.length > 0) {
         let { file_name, file } = makeParFile(name, reorganized, counts);
-        setTimeout(() => makeTextFile(file_name, file), 40);
+        setTimeout(() => makeTextFile(file_name, file), 30);
     }
     let force_download = view.getInputBool("forceDownload");
     if (force_download) {
         if (forces.length > 0) {
-            makeForceFile();
+            let file_name = name.concat('_force.txt');
+            let contents = forcesToString();
+            setTimeout(() => makeTextFile(file_name, contents), 40);
         }
         else {
             notify('No forces to export. Use the forces editor in the "Dynamics" tab to add new forces.', "warning");
@@ -83,7 +86,7 @@ function make3dOutput() {
         notify(`Unknown file format: ${fileFormat}`, "alert");
     }
 }
-function getNewIds() {
+function getNewIds(oldFormat = true) {
     //remove any gaps in the particle numbering
     //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
     let peptides = [];
@@ -156,7 +159,7 @@ function getNewIds() {
         strand.forEach((e) => {
             newElementIds.set(e, idCounter++);
             totNuc++;
-        }, true // Iterate in 3' to 5' direction, per oxDNA convention
+        }, oldFormat // Iterate in 3' to 5' direction, per oxDNA convention
         );
     });
     const counts = {
@@ -173,45 +176,73 @@ function getNewIds() {
     }
     return [newElementIds, newStrandIds, counts, gsSubtypes];
 }
-function makeTopFile(name) {
-    const top = []; // string of contents of .top file
-    // remove any gaps in the particle numbering
-    let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
-    let firstLine = [counts['totParticles'], counts['totStrands']];
-    if (counts['totGS'] > 0) {
-        // Add extra counts for protein/DNA/ cg DNA simulation
-        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v => counts[v]));
-    }
-    else if (counts['totAA'] > 0) {
-        // Add extra counts needed in protein simulation
-        firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v => counts[v]));
-    }
-    top.push(firstLine.join(" "));
-    newElementIds.forEach((_id, e) => {
-        let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
-        let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
-        let cons = [];
-        // Protein mode
-        if (counts['totAA'] > 0 || counts['totGS'] > 0) {
-            if (e.isAminoAcid() || e.isGS()) {
-                for (let i = 0; i < e.connections.length; i++) {
-                    let c = e.connections[i];
-                    if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
-                        cons.push(newElementIds.get(c));
+function makeTopFile(name, useNew = undefined) {
+    function makeTopFileOld(name) {
+        const top = []; // string of contents of .top file
+        // remove any gaps in the particle numbering
+        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
+        let firstLine = [counts['totParticles'], counts['totStrands']];
+        if (counts['totGS'] > 0) {
+            // Add extra counts for protein/DNA/ cg DNA simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v => counts[v]));
+        }
+        else if (counts['totAA'] > 0) {
+            // Add extra counts needed in protein simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v => counts[v]));
+        }
+        top.push(firstLine.join(" "));
+        newElementIds.forEach((_id, e) => {
+            let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
+            let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
+            let cons = [];
+            // Protein mode
+            if (counts['totAA'] > 0 || counts['totGS'] > 0) {
+                if (e.isAminoAcid() || e.isGS()) {
+                    for (let i = 0; i < e.connections.length; i++) {
+                        let c = e.connections[i];
+                        if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
+                            cons.push(newElementIds.get(c));
+                        }
                     }
                 }
             }
+            if (e.isGS()) {
+                top.push([newStrandIds.get(e.strand), "gs" + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+            }
+            else {
+                top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+            }
+        });
+        //this is absolute abuse of ES6 and I feel a little bad about it
+        return { a: newElementIds, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
+    }
+    function makeTopFileNew(name) {
+        const top = []; // string of contents of .top file
+        let default_props = ['id', 'type', 'circular'];
+        // remove any gaps in the particle numbering
+        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds(false);
+        let firstLine = [counts['totParticles'].toString(), counts['totStrands'].toString()];
+        if (counts['totGS'] > 0) {
+            // Add extra counts for protein/DNA/ cg DNA simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v => counts[v].toString()));
         }
-        if (e.isGS()) {
-            top.push([newStrandIds.get(e.strand), "gs" + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+        else if (counts['totAA'] > 0) {
+            // Add extra counts needed in protein simulation
+            firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v => counts[v].toString()));
         }
-        else {
-            top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
-        }
-    });
-    //makeTextFile(name+".top", top.join("\n")); //make .top 
-    //this is absolute abuse of ES6 and I feel a little bad about it
-    return { a: newElementIds, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
+        firstLine.push('5->3');
+        top.push(firstLine.join(" "));
+        newStrandIds.forEach((_id, s) => {
+            let line = [s.getSequence(), "id=" + _id.toString(), "type=" + s.kwdata['type'], "circular=" + s.isCircular(), s.getKwdataString(default_props)];
+            top.push(line.join(" "));
+        });
+        top.push(''); // topology has to end in an empty line
+        return { a: newElementIds, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
+    }
+    // Determine which format to write and generate the file
+    useNew = (useNew === undefined ? useNew = view.getInputBool("topFormat") : useNew);
+    let topOut = (useNew ? makeTopFileNew(name) : makeTopFileOld(name));
+    return topOut;
 }
 function makeDatFile(name, altNumbering = undefined) {
     // Get largest absolute coordinate:
@@ -339,15 +370,14 @@ function makeOxViewJsonFile(name, space) {
         selections: selectionListHandler.serialize()
     }, null, space));
 }
-//let textFile: string;
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });
-    var elem = window.document.createElement('a'); //
-    elem.href = window.URL.createObjectURL(blob); //
-    elem.download = filename; //
-    document.body.appendChild(elem); //
-    elem.click(); //
-    document.body.removeChild(elem); //
+    var elem = window.document.createElement('a');
+    elem.href = window.URL.createObjectURL(blob);
+    elem.download = filename;
+    document.body.appendChild(elem);
+    elem.click();
+    document.body.removeChild(elem);
     //window.parent.FakeDataDownload(blob, filename);
 }
 ;
@@ -384,9 +414,6 @@ function makeUNFOutput(name) {
     const oxDNAToUNF = 0.8518; //oxDNA to nm conversion factor
     function identifyClusters() {
         class unfGroup {
-            name;
-            id;
-            includedObjects;
             constructor(name, id, includedObjects) {
                 this.name = name;
                 this.id = id;

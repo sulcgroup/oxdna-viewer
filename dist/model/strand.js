@@ -5,15 +5,10 @@
  * @param system - The strand's parent system
  */
 class Strand {
-    id; //system location
-    system;
-    pos;
-    label;
-    end3;
-    end5;
     constructor(id, system) {
         this.id = id;
         this.system = system;
+        this.kwdata = {};
     }
     ;
     setFrom(e) {
@@ -47,6 +42,15 @@ class Strand {
                 break;
         }
         return i;
+    }
+    getKwdataString(dni) {
+        let outStr = [];
+        for (const [key, value] of Object.entries(this.kwdata)) {
+            if (!dni.includes(key)) {
+                outStr.push(key + "=" + value);
+            }
+        }
+        return (outStr.join(" "));
     }
     updateEnds() {
         let start = this.end3;
@@ -174,17 +178,21 @@ class NucleicAcidStrand extends Strand {
     }
     ;
     createBasicElement(id) {
-        if (RNA_MODE)
+        if (this.kwdata['type'] == 'RNA')
             return new RNANucleotide(id, this);
         else
             return new DNANucleotide(id, this);
     }
     ;
     createBasicElementTyped(type, id) {
-        if (type == 'rna')
+        if (type.toLowerCase() == 'rna')
             return new RNANucleotide(id, this);
-        else if (type == 'dna')
+        else if (type.toLowerCase() == 'dna')
             return new DNANucleotide(id, this);
+        else {
+            notify(type + " is not a recognized nucleic acid type, oxView only supports 'dna' or 'rna' at the moment.");
+            return;
+        }
     }
     ;
     /**

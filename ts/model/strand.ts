@@ -13,11 +13,13 @@ abstract class Strand {
     label: string;
     end3: BasicElement;
     end5: BasicElement;
+    kwdata: Object;
 
 
     constructor(id: number, system: System) {
         this.id = id;
         this.system = system;
+        this.kwdata = {}
     };
 
     setFrom(e: BasicElement) {
@@ -54,6 +56,14 @@ abstract class Strand {
         }
         return i;
     }
+
+    getKwdataString(dni: string[]) { //dni stands for "do not include"
+        let outStr: string[] = []
+        for (const [key, value] of Object.entries(this.kwdata)) {
+            if (!dni.includes(key)) { outStr.push(key+"="+value) }
+        }
+        return (outStr.join (" "))
+    }  
 
     updateEnds() {
         let start = this.end3;
@@ -191,17 +201,21 @@ class NucleicAcidStrand extends Strand {
     };
 
     createBasicElement(id?: number) {
-        if (RNA_MODE)
+        if (this.kwdata['type'] == 'RNA')
             return new RNANucleotide(id, this);
         else
             return new DNANucleotide(id, this);
     };
 
     createBasicElementTyped(type: string, id?: number) {
-        if (type == 'rna')
+        if (type.toLowerCase() == 'rna')
             return new RNANucleotide(id, this);
-        else if (type == 'dna')
+        else if (type.toLowerCase() == 'dna')
             return new DNANucleotide(id, this);
+        else{
+            notify(type+" is not a recognized nucleic acid type, oxView only supports 'dna' or 'rna' at the moment.")
+            return
+        }
     };
 
     /**

@@ -3,7 +3,6 @@
  * This also specifies the visual structure of a nucleotide.
  */
 class Nucleotide extends BasicElement {
-    pair;
     constructor(id, strand) {
         super(id, strand);
     }
@@ -136,12 +135,14 @@ class Nucleotide extends BasicElement {
                 }
                 break;
             case "Overlay":
-                color = sys.lutCols[sid];
-                break;
+                if (!(color = sys.lutCols[sid])) {
+                    color = this.color ? this.color : GREY;
+                    break;
+                }
             case "Custom":
                 if (!this.color) {
                     // Use overlay color if overlay is loaded, otherwise color gray
-                    if (lut) {
+                    if (sys.lutCols[sid]) {
                         color = sys.lutCols[sid];
                     }
                     else {

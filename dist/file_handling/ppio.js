@@ -1,17 +1,10 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 class PatchyTopReader extends FileReader {
-    topFile = null;
-    system;
-    elems;
-    sidCounter = 0;
-    nucLocalID = 0;
-    lastStrand; //strands are 1-indexed in oxDNA .top files
-    n3;
-    callback;
-    configurationLength;
-    LORO;
     constructor(topFile, system, elems, callback) {
         super();
+        this.topFile = null;
+        this.sidCounter = 0;
+        this.nucLocalID = 0;
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
@@ -23,6 +16,7 @@ class PatchyTopReader extends FileReader {
         this.onload = () => {
             let nucCount = this.elems.getNextId();
             let file = this.result;
+            file = file.replace(/ {2,}/g, " "); // remove double spaces (cause Josh likes them)
             let lines = file.split(/[\n]+/g);
             this.configurationLength = parseInt(lines[0].split(" ")[0]);
             lines = lines.slice(1); // discard the header as we have the info now

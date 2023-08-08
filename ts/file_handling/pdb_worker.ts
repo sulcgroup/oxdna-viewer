@@ -1019,6 +1019,7 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
             }
 
         } else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
+            RNA_MODE = (nstrand.strandtype == 'rna');
             let currentStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand();
             let strandInfo = [];
             let tmptype = nstrand.strandtype;

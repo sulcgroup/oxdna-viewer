@@ -294,8 +294,18 @@ function updateColoring(mode) {
     else if (lut && mode !== 'Custom') {
         api.removeColorbar();
     }
-    elements.forEach(e => e.updateColor());
+    systems.forEach(s => {
+        try {
+            s.getMonomers().forEach(e => {
+                e.updateColor();
+            });
+        }
+        catch (TypeError) {
+            console.log(Error().stack);
+        }
+    });
     systems.forEach(s => s.callUpdates(['instanceColor']));
+    //systems[systems.length - 1].callUpdates(['instanceColor']);
     if (tmpSystems.length > 0) {
         tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
     }
@@ -367,9 +377,6 @@ function setBackgroundColor() {
     document.getElementById('threeCanvas').style.background = color;
 }
 class ToggleGroup {
-    id;
-    doc;
-    onChange;
     constructor(id, doc, onChange) {
         this.id = id;
         this.doc = doc;
@@ -396,8 +403,6 @@ class ToggleGroup {
     }
 }
 class ToggleGroupWithDisable extends ToggleGroup {
-    lastActive;
-    disabled;
     constructor(id, doc, lastActive, disabled, onChange) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
@@ -424,26 +429,19 @@ class ToggleGroupWithDisable extends ToggleGroup {
     }
 }
 class View {
-    doc;
-    coloringMode;
-    centeringMode;
-    inboxingMode;
-    selectionMode;
-    transformMode;
-    centeringElements;
-    basepairMessage = "Locating basepairs, please be patient...";
-    vrEnabled = false;
-    backboneScale = 1;
-    nucleosideScale = 1;
-    connectorScale = 1;
-    bbconnectorScale = 1;
     constructor(doc) {
+        this.basepairMessage = "Locating basepairs, please be patient...";
+        this.vrEnabled = false;
+        this.backboneScale = 1;
+        this.nucleosideScale = 1;
+        this.connectorScale = 1;
+        this.bbconnectorScale = 1;
         this.doc = doc;
         // Initialise toggle groups
         this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring(); });
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
-        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        // this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g) => {
             // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
@@ -716,7 +714,8 @@ class View {
         document.getElementById('hoverInfo').hidden = true;
     }
     selectPairs() {
-        return this.doc.getElementById("selectPairs").checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return this.doc.getElementById("selectPairs").classList.contains("active");
     }
     updateImageResolutionText() {
         // Utility function to display the image resolution for saving canvas images
@@ -745,7 +744,7 @@ class View {
                 var url = URL.createObjectURL(blob);
                 a.href = url;
                 a.download = 'canvas.png';
-                a.click();
+                setTimeout(() => a.click(), 10);
             }, 'image/png', 1.0);
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
@@ -755,7 +754,7 @@ class View {
                     var url = URL.createObjectURL(blob);
                     a.href = url;
                     a.download = 'colorbar.png';
-                    a.click();
+                    setTimeout(() => a.click(), 20);
                 }, 'image/png', 1.0);
             }
         }
@@ -905,24 +904,6 @@ class View {
 let view = new View(document);
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
-    title;
-    xaxislabel;
-    yaxislabel;
-    data;
-    fluxWindowOpen;
-    type;
-    temp;
-    chart; // chartjs main chart object
-    units;
-    colors;
-    colorarr; // just stores colors for the graph
-    charttype;
-    chartdata;
-    chartoptions;
-    chartconfig; // Controls all the settings for the graph, made up of the chartdata and chartoptions variables, see chartjs for more info
-    datasetCount; // how many datasets are currently displayed on the graph
-    gids; // stores graph data indices of the datasets in global graphDatasets currently displayed on the graph
-    currentindexinfo; // stores indexing information to generate rmsf datasets, mass discretization outputs here
     constructor(type, units) {
         this.title = 'Flux Chart';
         this.xaxislabel = 'Particle ID';

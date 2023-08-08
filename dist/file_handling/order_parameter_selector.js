@@ -54,15 +54,14 @@ let loadHyperSelector = () => {
                 duration: 0 // general animation time
             },
             hover: {
-                animationDuration: 0, // duration of animations when hovering an item
-                // mode:"dataset", // it is possible to remove the line view from the plot 
-                // intersect:true  // on hover, but i find it to distracting 
+                animationDuration: 0,
             },
             responsiveAnimationDuration: 0,
             scales: {
                 xAxes: [{ display: true, scaleLabel: { display: true, labelString: 'Time' }, gridLines: { drawOnChartArea: false } }],
                 yAxes: [{ display: true, gridLines: { drawOnChartArea: false } }],
             },
+            spanGaps: true,
             annotation: {
                 events: ["click"],
                 annotations: [
@@ -82,14 +81,14 @@ let loadHyperSelector = () => {
     });
 };
 class ChartColorMap {
-    colors = [
-        'rgba(253,210,145,200)',
-        'rgba(255,179,34,200)',
-        'rgba(67,112,146 ,200)',
-        'rgba(110,164,204,200)',
-    ];
-    i = 0;
     constructor() {
+        this.colors = [
+            'rgba(253,210,145,200)',
+            'rgba(255,179,34,200)',
+            'rgba(67,112,146 ,200)',
+            'rgba(110,164,204,200)',
+        ];
+        this.i = 0;
     }
     get() {
         this.i++;
@@ -151,7 +150,7 @@ let handleParameterDrop = (files) => {
             for (let parameter_name in parameters) {
                 let data = [];
                 trajReader.lookupReader.position_lookup.forEach((p, i) => {
-                    data.push(parameters[parameter_name][i]);
+                    data.push({ x: i, y: parameters[parameter_name][i] });
                 });
                 if (myChart.data.datasets.length == 0) {
                     myChart.data = {

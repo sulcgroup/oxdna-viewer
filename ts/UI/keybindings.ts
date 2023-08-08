@@ -8,7 +8,9 @@ canvas.addEventListener("keydown", event =>{
 
         //show/hide menu
         case 'm' :  let menu = document.getElementById('menu');
+                    let floatingMenu = document.getElementById('floatingMenu');
                     menu.hidden=!menu.hidden;
+                    floatingMenu.hidden=!floatingMenu.hidden;
                     break;
                     
         // Mapping the next and prev to the arrow keys
@@ -109,7 +111,7 @@ canvas.addEventListener("keydown", event =>{
             }
 
             // Toggle selection:
-            view.selectionMode.toggle();
+            // view.selectionMode.toggle();
 
             break;
 

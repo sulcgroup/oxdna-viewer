@@ -9,7 +9,9 @@ canvas.addEventListener("keydown", event => {
         //show/hide menu
         case 'm':
             let menu = document.getElementById('menu');
+            let floatingMenu = document.getElementById('floatingMenu');
             menu.hidden = !menu.hidden;
+            floatingMenu.hidden = !floatingMenu.hidden;
             break;
         // Mapping the next and prev to the arrow keys
         case 'arrowright':
@@ -139,7 +141,7 @@ canvas.addEventListener("keydown", event => {
                 break;
             }
             // Toggle selection:
-            view.selectionMode.toggle();
+            // view.selectionMode.toggle();
             break;
         // Toggle dragging:
         case 'd':

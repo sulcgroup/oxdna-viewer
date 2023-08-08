@@ -91,7 +91,7 @@ function importFiles(files) {
     }
 }
 // Creates color overlays
-function makeLut(data, key) {
+function makeLut(data, key, system) {
     let arr = data[key];
     let min = arr[0], max = arr[0];
     for (let i = 0; i < arr.length; i++) {
@@ -116,12 +116,9 @@ function makeLut(data, key) {
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
     lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
     //update every system's color map
-    for (let i = 0; i < systems.length; i++) {
-        const system = systems[i];
-        const end = system.systemLength();
-        for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-            system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(systems[i].globalStartId + j).sid]));
-        }
+    const end = system.systemLength();
+    for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+        system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
     }
 }
 // define the drag and drop behavior of the scene
@@ -163,6 +160,10 @@ function handleFiles(files) {
         // oxview files had better be dropped alone because that's all that's loading.
         if (ext === "oxview") {
             readOxViewJsonFile(files[i]);
+            return;
+        }
+        else if (ext === "cam") {
+            readCamFile(files[i]);
             return;
         }
         else if (ext == "js") {
@@ -239,11 +240,43 @@ function handleFiles(files) {
     // same dirty logic as the event fix 
     // we ensure this way that the script is not handeled 2ce
     handledScript = false;
+    // set list of auxiliary files for the readAuxiliaryFiles function
+    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile);
     //read a topology/configuration pair and whatever else
     readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile);
     render();
     return;
 }
+// auxiliary files array for readAuxiliaryFiles function
+let auxiliaryFiles = {};
+function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile) {
+    auxiliaryFiles.topFile = topFile;
+    auxiliaryFiles.datFile = datFile;
+    auxiliaryFiles.jsonFile = jsonFile;
+    auxiliaryFiles.trapFile = trapFile;
+    auxiliaryFiles.hbFile = hbFile;
+    auxiliaryFiles.massFile = massFile;
+    auxiliaryFiles.parFile = parFile;
+}
+const exportCam = () => {
+    const cam = {
+        position: camera.position,
+        rotation: camera.rotation,
+        up: camera.up,
+        target: controls.target,
+    };
+    const camJSON = JSON.stringify(cam);
+    makeTextFile("camera.cam", camJSON);
+};
+const readCamFile = (file) => {
+    file.text().then(txt => {
+        const cam = JSON.parse(txt);
+        camera.position.set(cam.position.x, cam.position.y, cam.position.z);
+        camera.rotation.set(cam.rotation.x, cam.rotation.y, cam.rotation.z);
+        camera.up.set(cam.up.x, cam.up.y, cam.up.z);
+        controls.target.set(cam.target.x, cam.target.y, cam.target.z);
+    });
+};
 const handleCSV = (file) => {
     // highlight all the sequences complying with the cadnano file
     // or a line by line sequence file 
@@ -311,7 +344,8 @@ function readMGL(file) {
         box.set(x, y, z);
         //lines = lines.slice(0,1);
         lines.forEach(str => {
-            if (str) {
+            let t_flag = false; // to keep track of transparancy
+            if (str && !str.includes("I")) {
                 let line = str.split(" ");
                 // setup the size of the particles
                 const MGL_D = parseFloat(line[4]) * MGL_SCALE;
@@ -331,6 +365,11 @@ function readMGL(file) {
                 // main particle
                 const geometry = new THREE.SphereGeometry(MGL_D, 10, 10);
                 const material = new THREE.MeshPhongMaterial({ color: color_value });
+                if (color === "magenta") {
+                    material.transparent = true;
+                    material.opacity = 0.5;
+                    t_flag = true;
+                }
                 const sphere = new THREE.Mesh(geometry, material);
                 sphere.position.set(xpos, ypos, zpos);
                 scene.add(sphere);
@@ -355,6 +394,10 @@ function readMGL(file) {
                             color_value = new THREE.Color(patch_color);
                         }
                         const material = new THREE.MeshPhongMaterial({ color: color_value });
+                        if (t_flag) {
+                            material.transparent = true;
+                            material.opacity = 0.5;
+                        }
                         const cylinder = cylinderMesh(new THREE.Vector3(xpos, ypos, zpos), new THREE.Vector3(xpos + patch_x, ypos + patch_y, zpos + patch_z), patch_size, material);
                         scene.add(cylinder);
                     }
@@ -558,7 +601,12 @@ function readFilesFromURLParams() {
     const url = new URL(window.location.href);
     types.forEach(t => {
         if (url.searchParams.get(t)) {
-            paths.push(...url.searchParams.getAll(t));
+            if (t == 'pdb') {
+                paths.push(...url.searchParams.getAll(t).map(pdbID => `https://files.rcsb.org/download/${pdbID}.pdb`));
+            }
+            else {
+                paths.push(...url.searchParams.getAll(t));
+            }
         }
     });
     if (paths.length > 0) {
@@ -568,6 +616,8 @@ function readFilesFromURLParams() {
 var trajReader;
 let initFileReading = true; // dirty hack to keep the event handling in check 
 let handledScript = false;
+// addEventListener is outside function so multiple EventListeners aren't created, which bugs the function
+document.addEventListener('setupComplete', readAuxiliaryFiles);
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
 function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile) {
     if (initFileReading) {
@@ -575,7 +625,7 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
         // Figure out if any other places have the bug of adding N event handlers ...
         //setupComplete fires when indexing arrays are finished being set up
         //prevents async issues with par and overlay files
-        document.addEventListener('setupComplete', readAuxiliaryFiles);
+        //document.addEventListener('setupComplete', readAuxiliaryFiles);
         document.addEventListener('setupComplete', () => {
             if (scriptFile && !handledScript) {
                 readScriptFile(scriptFile);
@@ -651,53 +701,73 @@ function readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFi
     if (scriptFile && !handledScript) {
         readScriptFile(scriptFile);
     }
-    function readAuxiliaryFiles() {
-        if (jsonFile) {
-            const jsonReader = new FileReader(); //read .json
-            jsonReader.onload = () => {
-                readJson(systems[systems.length - 1], jsonReader);
-            };
-            jsonReader.readAsText(jsonFile);
-        }
-        if (trapFile) {
-            const trapReader = new FileReader(); //read .trap file
-            trapReader.onload = () => {
-                readTrap(systems[systems.length - 1], trapReader);
-            };
-            trapReader.readAsText(trapFile);
-        }
-        if (parFile) {
-            let parReader = new FileReader();
-            parReader.onload = () => {
-                readParFile(systems[systems.length - 1], parReader);
-            };
-            parReader.readAsText(parFile);
-        }
-        if (datFile && !topFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                updateConfFromFile(r.result);
-            };
-            r.readAsText(datFile);
-        }
-        if (hbFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                readHBondFile(hbFile);
-            };
-            r.readAsText(hbFile);
-        }
-        if (massFile) {
-            const r = new FileReader();
-            r.onload = () => {
-                readMassFile(r);
-            };
-            r.readAsText(massFile);
-        }
-        //document.removeEventListener('setupComplete', readAuxiliaryFiles, false);
-    }
     render();
     return;
+}
+function readAuxiliaryFiles() {
+    // This is super haunted
+    // up to this point, jsonFile was either undeclared or declared and undefined
+    // Suddenly, here, it's defined as the existing old file.
+    const topFile = auxiliaryFiles.topFile;
+    const datFile = auxiliaryFiles.datFile;
+    const jsonFile = auxiliaryFiles.jsonFile;
+    const trapFile = auxiliaryFiles.trapFile;
+    const parFile = auxiliaryFiles.parFile;
+    const hbFile = auxiliaryFiles.hbFile;
+    const massFile = auxiliaryFiles.massFile;
+    // if .top, .dat, and .json file are dragged on, the json file is only read on the new system
+    if (jsonFile && topFile && datFile) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            readJson(systems[systems.length - 1], jsonReader);
+        };
+        jsonReader.readAsText(jsonFile);
+    }
+    else if (jsonFile) {
+        const jsonReader = new FileReader(); //read .json
+        jsonReader.onload = () => {
+            systems.forEach((system) => {
+                readJson(system, jsonReader);
+            });
+        };
+        jsonReader.readAsText(jsonFile);
+    }
+    if (trapFile) {
+        const trapReader = new FileReader(); //read .trap file
+        trapReader.onload = () => {
+            readTrap(systems[systems.length - 1], trapReader);
+        };
+        trapReader.readAsText(trapFile);
+    }
+    if (parFile) {
+        let parReader = new FileReader();
+        parReader.onload = () => {
+            readParFile(systems[systems.length - 1], parReader);
+        };
+        parReader.readAsText(parFile);
+    }
+    if (datFile && !topFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            updateConfFromFile(r.result);
+        };
+        r.readAsText(datFile);
+    }
+    if (hbFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            readHBondFile(hbFile);
+        };
+        r.readAsText(hbFile);
+    }
+    if (massFile) {
+        const r = new FileReader();
+        r.onload = () => {
+            readMassFile(r);
+        };
+        r.readAsText(massFile);
+    }
+    //document.removeEventListener('setupComplete', readAuxiliaryFiles);
 }
 function updateConfFromFile(dat_file) {
     let lines = dat_file.split("\n");
@@ -724,7 +794,7 @@ function readJson(system, jsonReader) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
-                makeLut(data, key);
+                makeLut(data, key, system);
                 view.coloringMode.set("Overlay");
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
@@ -1378,6 +1448,7 @@ function readPdbFile(file) {
                             }
                         }
                         else if (['dna', 'rna'].includes(strandID[i])) { //DNA or RNA
+                            RNA_MODE = ['rna'].includes(strandID[i]);
                             let currentstrand = sys.addNewNucleicAcidStrand();
                             for (let j = 0; j < pdbtemp[0][i].length; j++) {
                                 let nc = currentstrand.createBasicElementTyped(strandID[i], id);

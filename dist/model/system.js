@@ -4,52 +4,16 @@
  * Data arrays are constant sized, so new particles added to the scene must be initialized in their own system.
  */
 class System {
-    id;
-    globalStartId; //1st nucleotide's id
-    datFile;
-    colormapFile;
-    lutCols;
-    strands = [];
-    label;
-    instanceParams = new Map([
-        ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-        ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
-        ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-        ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
-        ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
-    ]);
-    //the system contains all the data from a dat file in its instancing arrays
-    //the system also owns the actual meshes that get sent to the scene.
-    INSTANCES;
-    bbOffsets;
-    bbRotation;
-    nsOffsets;
-    nsRotation;
-    conOffsets;
-    conRotation;
-    bbconOffsets;
-    bbconRotation;
-    bbconScales;
-    cmOffsets;
-    bbColors;
-    nsColors;
-    scales;
-    nsScales;
-    conScales;
-    visibility;
-    bbLabels;
-    backboneGeometry;
-    nucleosideGeometry;
-    connectorGeometry;
-    spGeometry;
-    pickingGeometry;
-    backbone;
-    nucleoside;
-    connector;
-    bbconnector;
-    dummyBackbone;
-    checkedForBasepairs = false;
     constructor(id, startID) {
+        this.strands = [];
+        this.instanceParams = new Map([
+            ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
+            ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+            ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
+            ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+            ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
+        ]);
+        this.checkedForBasepairs = false;
         this.id = id;
         this.globalStartId = startID;
         this.lutCols = [];
@@ -152,26 +116,20 @@ class System {
             id--;
         return id;
     }
-    createStrand(strID) {
-        if (strID < 0)
-            return new Peptide(strID, this);
-        else
-            return new NucleicAcidStrand(strID, this);
-    }
-    ;
     createStrandTyped(strID, base) {
         if (strID < 0)
             if (base.includes('gs'))
-                return new Generic(strID, this);
+                return this.addNewGenericSphereStrand();
             else
-                return new Peptide(strID, this);
+                return this.addNewPeptideStrand();
         else
-            return new NucleicAcidStrand(strID, this);
+            return this.addNewNucleicAcidStrand();
     }
     ;
     addNewNucleicAcidStrand() {
         let id = this.getNextNucleicAcidStrandID();
         let strand = new NucleicAcidStrand(id, this);
+        strand.kwdata['type'] = RNA_MODE ? 'RNA' : 'DNA';
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -179,6 +137,7 @@ class System {
     addNewPeptideStrand() {
         let id = this.getNextPeptideStrandID();
         let strand = new Peptide(id, this);
+        strand.kwdata['type'] = 'peptide';
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -186,6 +145,7 @@ class System {
     addNewGenericSphereStrand() {
         let id = this.getNextGenericSphereStrandID();
         let strand = new Generic(id, this);
+        strand.kwdata['type'] = 'generic';
         strand.system = this;
         this.strands.push(strand);
         return strand;
@@ -286,23 +246,12 @@ class System {
 }
 ;
 class PatchySystem extends System {
-    patchyGeometries;
-    patchyMeshes;
-    pickingMeshes;
-    offsets;
-    rotations;
-    colors;
-    scalings;
-    visibilities;
-    labels;
-    instanceParams = new Map([
-        ['offsets', 3], ['rotations', 4], ['colors', 3],
-        ['scalings', 3], ['visibilities', 3], ['labels', 3]
-    ]);
-    particles;
-    species;
     constructor(id, particleFile, patchFile, loroPatchFiles, callback) {
         super(id, 0);
+        this.instanceParams = new Map([
+            ['offsets', 3], ['rotations', 4], ['colors', 3],
+            ['scalings', 3], ['visibilities', 3], ['labels', 3]
+        ]);
         this.id = id;
         this.particles = [];
         if (patchFile) {
@@ -356,7 +305,7 @@ class PatchySystem extends System {
                     return {
                         'position': pos,
                         'a1': pos.clone().normalize(),
-                        'a2': pos.clone().normalize(), // No actual orientation available
+                        'a2': pos.clone().normalize(),
                     };
                 })
             };

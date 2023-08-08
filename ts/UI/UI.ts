@@ -302,8 +302,17 @@ function updateColoring(mode?: string) {
         api.removeColorbar();
     }
 
-    elements.forEach(e => e.updateColor());
+    systems.forEach(s => {
+        try {
+            s.getMonomers().forEach(e => {
+                e.updateColor()
+            });
+        } catch (TypeError) {
+            console.log(Error().stack);
+        }
+    });
     systems.forEach(s => s.callUpdates(['instanceColor']));
+    //systems[systems.length - 1].callUpdates(['instanceColor']);
 
     if (tmpSystems.length > 0) {
         tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
@@ -453,7 +462,7 @@ class View {
     coloringMode: ToggleGroup;
     centeringMode: ToggleGroupWithDisable;
     inboxingMode: ToggleGroupWithDisable;
-    selectionMode: ToggleGroupWithDisable;
+    // selectionMode: ToggleGroupWithDisable;
     transformMode: ToggleGroupWithDisable;
 
     centeringElements: BasicElement[];
@@ -472,7 +481,7 @@ class View {
         this.coloringMode = new ToggleGroup('coloringMode', doc, ()=>{updateColoring()});
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
-        this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
+        // this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
         this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
         // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
@@ -745,7 +754,8 @@ class View {
     }
 
     public selectPairs(): boolean {
-        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        //return (<HTMLInputElement>this.doc.getElementById("selectPairs")).checked;
+        return (<HTMLInputElement>this.doc.getElementById("selectPairs")).classList.contains("active");
     }
 
     public updateImageResolutionText() {
@@ -773,12 +783,12 @@ class View {
             scaleFactor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
         }
         function saveImage() {
-            canvas.toBlob(function(blob){
+            canvas.toBlob(function(blob) {
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
                 a.download = 'canvas.png';
-                a.click();
+                setTimeout(() => a.click(), 10);
             }, 'image/png', 1.0);
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
@@ -788,7 +798,7 @@ class View {
                     var url = URL.createObjectURL(blob);
                     a.href = url;
                     a.download = 'colorbar.png';
-                    a.click();
+                    setTimeout(() => a.click(), 20);
                 }, 'image/png', 1.0);
             }
         }
