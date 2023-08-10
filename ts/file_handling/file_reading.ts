@@ -340,120 +340,165 @@ const handleCSV = (file:File)=>{
     });
 }
 
-const cylinderMesh = function (pointX, pointY, r, material) {
-    // https://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
-    // edge from X to Y
-    var direction = new THREE.Vector3().subVectors(pointY, pointX);
-    // Make the geometry (of "direction" length)
-    var geometry = new THREE.CylinderGeometry(r, 0, direction.length(), 10, 4);
-    // shift it so one end rests on the origin
-    geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
-    // rotate it the right way for lookAt to work
-    geometry.applyMatrix(new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(90)));
-    // Make a mesh with the geometry
-    var mesh = new THREE.Mesh(geometry, material);
-    // Position it where we want
-    mesh.position.copy(pointX);
-    // And make it point to where we want
-    mesh.lookAt(pointY);
-    return mesh;
- }
-
-
-
 const MGL_SCALE = 1;
-function readMGL(file:File){
+function readMGL(file:File) {
+	// utility function to parse colors in MGL format
+	function materialFromMGLColor(color: string, opacity: number = 1.0) {
+		if(color === "magenta") {
+            opacity = 0.5;
+        }
+		
+		let color_value: THREE.Color;
+		if(color.indexOf(",") > -1) {
+	        //we have a an rgb color definition
+	        let rgb = color.split(",").map(s => parseFloat(s));
+	        if(rgb.length > 3) {
+				opacity = rgb[3];
+			}
+	        
+	        color_value = new THREE.Color(rgb[0], rgb[1], rgb[2]);
+	    }
+	    else  {
+	        color_value = new THREE.Color(color);
+	    }
+	    
+        const material = new THREE.MeshPhongMaterial( {color: color_value} );
+        if(opacity < 1.0) {
+	        material.transparent = true;
+	        material.opacity = opacity;
+	    }
+        
+        return material;
+	}
+	
+	// utility function to generate a cylindrical or conical mesh
+	function cylinderMesh(pos_bottom: THREE.Vector3, pos_top: THREE.Vector3, r_bottom: number, r_top: number, material: THREE.Material) {
+	    // https://stackoverflow.com/questions/15316127/three-js-line-vector-to-cylinder
+	    // edge from X to Y
+	    var direction = new THREE.Vector3().subVectors(pos_top, pos_bottom);
+	    // Make the geometry (of "direction" length)
+	    var geometry = new THREE.CylinderGeometry(r_top, r_bottom, direction.length(), 10, 4);
+	    // shift it so one end rests on the origin
+	    geometry.applyMatrix(new THREE.Matrix4().makeTranslation(0, direction.length() / 2, 0));
+	    // rotate it the right way for lookAt to work
+	    geometry.applyMatrix(new THREE.Matrix4().makeRotationX(THREE.Math.degToRad(90)));
+	    // Make a mesh with the geometry
+	    var mesh = new THREE.Mesh(geometry, material);
+	    // Position it where we want
+	    mesh.position.copy(pos_bottom);
+	    // And make it point to where we want
+	    mesh.lookAt(pos_top);
+	    return mesh;
+	}
+	
     let reader = new FileReader();
     reader.onload = (e) => {
-        let lines =   (e.target.result as string).split(/[\n]+/g);
-        // parsing the header
-        let header = lines[0].split(":")[1].split(",");
-        let x = parseFloat(header[0]) * MGL_SCALE;
-        let y = parseFloat(header[1]) * MGL_SCALE;
-        let z = parseFloat(header[2]) * MGL_SCALE;
-        lines = lines.slice(1); // discard the header
+        let lines = (e.target.result as string).split(/[\n]+/g);
+        // parse the on-line header
+        let box_header = lines[0].split(":")[1].split(",");
+        
+        // the box can be specified as .Box:X,Y,Z or .Vol:V
+        let x: number, y: number, z: number
+        if(box_header.length == 1) {
+			x = y = z = parseFloat(box_header[0])**0.33 * MGL_SCALE;
+		}
+		else if(box_header.length == 3) {
+			[x, y, z] = box_header.slice(0, 3).map(side => parseFloat(side) * MGL_SCALE);
+		}
+		else {
+			notify(`The first line of an mgl file should be either '.Box:X,Y,Z' or '.Vol:V', with X, Y, Z and V numbers`);
+		}
+        lines = lines.slice(1); // discard the header line
        
-        // modify box 
+        // modify the box 
         box.set(x,y,z);
-        //lines = lines.slice(0,1);
-        lines.forEach(str =>{
-            let t_flag = false; // to keep track of transparancy
-            if (str && !str.includes("I")){
-                let line = str.split(" ");
-                // setup the size of the particles
-                const MGL_D =  parseFloat(line[4]) * MGL_SCALE;
-                
-                let xpos = (parseFloat(line[0]))*MGL_SCALE;
-                let ypos = (parseFloat(line[1]))*MGL_SCALE;
-                let zpos = (parseFloat(line[2]))*MGL_SCALE;
-                let color = line[5].slice(2).slice(0,-1);
-                let color_value:THREE.Color;
-                if(color.indexOf(",")>-1){
-                    //we have a an rgb color definition
-                    let rgb = color.split(",").map(s => parseFloat(s));
-                    color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
-                }
-                else{
-                    color_value = new THREE.Color(color);
-                }
-
-                // main particle
-                const geometry = new THREE.SphereGeometry( MGL_D, 10, 10 );
-                const material = new THREE.MeshPhongMaterial( {color: color_value} );
-                if(color === "magenta"){
-                    material.transparent = true;
-                    material.opacity = 0.5;
-                    t_flag = true;
-                }
-                const sphere = new THREE.Mesh( geometry, material );
-                sphere.position.set(xpos,ypos,zpos);
-                scene.add( sphere );
-                // now let's figure out the bonds
-                let patch_pos = str.indexOf("M");
-                let patches_str = str.slice(patch_pos + 1).split("]").slice(0,-1);
-                patches_str.forEach(patch_str=>{  
-                    if (patch_str){  
-                    let patch_info  = patch_str.split(" ");
-                    patch_info = patch_info.slice(1);
-
-                    let patch_x     = parseFloat(patch_info[0]) * MGL_SCALE;                  
-                    let patch_y     = parseFloat(patch_info[1]) * MGL_SCALE;
-                    let patch_z     = parseFloat(patch_info[2]) * MGL_SCALE; 
-                    let patch_size  = parseFloat(patch_info[3]) * MGL_SCALE;
-
-                    let patch_color = patch_info[4].slice(2);
-
-                    if(patch_color.indexOf(",")>-1){
-                        //we have a an rgb color definition
-                        let rgb = patch_color.split(",").map(s => parseFloat(s));
-                        color_value = new THREE.Color(rgb[0],rgb[1],rgb[2]);
-                    }
-                    else{
-                        color_value = new THREE.Color(patch_color);
-                    }
-
-
-                    const material = new THREE.MeshPhongMaterial( {color: color_value} );
-                    if(t_flag){
-                        material.transparent = true;
-                        material.opacity = 0.5;
-                    }
-                    const cylinder = cylinderMesh(
-                        new THREE.Vector3(xpos, ypos,zpos),
-                        new THREE.Vector3(xpos + patch_x,ypos + patch_y,zpos + patch_z),
-                        patch_size,
-                        material
-                    );
-                    scene.add(cylinder);
-                    }     
-                });
-            }
+        
+        lines.forEach(str => {
+			// in cogli shapes can be grouped in a single object by using "G" delimiters. Here we treat each shape 
+			// as a different object, so we split lines if we find G's
+			str.split("G").forEach(substr => {
+				substr = substr.trim();
+				if(substr) {
+	                let line = substr.split(" ");
+	                // setup the size of the particles
+	                const radius =  parseFloat(line[4]) * MGL_SCALE;
+	                
+	                let [xpos, ypos, zpos] : number[] = line.slice(0, 3).map(coord => parseFloat(coord) * MGL_SCALE); 
+	                let color = line[5].slice(2).slice(0,-1);
+	                let material = materialFromMGLColor(color);
+	                
+	                let key = "S"; //  which object do we need to build? The default is a sphere
+	                if(line.length > 6) {
+						key = line[6];
+					}
+	
+					switch(key) {
+						// a simple sphere
+						case 'S': {
+							const geometry = new THREE.SphereGeometry( radius, 10, 10 );
+			                const sphere = new THREE.Mesh( geometry, material );
+			                sphere.position.set(xpos,ypos,zpos);
+			                scene.add(sphere);
+							break;
+						}
+						// a patchy particle
+						case 'M': {
+							const geometry = new THREE.SphereGeometry( radius, 10, 10 );
+							const sphere = new THREE.Mesh( geometry, material );
+							sphere.position.set(xpos,ypos,zpos);
+							scene.add(sphere);
+							// now let's figure out the bonds
+							let patch_pos = str.indexOf("M");
+							let patches_str = str.slice(patch_pos + 1).split("]").slice(0,-1);
+							patches_str.forEach(patch_str=>{  
+							    if(patch_str) {
+								    let patch_info  = patch_str.split(" ");
+								    patch_info = patch_info.slice(1);
+								    
+								    let [patch_x, patch_y, patch_z] : number[] = patch_info.slice(0, 3).map(coord => parseFloat(coord) * MGL_SCALE); 
+								    let patch_size  = parseFloat(patch_info[3]) * MGL_SCALE;
+								
+								    let patch_color = patch_info[4].slice(2);
+								    let patch_material = materialFromMGLColor(patch_color, material.opacity);
+								
+								    const cylinder = cylinderMesh(
+								        new THREE.Vector3(xpos, ypos,zpos),
+								        new THREE.Vector3(xpos + patch_x,ypos + patch_y,zpos + patch_z),
+								        0,
+								        patch_size,
+								        patch_material
+								    );
+								    scene.add(cylinder);
+							    }     
+							});
+							break;
+						}
+						// a cylinder
+						case 'C': {
+							let [axis_x, axis_y, axis_z] : number[] = line.slice(7, 10).map(coord => parseFloat(coord) * MGL_SCALE); 
+					        
+					        const cylinder = cylinderMesh(
+						        new THREE.Vector3(xpos, ypos,zpos),
+						        new THREE.Vector3(xpos + axis_x, ypos + axis_y, zpos + axis_z),
+						        radius,
+						        radius,
+						        material
+						    );
+						    scene.add(cylinder);
+					        
+							break
+						}
+						default:
+							notify(`mgl object '${key}' not supported yet`);
+	                		break;
+					}
+	            }
+			});
         });
+        render();
     };
     reader.readAsText(file);
 }
-
-
 
 //parse a trap file
 function readTrap(system, trapReader) {
