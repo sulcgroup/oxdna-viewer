@@ -488,6 +488,60 @@ function readMGL(file:File) {
 					        
 							break
 						}
+						// a dipolar sphere (i.e. a sphere with an embedded dipole)
+						case 'D': {
+							// opaque colours don't make sense here
+							if(material.opacity == 1.0) {
+								material.transparent = true;
+								material.opacity = 0.5;
+							}
+							
+							const geometry = new THREE.SphereGeometry( radius, 10, 10 );
+							const sphere = new THREE.Mesh( geometry, material );
+							sphere.position.set(xpos,ypos,zpos);
+							scene.add(sphere);
+							
+							let arrow_material = materialFromMGLColor("black");
+							let [dip_x, dip_y, dip_z] : number[] = line.slice(7, 10).map(coord => parseFloat(coord) * MGL_SCALE);
+							
+							let dip_length: number = Math.sqrt(dip_x**2 + dip_y**2 + dip_z**2);
+							let cyl_radius: number = radius * 0.2;
+							let arrow_length: number = dip_length * 0.8;
+							let cyl_length: number = arrow_length * 0.6;
+							
+							let cyl_x: number = xpos - 0.5 * arrow_length * dip_x / dip_length;
+							let cyl_y: number = ypos - 0.5 * arrow_length * dip_y / dip_length;
+							let cyl_z: number = zpos - 0.5 * arrow_length * dip_z / dip_length;
+
+							let cone_radius: number = cyl_radius * 2;
+							let cone_length: number = arrow_length * 0.4;
+							let cone_x: number = cyl_x + cyl_length * dip_x / dip_length;
+							let cone_y: number = cyl_y + cyl_length * dip_y / dip_length;
+							let cone_z: number = cyl_z + cyl_length * dip_z / dip_length;
+							
+							const cylinder = cylinderMesh(
+						        new THREE.Vector3(cyl_x, cyl_y, cyl_z),
+						        new THREE.Vector3(cone_x, cone_y, cone_z),
+						        cyl_radius,
+						        cyl_radius,
+						        arrow_material
+						    );
+						    scene.add(cylinder);
+						    
+							const cone = cylinderMesh(
+						        new THREE.Vector3(cone_x, cone_y, cone_z),
+						        new THREE.Vector3(
+									cone_x + dip_x * cone_length / dip_length,
+									cone_y + dip_y * cone_length / dip_length,
+									cone_z + dip_z * cone_length / dip_length
+						        ),
+						        cone_radius,
+						        0,
+						        arrow_material
+						    );
+						    scene.add(cone);
+						    break;
+						}
 						default:
 							notify(`mgl object '${key}' not supported yet`);
 	                		break;
