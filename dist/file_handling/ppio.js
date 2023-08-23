@@ -1,10 +1,17 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 class PatchyTopReader extends FileReader {
+    topFile = null;
+    system;
+    elems;
+    sidCounter = 0;
+    nucLocalID = 0;
+    lastStrand; //strands are 1-indexed in oxDNA .top files
+    n3;
+    callback;
+    configurationLength;
+    LORO;
     constructor(topFile, system, elems, callback) {
         super();
-        this.topFile = null;
-        this.sidCounter = 0;
-        this.nucLocalID = 0;
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
@@ -22,7 +29,7 @@ class PatchyTopReader extends FileReader {
             lines = lines.slice(1); // discard the header as we have the info now
             let speciesCounts = [];
             if (!this.LORO) {
-                lines[0].split(" ").forEach((t, i) => {
+                lines[0].trim().split(" ").forEach((t, i) => {
                     if (t) {
                         let sphere = new PatchyParticle(nucCount + i, this.system);
                         this.system.particles.push(sphere);
@@ -46,7 +53,7 @@ class PatchyTopReader extends FileReader {
                 lines.forEach((line, t) => {
                     console.log(line);
                     // Split on one or more spaces
-                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/ +/g);
+                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/\s+/g);
                     let pCount = parseInt(pCountStr);
                     for (let p = 0; p < pCount; p++) {
                         const id = idCounter++;

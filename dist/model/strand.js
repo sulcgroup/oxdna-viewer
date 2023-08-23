@@ -5,6 +5,13 @@
  * @param system - The strand's parent system
  */
 class Strand {
+    id; //system location
+    system;
+    pos;
+    label;
+    end3;
+    end5;
+    kwdata;
     constructor(id, system) {
         this.id = id;
         this.system = system;

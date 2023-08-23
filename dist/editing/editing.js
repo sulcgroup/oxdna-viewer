@@ -1,4 +1,15 @@
 class InstanceCopy {
+    type;
+    id;
+    clusterId;
+    n3id;
+    n5id;
+    bpid;
+    elemType;
+    system;
+    color;
+    instanceParams;
+    isPatchy;
     constructor(e) {
         this.instanceParams = e.getSystem().instanceParams;
         this.instanceParams.forEach((size, attr) => {

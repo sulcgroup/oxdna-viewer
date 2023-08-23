@@ -132,23 +132,19 @@ function redrawBox() {
     boxObj = drawBox(box, getCenteringGoal());
     boxObj.visible = visible;
 }
+function setArrowsVisibility(new_visibility) {
+    for (let name of ["x-axis", "y-axis", "z-axis"]) {
+        let arrowHelper = scene.getObjectByName(name);
+        arrowHelper.visible = new_visibility;
+    }
+}
 // Remove coordinate axes from scene.  Hooked to "Display Arrows" checkbox on sidebar.
 function toggleArrows(chkBox) {
     if (chkBox.checked) {
-        let arrowHelper = scene.getObjectByName("x-axis");
-        arrowHelper.visible = true;
-        arrowHelper = scene.getObjectByName("y-axis");
-        arrowHelper.visible = true;
-        arrowHelper = scene.getObjectByName("z-axis");
-        arrowHelper.visible = true;
+        setArrowsVisibility(true);
     }
     else { //if not checked, set all axes to invisible
-        let arrowHelper = scene.getObjectByName("x-axis");
-        arrowHelper.visible = false;
-        arrowHelper = scene.getObjectByName("y-axis");
-        arrowHelper.visible = false;
-        arrowHelper = scene.getObjectByName("z-axis");
-        arrowHelper.visible = false;
+        setArrowsVisibility(false);
     }
     render(); //update scene
 }
