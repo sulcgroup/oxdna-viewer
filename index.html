@@ -770,7 +770,7 @@
                 
                 <div class="tight group flex-column">
                     <div>
-                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
+                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex" title="Set also complementary bases">
                         <button class="ribbon-icon-button" onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">
                             <img src="img/ico/extend.svg">
                             <span class="caption"> Extend</span>
@@ -815,8 +815,23 @@
                         </button>
 
                     </div>
+                    <!--<input type="text" data-role="input" id="sequence" class="mb-1"
+                    data-append="
+                        <div class='box-row' style='width: 100%'>
+                            <span id='strandTypeSpan'><select class='select' id='newStrandType', style='width: 45px; text-align-last: center; font-size: 10pt'>
+                            <option value='DNA' selected='selected'>DNA</option>
+                            <option value='RNA'>RNA</option>
+                            </select></span>
+                            <span id='seqLen'>0</span>
+                        </div>"-->
                     <input type="text" data-role="input" id="sequence" class="mb-1"
-                        data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
+                        data-prepend="<span>Seq</span>"
+                        data-append="
+                            <select>
+                                <option value='DNA' selected='selected'>DNA</option>
+                                <option value='RNA'>RNA</option>
+                            <select>
+                            <span id='seqLen'>0</span>"
                         data-history="true" data-prevent-submit="true"
                         placeholder="Type a sequence here"
                         style="text-transform: uppercase;"
