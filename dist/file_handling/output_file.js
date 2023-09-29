@@ -1,35 +1,41 @@
 function makeOutputFiles() {
     let name = view.getInputValue("outputFilename");
+    // Determine which order to write the files in
+    // Old has backwards NA strands (3'-5') while new has 5'-3'
+    let useNew = view.getInputBool("topFormat");
+    // remove any gaps in the particle numbering
+    const [newElementIDs, newStrandIds, counts, gsSubtypes] = getNewIds(useNew);
+    // Create topology file
     let top = view.getInputBool("topDownload");
-    let reorganized, counts;
     if (top) {
-        let { a, b, c, file_name, file, gs } = makeTopFile(name);
-        reorganized = a;
-        counts = c;
-        // add timeout because if you try to download multiple files at the same time, the browser often misses the second one.
+        let { file_name, file } = makeTopFile(name, newElementIDs, newStrandIds, gsSubtypes, counts, useNew);
+        // add timeout because if you try to download multiple files at the same time, the browser often misses the later ones.
         setTimeout(() => makeTextFile(file_name, file), 10);
-        if (gs.masses.length > 0) { // check for generic sphere presence
-            makeMassFile(name + "_m.txt", reorganized, counts, gs);
-        }
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated", "warning");
         return;
     }
+    // Create configuration file
     let dat = view.getInputBool("datDownload");
     if (dat) {
-        let { file_name, file } = makeDatFile(name, reorganized);
+        let { file_name, file } = makeDatFile(name, newElementIDs);
+        setTimeout(() => makeTextFile(file_name, file), 20);
+    }
+    if (gsSubtypes.masses.length > 0) { // check for generic sphere presence
+        let file_name = name + "_m.txt";
+        let file = makeMassFile(newElementIDs, gsSubtypes);
         setTimeout(() => makeTextFile(file_name, file), 20);
     }
     if (networks.length > 0) {
-        let { file_name, file } = makeParFile(name, reorganized, counts);
+        let { file_name, file } = makeParFile(name, newElementIDs, counts);
         setTimeout(() => makeTextFile(file_name, file), 30);
     }
     let force_download = view.getInputBool("forceDownload");
     if (force_download) {
         if (forces.length > 0) {
             let file_name = name.concat('_force.txt');
-            let contents = forcesToString();
+            let contents = forcesToString(newElementIDs);
             setTimeout(() => makeTextFile(file_name, contents), 40);
         }
         else {
@@ -86,41 +92,37 @@ function make3dOutput() {
         notify(`Unknown file format: ${fileFormat}`, "alert");
     }
 }
-function getNewIds(oldFormat = true) {
-    //remove any gaps in the particle numbering
-    //have to rebuild the system to keep all proteins contiguous or else oxDNA will segfault
+// Not sure if I broke generic spheres, but as far as I know they're unused (Erik, Sept 2023)
+function getNewIds(useNew = false) {
+    // Particle numbering in oxDNA systems must be contiguous.
+    // All proteins must be listed either before or after all nucleic acids.
+    // This function creates a map which maps each BasicElement to its ID in the output.
     let peptides = [];
     let nas = [];
     let gstrands = [];
-    //figure out if there are any proteins in the system
+    // Partition strands by their molecule type 
     systems.forEach(system => {
-        system.strands.forEach(strand => {
-            if (strand.isPeptide()) {
-                peptides.push(strand);
-            }
-            else if (strand.isGS()) {
-                gstrands.push(strand);
-            }
-            else {
-                nas.push(strand);
-            }
-        });
+        peptides.push(...system.strands.filter((s) => s.isPeptide()));
+        gstrands.push(...system.strands.filter((s) => s.isGS()));
+        nas.push(...system.strands.filter((s) => s.isNucleicAcid()));
     });
+    // initialize our counters
     const newStrandIds = new Map();
-    const newElementIds = new Map();
+    const newElementIDs = new Map();
     let totNuc = 0;
     let totAA = 0;
-    let totNucleic = 0;
-    let totPeptide = 0;
-    let totGS = 0; // Generic Sphere for Coarse Grained DNA model
-    let totGStrand = 0;
+    let totGS = 0;
+    let totNucleic = nas.length;
+    let totPeptide = peptides.length;
+    let totGStrand = gstrands.length;
     let sidCounter = -1;
     let idCounter = 0;
+    // By convention, the file will start with peptide strands
+    // Peptides were never backwards, so we always iterate forward.
     peptides.forEach(strand => {
-        newStrandIds.set(strand, sidCounter--);
-        totPeptide += 1;
+        newStrandIds.set(strand, sidCounter--); // peptide strands use negative indexing.
         strand.forEach((e) => {
-            newElementIds.set(e, idCounter++);
+            newElementIDs.set(e, idCounter++);
             totAA++;
         });
     });
@@ -131,12 +133,13 @@ function getNewIds(oldFormat = true) {
         radii: [],
         subtype: -1
     };
+    // Next, generic sphere objects
+    // This has not been thorougly tested.
     gstrands.forEach(strand => {
         newStrandIds.set(strand, sidCounter--);
-        totGStrand += 1;
         strand.forEach((e) => {
             let f = e;
-            newElementIds.set(e, idCounter++);
+            newElementIDs.set(e, idCounter++);
             // Need to Assign "Subtypes" of each particle based of their masses, repeated masses are represented as the same particle1
             // resulting subtypes start from 0
             let ind = gsSubtypes.masses.indexOf(f.mass);
@@ -152,14 +155,14 @@ function getNewIds(oldFormat = true) {
             totGS++;
         });
     });
-    sidCounter = 1;
+    // Finally, nucleic acids
+    sidCounter = 1; // NA strands are positive-indexed.
     nas.forEach(strand => {
         newStrandIds.set(strand, sidCounter++);
-        totNucleic += 1;
         strand.forEach((e) => {
-            newElementIds.set(e, idCounter++);
+            newElementIDs.set(e, idCounter++);
             totNuc++;
-        }, oldFormat // Iterate in 3' to 5' direction, per oxDNA convention
+        }, !useNew //new = 5'-3'; old = 3'=5'
         );
     });
     const counts = {
@@ -174,13 +177,11 @@ function getNewIds(oldFormat = true) {
     if (counts.totParticles != elements.size) {
         notify(`Length of totNuc (${counts.totParticles}) is not equal to length of elements array (${elements.size})`);
     }
-    return [newElementIds, newStrandIds, counts, gsSubtypes];
+    return [newElementIDs, newStrandIds, counts, gsSubtypes];
 }
-function makeTopFile(name, useNew = undefined) {
+function makeTopFile(name, newElementIDs, newStrandIDs, gsSubtypes, counts, useNew = undefined) {
     function makeTopFileOld(name) {
         const top = []; // string of contents of .top file
-        // remove any gaps in the particle numbering
-        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds();
         let firstLine = [counts['totParticles'], counts['totStrands']];
         if (counts['totGS'] > 0) {
             // Add extra counts for protein/DNA/ cg DNA simulation
@@ -191,36 +192,36 @@ function makeTopFile(name, useNew = undefined) {
             firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic'].map(v => counts[v]));
         }
         top.push(firstLine.join(" "));
-        newElementIds.forEach((_id, e) => {
-            let n3 = e.n3 ? newElementIds.get(e.n3) : -1;
-            let n5 = e.n5 ? newElementIds.get(e.n5) : -1;
+        newElementIDs.forEach((_id, e) => {
+            let n3 = e.n3 ? newElementIDs.get(e.n3) : -1;
+            let n5 = e.n5 ? newElementIDs.get(e.n5) : -1;
             let cons = [];
             // Protein mode
             if (counts['totAA'] > 0 || counts['totGS'] > 0) {
                 if (e.isAminoAcid() || e.isGS()) {
                     for (let i = 0; i < e.connections.length; i++) {
                         let c = e.connections[i];
-                        if (newElementIds.get(c) > newElementIds.get(e) && newElementIds.get(c) != n5) {
-                            cons.push(newElementIds.get(c));
+                        if (newElementIDs.get(c) > newElementIDs.get(e) && newElementIDs.get(c) != n5) {
+                            cons.push(newElementIDs.get(c));
                         }
                     }
                 }
             }
             if (e.isGS()) {
-                top.push([newStrandIds.get(e.strand), "gs" + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
+                top.push([newStrandIDs.get(e.strand), "gs" + gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
             }
             else {
-                top.push([newStrandIds.get(e.strand), e.type, n3, n5, ...cons].join(' '));
+                top.push([newStrandIDs.get(e.strand), e.type, n3, n5, ...cons].join(' '));
             }
         });
         //this is absolute abuse of ES6 and I feel a little bad about it
-        return { a: newElementIds, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
+        return { a: newElementIDs, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
     }
     function makeTopFileNew(name) {
         const top = []; // string of contents of .top file
         let default_props = ['id', 'type', 'circular'];
         // remove any gaps in the particle numbering
-        let [newElementIds, newStrandIds, counts, gsSubtypes] = getNewIds(false);
+        let [newElementIDs, newStrandIds, counts, gsSubtypes] = getNewIds(false);
         let firstLine = [counts['totParticles'].toString(), counts['totStrands'].toString()];
         if (counts['totGS'] > 0) {
             // Add extra counts for protein/DNA/ cg DNA simulation
@@ -237,14 +238,12 @@ function makeTopFile(name, useNew = undefined) {
             top.push(line.join(" "));
         });
         top.push(''); // topology has to end in an empty line
-        return { a: newElementIds, b: firstLine, c: counts, file_name: name + ".top", file: top.join("\n"), gs: gsSubtypes };
+        return { file_name: name + ".top", file: top.join("\n") };
     }
-    // Determine which format to write and generate the file
-    useNew = (useNew === undefined ? useNew = view.getInputBool("topFormat") : useNew);
     let topOut = (useNew ? makeTopFileNew(name) : makeTopFileOld(name));
     return topOut;
 }
-function makeDatFile(name, altNumbering = undefined) {
+function makeDatFile(name, newElementIDs = undefined) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => {
@@ -259,8 +258,8 @@ function makeDatFile(name, altNumbering = undefined) {
         `E = 0 0 0\n`
     ].join('\n');
     // get coordinates for all elements, in the correct order
-    if (altNumbering) {
-        altNumbering.forEach((_id, e) => {
+    if (newElementIDs) {
+        newElementIDs.forEach((_id, e) => {
             dat += e.getDatFileOutput();
         });
     }
@@ -275,7 +274,7 @@ function makeDatFile(name, altNumbering = undefined) {
     }
     return { file_name: name + ".dat", file: dat }; //make .dat file
 }
-function makeParFile(name, altNumbering, counts) {
+function makeParFile(name, newElementIDs, counts) {
     const par = [];
     par.push(counts['totAA'] + counts['totGS']);
     networks.forEach((net) => {
@@ -284,43 +283,22 @@ function makeParFile(name, altNumbering, counts) {
             for (let i = 0; i < t; i++) {
                 let p1 = net.particles[net.reducedEdges.p1[i]]; // old element old id
                 let p2 = net.particles[net.reducedEdges.p2[i]];
-                const p1ID = altNumbering.get(p1);
-                const p2ID = altNumbering.get(p2);
+                const p1ID = newElementIDs.get(p1);
+                const p2ID = newElementIDs.get(p2);
                 const line = [p1ID, p2ID, net.reducedEdges.eqDist[i], net.reducedEdges.types[i], net.reducedEdges.ks[i]].concat(net.reducedEdges.extraParams[i]);
                 par.push(line.join(" "));
             }
         }
     });
     return { file_name: name + ".par", file: par.join('\n') };
-    // ANMs.forEach ((anm: ANM) => {
-    //     //ANMs can be huge so we need to use a traditional for loop here
-    //     const l = anm.children.length
-    //     for (let i = 0; i < l; i++) {
-    //         const curCon = anm.children[i]
-    //         const p1ID: number = altNumbering.get(curCon.p1);
-    //         const p2ID: number = altNumbering.get(curCon.p2);
-    //
-    //         const line = [p1ID, p2ID, curCon.eqDist, curCon.type, curCon.strength].concat(curCon.extraParams);
-    //         par.push(line.join(" "));
-    //     }
-    // });
-    // return {file_name: name+".par", file: par.join('\n') };
 }
-function makeMassFile(name, altNumbering, counts, gsSubtypes) {
+function makeMassFile(newElementIDs, gsSubtypes) {
     let text = (gsSubtypes.subtype + 27).toString() + "\n";
     for (let i = 0; i < 27; i++) {
         text += i.toString() + " 1 1\n"; // Mass and radius defaults for DNA/ AA, Radius values are unused by oxDNA
     }
     text += gsSubtypes.masses.map((m, idx) => (idx + 27).toString() + " " + m.toString() + " " + gsSubtypes.radii[idx].toString()).join('\n');
-    makeTextFile(name, text);
-}
-function makeForceFile() {
-    if (forces.length > 0) {
-        makeTextFile("external_forces.txt", forcesToString());
-    }
-    else {
-        notify("No forces have been added yet, please click Dynamics/Forces", "alert");
-    }
+    return (text);
 }
 function makeSelectedBasesFile() {
     makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));

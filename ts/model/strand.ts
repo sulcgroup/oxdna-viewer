@@ -272,6 +272,8 @@ class NucleicAcidStrand extends Strand {
     isNucleicAcid(): boolean {
         return true;
     }
+
+
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -406,10 +408,11 @@ class Generic extends Strand {
             })
         }
     };
-    // is Generic Sphere method
+
     isGS(): boolean{
         return true;
     }
+
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();

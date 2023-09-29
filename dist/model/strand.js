@@ -364,7 +364,6 @@ class Generic extends Strand {
         }
     }
     ;
-    // is Generic Sphere method
     isGS() {
         return true;
     }
