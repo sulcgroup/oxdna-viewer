@@ -942,7 +942,7 @@ function readOxViewString(s) {
                     default:
                         let error = `Unrecognised type of strand:  ${strandData.class}`;
                         notify(error, "alert");
-                        throw error;
+                        throw new Error(error);
                 }
                 strand = new strandClass(strandData.id, sys);
                 // Add strand to system
@@ -965,7 +965,7 @@ function readOxViewString(s) {
                         default:
                             let error = `Unrecognised type of element:  ${elementData.class}`;
                             notify(error);
-                            throw error;
+                            throw new Error(error);
                     }
                     e = new elementClass(undefined, strand);
                     // Preserve ID when possible, keep track of new IDs if not
@@ -1517,8 +1517,7 @@ function readPdbFile(file) {
                             }
                         }
                         else if (['dna', 'rna'].includes(strandID[i])) { //DNA or RNA
-                            RNA_MODE = ['rna'].includes(strandID[i]);
-                            let currentstrand = sys.addNewNucleicAcidStrand();
+                            let currentstrand = sys.addNewNucleicAcidStrand(strandID[i].toUpperCase());
                             for (let j = 0; j < pdbtemp[0][i].length; j++) {
                                 let nc = currentstrand.createBasicElementTyped(strandID[i], id);
                                 nc.sid = id - startID;

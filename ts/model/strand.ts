@@ -273,6 +273,13 @@ class NucleicAcidStrand extends Strand {
         return true;
     }
 
+    isDNA(): boolean {
+        return this.kwdata['type'] == 'DNA' ? true : false
+    }
+
+    isRNA(): boolean {
+    return this.kwdata['type'] == 'RNA' ? true : false
+    }
 
     toJSON() {
         // Get superclass attributes

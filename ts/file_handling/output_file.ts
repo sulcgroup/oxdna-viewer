@@ -209,7 +209,16 @@ function getNewIds(useNew:Boolean=false): [Map<BasicElement, number>, Map<Strand
 
     // Finally, nucleic acids
     sidCounter = 1; // NA strands are positive-indexed.
+    let lastType: string = nas[0].kwdata['type'];
+    console.log(useNew);
     nas.forEach(strand => {
+        
+        //console.log(strand.kwdata['type'] != lastType, !useNew, strand.kwdata['type'] != lastType && !useNew);
+        if (strand.kwdata['type'] != lastType && !useNew){
+            let error: string = "You must use the new topology format when mixing DNA and RNA.";
+            notify(error, 'alert');
+            throw new Error(error);
+        }
         newStrandIds.set(strand, sidCounter++);
         strand.forEach((e: BasicElement) => {
             newElementIDs.set(e, idCounter++);
@@ -283,13 +292,10 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
         const top: string[] = []; // string of contents of .top file
         let default_props = ['id', 'type', 'circular']
 
-        // remove any gaps in the particle numbering
-        let [newElementIDs, newStrandIds, counts, gsSubtypes] = getNewIds(false);
-
         let firstLine:string[] = [counts['totParticles'].toString(), counts['totStrands'].toString()];
 
         if (counts['totGS'] > 0) {
-            // Add extra counts for protein/DNA/ cg DNA simulation
+            // Add extra counts for protein/DNA/cg DNA simulation
             firstLine = firstLine.concat(['totNuc', 'totAA', 'totNucleic', 'totPeptide'].map(v=>counts[v].toString()));
         } else if (counts['totAA'] > 0) {
             // Add extra counts needed in protein simulation
@@ -298,7 +304,7 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
         firstLine.push('5->3')
         top.push(firstLine.join(" "));
 
-        newStrandIds.forEach((_id, s) => {
+        newStrandIDs.forEach((_id, s) => {
             let line = [s.getSequence(), "id="+_id.toString(), "type="+s.kwdata['type'], "circular="+s.isCircular(), s.getKwdataString(default_props)]
             top.push(line.join(" "))
         })

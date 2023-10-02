@@ -31,7 +31,7 @@ var edit;
             newStrand = strand.system.addNewPeptideStrand();
         }
         else {
-            newStrand = strand.system.addNewNucleicAcidStrand();
+            newStrand = strand.system.addNewNucleicAcidStrand(e.isDNA() ? 'DNA' : 'RNA');
         }
         let tmpn3 = e.n3; // Save 3' neighbour temporarly.
         // Fix endpoints
@@ -436,7 +436,7 @@ var edit;
                         strand = sys.addNewGenericSphereStrand();
                     }
                     else {
-                        strand = sys.addNewNucleicAcidStrand();
+                        strand = sys.addNewNucleicAcidStrand(e.isDNA() ? 'DNA' : 'RNA');
                     }
                     e.strand = strand;
                     strand.setFrom(e);
@@ -746,6 +746,7 @@ var edit;
      */
     function createStrand(sequence, createDuplex, isRNA) {
         isRNA = (isRNA === undefined) ? false : isRNA;
+        let type = isRNA ? 'RNA' : 'DNA';
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
         // This looks weird, but createBP() makes that nucleotide in its own tmpSys so it's 2n-1 for the duplex case.
@@ -769,7 +770,7 @@ var edit;
             box = new THREE.Vector3(1000, 1000, 1000);
         }
         // Create a new strand
-        let strand = realSys.addNewNucleicAcidStrand();
+        let strand = realSys.addNewNucleicAcidStrand(type);
         // Initialise proper nucleotide
         let e = isRNA ? new RNANucleotide(undefined, strand) : new DNANucleotide(undefined, strand);
         let addedElems = [];
@@ -1260,7 +1261,7 @@ var edit;
         const tmpSys = new System(tmpSystems.length, 0);
         tmpSys.initInstances(1);
         tmpSystems.push(tmpSys);
-        const strand = elem.getSystem().addNewNucleicAcidStrand();
+        const strand = elem.getSystem().addNewNucleicAcidStrand(elem.isDNA() ? 'DNA' : 'RNA');
         // Add element and assign id
         let e;
         if (elem.isDNA()) {

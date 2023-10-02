@@ -29,33 +29,43 @@ class TopReader extends FileReader{
     }
 
     read_old_top_file(lines) {
+        function strandTypeFromLine(l: string[]) {
+            let strID = parseInt(l[0]); //proteins and GS strands are negative indexed
+            if (strID < 0) {
+                if (l[1].includes('gs')) type = 'gs';
+                else type = 'peptide';
+            }
+            else {
+                type = isRNA ? 'RNA' : 'DNA';
+            }
+            return type
+        }
+
         let nucCount = this.elems.getNextId();
         
         lines = lines.slice(1); // discard the header
         this.configurationLength = lines.length;
+
+        // create empty list of elements with length equal to the topology
+        // old style topology files can only contain one of DNA or RNA, so this is safe.
+        // Note: this is implemented such that we have the elements for the dat reader 
+        let nuc: BasicElement; //DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
+        let isRNA: boolean;
+        let type: string = '';
+        for (let j = 0; j < lines.length; j++) {
+            this.elems.set(nucCount+j, nuc);
+            if (lines[j].includes("U")){
+                isRNA = true;
+            }
+        }
     
         let l0 = lines[0].split(" "); 
         let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
         this.lastStrand = strID;
-        let currentStrand: Strand = this.system.createStrandTyped(strID, l0[1]);
-        this.system.addStrand(currentStrand);
-        
-        // create empty list of elements with length equal to the topology
-        // Note: this is implemented such that we have the elements for the DAT reader 
-        let nuc: BasicElement;//DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
-        for (let j = 0; j < lines.length; j++) {
-            this.elems.set(nucCount+j, nuc);
-            if (lines[j].includes("U")){
-                RNA_MODE = true;
-            }
-        }
-        // I hate this but kwdata['type'] needs to be set for file output
-        if (currentStrand.isPeptide()) { currentStrand.kwdata['type'] = 'peptide'; }
-        else if (currentStrand.isGS()) { currentStrand.kwdata['type'] = 'generic'; }
-        else if (currentStrand.isNucleicAcid()) { 
-            if (RNA_MODE) {currentStrand.kwdata['type'] = 'RNA'; }
-            else {currentStrand.kwdata['type'] = 'DNA'}
-        }
+
+        type = strandTypeFromLine(l0)
+
+        let currentStrand: Strand = this.system.createStrandTyped(type);
     
         // Create new cluster for loaded structure:
         let cluster = ++clusterCounter;
@@ -72,16 +82,8 @@ class TopReader extends FileReader{
             strID = parseInt(l[0]);
                 
             if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                currentStrand = this.system.createStrandTyped(strID, l[1]);
-
-                // I hate this but kwdata['type'] needs to be set for file output
-                if (currentStrand.isPeptide()) { currentStrand.kwdata['type'] = 'peptide'; }
-                else if (currentStrand.isGS()) { currentStrand.kwdata['type'] = 'generic'; }
-                else if (currentStrand.isNucleicAcid()) { 
-                    if (RNA_MODE) {currentStrand.kwdata['type'] = 'RNA'; }
-                    else {currentStrand.kwdata['type'] = 'DNA'}
-                }
-                this.system.addStrand(currentStrand);
+                type = strandTypeFromLine(l)
+                currentStrand = this.system.createStrandTyped(type);
                 this.nucLocalID = 0;
             };
                 
@@ -169,7 +171,7 @@ class TopReader extends FileReader{
             let new_strand: Strand
 
             if (strand_type == "DNA" || strand_type == "RNA") {
-                new_strand = this.system.addNewNucleicAcidStrand();
+                new_strand = this.system.addNewNucleicAcidStrand(strand_type);
             }
             else if (strand_type == "peptide") {
                 new_strand = this.system.addNewPeptideStrand();
@@ -178,8 +180,9 @@ class TopReader extends FileReader{
                 new_strand = this.system.addNewGenericSphereStrand();
             }
             else {
-                notify("Unrecognized strand type: " + strand_type);
-                return
+                let error = `Unrecognised type of strand: ${strand_type}`;
+                notify(error, "alert");
+                throw new Error(error);
             }
 
             new_strand.kwdata = kwdata;
