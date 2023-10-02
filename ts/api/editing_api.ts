@@ -821,13 +821,7 @@ module edit{
      * @param isRNA (optional) Is this an RNA strand?
      */
     export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
-        if (sequence.includes('U')) {
-            isRNA = true;
-            RNA_MODE = true;
-        }
-        else {
-            RNA_MODE = false;
-        }
+        isRNA = (isRNA === undefined) ? false : isRNA;
 
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);

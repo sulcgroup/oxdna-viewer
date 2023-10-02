@@ -745,13 +745,7 @@ var edit;
      * @param isRNA (optional) Is this an RNA strand?
      */
     function createStrand(sequence, createDuplex, isRNA) {
-        if (sequence.includes('U')) {
-            isRNA = true;
-            RNA_MODE = true;
-        }
-        else {
-            RNA_MODE = false;
-        }
+        isRNA = (isRNA === undefined) ? false : isRNA;
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);
         // This looks weird, but createBP() makes that nucleotide in its own tmpSys so it's 2n-1 for the duplex case.

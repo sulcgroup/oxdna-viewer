@@ -815,19 +815,10 @@
                         </button>
 
                     </div>
-                    <!--<input type="text" data-role="input" id="sequence" class="mb-1"
-                    data-append="
-                        <div class='box-row' style='width: 100%'>
-                            <span id='strandTypeSpan'><select class='select' id='newStrandType', style='width: 45px; text-align-last: center; font-size: 10pt'>
-                            <option value='DNA' selected='selected'>DNA</option>
-                            <option value='RNA'>RNA</option>
-                            </select></span>
-                            <span id='seqLen'>0</span>
-                        </div>"-->
                     <input type="text" data-role="input" id="sequence" class="mb-1"
                         data-prepend="<span>Seq</span>"
                         data-append="
-                            <select>
+                            <select id='NA_toggle'>
                                 <option value='DNA' selected='selected'>DNA</option>
                                 <option value='RNA'>RNA</option>
                             <select>
@@ -842,7 +833,8 @@
                         oninput  = 'document.getElementById("seqLen").innerHTML = this.value.length;'
                     >
                 </div>
-            </div></div>
+            </div>
+        </div>
 
             <!-- View -->
             <div class="section" id="section-view"><div class="d-flex flex-wrap-r">

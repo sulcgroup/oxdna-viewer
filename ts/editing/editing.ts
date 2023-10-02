@@ -160,11 +160,13 @@ function extendWrapper(double: boolean) {
 function createWrapper() {
     let seq: string = view.getInputValue("sequence").toUpperCase();
     let createDuplex = view.getInputBool("setCompl");
+    let type: string = view.getInputValue("NA_toggle");
+    let isRNA:boolean = type === 'RNA' ? true : false;
     if (seq == "") {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = edit.createStrand(seq, createDuplex);
+    let elems = edit.createStrand(seq, createDuplex, isRNA);
 
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
