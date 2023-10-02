@@ -59,7 +59,7 @@ class TopReader extends FileReader{
             }
         }
     
-        let l0 = lines[0].split(" "); 
+        let l0 = lines[0].split(/\s+/); 
         let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
         this.lastStrand = strID;
 
@@ -78,7 +78,12 @@ class TopReader extends FileReader{
                 return;
             }
             //split the file and read each column, format is: "strID base n3 n5"
-            let l = line.split(" "); 
+            let l = line.split(/\s+/); 
+            if(l.length < 4) {
+                let err = `Line ${i} : ${line} is not a valid topology line.`;
+                notify(err, "alert");
+                throw new Error(err);
+            }
             strID = parseInt(l[0]);
                 
             if (strID != this.lastStrand) { //if new strand id, make new strand                        
@@ -146,7 +151,7 @@ class TopReader extends FileReader{
 
         lines.forEach((line, i) => {
             if (!line) { return }// skip empty lines
-            let l:string[] = line.trim().split(' ');
+            let l:string[] = line.trim().split(/\s+/);
             let seq:string = l[0];
             let kwdata:object = {
                 id: i,
