@@ -381,7 +381,7 @@ function readMGL(file) {
             str.split("G").forEach(substr => {
                 substr = substr.trim();
                 if (substr) {
-                    let line = substr.split(" ");
+                    let line = substr.split(/\s+/);
                     // setup the size of the particles
                     const radius = parseFloat(line[4]) * MGL_SCALE;
                     let [xpos, ypos, zpos] = line.slice(0, 3).map(coord => parseFloat(coord) * MGL_SCALE);
@@ -411,7 +411,7 @@ function readMGL(file) {
                             let patches_str = str.slice(patch_pos + 1).split("]").slice(0, -1);
                             patches_str.forEach(patch_str => {
                                 if (patch_str) {
-                                    let patch_info = patch_str.split(" ");
+                                    let patch_info = patch_str.split(/\s+/);
                                     patch_info = patch_info.slice(1);
                                     let [patch_x, patch_y, patch_z] = patch_info.slice(0, 3).map(coord => parseFloat(coord) * MGL_SCALE);
                                     let patch_size = parseFloat(patch_info[3]) * MGL_SCALE;
@@ -1128,7 +1128,7 @@ function readHBondFile(file) {
         //process hbonds
         for (let i = 0; i < size - 1; i++) {
             // trims all split items then removes the empty strings
-            let l = lines[i].split(" ").map(function (item) { return item.trim(); }).filter(n => n);
+            let l = lines[i].split(/\s+/).map(function (item) { return item.trim(); }).filter(n => n);
             if (recongizedProteinResidues.indexOf(l[0]) != -1) { //check that its a protein residue
                 //extract values
                 const pos1 = l[1].split("."), atm1 = l[2], id2 = l[3], pos2 = l[4].split("."), atm2 = l[5], dist = parseFloat(l[8]);
@@ -1166,7 +1166,7 @@ function readParFile(system, reader) {
     const net = new Network(networks.length, system.getAAMonomers());
     //process connections
     for (let i = 0; i < size; i++) {
-        let l = lines[i].split(" ");
+        let l = lines[i].split(/\s+/);
         //extract values
         const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[2]), type = l[3], strength = parseFloat(l[4]);
         // if its a torsional ANM then there are additional parameters on some lines
@@ -1409,7 +1409,7 @@ function readMassFile(reader) {
         lines = lines.slice(1);
         const size = lines.length;
         for (let i = 0; i < size; i++) {
-            let l = lines[i].split(" ");
+            let l = lines[i].split(/\s+/);
             //extract values
             const p = parseInt(l[0]), mass = parseInt(l[1]), radius = parseFloat(l[2]);
             if (p > 26) {

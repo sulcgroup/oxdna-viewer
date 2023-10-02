@@ -126,7 +126,7 @@ class TopReader extends FileReader {
         view.setInputBool("topFormat", true); // if input is new format, default to new format
         let nucCount = this.elems.getNextId();
         let cluster = ++clusterCounter;
-        let l0 = lines[0].split(" ");
+        let l0 = lines[0].split(/\s+/);
         let nMonomers = l0[0];
         let nStrands = l0[0];
         lines = lines.slice(1);
@@ -452,7 +452,7 @@ class TrajectoryReader {
         box.y = Math.max(box.y, newBox.y);
         box.z = Math.max(box.z, newBox.z);
         redrawBox();
-        const time = parseInt(lines[0].split(" ")[2]);
+        const time = parseInt(lines[0].split(/\s+/)[2]);
         this.time = time; //update our notion of time
         confNum += 1;
         console.log(confNum, "t =", time);
@@ -474,7 +474,7 @@ class TrajectoryReader {
                 // get the nucleotide associated with the line
                 currentNucleotide = elements.get(i + system.globalStartId);
                 // consume a new line from the file
-                l = lines[i].split(" ");
+                l = lines[i].split(/\s+/);
                 currentNucleotide.calcPositionsFromConfLine(l, true);
                 //when a strand is finished, add it to the system
                 if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
@@ -501,7 +501,7 @@ class TrajectoryReader {
                 ;
                 currentNucleotide = elements.get(system.globalStartId + lineNum);
                 // consume a new line
-                l = lines[lineNum].split(" ");
+                l = lines[lineNum].split(/\s+/);
                 currentNucleotide.calcPositionsFromConfLine(l);
             }
             system.callUpdates(['instanceOffset', 'instanceRotation']);

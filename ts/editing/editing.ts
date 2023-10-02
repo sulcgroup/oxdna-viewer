@@ -345,7 +345,7 @@ function findDomainWrapper() {
     // else we use space
     let search_arr = search_str.split(",");
     if(search_arr.length==1){
-        search_arr = search_str.split(" ");
+        search_arr = search_str.split(/\s+/);
     }
     //now we have an array of search strings
     // which we want to trim 
