@@ -99,19 +99,19 @@ class OXServeSocket extends WebSocket {
     start_simulation = () => {
         this.abort = false;
         const name = 'out';
-        let conf = {};
-        const useNew = false; //oxServe is running an ancient copy of oxDNA
-        const [newElementIDs, newStrandIds, counts, gsSubtypes] = getNewIds(useNew);
+        let reorganized, counts, conf = {};
         {
-            let { file_name, file } = makeTopFile(name, newElementIDs, newStrandIds, gsSubtypes, counts, useNew);
+            let { a, b, file_name, file } = makeTopFile(name);
+            reorganized = a;
+            counts = b;
             conf["top_file"] = file;
         }
         {
-            let { file_name, file } = makeDatFile(name, newElementIDs);
+            let { file_name, file } = makeDatFile(name, reorganized);
             conf["dat_file"] = file;
         }
         if (networks.length > 0) {
-            let { file_name, file } = makeParFile(name, newElementIDs, counts);
+            let { file_name, file } = makeParFile(name, reorganized, counts);
             conf["par_file"] = file;
         }
         conf["settings"] = {};
@@ -126,7 +126,7 @@ class OXServeSocket extends WebSocket {
         console.log(`Simulation type is ${sim_type}`);
         let settings_list = relax_scenarios[sim_type];
         if (forces.length > 0) {
-            conf["trap_file"] = forcesToString(newElementIDs);
+            conf["trap_file"] = forcesToString();
         }
         //set all var fields 
         for (let [key, value] of Object.entries(settings_list["var"])) {

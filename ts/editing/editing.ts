@@ -160,13 +160,11 @@ function extendWrapper(double: boolean) {
 function createWrapper() {
     let seq: string = view.getInputValue("sequence").toUpperCase();
     let createDuplex = view.getInputBool("setCompl");
-    let type: string = view.getInputValue("NA_toggle");
-    let isRNA:boolean = type === 'RNA' ? true : false;
     if (seq == "") {
         notify("Please type a sequence into the box");
         return;
     }
-    let elems = edit.createStrand(seq, createDuplex, isRNA);
+    let elems = edit.createStrand(seq, createDuplex);
 
     let instanceCopies = elems.map(e=>{return new InstanceCopy(e)});
     let pos = new THREE.Vector3();
@@ -345,7 +343,7 @@ function findDomainWrapper() {
     // else we use space
     let search_arr = search_str.split(",");
     if(search_arr.length==1){
-        search_arr = search_str.split(/\s+/);
+        search_arr = search_str.split(" ");
     }
     //now we have an array of search strings
     // which we want to trim 

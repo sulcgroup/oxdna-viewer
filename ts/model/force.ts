@@ -1,5 +1,6 @@
-function forcesToString(newElementIDs) {
-    return forces.map(f=>f.toString(newElementIDs)).join('\n\n');
+function forcesToString() {
+    let [newElementIds, , ] = getNewIds();
+    return forces.map(f=>f.toString(newElementIds)).join('\n\n');
 }
 
 abstract class Force {   

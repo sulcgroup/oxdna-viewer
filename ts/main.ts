@@ -73,6 +73,9 @@ class ElementMap extends Map<number, BasicElement>{
     }
 }
 
+// store rendering mode RNA  
+var RNA_MODE = false; // By default we do DNA base spacing
+
 // add base index visualistion
 let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 

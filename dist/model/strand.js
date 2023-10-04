@@ -254,12 +254,6 @@ class NucleicAcidStrand extends Strand {
     isNucleicAcid() {
         return true;
     }
-    isDNA() {
-        return this.kwdata['type'] == 'DNA' ? true : false;
-    }
-    isRNA() {
-        return this.kwdata['type'] == 'RNA' ? true : false;
-    }
     toJSON() {
         // Get superclass attributes
         let json = super.toJSON();
@@ -370,6 +364,7 @@ class Generic extends Strand {
         }
     }
     ;
+    // is Generic Sphere method
     isGS() {
         return true;
     }

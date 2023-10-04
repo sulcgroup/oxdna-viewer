@@ -755,9 +755,9 @@
                         <img src="img/ico/ligate.svg" height="18px" >
                         <span class="caption">Ligate</span>
                     </button>
-                    <button class="ribbon-button disabled" onclick="replaceSelectionByDuplexWrapper()" title="Take 2 selected sticky ends and replace them by a formed duplex.">
+                    <button class="ribbon-button" onclick="replaceSelectionByDuplexWrapper()" title="Take 2 selected sticky ends and replace them by a formed duplex.">
                         <img src="img/ico/connectDuplex.svg" height="18px">
-                        <span class="caption">Connect SE<br>(broken)</span>
+                        <span class="caption">Connect SE</span>
                     </button>
                     <button class="ribbon-button" onclick="moveToWrapper()" title="Move a group of elements towards the last selected element">
                         <span class="icon" height="18px">
@@ -770,7 +770,7 @@
                 
                 <div class="tight group flex-column">
                     <div>
-                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex" title="Set also complementary bases">
+                        <input type="checkbox" id="setCompl" data-role="checkbox" data-caption="Duplex mode" title="Set also complementary bases">
                         <button class="ribbon-icon-button" onclick="extendWrapper(false)" title="Extend strand (or duplex) from the selected monomer with the given sequence">
                             <img src="img/ico/extend.svg">
                             <span class="caption"> Extend</span>
@@ -816,13 +816,7 @@
 
                     </div>
                     <input type="text" data-role="input" id="sequence" class="mb-1"
-                        data-prepend="<span>Seq</span>"
-                        data-append="
-                            <select id='NA_toggle'>
-                                <option value='DNA' selected='selected'>DNA</option>
-                                <option value='RNA'>RNA</option>
-                            <select>
-                            <span id='seqLen'>0</span>"
+                        data-append="<span id='seqLen'>0</span>" data-prepend="<span'>Seq</span>"
                         data-history="true" data-prevent-submit="true"
                         placeholder="Type a sequence here"
                         style="text-transform: uppercase;"
@@ -833,8 +827,7 @@
                         oninput  = 'document.getElementById("seqLen").innerHTML = this.value.length;'
                     >
                 </div>
-            </div>
-        </div>
+            </div></div>
 
             <!-- View -->
             <div class="section" id="section-view"><div class="d-flex flex-wrap-r">

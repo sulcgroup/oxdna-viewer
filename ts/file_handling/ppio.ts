@@ -30,13 +30,13 @@ class PatchyTopReader extends FileReader{
             file = file.replace(/ {2,}/g, " ") // remove double spaces (cause Josh likes them)
             let lines = file.split(/[\n]+/g);
 
-            this.configurationLength = parseInt(lines[0].split(/\s+/)[0]);
+            this.configurationLength = parseInt(lines[0].split(" ")[0]);
             lines = lines.slice(1); // discard the header as we have the info now
 
             let speciesCounts = [];
 
             if(!this.LORO){
-                lines[0].trim().split(/\s+/).forEach((t,i)=>{
+                lines[0].trim().split(" ").forEach((t,i)=>{
                     if(t){
                         let sphere = new PatchyParticle(nucCount+i, this.system);
                         this.system.particles.push(sphere);
