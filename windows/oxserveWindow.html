@@ -12,58 +12,58 @@ Simulation settings:
 
 <fieldset id="relax_MC_settings" >
     <label for="mcT">T: </label>
-    <input type="number" value="30" id="mcT" title="Simulation temperature">
+    <input type="number" value="30" id="mcT" title="Simulation temperature" style="width:100%">
 
     <label for="mcSteps">Steps: </label>
-    <input type="number" value="100000" id="mcSteps" title="Number of steps to simulate">
+    <input type="number" value="100000" id="mcSteps" title="Number of steps to simulate" style="width:100%">
     
     <label for="mcSalt">Salt: </label>
-    <input type="number" value="1" id="mcSalt" title="Na concentration">
+    <input type="number" value="1" id="mcSalt" title="Na concentration" style="width:100%">
     
     <label for="mcInteractionType">Interaction type:</label>
-    <select id="mcInteractionType">
+    <select id="mcInteractionType" style="width:100%">
       <option value="DNA2">DNA</option>
       <option value="RNA">RNA</option>
       <option value="DNANM">DNA ANM</option>
       <option value="RNANM">RNA ANM</option>
-    </select>
+    </select><br>
 
     <label for="mcPrintConfInterval">Print Conf Interval: </label>
-    <input type="number" value="1000" id="mcPrintConfInterval" title="Output configuration every # of steps.">
+    <input type="number" value="1000" id="mcPrintConfInterval" title="Output configuration every # of steps." style="width:100%">
 
     <label for="mcPrintEnergyInterval">Print Energy Interval: </label>
-    <input type="number" value="1000" id="mcPrintEnergyInterval" title="Output energy every # of steps.">
+    <input type="number" value="1000" id="mcPrintEnergyInterval" title="Output energy every # of steps."style="width:100%">
 
     <label for="mcDeltaTranslation">Delta Translation: </label>
-    <input type="number" value="0.22" id="mcDeltaTranslation" title="">
+    <input type="number" value="0.22" id="mcDeltaTranslation" title=""style="width:100%">
     
     <label for="mcDeltaRotation">Delta Rotation: </label>
-    <input type="number" value="0.22" id="mcDeltaRotation" title="">
+    <input type="number" value="0.22" id="mcDeltaRotation" title="" style="width:100%">
 
    
     Relax settings:<br/>
     <input type="checkbox" checked="true" id="mcUseRelax" data-role="checkbox" data-caption="Use" title="Use relax settings.">
     <br/>
     <label for="mcBackboneForce">Backbone Force: </label>
-    <input type="number" value="5" id="mcBackboneForce" title="">
+    <input type="number" value="5" id="mcBackboneForce" title="" style="width:100%">
 
     <label for="mcBackboneForceFar">Backbone Force Far: </label>
-    <input type="number" value="10" id="mcBackboneForceFar" title="">
+    <input type="number" value="10" id="mcBackboneForceFar" title="" style="width:100%">
 
 </fieldset>
 
 <fieldset id="relax_MD_settings" hidden=true>
     <label for="mdT">T: </label>
-    <input type="number" value="20" id="mdT" title="Simulation temperature">
+    <input type="number" value="20" id="mdT" title="Simulation temperature" style="width:100%">
     
     <label for="mdSteps">Steps: </label>
-    <input type="number" value="1000000" id="mdSteps" title="Number of steps to simulate">
+    <input type="number" value="1000000" id="mdSteps" title="Number of steps to simulate" style="width:100%">
 
     <label for="mdSalt">Salt: </label>
-    <input type="number" value="1" id="mdSalt" title="Na concentration">
+    <input type="number" value="1" id="mdSalt" title="Na concentration"  style="width:100%">
     
     <label for="mdInteractionType">Interaction type:</label>
-    <select id="mdInteractionType">
+    <select id="mdInteractionType" style="width:100%">
       <option value="DNA2">DNA</option>
       <option value="RNA2">RNA</option>
       <option value="DNANM">DNA ANM</option>
@@ -71,14 +71,14 @@ Simulation settings:
     </select>
 
     <label for="mdPrintConfInterval">Print Conf Interval: </label>
-    <input type="number" value="10000" id="mdPrintConfInterval" title="Output configuration every # of steps.">
+    <input type="number" value="10000" id="mdPrintConfInterval" title="Output configuration every # of steps." style="width:100%">
 
     <label for="mdPrintEnergyInterval">Print Energy Interval: </label>
-    <input type="number" value="10000" id="mdPrintEnergyInterval" title="Output energy every # of steps.">
+    <input type="number" value="10000" id="mdPrintEnergyInterval" title="Output energy every # of steps." style="width:100%">
 
     <label for="mdThermostat">Thermostat: </label>
     <!--<input type="text" value="john" id="mdThermostat" title="Thermostat to use.">-->
-    <select id="mdThermostat">
+    <select id="mdThermostat" style="width:100%">
       <option value="brownian">Brownian</option>
       <!--<option value="refresh"> Anderson</option>-->
       <option value="bussi">Bussi-Donadio-Parrinello</option>
@@ -87,23 +87,23 @@ Simulation settings:
     </select>
 
     <label for="mdDT">dt: </label>
-    <input type="number" value="0.003" id="mdDT" title="dt value.">
+    <input type="number" value="0.003" id="mdDT" title="dt value." style="width:100%">
     
     <label for="mdDiff_Coeff">diff coeff: </label>
-    <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value.">
+    <input type="number" value="2.5" id="mdDiff_Coeff" title="Diffusion coeff value." style="width:100%">
 
     <label for="mdMaxDensityMul">Max Density Multiplier: </label>
-    <input type="number" value="10" id="mdMaxDensityMul" title="">
+    <input type="number" value="10" id="mdMaxDensityMul" title="" style="width:100%">
     
     Relax settings:<br/>
     
-    <input type="checkbox" checked="true" id="mdUseRelax" data-role="checkbox" data-caption="Use" title="Use relax settings.">
+    <input type="checkbox" checked="true" id="mdUseRelax" data-role="checkbox" data-caption="Use" title="Use relax settings." style="width:100%">
     <br/>
     <label for="mdBackboneForce">Backbone Force: </label>
-    <input type="number" value="5" id="mdBackboneForce" title="">
+    <input type="number" value="5" id="mdBackboneForce" title="" style="width:100%">
 
     <label for="mdBackboneForceFar">Backbone Force Far: </label>
-    <input type="number" value="10" id="mdBackboneForceFar" title="">
+    <input type="number" value="10" id="mdBackboneForceFar" title="" style="width:100%">
     
 
 
