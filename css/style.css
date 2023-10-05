@@ -134,6 +134,18 @@ td.empty {
     filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(140deg) brightness(106%) contrast(103%);
   }
 
+  /*Red hover for delete buttons*/
+  .button.delete{
+    background-color:lightcoral;
+  }
+  .button.delete:hover{
+    background-color:red;
+  }
+
+  table-search-block{
+    width:100%;
+  }
+
   .selection.modes{
     display: flex;
     height: 36px;

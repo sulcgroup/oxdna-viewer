@@ -3,23 +3,26 @@
         title="Create mutual traps from the selected elements">Create from selection
     </button>
 
-    <button onclick="makeTrapsFromPairs(); listForces();" class="button outline"
+    <button onclick="makeTrapsFromPairs(); listForces();" class="button outline secondary" 
         title="Create mutual traps between all basepairs">Create from base pairs
+    </button>
+
+    <br>
+    <button onclick="deleteSelectedForces();" class="button outline secondary delete"
+    title="Delete all forces selected below">Delete selected
     </button>
 </div>
 
 <label for="txtForceValue">Stiffness: </label>
-<input type="number" value="0.09" id="txtForceValue" title="">
+<input type="number" value="0.09" id="txtForceValue" title="" style="width:100%">
 
-<button onclick="deleteSelectedForces();" class="button outline"
-title="Delete all forces selected below">Delete selected
-</button>
+
 
 <div style="margin-top: 3%;">
 <label>Relaxed distance in SU</label>
-<input type="number" id="r0" value="1.2">
+<input type="number" id="r0" value="1.2" style="width:100%">
 
-<button onclick="measureDistanceForces()" class="button outline" title="Setting relaxed distance from selection">
+<button onclick="measureDistanceForces()" class="button outline secondary" title="Setting relaxed distance from selection">
     Get distance from selection
 </button>
 </div>
