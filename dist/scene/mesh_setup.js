@@ -2,13 +2,13 @@
 // The initial set up of the instanced objects.
 // Objects can be deformed by parameters sent to the instanceScale parameter of the instance
 var instancedBackbone = new THREE.InstancedBufferGeometry();
-instancedBackbone.copy(new THREE.SphereBufferGeometry(.2, 50, 50)); //don't worry about those type conversion, just trying to keep tsc happy
+instancedBackbone.copy(new THREE.SphereBufferGeometry(.2, 10, 10)); //don't worry about those type conversion, just trying to keep tsc happy
 var instancedNucleoside = new THREE.InstancedBufferGeometry();
 instancedNucleoside.copy(new THREE.SphereBufferGeometry(.3, 10, 10));
 var instancedConnector = new THREE.InstancedBufferGeometry();
 instancedConnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
 var instancedBBconnector = new THREE.InstancedBufferGeometry();
-instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1, .02, 1, 50));
+instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1, .02, 1, 8));
 var instanceMaterial2 = new THREE.MeshPhysicalMaterial({
     vertexColors: THREE.VertexColors,
     metalness: 0.1,
