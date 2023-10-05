@@ -945,13 +945,14 @@ function readAuxiliaryFiles() {
 
 function updateConfFromFile(dat_file) {
     let lines = dat_file.split("\n");
+    let topDirection = !view.getInputBool("topFormat") // the topology reader sets this input element based on the direction of the top file.
     lines = lines.slice(3) // discard the header
     systems.forEach(system =>{
         system.strands.forEach((strand: Strand) => {
             strand.forEach(e => {
                 let line = lines.shift().split(' ');
                 e.calcPositionsFromConfLine(line);
-            }, true); //oxDNA runs 3'-5'
+            }, topDirection);
         });
         system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
     });

@@ -319,7 +319,7 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
     return topOut
 
 }
-function makeDatFile(name:string, newElementIDs=undefined) {
+function makeDatFile(name:string, newElementIDs:Map<BasicElement, number>) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => { //for all elements
@@ -339,20 +339,10 @@ function makeDatFile(name:string, newElementIDs=undefined) {
     ].join('\n');
 
     // get coordinates for all elements, in the correct order
-    if (newElementIDs) {
-        newElementIDs.forEach((_id, e) => {
-            dat += e.getDatFileOutput();
-        });
-    }
-    else {
-        systems.forEach(system =>{
-            system.strands.forEach((strand: Strand) => {
-                strand.forEach(e => {
-                    dat += e.getDatFileOutput();
-                }, true); //oxDNA runs 3'-5'
-            });
-        });
-    }
+    newElementIDs.forEach((_id, e) => {
+        dat += e.getDatFileOutput();
+    });
+
     return {file_name: name + ".dat", file: dat};//make .dat file
 }
 

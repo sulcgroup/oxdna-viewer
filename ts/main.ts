@@ -184,8 +184,6 @@ function connectedSelectorWrapper():void{
     
 }
 
-
-
 // Utility function to pick a random element from list
 function randomChoice(l: any[]): any {
     return l[Math.floor(Math.random()*l.length)];

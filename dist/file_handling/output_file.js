@@ -249,7 +249,7 @@ function makeTopFile(name, newElementIDs, newStrandIDs, gsSubtypes, counts, useN
     let topOut = (useNew ? makeTopFileNew(name) : makeTopFileOld(name));
     return topOut;
 }
-function makeDatFile(name, newElementIDs = undefined) {
+function makeDatFile(name, newElementIDs) {
     // Get largest absolute coordinate:
     let maxCoord = 0;
     elements.forEach(e => {
@@ -264,20 +264,9 @@ function makeDatFile(name, newElementIDs = undefined) {
         `E = 0 0 0\n`
     ].join('\n');
     // get coordinates for all elements, in the correct order
-    if (newElementIDs) {
-        newElementIDs.forEach((_id, e) => {
-            dat += e.getDatFileOutput();
-        });
-    }
-    else {
-        systems.forEach(system => {
-            system.strands.forEach((strand) => {
-                strand.forEach(e => {
-                    dat += e.getDatFileOutput();
-                }, true); //oxDNA runs 3'-5'
-            });
-        });
-    }
+    newElementIDs.forEach((_id, e) => {
+        dat += e.getDatFileOutput();
+    });
     return { file_name: name + ".dat", file: dat }; //make .dat file
 }
 function makeParFile(name, newElementIDs, counts) {
