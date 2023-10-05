@@ -1019,8 +1019,8 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
             }
 
         } else if (nstrand.strandtype == 'rna' || nstrand.strandtype == 'dna') {
-            RNA_MODE = (nstrand.strandtype == 'rna');
-            let currentStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand();
+            let type = nstrand.strandtype == 'rna'? 'RNA' : 'DNA';
+            let currentStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand(type);
             let strandInfo = [];
             let tmptype = nstrand.strandtype;
             strandtype.push(tmptype);
@@ -1063,7 +1063,7 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
                     if(nstrand.chainID.includes(rid)){
-                        let repeatStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand();
+                        let repeatStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand(currentStrand.kwdata['type']);
                         strandtype.push(tmptype);
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
                             let repeatNuc = repeatStrand.createBasicElementTyped(nstrand.strandtype, nextElementId);

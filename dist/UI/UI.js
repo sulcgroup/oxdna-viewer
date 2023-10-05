@@ -664,7 +664,19 @@ class View {
         return this.doc.getElementById(id);
     }
     getInputBool(id) {
-        return document.getElementById(id).checked;
+        return this.doc.getElementById(id).checked;
+    }
+    setInputBool(id, value) {
+        let problem = false;
+        let e = this.doc.getElementById(id);
+        if (e.type === 'checkbox') {
+            e.checked = value;
+        }
+        else {
+            console.log("ERROR:", id, "is not a boolean input element.");
+            problem = true;
+        }
+        return (problem);
     }
     isWindowOpen(id) {
         let elem = this.doc.getElementById(id);

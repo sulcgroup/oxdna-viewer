@@ -65,8 +65,6 @@ class ElementMap extends Map {
         return this.idCounter;
     }
 }
-// store rendering mode RNA  
-var RNA_MODE = false; // By default we do DNA base spacing
 // add base index visualistion
 let elements = new ElementMap(); //contains references to all BasicElements
 //initialize the space

@@ -152,20 +152,23 @@ class System {
             id--;
         return id;
     }
-    createStrandTyped(strID, base) {
-        if (strID < 0)
-            if (base.includes('gs'))
-                return this.addNewGenericSphereStrand();
-            else
-                return this.addNewPeptideStrand();
-        else
-            return this.addNewNucleicAcidStrand();
+    createStrandTyped(type) {
+        if (type === 'DNA' || type === 'RNA')
+            return this.addNewNucleicAcidStrand(type);
+        else if (type === 'peptide')
+            return this.addNewPeptideStrand();
+        else if (type === 'gs')
+            return this.addNewGenericSphereStrand();
+        else {
+            notify(`${type} is not a valid monomer type`, "alert");
+            throw new Error(`${type} is not a valid monomer type`);
+        }
     }
     ;
-    addNewNucleicAcidStrand() {
+    addNewNucleicAcidStrand(type) {
         let id = this.getNextNucleicAcidStrandID();
         let strand = new NucleicAcidStrand(id, this);
-        strand.kwdata['type'] = RNA_MODE ? 'RNA' : 'DNA';
+        strand.kwdata['type'] = type;
         strand.system = this;
         this.strands.push(strand);
         return strand;
