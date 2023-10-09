@@ -1052,18 +1052,26 @@ function readOxViewString(s: string) {
             // Go through and add each strand
             sysData.strands.forEach(strandData => {
                 let strand: Strand;
+                let strandType: string;
 
                 // Create strand of correct class
                 let strandClass;
                 switch (strandData.class) {
-                    case 'NucleicAcidStrand': strandClass = NucleicAcidStrand; break;
-                    case 'Peptide': strandClass = Peptide; break;
+                    case 
+                        'NucleicAcidStrand': strandClass = NucleicAcidStrand; 
+                        strandType = strandData.monomers[0].class;
+                    break;
+                    case 
+                        'Peptide': strandClass = Peptide; 
+                        strandType = 'peptide';
+                    break;
                     default:
                         let error = `Unrecognised type of strand:  ${strandData.class}`;
                         notify(error, "alert");
                         throw new Error(error);
                 }
                 strand = new strandClass(strandData.id, sys);
+                strand.kwdata['type'] = strandType;
 
                 // Add strand to system
                 sys.addStrand(strand);

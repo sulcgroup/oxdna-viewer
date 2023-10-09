@@ -931,14 +931,17 @@ function readOxViewString(s) {
             // Go through and add each strand
             sysData.strands.forEach(strandData => {
                 let strand;
+                let strandType;
                 // Create strand of correct class
                 let strandClass;
                 switch (strandData.class) {
                     case 'NucleicAcidStrand':
                         strandClass = NucleicAcidStrand;
+                        strandType = strandData.monomers[0].class;
                         break;
                     case 'Peptide':
                         strandClass = Peptide;
+                        strandType = 'peptide';
                         break;
                     default:
                         let error = `Unrecognised type of strand:  ${strandData.class}`;
@@ -946,6 +949,7 @@ function readOxViewString(s) {
                         throw new Error(error);
                 }
                 strand = new strandClass(strandData.id, sys);
+                strand.kwdata['type'] = strandType;
                 // Add strand to system
                 sys.addStrand(strand);
                 // Go through and add each monomer element
