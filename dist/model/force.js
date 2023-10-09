@@ -29,6 +29,11 @@ class MutualTrap extends PairwiseForce {
         for (var param in parsedjson) {
             if (['particle', 'ref_particle'].includes(param)) {
                 this[param] = elements.get(parsedjson[param]);
+                if (this[param] === undefined) {
+                    const err = `Particle ${parsedjson[param]} in parsed force file does not exist.`;
+                    notify(err, "alert");
+                    throw (err);
+                }
             }
             else {
                 this[param] = parsedjson[param];
