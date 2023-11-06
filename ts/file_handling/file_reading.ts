@@ -252,7 +252,7 @@ function handleFiles(files: FileList) {
 
     let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone
 
-    if (!newSystem && !addition) {
+    if ((!newSystem && !addition) || (addition && systems.length == 0)) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
     }
     // same dirty logic as the event fix 

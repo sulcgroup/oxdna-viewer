@@ -363,9 +363,9 @@ class TrajectoryReader {
         this.system = system;
         this.elems = elems;
         this.datFile = datFile;
-        this.chunker = new FileChunker(datFile, 1024 * 1024 * 50);// 30*this.topReader.configurationLength); // we read in chunks of 30 MB 
-        this.confLength = this.topReader.configurationLength +3; 
-        this.numNuc = system.systemLength();
+        this.chunker = new FileChunker(datFile, 1024 * 1024 * 50);// we read in chunks of 50 MB 
+        this.confLength = this.topReader.configurationLength + 3; 
+        this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
         this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
         this.indexProgress=<HTMLProgressElement>document.getElementById("trajIndexingProgress");
@@ -549,6 +549,7 @@ class TrajectoryReader {
             //for each line in the current configuration, read the line and calculate positions
             for (let i = 0; i < numNuc; i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+                    notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
                     break
                 };
                 // get the nucleotide associated with the line

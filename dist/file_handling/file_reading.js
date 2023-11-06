@@ -234,7 +234,7 @@ function handleFiles(files) {
     let parAlone = parFile && !topFile;
     let hbAlone = hbFile; // Can't think of any situation where (it would make any sense) for a hb file to be dropped with any other file
     let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone;
-    if (!newSystem && !addition) {
+    if ((!newSystem && !addition) || (addition && systems.length == 0)) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
     }
     // same dirty logic as the event fix 
