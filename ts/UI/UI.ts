@@ -1,6 +1,6 @@
 // Use Metro GUI
 declare var Metro: any;
-var VRButton: any;
+var XRButton: any;
 
 
 function select3psWrapper() {
@@ -629,7 +629,7 @@ class View {
             scene.add(rig);
 
             // Add vr button to document
-            document.body.appendChild(VRButton.createButton(vrRenderer));
+            document.body.appendChild(XRButton.createButton(vrRenderer));
 
             // Enamble VR in vrRenderer
             vrRenderer.vr.enabled = true;
