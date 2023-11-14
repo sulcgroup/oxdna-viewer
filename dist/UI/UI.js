@@ -1,4 +1,4 @@
-var XRButton;
+var VRButton;
 function select3psWrapper() {
     if (selectedBases.size == 0) {
         api.highlight3ps();
@@ -615,7 +615,7 @@ class View {
             rig.add(camera);
             scene.add(rig);
             // Add vr button to document
-            document.body.appendChild(XRButton.createButton(vrRenderer));
+            document.body.appendChild(VRButton.createButton(vrRenderer));
             // Enamble VR in vrRenderer
             vrRenderer.vr.enabled = true;
             // Make the camera go around the scene
