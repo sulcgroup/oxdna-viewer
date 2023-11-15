@@ -109,9 +109,11 @@ class System {
     }
     select() {
         this.strands.forEach(s => s.select());
+        updateColoring();
     }
     deselect() {
         this.strands.forEach(s => s.deselect());
+        updateColoring();
     }
     /**
      * Return a list of all monomers in the system

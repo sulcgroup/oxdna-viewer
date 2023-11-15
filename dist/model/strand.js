@@ -136,9 +136,11 @@ class Strand {
     }
     select() {
         this.forEach(e => e.select(), true);
+        updateColoring();
     }
     deselect() {
         this.forEach(e => e.deselect(), true);
+        updateColoring();
     }
     isEmpty() {
         //console.assert(this.end3 ? true : !this.end5, "Stand incorrectly empty");

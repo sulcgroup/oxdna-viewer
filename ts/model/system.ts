@@ -122,10 +122,12 @@ class System {
 
     select() {
         this.strands.forEach(s=>s.select());
+        updateColoring();
     }
 
     deselect() {
         this.strands.forEach(s=>s.deselect());
+        updateColoring();
     }
 
     /**
