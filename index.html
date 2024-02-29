@@ -391,14 +391,14 @@
                     title="Download a file JSON file storing the current design" style="width: 50px;">
                     <!-- <span class="mif-floppy-disk mif-2x"></span> -->
                     <img src="./favicon.png" height="30px">
-                    <!-- <span class="caption">oxView</span> -->
+                    <span class="caption">oxView</span>
                 </button>
                 <button class="ribbon-button"
                     onclick="Metro.dialog.open('#exportOxdnaDialog'); document.getElementById('gidUpdateWarning').hidden = !topologyEdited; document.getElementById('forceDownload').checked = forces.length > 0"
                     title="Downloading the current scene as oxDNA files (Ctrl/⌘-S)" style="width: 50px;">
                     <!-- <span class="mif-file-download mif-2x"></span> -->
                     <img src="./img/ico/oxdna_logo.png" height="30px" >
-                    <!-- <span class="caption">oxDNA</span> -->
+                    <span class="caption">oxDNA</span>
                 </button>
                 <span class="title mif-floppy-disk mif-3x"> <b>Save</b></span>
                 </div>
@@ -414,17 +414,17 @@
                         id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x fg-green"></span> -->
                         <img src="img/ico/taco_logo.png" height="30px">
-                        <!-- <span class="caption">Taco</span> -->
+                        <span class="caption">Taco</span>
                     </button>
                     <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x"></span> -->
-                        <img src="https://www.rcsb.org/favicon.ico" height="40px" width="30px">
+                        <img src="https://www.rcsb.org/favicon.ico" height="40px">
                         <!--<span class="caption">PDB</span>-->
                     </button>
                     <button class="ribbon-button primary" onclick="Metro.dialog.open('#importNanobaseDialog')" title="Import Nanobase from URL" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x"></span> -->
                         <img src="./img/ico/nanobase_logo.png" height="20px">
-                        <!-- <span class="caption">Nanobase</span> -->
+                        <span class="caption" style="margin-top: 4px; margin-left: -10px;">Nanobase</span> <!--yuckyyy-->
                     </button>
                     <span class="title mif-file-upload mif-3x"> <b>Import</b></span>
                 </div>
@@ -437,7 +437,7 @@
                     <button class="ribbon-button" onclick="makeSelectedBasesFile()"
                         title="Download plain-text file of selected bases">
                         <span class="mif-file-download mif-2x"></span>
-                        <span class="caption">Selected base list</span>
+                        <span class="caption">Selection IDs</span>
                     </button>
                     <button class="ribbon-button" onclick="Metro.dialog.open('#exportUNF')" title="Options for UNF export of the scene.">
                         <span class="mif-file-download mif-2x"></span>
@@ -451,11 +451,11 @@
                         title="Download a file containing all sequences" style="width: 50px;">
                         <!-- <span class="mif-file-download mif-2x"></span> -->
                         <span class="mif-file-text mif-2x"></span>
-                        <!-- <span class="caption">Sequence file</span> -->
+                        <span class="caption">Seqs</span>
                     </button>
                     <button id="videoCreateButton" class="ribbon-button" onclick="view.toggleWindow('videoCreationWindow')" style="width: 50px;">
                         <span class="mif-video-camera mif-2x"></span>
-                        <!-- <span class="caption">Create video</span> -->
+                        <span class="caption">Video</span>
                     </button> 
                     <span class="title mif-file-download mif-3x"> <b>Export</b></span>
                 </div>
