@@ -209,10 +209,15 @@ function getNewIds(useNew:Boolean=false): [Map<BasicElement, number>, Map<Strand
 
     // Finally, nucleic acids
     sidCounter = 1; // NA strands are positive-indexed.
-    let lastType: string = nas[0].kwdata['type'];
+    let lastType: string;
+    // Program crashes if we try to set lastType and have
+    // no nucleic acid strands. So we need this check.
+    if (nas.length > 0) {
+        lastType = nas[0].kwdata['type'];
+    }
     console.log(useNew);
     nas.forEach(strand => {
-        
+
         //console.log(strand.kwdata['type'] != lastType, !useNew, strand.kwdata['type'] != lastType && !useNew);
         if (strand.kwdata['type'] != lastType && !useNew){
             let error: string = "You must use the new topology format when mixing DNA and RNA.";
