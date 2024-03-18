@@ -169,7 +169,7 @@ function handleFiles(files: FileList) {
 
     const filesLen = files.length;
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile,loroPatchFiles, scriptFile; //this sets them all to undefined.
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile,loroPatchFiles, scriptFile, selectFile; //this sets them all to undefined.
 
 
     // assign files to the extentions
@@ -226,9 +226,10 @@ function handleFiles(files: FileList) {
         else if (ext === "top") topFile = files[i];
         else if (ext === "json") jsonFile = files[i];
         else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) particleFile = files[i];
-        else if ( fileName.includes("patches")) patchFile = files[i];
+        else if (fileName.includes("patches")) patchFile = files[i];
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = files[i];
         else if (ext === "txt" && (fileName.includes("_m"))) massFile = files[i];
+        else if (ext === "txt" && (fileName.includes("select"))) selectFile = files[i];
         else if (ext === "idx") idxFile = files[i];
         else if (ext === "par") parFile = files[i];
         else if (ext === "hb") hbFile = files[i];
@@ -248,9 +249,9 @@ function handleFiles(files: FileList) {
     let jsonAlone =  jsonFile && !topFile;
     let parAlone = parFile && !topFile;
     let hbAlone = hbFile; // Can't think of any situation where (it would make any sense) for a hb file to be dropped with any other file
+    let selectAlone = selectFile && !topFile;
 
-
-    let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone
+    let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone || selectAlone;
 
     if ((!newSystem && !addition) || (addition && systems.length == 0)) {
         notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.")
@@ -260,10 +261,10 @@ function handleFiles(files: FileList) {
     handledScript = false;
     
     // set list of auxiliary files for the readAuxiliaryFiles function
-    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile);
+    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile, selectFile);
     
     //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles,scriptFile);
+    readFiles(topFile, datFile, idxFile, pdbFile, particleFile, patchFile, loroPatchFiles, scriptFile);
 
     render();
     return;
@@ -271,7 +272,7 @@ function handleFiles(files: FileList) {
 
 // auxiliary files array for readAuxiliaryFiles function
 let auxiliaryFiles: { [key: string]: any} = {}
-function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile) {
+function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile, selectFile) {
     auxiliaryFiles.topFile = topFile;
     auxiliaryFiles.datFile = datFile;
     auxiliaryFiles.jsonFile = jsonFile;
@@ -279,6 +280,7 @@ function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFil
     auxiliaryFiles.hbFile = hbFile;
     auxiliaryFiles.massFile = massFile;
     auxiliaryFiles.parFile = parFile;
+    auxiliaryFiles.selectFile = selectFile;
 }
 
 const exportCam = ()=>{
@@ -675,11 +677,13 @@ function readFilesFromPathArgs(args){
         Metro.activity.close(activity);
     }
 
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles; //this sets them all to undefined.
+    // Things that are greyed out here are incompatiable with the electron implementation.
+    // TODO: Fix this so that electron files also go through handleFiles
+    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile, selectFile; //this sets them all to undefined.
     const  get_request = (paths) => {
            if(paths.length == 0) {
                 //read a topology/configuration pair and whatever else
-                readFiles(topFile, datFile, idxFile, jsonFile, trapFile, parFile, pdbFile, hbFile, massFile, particleFile, patchFile, loroPatchFiles);
+                readFiles(topFile, datFile, idxFile, pdbFile, particleFile, patchFile, loroPatchFiles, scriptFile);
                 done();
            }
            else {
@@ -702,6 +706,7 @@ function readFilesFromPathArgs(args){
                 else if (ext === "json") jsonFile = file;
                 else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) trapFile = file;
                 else if (ext === "txt" && (fileName.includes("_m"))) massFile = file;
+                else if (ext === "txt" && (fileName.includes("select"))) selectFile = file;
                 else if (ext === "idx") idxFile = file;
                 else if (ext === "par") parFile = file;
                 else if (ext === "hb") hbFile = file;
@@ -748,7 +753,7 @@ function readFilesFromPathArgs(args){
 // And from the URL
 function readFilesFromURLParams() {
     let paths = []
-    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json']
+    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json', 'select']
     const url = new URL(window.location.href);
     types.forEach(t =>{
         if (url.searchParams.get(t)) {
@@ -772,7 +777,7 @@ let handledScript = false;
 document.addEventListener('setupComplete', readAuxiliaryFiles);
 
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile: File, datFile: File, idxFile:File, jsonFile?: File, trapFile?: File, parFile?: File, pdbFile?: File, hbFile?: File, massFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[],scriptFile?:File) {
+function readFiles(topFile: File, datFile: File, idxFile:File, pdbFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[], scriptFile?:File,) {
     
     if(initFileReading){
         // TODO: apart from a drastic rewrite... 
@@ -885,6 +890,7 @@ function readAuxiliaryFiles() {
     const parFile = auxiliaryFiles.parFile;
     const hbFile = auxiliaryFiles.hbFile;
     const massFile = auxiliaryFiles.massFile;
+    const selectFile = auxiliaryFiles.selectFile;
     
     // if .top, .dat, and .json file are dragged on, the json file is only read on the new system
     if (jsonFile && topFile && datFile) {
@@ -939,6 +945,13 @@ function readAuxiliaryFiles() {
             readMassFile(r);
         }
         r.readAsText(massFile);
+    }
+    if (selectFile){
+        const r = new FileReader();
+        r.onload = () => {
+            readSelectFile(r);
+        }
+        r.readAsText(selectFile);
     }
     //document.removeEventListener('setupComplete', readAuxiliaryFiles);
 }
@@ -1646,6 +1659,16 @@ function readMassFile(reader){
     } else {
         console.log("No GS Masses in file, (no subtype over 27), double check header")
     }
+}
+
+function readSelectFile(reader) {
+    if (systems.length > 1) {
+        notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning')
+    }
+    const ids = (reader.result as string).split(' ').map(function(i) {
+        return parseInt(i, 10)
+    });
+    api.selectElementIDs(ids, true)
 }
 
 function readPdbFile(file) {

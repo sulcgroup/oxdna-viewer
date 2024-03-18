@@ -239,6 +239,7 @@ module api{
         if (selectedBases.size > 0 && view.transformMode.enabled()) {
             transformControls.show();
         }
+        render()
     }
     
     //there's probably a less blunt way to do this...

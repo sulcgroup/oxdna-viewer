@@ -234,6 +234,7 @@ var api;
         if (selectedBases.size > 0 && view.transformMode.enabled()) {
             transformControls.show();
         }
+        render();
     }
     api.selectElements = selectElements;
     //there's probably a less blunt way to do this...

@@ -377,7 +377,7 @@ function makeMassFile(newElementIDs:Map<BasicElement, number>, gsSubtypes){ //ma
 }
 
 function makeSelectedBasesFile() { //make selected base file
-    makeTextFile("baseListFile", Array.from(selectedBases).map(e=>e.id).join(" "));
+    makeTextFile("selectedBases.txt", Array.from(selectedBases).map(e=>e.id).join(" "));
 }
 
 function makeSequenceFile() {

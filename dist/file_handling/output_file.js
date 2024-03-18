@@ -296,7 +296,7 @@ function makeMassFile(newElementIDs, gsSubtypes) {
     return (text);
 }
 function makeSelectedBasesFile() {
-    makeTextFile("baseListFile", Array.from(selectedBases).map(e => e.id).join(" "));
+    makeTextFile("selectedBases.txt", Array.from(selectedBases).map(e => e.id).join(" "));
 }
 function makeSequenceFile() {
     let seqTxts = [
