@@ -121,34 +121,10 @@ function makeLut(data, key, system) {
         system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
     }
 }
-// define the drag and drop behavior of the scene
-const target = renderer.domElement;
-target.addEventListener("dragover", function (event) {
-    event.preventDefault();
-    target.classList.add('dragging');
-}, false);
-target.addEventListener("dragenter", function (event) {
-    event.preventDefault();
-    target.classList.add('dragging');
-}, false);
-target.addEventListener("dragexit", function (event) {
-    event.preventDefault();
-    target.classList.remove('dragging');
-}, false);
 // the actual code to drop in the config files
 //First, a bunch of global variables for trajectory reading
 let confNum = 0, datFileout = "", box = new THREE.Vector3(); //box size for system
 //and a couple relating to overlay files
-var defaultColormap = "cooltowarm";
-function handleDrop(event) {
-    // cancel default actions
-    target.classList.remove('dragging');
-    const files = event.dataTransfer.files;
-    handleFiles(files);
-}
-// What to do if a file is dropped
-target.addEventListener("drop", function (event) { event.preventDefault(); });
-target.addEventListener("drop", handleDrop, false);
 function handleFiles(files) {
     const filesLen = files.length;
     let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile, selectFile; //this sets them all to undefined.

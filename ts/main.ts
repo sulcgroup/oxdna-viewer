@@ -78,17 +78,20 @@ class ElementMap extends Map<number, BasicElement>{
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Particle indexing stuff
-let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
+const elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 const systems: System[] = [];
 var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
-let clusterCounter = 0; // Track cluster number
+var clusterCounter = 0; 
 
 // File reading stuff
-let pdbtemp = []; // stores output from worker, so worker can terminate
+var trajReader: TrajectoryReader;
+var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
-var unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
+const unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
+var confNum: number = 0; // Current configuration number in a trajectory
+var box = new THREE.Vector3(); // Box size of the current scene
 
 // ANM stuff
 var selectednetwork: number = 0; // Only used for networks
@@ -96,7 +99,7 @@ const networks: Network[] = []; // Only used for networks, replaced anms
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 
 // Forces stuff
-let forces: Force[] = [];
+var forces: Force[] = [];
 var forcesTable: string[][] = [];
 var forceHandler;
 
@@ -136,6 +139,13 @@ target.addEventListener("dragexit", function (event) {
 // What to do if a file is dropped
 target.addEventListener("drop", function (event) {event.preventDefault();})
 target.addEventListener("drop", handleDrop, false);
+
+// Define message passing behavior
+window.addEventListener("message", (event) => {
+    if(event.data.message){ // do we have a message ?
+        handleMessage(event.data);
+    }
+}, false);
 
 render();
 
