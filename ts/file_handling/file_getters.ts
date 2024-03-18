@@ -1,5 +1,9 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////          Something happened!  Call handleFiles()           ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 // Catch files drag n dropped in
 function handleDrop (event) {
     // cancel default actions
@@ -24,15 +28,15 @@ function readFilesFromURLPath(paths: string[]) {
         req.send();
     }));
 
-    //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
-    Promise.all(promises).then((files) => {
-        handleFiles(files as unknown as FileList)
+    Promise.all(promises).then((files:File[]) => {
+        handleFiles(files)
     })
 }
 
-// And from the URL
+// And from the URL of oxView itself (can be used to read local files if you host oxView yourself)
 function readFilesFromURLParams() {
     let paths = []
+    // I don't think we need this anymore???
     const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json', 'select']
     const url = new URL(window.location.href);
     types.forEach(t =>{
@@ -119,7 +123,7 @@ function handleMessage(data) {
         handleFiles(files);
         return
     }
-    
+
     else {
         console.log(data.message, "is not a recognized message")
         return
@@ -173,7 +177,7 @@ function readFilesFromPathArgs(args){
     if(args.length > 0) {
         let files = get_request(args);
         //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
-        handleFiles(files as unknown as FileList)
+        handleFiles(files)
     }
     else {
         activity.text = "ERROR: No files provided"

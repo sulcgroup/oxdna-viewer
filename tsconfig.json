@@ -19,7 +19,7 @@
       "./ts/editing/doUndo.ts",
       "./ts/editing/rigid-body_simulation.ts",
       "./ts/editing/translation.ts",
-      "./ts/file_handling/file_reading.ts",
+      "ts/file_handling/file_handling.ts",
       "./ts/file_handling/file_getters.ts",
       "./ts/file_handling/system_readers.ts",
       "./ts/file_handling/aux_readers.ts",

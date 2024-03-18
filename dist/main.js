@@ -70,22 +70,25 @@ class ElementMap extends Map {
 ///////////////////                  oxView's global variables                 ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Particle indexing stuff
-let elements = new ElementMap(); //contains references to all BasicElements
+const elements = new ElementMap(); //contains references to all BasicElements
 const systems = [];
 var sysCount = 0;
 var strandCount = 0;
 var selectedBases = new Set();
-let clusterCounter = 0; // Track cluster number
+var clusterCounter = 0;
 // File reading stuff
-let pdbtemp = []; // stores output from worker, so worker can terminate
+var trajReader;
+var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
-var unfFileInfo = []; // Stores UNF file info (Necessary for writing out UNF files)
+const unfFileInfo = []; // Stores UNF file info (Necessary for writing out UNF files)
+var confNum = 0; // Current configuration number in a trajectory
+var box = new THREE.Vector3(); // Box size of the current scene
 // ANM stuff
 var selectednetwork = 0; // Only used for networks
 const networks = []; // Only used for networks, replaced anms
 const graphDatasets = []; // Only used for fluctuation graph
 // Forces stuff
-let forces = [];
+var forces = [];
 var forcesTable = [];
 var forceHandler;
 // color overlay stuff
@@ -117,6 +120,12 @@ target.addEventListener("dragexit", function (event) {
 // What to do if a file is dropped
 target.addEventListener("drop", function (event) { event.preventDefault(); });
 target.addEventListener("drop", handleDrop, false);
+// Define message passing behavior
+window.addEventListener("message", (event) => {
+    if (event.data.message) { // do we have a message ?
+        handleMessage(event.data);
+    }
+}, false);
 render();
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                      Random functions                      ////////////////////
