@@ -526,3 +526,56 @@ document.addEventListener('keydown', function (event) {
         document.getElementById('selectPairs').classList.toggle('active');
     }
 });
+function colorSelectorWrapper() {
+    let colors = new Set();
+    //go through selectedBases and fetch our reference colors
+    selectedBases.forEach(b => {
+        if (b.color)
+            colors.add(b.color.getHex());
+    });
+    console.log(colors);
+    const match_color = (b) => {
+        if (b.color)
+            return colors.has(b.color.getHex());
+        return false;
+    };
+    let toSelect = [];
+    systems.forEach(system => {
+        system.strands.forEach(strand => {
+            strand.filter(match_color).forEach(b => toSelect.push(b));
+        });
+    });
+    tmpSystems.forEach(system => {
+        system.strands.forEach(strand => {
+            strand.filter(match_color).forEach(b => toSelect.push(b));
+        });
+    });
+    api.selectElements(toSelect);
+    render();
+}
+function connectedSelectorWrapper() {
+    let strands = new Set();
+    let selected_nucleotides = [...selectedBases].filter(e => e instanceof Nucleotide);
+    // go over our selection and recheck base pairing for every suspecious nucleotide
+    selected_nucleotides.forEach(e => {
+        if (e instanceof Nucleotide && !e.strand.system.checkedForBasepairs && !e.pair) {
+            e.pair = e.findPair();
+            if (e.pair) {
+                e.pair.pair = e;
+            }
+        }
+    });
+    // decompose nucleotides into strands
+    selected_nucleotides.forEach(p => {
+        if (p instanceof Nucleotide && p.pair)
+            strands.add(p.pair.strand);
+    });
+    // now we have all the strands that are making up the selected bases
+    // if we don't have base pairs in the fist strand, we have to search for pairs
+    strands.forEach(strand => {
+        strand.forEach(p => p.select());
+    });
+    //update the visuals 
+    systems.forEach(updateView);
+    tmpSystems.forEach(updateView);
+}

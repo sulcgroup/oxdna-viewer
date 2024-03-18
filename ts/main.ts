@@ -22,7 +22,7 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 
-
+// The ElementMap provies a mapping between particle ID in the simulation and JS objects here
 class ElementMap extends Map<number, BasicElement>{
     idCounter: number;
 
@@ -73,39 +73,75 @@ class ElementMap extends Map<number, BasicElement>{
     }
 }
 
-// add base index visualistion
-let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                  oxView's global variables                 ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-//initialize the space
+// Particle indexing stuff
+let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 const systems: System[] = [];
-var tmpSystems: System[] = [] //used for editing
-//const ANMs: ANM[] = [];
-let forces: Force[] = [];
-let pdbtemp = []; // stores output from worker, so worker can terminate
-var forcesTable: string[][] = [];
-var forceHandler;
 var sysCount: number = 0;
 var strandCount: number = 0;
 var selectedBases = new Set<BasicElement>();
+let clusterCounter = 0; // Track cluster number
 
-var selectednetwork: number = 0; // Only used for networks
-const networks: Network[] = []; // Only used for networks, replaced anms
-const graphDatasets: graphData[] = []; // Only used for fluctuation graph
+// File reading stuff
+let pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
 var unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
 
-var lut, devs: number[]; //need for Lut coloring
+// ANM stuff
+var selectednetwork: number = 0; // Only used for networks
+const networks: Network[] = []; // Only used for networks, replaced anms
+const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 
-const editHistory = new EditHistory();
-let clusterCounter = 0; // Cluster counter
+// Forces stuff
+let forces: Force[] = [];
+var forcesTable: string[][] = [];
+var forceHandler;
 
-//to keep track of if the topology was edited at any point.
-var topologyEdited: Boolean = false;
+// color overlay stuff
+var defaultColormap: string = "cooltowarm";
+var lut, devs: number[];
+
+// Editing stuff
+const editHistory = new EditHistory(); // Track do/undo
+var tmpSystems: System[] = [] // Track memory for newly created systems
+var topologyEdited: Boolean = false; // to keep track of if the topology was edited at any point.
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                       File input                           ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 
+// define the drag and drop behavior of the scene
+const target = renderer.domElement;
+target.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    target.classList.add('dragging');
+}, false);
+
+target.addEventListener("dragenter", function (event) {
+    event.preventDefault();
+    target.classList.add('dragging');
+}, false);
+
+target.addEventListener("dragexit", function (event) {
+    event.preventDefault();
+    target.classList.remove('dragging');
+}, false);
+
+// What to do if a file is dropped
+target.addEventListener("drop", function (event) {event.preventDefault();})
+target.addEventListener("drop", handleDrop, false);
+
 render();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                      Random functions                      ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 function findBasepairs(min_length=0) {
     systems.forEach(system=>{
@@ -127,62 +163,6 @@ function findBasepairs(min_length=0) {
         system.checkedForBasepairs = true;
     });
 };
-
-function colorSelectorWrapper(){
-    let colors = new Set();
-    //go through selectedBases and fetch our reference colors
-    selectedBases.forEach(b =>{
-        if(b.color)
-            colors.add(b.color.getHex());
-    });
-    console.log(colors);
-    const match_color = (b:Nucleotide)=>{
-      if(b.color)
-        return colors.has(b.color.getHex());
-      return false;
-    };
-    let toSelect= [];
-    systems.forEach(system=>{
-        system.strands.forEach(strand=>{
-            strand.filter(match_color).forEach(b=>toSelect.push(b));
-        });
-    });
-    tmpSystems.forEach(system=>{
-        system.strands.forEach(strand=>{
-            strand.filter(match_color).forEach(b=>toSelect.push(b));
-        });
-    });
-    api.selectElements(toSelect);
-    render();
-}
-
-function connectedSelectorWrapper():void{
-    let strands = new Set<Strand>();
-    let selected_nucleotides  = [... selectedBases].filter(e=>e instanceof Nucleotide);
-    // go over our selection and recheck base pairing for every suspecious nucleotide
-    selected_nucleotides.forEach(e =>{
-        if(e instanceof Nucleotide && !e.strand.system.checkedForBasepairs && !e.pair) {
-            e.pair = e.findPair();
-                if(e.pair) {
-                    e.pair.pair = e;
-            }
-        }
-    });
-    // decompose nucleotides into strands
-    selected_nucleotides.forEach(p  =>{
-        if (p instanceof Nucleotide && p.pair)
-            strands.add(p.pair.strand);
-    });
-    // now we have all the strands that are making up the selected bases
-    // if we don't have base pairs in the fist strand, we have to search for pairs
-    strands.forEach(strand => {
-        strand.forEach(p => p.select());
-    });
-    //update the visuals 
-    systems.forEach(updateView);
-    tmpSystems.forEach(updateView);
-    
-}
 
 // Utility function to pick a random element from list
 function randomChoice(l: any[]): any {
