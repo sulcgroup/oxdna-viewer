@@ -50,13 +50,13 @@ function handleFiles(files: File[]) {
 
         // These file types lead to creation of a new system
         if (ext == 'top') {
-            systemFiles.push(new File2reader(files[i], 'topology', readTop));
+            systemFiles.push(new File2reader(files[i], 'topology', readTop)); // works
         }
         else if (ext === "oxview") {
-            systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile));
+            systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile)); //works
         }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
-            systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile));
+            systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); // works
         }
         else if (ext === "unf") {
             systemFiles.push(new File2reader(files[i], 'unf', readUNFString));

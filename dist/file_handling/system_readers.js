@@ -396,6 +396,9 @@ function readPdbFile(file) {
     let reader = new FileReader();
     var worker = new Worker('./dist/file_handling/pdb_worker.js');
     let indx = -1;
+    // initialize System
+    let startID = elements.getNextId();
+    var sys = new System(sysCount, startID);
     reader.onload = () => {
         const pdbLines = reader.result.split(/[\n]+/g);
         // feed pdbLines into worker
@@ -419,7 +422,6 @@ function readPdbFile(file) {
                     let dims = pdbtemp[4];
                     let pdbindices = pdbtemp[5];
                     // let pdbinfo = pdbtemp[6]
-                    let startID = elements.getNextId();
                     let id = startID;
                     // store PDB data
                     let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
@@ -441,8 +443,6 @@ function readPdbFile(file) {
                         box.z = dims[2] * 1.25;
                     redrawBox();
                     dims = undefined;
-                    // initialize System
-                    let sys = new System(sysCount, startID);
                     for (let i = 0; i < pdbtemp[0].length; i++) {
                         if (strandID[i] == "pro") {
                             let currentstrand = sys.addNewPeptideStrand();
@@ -526,4 +526,5 @@ function readPdbFile(file) {
     }
     activate();
     pdbtemp = [];
+    return (sys);
 }
