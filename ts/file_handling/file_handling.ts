@@ -129,16 +129,84 @@ function handleFiles(files: File[]) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
         if (ext == 'top') {
-            systemFiles.push(new File2reader(files[i], 'topology', readTop))
+            systemFiles.push(new File2reader(files[i], 'topology', readTop));
         }
-        if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
-            auxFiles.push(new File2reader(files[i], 'trajectory', readTraj))
+        else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
+            auxFiles.push(new File2reader(files[i], 'trajectory', readTraj));
         }
+        else if (ext === "oxview") {
+            systemFiles.push(new File2reader(files[i], 'oxview', readOxViewString));
+        }
+        else if (ext === "cam") {
+            auxFiles.push(new File2reader(files[i], 'camera', readCamFile));
+        }
+        else if (ext=="js"){
+            scriptFiles.push(new File2reader(files[i], 'topology', readScriptFile));
+        }
+        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
+            systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile));
+        }
+        else if (ext === "unf") {
+            systemFiles.push(new File2reader(files[i], 'unf', readUNFString));
+        }
+        else if (ext === "xyz") {
+            systemFiles.push(new File2reader(files[i], 'xyz', readXYZString));
+        }
+        else if (ext === "csv"){
+            auxFiles.push(new File2reader(files[i], 'csv', handleCSV));
+        }
+        else if (ext === "json") {
+            auxFiles.push(new File2reader(files[i], 'json', readJson));
+        }
+        else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) {
+            auxFiles.push(new File2reader(files[i], 'force', readTrap));
+        }
+        else if (ext === "txt" && (fileName.includes("_m"))) {
+            auxFiles.push(new File2reader(files[i], 'mass', readMassFile));
+        }
+        else if (ext === "txt" && (fileName.includes("select"))) {
+            auxFiles.push(new File2reader(files[i], 'select', readSelectFile));
+        }
+        else if (ext === "idx") {
+            auxFiles.push(new File2reader(files[i], 'select', readSelectFile));
+        }
+        else if (ext === "par") {
+            auxFiles.push(new File2reader(files[i], 'par', readParFile));
+        }
+        else if (ext === "hb") {
+            auxFiles.push(new File2reader(files[i], 'hb', readHBondFile));
+        }
+        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) {
+            auxFiles.push(new File2reader(files[i], 'particle', parseFileWith)); //HELP!
+        }
+        else if (ext === "mgl"){
+            systemFiles.push(new File2reader(files[i], 'mgl', readMGL));
+        }
+        else if (fileName.includes("patches")) {
+            auxFiles.push(new File2reader(files[i], 'patch', parseFileWith)); //HELP!
+        }
+        
+        
+        
+        //idk what to do with this one
+        // everything else is read in the context of other files so we need to check what we have.
+        //else if (
+        //    ext === "patchspec" ||
+        //    fileName.match(/p_my\w+\.dat/g) // Why do multiple files need to end with dat?
+        //) {
+        //    if (loroPatchFiles == undefined){
+        //        loroPatchFiles = [];
+        //    }
+        //    loroPatchFiles.push(files[i]);
+        //}
     }
 
     function makeSystem() {
         return new Promise (function (resolve, reject) {
-            let system = systemFiles[0].reader(systemFiles[0].file);
+            let system:System
+            if (systemFiles.length == 0) {system = systems[systems.length-1]}
+            else if (systemFiles.length == 1) {system = systemFiles[0].reader(systemFiles[0].file)}
+            else {throw new Error("Systems must be defined by a single file!")}
             resolve(system)
         });
     }
@@ -156,7 +224,6 @@ function handleFiles(files: File[]) {
         });
     }
     
-    //makeSystem().then((system) => {auxFiles[0]['reader'](auxFiles[0]['file'], system)}).catch((error) => console.log(error))
     makeSystem().then((system) => readAuxiliaryFiles(system))
 
 }
