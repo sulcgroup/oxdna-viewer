@@ -1,105 +1,4 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-function handleFiles_old(files) {
-    const filesLen = files.length;
-    let datFile, topFile, jsonFile, trapFile, parFile, idxFile, hbFile, pdbFile, massFile, particleFile, patchFile, loroPatchFiles, scriptFile, selectFile; //this sets them all to undefined.
-    // assign files to the extentions
-    for (let i = 0; i < filesLen; i++) {
-        // get file extension
-        const fileName = files[i].name.toLowerCase();
-        const ext = fileName.split('.').pop();
-        // oxview files had better be dropped alone because that's all that's loading.
-        if (ext === "oxview") {
-            parseFileWith(files[i], readOxViewString);
-            return;
-        }
-        else if (ext === "cam") {
-            readCamFile(files[i]);
-            return;
-        }
-        else if (ext == "js") {
-            scriptFile = files[i];
-            //readScriptFile(files[i]);
-            //return;
-        }
-        else if (ext === "mgl") {
-            readMGL(files[i]);
-            return;
-        }
-        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
-            pdbFile = files[i];
-        }
-        else if (ext === "unf") {
-            parseFileWith(files[i], readUNFString);
-            return;
-        }
-        else if (ext === "xyz") {
-            parseFileWith(files[i], readXYZString);
-            return;
-        }
-        else if (ext === "csv") {
-            handleCSV(files[i]);
-            return;
-        }
-        // everything else is read in the context of other files so we need to check what we have.
-        else if (ext === "patchspec" ||
-            fileName.match(/p_my\w+\.dat/g) // Why do multiple files need to end with dat?
-        ) {
-            if (loroPatchFiles == undefined) {
-                loroPatchFiles = [];
-            }
-            loroPatchFiles.push(files[i]);
-        }
-        else if (["dat", "conf", "oxdna"].includes(ext))
-            datFile = files[i];
-        else if (ext === "top")
-            topFile = files[i];
-        else if (ext === "json")
-            jsonFile = files[i];
-        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix"))
-            particleFile = files[i];
-        else if (fileName.includes("patches"))
-            patchFile = files[i];
-        else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force")))
-            trapFile = files[i];
-        else if (ext === "txt" && (fileName.includes("_m")))
-            massFile = files[i];
-        else if (ext === "txt" && (fileName.includes("select")))
-            selectFile = files[i];
-        else if (ext === "idx")
-            idxFile = files[i];
-        else if (ext === "par")
-            parFile = files[i];
-        else if (ext === "hb")
-            hbFile = files[i];
-        // otherwise, what is this?
-        else {
-            notify("This reader uses file extensions to determine file type.\nRecognized extensions are: .conf, .dat, .oxdna, .top, .json, .par, .pdb, .mgl, .xyz, and trap.txt\nPlease drop one .dat/.conf/.oxdna and one .top file.  Additional data files can be added at the time of load or dropped later.");
-            return;
-        }
-    }
-    // If a new system is being loaded, there will be a dat and top file pair
-    let newSystem = datFile && topFile || pdbFile;
-    // Additional information can be dropped in later
-    let datAlone = datFile && !topFile;
-    let trapAlone = trapFile && !topFile;
-    let jsonAlone = jsonFile && !topFile;
-    let parAlone = parFile && !topFile;
-    let hbAlone = hbFile; // Can't think of any situation where (it would make any sense) for a hb file to be dropped with any other file
-    let selectAlone = selectFile && !topFile;
-    let addition = datAlone || trapAlone || jsonAlone || parAlone || hbAlone || selectAlone;
-    if ((!newSystem && !addition) || (addition && systems.length == 0)) {
-        notify("Unrecognized file combination. Please drag and drop 1 .dat and 1 .top file to load a new system or an overlay file to add information to an already loaded system.");
-    }
-    // same dirty logic as the event fix 
-    // we ensure this way that the script is not handeled 2ce
-    handledScript = false;
-    // set list of auxiliary files for the readAuxiliaryFiles function
-    setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile, selectFile);
-    //read a topology/configuration pair and whatever else
-    readFiles(topFile, datFile, idxFile, pdbFile, particleFile, patchFile, loroPatchFiles, scriptFile);
-    render();
-    return;
-}
 class File2reader {
     file;
     type;
@@ -109,6 +8,26 @@ class File2reader {
         this.type = type;
         this.reader = reader;
     }
+}
+class oxFileReader extends FileReader {
+    promise;
+    constructor(parser) {
+        super();
+        this.promise = new Promise(function (resolve, reject) {
+            this.onload = () => {
+                let f = this.result;
+                let result = parser(f);
+                resolve(result);
+            };
+        }.bind(this));
+    }
+}
+// Generic function to connect a file to a reader
+async function parseFileWith(file, parser) {
+    let reader = new oxFileReader(parser);
+    reader.readAsText(file);
+    let result = await reader.promise;
+    return result;
 }
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
@@ -121,20 +40,12 @@ function handleFiles(files) {
     for (let i = 0; i < filesLen; i++) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
+        // These file types lead to creation of a new system
         if (ext == 'top') {
             systemFiles.push(new File2reader(files[i], 'topology', readTop));
         }
-        else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
-            auxFiles.push(new File2reader(files[i], 'trajectory', readTraj));
-        }
         else if (ext === "oxview") {
-            systemFiles.push(new File2reader(files[i], 'oxview', readOxViewString));
-        }
-        else if (ext === "cam") {
-            auxFiles.push(new File2reader(files[i], 'camera', readCamFile));
-        }
-        else if (ext == "js") {
-            scriptFiles.push(new File2reader(files[i], 'topology', readScriptFile));
+            systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile));
         }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { // normal pdb and biological assemblies (.pdb1, .pdb2)
             systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile));
@@ -145,8 +56,12 @@ function handleFiles(files) {
         else if (ext === "xyz") {
             systemFiles.push(new File2reader(files[i], 'xyz', readXYZString));
         }
-        else if (ext === "csv") {
-            auxFiles.push(new File2reader(files[i], 'csv', handleCSV));
+        else if (ext === "mgl") {
+            systemFiles.push(new File2reader(files[i], 'mgl', readMGL)); //HELP!
+        }
+        // These file types modify an existing system
+        else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
+            auxFiles.push(new File2reader(files[i], 'trajectory', readTraj));
         }
         else if (ext === "json") {
             auxFiles.push(new File2reader(files[i], 'json', readJson));
@@ -160,6 +75,12 @@ function handleFiles(files) {
         else if (ext === "txt" && (fileName.includes("select"))) {
             auxFiles.push(new File2reader(files[i], 'select', readSelectFile));
         }
+        else if (ext === "cam") {
+            auxFiles.push(new File2reader(files[i], 'camera', readCamFile));
+        }
+        else if (ext === "csv") {
+            auxFiles.push(new File2reader(files[i], 'csv', handleCSV));
+        }
         else if (ext === "idx") {
             auxFiles.push(new File2reader(files[i], 'select', readSelectFile));
         }
@@ -172,11 +93,12 @@ function handleFiles(files) {
         else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) {
             auxFiles.push(new File2reader(files[i], 'particle', parseFileWith)); //HELP!
         }
-        else if (ext === "mgl") {
-            systemFiles.push(new File2reader(files[i], 'mgl', readMGL));
-        }
         else if (fileName.includes("patches")) {
             auxFiles.push(new File2reader(files[i], 'patch', parseFileWith)); //HELP!
+        }
+        // Who knows what a script might do
+        else if (ext == "js") {
+            scriptFiles.push(new File2reader(files[i], 'topology', readScriptFile));
         }
         //idk what to do with this one
         // everything else is read in the context of other files so we need to check what we have.
@@ -217,7 +139,8 @@ function handleFiles(files) {
             resolve(toWait);
         });
     }
-    makeSystem().then((system) => readAuxiliaryFiles(system));
+    function executeScript() { }
+    makeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())));
 }
 function readError() {
     notify("Oh no!", 'error');
@@ -225,183 +148,189 @@ function readError() {
 function readSuccess() {
     notify("Yay!");
 }
-// auxiliary files array for readAuxiliaryFiles function
-let auxiliaryFiles = {};
-function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile, selectFile) {
-    auxiliaryFiles.topFile = topFile;
-    auxiliaryFiles.datFile = datFile;
-    auxiliaryFiles.jsonFile = jsonFile;
-    auxiliaryFiles.trapFile = trapFile;
-    auxiliaryFiles.hbFile = hbFile;
-    auxiliaryFiles.massFile = massFile;
-    auxiliaryFiles.parFile = parFile;
-    auxiliaryFiles.selectFile = selectFile;
-}
 let initFileReading = true; // dirty hack to keep the event handling in check 
 let handledScript = false;
 // addEventListener is outside function so multiple EventListeners aren't created, which bugs the function
-document.addEventListener('setupComplete', readAuxiliaryFiles);
+//document.addEventListener('setupComplete', readAuxiliaryFiles);
 // Now that the files are identified, make sure the files are the correct ones and begin the reading process
-function readFiles(topFile, datFile, idxFile, pdbFile, particleFile, patchFile, loroPatchFiles, scriptFile) {
-    if (initFileReading) {
-        // TODO: apart from a drastic rewrite... 
-        // Figure out if any other places have the bug of adding N event handlers ...
-        //setupComplete fires when indexing arrays are finished being set up
-        //prevents async issues with par and overlay files
-        //document.addEventListener('setupComplete', readAuxiliaryFiles);
-        document.addEventListener('setupComplete', () => {
-            if (scriptFile && !handledScript) {
-                readScriptFile(scriptFile);
-            }
-        });
-        initFileReading = false;
-    }
-    if (topFile && datFile) {
-        renderer.domElement.style.cursor = "wait";
-        if (typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined") {
-            //make system to store the dropped files in
-            const system = new PatchySystem(sysCount, particleFile, patchFile, loroPatchFiles, (callback) => {
-                //we handle patchy files
-                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements, () => {
-                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                    trajReader = new TrajectoryReader(datFile, system);
-                    trajReader.indexTrajectory();
-                    //set up patchy instancing data arrays
-                    system.initPatchyInstances();
-                    callback();
-                });
-                patchyTopologyReader.read();
-            });
-            systems.push(system); //add system to Systems[]
-        }
-        else {
-            //make system to store the dropped files in
-            const system = new System(sysCount, elements.getNextId());
-            systems.push(system); //add system to Systems[]
-            //TODO: is this really neaded?
-            system.setDatFile(datFile); //store datFile in current System object
-            if (!idxFile) {
-                //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-                //const topReader = new TopReader(topFile, system, elements,()=>{
-                //    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                //    trajReader = new TrajectoryReader(datFile,system);
-                //    trajReader.indexTrajectory();
-                //
-                //    //set up instancing data arrays
-                //    system.initInstances(system.systemLength());
-                //});
-                //topReader.read();
-            }
-            else {
-                console.log("index provided");
-                const idxReader = new FileReader(); //read .json
-                //idxReader.onload = () => {
-                //    let file = idxReader.result as string;
-                //    let indexes = JSON.parse(file);
-                //
-                //    const topReader = new TopReader(topFile, system, elements,()=>{
-                //        //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                //        trajReader = new TrajectoryReader(datFile,system,indexes);
-                //        trajReader.nextConfig();
-                //        //set up instancing data arrays
-                //        system.initInstances(system.systemLength());
-                //    });
-                //    topReader.read();
-                //};
-                idxReader.readAsText(idxFile);
-            }
-        }
-        return;
-    }
-    else if (pdbFile) {
-        readPdbFile(pdbFile);
-        //document.addEventListener('setupComplete', readAuxiliaryFiles)
-        return;
-    }
-    else {
-        readAuxiliaryFiles();
-    }
-    // now due to async issues this will fire whenever, 
-    // but that's better than not at all 
-    if (scriptFile && !handledScript) {
-        readScriptFile(scriptFile);
-    }
-    render();
-    return;
-}
-function readAuxiliaryFiles() {
-    // This is super haunted
-    // up to this point, jsonFile was either undeclared or declared and undefined
-    // Suddenly, here, it's defined as the existing old file.
-    const topFile = auxiliaryFiles.topFile;
-    const datFile = auxiliaryFiles.datFile;
-    const jsonFile = auxiliaryFiles.jsonFile;
-    const trapFile = auxiliaryFiles.trapFile;
-    const parFile = auxiliaryFiles.parFile;
-    const hbFile = auxiliaryFiles.hbFile;
-    const massFile = auxiliaryFiles.massFile;
-    const selectFile = auxiliaryFiles.selectFile;
-    // if .top, .dat, and .json file are dragged on, the json file is only read on the new system
-    if (jsonFile && topFile && datFile) {
-        const jsonReader = new FileReader(); //read .json
-        jsonReader.onload = () => {
-            readJson(systems[systems.length - 1], jsonReader);
-        };
-        jsonReader.readAsText(jsonFile);
-    }
-    else if (jsonFile) {
-        const jsonReader = new FileReader(); //read .json
-        jsonReader.onload = () => {
-            systems.forEach((system) => {
-                readJson(system, jsonReader);
-            });
-        };
-        jsonReader.readAsText(jsonFile);
-    }
-    if (trapFile) {
-        const trapReader = new FileReader(); //read .trap file
-        trapReader.onload = () => {
-            readTrap(trapReader);
-        };
-        trapReader.readAsText(trapFile);
-    }
-    if (parFile) {
-        let parReader = new FileReader();
-        parReader.onload = () => {
-            readParFile(systems[systems.length - 1], parReader);
-        };
-        parReader.readAsText(parFile);
-    }
-    if (datFile && !topFile) {
-        const r = new FileReader();
-        r.onload = () => {
-            updateConfFromFile(r.result);
-        };
-        r.readAsText(datFile);
-    }
-    if (hbFile) {
-        const r = new FileReader();
-        r.onload = () => {
-            readHBondFile(hbFile);
-        };
-        r.readAsText(hbFile);
-    }
-    if (massFile) {
-        const r = new FileReader();
-        r.onload = () => {
-            readMassFile(r);
-        };
-        r.readAsText(massFile);
-    }
-    if (selectFile) {
-        const r = new FileReader();
-        r.onload = () => {
-            readSelectFile(r);
-        };
-        r.readAsText(selectFile);
-    }
-    //document.removeEventListener('setupComplete', readAuxiliaryFiles);
-}
+//function readFiles(topFile: File, datFile: File, idxFile:File, pdbFile?: File, particleFile?: File, patchFile?: File, loroPatchFiles?: File[], scriptFile?:File,) {
+//    
+//    if(initFileReading){
+//        // TODO: apart from a drastic rewrite... 
+//        // Figure out if any other places have the bug of adding N event handlers ...
+//        //setupComplete fires when indexing arrays are finished being set up
+//        //prevents async issues with par and overlay files
+//        
+//        //document.addEventListener('setupComplete', readAuxiliaryFiles);
+//        
+//        document.addEventListener('setupComplete', ()=>{
+//            if(scriptFile && !handledScript){
+//                
+//                readScriptFile(scriptFile);
+//            }
+//        });
+//
+//        initFileReading = false;
+//    }
+//    
+//    if (topFile && datFile) {
+//        renderer.domElement.style.cursor = "wait";
+//
+//        if(typeof loroPatchFiles !== "undefined" || typeof particleFile !== "undefined"){
+//            //make system to store the dropped files in
+//            const system = new PatchySystem(
+//                sysCount, particleFile, patchFile, 
+//                loroPatchFiles, (callback)=>
+//            {
+//                //we handle patchy files
+//                const patchyTopologyReader = new PatchyTopReader(topFile, system, elements,()=>{
+//                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+//                    trajReader = new TrajectoryReader(datFile, system);
+//                    trajReader.indexTrajectory();
+//
+//                    //set up patchy instancing data arrays
+//                    system.initPatchyInstances();
+//
+//                    callback();
+//                });
+//                patchyTopologyReader.read();
+//            });
+//            systems.push(system); //add system to Systems[]
+//        } else {
+//            //make system to store the dropped files in
+//            const system = new System(sysCount, elements.getNextId());
+//            systems.push(system); //add system to Systems[]
+//            //TODO: is this really neaded?
+//            system.setDatFile(datFile); //store datFile in current System object
+//            if(!idxFile){
+//                //read topology file, the configuration file is read once the topology is loaded to avoid async errors
+//                //const topReader = new TopReader(topFile, system, elements,()=>{
+//                //    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+//                //    trajReader = new TrajectoryReader(datFile,system);
+//                //    trajReader.indexTrajectory();
+//    //
+//                //    //set up instancing data arrays
+//                //    system.initInstances(system.systemLength());
+//                //});
+//                //topReader.read();
+//            }
+//            else{
+//                console.log("index provided");
+//                const idxReader = new FileReader(); //read .json
+//                //idxReader.onload = () => {
+//                //    let file = idxReader.result as string;
+//                //    let indexes = JSON.parse(file);
+//    //
+//                //    const topReader = new TopReader(topFile, system, elements,()=>{
+//                //        //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+//                //        trajReader = new TrajectoryReader(datFile,system,indexes);
+//                //        trajReader.nextConfig();
+//                //        //set up instancing data arrays
+//                //        system.initInstances(system.systemLength());
+//                //    });
+//                //    topReader.read();
+//                //};
+//                idxReader.readAsText(idxFile);
+//            }
+//        }
+//        return;
+//    }
+//    else if (pdbFile) {
+//        readPdbFile(pdbFile);
+//        //document.addEventListener('setupComplete', readAuxiliaryFiles)
+//        return;
+//    }
+//    else {
+//        readAuxiliaryFiles();
+//    }        
+//    
+//    // now due to async issues this will fire whenever, 
+//    // but that's better than not at all 
+//    if(scriptFile  && !handledScript){
+//        readScriptFile(scriptFile);
+//    }
+//
+//    render();
+//    return;
+//}
+//function readAuxiliaryFiles() {
+//    // This is super haunted
+//    // up to this point, jsonFile was either undeclared or declared and undefined
+//    // Suddenly, here, it's defined as the existing old file.
+//    
+//    const topFile = auxiliaryFiles.topFile;
+//    const datFile = auxiliaryFiles.datFile;
+//    const jsonFile = auxiliaryFiles.jsonFile;
+//    const trapFile = auxiliaryFiles.trapFile;
+//    const parFile = auxiliaryFiles.parFile;
+//    const hbFile = auxiliaryFiles.hbFile;
+//    const massFile = auxiliaryFiles.massFile;
+//    const selectFile = auxiliaryFiles.selectFile;
+//    
+//    // if .top, .dat, and .json file are dragged on, the json file is only read on the new system
+//    if (jsonFile && topFile && datFile) {
+//        const jsonReader = new FileReader(); //read .json
+//        jsonReader.onload = () => {
+//            readJson(systems[systems.length - 1], jsonReader);
+//        };
+//        jsonReader.readAsText(jsonFile);
+//    }
+//    else if (jsonFile) {
+//        const jsonReader = new FileReader(); //read .json
+//        jsonReader.onload = () => {
+//            systems.forEach( (system) => {
+//                readJson(system, jsonReader);
+//            });
+//        };
+//        jsonReader.readAsText(jsonFile);
+//    }
+//
+//    if (trapFile) {
+//        const trapReader = new FileReader(); //read .trap file
+//        trapReader.onload = () => {
+//            readTrap(trapReader);
+//        };
+//        trapReader.readAsText(trapFile);
+//    }
+//
+//    if (parFile) {
+//        let parReader = new FileReader();
+//        parReader.onload = () => {
+//            readParFile(systems[systems.length - 1], parReader)
+//        };
+//        parReader.readAsText(parFile)
+//    }
+//    if (datFile && !topFile) {
+//        const r = new FileReader();
+//        r.onload = ()=> {
+//            updateConfFromFile(r.result as string);
+//        }
+//        r.readAsText(datFile);
+//    }
+//    if (hbFile){
+//        const r = new FileReader();
+//        r.onload = ()=> {
+//            readHBondFile(hbFile);
+//        }
+//        r.readAsText(hbFile);
+//    }
+//    if (massFile){
+//        const r = new FileReader();
+//        r.onload = ()=> {
+//            readMassFile(r);
+//        }
+//        r.readAsText(massFile);
+//    }
+//    if (selectFile){
+//        const r = new FileReader();
+//        r.onload = () => {
+//            readSelectFile(r);
+//        }
+//        r.readAsText(selectFile);
+//    }
+//    //document.removeEventListener('setupComplete', readAuxiliaryFiles);
+//}
+//
 function addSystemToScene(system) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.

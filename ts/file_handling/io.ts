@@ -8,7 +8,7 @@ class TopReader extends FileReader{
     system: System;
     elems: ElementMap;
 
-    promise:Promise<unknown>
+    promise:Promise<System>
     sidCounter = 0;
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in old oxDNA .top files

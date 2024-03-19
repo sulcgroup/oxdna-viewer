@@ -13,20 +13,16 @@ async function readTop(topFile:File) {
     await topReader.promise
     system.initInstances(system.systemLength())
     return system
-    
 }
 
-// Generic function to connect a file to a reader
-function parseFileWith(file: File, parser: Function) {
-    let reader = new FileReader();
-    reader.onload = (e) => {
-        parser(e.target.result as string);
-    };
-    reader.readAsText(file);
+async function readOxViewFile(oxFile:File) {
+    //oxView files may contain multiple systems
+    parseFileWith(oxFile, parseOxViewString);
+    return systems[systems.length-1]
 }
 
 // Read an oxView file
-function readOxViewString(s: string) {
+function parseOxViewString(s: string) {
     let sysStartId = sysCount;
     const newElementIds = new Map();
     // Check if file includes custom colors

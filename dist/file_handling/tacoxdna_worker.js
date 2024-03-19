@@ -73,7 +73,7 @@ function importFiles(files) {
                 };
                 worker.onmessage = (e) => {
                     let converted = e.data;
-                    readOxViewString(converted);
+                    parseOxViewString(converted); //I am not sure this is right
                     console.log('Conversion finished');
                     finished();
                 };
