@@ -4,6 +4,13 @@
 ///////////////////                Read a file, modify a system                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+function readTraj(trajFile:File, system:System) {
+    trajReader = new TrajectoryReader(trajFile, system);
+    trajReader.indexTrajectory()
+    render()
+    return system
+}
+
 // Creates color overlays
 function makeLut(data, key, system) {
 

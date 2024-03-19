@@ -104,7 +104,7 @@ function handleFiles_old(files: File[]) {
     return;
 }
 
-class file2reader {
+class File2reader {
     file: File;
     type: string;
     reader: Function;
@@ -119,9 +119,9 @@ class file2reader {
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
 function handleFiles(files: File[]) {
-    const systemFiles:file2reader[] = []
-    const auxFiles:Object[] = []
-    const scriptFiles:Object[] = []
+    const systemFiles:File2reader[] = []
+    const auxFiles:File2reader[] = []
+    const scriptFiles:File2reader[] = []
 
     // Nasty "switch" statement
     const filesLen = files.length;
@@ -129,17 +129,10 @@ function handleFiles(files: File[]) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
         if (ext == 'top') {
-            systemFiles.push(new file2reader(files[i], 'topology', readTop))
+            systemFiles.push(new File2reader(files[i], 'topology', readTop))
         }
         if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
-            auxFiles.push(
-                {
-                    'file' : files[i],
-                    'type' : 'trajectory',
-                    'reader' : readTraj
-
-                }
-            )
+            auxFiles.push(new File2reader(files[i], 'trajectory', readTraj))
         }
     }
 
@@ -149,10 +142,23 @@ function handleFiles(files: File[]) {
             resolve(system)
         });
     }
-    
-    makeSystem().then((system) => {auxFiles[0]['reader'](auxFiles[0]['file'], system)}).catch((error) => console.log(error))
 
-    console.log("done with handleFile")
+    function readAuxiliaryFiles(system) {
+        return new Promise (function (resolve, reject){
+            let readList = auxFiles.map((auxFile) => {
+                return new Promise(function (resolve, reject) {
+                    auxFile.reader(auxFile.file, system);
+                    resolve(system);
+                })
+            });
+            let toWait = Promise.all(readList)
+            resolve(toWait)
+        });
+    }
+    
+    //makeSystem().then((system) => {auxFiles[0]['reader'](auxFiles[0]['file'], system)}).catch((error) => console.log(error))
+    makeSystem().then((system) => readAuxiliaryFiles(system))
+
 }
 
 function readError() {
@@ -160,28 +166,6 @@ function readError() {
 }
 function readSuccess() {
     notify("Yay!")
-}
-
-async function readTop(topFile:File) {
-    //make system to store the dropped files in
-    const system = new System(sysCount, elements.getNextId());
-    systems.push(system); //add system to Systems[]
-    const topReader = new TopReader(topFile, system, elements);
-    topReader.read();
-    await topReader.promise
-    system.initInstances(system.systemLength())
-    return system
-    
-}
-
-function readTraj(trajFile:File, system:System) {
-    console.log(system)
-    trajReader = new TrajectoryReader(trajFile, system);
-    trajReader.indexTrajectory()
-    trajReader.nextConfig()
-    render()
-    console.log(system.systemLength())
-    return system
 }
 
 // auxiliary files array for readAuxiliaryFiles function

@@ -2,6 +2,16 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                 Read a file, make a system                 ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+async function readTop(topFile) {
+    //make system to store the dropped files in
+    const system = new System(sysCount, elements.getNextId());
+    systems.push(system); //add system to Systems[]
+    const topReader = new TopReader(topFile, system, elements);
+    topReader.read();
+    await topReader.promise;
+    system.initInstances(system.systemLength());
+    return system;
+}
 // Generic function to connect a file to a reader
 function parseFileWith(file, parser) {
     let reader = new FileReader();
