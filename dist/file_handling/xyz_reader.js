@@ -1,4 +1,4 @@
-function readXYZString(s) {
+function parseXYZString(s) {
     let sys = new System(sysCount, elements.getNextId());
     let lines = s.split(/[\n]+/g);
     // trim blank lines at the end of the file 

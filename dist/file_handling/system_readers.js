@@ -13,13 +13,17 @@ async function readTop(topFile) {
     return system;
 }
 async function readOxViewFile(oxFile) {
-    //oxView files may contain multiple systems
+    // oxView files may contain multiple systems
     parseFileWith(oxFile, parseOxViewString);
     return systems[systems.length - 1];
 }
 async function readUNFFile(unfFile) {
-    //UNF files may contain multiple systems
+    // UNF files may contain multiple systems
     parseFileWith(unfFile, parseUNFString);
+}
+async function readXYZFile(xyzFile) {
+    // XYZ reader makes its own system
+    parseFileWith(xyzFile, parseXYZString);
 }
 // Read an oxView file
 function parseOxViewString(s) {

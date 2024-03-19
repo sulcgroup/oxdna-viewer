@@ -1,4 +1,4 @@
-function readXYZString(s: string) {
+function parseXYZString(s: string) {
     let sys = new System(sysCount, elements.getNextId());
 
     let lines = s.split(/[\n]+/g);

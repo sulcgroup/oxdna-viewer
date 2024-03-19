@@ -54,7 +54,7 @@ function handleFiles(files) {
             systemFiles.push(new File2reader(files[i], 'unf', readUNFFile)); // works
         }
         else if (ext === "xyz") {
-            systemFiles.push(new File2reader(files[i], 'xyz', readXYZString));
+            systemFiles.push(new File2reader(files[i], 'xyz', readXYZFile));
         }
         else if (ext === "mgl") {
             systemFiles.push(new File2reader(files[i], 'mgl', readMGL)); //HELP!
