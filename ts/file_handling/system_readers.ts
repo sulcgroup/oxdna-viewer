@@ -21,6 +21,11 @@ async function readOxViewFile(oxFile:File) {
     return systems[systems.length-1]
 }
 
+async function readUNFFile(unfFile:File) {
+    //UNF files may contain multiple systems
+    parseFileWith(unfFile, parseUNFString)
+}
+
 // Read an oxView file
 function parseOxViewString(s: string) {
     let sysStartId = sysCount;

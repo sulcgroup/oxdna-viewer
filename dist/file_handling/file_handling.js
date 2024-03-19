@@ -51,7 +51,7 @@ function handleFiles(files) {
             systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); // works
         }
         else if (ext === "unf") {
-            systemFiles.push(new File2reader(files[i], 'unf', readUNFString));
+            systemFiles.push(new File2reader(files[i], 'unf', readUNFFile)); // works
         }
         else if (ext === "xyz") {
             systemFiles.push(new File2reader(files[i], 'xyz', readXYZString));

@@ -1,4 +1,4 @@
-function readUNFString(s: string) {
+function parseUNFString(s: string) {
 
     //the peptide and nucleic acid strands actually have almost the same structure, but different names...
     function isNa(obj) {
