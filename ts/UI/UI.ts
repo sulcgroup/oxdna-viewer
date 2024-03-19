@@ -67,6 +67,7 @@ function deleteSelectedForces() {
     var table = $('#forcesTable').data('table');
     let removeIndices = table.getSelectedItems().map(s=>forcesTable.indexOf(s));
 
+    // consider changing to https://stackoverflow.com/a/35116966/9738112 so it can be in-place
     forces = forces.filter((f,i)=>!removeIndices.includes(i));
     forcesTable = forcesTable.filter((f,i)=>!removeIndices.includes(i));
 

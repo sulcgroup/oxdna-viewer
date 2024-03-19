@@ -71,24 +71,23 @@ class ElementMap extends Map {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Particle indexing stuff
 const elements = new ElementMap(); //contains references to all BasicElements
-const systems = [];
-var sysCount = 0;
-var strandCount = 0;
-var selectedBases = new Set();
-var clusterCounter = 0;
+const systems = []; // contains references to all systems
+const selectedBases = new Set(); // contains the set of currently selected BasicElements
+var sysCount = 0; //THIS CAN BE REMOVED.  REPLACE WITH systems.length
+var clusterCounter = 0; //idk about this one...
 // File reading stuff
-var trajReader;
+var trajReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
 var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 const unfFileInfo = []; // Stores UNF file info (Necessary for writing out UNF files)
 var confNum = 0; // Current configuration number in a trajectory
 var box = new THREE.Vector3(); // Box size of the current scene
 // ANM stuff
-var selectednetwork = 0; // Only used for networks
 const networks = []; // Only used for networks, replaced anms
+var selectednetwork = 0; // Only used for networks
 const graphDatasets = []; // Only used for fluctuation graph
 // Forces stuff
-var forces = [];
+var forces = []; // Can't be const because of the current implementation of removing forces.
 var forcesTable = [];
 var forceHandler;
 // color overlay stuff
@@ -130,6 +129,7 @@ render();
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                      Random functions                      ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// These should probably be moved somewhere else...
 function findBasepairs(min_length = 0) {
     systems.forEach(system => {
         if (!system.checkedForBasepairs) {

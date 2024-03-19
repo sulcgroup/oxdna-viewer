@@ -79,14 +79,13 @@ class ElementMap extends Map<number, BasicElement>{
 
 // Particle indexing stuff
 const elements: ElementMap = new ElementMap(); //contains references to all BasicElements
-const systems: System[] = [];
-var sysCount: number = 0;
-var strandCount: number = 0;
-var selectedBases = new Set<BasicElement>();
-var clusterCounter = 0; 
+const systems: System[] = [];  // contains references to all systems
+const selectedBases = new Set<BasicElement>(); // contains the set of currently selected BasicElements
+var sysCount: number = 0;  //THIS CAN BE REMOVED.  REPLACE WITH systems.length
+var clusterCounter = 0; //idk about this one...
 
 // File reading stuff
-var trajReader: TrajectoryReader;
+var trajReader: TrajectoryReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
 var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
 const unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
@@ -94,12 +93,12 @@ var confNum: number = 0; // Current configuration number in a trajectory
 var box = new THREE.Vector3(); // Box size of the current scene
 
 // ANM stuff
-var selectednetwork: number = 0; // Only used for networks
 const networks: Network[] = []; // Only used for networks, replaced anms
+var selectednetwork: number = 0; // Only used for networks
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 
 // Forces stuff
-var forces: Force[] = [];
+var forces: Force[] = [];  // Can't be const because of the current implementation of removing forces.
 var forcesTable: string[][] = [];
 var forceHandler;
 
@@ -152,6 +151,8 @@ render();
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                      Random functions                      ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// These should probably be moved somewhere else...
 
 function findBasepairs(min_length=0) {
     systems.forEach(system=>{

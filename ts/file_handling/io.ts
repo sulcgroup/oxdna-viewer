@@ -1,31 +1,38 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="./order_parameter_selector.ts" />
 
+// Rename this to oxDNA_reader.ts???
+
 class TopReader extends FileReader{
     topFile: File = null;
     system: System;
     elems: ElementMap;
 
+    promise:Promise<unknown>
     sidCounter = 0;
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in old oxDNA .top files
     n3: number;
-    callback : Function;
-    configurationLength : number;
 
-    constructor(topFile: File, system: System, elems: ElementMap, callback : Function){
+    constructor(topFile: File, system: System, elems: ElementMap){
         super();
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
-        this.callback = callback;
-        this.onload = () => {
-            let file = this.result as string
-            let lines = file.split(/[\n]+/g);
-            (lines[0].indexOf('5->3') > 0)? this.read_new_top_file(lines) :this.read_old_top_file(lines);
-            // fire dat reader
-            this.callback();
-        };
+        // If you put the onload inside a promise you can wait for it later
+        this.promise = new Promise( function (resolve, reject) {
+            this.onload = () => {
+                let file = this.result as string;
+                let lines = file.split(/[\n]+/g);
+                (lines[0].indexOf('5->3') > 0)? this.read_new_top_file(lines) :this.read_old_top_file(lines);
+                resolve("success");
+            };
+
+            this.onerror = () => {
+                reject(new DOMException("Problem with top file"))
+            }
+        }.bind(this))
+        
     }
 
     read_old_top_file(lines) {
@@ -44,7 +51,6 @@ class TopReader extends FileReader{
         let nucCount = this.elems.getNextId();
         
         lines = lines.slice(1); // discard the header
-        this.configurationLength = lines.length;
 
         // create empty list of elements with length equal to the topology
         // old style topology files can only contain one of DNA or RNA, so this is safe.
@@ -73,7 +79,6 @@ class TopReader extends FileReader{
         lines.forEach((line, i) => {
             if (line == "") {
                 // Delete last element
-                this.configurationLength -= 1;
                 this.elems.delete(this.elems.getNextId()-1);
                 return;
             }
@@ -296,18 +301,25 @@ class  LookupReader extends FileReader {
     confLength : number;
     callback : Function;
     size :number;
+    promise: Promise<unknown>
 
     constructor(chunker, confLength, callback) {
         super();
         this.chunker = chunker;
         this.confLength = confLength;
         this.callback = callback;
-        this.onload = (evt) =>{ // extract configuration
-            let file = this.result as string;
-            let lines = file.split(/[\n]+/g);
-            // we need to pass down idx to sync with the DatReader
-            this.callback(this.idx, lines, this.size);
-        };
+        this.promise = new Promise(function (resolve, reject) {
+            this.onload = (evt) =>{ // extract configuration
+                let file = this.result as string;
+                let lines = file.split(/[\n]+/g);
+                // we need to pass down idx to sync with the DatReader
+                this.callback(this.idx, lines, this.size);
+            };
+            this.onerror = () => {
+                console.log("oh no!")
+            }
+        }.bind(this))
+        
     }
 
     addIndex(offset,size,time){
@@ -321,7 +333,7 @@ class  LookupReader extends FileReader {
         return l == 0 || idx >= l;
     }
 
-    getConf(idx:number){
+    async getConf(idx:number){
         if (idx < this.position_lookup.length){
             let offset = this.position_lookup[idx][0];
             this.size  = this.position_lookup[idx][1];
@@ -333,6 +345,7 @@ class  LookupReader extends FileReader {
                     this.size
                 )
             );
+            await this.promise
         }
     }
 }
@@ -340,7 +353,7 @@ class  LookupReader extends FileReader {
 
 
 class TrajectoryReader {
-    topReader : TopReader|PatchyTopReader;
+    //topReader : TopReader|PatchyTopReader;
     system : System;
     elems : ElementMap;
     chunker : FileChunker;
@@ -358,13 +371,12 @@ class TrajectoryReader {
     indexProgress :HTMLProgressElement;
     trajControls:HTMLElement;
 
-    constructor(datFile:File, topReader: TopReader|PatchyTopReader, system: System, elems: ElementMap,indexes?:[]){
-        this.topReader = topReader;
+    constructor(datFile:File, system: System,indexes?:[]){
+        //this.topReader = topReader;
         this.system = system;
-        this.elems = elems;
         this.datFile = datFile;
         this.chunker = new FileChunker(datFile, 1024 * 1024 * 50);// we read in chunks of 50 MB 
-        this.confLength = this.topReader.configurationLength + 3; 
+        this.confLength = this.system.systemLength() + 3; 
         this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
         this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
@@ -510,7 +522,7 @@ class TrajectoryReader {
     }
 
 
-    parseConf(lines :string[]){
+    parseConf(lines: string[]){
         let system = this.system;
         let numNuc = this.numNuc;
         // parse file into lines

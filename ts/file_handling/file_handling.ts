@@ -1,8 +1,6 @@
+/// <reference path="../typescript_definitions/index.d.ts" />
 
-
-
-
-function handleFiles(files: File[]) {
+function handleFiles_old(files: File[]) {
 
     const filesLen = files.length;
 
@@ -106,6 +104,86 @@ function handleFiles(files: File[]) {
     return;
 }
 
+class file2reader {
+    file: File;
+    type: string;
+    reader: Function;
+
+    constructor(file, type, reader) {
+        this.file = file;
+        this.type = type;
+        this.reader = reader;
+    }
+} 
+
+// organizes files into files that create a new system, auxiliary files, and script files.
+// Then fires the reads sequentially
+function handleFiles(files: File[]) {
+    const systemFiles:file2reader[] = []
+    const auxFiles:Object[] = []
+    const scriptFiles:Object[] = []
+
+    // Nasty "switch" statement
+    const filesLen = files.length;
+    for (let i = 0; i < filesLen; i++) {
+        const fileName = files[i].name.toLowerCase();
+        const ext = fileName.split('.').pop();
+        if (ext == 'top') {
+            systemFiles.push(new file2reader(files[i], 'topology', readTop))
+        }
+        if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
+            auxFiles.push(
+                {
+                    'file' : files[i],
+                    'type' : 'trajectory',
+                    'reader' : readTraj
+
+                }
+            )
+        }
+    }
+
+    function makeSystem() {
+        return new Promise (function (resolve, reject) {
+            let system = systemFiles[0].reader(systemFiles[0].file);
+            resolve(system)
+        });
+    }
+    
+    makeSystem().then((system) => {auxFiles[0]['reader'](auxFiles[0]['file'], system)}).catch((error) => console.log(error))
+
+    console.log("done with handleFile")
+}
+
+function readError() {
+    notify("Oh no!", 'error')
+}
+function readSuccess() {
+    notify("Yay!")
+}
+
+async function readTop(topFile:File) {
+    //make system to store the dropped files in
+    const system = new System(sysCount, elements.getNextId());
+    systems.push(system); //add system to Systems[]
+    const topReader = new TopReader(topFile, system, elements);
+    topReader.read();
+    await topReader.promise
+    system.initInstances(system.systemLength())
+    return system
+    
+}
+
+function readTraj(trajFile:File, system:System) {
+    console.log(system)
+    trajReader = new TrajectoryReader(trajFile, system);
+    trajReader.indexTrajectory()
+    trajReader.nextConfig()
+    render()
+    console.log(system.systemLength())
+    return system
+}
+
 // auxiliary files array for readAuxiliaryFiles function
 let auxiliaryFiles: { [key: string]: any} = {}
 function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFile, parFile, selectFile) {
@@ -118,9 +196,6 @@ function setAuxiliaryFiles(topFile, datFile, jsonFile, trapFile, hbFile, massFil
     auxiliaryFiles.parFile = parFile;
     auxiliaryFiles.selectFile = selectFile;
 }
-
-
-
 
 let initFileReading = true; // dirty hack to keep the event handling in check 
 let handledScript = false;
@@ -161,7 +236,7 @@ function readFiles(topFile: File, datFile: File, idxFile:File, pdbFile?: File, p
                 //we handle patchy files
                 const patchyTopologyReader = new PatchyTopReader(topFile, system, elements,()=>{
                     //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                    trajReader = new TrajectoryReader(datFile,patchyTopologyReader, system, elements);
+                    trajReader = new TrajectoryReader(datFile, system);
                     trajReader.indexTrajectory();
 
                     //set up patchy instancing data arrays
@@ -180,32 +255,32 @@ function readFiles(topFile: File, datFile: File, idxFile:File, pdbFile?: File, p
             system.setDatFile(datFile); //store datFile in current System object
             if(!idxFile){
                 //read topology file, the configuration file is read once the topology is loaded to avoid async errors
-                const topReader = new TopReader(topFile, system, elements,()=>{
-                    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                    trajReader = new TrajectoryReader(datFile,topReader,system,elements);
-                    trajReader.indexTrajectory();
-    
-                    //set up instancing data arrays
-                    system.initInstances(system.systemLength());
-                });
-                topReader.read();
+                //const topReader = new TopReader(topFile, system, elements,()=>{
+                //    //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                //    trajReader = new TrajectoryReader(datFile,system);
+                //    trajReader.indexTrajectory();
+    //
+                //    //set up instancing data arrays
+                //    system.initInstances(system.systemLength());
+                //});
+                //topReader.read();
             }
             else{
                 console.log("index provided");
                 const idxReader = new FileReader(); //read .json
-                idxReader.onload = () => {
-                    let file = idxReader.result as string;
-                    let indexes = JSON.parse(file);
-    
-                    const topReader = new TopReader(topFile, system, elements,()=>{
-                        //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
-                        trajReader = new TrajectoryReader(datFile,topReader,system,elements,indexes);
-                        trajReader.nextConfig();
-                        //set up instancing data arrays
-                        system.initInstances(system.systemLength());
-                    });
-                    topReader.read();
-                };
+                //idxReader.onload = () => {
+                //    let file = idxReader.result as string;
+                //    let indexes = JSON.parse(file);
+    //
+                //    const topReader = new TopReader(topFile, system, elements,()=>{
+                //        //fire dat file read from inside top file reader to make sure they don't desync (large protein files will cause a desync)
+                //        trajReader = new TrajectoryReader(datFile,system,indexes);
+                //        trajReader.nextConfig();
+                //        //set up instancing data arrays
+                //        system.initInstances(system.systemLength());
+                //    });
+                //    topReader.read();
+                //};
                 idxReader.readAsText(idxFile);
             }
         }
