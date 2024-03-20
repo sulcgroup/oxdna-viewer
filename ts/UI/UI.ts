@@ -649,7 +649,7 @@ class View {
 
             // Make controller click go to next config
             const selectListener = (event) => {
-                trajReader.nextConfig();
+                systems[systems.length-1].reader.nextConfig();
             };
             const controller = vrRenderer.vr.getController(0);
             controller.addEventListener('select', selectListener);

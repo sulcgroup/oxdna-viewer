@@ -76,7 +76,7 @@ const selectedBases = new Set(); // contains the set of currently selected Basic
 var sysCount = 0; //THIS CAN BE REMOVED.  REPLACE WITH systems.length
 var clusterCounter = 0; //idk about this one...
 // File reading stuff
-var trajReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
+//var trajReader: TrajectoryReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
 var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Models)
 const unfFileInfo = []; // Stores UNF file info (Necessary for writing out UNF files)

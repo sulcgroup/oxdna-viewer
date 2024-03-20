@@ -63,7 +63,7 @@ function createTrajectoryVideo(canvas, capturer, onComplete?) {
     function _load(e) {
         e.preventDefault(); // cancel default actions
         capturer.capture(canvas);
-        trajReader.nextConfig();
+        systems[systems.length - 1].reader.nextConfig();
     };
 
     // Listen for last configuration event
@@ -86,7 +86,7 @@ function createTrajectoryVideo(canvas, capturer, onComplete?) {
 
     // Start capturing
     capturer.start();
-    trajReader.nextConfig();
+    systems[systems.length - 1].reader.nextConfig();
 };
 
 function createLemniscateVideo(canvas, capturer, framerate:number, duration:number, onComplete?: ()=>void) {

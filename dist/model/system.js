@@ -7,6 +7,7 @@ class System {
     id;
     globalStartId; //1st nucleotide's id
     datFile;
+    reader; // The FileReader object bound to this system
     colormapFile;
     lutCols;
     strands = [];
@@ -98,6 +99,9 @@ class System {
                 this.dummyBackbone.geometry["attributes"][name].needsUpdate = true;
             }
         });
+    }
+    callAllUpdates() {
+        this.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale', 'instanceColor', 'instanceVisibility']);
     }
     getElementBySID(sid) {
         return elements.get(this.globalStartId + sid);

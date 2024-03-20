@@ -12,21 +12,22 @@ async function readTop(topFile:File) {
     topReader.read();
     await topReader.promise
     system.initInstances(system.systemLength())
+    addSystemToScene(system);
     return system
 }
 
-async function readOxViewFile(oxFile:File) {
+function readOxViewFile(oxFile:File) {
     // oxView files may contain multiple systems
     parseFileWith(oxFile, parseOxViewString);
     return systems[systems.length-1]
 }
 
-async function readUNFFile(unfFile:File) {
+function readUNFFile(unfFile:File) {
     // UNF files may contain multiple systems
     parseFileWith(unfFile, parseUNFString)
 }
 
-async function readXYZFile(xyzFile:File) {
+function readXYZFile(xyzFile:File) {
     // XYZ reader makes its own system
     parseFileWith(xyzFile, parseXYZString)
 }

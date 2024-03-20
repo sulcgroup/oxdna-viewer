@@ -1,4 +1,7 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                Figure out how to read files                ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 class File2reader {
     file;
     type;
@@ -43,7 +46,7 @@ function handleFiles(files) {
     for (let i = 0; i < filesLen; i++) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
-        // These file types lead to creation of a new system
+        // These file types lead to creation of a new system(s)
         if (ext === 'top') {
             systemFiles.push(new File2reader(files[i], 'topology', readTop));
         } // works 
@@ -133,6 +136,7 @@ function handleFiles(files) {
                 });
             });
             let toWait = Promise.all(readList);
+            system.callAllUpdates();
             resolve(toWait);
         });
     }

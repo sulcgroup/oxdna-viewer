@@ -1,5 +1,9 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                Figure out how to read files                ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 class File2reader {
     file: File;
     type: string;
@@ -51,7 +55,7 @@ function handleFiles(files: File[]) {
         const fileName = files[i].name.toLowerCase();
         const ext = fileName.split('.').pop();
 
-        // These file types lead to creation of a new system
+        // These file types lead to creation of a new system(s)
         if      (ext === 'top') { systemFiles.push(new File2reader(files[i], 'topology', readTop)); } // works 
         else if (ext === "oxview") { systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile)); } //works
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); } // normal pdb and biological assemblies (.pdb1, .pdb2) //works
@@ -99,6 +103,7 @@ function handleFiles(files: File[]) {
                 })
             });
             let toWait = Promise.all(readList)
+            system.callAllUpdates()
             resolve(toWait)
         });
     }

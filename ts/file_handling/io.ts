@@ -353,7 +353,6 @@ class  LookupReader extends FileReader {
 
 
 class TrajectoryReader {
-    //topReader : TopReader|PatchyTopReader;
     system : System;
     elems : ElementMap;
     chunker : FileChunker;
@@ -390,7 +389,7 @@ class TrajectoryReader {
                 this.trajectorySlider.setAttribute("value",this.idx.toString());
                 if(myChart){
                     // hacky way to propagate the line annotation
-                    myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[this.idx][2];
+                    myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];
                     myChart.update();
                 }
             });
@@ -448,7 +447,7 @@ class TrajectoryReader {
                 notify("Finished indexing!");
                 //dirty hack to handle single conf case
                 if(indices.length==1){
-                    trajReader.trajectorySlider.hidden=true;
+                    this.trajectorySlider.hidden=true;
                     this.indexProgressControls.hidden=true;
                     this.trajControls.hidden = true;
                     document.getElementById('fileSectionLink').click();
@@ -464,14 +463,14 @@ class TrajectoryReader {
 
             }
             //update slider
-            trajReader.trajectorySlider.setAttribute("max" ,
-                    (trajReader.lookupReader.position_lookup.length-1).toString()
+            this.trajectorySlider.setAttribute("max" ,
+                    (this.lookupReader.position_lookup.length-1).toString()
             );
         };
 
     }
     downloadIndexFile(){
-         makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
+         makeTextFile("trajectory.idx", JSON.stringify(this.lookupReader.position_lookup));
     }
     retrieveByIdx(idx){
         //used by the slider to set the conf
@@ -481,7 +480,7 @@ class TrajectoryReader {
             this.trajectorySlider.setAttribute("value",this.idx.toString());
             if(myChart){
                 // hacky way to propagate the line annotation
-                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[idx][2];
                 myChart.update();
             }
         }
@@ -505,13 +504,13 @@ class TrajectoryReader {
         if (this.playFlag )
         {
             this.intervalId = setInterval(()=>{
-                if(trajReader.idx==trajReader.lookupReader.position_lookup.length-1)
+                if(this.idx==this.lookupReader.position_lookup.length-1)
                 {
                     this.playFlag = false;
                     clearInterval(this.intervalId);
                     return;
                 }
-                trajReader.nextConfig();
+                this.nextConfig();
             }, 100);
         }
         else{
@@ -584,7 +583,6 @@ class TrajectoryReader {
                 }
 
             }
-            addSystemToScene(system);
             sysCount++;
         }
         else{

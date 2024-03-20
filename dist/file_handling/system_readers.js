@@ -10,18 +10,19 @@ async function readTop(topFile) {
     topReader.read();
     await topReader.promise;
     system.initInstances(system.systemLength());
+    addSystemToScene(system);
     return system;
 }
-async function readOxViewFile(oxFile) {
+function readOxViewFile(oxFile) {
     // oxView files may contain multiple systems
     parseFileWith(oxFile, parseOxViewString);
     return systems[systems.length - 1];
 }
-async function readUNFFile(unfFile) {
+function readUNFFile(unfFile) {
     // UNF files may contain multiple systems
     parseFileWith(unfFile, parseUNFString);
 }
-async function readXYZFile(xyzFile) {
+function readXYZFile(xyzFile) {
     // XYZ reader makes its own system
     parseFileWith(xyzFile, parseXYZString);
 }

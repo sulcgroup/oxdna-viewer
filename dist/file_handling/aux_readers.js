@@ -1,12 +1,20 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////                Read a file, modify a system                ////////////////////
+///////////////////               Read a file, modify the scene                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 function readTraj(trajFile, system) {
-    trajReader = new TrajectoryReader(trajFile, system);
-    trajReader.indexTrajectory();
+    // The system needs to know if it already has a traj reader attached to it.
+    // If so, delete the old one and add the new one
+    // We currently have a problem that the TrajectoryReader creates new meshes when it fires
+    // Why? I thought addSystemToScene did that...?
+    system.reader = new TrajectoryReader(trajFile, system);
+    system.reader.indexTrajectory();
     render();
     return system;
+}
+function readJson(jsonFile, system) {
+    parseFileWith(jsonFile, parseJson); // How to add overloads???  //parseJson needs the system as well
+    render();
 }
 // Creates color overlays
 function makeLut(data, key, system) {
@@ -176,9 +184,8 @@ function updateConfFromFile(dat_file) {
     render();
 }
 // Json files can be a lot of things, read them.
-function readJson(system, jsonReader) {
-    const file = jsonReader.result;
-    const data = JSON.parse(file);
+function parseJson(json, system) {
+    const data = JSON.parse(json);
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
