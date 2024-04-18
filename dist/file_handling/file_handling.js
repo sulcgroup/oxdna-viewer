@@ -21,14 +21,15 @@ class oxFileReader extends FileReader {
         this.promise = new Promise(function (resolve, reject) {
             this.onload = () => {
                 let f = this.result;
-                let result = parser(f);
+                let result = parser(f, ...parser['args']);
                 resolve(result);
             };
         }.bind(this));
     }
 }
 // Generic function to connect a file to a reader to a parser
-async function parseFileWith(file, parser) {
+async function parseFileWith(file, parser, args = []) {
+    parser['args'] = args;
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
     let result = await reader.promise;
@@ -136,7 +137,7 @@ function handleFiles(files) {
                 });
             });
             let toWait = Promise.all(readList);
-            system.callAllUpdates();
+            system.callAllUpdates(); // This isn't working for oxView systems
             resolve(toWait);
         });
     }
@@ -145,6 +146,7 @@ function handleFiles(files) {
     // Put all the function executions in a promise chain to make sure they fire sequentially
     makeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())));
 }
+// Create Three geometries and meshes that get drawn in the scene.
 function addSystemToScene(system) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.

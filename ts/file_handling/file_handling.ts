@@ -26,7 +26,7 @@ class oxFileReader extends FileReader {
         this.promise = new Promise (function (resolve, reject) {
             this.onload = () => {
                 let f = this.result as string
-                let result = parser(f)
+                let result = parser(f, ...parser['args'])
                 resolve(result)
             }
         }.bind(this))
@@ -34,7 +34,8 @@ class oxFileReader extends FileReader {
 }
 
 // Generic function to connect a file to a reader to a parser
-async function parseFileWith(file: File, parser: Function) {
+async function parseFileWith(file: File, parser: Function, args:unknown[]=[]) {
+    parser['args'] = args
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
     let result = await reader.promise
@@ -102,8 +103,8 @@ function handleFiles(files: File[]) {
                     resolve(system);
                 })
             });
-            let toWait = Promise.all(readList)
-            system.callAllUpdates()
+            let toWait = Promise.all(readList) // This is causing race conditions with dat and json files.
+            system.callAllUpdates() // This isn't working for oxView systems
             resolve(toWait)
         });
     }
@@ -115,6 +116,7 @@ function handleFiles(files: File[]) {
     makeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())))
 }
 
+// Create Three geometries and meshes that get drawn in the scene.
 function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.

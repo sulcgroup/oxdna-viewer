@@ -16,7 +16,7 @@ async function readTop(topFile) {
 function readOxViewFile(oxFile) {
     // oxView files may contain multiple systems
     parseFileWith(oxFile, parseOxViewString);
-    return systems[systems.length - 1];
+    return systems[systems.length - 1]; // Note that this isn't quite right because an oxView file might make multiple systems.
 }
 function readUNFFile(unfFile) {
     // UNF files may contain multiple systems

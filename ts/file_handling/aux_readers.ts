@@ -5,19 +5,15 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 function readTraj(trajFile:File, system:System) {
-
-    // The system needs to know if it already has a traj reader attached to it.
-    // If so, delete the old one and add the new one
-    // We currently have a problem that the TrajectoryReader creates new meshes when it fires
-    // Why? I thought addSystemToScene did that...?
     system.reader = new TrajectoryReader(trajFile, system);
-    system.reader.indexTrajectory()
-    render()
+    system.reader.indexTrajectory();
+    system.callAllUpdates();
+    render();
     return system
 }
 
 function readJson(jsonFile:File, system:System){
-    parseFileWith(jsonFile, parseJson) // How to add overloads???  //parseJson needs the system as well
+    parseFileWith(jsonFile, parseJson, [system]) // How to add overloads???  //parseJson needs the system as well
     render()
 }
 
@@ -181,26 +177,26 @@ function readTrap(trapReader) {
 }
 
 // Read a conf file and update the most recent system based on it
-function updateConfFromFile(dat_file) {
-    let lines = dat_file.split("\n");
-    let topDirection = !view.getInputBool("topFormat") // the topology reader sets this input element based on the direction of the top file.
-    lines = lines.slice(3) // discard the header
-    systems.forEach(system =>{
-        system.strands.forEach((strand: Strand) => {
-            strand.forEach(e => {
-                let line = lines.shift().split(' ');
-                e.calcPositionsFromConfLine(line);
-            }, topDirection);
-        });
-        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
-    });
-    tmpSystems.forEach(system =>{
-        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
-    });
-
-    centerAndPBC();
-    render();
-}
+//function updateConfFromFile(dat_file) {
+//    let lines = dat_file.split("\n");
+//    let topDirection = !view.getInputBool("topFormat") // the topology reader sets this input element based on the direction of the top file.
+//    lines = lines.slice(3) // discard the header
+//    systems.forEach(system =>{
+//        system.strands.forEach((strand: Strand) => {
+//            strand.forEach(e => {
+//                let line = lines.shift().split(' ');
+//                e.calcPositionsFromConfLine(line);
+//            }, topDirection);
+//        });
+//        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
+//    });
+//    tmpSystems.forEach(system =>{
+//        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
+//    });
+//
+//    centerAndPBC();
+//    render();
+//}
 
 // Json files can be a lot of things, read them.
 function parseJson(json:string, system:System) {
