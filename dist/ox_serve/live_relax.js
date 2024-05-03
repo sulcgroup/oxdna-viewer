@@ -63,6 +63,11 @@ class OXServeSocket extends WebSocket {
     abort = true;
     constructor(url) {
         super(url);
+        // make a fake reader to recieve the trajectory
+        let oxServeTrajReader = new TrajectoryReader(new File([], 'oxServe.dat'), systems[sysCount - 1]);
+        oxServeTrajReader.firstConf = false;
+        oxServeTrajReader.system = systems[sysCount - 1];
+        oxServeTrajReader.numNuc = systems[sysCount - 1].systemLength();
         this.onmessage = (response) => {
             if (!this.abort) { //ignore all incomming messages when we stop the simulation
                 let message = JSON.parse(response.data);
@@ -70,7 +75,8 @@ class OXServeSocket extends WebSocket {
                     console.log(message["console_log"]);
                 }
                 if ("dat_file" in message) {
-                    updateConfFromFile(message["dat_file"]);
+                    let lines = message["dat_file"].split(/[\n]+/g);
+                    oxServeTrajReader.parseConf(lines);
                     if (forceHandler)
                         forceHandler.redraw();
                 }

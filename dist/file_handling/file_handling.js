@@ -136,7 +136,7 @@ function handleFiles(files) {
                     resolve(system);
                 });
             });
-            let toWait = Promise.all(readList);
+            let toWait = Promise.all(readList); // This is causing race conditions with dat and json files.
             system.callAllUpdates(); // This isn't working for oxView systems
             resolve(toWait);
         });

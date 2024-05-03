@@ -501,18 +501,19 @@ class TrajectoryReader {
         }
         else {
             // here goes update logic in theory ?
-            for (let lineNum = 0; lineNum < numNuc; lineNum++) {
-                if (lines[lineNum] == "") {
-                    notify("There's an empty line in the middle of your configuration!");
-                    break;
-                }
-                ;
-                currentNucleotide = elements.get(system.globalStartId + lineNum);
-                // consume a new line
-                l = lines[lineNum].split(/\s+/);
-                currentNucleotide.calcPositionsFromConfLine(l);
-            }
-            system.callUpdates(['instanceOffset', 'instanceRotation']);
+            let topDirection = !view.getInputBool("topFormat");
+            systems.forEach(system => {
+                system.strands.forEach((strand) => {
+                    strand.forEach(e => {
+                        let line = lines.shift().split(' ');
+                        e.calcPositionsFromConfLine(line);
+                    }, topDirection);
+                });
+                system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+            });
+            tmpSystems.forEach(system => {
+                system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+            });
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)
