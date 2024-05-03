@@ -242,6 +242,7 @@ function parseOxViewString(s) {
 // Read an mgl file
 const MGL_SCALE = 1;
 function readMGL(file) {
+    notify("Warning: MGL will render but it's not interactive", "warning");
     // utility function to parse colors in MGL format
     function materialFromMGLColor(color, opacity = 1.0) {
         if (color === "magenta") {

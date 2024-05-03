@@ -71,10 +71,10 @@ function handleFiles(files: File[]) {
         else if (ext === "txt" && (fileName.includes("_m"))) { auxFiles.push(new File2reader(files[i], 'mass', readMassFile)); }
         else if (ext === "txt" && (fileName.includes("select"))) { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }
         else if (ext === "cam") { auxFiles.push(new File2reader(files[i], 'camera', readCamFile)); }
-        else if (ext === "csv"){ auxFiles.push(new File2reader(files[i], 'csv', handleCSV)); }
+        else if (ext === "csv") { auxFiles.push(new File2reader(files[i], 'csv', handleCSV)); }
         else if (ext === "idx") { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }
         else if (ext === "par") { auxFiles.push(new File2reader(files[i], 'par', readParFile)); }
-        else if (ext === "hb") { auxFiles.push(new File2reader(files[i], 'hb', readHBondFile)); }
+        else if (ext === "hb")  { auxFiles.push(new File2reader(files[i], 'hb', readHBondFile)); }
         else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) { auxFiles.push(new File2reader(files[i], 'particle', parseFileWith)); } //HELP! 
         else if (fileName.includes("patches")) { auxFiles.push(new File2reader(files[i], 'patch', parseFileWith)); } //HELP!
         else if (ext === "patchspec" || fileName.match(/p_my\w+\.dat/g)) { auxFiles.push(new File2reader(files[i], 'loro', parseFileWith))} //HELP!
