@@ -4,96 +4,101 @@ class PatchyTopReader extends FileReader{
     topFile: File = null;
     system: PatchySystem;
     elems: ElementMap;
+    promise:Promise<PatchySystem>
 
     sidCounter = 0;
     nucLocalID: number = 0;
     lastStrand: number; //strands are 1-indexed in oxDNA .top files
     n3: number;
-    callback : Function;
     configurationLength : number;
     LORO: boolean;
 
-    constructor(topFile: File, system: PatchySystem, elems: ElementMap, callback : Function){
+    constructor(topFile: File, system: PatchySystem, elems: ElementMap){
         super();
         this.topFile = topFile;
         this.system = system;
         this.elems = elems;
-        this.callback = callback;
         this.LORO = false; 
         if(this.topFile.name.toLowerCase().includes("loro")) {
             this.LORO = true;
         }
-        this.onload = () => {
-            let nucCount = this.elems.getNextId();
 
-            let file = this.result as string;
-            file = file.replace(/ {2,}/g, " ") // remove double spaces (cause Josh likes them)
-            let lines = file.split(/[\n]+/g);
+        this.promise = new Promise( function (resolve, reject) {
+            this.onload = () => {
+                let nucCount = this.elems.getNextId();
 
-            this.configurationLength = parseInt(lines[0].split(/\s+/)[0]);
-            lines = lines.slice(1); // discard the header as we have the info now
+                let file = this.result as string;
+                file = file.replace(/ {2,}/g, " ") // remove double spaces (cause Josh likes them)
+                let lines = file.split(/[\n]+/g);
 
-            let speciesCounts = [];
+                this.configurationLength = parseInt(lines[0].split(/\s+/)[0]);
+                lines = lines.slice(1); // discard the header as we have the info now
 
-            if(!this.LORO){
-                lines[0].trim().split(/\s+/).forEach((t,i)=>{
-                    if(t){
-                        let sphere = new PatchyParticle(nucCount+i, this.system);
-                        this.system.particles.push(sphere);
-                        sphere.id = nucCount+i;
-                        this.elems.set(nucCount+i, sphere);
+                let speciesCounts = [];
 
-                        sphere.type = t;
+                if(!this.LORO){
+                    lines[0].trim().split(/\s+/).forEach((t,i)=>{
+                        if(t){
+                            let sphere = new PatchyParticle(nucCount+i, this.system);
+                            this.system.particles.push(sphere);
+                            sphere.id = nucCount+i;
+                            this.elems.set(nucCount+i, sphere);
 
-                        const s = parseInt(t);
-                        if (speciesCounts[s] == undefined) {
-                            speciesCounts[s] = 1;
-                        } else {
-                            speciesCounts[s]++;
+                            sphere.type = t;
+
+                            const s = parseInt(t);
+                            if (speciesCounts[s] == undefined) {
+                                speciesCounts[s] = 1;
+                            } else {
+                                speciesCounts[s]++;
+                            }
+
+                            sphere.sid = speciesCounts[s]-1;
+                            sphere.clusterId = clusterCounter;
                         }
+                    });
+                }
+                else {
+                    let idCounter = 0;
+                    lines.forEach((line, t)=>{
+                        // Split on one or more spaces
+                        const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/\s+/g);
+                        let pCount = parseInt(pCountStr);
+                        for(let p=0; p<pCount; p++) {
+                            const id = idCounter++
+                            let sphere = new PatchyParticle(id, this.system);
+                            this.system.particles.push(sphere);
+                            sphere.sid = this.sidCounter++;
+                            sphere.id = id;
+                            this.elems.set(id, sphere);
+                            sphere['patchSpec'] = patchSpec;
 
-                        sphere.sid = speciesCounts[s]-1;
-                        sphere.clusterId = clusterCounter;
-                    }
-                });
-            }
-            else {
-                let idCounter = 0;
-                lines.forEach((line, t)=>{
-                    console.log(line)
-                    // Split on one or more spaces
-                    const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/\s+/g);
-                    let pCount = parseInt(pCountStr);
-                    for(let p=0; p<pCount; p++) {
-                        const id = idCounter++
-                        let sphere = new PatchyParticle(id, this.system);
-                        this.system.particles.push(sphere);
-                        sphere.sid = this.sidCounter++;
-                        sphere.id = id;
-                        this.elems.set(id, sphere);
-                        sphere['patchSpec'] = patchSpec;
+                            sphere.type = t.toString();
 
-                        sphere.type = t.toString();
+                            // Set the id per species
+                            if (speciesCounts[t] == undefined) {
+                                speciesCounts[t] = 1;
+                            } else {
+                                speciesCounts[t]++;
+                            }
 
-                        // Set the id per species
-                        if (speciesCounts[t] == undefined) {
-                            speciesCounts[t] = 1;
-                        } else {
-                            speciesCounts[t]++;
+                            sphere.sid = speciesCounts[t]-1;
+                            sphere.clusterId = clusterCounter;
                         }
+                    });
+                }
 
-                        sphere.sid = speciesCounts[t]-1;
-                        sphere.clusterId = clusterCounter;
-                    }
-                });
+                nucCount = this.elems.getNextId();
+                resolve("success");
+            };
+                
+
+            this.onerror = () => {
+                reject(new DOMException("Problem with top file"))
             }
-
-            nucCount = this.elems.getNextId();
-            // usually the place where the DatReader gets fired
-            this.callback();
-
-        };
+        }.bind(this))
     }
+
     
     read(){
         this.readAsText(this.topFile);

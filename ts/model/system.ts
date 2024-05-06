@@ -324,6 +324,7 @@ class PatchySystem extends System {
     scalings: Float32Array[];
     visibilities: Float32Array[];
     labels: Float32Array[];
+    ready: Promise<boolean>;
 
     instanceParams = new Map([
         ['offsets', 3], ['rotations', 4], ['colors', 3],
@@ -336,140 +337,149 @@ class PatchySystem extends System {
         patches: any[]
     }[];
 
-    constructor(id: number, particleFile?: File, patchFile?: File, loroPatchFiles?: File[],
-        callback?: (any)=>void
-    ) {
+    constructor(id: number, particleFile?: File, patchFile?: File, loroPatchFiles?: File[]) {
         super(id, 0);
         this.id = id;
         this.particles = [];
 
         if (patchFile) {
+            this.ready = this.readPatchyFiles(particleFile, patchFile);
+        } else if (loroPatchFiles) {
+            this.ready = this.readLoroFiles(loroPatchFiles);
+        } else {
+            notify("Missing patch information for patchy particle system", "warning", true);
+        }
+    };
+
+    async readPatchyFiles(particleFile:File, patchFile:File): Promise<boolean> {
+        return new Promise(function(resolve, reject) {
             particleFile.text().then(particlesStr => {
                 patchFile.text().then(patchesStr => {
-                    callback(()=>{
-                        this.initSpecies(particlesStr, patchesStr);
-                    });
+                    this.initSpecies(particlesStr, patchesStr).then(resolve(true));
                 });
             });
-        } else if (loroPatchFiles) {
+        }.bind(this)); // why do I need this??
+    }
+    
+    async readLoroFiles(loroPatchFiles:File[]): Promise<boolean> {
+        return new Promise(function(resolve, reject) {
             let patchStrMap = new Map();
             loroPatchFiles.forEach(f=>f.text().then(s=>{
                 patchStrMap.set(f.name, s);
                 if (patchStrMap.size == loroPatchFiles.length) {
-                    callback(()=>{
-                        // All files loaded
-                        this.initLoroSpecies(patchStrMap);
-                    });
+                    this.initLoroSpecies(patchStrMap).then(resolve(true));
                 }
             }));
-        } else {
-            notify("Missing patch information for patchy particle system", "warning", true);
-
-            // This is a really ugly hack to fix a race condition
-            new Promise(resolve => setTimeout(resolve, 1000)).then(()=>callback(()=>{}));
-        }
-    };
-
-    initLoroSpecies(patchStrMap: Map<string, string>) {
-        this.particles.map(()=>{});
-        const types = this.particles.map(p=>parseInt(p.type));
-        const instanceCounts = [];
-        const patchSpecs = []
-        types.forEach((s,i)=>{
-            patchSpecs[s] = this.particles[i]['patchSpec'];
-            if (instanceCounts[s] === undefined) {
-                instanceCounts[s] = 1;
-            } else {
-                instanceCounts[s]++;
-            }
-        });
-        this.species = [...new Set(types)].map(s=>{
-            let patchStrs = patchStrMap.get(patchSpecs[s]);
-            return {
-                'type': s,
-                'patches': patchStrs.split('\n').map(vs=>{
-                    let pos = new THREE.Vector3().fromArray(
-                        vs.trim().split(/ +/g).map(v=>parseFloat(v))
-                    );
-                    return {
-                        'position': pos,
-                        'a1': pos.clone().normalize(),
-                        'a2': pos.clone().normalize(), // No actual orientation available
-                    }
-                })
-            }
-        });
-        console.log(this.species.length)
+        }.bind(this));
     }
 
     initSpecies(particlesStr: string, patchesStr: string) {
-        // Remove whitespace
-        particlesStr = particlesStr.replaceAll(' ', '');
-        patchesStr = patchesStr.replaceAll(' ', '');
+        return new Promise( function(resolve, reject){
+            // Remove whitespace
+            particlesStr = particlesStr.replaceAll(' ', '');
+            patchesStr = patchesStr.replaceAll(' ', '');
 
-        const getScalar = (name: string, s: string) => {
-            const m = s.match(new RegExp(`${name}=(-?\\d+)`));
-            if (m) {
-                return parseFloat(m[1]);
-            }
-            return false
-        }
-        const getArray = (name, s) => {
-            const m = s.match(new RegExp(`${name}=([\\,\\d\\.\\-\\+]+)`));
-            if (m) {
-                return m[1].split(',').map((v: string)=>parseFloat(v));
-            }
-            return false
-        }
-        let particles = [];
-        let currentParticle;
-        for (const line of particlesStr.split('\n')) {
-            const particleID = line.match(/particle_(\d+)/)
-            if (particleID) {
-                if (currentParticle) {
-                    particles.push(currentParticle);
+            const getScalar = (name: string, s: string) => {
+                const m = s.match(new RegExp(`${name}=(-?\\d+)`));
+                if (m) {
+                    return parseFloat(m[1]);
                 }
-                currentParticle = {'id': parseInt(particleID[1])}
+                return false
             }
-            const type = getScalar('type', line);
-            if (type !== false) {
-                currentParticle['type'] = type
+            const getArray = (name, s) => {
+                const m = s.match(new RegExp(`${name}=([\\,\\d\\.\\-\\+]+)`));
+                if (m) {
+                    return m[1].split(',').map((v: string)=>parseFloat(v));
+                }
+                return false
             }
-            const patches = getArray('patches', line);
-            if (patches !== false) {
-                currentParticle['patches'] = patches;
-            }
-        }
-        particles.push(currentParticle);
-
-        let patches = new Map();
-
-        let currentId: number;
-        for (const line of patchesStr.split('\n')) {
-            const patchID = line.match(/patch_(\d+)/);
-            if (patchID) {
-                currentId = parseInt(patchID[1]);
-                patches.set(currentId, {});
-            }
-            const color = getScalar('color', line);
-            if (color !== false) {
-                patches.get(currentId)['color'] = color;
-            }
-            for (const k of ['position', 'a1', 'a2']) {
-                const a = getArray(k, line);
-                if (a) {
-                    const v = new THREE.Vector3().fromArray(a);
-                    patches.get(currentId)[k] = v;
+            let particles = [];
+            let currentParticle;
+            for (const line of particlesStr.split('\n')) {
+                const particleID = line.match(/particle_(\d+)/)
+                if (particleID) {
+                    if (currentParticle) {
+                        particles.push(currentParticle);
+                    }
+                    currentParticle = {'id': parseInt(particleID[1])}
+                }
+                const type = getScalar('type', line);
+                if (type !== false) {
+                    currentParticle['type'] = type
+                }
+                const patches = getArray('patches', line);
+                if (patches !== false) {
+                    currentParticle['patches'] = patches;
                 }
             }
-        }
+            particles.push(currentParticle);
 
-        for (const particle of particles) {
-            particle['patches'] = particle['patches'].map(id=>patches.get(id));
-        }
+            let patches = new Map();
 
-        this.species = particles;
+            let currentId: number;
+            for (const line of patchesStr.split('\n')) {
+                const patchID = line.match(/patch_(\d+)/);
+                if (patchID) {
+                    currentId = parseInt(patchID[1]);
+                    patches.set(currentId, {});
+                }
+                const color = getScalar('color', line);
+                if (color !== false) {
+                    patches.get(currentId)['color'] = color;
+                }
+                for (const k of ['position', 'a1', 'a2']) {
+                    const a = getArray(k, line);
+                    if (a) {
+                        const v = new THREE.Vector3().fromArray(a);
+                        patches.get(currentId)[k] = v;
+                    }
+                }
+            }
+
+            for (const particle of particles) {
+                particle['patches'] = particle['patches'].map(id=>patches.get(id));
+            }
+
+            this.species = particles;
+        }.bind(this));
     }
+
+    initLoroSpecies(patchStrMap: Map<string, string>) {
+        return new Promise( function(resolve, reject){
+            this.particles.map(()=>{}); // I have somehow ruined particles.  It's because they're made by the top reader which is called after this
+            const types = this.particles.map(p=>parseInt(p.type));
+            console.log(types); //this is bad.
+            const instanceCounts = [];
+            const patchSpecs = []
+            types.forEach((s,i)=>{
+                console.log(this.particles[i]['patchSpec'])
+                patchSpecs[s] = this.particles[i]['patchSpec'];
+                if (instanceCounts[s] === undefined) {
+                    instanceCounts[s] = 1;
+                } else {
+                    instanceCounts[s]++;
+                }
+            });
+            this.species = [...new Set(types)].map(s=>{
+                let patchStrs = patchStrMap.get(patchSpecs[s]);
+                return {
+                    'type': s,
+                    'patches': patchStrs.split('\n').map(vs=>{
+                        let pos = new THREE.Vector3().fromArray(
+                            vs.trim().split(/ +/g).map(v=>parseFloat(v))
+                        );
+                        return {
+                            'position': pos,
+                            'a1': pos.clone().normalize(),
+                            'a2': pos.clone().normalize(), // No actual orientation available
+                        }
+                    })
+                }
+            });
+        }.bind(this));
+    }
+
+
 
     isPatchySystem() {
         return true;
@@ -483,7 +493,8 @@ class PatchySystem extends System {
         return this.particles.length;
     };
 
-    initPatchyInstances() {
+    async initPatchyInstances() {
+        await this.ready;
         const types = this.particles.map(p=>parseInt(p.type));
         const instanceCounts = [];
         types.forEach(s=>{

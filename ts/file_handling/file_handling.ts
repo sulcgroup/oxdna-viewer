@@ -44,11 +44,12 @@ async function parseFileWith(file: File, parser: Function, args:unknown[]=[]) {
 
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
-function handleFiles(files: File[]) {
+async function handleFiles(files: File[]) {
     renderer.domElement.style.cursor = "wait";
-    const systemFiles:File2reader[] = []
-    const auxFiles:File2reader[] = []
-    const scriptFiles:File2reader[] = []
+    const systemFiles:File2reader[] = [];
+    const systemHelpers:Object = {}; // These can be named whatever.
+    const auxFiles:File2reader[] = [];
+    const scriptFiles:File2reader[] = [];
 
     // Nasty "switch" statement
     const filesLen = files.length;
@@ -57,12 +58,17 @@ function handleFiles(files: File[]) {
         const ext = fileName.split('.').pop();
 
         // These file types lead to creation of a new system(s)
-        if      (ext === 'top') { systemFiles.push(new File2reader(files[i], 'topology', readTop)); } // works 
+        if      (ext === 'top') { systemFiles.push(new File2reader(files[i], 'topology', await identifyTopologyParser(files[i]))); } // works 
         else if (ext === "oxview") { systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile)); } //works
-        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); } // normal pdb and biological assemblies (.pdb1, .pdb2) //works
+        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); } //works
         else if (ext === "unf") { systemFiles.push(new File2reader(files[i], 'unf', readUNFFile)); } // works
         else if (ext === "xyz") { systemFiles.push(new File2reader(files[i], 'xyz', readXYZFile)); } //works
-        else if (ext === "mgl") { systemFiles.push(new File2reader(files[i], 'mgl', readMGL)); }  //HELP!
+        else if (ext === "mgl") { systemFiles.push(new File2reader(files[i], 'mgl', readMGL)); }  //ehh...
+
+        // Patchy files are special and are needed at system creation time
+        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) { systemHelpers["particles"] = files[i]; } //HELP! 
+        else if (fileName.includes("patches")) { systemHelpers["patches"] = files[i]; } //HELP!
+        else if (ext === "patchspec" || fileName.match(/p_my\w+\.dat/g)) { (systemHelpers["loroPatchFiles"] == undefined) ? systemHelpers["loroPatchFiles"] = [files[i]]: systemHelpers["loroPatchFiles"].push(files[i])} //HELP!
 
         // These file types modify an existing system
         else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') { auxFiles.push(new File2reader(files[i], 'trajectory', readTraj)); }
@@ -75,21 +81,18 @@ function handleFiles(files: File[]) {
         else if (ext === "idx") { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }
         else if (ext === "par") { auxFiles.push(new File2reader(files[i], 'par', readParFile)); }
         else if (ext === "hb")  { auxFiles.push(new File2reader(files[i], 'hb', readHBondFile)); }
-        else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) { auxFiles.push(new File2reader(files[i], 'particle', parseFileWith)); } //HELP! 
-        else if (fileName.includes("patches")) { auxFiles.push(new File2reader(files[i], 'patch', parseFileWith)); } //HELP!
-        else if (ext === "patchspec" || fileName.match(/p_my\w+\.dat/g)) { auxFiles.push(new File2reader(files[i], 'loro', parseFileWith))} //HELP!
 
         // Who knows what a script might do
-        else if (ext=="js"){ scriptFiles.push(new File2reader(files[i], 'topology', readScriptFile)); }
+        else if (ext=="js"){ scriptFiles.push(new File2reader(files[i], 'script', readScriptFile)); }
     }
 
     // Create a system from a file and resolve with a reference to the system
-    function makeSystem() {
+    function getOrMakeSystem() {
         return new Promise (function (resolve, reject) {
             let system:System
-            if (systemFiles.length == 0) {system = systems[systems.length-1]}
-            else if (systemFiles.length == 1) {system = systemFiles[0].reader(systemFiles[0].file)}
-            else {throw new Error("Systems must be defined by a single file!")}
+            if (systemFiles.length == 0) {system = systems[systems.length-1]} // If we're not making a new system
+            else if (systemFiles.length == 1) {system = systemFiles[0].reader(systemFiles[0].file, systemHelpers)} // If we're reading a file to make a system
+            else {throw new Error("Systems must be defined by a single file (there can be helper files)!")}
             resolve(system)
         });
     }
@@ -113,11 +116,11 @@ function handleFiles(files: File[]) {
     function executeScript() {}
     
     // Put all the function executions in a promise chain to make sure they fire sequentially
-    makeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())))
+    getOrMakeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())))
 }
 
 // Create Three geometries and meshes that get drawn in the scene.
-function addSystemToScene(system: System) {
+async function addSystemToScene(system: System) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.
     // This will force the gpu to check the vectors again when redrawing.
@@ -125,6 +128,10 @@ function addSystemToScene(system: System) {
     if (system.isPatchySystem()) {
         // Patchy particle geometries
         let s = system as PatchySystem;
+        console.log(s.ready)
+        await s.ready
+        console.log(s.ready)
+        console.log(s.species)
         if (s.species !== undefined) {
 
             const patchResolution = 4; // Number of points defining each patch

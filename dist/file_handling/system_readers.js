@@ -2,7 +2,34 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                 Read a file, make a system                 ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-async function readTop(topFile) {
+async function identifyTopologyParser(topFile) {
+    // .top files may be DNA/RNA/Protein, or some sort of patchy.
+    // There are 4(5?) different file formats, all called .top.  Which is this one?
+    let contents;
+    await topFile.text().then((result) => { contents = result; });
+    let lines = contents.split(/[\n]+/g);
+    lines = lines.filter(item => item); // remove blank lines
+    let header = lines[0];
+    let l0 = header.split(/\s+/);
+    // It might be a DNA/RNA/Protein file
+    if (header.indexOf('5->3') > 0 || lines.length == parseInt(l0[0]) + 1) {
+        return readTop;
+    }
+    // It might be a LORO file
+    else if (lines.length == parseInt(l0[1]) + 1 || lines.length == 2) {
+        return readPatchyTop;
+    }
+    // It might be Subhajit's topology
+    else if (0) {
+        //NOT IMPLEMENTED
+        return new Function;
+    }
+    else {
+        notify("ERROR: Topology format not recognized", 'error');
+        return undefined;
+    }
+}
+async function readTop(topFile, systemHelpers) {
     //make system to store the dropped files in
     const system = new System(sysCount, elements.getNextId());
     systems.push(system); //add system to Systems[]
@@ -10,6 +37,16 @@ async function readTop(topFile) {
     topReader.read();
     await topReader.promise;
     system.initInstances(system.systemLength());
+    addSystemToScene(system);
+    return system;
+}
+async function readPatchyTop(topFile, systemHelpers) {
+    const system = new PatchySystem(sysCount, systemHelpers["particles"], systemHelpers["patches"], systemHelpers["loroPatchFiles"]);
+    systems.push(system);
+    const topReader = new PatchyTopReader(topFile, system, elements);
+    topReader.read();
+    await topReader.promise;
+    system.initPatchyInstances();
     addSystemToScene(system);
     return system;
 }
