@@ -31,8 +31,7 @@ async function identifyTopologyParser(topFile) {
 }
 function readTop(topFile) {
     //make system to store the dropped files in
-    let system = parseFileWith(topFile, parseTop);
-    return system;
+    return parseFileWith(topFile, parseTop);
 }
 function readPatchyTop(topFile, systemHelpers) {
     // Loro topology files have loro in the name
@@ -40,23 +39,18 @@ function readPatchyTop(topFile, systemHelpers) {
     if (topFile.name.toLowerCase().includes("loro")) {
         LORO = true;
     }
-    let system = parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]);
-    return system;
+    return parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]);
 }
 function readOxViewFile(oxFile) {
     // oxView files may contain multiple systems
-    parseFileWith(oxFile, parseOxViewString);
-    return systems[systems.length - 1]; // Note that this isn't quite right because an oxView file might make multiple systems.
+    return parseFileWith(oxFile, parseOxViewString);
 }
 function readUNFFile(unfFile) {
     // UNF files may contain multiple systems
-    parseFileWith(unfFile, parseUNFString);
-    return systems[systems.length - 1];
+    return parseFileWith(unfFile, parseUNFString);
 }
 function readXYZFile(xyzFile) {
-    // XYZ reader makes its own system
-    parseFileWith(xyzFile, parseXYZString);
-    return systems[systems.length - 1];
+    return parseFileWith(xyzFile, parseXYZString);
 }
 function parseTop(s) {
     function readNewTopFile(lines) {
@@ -309,6 +303,7 @@ function parsePatchyTop(s, systemHelpers, LORO) {
 // Read an oxView file
 function parseOxViewString(s) {
     let sysStartId = systems.length;
+    const createdSystems = [];
     const newElementIds = new Map();
     // Check if file includes custom colors
     let customColors = false;
@@ -328,6 +323,7 @@ function parseOxViewString(s) {
         // Go through and add each system
         data.systems.forEach(sysData => {
             let sys = new System(sysStartId + sysData.id, elements.getNextId());
+            createdSystems.push(sys);
             sys.label = sysData.label;
             let sidCounter = 0;
             // Go through and add each strand
@@ -489,6 +485,7 @@ function parseOxViewString(s) {
         centerAndPBC(
         // Consider all added monomers
         data.systems.flatMap(sysData => sysData.createdSystem.getMonomers()));
+        return createdSystems;
     }
     if (data.forces) {
         data.forces.forEach(f => {

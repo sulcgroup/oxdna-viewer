@@ -22,5 +22,5 @@ function parseXYZString(s: string) {
     });
 
     addSystemToScene(sys);
-
+    return sys
 }

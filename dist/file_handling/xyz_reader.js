@@ -17,4 +17,5 @@ function parseXYZString(s) {
         elements.push(e);
     });
     addSystemToScene(sys);
+    return sys;
 }

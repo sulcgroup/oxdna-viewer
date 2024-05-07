@@ -38,8 +38,7 @@ async function identifyTopologyParser(topFile:File) {
 
 function readTop(topFile:File):Promise<System> {
     //make system to store the dropped files in
-    let system = parseFileWith(topFile, parseTop) as Promise<System>;
-    return system
+    return parseFileWith(topFile, parseTop) as Promise<System>;
 }
 
 function readPatchyTop(topFile: File, systemHelpers: Object):Promise<PatchySystem> {
@@ -49,26 +48,21 @@ function readPatchyTop(topFile: File, systemHelpers: Object):Promise<PatchySyste
         LORO = true;
     }
 
-    let system = parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]) as Promise<PatchySystem>;
-    return system
+    return parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]) as Promise<PatchySystem>;
 }
 
-function readOxViewFile(oxFile:File) {
+function readOxViewFile(oxFile:File):Promise<System[]> {
     // oxView files may contain multiple systems
-    parseFileWith(oxFile, parseOxViewString);
-    return systems[systems.length-1] // Note that this isn't quite right because an oxView file might make multiple systems.
+    return parseFileWith(oxFile, parseOxViewString) as Promise<System[]>;
 }
 
-function readUNFFile(unfFile:File) {
+function readUNFFile(unfFile:File):Promise<System[]> {
     // UNF files may contain multiple systems
-    parseFileWith(unfFile, parseUNFString)
-    return systems[systems.length-1]
+    return parseFileWith(unfFile, parseUNFString) as Promise<System[]>
 }
 
-function readXYZFile(xyzFile:File) {
-    // XYZ reader makes its own system
-    parseFileWith(xyzFile, parseXYZString)
-    return systems[systems.length-1]
+function readXYZFile(xyzFile:File):Promise<System> {
+    return parseFileWith(xyzFile, parseXYZString) as Promise<System>
 }
 
 function parseTop(s: string) {
@@ -359,6 +353,7 @@ function parsePatchyTop(s: string, systemHelpers: Object, LORO: boolean) {
 // Read an oxView file
 function parseOxViewString(s: string) {
     let sysStartId = systems.length;
+    const createdSystems:System[] = []
     const newElementIds = new Map();
     // Check if file includes custom colors
     let customColors = false;
@@ -380,6 +375,7 @@ function parseOxViewString(s: string) {
         // Go through and add each system
         data.systems.forEach(sysData => {
             let sys = new System(sysStartId+sysData.id, elements.getNextId());
+            createdSystems.push(sys);
             sys.label = sysData.label;
             let sidCounter = 0;
 
@@ -542,6 +538,7 @@ function parseOxViewString(s: string) {
             // Consider all added monomers
             data.systems.flatMap(sysData=>sysData.createdSystem.getMonomers())
         );
+        return createdSystems
     }
 
     if (data.forces) {

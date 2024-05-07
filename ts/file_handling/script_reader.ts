@@ -1,9 +1,7 @@
-function readScriptFile(file: File){
+function readScriptFile(scriptFile:File) {
+    return parseFileWith(scriptFile, parseScript)
+}
 
-    let reader = new FileReader();
-    reader.onload=(e)=>{
-        //handledScript=true;
-        eval(e.target.result as string); // hacky, but should do the trick 
-    };
-    reader.readAsText(file);
+function parseScript(script:string) {
+    return eval(script);
 }

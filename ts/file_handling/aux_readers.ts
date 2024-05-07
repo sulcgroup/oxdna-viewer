@@ -10,8 +10,7 @@ function readTraj(trajFile:File, system:System) {
 }
 
 function readJson(jsonFile:File, system:System){
-    parseFileWith(jsonFile, parseJson, [system])
-    return system
+    return parseFileWith(jsonFile, parseJson, [system])
 }
 
 // Creates color overlays

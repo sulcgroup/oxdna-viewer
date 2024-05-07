@@ -23,17 +23,17 @@ class oxFileReader extends FileReader {
             this.onload = () => {
                 let f = this.result;
                 let result = parser(f, ...parser['args']);
-                resolve(result);
+                resolve(result); // This passes the result of the parser up through parseFilesWith
             };
         }.bind(this));
     }
 }
 // Generic function to connect a text file to a reader to the correct parser
-async function parseFileWith(file, parser, args = []) {
+function parseFileWith(file, parser, args = []) {
     parser['args'] = args;
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
-    let result = await reader.promise;
+    let result = reader.promise;
     return result;
 }
 // organizes files into files that create a new system, auxiliary files, and script files.
@@ -141,12 +141,10 @@ async function handleFiles(files) {
     }
     // Wheeeeeeeee
     function executeScript() {
-        return new Promise(function (resolve, reject) {
-            scriptFiles.forEach(async function (f) {
-                await f.reader(f.file);
-                resolve("success!");
-            });
-        });
+        let readList = scriptFiles.map((scriptFile) => new Promise(function (resolve, reject) {
+            readScriptFile(scriptFile.file);
+        }));
+        return Promise.all(readList);
     }
     let systemPromise = getOrMakeSystem();
     let auxPromise = systemPromise.then((s) => { readAuxiliaryFiles(s); }); // This is still not working (it's letting executeScript fire before Aux finishes)

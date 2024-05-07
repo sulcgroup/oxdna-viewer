@@ -173,11 +173,13 @@ function parseUNFString(s: string) {
 
     // flag if there are custom colors
     let customColors: boolean = false;
+    const createdSystems: System[] = []
 
     data.structures.forEach((struct, i) => {
 
         // Create a system for our file
         let sys = new System(systems.length, elements.getNextId());
+        createdSystems.push(sys);
         sys.label = struct.name;
         let sidCounter = 0;
         let strandCounter = 0;
@@ -472,6 +474,8 @@ function parseUNFString(s: string) {
     if (appendedData != ''){
         let blob = new Blob([appendedData], {type: 'text/plain'});
         let f = new File([blob], 'tmp.pdb', {type: 'text/plain'});
-        readPdbFile(f);
+        let sys = readPdbFile(f);
+        createdSystems.push(sys)
     }
+    return createdSystems
 }

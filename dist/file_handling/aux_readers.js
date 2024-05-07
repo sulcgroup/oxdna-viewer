@@ -7,8 +7,7 @@ function readTraj(trajFile, system) {
     return system;
 }
 function readJson(jsonFile, system) {
-    parseFileWith(jsonFile, parseJson, [system]);
-    return system;
+    return parseFileWith(jsonFile, parseJson, [system]);
 }
 // Creates color overlays
 function makeLut(data, key, system) {
