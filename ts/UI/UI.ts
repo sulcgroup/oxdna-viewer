@@ -1278,7 +1278,7 @@ class fluxGraph {
         tmpSystems.push(dumb);
 
         let currentelemsize = elements.size;
-        let realSys = new System(sysCount++, currentelemsize);
+        let realSys = new System(systems.length, currentelemsize);
         realSys.initInstances(0);
         systems.push(realSys);
         addSystemToScene(realSys);

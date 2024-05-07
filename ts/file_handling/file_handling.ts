@@ -102,8 +102,8 @@ async function handleFiles(files: File[]) {
 
     function readAuxiliaryFiles(system) {
         let readList:Promise<unknown>[] = auxFiles.map((auxFile) => 
-            new Promise(async function (resolve, reject) {
-                await auxFile.reader(auxFile.file, system);
+            new Promise(function (resolve, reject) {
+                auxFile.reader(auxFile.file, system);
                 resolve(system);
             })
         );
@@ -121,7 +121,7 @@ async function handleFiles(files: File[]) {
     }
     
     let systemPromise = getOrMakeSystem();
-    let auxPromise = systemPromise.then((s) => {readAuxiliaryFiles(s)}); // This is still not working
+    let auxPromise = systemPromise.then((s) => {readAuxiliaryFiles(s)}); // This is still not working (it's letting executeScript fire before Aux finishes)
     let scriptPromise = auxPromise.then((s) => {executeScript()});
 }
 

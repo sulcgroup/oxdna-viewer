@@ -73,7 +73,6 @@ class ElementMap extends Map {
 const elements = new ElementMap(); //contains references to all BasicElements
 const systems = []; // contains references to all systems
 const selectedBases = new Set(); // contains the set of currently selected BasicElements
-var sysCount = 0; //THIS CAN BE REMOVED.  REPLACE WITH systems.length
 var clusterCounter = 0; //idk about this one...
 // File reading stuff
 //var trajReader: TrajectoryReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.

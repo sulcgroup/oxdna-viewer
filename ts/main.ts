@@ -81,7 +81,6 @@ class ElementMap extends Map<number, BasicElement>{
 const elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 const systems: System[] = [];  // contains references to all systems
 const selectedBases = new Set<BasicElement>(); // contains the set of currently selected BasicElements
-var sysCount: number = 0;  //THIS CAN BE REMOVED.  REPLACE WITH systems.length
 var clusterCounter = 0; //idk about this one...
 
 // File reading stuff

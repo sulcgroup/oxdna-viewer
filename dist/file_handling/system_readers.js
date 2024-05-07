@@ -234,7 +234,7 @@ function parseTop(s) {
         });
         nucCount = elements.getNextId();
     }
-    const system = new System(sysCount, elements.getNextId());
+    const system = new System(systems.length, elements.getNextId());
     systems.push(system);
     let sidCounter = 0;
     let lastStrand;
@@ -245,7 +245,7 @@ function parseTop(s) {
     return system;
 }
 function parsePatchyTop(s, systemHelpers, LORO) {
-    const system = new PatchySystem(sysCount);
+    const system = new PatchySystem(systems.length);
     systems.push(system);
     let sidCounter = 0;
     let nucCount = elements.getNextId();
@@ -308,7 +308,7 @@ function parsePatchyTop(s, systemHelpers, LORO) {
 }
 // Read an oxView file
 function parseOxViewString(s) {
-    let sysStartId = sysCount;
+    let sysStartId = systems.length;
     const newElementIds = new Map();
     // Check if file includes custom colors
     let customColors = false;
@@ -412,7 +412,6 @@ function parseOxViewString(s) {
             sysData.createdSystem = sys;
             sys.initInstances(sidCounter);
             systems.push(sys);
-            sysCount++;
         });
         // Loop through another time to connect elements, since we now have updated IDs
         data.systems.forEach(sysData => {
@@ -688,11 +687,11 @@ function readPdbFile(file) {
     let indx = -1;
     // initialize System
     let startID = elements.getNextId();
-    var sys = new System(sysCount, startID);
+    var sys = new System(systems.length, startID);
     reader.onload = () => {
         const pdbLines = reader.result.split(/[\n]+/g);
         // feed pdbLines into worker
-        let transfer = [pdbLines, pdbFileInfo.length, elements.getNextId(), sysCount];
+        let transfer = [pdbLines, pdbFileInfo.length, elements.getNextId(), systems.length];
         worker.postMessage(transfer);
     };
     function activate() {
@@ -800,7 +799,6 @@ function readPdbFile(file) {
                     //System is set Up just needs to be added to the systems array now I believe
                     addSystemToScene(sys);
                     systems.push(sys);
-                    sysCount++;
                     if (flux.fluxWindowOpen)
                         view.addGraphData(graphDatasets.length - 1); // add to flux window if open, otherwise it'll be added on next opening
                     // notify("ANM Fitting Complete, Please check under Available Datasets in the Fluctuation Solver");

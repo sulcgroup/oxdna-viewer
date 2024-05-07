@@ -283,7 +283,6 @@ class TrajectoryReader {
                 }
             }
             system.callAllUpdates();
-            sysCount++;
         }
         else {
             // here goes update logic in theory ?

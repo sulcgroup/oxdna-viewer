@@ -177,7 +177,7 @@ function parseUNFString(s: string) {
     data.structures.forEach((struct, i) => {
 
         // Create a system for our file
-        let sys = new System(sysCount, elements.getNextId());
+        let sys = new System(systems.length, elements.getNextId());
         sys.label = struct.name;
         let sidCounter = 0;
         let strandCounter = 0;
@@ -256,7 +256,6 @@ function parseUNFString(s: string) {
         // Now we know how many nucleotides there are, allocate the memory
         sys.initInstances(sidCounter);
         systems.push(sys);
-        sysCount++;
 
         // Create a list of all strands of all the nucleotides and peptides
         // Really not great practice to be messing with the object, but I need to be able to come back to it later.
