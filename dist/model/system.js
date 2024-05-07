@@ -311,6 +311,10 @@ class PatchySystem extends System {
         super(id, 0);
         this.id = id;
         this.particles = [];
+    }
+    ;
+    // These can be undefined, but you do need three arguments when calling this function
+    async readPatchFiles(particleFile, patchFile, loroPatchFiles) {
         if (patchFile) {
             this.ready = this.readPatchyFiles(particleFile, patchFile);
         }
@@ -321,7 +325,6 @@ class PatchySystem extends System {
             notify("Missing patch information for patchy particle system", "warning", true);
         }
     }
-    ;
     async readPatchyFiles(particleFile, patchFile) {
         return new Promise(function (resolve, reject) {
             particleFile.text().then(particlesStr => {
@@ -409,13 +412,11 @@ class PatchySystem extends System {
     }
     initLoroSpecies(patchStrMap) {
         return new Promise(function (resolve, reject) {
-            this.particles.map(() => { }); // I have somehow ruined particles.  It's because they're made by the top reader which is called after this
+            this.particles.map(() => { });
             const types = this.particles.map(p => parseInt(p.type));
-            console.log(types); //this is bad.
             const instanceCounts = [];
             const patchSpecs = [];
             types.forEach((s, i) => {
-                console.log(this.particles[i]['patchSpec']);
                 patchSpecs[s] = this.particles[i]['patchSpec'];
                 if (instanceCounts[s] === undefined) {
                     instanceCounts[s] = 1;

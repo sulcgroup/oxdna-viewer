@@ -41,11 +41,12 @@ async function readTop(topFile, systemHelpers) {
     return system;
 }
 async function readPatchyTop(topFile, systemHelpers) {
-    const system = new PatchySystem(sysCount, systemHelpers["particles"], systemHelpers["patches"], systemHelpers["loroPatchFiles"]);
+    const system = new PatchySystem(sysCount);
     systems.push(system);
     const topReader = new PatchyTopReader(topFile, system, elements);
     topReader.read();
     await topReader.promise;
+    await system.readPatchFiles(systemHelpers["particles"], systemHelpers["patches"], systemHelpers["loroPatchFiles"]);
     system.initPatchyInstances();
     addSystemToScene(system);
     return system;
