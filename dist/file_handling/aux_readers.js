@@ -4,7 +4,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 function readTraj(trajFile, system) {
     system.reader = new TrajectoryReader(trajFile, system);
-    return system;
+    return system.reader.lookupReader.promise;
 }
 function readJson(jsonFile, system) {
     return parseFileWith(jsonFile, parseJson, [system]);

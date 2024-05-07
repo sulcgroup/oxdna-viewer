@@ -72,9 +72,11 @@ class  LookupReader extends FileReader {
                 let lines = file.split(/[\n]+/g);
                 // we need to pass down idx to sync with the DatReader
                 this.callback(this.idx, lines, this.size);
+                resolve("success");
             };
             this.onerror = () => {
                 console.log("oh no!")
+                reject("rejected")
             }
         }.bind(this))
         

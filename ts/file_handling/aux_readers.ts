@@ -4,9 +4,9 @@
 ///////////////////               Read a file, modify the scene                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-function readTraj(trajFile:File, system:System) {
+function readTraj(trajFile:File, system:System):Promise<string> { // the problem is here, we need to return a promise that waits for the reader
     system.reader = new TrajectoryReader(trajFile, system);
-    return system
+    return system.reader.lookupReader.promise
 }
 
 function readJson(jsonFile:File, system:System){
