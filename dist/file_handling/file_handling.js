@@ -2,6 +2,7 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                Figure out how to read files                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// An object which connects a file to the function which can parse its contents
 class File2reader {
     file;
     type;
@@ -27,12 +28,13 @@ class oxFileReader extends FileReader {
         }.bind(this));
     }
 }
-// Generic function to connect a file to a reader to a parser
+// Generic function to connect a text file to a reader to the correct parser
 async function parseFileWith(file, parser, args = []) {
     parser['args'] = args;
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
     let result = await reader.promise;
+    console.log(file.name, result);
     return result;
 }
 // organizes files into files that create a new system, auxiliary files, and script files.
@@ -43,7 +45,9 @@ async function handleFiles(files) {
     const systemHelpers = {}; // These can be named whatever.
     const auxFiles = [];
     const scriptFiles = [];
-    // Nasty "switch" statement
+    // Nasty "switch" statement.  
+    // The file will be assigned to the first reader it matches.
+    // This is because some people name their particle files "particles.dat".
     const filesLen = files.length;
     for (let i = 0; i < filesLen; i++) {
         const fileName = files[i].name.toLowerCase();
@@ -51,32 +55,32 @@ async function handleFiles(files) {
         // These file types lead to creation of a new system(s)
         if (ext === 'top') {
             systemFiles.push(new File2reader(files[i], 'topology', await identifyTopologyParser(files[i])));
-        } // works 
+        }
         else if (ext === "oxview") {
             systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile));
-        } //works
+        }
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") {
             systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile));
-        } //works
+        }
         else if (ext === "unf") {
             systemFiles.push(new File2reader(files[i], 'unf', readUNFFile));
-        } // works
+        }
         else if (ext === "xyz") {
             systemFiles.push(new File2reader(files[i], 'xyz', readXYZFile));
-        } //works
+        }
         else if (ext === "mgl") {
             systemFiles.push(new File2reader(files[i], 'mgl', readMGL));
-        } //ehh...
+        }
         // Patchy files are special and are needed at system creation time
         else if (fileName.includes("particles") || fileName.includes("loro") || fileName.includes("matrix")) {
             systemHelpers["particles"] = files[i];
-        } //HELP! 
+        }
         else if (fileName.includes("patches")) {
             systemHelpers["patches"] = files[i];
-        } //HELP!
+        }
         else if (ext === "patchspec" || fileName.match(/p_my\w+\.dat/g)) {
             (systemHelpers["loroPatchFiles"] == undefined) ? systemHelpers["loroPatchFiles"] = [files[i]] : systemHelpers["loroPatchFiles"].push(files[i]);
-        } //HELP!
+        }
         // These file types modify an existing system
         else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') {
             auxFiles.push(new File2reader(files[i], 'trajectory', readTraj));
@@ -126,27 +130,38 @@ async function handleFiles(files) {
             else {
                 throw new Error("Systems must be defined by a single file (there can be helper files)!");
             }
+            console.log("system made");
+            console.log(system);
             resolve(system);
         });
     }
     // Launch reads of all auxiliary files dropped and apply them to the most recent system
     function readAuxiliaryFiles(system) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(async function (resolve, reject) {
             let readList = auxFiles.map((auxFile) => {
-                return new Promise(function (resolve, reject) {
-                    auxFile.reader(auxFile.file, system);
+                return new Promise(async function (resolve, reject) {
+                    await auxFile.reader(auxFile.file, system);
                     resolve(system);
                 });
             });
             let toWait = Promise.all(readList); // This is causing race conditions with dat and json files.
-            system.callAllUpdates(); // This isn't working for oxView systems
+            await toWait;
+            console.log("aux files read");
+            console.log(system);
             resolve(toWait);
         });
     }
     // Wheeeeeeeee
-    function executeScript() { }
+    function executeScript() {
+        return new Promise(function (resolve, reject) {
+            scriptFiles.forEach(async function (f) {
+                await f.reader(f.file);
+                console.log("script read");
+            });
+        });
+    }
     // Put all the function executions in a promise chain to make sure they fire sequentially
-    getOrMakeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript())));
+    getOrMakeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript().then(() => { system.callAllUpdates(); render(); }))));
 }
 // Create Three geometries and meshes that get drawn in the scene.
 async function addSystemToScene(system) {
@@ -156,10 +171,7 @@ async function addSystemToScene(system) {
     if (system.isPatchySystem()) {
         // Patchy particle geometries
         let s = system;
-        console.log(s.ready);
         await s.ready;
-        console.log(s.ready);
-        console.log(s.species);
         if (s.species !== undefined) {
             const patchResolution = 4; // Number of points defining each patch
             const patchWidth = 0.2; // Radius of patch "circle"

@@ -15,7 +15,7 @@ async function identifyTopologyParser(topFile) {
     if (header.indexOf('5->3') > 0 || lines.length == parseInt(l0[0]) + 1) {
         return readTop;
     }
-    // It might be a LORO file
+    // It might be a patchy or LORO file
     else if (lines.length == parseInt(l0[1]) + 1 || lines.length == 2) {
         return readPatchyTop;
     }
@@ -40,13 +40,73 @@ async function readTop(topFile, systemHelpers) {
     addSystemToScene(system);
     return system;
 }
-async function readPatchyTop(topFile, systemHelpers) {
+function readPatchyTop(topFile, systemHelpers) {
+    // Loro topology files have loro in the name
+    let LORO = false;
+    if (topFile.name.toLowerCase().includes("loro")) {
+        LORO = true;
+    }
+    let system = parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]);
+    return system;
+}
+function parsePatchyTop(s, systemHelpers, LORO) {
     const system = new PatchySystem(sysCount);
     systems.push(system);
-    const topReader = new PatchyTopReader(topFile, system, elements);
-    topReader.read();
-    await topReader.promise;
-    await system.readPatchFiles(systemHelpers["particles"], systemHelpers["patches"], systemHelpers["loroPatchFiles"]);
+    let sidCounter = 0;
+    let nucCount = elements.getNextId();
+    s = s.replace(/ {2,}/g, " "); // remove double spaces (cause Josh likes them)
+    let lines = s.split(/[\n]+/g);
+    const configurationLength = parseInt(lines[0].split(/\s+/)[0]);
+    lines = lines.slice(1); // discard the header as we have the info now
+    const speciesCounts = [];
+    if (!LORO) {
+        lines[0].trim().split(/\s+/).forEach((t, i) => {
+            if (t) {
+                let sphere = new PatchyParticle(nucCount + i, system);
+                system.particles.push(sphere);
+                sphere.id = nucCount + i;
+                elements.set(nucCount + i, sphere);
+                sphere.type = t;
+                const s = parseInt(t);
+                if (speciesCounts[s] == undefined) {
+                    speciesCounts[s] = 1;
+                }
+                else {
+                    speciesCounts[s]++;
+                }
+                sphere.sid = speciesCounts[s] - 1;
+                sphere.clusterId = clusterCounter;
+            }
+        });
+    }
+    else {
+        let idCounter = 0;
+        lines.forEach((line, t) => {
+            // Split on one or more spaces
+            const [pCountStr, nPatches, patchIds, patchSpec] = line.split(/\s+/g);
+            let pCount = parseInt(pCountStr);
+            for (let p = 0; p < pCount; p++) {
+                const id = idCounter++;
+                let sphere = new PatchyParticle(id, system);
+                system.particles.push(sphere);
+                sphere.sid = sidCounter++;
+                sphere.id = id;
+                elements.set(id, sphere);
+                sphere['patchSpec'] = patchSpec;
+                sphere.type = t.toString();
+                // Set the id per species
+                if (speciesCounts[t] == undefined) {
+                    speciesCounts[t] = 1;
+                }
+                else {
+                    speciesCounts[t]++;
+                }
+                sphere.sid = speciesCounts[t] - 1;
+                sphere.clusterId = clusterCounter;
+            }
+        });
+    }
+    system.readPatchFiles(systemHelpers["particles"], systemHelpers["patches"], systemHelpers["loroPatchFiles"]);
     system.initPatchyInstances();
     addSystemToScene(system);
     return system;

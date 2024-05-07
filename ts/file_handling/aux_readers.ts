@@ -7,14 +7,12 @@
 function readTraj(trajFile:File, system:System) {
     system.reader = new TrajectoryReader(trajFile, system);
     system.reader.indexTrajectory();
-    system.callAllUpdates();
-    render();
     return system
 }
 
 function readJson(jsonFile:File, system:System){
-    parseFileWith(jsonFile, parseJson, [system]) // How to add overloads???  //parseJson needs the system as well
-    render()
+    parseFileWith(jsonFile, parseJson, [system])
+    return system
 }
 
 // Creates color overlays
@@ -200,6 +198,8 @@ function readTrap(trapReader) {
 
 // Json files can be a lot of things, read them.
 function parseJson(json:string, system:System) {
+    console.log(json)
+    console.log(typeof(json));
     const data = JSON.parse(json);
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length

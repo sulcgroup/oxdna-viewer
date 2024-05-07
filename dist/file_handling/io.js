@@ -7,7 +7,6 @@ class TopReader extends FileReader {
     elems;
     promise;
     sidCounter = 0;
-    nucLocalID = 0;
     lastStrand; //strands are 1-indexed in old oxDNA .top files
     n3;
     constructor(topFile, system, elems) {
@@ -80,7 +79,6 @@ class TopReader extends FileReader {
             if (strID != this.lastStrand) { //if new strand id, make new strand                        
                 type = strandTypeFromLine(l);
                 currentStrand = this.system.createStrandTyped(type);
-                this.nucLocalID = 0;
             }
             ;
             // create a new element
@@ -117,7 +115,6 @@ class TopReader extends FileReader {
             }
             let base = l[1]; // get base id
             nuc.type = base;
-            this.nucLocalID += 1;
             this.lastStrand = strID;
         });
         nucCount = this.elems.getNextId();
