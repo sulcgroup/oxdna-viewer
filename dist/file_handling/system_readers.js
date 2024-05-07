@@ -235,6 +235,7 @@ function parseTop(s) {
     let lines = s.split(/[\n]+/g);
     (lines[0].indexOf('5->3') > 0) ? readNewTopFile(lines) : readOldTopFile(lines);
     system.initInstances(system.systemLength());
+    system.fillDefaultColors();
     addSystemToScene(system);
     return system;
 }
@@ -389,6 +390,7 @@ function parseOxViewString(s) {
                     // Set misc attributes
                     e.label = elementData.label;
                     e.type = elementData.type;
+                    e.sid = sidCounter++;
                     // Set cluster id, making sure not to reuse any already
                     // existing cluster id loaded earlier.
                     if (elementData.cluster) {
@@ -401,7 +403,6 @@ function parseOxViewString(s) {
                         e.color = new THREE.Color(elementData.color);
                         customColors = true;
                     }
-                    e.sid = sidCounter++;
                     elementData.createdElement = e;
                 });
             });
@@ -426,6 +427,7 @@ function parseOxViewString(s) {
                     }
                 });
             });
+            sysData.createdSystem.fillDefaultColors(); // do this here after strands have been connected
         });
         // Let's do this one more time...
         // Since we now have the topology setup, let's set the configuration
@@ -485,7 +487,6 @@ function parseOxViewString(s) {
         centerAndPBC(
         // Consider all added monomers
         data.systems.flatMap(sysData => sysData.createdSystem.getMonomers()));
-        return createdSystems;
     }
     if (data.forces) {
         data.forces.forEach(f => {
@@ -514,6 +515,10 @@ function parseOxViewString(s) {
             forceHandler.set(forces);
         }
     }
+    if (createdSystems.length > 1) {
+        notify("Warning additional files only affect the last file in a multi-system file", "warning");
+    }
+    return createdSystems[createdSystems.length - 1]; // for aux reader purposes, there can only be one system created.
 }
 // Read an mgl file
 const MGL_SCALE = 1;

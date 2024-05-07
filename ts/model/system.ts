@@ -289,6 +289,21 @@ class System {
         render();
     };
 
+    fillDefaultColors() {
+        this.getMonomers().forEach((e) => {
+            // determine the mesh color, either from a supplied colormap json or by the strand ID.
+            const bbColor = e.strandToColor(e.strand.id);
+            this.fillVec('bbColors', 3, e.sid, [bbColor.r, bbColor.g, bbColor.b]);
+
+            const nsColor = e.elemToColor(e.type);
+            this.fillVec('nsColors', 3, e.sid, [nsColor.r, nsColor.g, nsColor.b]);
+
+            let idColor = new THREE.Color();
+            idColor.setHex(e.id+1); //has to be +1 or you can't grab nucleotide 0
+            this.fillVec('bbLabels', 3, e.sid, [idColor.r, idColor.g, idColor.b]);
+        });
+    }
+
     fillVec(vecName, unitSize, pos, vals) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][pos * unitSize + i] = vals[i]
@@ -523,7 +538,7 @@ class PatchySystem extends System {
             });
         });
     }
-    
+
     fillPatchyVec(species: number, vecName: string, unitSize: number, pos: number, vals: number[]) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][species][pos * unitSize + i] = vals[i]

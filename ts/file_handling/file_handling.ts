@@ -119,11 +119,7 @@ async function handleFiles(files: File[]) {
         )
         return Promise.all(readList)
     }
-    
-    //let systemPromise = getOrMakeSystem();
-    //let auxPromise = systemPromise.then((s) => {readAuxiliaryFiles(s)}); // This is still not working (it's letting executeScript fire before Aux finishes)
-    //console.log(auxPromise);
-    //let scriptPromise = auxPromise.then((s) => {console.log(s); executeScript()});
+
     getOrMakeSystem().then((sys) => readAuxiliaryFiles(sys)).then(() => executeScript())
 }
 

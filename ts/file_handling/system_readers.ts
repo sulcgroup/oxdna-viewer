@@ -273,6 +273,7 @@ function parseTop(s: string) {
     (lines[0].indexOf('5->3') > 0)? readNewTopFile(lines) : readOldTopFile(lines);
 
     system.initInstances(system.systemLength())
+    system.fillDefaultColors();
     addSystemToScene(system);
     return system
 }
@@ -441,6 +442,7 @@ function parseOxViewString(s: string) {
                     // Set misc attributes
                     e.label = elementData.label;
                     e.type = elementData.type;
+                    e.sid = sidCounter++;
 
                     // Set cluster id, making sure not to reuse any already
                     // existing cluster id loaded earlier.
@@ -455,7 +457,6 @@ function parseOxViewString(s: string) {
                         e.color = new THREE.Color(elementData.color);
                         customColors = true;
                     }
-                    e.sid = sidCounter++;
 
                     elementData.createdElement = e;
                 });
@@ -475,7 +476,9 @@ function parseOxViewString(s: string) {
                     if ('bp' in d) {e.pair = elements.get(newElementIds.get(d.bp));}
                 });
             });
+            sysData.createdSystem.fillDefaultColors(); // do this here after strands have been connected
         });
+        
         // Let's do this one more time...
         // Since we now have the topology setup, let's set the configuration
         data.systems.forEach(sysData => {
@@ -538,7 +541,6 @@ function parseOxViewString(s: string) {
             // Consider all added monomers
             data.systems.flatMap(sysData=>sysData.createdSystem.getMonomers())
         );
-        return createdSystems
     }
 
     if (data.forces) {
@@ -567,6 +569,10 @@ function parseOxViewString(s: string) {
             forceHandler.set(forces);
         }
     }
+    if (createdSystems.length > 1) {
+        notify("Warning additional files only affect the last file in a multi-system file", "warning")
+    }
+    return createdSystems[createdSystems.length-1] // for aux reader purposes, there can only be one system created.
 }
 
 // Read an mgl file
