@@ -40,7 +40,6 @@ async function parseFileWith(file: File, parser: Function, args:unknown[]=[]) {
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
     let result = await reader.promise
-    console.log(file.name, result)
     return result
 }
 

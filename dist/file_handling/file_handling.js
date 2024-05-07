@@ -34,7 +34,6 @@ async function parseFileWith(file, parser, args = []) {
     let reader = new oxFileReader(parser);
     reader.readAsText(file);
     let result = await reader.promise;
-    console.log(file.name, result);
     return result;
 }
 // organizes files into files that create a new system, auxiliary files, and script files.
