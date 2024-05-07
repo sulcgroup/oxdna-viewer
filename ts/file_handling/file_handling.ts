@@ -96,27 +96,18 @@ async function handleFiles(files: File[]) {
             if (systemFiles.length == 0) {system = systems[systems.length-1]} // If we're not making a new system
             else if (systemFiles.length == 1) {system = systemFiles[0].reader(systemFiles[0].file, systemHelpers)} // If we're reading a file to make a system
             else {throw new Error("Systems must be defined by a single file (there can be helper files)!")}
-            console.log("system made")
-            console.log(system)
             resolve(system)
         });
     }
 
-    // Launch reads of all auxiliary files dropped and apply them to the most recent system
     function readAuxiliaryFiles(system) {
-        return new Promise ( async function (resolve, reject){
-            let readList = auxFiles.map((auxFile) => {
-                return new Promise<System>(async function (resolve, reject) {
-                    await auxFile.reader(auxFile.file, system);
-                    resolve(system);
-                })
-            });
-            let toWait = Promise.all(readList) // This is causing race conditions with dat and json files.
-            await toWait
-            console.log("aux files read")
-            console.log(system)
-            resolve(toWait)
-        });
+        let readList:Promise<unknown>[] = auxFiles.map((auxFile) => 
+            new Promise(async function (resolve, reject) {
+                await auxFile.reader(auxFile.file, system);
+                resolve(system);
+            })
+        );
+        return Promise.all(readList);
     }
 
     // Wheeeeeeeee
@@ -124,13 +115,14 @@ async function handleFiles(files: File[]) {
         return new Promise (function (resolve, reject) {
             scriptFiles.forEach(async function (f) {
                 await f.reader(f.file);
-                console.log("script read")
+                resolve("success!")
             })
         })
     }
     
-    // Put all the function executions in a promise chain to make sure they fire sequentially
-    getOrMakeSystem().then((system) => readAuxiliaryFiles(system).then((() => executeScript().then(() => {system.callAllUpdates(); render()}))))
+    let systemPromise = getOrMakeSystem();
+    let auxPromise = systemPromise.then((s) => {readAuxiliaryFiles(s)}); // This is still not working
+    let scriptPromise = auxPromise.then((s) => {executeScript()});
 }
 
 // Create Three geometries and meshes that get drawn in the scene.
@@ -314,11 +306,6 @@ async function addSystemToScene(system: System) {
 
         pickingScene.add(system.dummyBackbone);
     }
-
-
-
-    // Let the other file readers know that it's safe to reference system properties
-    document.dispatchEvent(new Event('setupComplete'))
 
     // Reset the cursor from the loading spinny and reset canvas focus
     renderer.domElement.style.cursor = "auto";

@@ -1,5 +1,4 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="./order_parameter_selector.ts" />
 // Rename this to oxDNA_reader.ts???
 class FileChunker {
     file;
@@ -48,17 +47,15 @@ class LookupReader extends FileReader {
     chunker;
     position_lookup = []; // store offset and size
     idx = -1;
-    confLength;
     callback;
     size;
     promise;
-    constructor(chunker, confLength, callback) {
+    constructor(chunker, callback) {
         super();
         this.chunker = chunker;
-        this.confLength = confLength;
         this.callback = callback;
         this.promise = new Promise(function (resolve, reject) {
-            this.onload = (evt) => {
+            this.onload = () => {
                 let file = this.result;
                 let lines = file.split(/[\n]+/g);
                 // we need to pass down idx to sync with the DatReader
@@ -89,12 +86,9 @@ class LookupReader extends FileReader {
 }
 class TrajectoryReader {
     system;
-    elems;
     chunker;
     datFile;
-    confLength;
     firstConf = true;
-    numNuc;
     lookupReader;
     idx = 0;
     offset = 0;
@@ -108,13 +102,11 @@ class TrajectoryReader {
         this.system = system;
         this.datFile = datFile;
         this.chunker = new FileChunker(datFile, 1024 * 1024 * 50); // we read in chunks of 50 MB 
-        this.confLength = this.system.systemLength() + 3;
-        this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = document.getElementById("trajectorySlider");
         this.indexProgressControls = document.getElementById("trajIndexingProgressControls");
         this.indexProgress = document.getElementById("trajIndexingProgress");
         this.trajControls = document.getElementById("trajControls");
-        this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
+        this.lookupReader = new LookupReader(this.chunker, (idx, lines) => {
             this.idx = idx;
             //try display the retrieved conf
             this.parseConf(lines);
@@ -138,6 +130,9 @@ class TrajectoryReader {
             // set focus to trajectory
             document.getElementById('trajControlsLink').click();
             document.getElementById("hyperSelectorBtnId").disabled = false;
+        }
+        else {
+            this.indexTrajectory();
         }
     }
     nextConfig() {
@@ -236,10 +231,9 @@ class TrajectoryReader {
     }
     parseConf(lines) {
         let system = this.system;
-        let numNuc = this.numNuc;
         // parse file into lines
         //let lines = this.curConf;
-        if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+        if (lines.length - 3 < system.systemLength()) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return;
         }
@@ -265,7 +259,7 @@ class TrajectoryReader {
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < numNuc; i++) {
+            for (let i = 0; i < system.systemLength(); i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
                     notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning');
                     break;
@@ -288,6 +282,7 @@ class TrajectoryReader {
                     }
                 }
             }
+            system.callAllUpdates();
             sysCount++;
         }
         else {

@@ -36,20 +36,20 @@ async function identifyTopologyParser(topFile:File) {
     }
 }
 
-function readTop(topFile:File) {
+function readTop(topFile:File):Promise<System> {
     //make system to store the dropped files in
-    let system = parseFileWith(topFile, parseTop)
+    let system = parseFileWith(topFile, parseTop) as Promise<System>;
     return system
 }
 
-function readPatchyTop(topFile: File, systemHelpers: Object) {
+function readPatchyTop(topFile: File, systemHelpers: Object):Promise<PatchySystem> {
     // Loro topology files have loro in the name
     let LORO:boolean = false
     if(topFile.name.toLowerCase().includes("loro")) {
         LORO = true;
     }
 
-    let system = parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]);
+    let system = parseFileWith(topFile, parsePatchyTop, [systemHelpers, LORO]) as Promise<PatchySystem>;
     return system
 }
 

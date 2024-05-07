@@ -4,7 +4,6 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 function readTraj(trajFile, system) {
     system.reader = new TrajectoryReader(trajFile, system);
-    system.reader.indexTrajectory();
     return system;
 }
 function readJson(jsonFile, system) {
@@ -158,31 +157,8 @@ function readTrap(trapReader) {
     }
     render();
 }
-// Read a conf file and update the most recent system based on it
-//function updateConfFromFile(dat_file) {
-//    let lines = dat_file.split("\n");
-//    let topDirection = !view.getInputBool("topFormat") // the topology reader sets this input element based on the direction of the top file.
-//    lines = lines.slice(3) // discard the header
-//    systems.forEach(system =>{
-//        system.strands.forEach((strand: Strand) => {
-//            strand.forEach(e => {
-//                let line = lines.shift().split(' ');
-//                e.calcPositionsFromConfLine(line);
-//            }, topDirection);
-//        });
-//        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
-//    });
-//    tmpSystems.forEach(system =>{
-//        system.callUpdates(['instanceOffset','instanceRotation','instanceScale']);
-//    });
-//
-//    centerAndPBC();
-//    render();
-//}
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
-    console.log(json);
-    console.log(typeof (json));
     const data = JSON.parse(json);
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length

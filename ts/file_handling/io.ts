@@ -1,5 +1,4 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="./order_parameter_selector.ts" />
 
 // Rename this to oxDNA_reader.ts???
 class FileChunker{
@@ -59,18 +58,16 @@ class  LookupReader extends FileReader {
     chunker : FileChunker;
     position_lookup = []; // store offset and size
     idx = -1;
-    confLength : number;
     callback : Function;
-    size :number;
+    size: number;
     promise: Promise<unknown>
 
-    constructor(chunker, confLength, callback) {
+    constructor(chunker, callback) {
         super();
         this.chunker = chunker;
-        this.confLength = confLength;
         this.callback = callback;
         this.promise = new Promise(function (resolve, reject) {
-            this.onload = (evt) =>{ // extract configuration
+            this.onload = () =>{ // extract configuration
                 let file = this.result as string;
                 let lines = file.split(/[\n]+/g);
                 // we need to pass down idx to sync with the DatReader
@@ -111,16 +108,11 @@ class  LookupReader extends FileReader {
     }
 }
 
-
-
 class TrajectoryReader {
     system : System;
-    elems : ElementMap;
     chunker : FileChunker;
     datFile: File;
-    confLength : number;
     firstConf = true;
-    numNuc : number;
     lookupReader : LookupReader;
     idx = 0;
     offset = 0;
@@ -131,18 +123,15 @@ class TrajectoryReader {
     indexProgress :HTMLProgressElement;
     trajControls:HTMLElement;
 
-    constructor(datFile:File, system: System,indexes?:[]){
+    constructor(datFile:File, system: System, indexes?:[]){
         this.system = system;
         this.datFile = datFile;
         this.chunker = new FileChunker(datFile, 1024 * 1024 * 50);// we read in chunks of 50 MB 
-        this.confLength = this.system.systemLength() + 3; 
-        this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
         this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
         this.indexProgress=<HTMLProgressElement>document.getElementById("trajIndexingProgress");
         this.trajControls = document.getElementById("trajControls");
-        this.lookupReader = new LookupReader(this.chunker,this.confLength,
-            (idx, lines, size)=>{
+        this.lookupReader = new LookupReader(this.chunker, (idx, lines)=>{
                 this.idx = idx;
                 //try display the retrieved conf
                 this.parseConf(lines);
@@ -169,6 +158,9 @@ class TrajectoryReader {
             // set focus to trajectory
             document.getElementById('trajControlsLink').click();
             (<HTMLButtonElement>document.getElementById("hyperSelectorBtnId")).disabled = false;
+        }
+        else {
+            this.indexTrajectory();
         }
     }
 
@@ -283,10 +275,9 @@ class TrajectoryReader {
 
     parseConf(lines: string[]){
         let system = this.system;
-        let numNuc = this.numNuc;
         // parse file into lines
         //let lines = this.curConf;
-        if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+        if (lines.length-3 < system.systemLength()) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return
         }
@@ -318,7 +309,7 @@ class TrajectoryReader {
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < numNuc; i++) {
+            for (let i = 0; i < system.systemLength(); i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
                     notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
                     break
@@ -343,6 +334,7 @@ class TrajectoryReader {
                 }
 
             }
+            system.callAllUpdates()
             sysCount++;
         }
         else{

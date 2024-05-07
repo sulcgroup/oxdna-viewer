@@ -67,7 +67,6 @@ class OXServeSocket extends WebSocket {
         let oxServeTrajReader = new TrajectoryReader(new File([], 'oxServe.dat'), systems[sysCount - 1]);
         oxServeTrajReader.firstConf = false;
         oxServeTrajReader.system = systems[sysCount - 1];
-        oxServeTrajReader.numNuc = systems[sysCount - 1].systemLength();
         this.onmessage = (response) => {
             if (!this.abort) { //ignore all incomming messages when we stop the simulation
                 let message = JSON.parse(response.data);

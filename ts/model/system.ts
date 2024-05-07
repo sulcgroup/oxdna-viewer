@@ -523,6 +523,7 @@ class PatchySystem extends System {
             });
         });
     }
+    
     fillPatchyVec(species: number, vecName: string, unitSize: number, pos: number, vals: number[]) {
         for (let i = 0; i < unitSize; i++) {
             this[vecName][species][pos * unitSize + i] = vals[i]
