@@ -57,6 +57,7 @@ function deleteSelectedForces() {
     // Remove all forces selected in the force window
     var table = $('#forcesTable').data('table');
     let removeIndices = table.getSelectedItems().map(s => forcesTable.indexOf(s));
+    // consider changing to https://stackoverflow.com/a/35116966/9738112 so it can be in-place
     forces = forces.filter((f, i) => !removeIndices.includes(i));
     forcesTable = forcesTable.filter((f, i) => !removeIndices.includes(i));
     forceHandler.set(forces);
@@ -305,7 +306,6 @@ function updateColoring(mode) {
         }
     });
     systems.forEach(s => s.callUpdates(['instanceColor']));
-    //systems[systems.length - 1].callUpdates(['instanceColor']);
     if (tmpSystems.length > 0) {
         tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
     }
@@ -631,7 +631,7 @@ class View {
             });
             // Make controller click go to next config
             const selectListener = (event) => {
-                trajReader.nextConfig();
+                systems[systems.length - 1].reader.nextConfig();
             };
             const controller = vrRenderer.vr.getController(0);
             controller.addEventListener('select', selectListener);
@@ -1231,7 +1231,7 @@ class fluxGraph {
         dumb.initInstances(masses.length);
         tmpSystems.push(dumb);
         let currentelemsize = elements.size;
-        let realSys = new System(sysCount++, currentelemsize);
+        let realSys = new System(systems.length, currentelemsize);
         realSys.initInstances(0);
         systems.push(realSys);
         addSystemToScene(realSys);

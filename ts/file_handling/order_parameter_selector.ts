@@ -49,7 +49,7 @@ let loadHyperSelector = ()=>{
         // we should have only 1
         if(activePoints[0]){
             let index = activePoints[0]["_index"]; 
-            trajReader.retrieveByIdx(index);
+            systems[systems.length - 1].reader.retrieveByIdx(index);
         }
     };
     if(myChart===null || myChart.ctx !== ctx)
@@ -122,7 +122,7 @@ let handleParameterDrop = (files)=>{
       }
     labels = [];
     
-    trajReader.lookupReader.position_lookup.forEach((p,i) =>{        
+    systems[systems.length - 1].reader.lookupReader.position_lookup.forEach((p,i) =>{        
         labels.push(p[2]);});
     // populate the labels
 
@@ -172,7 +172,7 @@ let handleParameterDrop = (files)=>{
             for (let parameter_name in parameters){
             let data = [];
 
-            trajReader.lookupReader.position_lookup.forEach((p,i) =>{
+            systems[systems.length - 1].reader.lookupReader.position_lookup.forEach((p,i) =>{
                 data.push({x:i, y:parameters[parameter_name][i]});
             });
             

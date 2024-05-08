@@ -1,4 +1,4 @@
-function readUNFString(s) {
+function parseUNFString(s) {
     //the peptide and nucleic acid strands actually have almost the same structure, but different names...
     function isNa(obj) {
         if (obj.naType === 'DNA' || obj.naType === 'RNA' || obj.naType === 'XNA') {
@@ -149,9 +149,11 @@ function readUNFString(s) {
     }
     // flag if there are custom colors
     let customColors = false;
+    const createdSystems = [];
     data.structures.forEach((struct, i) => {
         // Create a system for our file
-        let sys = new System(sysCount, elements.getNextId());
+        let sys = new System(systems.length, elements.getNextId());
+        createdSystems.push(sys);
         sys.label = struct.name;
         let sidCounter = 0;
         let strandCounter = 0;
@@ -210,7 +212,6 @@ function readUNFString(s) {
         // Now we know how many nucleotides there are, allocate the memory
         sys.initInstances(sidCounter);
         systems.push(sys);
-        sysCount++;
         // Create a list of all strands of all the nucleotides and peptides
         // Really not great practice to be messing with the object, but I need to be able to come back to it later.
         struct.allStrands = struct.naStrands;
@@ -287,6 +288,8 @@ function readUNFString(s) {
     data.structures.forEach((struct, i) => {
         //we put each structure in a different system, need to find the right one via this horrible dereference
         let sys = elements.get(struct.allStrands[0][monomerName(struct.allStrands[0])][0].id).getSystem();
+        // colors have a handy-dandy function
+        sys.fillDefaultColors();
         // lastly, position the nucleotides based off alt positions
         struct.allStrands.forEach((s) => {
             s[monomerName(s)].forEach((n) => {
@@ -339,14 +342,6 @@ function readUNFString(s) {
                         spRotation = new THREE.Quaternion(0, 0, 0, 0);
                     }
                     e.handleCircularStrands(sys, sid, bb);
-                    // determine the mesh color, either from a supplied colormap json or by the strand ID.
-                    const bbColor = e.strandToColor(e.strand.id);
-                    sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
-                    const nsColor = e.elemToColor(e.type);
-                    sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
-                    let idColor = new THREE.Color();
-                    idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-                    sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
                     //fill the instance matrices with data
                     sys.fillVec('cmOffsets', 3, sid, cm.toArray());
                     sys.fillVec('bbOffsets', 3, sid, bb.toArray());
@@ -386,6 +381,11 @@ function readUNFString(s) {
     if (appendedData != '') {
         let blob = new Blob([appendedData], { type: 'text/plain' });
         let f = new File([blob], 'tmp.pdb', { type: 'text/plain' });
-        readPdbFile(f);
+        let sys = readPdbFile(f);
+        createdSystems.push(sys);
     }
+    if (createdSystems.length > 1) {
+        notify("Warning additional files only affect the last file in a multi-system file", "warning");
+    }
+    return createdSystems[createdSystems.length - 1]; // for aux reader purposes, there can only be one system created.
 }

@@ -291,7 +291,6 @@ module edit{
                     // Remove system if empty
                     if (system.isEmpty()) {
                         systems.splice(systems.indexOf(system), 1);
-                        sysCount--;
                     }
                 }
             });
@@ -365,9 +364,7 @@ module edit{
             }
 
             // Assign a picking color
-            let idColor = new THREE.Color();
-            idColor.setHex(e.id + 1); //has to be +1 or you can't grab nucleotide 0
-            tmpSys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
+            e.defaultColor();
 
             return e;
         });
@@ -543,6 +540,7 @@ module edit{
             e[inverse] = last;
             e.setType(sequence[i]);
             e.strand = strand;
+            e.defaultColor()
             last = e;
             sidCounter++;
             addedElems.push(e);
@@ -560,6 +558,7 @@ module edit{
         }
 
         addSystemToScene(tmpSys);
+        tmpSys.callAllUpdates();
         //putting this in one loop would slow down loading systems
         //would require dereferencing the backbone position of every nucleotide
         //its not worth slowing down everything to avoid this for loop
@@ -605,6 +604,7 @@ module edit{
             e1[inverse] = last1;
             e1.setType(sequence[i]);
             e1.strand = strand;
+            e1.defaultColor();
             last1 = e1;
             addedElems.push(e1);
         }
@@ -624,6 +624,7 @@ module edit{
             e2[direction] = last2;
             e2.setType(e1.getComplementaryType());
             e2.strand = strand2;
+            e2.defaultColor();
             last2 = e2;
             addedElems.push(e2);
 
@@ -839,7 +840,7 @@ module edit{
         }
         else {
             blank = true;
-            realSys = new System(sysCount++, elements.getNextId())
+            realSys = new System(systems.length, elements.getNextId())
             realSys.initInstances(0);
             systems.push(realSys);
             addSystemToScene(realSys);
@@ -908,7 +909,12 @@ module edit{
 
         // Make created strand(s) a new cluster, for convenience.
         clusterCounter++;
-        addedElems.forEach(e=>e.clusterId=clusterCounter);
+        addedElems.forEach(e=> {
+            e.clusterId=clusterCounter
+            e.defaultColor()
+        });
+
+        tmpSys.callAllUpdates()
 
         return addedElems;
     }
@@ -1216,7 +1222,7 @@ module edit{
         tmpSystems.push(dumb);
 
         let currentelemsize = elements.size;
-        let realSys = new System(sysCount++, currentelemsize);
+        let realSys = new System(systems.length, currentelemsize);
         realSys.initInstances(0);
         systems.push(realSys);
         addSystemToScene(realSys);
@@ -1343,7 +1349,7 @@ module edit{
         tmpSystems.push(dumb);
 
         let currentelemsize = elements.size;
-        let realSys = new System(sysCount++, currentelemsize);
+        let realSys = new System(systems.length, currentelemsize);
         realSys.initInstances(0);
         systems.push(realSys);
         addSystemToScene(realSys);
@@ -1415,6 +1421,7 @@ module edit{
         elem.pair = e;
         e.strand = strand;
         strand.setFrom(e);
+        e.defaultColor();
         
         const cm = elem.getPos();
         const a1 = elem.getA1();
@@ -1437,6 +1444,7 @@ module edit{
             editHistory.add(new RevertableAddition(instanceCopy, [e], position));
         }
         topologyEdited = true;
+        tmpSys.callAllUpdates();
 
         return e;
     }

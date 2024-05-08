@@ -1,5 +1,5 @@
-function readXYZString(s: string) {
-    let sys = new System(sysCount, elements.getNextId());
+function parseXYZString(s: string) {
+    let sys = new System(systems.length, elements.getNextId());
 
     let lines = s.split(/[\n]+/g);
 
@@ -10,7 +10,6 @@ function readXYZString(s: string) {
 
     sys.initInstances(lines.length);
     systems.push(sys);
-    sysCount++;
 
     lines.forEach((l, i) => {
         let str = sys.addNewGenericSphereStrand();
@@ -23,5 +22,5 @@ function readXYZString(s: string) {
     });
 
     addSystemToScene(sys);
-
+    return sys
 }

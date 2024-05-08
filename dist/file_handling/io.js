@@ -1,212 +1,5 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="./order_parameter_selector.ts" />
-class TopReader extends FileReader {
-    topFile = null;
-    system;
-    elems;
-    sidCounter = 0;
-    nucLocalID = 0;
-    lastStrand; //strands are 1-indexed in old oxDNA .top files
-    n3;
-    callback;
-    configurationLength;
-    constructor(topFile, system, elems, callback) {
-        super();
-        this.topFile = topFile;
-        this.system = system;
-        this.elems = elems;
-        this.callback = callback;
-        this.onload = () => {
-            let file = this.result;
-            let lines = file.split(/[\n]+/g);
-            (lines[0].indexOf('5->3') > 0) ? this.read_new_top_file(lines) : this.read_old_top_file(lines);
-            // fire dat reader
-            this.callback();
-        };
-    }
-    read_old_top_file(lines) {
-        function strandTypeFromLine(l) {
-            let strID = parseInt(l[0]); //proteins and GS strands are negative indexed
-            if (strID < 0) {
-                if (l[1].includes('gs'))
-                    type = 'gs';
-                else
-                    type = 'peptide';
-            }
-            else {
-                type = isRNA ? 'RNA' : 'DNA';
-            }
-            return type;
-        }
-        let nucCount = this.elems.getNextId();
-        lines = lines.slice(1); // discard the header
-        this.configurationLength = lines.length;
-        // create empty list of elements with length equal to the topology
-        // old style topology files can only contain one of DNA or RNA, so this is safe.
-        // Note: this is implemented such that we have the elements for the dat reader 
-        let nuc; //DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
-        let isRNA;
-        let type = '';
-        for (let j = 0; j < lines.length; j++) {
-            this.elems.set(nucCount + j, nuc);
-            if (lines[j].includes("U")) {
-                isRNA = true;
-            }
-        }
-        let l0 = lines[0].split(/\s+/);
-        let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
-        this.lastStrand = strID;
-        type = strandTypeFromLine(l0);
-        let currentStrand = this.system.createStrandTyped(type);
-        // Create new cluster for loaded structure:
-        let cluster = ++clusterCounter;
-        lines.forEach((line, i) => {
-            if (line == "") {
-                // Delete last element
-                this.configurationLength -= 1;
-                this.elems.delete(this.elems.getNextId() - 1);
-                return;
-            }
-            //split the file and read each column, format is: "strID base n3 n5"
-            let l = line.split(/\s+/);
-            if (l.length < 4) {
-                let err = `Line ${i} : ${line} is not a valid topology line.`;
-                notify(err, "alert");
-                throw new Error(err);
-            }
-            strID = parseInt(l[0]);
-            if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                type = strandTypeFromLine(l);
-                currentStrand = this.system.createStrandTyped(type);
-                this.nucLocalID = 0;
-            }
-            ;
-            // create a new element
-            if (!this.elems.get(nucCount + i))
-                this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
-            let nuc = this.elems.get(nucCount + i);
-            // Set systemID
-            nuc.sid = this.sidCounter++;
-            // Set cluster id;
-            nuc.clusterId = cluster;
-            //create neighbor 3 element if it doesn't exist
-            let n3 = parseInt(l[2]);
-            if (n3 != -1) {
-                if (!this.elems.get(nucCount + n3)) {
-                    this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
-                }
-                nuc.n3 = this.elems.get(nucCount + n3);
-            }
-            else {
-                nuc.n3 = null;
-                currentStrand.end3 = nuc;
-            }
-            //create neighbor 5 element if it doesn't exist
-            let n5 = parseInt(l[3]);
-            if (n5 != -1) {
-                if (!this.elems.get(nucCount + n5)) {
-                    this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
-                }
-                nuc.n5 = this.elems.get(nucCount + n5);
-            }
-            else {
-                nuc.n5 = null;
-                currentStrand.end5 = nuc;
-            }
-            let base = l[1]; // get base id
-            nuc.type = base;
-            this.nucLocalID += 1;
-            this.lastStrand = strID;
-        });
-        nucCount = this.elems.getNextId();
-    }
-    read_new_top_file(lines) {
-        // TODO: This does not work with (#) formatted base types
-        // TODO: What to do with keywords other than type and circular? color, label
-        // TODO: Have each system keep track of which direction its strands are in case of mixed systems
-        view.setInputBool("topFormat", true); // if input is new format, default to new format
-        let nucCount = this.elems.getNextId();
-        let cluster = ++clusterCounter;
-        let l0 = lines[0].split(/\s+/);
-        let nMonomers = l0[0];
-        let nStrands = l0[0];
-        lines = lines.slice(1);
-        lines.forEach((line, i) => {
-            if (!line) {
-                return;
-            } // skip empty lines
-            let l = line.trim().split(/\s+/);
-            let seq = l[0];
-            let kwdata = {
-                id: i,
-                type: "DNA",
-                circular: false
-            };
-            l.slice(1).forEach(kv => {
-                let split = kv.split('=');
-                // Turn values representing bools into JS bools
-                if (split[1].toLowerCase() === 'true' || split[1].toLowerCase() === 'false') {
-                    kwdata[split[0]] = (split[1].toLocaleLowerCase() === 'true');
-                }
-                // Keep everything else as strings
-                else {
-                    kwdata[split[0]] = split[1];
-                }
-            });
-            // create strand
-            let strand_type = kwdata["type"];
-            let new_strand;
-            if (strand_type == "DNA" || strand_type == "RNA") {
-                new_strand = this.system.addNewNucleicAcidStrand(strand_type);
-            }
-            else if (strand_type == "peptide") {
-                new_strand = this.system.addNewPeptideStrand();
-            }
-            else if (strand_type == "generic") {
-                new_strand = this.system.addNewGenericSphereStrand();
-            }
-            else {
-                let error = `Unrecognised type of strand: ${strand_type}`;
-                notify(error, "alert");
-                throw new Error(error);
-            }
-            new_strand.kwdata = kwdata;
-            // Should strands maintain negative indexing on peptide strands for compatibility with the old writer.
-            // Or should I re-index here to have nicely 0-indexed strings
-            // create monomers in strand
-            let last_nuc = null;
-            let nuc = null;
-            for (let j = 0; j < seq.length; j++) {
-                if (new_strand instanceof NucleicAcidStrand) {
-                    nuc = new_strand.createBasicElementTyped(strand_type.toLowerCase(), nucCount);
-                }
-                else {
-                    nuc = new_strand.createBasicElement(nucCount);
-                }
-                this.elems.set(nucCount, nuc);
-                // set nucleotide properties
-                nuc.sid = this.sidCounter++;
-                nuc.clusterId = cluster;
-                nuc.n5 = last_nuc;
-                if (last_nuc) {
-                    last_nuc.n3 = nuc;
-                }
-                nuc.type = seq[j];
-                last_nuc = nuc;
-                nucCount = this.elems.getNextId();
-            }
-            new_strand.end3 = nuc;
-            if (kwdata["circular"]) {
-                new_strand.end3.n3 = new_strand.end5;
-                new_strand.end5.n5 = new_strand.end3;
-            }
-            new_strand.updateEnds();
-        });
-    }
-    read() {
-        this.readAsText(this.topFile);
-    }
-}
+// Rename this to oxDNA_reader.ts???
 class FileChunker {
     file;
     current_chunk;
@@ -254,20 +47,26 @@ class LookupReader extends FileReader {
     chunker;
     position_lookup = []; // store offset and size
     idx = -1;
-    confLength;
     callback;
     size;
-    constructor(chunker, confLength, callback) {
+    promise;
+    constructor(chunker, callback) {
         super();
         this.chunker = chunker;
-        this.confLength = confLength;
         this.callback = callback;
-        this.onload = (evt) => {
-            let file = this.result;
-            let lines = file.split(/[\n]+/g);
-            // we need to pass down idx to sync with the DatReader
-            this.callback(this.idx, lines, this.size);
-        };
+        this.promise = new Promise(function (resolve, reject) {
+            this.onload = () => {
+                let file = this.result;
+                let lines = file.split(/[\n]+/g);
+                // we need to pass down idx to sync with the DatReader
+                this.callback(this.idx, lines, this.size);
+                resolve("success");
+            };
+            this.onerror = () => {
+                console.log("oh no!");
+                reject("rejected");
+            };
+        }.bind(this));
     }
     addIndex(offset, size, time) {
         this.position_lookup.push([offset, size, time]);
@@ -276,25 +75,22 @@ class LookupReader extends FileReader {
         let l = this.position_lookup.length;
         return l == 0 || idx >= l;
     }
-    getConf(idx) {
+    async getConf(idx) {
         if (idx < this.position_lookup.length) {
             let offset = this.position_lookup[idx][0];
             this.size = this.position_lookup[idx][1];
             this.idx = idx; // as we are successful in retrieving
             // we can update 
             this.readAsText(this.chunker.getChunkAtPos(offset, this.size));
+            await this.promise;
         }
     }
 }
 class TrajectoryReader {
-    topReader;
     system;
-    elems;
     chunker;
     datFile;
-    confLength;
     firstConf = true;
-    numNuc;
     lookupReader;
     idx = 0;
     offset = 0;
@@ -304,26 +100,22 @@ class TrajectoryReader {
     indexProgressControls;
     indexProgress;
     trajControls;
-    constructor(datFile, topReader, system, elems, indexes) {
-        this.topReader = topReader;
+    constructor(datFile, system, indexes) {
         this.system = system;
-        this.elems = elems;
         this.datFile = datFile;
         this.chunker = new FileChunker(datFile, 1024 * 1024 * 50); // we read in chunks of 50 MB 
-        this.confLength = this.topReader.configurationLength + 3;
-        this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = document.getElementById("trajectorySlider");
         this.indexProgressControls = document.getElementById("trajIndexingProgressControls");
         this.indexProgress = document.getElementById("trajIndexingProgress");
         this.trajControls = document.getElementById("trajControls");
-        this.lookupReader = new LookupReader(this.chunker, this.confLength, (idx, lines, size) => {
+        this.lookupReader = new LookupReader(this.chunker, (idx, lines) => {
             this.idx = idx;
             //try display the retrieved conf
             this.parseConf(lines);
             this.trajectorySlider.setAttribute("value", this.idx.toString());
             if (myChart) {
                 // hacky way to propagate the line annotation
-                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[this.idx][2];
+                myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];
                 myChart.update();
             }
         });
@@ -340,6 +132,9 @@ class TrajectoryReader {
             // set focus to trajectory
             document.getElementById('trajControlsLink').click();
             document.getElementById("hyperSelectorBtnId").disabled = false;
+        }
+        else {
+            this.indexTrajectory();
         }
     }
     nextConfig() {
@@ -374,7 +169,7 @@ class TrajectoryReader {
                 notify("Finished indexing!");
                 //dirty hack to handle single conf case
                 if (indices.length == 1) {
-                    trajReader.trajectorySlider.hidden = true;
+                    this.trajectorySlider.hidden = true;
                     this.indexProgressControls.hidden = true;
                     this.trajControls.hidden = true;
                     document.getElementById('fileSectionLink').click();
@@ -389,11 +184,11 @@ class TrajectoryReader {
                 document.getElementById("hyperSelectorBtnId").disabled = false;
             }
             //update slider
-            trajReader.trajectorySlider.setAttribute("max", (trajReader.lookupReader.position_lookup.length - 1).toString());
+            this.trajectorySlider.setAttribute("max", (this.lookupReader.position_lookup.length - 1).toString());
         };
     }
     downloadIndexFile() {
-        makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
+        makeTextFile("trajectory.idx", JSON.stringify(this.lookupReader.position_lookup));
     }
     retrieveByIdx(idx) {
         //used by the slider to set the conf
@@ -403,7 +198,7 @@ class TrajectoryReader {
             this.trajectorySlider.setAttribute("value", this.idx.toString());
             if (myChart) {
                 // hacky way to propagate the line annotation
-                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[idx][2];
                 myChart.update();
             }
         }
@@ -423,12 +218,12 @@ class TrajectoryReader {
         this.playFlag = !this.playFlag;
         if (this.playFlag) {
             this.intervalId = setInterval(() => {
-                if (trajReader.idx == trajReader.lookupReader.position_lookup.length - 1) {
+                if (this.idx == this.lookupReader.position_lookup.length - 1) {
                     this.playFlag = false;
                     clearInterval(this.intervalId);
                     return;
                 }
-                trajReader.nextConfig();
+                this.nextConfig();
             }, 100);
         }
         else {
@@ -438,10 +233,9 @@ class TrajectoryReader {
     }
     parseConf(lines) {
         let system = this.system;
-        let numNuc = this.numNuc;
         // parse file into lines
         //let lines = this.curConf;
-        if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+        if (lines.length - 3 < system.systemLength()) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return;
         }
@@ -467,7 +261,7 @@ class TrajectoryReader {
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < numNuc; i++) {
+            for (let i = 0; i < system.systemLength(); i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
                     notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning');
                     break;
@@ -490,23 +284,23 @@ class TrajectoryReader {
                     }
                 }
             }
-            addSystemToScene(system);
-            sysCount++;
+            system.callAllUpdates();
         }
         else {
             // here goes update logic in theory ?
-            for (let lineNum = 0; lineNum < numNuc; lineNum++) {
-                if (lines[lineNum] == "") {
-                    notify("There's an empty line in the middle of your configuration!");
-                    break;
-                }
-                ;
-                currentNucleotide = elements.get(system.globalStartId + lineNum);
-                // consume a new line
-                l = lines[lineNum].split(/\s+/);
-                currentNucleotide.calcPositionsFromConfLine(l);
-            }
-            system.callUpdates(['instanceOffset', 'instanceRotation']);
+            let topDirection = !view.getInputBool("topFormat");
+            systems.forEach(system => {
+                system.strands.forEach((strand) => {
+                    strand.forEach(e => {
+                        let line = lines.shift().split(' ');
+                        e.calcPositionsFromConfLine(line);
+                    }, topDirection);
+                });
+                system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+            });
+            tmpSystems.forEach(system => {
+                system.callUpdates(['instanceOffset', 'instanceRotation', 'instanceScale']);
+            });
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)

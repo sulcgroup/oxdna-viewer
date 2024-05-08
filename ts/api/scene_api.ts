@@ -254,7 +254,7 @@ module api{
         }
         colorbarScene.remove(lut.legend.mesh)
         //reset light to default
-        pointlight.intensity = 0.5;
+        pointlight.intensity = 1.1;
         renderColorbar();
     }
 

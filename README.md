@@ -120,8 +120,8 @@ let update_func =()=>{
     cms.calculate();
     track.calculate();
 };
-trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, update_func);
-trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, update_func);
+systems[systems.length - 1].reader.nextConfig = api.observable.wrap(systems[systems.length - 1].reader.nextConfig, update_func);
+systems[systems.length - 1].reader.previousConfig = api.observable.wrap(systems[systems.length - 1].reader.previousConfig, update_func);
 render();
 ```
 

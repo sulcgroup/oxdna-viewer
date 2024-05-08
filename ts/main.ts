@@ -22,7 +22,7 @@ The .js file will then appear in dist and you must add it to the script list at 
 If you have any questions, feel free to open an issue on the GitHub page.
 */
 
-
+// The ElementMap provies a mapping between particle ID in the simulation and JS objects here
 class ElementMap extends Map<number, BasicElement>{
     idCounter: number;
 
@@ -73,39 +73,85 @@ class ElementMap extends Map<number, BasicElement>{
     }
 }
 
-// add base index visualistion
-let elements: ElementMap = new ElementMap(); //contains references to all BasicElements
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                  oxView's global variables                 ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
-//initialize the space
-const systems: System[] = [];
-var tmpSystems: System[] = [] //used for editing
-//const ANMs: ANM[] = [];
-let forces: Force[] = [];
-let pdbtemp = []; // stores output from worker, so worker can terminate
+// Particle indexing stuff
+const elements: ElementMap = new ElementMap(); //contains references to all BasicElements
+const systems: System[] = [];  // contains references to all systems
+const selectedBases = new Set<BasicElement>(); // contains the set of currently selected BasicElements
+var clusterCounter = 0; //idk about this one...
+
+// File reading stuff
+//var trajReader: TrajectoryReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
+var pdbtemp = []; // stores output from worker, so worker can terminate
+const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
+const unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
+var confNum: number = 0; // Current configuration number in a trajectory
+var box = new THREE.Vector3(); // Box size of the current scene
+
+// ANM stuff
+const networks: Network[] = []; // Only used for networks, replaced anms
+var selectednetwork: number = 0; // Only used for networks
+const graphDatasets: graphData[] = []; // Only used for fluctuation graph
+
+// Forces stuff
+var forces: Force[] = [];  // Can't be const because of the current implementation of removing forces.
 var forcesTable: string[][] = [];
 var forceHandler;
-var sysCount: number = 0;
-var strandCount: number = 0;
-var selectedBases = new Set<BasicElement>();
 
-var selectednetwork: number = 0; // Only used for networks
-const networks: Network[] = []; // Only used for networks, replaced anms
-const graphDatasets: graphData[] = []; // Only used for fluctuation graph
-const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
-var unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)
+// color overlay stuff
+var defaultColormap: string = "cooltowarm";
+var lut, devs: number[];
 
-var lut, devs: number[]; //need for Lut coloring
+// Editing stuff
+const editHistory = new EditHistory(); // Track do/undo
+var tmpSystems: System[] = [] // Track memory for newly created systems
+var topologyEdited: Boolean = false; // to keep track of if the topology was edited at any point.
 
-const editHistory = new EditHistory();
-let clusterCounter = 0; // Cluster counter
-
-//to keep track of if the topology was edited at any point.
-var topologyEdited: Boolean = false;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                       File input                           ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Check if there are files provided in the url (and load them if that is the case)
 readFilesFromURLParams();
 
+// define the drag and drop behavior of the scene
+const target = renderer.domElement;
+target.addEventListener("dragover", function (event) {
+    event.preventDefault();
+    target.classList.add('dragging');
+}, false);
+
+target.addEventListener("dragenter", function (event) {
+    event.preventDefault();
+    target.classList.add('dragging');
+}, false);
+
+target.addEventListener("dragexit", function (event) {
+    event.preventDefault();
+    target.classList.remove('dragging');
+}, false);
+
+// What to do if a file is dropped
+target.addEventListener("drop", function (event) {event.preventDefault();})
+target.addEventListener("drop", handleDrop, false);
+
+// Define message passing behavior
+window.addEventListener("message", (event) => {
+    if(event.data.message){ // do we have a message ?
+        handleMessage(event.data);
+    }
+}, false);
+
 render();
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////                      Random functions                      ////////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// These should probably be moved somewhere else...
 
 function findBasepairs(min_length=0) {
     systems.forEach(system=>{
@@ -127,62 +173,6 @@ function findBasepairs(min_length=0) {
         system.checkedForBasepairs = true;
     });
 };
-
-function colorSelectorWrapper(){
-    let colors = new Set();
-    //go through selectedBases and fetch our reference colors
-    selectedBases.forEach(b =>{
-        if(b.color)
-            colors.add(b.color.getHex());
-    });
-    console.log(colors);
-    const match_color = (b:Nucleotide)=>{
-      if(b.color)
-        return colors.has(b.color.getHex());
-      return false;
-    };
-    let toSelect= [];
-    systems.forEach(system=>{
-        system.strands.forEach(strand=>{
-            strand.filter(match_color).forEach(b=>toSelect.push(b));
-        });
-    });
-    tmpSystems.forEach(system=>{
-        system.strands.forEach(strand=>{
-            strand.filter(match_color).forEach(b=>toSelect.push(b));
-        });
-    });
-    api.selectElements(toSelect);
-    render();
-}
-
-function connectedSelectorWrapper():void{
-    let strands = new Set<Strand>();
-    let selected_nucleotides  = [... selectedBases].filter(e=>e instanceof Nucleotide);
-    // go over our selection and recheck base pairing for every suspecious nucleotide
-    selected_nucleotides.forEach(e =>{
-        if(e instanceof Nucleotide && !e.strand.system.checkedForBasepairs && !e.pair) {
-            e.pair = e.findPair();
-                if(e.pair) {
-                    e.pair.pair = e;
-            }
-        }
-    });
-    // decompose nucleotides into strands
-    selected_nucleotides.forEach(p  =>{
-        if (p instanceof Nucleotide && p.pair)
-            strands.add(p.pair.strand);
-    });
-    // now we have all the strands that are making up the selected bases
-    // if we don't have base pairs in the fist strand, we have to search for pairs
-    strands.forEach(strand => {
-        strand.forEach(p => p.select());
-    });
-    //update the visuals 
-    systems.forEach(updateView);
-    tmpSystems.forEach(updateView);
-    
-}
 
 // Utility function to pick a random element from list
 function randomChoice(l: any[]): any {

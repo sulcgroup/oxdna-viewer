@@ -1,6 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /// <reference path="../api/observable_api.ts" />
-/// <reference path="../file_handling/file_reading.ts" />
+/// <reference path="../file_handling/file_handling.ts" />
 /// <reference path="../main.ts" />
 
 class DistanceHandler{
@@ -45,8 +45,8 @@ function distanceSetup(){
     // On opening the window we want to bind
     // the update calls to the next conf loaded
     if(!boundDistanceUpdate){
-        trajReader.lookupReader.callback = api.observable.wrap(
-            trajReader.lookupReader.callback, listDistances);
+        systems[systems.length - 1].reader.lookupReader.callback = api.observable.wrap(
+            systems[systems.length - 1].reader.lookupReader.callback, listDistances);
         boundDistanceUpdate=true;
     }
     listDistances();

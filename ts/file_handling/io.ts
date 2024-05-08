@@ -1,241 +1,6 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="./order_parameter_selector.ts" />
 
-class TopReader extends FileReader{
-    topFile: File = null;
-    system: System;
-    elems: ElementMap;
-
-    sidCounter = 0;
-    nucLocalID: number = 0;
-    lastStrand: number; //strands are 1-indexed in old oxDNA .top files
-    n3: number;
-    callback : Function;
-    configurationLength : number;
-
-    constructor(topFile: File, system: System, elems: ElementMap, callback : Function){
-        super();
-        this.topFile = topFile;
-        this.system = system;
-        this.elems = elems;
-        this.callback = callback;
-        this.onload = () => {
-            let file = this.result as string
-            let lines = file.split(/[\n]+/g);
-            (lines[0].indexOf('5->3') > 0)? this.read_new_top_file(lines) :this.read_old_top_file(lines);
-            // fire dat reader
-            this.callback();
-        };
-    }
-
-    read_old_top_file(lines) {
-        function strandTypeFromLine(l: string[]) {
-            let strID = parseInt(l[0]); //proteins and GS strands are negative indexed
-            if (strID < 0) {
-                if (l[1].includes('gs')) type = 'gs';
-                else type = 'peptide';
-            }
-            else {
-                type = isRNA ? 'RNA' : 'DNA';
-            }
-            return type
-        }
-
-        let nucCount = this.elems.getNextId();
-        
-        lines = lines.slice(1); // discard the header
-        this.configurationLength = lines.length;
-
-        // create empty list of elements with length equal to the topology
-        // old style topology files can only contain one of DNA or RNA, so this is safe.
-        // Note: this is implemented such that we have the elements for the dat reader 
-        let nuc: BasicElement; //DNANucleotide | RNANucleotide | AminoAcid | GenericSphere;
-        let isRNA: boolean;
-        let type: string = '';
-        for (let j = 0; j < lines.length; j++) {
-            this.elems.set(nucCount+j, nuc);
-            if (lines[j].includes("U")){
-                isRNA = true;
-            }
-        }
-    
-        let l0 = lines[0].split(/\s+/); 
-        let strID = parseInt(l0[0]); //proteins and GS strands are negative indexed
-        this.lastStrand = strID;
-
-        type = strandTypeFromLine(l0)
-
-        let currentStrand: Strand = this.system.createStrandTyped(type);
-    
-        // Create new cluster for loaded structure:
-        let cluster = ++clusterCounter;
-        
-        lines.forEach((line, i) => {
-            if (line == "") {
-                // Delete last element
-                this.configurationLength -= 1;
-                this.elems.delete(this.elems.getNextId()-1);
-                return;
-            }
-            //split the file and read each column, format is: "strID base n3 n5"
-            let l = line.split(/\s+/); 
-            if(l.length < 4) {
-                let err = `Line ${i} : ${line} is not a valid topology line.`;
-                notify(err, "alert");
-                throw new Error(err);
-            }
-            strID = parseInt(l[0]);
-                
-            if (strID != this.lastStrand) { //if new strand id, make new strand                        
-                type = strandTypeFromLine(l)
-                currentStrand = this.system.createStrandTyped(type);
-                this.nucLocalID = 0;
-            };
-                
-            // create a new element
-            if (!this.elems.get(nucCount + i))
-                this.elems.set(nucCount + i, currentStrand.createBasicElement(nucCount + i));
-            let nuc = this.elems.get(nucCount + i);
-    
-            // Set systemID
-            nuc.sid = this.sidCounter++;
-    
-            // Set cluster id;
-            nuc.clusterId = cluster;
-    
-            //create neighbor 3 element if it doesn't exist
-            let n3 = parseInt(l[2]);
-            if (n3 != -1) {
-                if (!this.elems.get(nucCount + n3)) {
-                    this.elems.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
-                }
-                nuc.n3 = this.elems.get(nucCount + n3);
-            }
-            else {
-                nuc.n3 = null;
-                currentStrand.end3 = nuc;
-            }
-    
-            //create neighbor 5 element if it doesn't exist
-            let n5 = parseInt(l[3]);
-            if (n5 != -1) {
-                if (!this.elems.get(nucCount + n5)) {
-                    this.elems.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
-                }
-                nuc.n5 = this.elems.get(nucCount + n5);
-            }
-            else {
-                nuc.n5 = null;
-                currentStrand.end5 = nuc;
-            }
-    
-            let base = l[1]; // get base id
-            nuc.type = base;
-                
-            this.nucLocalID += 1;
-            this.lastStrand = strID;
-        });
-        nucCount = this.elems.getNextId();
-    }
-
-    read_new_top_file(lines) {
-        // TODO: This does not work with (#) formatted base types
-        // TODO: What to do with keywords other than type and circular? color, label
-        // TODO: Have each system keep track of which direction its strands are in case of mixed systems
-        view.setInputBool("topFormat", true); // if input is new format, default to new format
-        let nucCount = this.elems.getNextId();
-        let cluster = ++clusterCounter;
-        let l0 = lines[0].split(/\s+/);
-        let nMonomers = l0[0];
-        let nStrands = l0[0];
-        lines = lines.slice(1);
-
-        lines.forEach((line, i) => {
-            if (!line) { return }// skip empty lines
-            let l:string[] = line.trim().split(/\s+/);
-            let seq:string = l[0];
-            let kwdata:object = {
-                id: i,
-                type : "DNA",
-                circular : false
-            };
-
-            l.slice(1).forEach(kv => {
-                let split = kv.split('=');
-                // Turn values representing bools into JS bools
-                if (split[1].toLowerCase() === 'true' || split[1].toLowerCase() === 'false') {
-                    kwdata[split[0]] = (split[1].toLocaleLowerCase() === 'true');
-                }
-                // Keep everything else as strings
-                else{
-                    kwdata[split[0]] = split[1];
-                }
-            })
-
-            // create strand
-            let strand_type = kwdata["type"]
-            let new_strand: Strand
-
-            if (strand_type == "DNA" || strand_type == "RNA") {
-                new_strand = this.system.addNewNucleicAcidStrand(strand_type);
-            }
-            else if (strand_type == "peptide") {
-                new_strand = this.system.addNewPeptideStrand();
-            }
-            else if (strand_type == "generic") {
-                new_strand = this.system.addNewGenericSphereStrand();
-            }
-            else {
-                let error = `Unrecognised type of strand: ${strand_type}`;
-                notify(error, "alert");
-                throw new Error(error);
-            }
-
-            new_strand.kwdata = kwdata;
-
-            // Should strands maintain negative indexing on peptide strands for compatibility with the old writer.
-            // Or should I re-index here to have nicely 0-indexed strings
-
-            // create monomers in strand
-            let last_nuc: BasicElement = null;
-            let nuc: BasicElement = null;
-            for (let j=0; j<seq.length; j++) {
-                if (new_strand instanceof NucleicAcidStrand) {
-                    nuc = new_strand.createBasicElementTyped(strand_type.toLowerCase(), nucCount)
-                }
-                else {
-                    nuc = new_strand.createBasicElement(nucCount)
-                }
-                this.elems.set(nucCount, nuc)
-
-                // set nucleotide properties
-                nuc.sid = this.sidCounter++;
-                nuc.clusterId = cluster;
-                nuc.n5 = last_nuc;
-                if (last_nuc) { last_nuc.n3 = nuc;}
-                nuc.type = seq[j];
-
-                last_nuc = nuc;
-                nucCount = this.elems.getNextId();
-            }
-
-            new_strand.end3 = nuc;
-
-            if (kwdata["circular"]) {
-                new_strand.end3.n3 = new_strand.end5;
-                new_strand.end5.n5 = new_strand.end3;
-            }
-            new_strand.updateEnds();
-
-        })
-    }
-    
-    read(){
-        this.readAsText(this.topFile);
-    }
-}
-
-
+// Rename this to oxDNA_reader.ts???
 class FileChunker{
     file:Blob;
     current_chunk : number;
@@ -293,21 +58,28 @@ class  LookupReader extends FileReader {
     chunker : FileChunker;
     position_lookup = []; // store offset and size
     idx = -1;
-    confLength : number;
     callback : Function;
-    size :number;
+    size: number;
+    promise: Promise<unknown>
 
-    constructor(chunker, confLength, callback) {
+    constructor(chunker, callback) {
         super();
         this.chunker = chunker;
-        this.confLength = confLength;
         this.callback = callback;
-        this.onload = (evt) =>{ // extract configuration
-            let file = this.result as string;
-            let lines = file.split(/[\n]+/g);
-            // we need to pass down idx to sync with the DatReader
-            this.callback(this.idx, lines, this.size);
-        };
+        this.promise = new Promise(function (resolve, reject) {
+            this.onload = () =>{ // extract configuration
+                let file = this.result as string;
+                let lines = file.split(/[\n]+/g);
+                // we need to pass down idx to sync with the DatReader
+                this.callback(this.idx, lines, this.size);
+                resolve("success");
+            };
+            this.onerror = () => {
+                console.log("oh no!")
+                reject("rejected")
+            }
+        }.bind(this))
+        
     }
 
     addIndex(offset,size,time){
@@ -321,7 +93,7 @@ class  LookupReader extends FileReader {
         return l == 0 || idx >= l;
     }
 
-    getConf(idx:number){
+    async getConf(idx:number){
         if (idx < this.position_lookup.length){
             let offset = this.position_lookup[idx][0];
             this.size  = this.position_lookup[idx][1];
@@ -333,21 +105,16 @@ class  LookupReader extends FileReader {
                     this.size
                 )
             );
+            await this.promise
         }
     }
 }
 
-
-
 class TrajectoryReader {
-    topReader : TopReader|PatchyTopReader;
     system : System;
-    elems : ElementMap;
     chunker : FileChunker;
     datFile: File;
-    confLength : number;
     firstConf = true;
-    numNuc : number;
     lookupReader : LookupReader;
     idx = 0;
     offset = 0;
@@ -358,27 +125,22 @@ class TrajectoryReader {
     indexProgress :HTMLProgressElement;
     trajControls:HTMLElement;
 
-    constructor(datFile:File, topReader: TopReader|PatchyTopReader, system: System, elems: ElementMap,indexes?:[]){
-        this.topReader = topReader;
+    constructor(datFile:File, system: System, indexes?:[]){
         this.system = system;
-        this.elems = elems;
         this.datFile = datFile;
         this.chunker = new FileChunker(datFile, 1024 * 1024 * 50);// we read in chunks of 50 MB 
-        this.confLength = this.topReader.configurationLength + 3; 
-        this.numNuc = system.systemLength(); //these two are redundant, I think??
         this.trajectorySlider = <HTMLInputElement>document.getElementById("trajectorySlider");
         this.indexProgressControls = <HTMLDivElement>document.getElementById("trajIndexingProgressControls");
         this.indexProgress=<HTMLProgressElement>document.getElementById("trajIndexingProgress");
         this.trajControls = document.getElementById("trajControls");
-        this.lookupReader = new LookupReader(this.chunker,this.confLength,
-            (idx, lines, size)=>{
+        this.lookupReader = new LookupReader(this.chunker, (idx, lines)=>{
                 this.idx = idx;
                 //try display the retrieved conf
                 this.parseConf(lines);
                 this.trajectorySlider.setAttribute("value",this.idx.toString());
                 if(myChart){
                     // hacky way to propagate the line annotation
-                    myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[this.idx][2];
+                    myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];
                     myChart.update();
                 }
             });
@@ -398,6 +160,9 @@ class TrajectoryReader {
             // set focus to trajectory
             document.getElementById('trajControlsLink').click();
             (<HTMLButtonElement>document.getElementById("hyperSelectorBtnId")).disabled = false;
+        }
+        else {
+            this.indexTrajectory();
         }
     }
 
@@ -436,7 +201,7 @@ class TrajectoryReader {
                 notify("Finished indexing!");
                 //dirty hack to handle single conf case
                 if(indices.length==1){
-                    trajReader.trajectorySlider.hidden=true;
+                    this.trajectorySlider.hidden=true;
                     this.indexProgressControls.hidden=true;
                     this.trajControls.hidden = true;
                     document.getElementById('fileSectionLink').click();
@@ -452,14 +217,14 @@ class TrajectoryReader {
 
             }
             //update slider
-            trajReader.trajectorySlider.setAttribute("max" ,
-                    (trajReader.lookupReader.position_lookup.length-1).toString()
+            this.trajectorySlider.setAttribute("max" ,
+                    (this.lookupReader.position_lookup.length-1).toString()
             );
         };
 
     }
     downloadIndexFile(){
-         makeTextFile("trajectory.idx", JSON.stringify(trajReader.lookupReader.position_lookup));
+         makeTextFile("trajectory.idx", JSON.stringify(this.lookupReader.position_lookup));
     }
     retrieveByIdx(idx){
         //used by the slider to set the conf
@@ -469,7 +234,7 @@ class TrajectoryReader {
             this.trajectorySlider.setAttribute("value",this.idx.toString());
             if(myChart){
                 // hacky way to propagate the line annotation
-                myChart["annotation"].elements['hline'].options.value = trajReader.lookupReader.position_lookup[idx][2];
+                myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[idx][2];
                 myChart.update();
             }
         }
@@ -493,13 +258,13 @@ class TrajectoryReader {
         if (this.playFlag )
         {
             this.intervalId = setInterval(()=>{
-                if(trajReader.idx==trajReader.lookupReader.position_lookup.length-1)
+                if(this.idx==this.lookupReader.position_lookup.length-1)
                 {
                     this.playFlag = false;
                     clearInterval(this.intervalId);
                     return;
                 }
-                trajReader.nextConfig();
+                this.nextConfig();
             }, 100);
         }
         else{
@@ -510,12 +275,11 @@ class TrajectoryReader {
     }
 
 
-    parseConf(lines :string[]){
+    parseConf(lines: string[]){
         let system = this.system;
-        let numNuc = this.numNuc;
         // parse file into lines
         //let lines = this.curConf;
-        if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+        if (lines.length-3 < system.systemLength()) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return
         }
@@ -547,7 +311,7 @@ class TrajectoryReader {
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < numNuc; i++) {
+            for (let i = 0; i < system.systemLength(); i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
                     notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
                     break
@@ -572,22 +336,23 @@ class TrajectoryReader {
                 }
 
             }
-            addSystemToScene(system);
-            sysCount++;
+            system.callAllUpdates()
         }
         else{
             // here goes update logic in theory ?
-            for (let lineNum = 0; lineNum < numNuc; lineNum++) {
-                if (lines[lineNum] == "") {
-                    notify("There's an empty line in the middle of your configuration!")
-                    break
-                };
-                currentNucleotide = elements.get(system.globalStartId+lineNum);
-                // consume a new line
-                l = lines[lineNum].split(/\s+/);
-                currentNucleotide.calcPositionsFromConfLine(l);
-            }
-            system.callUpdates(['instanceOffset','instanceRotation']);
+            let topDirection = !view.getInputBool("topFormat")
+            systems.forEach(system =>{
+                system.strands.forEach((strand: Strand) => {
+                    strand.forEach(e => {
+                        let line = lines.shift().split(' ');
+                        e.calcPositionsFromConfLine(line);
+                    }, topDirection);
+                });
+                system.callUpdates(['instanceOffset','instanceRotation', 'instanceScale']);
+            });
+            tmpSystems.forEach(system => {
+                system.callUpdates(['instanceOffset','instanceRotation', 'instanceScale']);
+            });
         }
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();

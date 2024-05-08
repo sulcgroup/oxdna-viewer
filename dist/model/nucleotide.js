@@ -56,16 +56,6 @@ class Nucleotide extends BasicElement {
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
         this.handleCircularStrands(sys, sid, bb);
-        if (colorUpdate) {
-            // determine the mesh color, either from a supplied colormap json or by the strand ID.
-            const bbColor = this.strandToColor(this.strand.id);
-            sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
-            const nsColor = this.elemToColor(this.type);
-            sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
-            let idColor = new THREE.Color();
-            idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
-            sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
-        }
         //fill the instance matrices with data
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
         sys.fillVec('bbOffsets', 3, sid, bb.toArray());
@@ -136,10 +126,13 @@ class Nucleotide extends BasicElement {
                 }
                 break;
             case "Overlay":
-                if (!(color = sys.lutCols[sid])) {
-                    color = this.color ? this.color : GREY;
-                    break;
+                if (sys.lutCols[sid]) {
+                    color = sys.lutCols[sid];
                 }
+                else {
+                    color = GREY;
+                }
+                break;
             case "Custom":
                 if (!this.color) {
                     // Use overlay color if overlay is loaded, otherwise color gray

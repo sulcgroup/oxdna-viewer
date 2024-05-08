@@ -19,7 +19,11 @@
       "./ts/editing/doUndo.ts",
       "./ts/editing/rigid-body_simulation.ts",
       "./ts/editing/translation.ts",
-      "./ts/file_handling/file_reading.ts",
+      "ts/file_handling/file_handling.ts",
+      "./ts/file_handling/file_getters.ts",
+      "./ts/file_handling/system_readers.ts",
+      "./ts/file_handling/aux_readers.ts",
+      "./ts/file_handling/script_reader.ts",
       "./ts/file_handling/tacoxdna_worker.ts",
       "./ts/file_handling/read_worker.ts",
       "./ts/file_handling/io.ts",
@@ -55,7 +59,6 @@
       "ts/ox_serve/relax_scenarios.ts",
       "ts/file_handling/order_parameter_selector.ts",
       "./ts/editing/distance.ts",
-      "./ts/file_handling/ppio.ts",
       "./ts/file_handling/plateDB.ts",
       "./ts/editing/selections.ts"
     ]

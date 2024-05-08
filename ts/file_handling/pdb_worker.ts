@@ -15,7 +15,7 @@ this.onmessage = function(e) {
     let syscount = e.data[3];
     let [initList, dsbonds] = prep_pdb(pdblines);
     let pdata = pdb_step1(pdblines);
-    let ret = addPDBToScene(pdata, pdbFileInfoIndx, elemIndx, syscount);
+    let ret = addPDBToScene(pdata, pdbFileInfoIndx, elemIndx);
     pdblines = undefined;
     pdata = undefined;
     postMessage(ret, undefined);
@@ -641,7 +641,7 @@ function pdb_step1(pdbLines: string[]): pdbinfowrapper{
     return pdbinfo
 }
 
-function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: number, syscount: number) {
+function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: number) {
     // let pindx = pdbFileInfo.indexOf(pdata);
     let elems = [];
     let strandtype =[];
