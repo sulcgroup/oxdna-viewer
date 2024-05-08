@@ -312,9 +312,8 @@ function updateColoring(mode?: string) {
             console.log(Error().stack);
         }
     });
-    systems.forEach(s => s.callUpdates(['instanceColor']));
-    //systems[systems.length - 1].callUpdates(['instanceColor']);
 
+    systems.forEach(s => s.callUpdates(['instanceColor']));
     if (tmpSystems.length > 0) {
         tmpSystems.forEach(s => s.callUpdates(['instanceColor']));
     }

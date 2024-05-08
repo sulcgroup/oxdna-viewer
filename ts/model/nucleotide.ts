@@ -158,11 +158,16 @@ abstract class Nucleotide extends BasicElement {
                     color = new THREE.Color(0xE60A0A);
                 } else {
                     color = backboneColors[this.clusterId % backboneColors.length];
-                } break;
+                } 
+                break;
             case "Overlay": 
-                if (!(color = sys.lutCols[sid])) {
-                    color = this.color? this.color : GREY; break;
+                if (sys.lutCols[sid]) {
+                    color = sys.lutCols[sid];
                 }
+                else {
+                    color = GREY;
+                }
+                break;
             case "Custom":
                 if (!this.color) {
                     // Use overlay color if overlay is loaded, otherwise color gray
@@ -179,6 +184,7 @@ abstract class Nucleotide extends BasicElement {
         if (selectedBases.has(this)) {
             color = color.clone().lerp(selectionColor, 0.6).multiplyScalar(2);
         }
+
         sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
     }
 

@@ -920,6 +920,7 @@ function readPdbFile(file) {
                     }
 
                     //System is set Up just needs to be added to the systems array now I believe
+                    sys.fillDefaultColors();
                     addSystemToScene(sys);
                     systems.push(sys);
 

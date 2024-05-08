@@ -126,10 +126,13 @@ class Nucleotide extends BasicElement {
                 }
                 break;
             case "Overlay":
-                if (!(color = sys.lutCols[sid])) {
-                    color = this.color ? this.color : GREY;
-                    break;
+                if (sys.lutCols[sid]) {
+                    color = sys.lutCols[sid];
                 }
+                else {
+                    color = GREY;
+                }
+                break;
             case "Custom":
                 if (!this.color) {
                     // Use overlay color if overlay is loaded, otherwise color gray
