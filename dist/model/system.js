@@ -267,8 +267,6 @@ class System {
     }
     ;
     fillDefaultColors() {
-        console.log("default called");
-        console.log(this.getMonomers());
         this.getMonomers().forEach((e) => {
             e.defaultColor();
         });
