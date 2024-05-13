@@ -97,64 +97,65 @@ const handleCSV = (file) => {
     });
 };
 //parse a trap file
-function readTrap(trapReader) {
-    let file = trapReader.result;
-    //{ can be replaced with \n to make sure no parameter is lost
-    while (file.indexOf("{") >= 0)
-        file = file.replace("{", "\n");
-    // traps can be split by } because everything between {} is one trap
-    let traps = file.split("}");
-    let trap_objs = [];
-    traps.forEach((trap) => {
-        let lines = trap.split('\n');
-        //empty lines and empty traps need not be processed as well as comments
-        lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
-        if (lines.length == 0)
-            return;
-        let trap_obj = {};
-        lines.forEach((line) => {
-            let com_pos = line.indexOf("#");
-            if (com_pos >= 0)
-                line = line.slice(0, com_pos).trim();
-            //another chance an empty line can be encountered. Remove whitespace
-            if (line.trim().length == 0)
+function readTrap(trapFile) {
+    trapFile.text().then(text => {
+        //{ can be replaced with \n to make sure no parameter is lost
+        while (text.indexOf("{") >= 0)
+            text = text.replace("{", "\n");
+        // traps can be split by } because everything between {} is one trap
+        let traps = text.split("}");
+        let trap_objs = [];
+        traps.forEach((trap) => {
+            let lines = trap.split('\n');
+            //empty lines and empty traps need not be processed as well as comments
+            lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
+            if (lines.length == 0)
                 return;
-            //split into option name and value
-            let options = line.split("=");
-            let lft = options[0].trim();
-            let rght = options[1].trim();
-            trap_obj[lft] = Number.isNaN(parseFloat(rght)) ? rght : parseFloat(rght);
+            let trap_obj = {};
+            lines.forEach((line) => {
+                let com_pos = line.indexOf("#");
+                if (com_pos >= 0)
+                    line = line.slice(0, com_pos).trim();
+                //another chance an empty line can be encountered. Remove whitespace
+                if (line.trim().length == 0)
+                    return;
+                //split into option name and value
+                let options = line.split("=");
+                let lft = options[0].trim();
+                let rght = options[1].trim();
+                trap_obj[lft] = Number.isNaN(parseFloat(rght)) ? rght : parseFloat(rght);
+            });
+            if (Object.keys(trap_obj).length > 0)
+                trap_objs.push(trap_obj);
         });
-        if (Object.keys(trap_obj).length > 0)
-            trap_objs.push(trap_obj);
-    });
-    //handle the different traps
-    trap_objs.forEach(f => {
-        switch (f.type) {
-            case "mutual_trap":
-                let mutTrap = new MutualTrap();
-                mutTrap.setFromParsedJson(f);
-                mutTrap.update();
-                forces.push(mutTrap);
-                break;
-            case "skew_trap":
-                let skewTrap = new SkewTrap();
-                skewTrap.setFromParsedJson(f);
-                skewTrap.update();
-                forces.push(skewTrap);
-                break;
-            default:
-                notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
-                break;
+        //handle the different traps
+        trap_objs.forEach(f => {
+            switch (f.type) {
+                case "mutual_trap":
+                    let mutTrap = new MutualTrap();
+                    mutTrap.setFromParsedJson(f);
+                    mutTrap.update();
+                    forces.push(mutTrap);
+                    break;
+                case "skew_trap":
+                    let skewTrap = new SkewTrap();
+                    skewTrap.setFromParsedJson(f);
+                    skewTrap.update();
+                    forces.push(skewTrap);
+                    break;
+                default:
+                    notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                    break;
+            }
+        });
+        if (!forceHandler) {
+            forceHandler = new ForceHandler(forces);
         }
+        else {
+            forceHandler.set(forces);
+        }
+        render();
     });
-    if (!forceHandler) {
-        forceHandler = new ForceHandler(forces);
-    }
-    else {
-        forceHandler.set(forces);
-    }
-    render();
 }
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
