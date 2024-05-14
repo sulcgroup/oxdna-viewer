@@ -160,7 +160,7 @@ function readTrap(trapFile) {
                     forces.push(skewTrap);
                     break;
                 default:
-                    notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
+                    notify(`External force ${f["type"]} type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
                     break;
             }
         });
