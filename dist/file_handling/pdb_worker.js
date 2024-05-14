@@ -20,48 +20,48 @@ this.onmessage = function (e) {
     postMessage(ret, undefined);
 };
 var backboneColors = [
-    new THREE.Color(0xfdd291),
-    new THREE.Color(0xffb322),
-    new THREE.Color(0x437092),
+    new THREE.Color(0xfdd291), //light yellow
+    new THREE.Color(0xffb322), //goldenrod
+    new THREE.Color(0x437092), //dark blue
     new THREE.Color(0x6ea4cc), //light blue
 ];
 var nucleosideColors = [
-    new THREE.Color(0x4747B8),
-    new THREE.Color(0xFFFF33),
+    new THREE.Color(0x4747B8), //A or K; Royal Blue
+    new THREE.Color(0xFFFF33), //G or C; Medium Yellow
     //C or A
-    new THREE.Color(0x8CFF8C),
+    new THREE.Color(0x8CFF8C), //Medium green
     //T/U or T
-    new THREE.Color(0xFF3333),
+    new THREE.Color(0xFF3333), //Red
     //E
-    new THREE.Color(0x660000),
+    new THREE.Color(0x660000), //Dark Brown
     //S
-    new THREE.Color(0xFF7042),
+    new THREE.Color(0xFF7042), //Medium Orange
     //D
-    new THREE.Color(0xA00042),
+    new THREE.Color(0xA00042), //Dark Rose
     //N
-    new THREE.Color(0xFF7C70),
+    new THREE.Color(0xFF7C70), //Light Salmon
     //Q
-    new THREE.Color(0xFF4C4C),
+    new THREE.Color(0xFF4C4C), //Dark Salmon
     //H
-    new THREE.Color(0x7070FF),
+    new THREE.Color(0x7070FF), //Medium Blue
     //G
-    new THREE.Color(0xEBEBEB),
+    new THREE.Color(0xEBEBEB), // light GREY
     //P
-    new THREE.Color(0x525252),
+    new THREE.Color(0x525252), //Dark Grey
     //R
-    new THREE.Color(0x00007C),
+    new THREE.Color(0x00007C), //Dark Blue
     //V
-    new THREE.Color(0x5E005E),
+    new THREE.Color(0x5E005E), //Dark Purple
     //I
-    new THREE.Color(0x004C00),
+    new THREE.Color(0x004C00), //Dark Green
     //L
-    new THREE.Color(0x455E45),
+    new THREE.Color(0x455E45), //Olive Green
     //M
-    new THREE.Color(0xB8A042),
+    new THREE.Color(0xB8A042), //Light Brown
     //F
-    new THREE.Color(0x534C42),
+    new THREE.Color(0x534C42), //Olive Grey
     //Y
-    new THREE.Color(0x8C704C),
+    new THREE.Color(0x8C704C), //Medium Brown
     //W
     new THREE.Color(0x4F4600), //Olive Brown
 ];

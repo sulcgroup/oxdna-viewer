@@ -383,3 +383,172 @@ function readMassFile(reader){
         console.log("No GS Masses in file, (no subtype over 27), double check header")
     }
 }
+
+
+function parseDotBracket(input: string): number[] {
+    // Converts a dot-bracket string to a list of paired nucleotides.
+
+    const output: number[] = new Array(input.length).fill(-1);
+    const parenQueue: number[] = [];
+    const squareQueue: number[] = [];
+    const curlyQueue: number[] = [];
+
+    for (let i = 0; i < input.trim().length; i++) {
+        const c = input[i];
+        switch (c) {
+            case '.':
+                continue;
+            case '(':
+                parenQueue.push(i);
+                break;
+            case '[':
+                squareQueue.push(i);
+                break;
+            case '{':
+                curlyQueue.push(i);
+                break;
+            case ')':
+                if (parenQueue.length === 0) {
+                    throw new Error("Mismatched parentheses in dot-bracket notation.");
+                }
+                const parenPair = parenQueue.pop();
+                output[i] = parenPair;
+                output[parenPair] = i;
+                break;
+            case ']':
+                if (squareQueue.length === 0) {
+                    throw new Error("Mismatched square brackets in dot-bracket notation.");
+                }
+                const squarePair = squareQueue.pop();
+                output[i] = squarePair;
+                output[squarePair] = i;
+                break;
+            case '}':
+                if (curlyQueue.length === 0) {
+                    throw new Error("Mismatched curly brackets in dot-bracket notation.");
+                }
+                const curlyPair = curlyQueue.pop();
+                output[i] = curlyPair;
+                output[curlyPair] = i;
+                break;
+            default:
+                throw new Error(`Encountered invalid character '${c}' in dot bracket`);
+        }
+    }
+
+    return output;
+}
+
+function readDotBracket(file:File){
+    const updateForceHandler = (forces:Force[])=>{
+        if (!forceHandler) {
+            forceHandler = new ForceHandler(forces)
+        } else {
+            forceHandler.set(forces)
+        }
+        render()
+    }
+    file.text().then(txt=>{
+        // let's define the input db format as follows:
+        // - each line can be a db string or a sequence
+        // - they have to alternate and be separated by a newline
+        // - if a line is a sequence, the next line has to be a db string
+        // - if a line is a db string, the next line has to be a sequence 
+        // - the function will search in all the systems for a strand with the same length and sequence as the sequence line
+        // - if it finds one, it will create a trap between the bases according to the db string
+        // - if the file contains only 1 line it has to be a db string and the trap will be created for the last system for all strands with the same length as the db string
+        // - unless there are selected bases, in which case the trap will be created only for the selected bases
+
+        // preprocess the file
+        // strip spaces and newlines
+        let lines = txt.split("\n").map(s=>s.replace(/\s/g,'')).filter(s=>s.length>0)
+
+        console.log("lines:", lines)
+
+        // now let's parse the file
+        let file_length = lines.length
+        let db_strings = []
+        let sequences = []
+        
+        for (let i = 0; i < file_length; i++){
+            if (i % 2 == 0){
+                db_strings.push(lines[i])
+            } else {
+                sequences.push(lines[i])
+            }
+        }
+        console.log("db_strings:", db_strings)
+        console.log("sequences:", sequences)
+
+        // if we have only one line, it has to be a db string
+        if (db_strings.length == 1 && sequences.length == 0){
+            let db_string = db_strings[0]
+            let pairs = parseDotBracket(db_string)
+
+            // we always work with either the last system or the selectedBases
+            let to_process;
+            // so do we have selected bases ? 
+            if (selectedBases.size > 0) {
+                console.log("selected bases")
+                // we do and do only on selectedBases
+                to_process = [[... selectedBases].sort( (a,b)=> a.id - b.id)]
+                if (to_process[0].length != db_string.length)
+                    to_process = [] //make sure we have enough bases selected 
+            }
+            else {
+                console.log("no selected bases")
+                // we work with the last system
+                to_process = systems[systems.length-1].strands.filter(strand => strand.getLength() == db_string.length).map( s=> s.getMonomers())
+            }
+
+            to_process.forEach( elements => {
+                pairs.forEach( (pair, i) => {
+                    if (pair != -1) {
+                        // if pair
+                        let trap = new MutualTrap()
+                        trap.set(elements[i],elements[pair],.09,1.2,1)
+                        forces.push(trap)
+                    }
+                })
+            })
+            updateForceHandler(forces)
+            return
+        }
+
+        // check if the file is valid
+        if (db_strings.length != sequences.length){
+            notify("Invalid dot bracket file format")
+            return
+        }
+
+        // if we have multiple lines, we have to search the strands for the subsequences
+        // and we'll use the first match we find
+        
+        for (let i = 0; i < sequences.length; i++){
+            let to_process = []
+            let db_string = db_strings[i]
+            let seq = sequences[i]
+            let pairs = parseDotBracket(db_string)
+            let strands = systems[systems.length-1].strands.forEach( strand => {
+                // check if strand is NucleicAcidStrand
+                if (! (strand instanceof NucleicAcidStrand)){ return }
+                let matches = strand.search(seq);
+                if (matches.length > 0){
+                    to_process.push(matches[0])
+                }
+            })
+            to_process.forEach( elements => {
+                pairs.forEach( (pair, i) => {
+                    if (pair != -1) {
+                        // if pair
+                        let trap = new MutualTrap()
+                        trap.set(elements[i],elements[pair],.09,1.2,1)
+                        forces.push(trap)
+                    }
+                })
+            })
+            updateForceHandler(forces)
+
+        }  
+    })
+}

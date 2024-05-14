@@ -84,6 +84,7 @@ async function handleFiles(files: File[]) {
         else if (ext === "idx") { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }
         else if (ext === "par") { auxFiles.push(new File2reader(files[i], 'par', readParFile)); }
         else if (ext === "hb")  { auxFiles.push(new File2reader(files[i], 'hb', readHBondFile)); }
+        else if (ext==="db")    { auxFiles.push(new File2reader(files[i], 'db', readDotBracket)); }
 
         // Who knows what a script might do
         else if (ext=="js"){ scriptFiles.push(new File2reader(files[i], 'script', readScriptFile)); }
