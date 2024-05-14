@@ -463,8 +463,6 @@ function readDotBracket(file:File){
         // strip spaces and newlines
         let lines = txt.split("\n").map(s=>s.replace(/\s/g,'')).filter(s=>s.length>0)
 
-        console.log("lines:", lines)
-
         // now let's parse the file
         let file_length = lines.length
         let db_strings = []
@@ -477,8 +475,6 @@ function readDotBracket(file:File){
                 sequences.push(lines[i])
             }
         }
-        console.log("db_strings:", db_strings)
-        console.log("sequences:", sequences)
 
         // if we have only one line, it has to be a db string
         if (db_strings.length == 1 && sequences.length == 0){
@@ -489,14 +485,12 @@ function readDotBracket(file:File){
             let to_process;
             // so do we have selected bases ? 
             if (selectedBases.size > 0) {
-                console.log("selected bases")
                 // we do and do only on selectedBases
                 to_process = [[... selectedBases].sort( (a,b)=> a.id - b.id)]
                 if (to_process[0].length != db_string.length)
                     to_process = [] //make sure we have enough bases selected 
             }
             else {
-                console.log("no selected bases")
                 // we work with the last system
                 to_process = systems[systems.length-1].strands.filter(strand => strand.getLength() == db_string.length).map( s=> s.getMonomers())
             }
@@ -548,7 +542,6 @@ function readDotBracket(file:File){
                 })
             })
             updateForceHandler(forces)
-
         }  
     })
 }
