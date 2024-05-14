@@ -312,8 +312,6 @@ var edit;
                 }
                 e.clusterId = newClusterMap.get(c.clusterId);
             }
-            // Assign a picking color
-            e.defaultColor();
             return e;
         });
         addSystemToScene(tmpSys);
@@ -439,6 +437,8 @@ var edit;
                     strand.setFrom(e);
                 }
             }
+            // set coloring and picking
+            e.defaultColor();
             // If the whole system has been removed we have to add it back again
             if (!systems.includes(sys)) {
                 systems.push(sys);
