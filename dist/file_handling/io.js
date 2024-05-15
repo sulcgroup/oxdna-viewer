@@ -233,9 +233,8 @@ class TrajectoryReader {
     }
     parseConf(lines) {
         let system = this.system;
-        // parse file into lines
-        //let lines = this.curConf;
-        if (lines.length - 3 < system.systemLength()) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
+        let numNuc = system.systemLength();
+        if (lines.length - 3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return;
         }
@@ -261,7 +260,7 @@ class TrajectoryReader {
             this.firstConf = false;
             let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < system.systemLength(); i++) {
+            for (let i = 0; i < numNuc; i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
                     notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning');
                     break;

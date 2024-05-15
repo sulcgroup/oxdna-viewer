@@ -128,9 +128,9 @@ function getNewIds(useNew = false) {
     });
     // these subtypes are not implemented in the CG-oxDNA model, just used for a 'relative' subtype that oxDNA will take as input
     let gsSubtypes = {
-        subtypelist: [], // per particle subtype assignment
-        masses: [], //
-        radii: [], //
+        subtypelist: [],
+        masses: [],
+        radii: [],
         subtype: -1
     };
     // Next, generic sphere objects
@@ -478,9 +478,9 @@ function makeUNFOutput(name) {
             let naStrandsSchema = {
                 "id": strand.id,
                 "name": strand.label,
-                "isScaffold": strand.getLength() > 1000 ? true : false, //entirely arbitrary, but generally right.
-                "naType": strand.end5.isDNA() ? "DNA" : "RNA", // Nucleotide type is actually pretty poorly defined in oxView, so this is the best I can do
-                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "isScaffold": strand.getLength() > 1000 ? true : false,
+                "naType": strand.end5.isDNA() ? "DNA" : "RNA",
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
                 "fivePrimeId": strand.end5.id,
                 "threePrimeId": strand.end3.id,
                 "pdbFileId": 0,
@@ -505,7 +505,7 @@ function makeUNFOutput(name) {
             let aaChainSchema = {
                 "id": strand.id,
                 "chainName": strand.label,
-                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '', // OxView defines colors on a per-nucleotide level while UNF defines it at the strand level.
+                "color": strand.end5.color ? '#'.concat(strand.end5.color.getHexString()) : '',
                 "pdbFileId": 0,
                 "nTerm": strand.end5.id,
                 "cTerm": strand.end3.id,
