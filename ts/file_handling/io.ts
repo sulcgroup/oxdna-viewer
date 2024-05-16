@@ -249,6 +249,9 @@ class TrajectoryReader {
         this.lookupReader.getConf(this.idx);
     }
 
+    // TODO: Make the frame rate choosable by a HTML element
+    // TODO: Make it listen for the 'nextConfigLoaded' event and fire the next conf when either the
+    // timeout is config is ready or the timeout is reached, whichever is second.
     playFlag = false;
     intervalId = null;
     playTrajectory(){
@@ -276,30 +279,32 @@ class TrajectoryReader {
 
     parseConf(lines: string[]){
         let system = this.system;
-        let numNuc = system.systemLength();
+        let numNuc = system.systemLength();  // NEVER call system.systemLength() inside a for loop, it walks the whole system.
 
         if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
             return
         }
-        if( box === undefined)
-            box = new THREE.Vector3(0,0,0);
-        let newBox = new THREE.Vector3(parseFloat(lines[1].split(/\s+/)[2]), parseFloat(lines[1].split(/\s+/)[3]), parseFloat(lines[1].split(/\s+/)[4]))
-        // Increase the simulation box size if larger than current
-        box.x = Math.max(box.x, newBox.x);
-        box.y = Math.max(box.y, newBox.y);
-        box.z = Math.max(box.z, newBox.z);
-        redrawBox();
-    
+
+        // Parse time and update time displays
         const time = parseInt(lines[0].split(/\s+/)[2]);
-        this.time = time; //update our notion of time
+        this.time = time;
         confNum += 1
         console.log(confNum, "t =", time);
         
         let timedisp = document.getElementById("trajTimestep");
         timedisp.innerHTML = `t = ${time.toLocaleString()}`;
 
-        // discard the header
+        // Parse box and increase box size if larger than current box
+        if( box === undefined)
+            box = new THREE.Vector3(0,0,0);
+        let newBox = new THREE.Vector3(parseFloat(lines[1].split(/\s+/)[2]), parseFloat(lines[1].split(/\s+/)[3]), parseFloat(lines[1].split(/\s+/)[4]))
+        box.x = Math.max(box.x, newBox.x);
+        box.y = Math.max(box.y, newBox.y);
+        box.z = Math.max(box.z, newBox.z);
+        redrawBox();
+
+        // discard the header so that line number matches particle number
         lines = lines.slice(3);
         
         let currentNucleotide: BasicElement,
@@ -312,22 +317,23 @@ class TrajectoryReader {
                 break
             };
 
-            // get the nucleotide associated with the line
-            if (system.lines2ele) { // ugly hack to get oxServe to work
-                currentNucleotide = system.lines2ele.get(i)
-            }
-            else { currentNucleotide = elements.get(i+system.globalStartId); }
             // consume a new line from the file
             l = lines[i].split(/\s+/);
+            
+            // get the nucleotide associated with the line
+            if (system.lines2ele) { currentNucleotide = system.lines2ele.get(i) } // ugly hack to get oxServe to work
+            else { currentNucleotide = elements.get(i+system.globalStartId); }
+
             currentNucleotide.calcPositionsFromConfLine(l);
         }
 
+        // Update instancing arrays, run inboxing, re-calculate forces
         system.callAllUpdates();
         tmpSystems.forEach(s => s.callAllUpdates())
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
-        // Signal that config has been loaded
-        // block the nextConfig loaded to prevent the video loader from continuing after the chunk
+
+        // Signal that config has been loaded. This is used by the trajectory video loader
         document.dispatchEvent(new Event('nextConfigLoaded'));
     }
 }
