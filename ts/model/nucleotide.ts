@@ -11,7 +11,7 @@ abstract class Nucleotide extends BasicElement {
         super(id, strand);
     };
 
-    calcPositionsFromConfLine(l: string[], colorUpdate?: boolean) {
+    calcPositionsFromConfLine(l: string[]) {
         //extract position
         let p = new THREE.Vector3(
             parseFloat(l[0]),
@@ -30,10 +30,10 @@ abstract class Nucleotide extends BasicElement {
             parseFloat(l[7]),
             parseFloat(l[8])
         );
-        this.calcPositions(p, a1, a3, colorUpdate)
+        this.calcPositions(p, a1, a3)
     };
 
-    calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3, colorUpdate?: boolean) {
+    calcPositions(p: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3) {
         
         let sys = this.getSystem(),
             sid = this.sid;

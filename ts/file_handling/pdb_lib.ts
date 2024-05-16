@@ -182,7 +182,7 @@ function FillInfoAA(info: [string, string, number[], number[], number[], number]
     let i4 = new THREE.Vector3().fromArray(info[4])
 
     // let center = info[2].map((x, xid)=>{ return x-CM[xid];})
-    AM.calcPositions(i2, i3, i4, true);
+    AM.calcPositions(i2, i3, i4);
 }
 
 // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to the system
@@ -194,5 +194,5 @@ function FillInfoNC(info: [string, string, number[], number[], number[], number]
     let i2 = new THREE.Vector3().fromArray(info[2]);
     let i3 = new THREE.Vector3().fromArray(info[3]);
     let i4 = new THREE.Vector3().fromArray(info[4]);
-    NC.calcPositions(i2, i3, i4, true);
+    NC.calcPositions(i2, i3, i4);
 }

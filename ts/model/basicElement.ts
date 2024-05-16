@@ -29,8 +29,8 @@ abstract class BasicElement {
         this.dummySys = null;
     };
 
-    abstract calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3, colorUpdate?: boolean)
-    abstract calcPositionsFromConfLine(l: string[], colorUpdate?: boolean): void;
+    abstract calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3)
+    abstract calcPositionsFromConfLine(l: string[]): void;
     abstract updateColor(): void;
     //abstract setPosition(newPos: THREE.Vector3): void; 
     abstract extendStrand(len: number, direction: string, double: boolean): void;

@@ -32,7 +32,7 @@ class AminoAcid extends BasicElement {
         return nucleosideColors[elem];
     };
 
-    calcPositionsFromConfLine(l: string[], colorUpdate?: boolean) {
+    calcPositionsFromConfLine(l: string[]) {
         //extract position
         const p = new THREE.Vector3(
             parseFloat(l[0]),
@@ -41,10 +41,10 @@ class AminoAcid extends BasicElement {
         );
         let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
         let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
-        this.calcPositions(p, a1, a3, colorUpdate);
+        this.calcPositions(p, a1, a3);
     }
 
-    calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3, colorUpdate?: boolean) {
+    calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3) {
         const sys = this.getSystem();
         let sid = this.sid;
         this.a1 = a1.clone();
@@ -68,19 +68,6 @@ class AminoAcid extends BasicElement {
         }
 
         this.handleCircularStrands(sys, sid, p);
-
-        if (colorUpdate) {
-            // determine the mesh color, either from a supplied colormap json or by the strand ID.
-            const bbColor = this.strandToColor(this.strand.id);
-            sys.fillVec('bbColors', 3, sid, [bbColor.r, bbColor.g, bbColor.b]);
-
-            const nsColor = this.elemToColor(this.type);
-            sys.fillVec('nsColors', 3, sid, [nsColor.r, nsColor.g, nsColor.b]);
-
-            let idColor = new THREE.Color();
-            idColor.setHex(this.id+1); //has to be +1 or you can't grab nucleotide 0
-            sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
-        }
 
         // fill in the instancing matrices
         sys.fillVec('cmOffsets', 3, sid, p.toArray());

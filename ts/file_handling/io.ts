@@ -299,7 +299,6 @@ class TrajectoryReader {
         
         let timedisp = document.getElementById("trajTimestep");
         timedisp.innerHTML = `t = ${time.toLocaleString()}`;
-        //timedisp.hidden = false;
 
         // discard the header
         lines = lines.slice(3);
@@ -309,7 +308,6 @@ class TrajectoryReader {
         
         if (this.firstConf){
             this.firstConf = false;
-            let currentStrand = system.strands[0];
             //for each line in the current configuration, read the line and calculate positions
             for (let i = 0; i < numNuc; i++) {
                 if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
@@ -321,25 +319,11 @@ class TrajectoryReader {
 
                 // consume a new line from the file
                 l = lines[i].split(/\s+/);
-                currentNucleotide.calcPositionsFromConfLine(l, true);
-
-                //when a strand is finished, add it to the system
-                if (currentStrand !== undefined && (!currentNucleotide.n5 || currentNucleotide.n5 == currentStrand.end3)) { //if last nucleotide in straight strand
-                    if (currentNucleotide.n5 == currentStrand.end3) {
-                        currentStrand.end5 = currentNucleotide;
-                    }
-                    system.addStrand(currentStrand); // add strand to system
-                    currentStrand = system.strands[currentStrand.id];//strandID]; //don't ask, its another artifact of strands being 1-indexed
-                    if (elements.get(currentNucleotide.id+1)) {
-                        currentStrand = elements.get(currentNucleotide.id+1).strand;
-                    }
-                }
-
+                currentNucleotide.calcPositionsFromConfLine(l);
             }
-            system.callAllUpdates()
+            system.callAllUpdates();
         }
-        else{
-            // here goes update logic in theory ?
+        else{ //Update an existing system
             let topDirection = !view.getInputBool("topFormat")
             systems.forEach(system =>{
                 system.strands.forEach((strand: Strand) => {

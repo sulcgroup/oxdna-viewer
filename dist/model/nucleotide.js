@@ -8,16 +8,16 @@ class Nucleotide extends BasicElement {
         super(id, strand);
     }
     ;
-    calcPositionsFromConfLine(l, colorUpdate) {
+    calcPositionsFromConfLine(l) {
         //extract position
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         // extract axis vector a1 (backbone vector) and a3 (stacking vector) 
         let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5]));
         let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8]));
-        this.calcPositions(p, a1, a3, colorUpdate);
+        this.calcPositions(p, a1, a3);
     }
     ;
-    calcPositions(p, a1, a3, colorUpdate) {
+    calcPositions(p, a1, a3) {
         let sys = this.getSystem(), sid = this.sid;
         if (this.dummySys !== null) {
             sys = this.dummySys;

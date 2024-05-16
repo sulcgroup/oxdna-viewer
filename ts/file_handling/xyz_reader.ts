@@ -21,6 +21,7 @@ function parseXYZString(s: string) {
         elements.push(e);
     });
 
+    sys.fillDefaultColors();
     addSystemToScene(sys);
     return sys
 }

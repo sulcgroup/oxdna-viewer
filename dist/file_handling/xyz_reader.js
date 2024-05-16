@@ -16,6 +16,7 @@ function parseXYZString(s) {
         e.type = 'A';
         elements.push(e);
     });
+    sys.fillDefaultColors();
     addSystemToScene(sys);
     return sys;
 }

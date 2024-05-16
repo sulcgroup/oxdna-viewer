@@ -443,11 +443,11 @@ function parseOxViewString(s) {
                         if (d.a1 && d.a3) {
                             let a1 = new THREE.Vector3().fromArray(d.a1);
                             let a3 = new THREE.Vector3().fromArray(d.a3);
-                            e.calcPositions(p, a1, a3, true);
+                            e.calcPositions(p, a1, a3);
                         }
                         else {
                             const zero = new THREE.Vector3();
-                            e.calcPositions(p, zero, zero, true); // Amino acid
+                            e.calcPositions(p, zero, zero); // Amino acid
                         }
                         // Otherwise fallback to reading instance parameters
                     }

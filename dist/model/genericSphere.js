@@ -15,7 +15,7 @@ class GenericSphere extends BasicElement {
     elemToColor(elem) {
         return GREY;
     }
-    calcPositionsFromConfLine(l, colorUpdate) {
+    calcPositionsFromConfLine(l) {
         //extract position
         const p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         this.calcPositions(p);
@@ -50,11 +50,6 @@ class GenericSphere extends BasicElement {
             spRotation = new THREE.Quaternion(0, 0, 0, 0);
         }
         this.handleCircularStrands(sys, sid, p);
-        // determine the mesh color, either from a supplied colormap json or by the strand ID.
-        let color = new THREE.Color();
-        color = this.strandToColor(this.strand.id);
-        let idColor = new THREE.Color();
-        idColor.setHex(this.id + 1); //has to be +1 or you can't grab nucleotide 0
         // fill in the instancing matrices
         let scale = this.radius * 2;
         sys.fillVec('cmOffsets', 3, sid, p.toArray());
@@ -70,11 +65,7 @@ class GenericSphere extends BasicElement {
         sys.fillVec('nsScales', 3, sid, [scale, scale, scale]);
         sys.fillVec('conScales', 3, sid, [0, 0, 0]);
         sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
-        sys.fillVec('bbColors', 3, sid, [color.r, color.g, color.b]);
         sys.fillVec('visibility', 3, sid, [1, 1, 1]);
-        color = this.elemToColor(this.type);
-        sys.fillVec('nsColors', 3, sid, [color.r, color.g, color.b]);
-        sys.fillVec('bbLabels', 3, sid, [idColor.r, idColor.g, idColor.b]);
         // keep track of last backbone for sugar-phosphate positioning
         //bbLast = p.clone();
     }
@@ -257,16 +248,16 @@ class PatchyParticle extends GenericSphere {
         sys.offsets[s][id + 1] += amount.y;
         sys.offsets[s][id + 2] += amount.z;
     }
-    calcPositionsFromConfLine(l, colorUpdate) {
+    calcPositionsFromConfLine(l) {
         //extract position
         let p = new THREE.Vector3(parseFloat(l[0]), parseFloat(l[1]), parseFloat(l[2]));
         //extract orientation vectors
         let a1 = new THREE.Vector3(parseFloat(l[3]), parseFloat(l[4]), parseFloat(l[5])).normalize();
         let a3 = new THREE.Vector3(parseFloat(l[6]), parseFloat(l[7]), parseFloat(l[8])).normalize();
-        this.calcPositions(p, a1, a3, colorUpdate);
+        this.calcPositions(p, a1, a3);
     }
     ;
-    calcPositions(p, a1, a3, _colorUpdate) {
+    calcPositions(p, a1, a3) {
         let sid = this.sid;
         let scale = 1;
         const defaultA1 = new THREE.Vector3(1, 0, 0);

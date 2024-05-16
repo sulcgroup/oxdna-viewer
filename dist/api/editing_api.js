@@ -498,7 +498,7 @@ var edit;
         //position new monomers
         for (let i = 0, len = sequence.length; i < len; i++) {
             let [p, a1, a3] = positions[i];
-            e.calcPositions(p, a1, a3, true);
+            e.calcPositions(p, a1, a3);
             e = e[direction];
         }
         addSystemToScene(tmpSys);
@@ -576,13 +576,13 @@ var edit;
         let e2 = end2[inverse];
         for (let i = 0; i < l; i++) {
             let [p, a1, a3] = positions[i];
-            e1.calcPositions(p, a1, a3, true);
+            e1.calcPositions(p, a1, a3);
             e1 = e1[direction];
         }
         // complementary strand adds elements in reverse direction
         for (let i = l * 2 - 1; i >= l; i--) {
             let [p, a1, a3] = positions[i];
-            e2.calcPositions(p, a1, a3, true);
+            e2.calcPositions(p, a1, a3);
             e2 = e2[inverse];
         }
         strand.updateEnds();
@@ -806,7 +806,7 @@ var edit;
             pos = camera.position.clone().add(a1.clone().multiplyScalar(20));
             a3 = a1.clone().cross(camera.up);
         }
-        e.calcPositions(pos, a1, a3, true);
+        e.calcPositions(pos, a1, a3);
         e.dummySys = tmpSys;
         // Extends the strand 3'->5' with the rest of the sequence
         // and return all added elements.
@@ -1293,7 +1293,7 @@ var edit;
         a1.negate();
         a3.negate();
         const pos = cm.clone().sub(a1.clone().multiplyScalar(1.2));
-        e.calcPositions(pos, a1, a3, true);
+        e.calcPositions(pos, a1, a3);
         e.dummySys = tmpSys;
         addSystemToScene(tmpSys);
         // Add to history, but we only want this if it is a atomic edit

@@ -326,7 +326,7 @@ function parseUNFString(s: string) {
 
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
-                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1), true);
+                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, 1));
                 });
                 //I hate doing it this way but there are so many add -> sub in here it kinda makes sense.
                 id2.forEach((e, i) => {
@@ -338,7 +338,7 @@ function parseUNFString(s: string) {
 
                     let sceneE = elements.get(newElementIds.get(e));
                     latticeElements.add(sceneE);
-                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1), true);
+                    sceneE.calcPositions(ePos, eA1, new THREE.Vector3(0, 0, -1));
                 });
             });
         });
@@ -447,7 +447,7 @@ function parseUNFString(s: string) {
                 else if (n.altPositions[0]) { //e must be a protein so we just need the a-carbon position
                     let p = new THREE.Vector3().fromArray(n.altPositions[0])
                     p.multiplyScalar(lenFactor);
-                    e.calcPositions(p, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), true)
+                    e.calcPositions(p, new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0))
                 }
             });
         });
