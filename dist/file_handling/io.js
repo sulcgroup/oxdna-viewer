@@ -262,12 +262,18 @@ class TrajectoryReader {
             }
             ;
             // get the nucleotide associated with the line
-            currentNucleotide = elements.get(i + system.globalStartId);
+            if (system.lines2ele) { // ugly hack to get oxServe to work
+                currentNucleotide = system.lines2ele.get(i);
+            }
+            else {
+                currentNucleotide = elements.get(i + system.globalStartId);
+            }
             // consume a new line from the file
             l = lines[i].split(/\s+/);
             currentNucleotide.calcPositionsFromConfLine(l);
         }
         system.callAllUpdates();
+        tmpSystems.forEach(s => s.callAllUpdates());
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)
             forceHandler.redraw();

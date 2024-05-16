@@ -215,9 +215,7 @@ function getNewIds(useNew:Boolean=false): [Map<BasicElement, number>, Map<Strand
     if (nas.length > 0) {
         lastType = nas[0].kwdata['type'];
     }
-    console.log(useNew);
     nas.forEach(strand => {
-
         //console.log(strand.kwdata['type'] != lastType, !useNew, strand.kwdata['type'] != lastType && !useNew);
         if (strand.kwdata['type'] != lastType && !useNew){
             let error: string = "You must use the new topology format when mixing DNA and RNA.";

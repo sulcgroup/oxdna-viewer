@@ -163,7 +163,6 @@ function getNewIds(useNew = false) {
     if (nas.length > 0) {
         lastType = nas[0].kwdata['type'];
     }
-    console.log(useNew);
     nas.forEach(strand => {
         //console.log(strand.kwdata['type'] != lastType, !useNew, strand.kwdata['type'] != lastType && !useNew);
         if (strand.kwdata['type'] != lastType && !useNew) {

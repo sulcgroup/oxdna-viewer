@@ -12,6 +12,7 @@ class System {
     lutCols;
     strands = [];
     label;
+    lines2ele;
     instanceParams = new Map([
         ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
         ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
@@ -120,13 +121,16 @@ class System {
         updateColoring();
     }
     /**
-     * Return a list of all monomers in the system
+     * Return a list of all monomers in the system in 5'-3' order
      */
     getMonomers() {
         return [].concat.apply([], this.strands.map(s => {
             return s.getMonomers();
         }));
     }
+    /**
+     * Return only the amino acid or generic sphere monomers in the system
+     */
     getAAMonomers() {
         return [].concat.apply([], this.strands.map(s => {
             if (s.isPeptide() || s.isGS()) {

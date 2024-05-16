@@ -13,6 +13,7 @@ class System {
     lutCols: THREE.Color[];
     strands: Strand[] = [];
     label: string;
+    lines2ele: Map<number, BasicElement>;
 
     instanceParams = new Map([
         ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
@@ -136,9 +137,9 @@ class System {
     }
 
     /**
-     * Return a list of all monomers in the system
+     * Return a list of all monomers in the system in 5'-3' order
      */
-    getMonomers() {
+    getMonomers():BasicElement[] {
         return [].concat.apply([],
             this.strands.map(s=>{
                 return s.getMonomers();
@@ -146,7 +147,10 @@ class System {
         );
     }
 
-    getAAMonomers() {
+    /**
+     * Return only the amino acid or generic sphere monomers in the system
+     */
+    getAAMonomers():AminoAcid[] {
         return [].concat.apply([],
             this.strands.map(s=>{
                 if(s.isPeptide() || s.isGS()) {

@@ -276,7 +276,7 @@ class TrajectoryReader {
 
     parseConf(lines: string[]){
         let system = this.system;
-        let numNuc = system.systemLength()
+        let numNuc = system.systemLength();
 
         if (lines.length-3 < numNuc) { //Handles dat files that are too small.  can't handle too big here because you don't know if there's a trajectory
             notify(".dat and .top files incompatible", "alert");
@@ -311,15 +311,19 @@ class TrajectoryReader {
                 notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
                 break
             };
+
             // get the nucleotide associated with the line
-            currentNucleotide = elements.get(i+system.globalStartId);
+            if (system.lines2ele) { // ugly hack to get oxServe to work
+                currentNucleotide = system.lines2ele.get(i)
+            }
+            else { currentNucleotide = elements.get(i+system.globalStartId); }
             // consume a new line from the file
             l = lines[i].split(/\s+/);
             currentNucleotide.calcPositionsFromConfLine(l);
         }
 
         system.callAllUpdates();
-
+        tmpSystems.forEach(s => s.callAllUpdates())
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
         // Signal that config has been loaded
