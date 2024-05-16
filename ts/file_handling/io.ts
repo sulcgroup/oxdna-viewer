@@ -180,7 +180,6 @@ class TrajectoryReader {
     indexTrajectory(){
         var worker = new Worker('./dist/file_handling/read_worker.js');
         worker.postMessage(this.datFile);
-        this.firstConf
         worker.onmessage = (e: MessageEvent) => {
             let [indices, last, state] = e.data;
             this.lookupReader.position_lookup=indices;
@@ -305,39 +304,22 @@ class TrajectoryReader {
         
         let currentNucleotide: BasicElement,
             l: string[];
-        
-        if (this.firstConf){
-            this.firstConf = false;
-            //for each line in the current configuration, read the line and calculate positions
-            for (let i = 0; i < numNuc; i++) {
-                if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
-                    notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
-                    break
-                };
-                // get the nucleotide associated with the line
-                currentNucleotide = elements.get(i+system.globalStartId);
 
-                // consume a new line from the file
-                l = lines[i].split(/\s+/);
-                currentNucleotide.calcPositionsFromConfLine(l);
-            }
-            system.callAllUpdates();
+        //for each line in the current configuration, read the line and calculate positions
+        for (let i = 0; i < numNuc; i++) {
+            if (lines[i] == "" || lines[i].slice(0, 1) == 't') {
+                notify("WARNING: provided configuration is shorter than topology. Assuming you know what you're doing.", 'warning')
+                break
+            };
+            // get the nucleotide associated with the line
+            currentNucleotide = elements.get(i+system.globalStartId);
+            // consume a new line from the file
+            l = lines[i].split(/\s+/);
+            currentNucleotide.calcPositionsFromConfLine(l);
         }
-        else{ //Update an existing system
-            let topDirection = !view.getInputBool("topFormat")
-            systems.forEach(system =>{
-                system.strands.forEach((strand: Strand) => {
-                    strand.forEach(e => {
-                        let line = lines.shift().split(' ');
-                        e.calcPositionsFromConfLine(line);
-                    }, topDirection);
-                });
-                system.callUpdates(['instanceOffset','instanceRotation', 'instanceScale']);
-            });
-            tmpSystems.forEach(system => {
-                system.callUpdates(['instanceOffset','instanceRotation', 'instanceScale']);
-            });
-        }
+
+        system.callAllUpdates();
+
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
         // Signal that config has been loaded
