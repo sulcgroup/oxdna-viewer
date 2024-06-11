@@ -282,7 +282,7 @@ class TrajectoryReader {
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler)
             forceHandler.redraw();
-        // Signal that config has been loaded. This is used by the trajectory video loader
+        // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));
     }
 }

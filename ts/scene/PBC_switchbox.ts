@@ -68,6 +68,11 @@ function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
     affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     if(forceHandler) forceHandler.redraw();
+    if (networks.length > 0) {
+        networks.forEach(n => {
+            n.recalculateVis();
+        })
+    }
     render();
 }
 

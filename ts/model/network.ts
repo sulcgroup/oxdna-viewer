@@ -275,6 +275,16 @@ class Network {
         }
     }
     ;
+    reCalculateRotations() { // Re-calculate all rotations based on particle positions.
+        for(let t = 0; t < this.reducedEdges.total; t++){
+            let i = this.reducedEdges.p1[t];
+            let j = this.reducedEdges.p2[t];
+            let newRot = this.elemcoords.rotation(i, j)
+            this.fillVec('rotations', 4, t, [newRot.w, newRot.z, newRot.y, newRot.x]);
+        }
+        this.callUpdates(["instanceRotation"])
+    }
+    ;
     updatePositions(){ // Called by translation.ts
         // update all coordinates
         this.elemcoords.xI = this.particles.map(e => e.getPos().x);
@@ -285,11 +295,20 @@ class Network {
             let i = this.reducedEdges.p1[t];
             let j = this.reducedEdges.p2[t];
             let pos = this.center(i, j).toArray();
+            let dij = this.elemcoords.distance(i, j);
             this.fillVec('offsets', 3, t, [pos[0], pos[1], pos[2]]);
+            this.fillVec('scales', 3, t, [1, dij, 1]);
         }
-        this.callUpdates(["instanceOffset"])
+        this.callUpdates(["instanceOffset", "instanceScale"]);
     }
     ;
+    recalculateVis() {
+        this.updatePositions();
+        this.reCalculateRotations();
+    }
+    ;
+    // This has never worked for single particles being rotated...
+    // Apply a rotation to all particles
     updateRotations(q: THREE.Quaternion){// Called by translation.ts
         for(let t = 0; t < this.reducedEdges.total; t++){
             let currRot = this.getVec('rotations', 4, t);

@@ -319,7 +319,7 @@ class TrajectoryReader {
 
             // consume a new line from the file
             l = lines[i].split(/\s+/);
-            
+
             // get the nucleotide associated with the line
             if (system.lines2ele) { currentNucleotide = system.lines2ele.get(i) } // ugly hack to get oxServe to work
             else { currentNucleotide = elements.get(i+system.globalStartId); }
@@ -333,7 +333,7 @@ class TrajectoryReader {
         centerAndPBC(system.getMonomers(), newBox);
         if (forceHandler) forceHandler.redraw();
 
-        // Signal that config has been loaded. This is used by the trajectory video loader
+        // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));
     }
 }

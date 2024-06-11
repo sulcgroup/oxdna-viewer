@@ -9,6 +9,9 @@ function readTraj(trajFile, system) {
 function readJson(jsonFile, system) {
     return parseFileWith(jsonFile, parseJson, [system]);
 }
+function readParFile(parFile, system) {
+    return parseFileWith(parFile, parsePar, [system]);
+}
 // Creates color overlays
 function makeLut(data, key, system) {
     let arr = data[key];
@@ -204,8 +207,8 @@ function readSelectFile(reader) {
     api.selectElementIDs(ids, true);
 }
 //reads in an anm parameter file and associates it with the last loaded system.
-function readParFile(system, reader) {
-    let lines = reader.result.split(/[\n]+/g);
+function parsePar(lines, system) {
+    lines = lines.split(/[\n]+/g);
     //remove the header
     lines = lines.slice(1);
     const size = lines.length;
@@ -216,6 +219,12 @@ function readParFile(system, reader) {
         let l = lines[i].split(/\s+/);
         //extract values
         const p = parseInt(l[0]), q = parseInt(l[1]), eqDist = parseFloat(l[2]), type = l[3], strength = parseFloat(l[4]);
+        if (!Number.isInteger(p) || !Number.isInteger(q) || !Number.isFinite(eqDist) || !Number.isFinite(strength)) {
+            notify("Cannot read par file, see console for bad line", 'error');
+            console.log("Error on par line", i);
+            console.log(l);
+            return;
+        }
         // if its a torsional ANM then there are additional parameters on some lines
         let extraParams = [];
         if (l.length > 5) {
@@ -226,7 +235,6 @@ function readParFile(system, reader) {
         if (Number.isInteger(p) && Number.isInteger(q)) {
             net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         }
-        // if (particle1 == undefined) console.log(i)
     }
     ;
     // Create and Fill Vectors

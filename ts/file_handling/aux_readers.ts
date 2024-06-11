@@ -13,6 +13,10 @@ function readJson(jsonFile:File, system:System){ // this still doesn't work for 
     return parseFileWith(jsonFile, parseJson, [system])
 }
 
+function readParFile(parFile:File, system:System) {
+    return parseFileWith(parFile, parsePar, [system])
+}
+
 // Creates color overlays
 function makeLut(data, key, system) {
 
@@ -222,9 +226,9 @@ function readSelectFile(reader) {
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
-function readParFile(system, reader) {
-    let lines = (reader.result as string).split(/[\n]+/g);
+function parsePar(lines, system) {
 
+    lines = lines.split(/[\n]+/g);
     //remove the header
     lines = lines.slice(1)
 
@@ -242,6 +246,13 @@ function readParFile(system, reader) {
             eqDist = parseFloat(l[2]),
             type = l[3],
             strength = parseFloat(l[4]);
+        
+        if (!Number.isInteger(p) || !Number.isInteger(q) || !Number.isFinite(eqDist) || !Number.isFinite(strength)) {
+            notify("Cannot read par file, see console for bad line", 'error')
+            console.log("Error on par line", i)
+            console.log(l)
+            return
+        }
 
         // if its a torsional ANM then there are additional parameters on some lines
         let extraParams = []
@@ -253,7 +264,6 @@ function readParFile(system, reader) {
         if(Number.isInteger(p) && Number.isInteger(q)){
             net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         }
-        // if (particle1 == undefined) console.log(i)
     };
     // Create and Fill Vectors
     net.initInstances(net.reducedEdges.total);
