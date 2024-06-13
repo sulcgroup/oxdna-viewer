@@ -52,13 +52,13 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 
 			let nucleotide = elements.get(id);
 			let sys = nucleotide.getSystem();
+			let selecting = selectedBases.has(nucleotide) ? false : true;
 
 			// Select multiple elements my holding down ctrl/command
 			if (!event.ctrlKey && !event.metaKey && !event.shiftKey && !selectedBases.has(nucleotide)) {
 				clearSelection();
 			}
 			
-			let strandCount = sys.strands.length;
 			switch(selectionMode){
 				case "System" :
 					sys.strands.forEach(strand=>{
@@ -82,7 +82,6 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 					updateView(sys);
 					break;
 				case "Monomer":
-					nucleotide.toggle();
 					if(event.shiftKey) {
 						if(view.selectPairs()){
 							if(!nucleotide.isPaired()) {
@@ -95,7 +94,7 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 							if (event.altKey) {
 								fancySelectIntermediate(nucleotide);
 							} else {
-								selectIntermediate();
+								selectIntermediate(nucleotide, selecting);
 							}
 						}
 					} else if(view.selectPairs()) {
@@ -105,6 +104,9 @@ canvas.addEventListener('mousedown', event => { //if mouse is pressed down
 						} else {
 							selectPaired(nucleotide);
 						}
+					}
+					else {
+						nucleotide.toggle();
 					}
 					updateView(sys);
 					break;
@@ -288,27 +290,62 @@ function fancySelectIntermediate(e: BasicElement) {
 	
 }
 
-function selectIntermediate() {
-	let n = elements.getNextId();
-	let iMin = 0;
-	let iMax = n;
-	while(iMin <= n) {
-		if(elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
-			break;
+function selectIntermediate(n:BasicElement, selecting:Boolean) {
+
+	let last = selecting ? selectedBases.lastSel : selectedBases.lastRem;
+	//how to cooly set select/deselect?  Do I just need to have ifs?
+
+	function selectIdRange(){
+		let n = elements.getNextId();
+		let iMin = 0;
+		let iMax = n;
+		while(iMin <= n) {
+			if(elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
+				break;
+			}
+			iMin++;
 		}
-		iMin++;
-	}
-	while(iMax > 0) {
-		if(elements.has(iMax) && selectedBases.has(elements.get(iMax))) {
-			break;
+		while(iMax > 0) {
+			if(elements.has(iMax) && selectedBases.has(elements.get(iMax))) {
+				break;
+			}
+			iMax--;
 		}
-		iMax--;
-	}
-	for(let i=iMin; i<iMax; i++) {
-		if (elements.has(i) && !selectedBases.has(elements.get(i))) {
-			elements.get(i).toggle();
+		console.log(iMin, iMax)
+		for(let i=iMin; i<iMax; i++) {
+			if (elements.has(i) && !selectedBases.has(elements.get(i))) {
+				selecting ? elements.get(i).select() : elements.get(i).deselect();
+			}
 		}
 	}
+	if (last == undefined) {
+		notify("Last selected base undefined! Select something new to use range select.", 'error');
+		return
+	}
+	if (last.strand == n.strand && !n.isPatchyParticle()) { 
+		let s5 = n.strand.end5;
+		let s3 = n.strand.end3;
+		while (s5 != s3) {
+			if (s5 == last || s5 == n) {
+				break
+			}
+			s5 = s5.n3;
+		}
+		while (s3 != s5) {
+			if (s3 == last || s3 == n) {
+				break
+			}
+			s3 = s3.n5;
+		}
+		let substr = n.strand.getSubstrand(s5, s3)
+		substr.forEach(n => selecting ? n.select() : n.deselect())
+	}
+	else {
+		notify("Selections not on same strand! Selecting id range instead", "warning")
+		n.toggle();
+		selectIdRange();
+	}
+
 }
 
 function makeTextArea(bases: string, id) { //insert "bases" string into text area with ID, id

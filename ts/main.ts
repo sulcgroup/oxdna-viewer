@@ -73,6 +73,39 @@ class ElementMap extends Map<number, BasicElement>{
     }
 }
 
+class smartSet<Type> extends Set<Type> {
+    lastSel:Type
+    lastRem:Type
+    constructor(){
+        super();
+        this.lastSel = undefined;
+        this.lastRem = undefined;
+    }
+
+    /**
+     * Add an element to the set and remember the last added element
+     * @param value 
+     * @returns void
+     */
+    add(value) {
+        this.lastSel = value;
+        return super.add(value);
+    }
+
+    /**
+     * Delete an element from the set and forget it if it was the last element added.
+     * @param value 
+     * @returns 
+     */
+    delete(value) {
+        if (this.lastSel === value) {
+            this.lastSel = undefined;
+        }
+        this.lastRem = value
+        return super.delete(value)
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                  oxView's global variables                 ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,11 +113,10 @@ class ElementMap extends Map<number, BasicElement>{
 // Particle indexing stuff
 const elements: ElementMap = new ElementMap(); //contains references to all BasicElements
 const systems: System[] = [];  // contains references to all systems
-const selectedBases = new Set<BasicElement>(); // contains the set of currently selected BasicElements
+const selectedBases = new smartSet<BasicElement>(); // contains the set of currently selected BasicElements
 var clusterCounter = 0; //idk about this one...
 
 // File reading stuff
-//var trajReader: TrajectoryReader; // So much stuff assumes a trajectoryReader exists that we just declare it here.
 var pdbtemp = []; // stores output from worker, so worker can terminate
 const pdbFileInfo: pdbinfowrapper[] = []; //Stores all PDB Info (Necessary for future Protein Models)
 const unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessary for writing out UNF files)

@@ -95,6 +95,22 @@ abstract class Strand {
     }
 
     /**
+     * Return an array containing part of the strand
+     * @param n5 5' element to start at
+     * @param n3 3' element to end at
+     */
+    getSubstrand(n5:BasicElement, n3:BasicElement): BasicElement[] {
+        let out:BasicElement[] = []
+        let curr = n5;
+        while (curr != n3) {
+            out.push(curr);
+            curr = curr.n3;
+        }
+        out.push(curr);
+        return out
+    }
+
+    /**
      * Performs the specified action for each element of the strand.
      * @param callbackfn A function that accepts up to two arguments
      * @param reverse Iterate in 3' to 5' direction, instead of the default 5' to 3'
