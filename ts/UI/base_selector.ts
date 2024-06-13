@@ -292,13 +292,12 @@ function fancySelectIntermediate(e: BasicElement) {
 
 function selectIntermediate(n:BasicElement, selecting:Boolean) {
 
-	let last = selecting ? selectedBases.last : selectedBases.last;
-	//how to cooly set select/deselect?  Do I just need to have ifs?
-
-	function selectIdRange(){
+	function selectIdRange(selecting){
 		let n = elements.getNextId();
 		let iMin = 0;
 		let iMax = n;
+
+		// Find the edges of selectedBases
 		while(iMin <= n) {
 			if(elements.has(iMin) && selectedBases.has(elements.get(iMin))) {
 				break;
@@ -311,20 +310,20 @@ function selectIntermediate(n:BasicElement, selecting:Boolean) {
 			}
 			iMax--;
 		}
-		console.log(iMin, iMax)
+
+		// And select everything in between (this isn't necessarily what we want, but it's how it's been for a long time.)
 		for(let i=iMin; i<iMax; i++) {
 			if (elements.has(i) && !selectedBases.has(elements.get(i))) {
 				selecting ? elements.get(i).select() : elements.get(i).deselect();
 			}
 		}
 	}
-	if (last == undefined) {
-		notify("Last selected base undefined! Select something new to use range select.", 'alert');
-		return
-	}
-	if (last.strand == n.strand && !n.isPatchyParticle()) { 
+
+	function selectStrandRange(n, selecting) {
 		let s5 = n.strand.end5;
 		let s3 = n.strand.end3;
+
+		//find the substrand affected
 		while (s5 != s3) {
 			if (s5 == last || s5 == n) {
 				break
@@ -337,13 +336,26 @@ function selectIntermediate(n:BasicElement, selecting:Boolean) {
 			}
 			s3 = s3.n5;
 		}
+
+		//Select or deselect it
 		let substr = n.strand.getSubstrand(s5, s3)
 		substr.forEach(n => selecting ? n.select() : n.deselect())
+	}
+
+	let last = selecting ? selectedBases.last : selectedBases.last;
+
+	if (last == undefined) {
+		notify("Last selected base undefined! Select something new to use range select.", 'alert');
+		return
+	}
+
+	if (last.strand == n.strand && !n.isPatchyParticle()) { 
+		selectStrandRange(n, selecting);
 	}
 	else {
 		notify("Selections not on same strand! Selecting id range instead", "warning")
 		n.toggle();
-		selectIdRange();
+		selectIdRange(selecting);
 	}
 
 }

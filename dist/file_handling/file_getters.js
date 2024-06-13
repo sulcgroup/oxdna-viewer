@@ -31,21 +31,9 @@ function readFilesFromURLPath(paths) {
 // And from the URL of oxView itself (can be used to read local files if you host oxView yourself)
 function readFilesFromURLParams() {
     let paths = [];
-    // I don't think we need this anymore???
-    const types = ['file', 'pdb', 'topology', 'configuration', 'overlay', 'force', 'par', 'oxview', 'hb', 'mgl', 'idx', 'json', 'select'];
     const url = new URL(window.location.href);
-    types.forEach(t => {
-        if (url.searchParams.get(t)) {
-            if (t == 'pdb') {
-                paths.push(...url.searchParams.getAll(t).map(pdbID => `https://files.rcsb.org/download/${pdbID}.pdb`));
-            }
-            //else if (t == 'nanobase') { //NEEDS TESTING
-            //    paths.push(...url.searchParams.getAll(t).map(nanobaseID=>`https://nanobase.org/oxdna/${nanobaseID}`));
-            //}
-            else {
-                paths.push(...url.searchParams.getAll(t));
-            }
-        }
+    url.searchParams.forEach((k, v) => {
+        paths.push(k);
     });
     if (paths.length > 0) {
         readFilesFromURLPath(paths);
