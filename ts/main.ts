@@ -74,12 +74,10 @@ class ElementMap extends Map<number, BasicElement>{
 }
 
 class smartSet<Type> extends Set<Type> {
-    lastSel:Type
-    lastRem:Type
+    last
     constructor(){
         super();
-        this.lastSel = undefined;
-        this.lastRem = undefined;
+        this.last = undefined;
     }
 
     /**
@@ -88,7 +86,7 @@ class smartSet<Type> extends Set<Type> {
      * @returns void
      */
     add(value) {
-        this.lastSel = value;
+        this.last = value;
         return super.add(value);
     }
 
@@ -98,10 +96,7 @@ class smartSet<Type> extends Set<Type> {
      * @returns 
      */
     delete(value) {
-        if (this.lastSel === value) {
-            this.lastSel = undefined;
-        }
-        this.lastRem = value
+        this.last = value
         return super.delete(value)
     }
 }

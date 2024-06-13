@@ -269,7 +269,7 @@ function fancySelectIntermediate(e) {
     });
 }
 function selectIntermediate(n, selecting) {
-    let last = selecting ? selectedBases.lastSel : selectedBases.lastRem;
+    let last = selecting ? selectedBases.last : selectedBases.last;
     //how to cooly set select/deselect?  Do I just need to have ifs?
     function selectIdRange() {
         let n = elements.getNextId();
@@ -295,7 +295,7 @@ function selectIntermediate(n, selecting) {
         }
     }
     if (last == undefined) {
-        notify("Last selected base undefined! Select something new to use range select.", 'error');
+        notify("Last selected base undefined! Select something new to use range select.", 'alert');
         return;
     }
     if (last.strand == n.strand && !n.isPatchyParticle()) {

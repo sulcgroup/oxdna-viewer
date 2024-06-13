@@ -67,12 +67,10 @@ class ElementMap extends Map {
     }
 }
 class smartSet extends Set {
-    lastSel;
-    lastRem;
+    last;
     constructor() {
         super();
-        this.lastSel = undefined;
-        this.lastRem = undefined;
+        this.last = undefined;
     }
     /**
      * Add an element to the set and remember the last added element
@@ -80,7 +78,7 @@ class smartSet extends Set {
      * @returns void
      */
     add(value) {
-        this.lastSel = value;
+        this.last = value;
         return super.add(value);
     }
     /**
@@ -89,10 +87,7 @@ class smartSet extends Set {
      * @returns
      */
     delete(value) {
-        if (this.lastSel === value) {
-            this.lastSel = undefined;
-        }
-        this.lastRem = value;
+        this.last = value;
         return super.delete(value);
     }
 }

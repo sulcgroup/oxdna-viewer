@@ -292,7 +292,7 @@ function fancySelectIntermediate(e: BasicElement) {
 
 function selectIntermediate(n:BasicElement, selecting:Boolean) {
 
-	let last = selecting ? selectedBases.lastSel : selectedBases.lastRem;
+	let last = selecting ? selectedBases.last : selectedBases.last;
 	//how to cooly set select/deselect?  Do I just need to have ifs?
 
 	function selectIdRange(){
@@ -319,7 +319,7 @@ function selectIntermediate(n:BasicElement, selecting:Boolean) {
 		}
 	}
 	if (last == undefined) {
-		notify("Last selected base undefined! Select something new to use range select.", 'error');
+		notify("Last selected base undefined! Select something new to use range select.", 'alert');
 		return
 	}
 	if (last.strand == n.strand && !n.isPatchyParticle()) { 
