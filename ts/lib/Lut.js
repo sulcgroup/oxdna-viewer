@@ -2,7 +2,7 @@
  * @author daron1337 / http://daron1337.github.io/
  */
 
-THREE.Lut = function ( colormap, numberofcolors ) {
+Lut = function ( colormap, numberofcolors ) {
 
 	this.lut = [];
 	this.map = THREE.ColorMapKeywords[ colormap ];
@@ -37,7 +37,7 @@ THREE.Lut = function ( colormap, numberofcolors ) {
 
 };
 
-THREE.Lut.prototype = {
+Lut.prototype = {
 
 	constructor: THREE.Lut,
 
@@ -491,7 +491,7 @@ THREE.Lut.prototype = {
 };
 
 
-THREE.ColorMapKeywords = {
+ColorMapKeywords = {
 
 	"rainbow":    [ [ 0.0, '0x0000FF' ], [ 0.2, '0x00FFFF' ], [ 0.5, '0x00FF00' ], [ 0.8, '0xFFFF00' ],  [ 1.0, '0xFF0000' ] ],
 	"cooltowarm": [ [ 0.0, '0x3C4EC2' ], [ 0.2, '0x9BBCFF' ], [ 0.5, '0xDCDCDC' ], [ 0.8, '0xF6A385' ],  [ 1.0, '0xB40426' ] ],

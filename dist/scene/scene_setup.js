@@ -1,5 +1,6 @@
 // <reference path="./three/index.d.ts" />
-// <reference path="./controls/three-trackballcontrols.d.ts" />
+/// <reference path="../controls/three-trackballcontrols.d.ts" />
+/// <reference path="../controls/three-transformcontrols.d.ts" />
 // <reference path="./lib/stats.js" />
 // stats code 
 //var stats = new stats();
@@ -206,7 +207,7 @@ function drawBox(size, position) {
     return boxObj;
 }
 // adding mouse control to the scene 
-const controls = new THREE.TrackballControls(camera, canvas);
+const controls = new TrackballControls(camera, canvas);
 controls.rotateSpeed = 1.5;
 controls.zoomSpeed = 2; //frequently structures are large so turned this up
 controls.panSpeed = 1.5;
@@ -218,7 +219,7 @@ controls.keys = [65, 83, 68];
 // following the logic of updating the scene only when the scene changes 
 // controlls induce change so we update the scene when we move it  
 controls.addEventListener('change', render);
-const transformControls = new THREE.TransformControls(camera, renderer.domElement);
+const transformControls = new TransformControls(camera, renderer.domElement);
 transformControls.addEventListener('change', render);
 scene.add(transformControls);
 transformControls.addEventListener('dragging-changed', function (event) {

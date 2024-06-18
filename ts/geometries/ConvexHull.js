@@ -46,13 +46,13 @@
 
 			if ( Array.isArray( points ) !== true ) {
 
-				console.error( 'THREE.ConvexHull: Points parameter is not an array.' );
+				console.error( 'ConvexHull: Points parameter is not an array.' );
 
 			}
 
 			if ( points.length < 4 ) {
 
-				console.error( 'THREE.ConvexHull: The algorithm needs at least four points.' );
+				console.error( 'ConvexHull: The algorithm needs at least four points.' );
 
 			}
 
@@ -81,7 +81,7 @@
 
 					if ( geometry.isGeometry ) {
 
-						console.error( 'THREE.ConvexHull no longer supports Geometry. Use THREE.BufferGeometry instead.' );
+						console.error( 'ConvexHull no longer supports Geometry. Use BufferGeometry instead.' );
 						return;
 
 					} else if ( geometry.isBufferGeometry ) {
@@ -1120,6 +1120,6 @@
 
 	}
 
-	THREE.ConvexHull = ConvexHull;
+	ConvexHull = ConvexHull;
 
 } )();

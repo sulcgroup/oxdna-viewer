@@ -2,7 +2,7 @@
  * @author alteredq / http://alteredqualia.com/
  */
 
-THREE.SceneUtils = {
+SceneUtils = {
 
 	createMultiMaterialObject: function ( geometry, materials ) {
 

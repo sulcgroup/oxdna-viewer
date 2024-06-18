@@ -46,6 +46,6 @@
 
 	}
 
-	THREE.ConvexGeometry = ConvexGeometry;
+	ConvexGeometry = ConvexGeometry;
 
 } )();
