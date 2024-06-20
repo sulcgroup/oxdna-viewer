@@ -1,6 +1,3 @@
-/// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="../typescript_definitions/oxView.d.ts" />
-
 canvas.addEventListener("keydown", event =>{
     switch (event.key.toLowerCase()) {
         // Save image on "p" press

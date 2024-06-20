@@ -55,6 +55,7 @@
     "@types/jquery": "^3.5.6",
     "@types/moment": "^2.13.0",
     "@types/sizzle": "2.3.2",
+    "@types/three": "^0.165.0",
     "@types/webvr-api": "0.0.36",
     "@zip.js/zip.js": "^2.3.17",
     "electron-settings": "^4.0.2",

@@ -10,6 +10,7 @@
         "moduleResolution": "node"       
     },
     "files": [
+      "./ts/load_three.ts",
       "./ts/main.ts",
       "./ts/api/editing_api.ts",
       "./ts/api/scene_api.ts",

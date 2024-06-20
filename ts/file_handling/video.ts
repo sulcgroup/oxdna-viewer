@@ -27,7 +27,7 @@ function createVideo() {
         name: videoType,
         verbose: true,
         display: true,
-        workersPath: 'ts/lib/'
+        workersPath: 'dist/lib/'
     });
 
     const button = <HTMLInputElement>document.getElementById("videoStartStop");
@@ -145,7 +145,7 @@ function nyancat(seq = "NYANCAT", framerate = 24, duration = 5) {
     const s: Set<BasicElement> = new Set(elems[0].strand.getMonomers());
     const capturer = new CCapture({
         format: 'gif', framerate: framerate,
-        name: seq, display: true, workersPath: 'ts/lib/'
+        name: seq, display: true, workersPath: 'dist/lib/'
     });
     let nFrames = duration * framerate;
     capturer.start();

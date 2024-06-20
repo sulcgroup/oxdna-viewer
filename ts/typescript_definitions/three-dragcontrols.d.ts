@@ -1,4 +1,4 @@
-import { Camera, EventDispatcher, Vector3 } from "../lib/three-core";
+import { Camera, EventDispatcher, Vector3 } from "./three-core";
 
 export class DragControls extends EventDispatcher {
     constructor(camera: Camera, domElement?: HTMLElement);

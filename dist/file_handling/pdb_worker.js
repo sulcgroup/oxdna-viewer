@@ -1,5 +1,5 @@
 importScripts('./pdb_lib.js');
-importScripts("../../ts/lib/three.js");
+importScripts("../../dist/lib/three.js");
 importScripts("../model/basicElement.js");
 importScripts("../model/nucleotide.js");
 importScripts("../model/aminoAcid.js");

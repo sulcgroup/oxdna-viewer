@@ -1,9 +1,3 @@
-/// <reference path="../typescript_definitions/index.d.ts" />
-/// <reference path="../typescript_definitions/oxView.d.ts" />
-/// <reference path="./relax_scenarios.ts" />
-
-
-
 // make sure local storage contains the relevant key 
 if (window.localStorage.getItem("oxServeIps") === null){
     window.localStorage.setItem("oxServeIps","");   
