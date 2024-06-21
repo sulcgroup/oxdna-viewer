@@ -1,4 +1,3 @@
-/// <reference path="../typescript_definitions/index.d.ts" />
 // The initial set up of the instanced objects.
 // Objects can be deformed by parameters sent to the instanceScale parameter of the instance
 var instancedBackbone = new THREE.InstancedBufferGeometry();
@@ -9,6 +8,11 @@ var instancedConnector = new THREE.InstancedBufferGeometry();
 instancedConnector.copy(new THREE.CylinderGeometry(.1, .1, 1, 8));
 var instancedBBconnector = new THREE.InstancedBufferGeometry();
 instancedBBconnector.copy(new THREE.CylinderGeometry(.1, .02, 1, 8));
+//const newInstanceMaterial = new MeshStandardNodeMaterial( {
+//   color: 0xfffff,
+//   roughness: .1,
+//   metalness: 0,
+//} );
 var instanceMaterial2 = new THREE.MeshPhysicalMaterial({
     vertexColors: THREE.VertexColors,
     metalness: 0.1,

@@ -1277,6 +1277,16 @@
     </div>
     <canvas id="threeCanvas" tabindex="1" style="width: 100%; height: 100%;"></canvas>
 
+    <!-- Import map to make imports work-->
+    <script type="importmap">
+        {
+            "imports" : {
+                "dist/" : "./dist/",
+                "three" : "./dist/lib/three.module.js"
+            }
+        }
+    </script>
+
     <!-- Three.js-->
     <script type="module" src="./dist/load_three.js" defer></script>
 
@@ -1291,8 +1301,6 @@
         <script src="./dist/lib/Lut.js" defer></script>
         <script src="./dist/lib/justcontext.js" defer></script>
         <script src="./dist/lib/VRButton.js" defer></script>
-        <script src="./dist/geometries/ConvexHull.js" defer></script>
-        <script src="./dist/geometries/ConvexGeometry.js" defer></script>
         <script src="./dist/scene/scene_setup.js" defer></script>
         <script src="./dist/scene/instancing.js" defer></script>
         <script src="./dist/scene/mesh_setup.js" defer></script>
@@ -1331,7 +1339,6 @@
         <script src="./dist/file_handling/xyz_reader.js" defer></script>
         <script src="./dist/file_handling/video.js" defer></script>
         <script src="./dist/editing/translation.js" defer></script>
-        <script src="./dist/controls/SceneUtils.js" defer></script>
         <script src="./dist/api/scene_api.js" defer></script>
         <script src="./dist/api/editing_api.js" defer></script>
         <script src="./dist/api/observable_api.js" defer></script>
