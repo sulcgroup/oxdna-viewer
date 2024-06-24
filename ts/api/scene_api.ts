@@ -144,7 +144,13 @@ module api{
     export function getElements(targets: number[]): BasicElement[] {
         let out = [];
         targets.forEach((n) => {
-            out.push(elements.get(n));
+            let elem = elements.get(n);
+            if (elem) {
+                out.push(elements.get(n));
+            }
+            else {
+                notify("ElementID " + n + " out of range.");
+            }
         });
         return(out);
     }
