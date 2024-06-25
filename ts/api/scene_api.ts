@@ -149,7 +149,7 @@ module api{
                 out.push(elements.get(n));
             }
             else {
-                notify("ElementID " + n + " out of range.");
+                notify("Trying to get Element of ID " + n + ", but this index is out of range.");
             }
         });
         return(out);
