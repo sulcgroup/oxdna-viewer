@@ -126,18 +126,12 @@ function extendWrapper(double: boolean) {
     //let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
     let elems = [];
     if(extendDuplex){
-        let c;
-        if(e.strand.end5 == e){
-            //input is 5->3
-            c = seq[seq.length-1];
-            seq = seq.slice(0,seq.length-1)
-        }else{ // we must have end3
-            c = seq[0];
-            seq = seq.slice(1);
-        }
+        // When extending, the sequence extends from the selected nucleotide.  It is not necessarily 5-3.
+        let c = seq[0];
+        seq = seq.slice(1);
         elems = edit.extendStrand(e, c);
         e = elems[0];
-        elems = elems.concat(
+        elems = elems.concat( 
             edit.extendDuplex(<Nucleotide>e, seq)
         );
     }else{
