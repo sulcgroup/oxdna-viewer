@@ -42,7 +42,7 @@ class InstanceCopy {
 let copied = [];
 function copyWrapper() {
     if (selectedBases.size == 0) {
-        notify("Please select monomers to copy");
+        notify("Please select monomers to copy", "alert");
         return;
     }
     let toCopy = Array.from(selectedBases).map(e => e.id); // Save so that we can clear the selection
@@ -51,7 +51,7 @@ function copyWrapper() {
 }
 function cutWrapper() {
     if (selectedBases.size == 0) {
-        notify("Please select monomers to copy");
+        notify("Please select monomers to copy", "alert");
         return;
     }
     let elems = Array.from(selectedBases); // Save so that we can clear the selection
@@ -62,7 +62,7 @@ function cutWrapper() {
 }
 function pasteWrapper(keepPos) {
     if (copied.length == 0) {
-        notify("Nothing is copied, so nothing to paste");
+        notify("Nothing is copied, so nothing to paste", "alert");
         return;
     }
     let pos;
@@ -82,7 +82,7 @@ function pasteWrapper(keepPos) {
 function nickWrapper() {
     let e = Array.from(selectedBases).pop();
     if (e == undefined) {
-        notify("Please select a monomer to nick at");
+        notify("Please select a monomer to nick at", "alert");
         return;
     }
     editHistory.do(new RevertableNick(e));
@@ -91,7 +91,7 @@ function nickWrapper() {
 function ligateWrapper() {
     let e = Array.from(selectedBases).slice(-2);
     if (e[0] == undefined || e[1] == undefined) {
-        notify("Please select two monomers to ligate");
+        notify("Please select two monomers to ligate", "alert");
         return;
     }
     editHistory.do(new RevertableLigation(e[0], e[1]));
@@ -102,16 +102,17 @@ function extendWrapper(double) {
     let seq = view.getInputValue("sequence").toUpperCase();
     let extendDuplex = view.getInputBool("setCompl");
     if (e == undefined) {
-        notify("Please select a monomer to extend from");
+        notify("Please select a monomer to extend from", "alert");
         return;
     }
     if (seq == "") {
-        notify("Please type a sequence into the box");
+        notify("Please type a sequence into the box", "alert");
         return;
     }
     //let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
     let elems = [];
     if (extendDuplex) {
+        // When extending, the sequence extends from the selected nucleotide.  It is not necessarily 5-3.
         let c = seq[0];
         seq = seq.slice(1);
         elems = edit.extendStrand(e, c);
@@ -135,7 +136,7 @@ function createWrapper() {
     let type = view.getInputValue("NA_toggle");
     let isRNA = type === 'RNA' ? true : false;
     if (seq == "") {
-        notify("Please type a sequence into the box");
+        notify("Please type a sequence into the box", "alert");
         return;
     }
     let elems = edit.createStrand(seq, createDuplex, isRNA);
@@ -152,7 +153,7 @@ function deleteWrapper() {
     let e = Array.from(selectedBases);
     clearSelection();
     if (e.length === 0) {
-        notify("Please select monomers to delete");
+        notify("Please select monomers to delete", "alert");
         return;
     }
     editHistory.do(new RevertableDeletion(e));
@@ -163,7 +164,7 @@ function interconnectDuplex3pWrapper() {
     let seq = view.getInputValue("sequence").toUpperCase();
     selectedBases.forEach(b => strands.add(b.strand));
     if (strands.size != 2 || seq == "") {
-        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.");
+        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.", "alert");
     }
     else {
         let [s1, s2] = Array.from(strands);
@@ -175,7 +176,7 @@ function interconnectDuplex5pWrapper() {
     let seq = view.getInputValue("sequence").toUpperCase();
     selectedBases.forEach(b => strands.add(b.strand));
     if (strands.size != 2 || seq == "") {
-        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.");
+        notify("please select 2 strands you want to connect by a duplex and type a sequence into the box.", "alert");
     }
     else {
         let [s1, s2] = Array.from(strands);
@@ -198,7 +199,7 @@ function replaceSelectionByDuplexWrapper() {
         selected_segments[1].map(b => b.type).join("")
     ];
     if (selected_segments_seq[0] !== rc(selected_segments_seq[1])) {
-        notify("The segments selected do not match up, please select complementary segments in both strands.");
+        notify("The segments selected do not match up, please select complementary segments in both strands.", "alert");
         return;
     }
     let seg_length = selected_segments[0].length;
@@ -245,7 +246,6 @@ function replaceSelectionByDuplexWrapper() {
         edit.ligate(s2.end5, end2);
     }
     if (is_3p) {
-        console.log("was here");
         // we need to ligate the 3p of strands
         edit.ligate(s1.end3, end1);
         edit.ligate(s2.end3, end2);
@@ -267,8 +267,10 @@ function getSelectedSeqWrapper() {
         seqInp.value = seq;
         seqLen.innerHTML = seq.length.toString();
     }
-    else
-        notify("Selection only on 1 strand allowed");
+    else {
+        notify("Selection only on 1 strand allowed", "alert");
+        return;
+    }
 }
 let complement_dict = {
     "A": "T", "T": "A",
@@ -345,7 +347,7 @@ function skipWrapper() {
     ;
     clearSelection();
     if (e.length === 0) {
-        notify("Please select monomers to skip");
+        notify("Please select monomers to skip", "alert");
         return;
     }
     edit.skip(e);
@@ -354,12 +356,12 @@ function skipWrapper() {
 function insertWrapper() {
     let seq = view.getInputValue("sequence").toUpperCase();
     if (seq == "") {
-        notify("Please type a sequence into the box");
+        notify("Please type a sequence into the box", "alert");
         return;
     }
     let e = Array.from(selectedBases).pop();
     if (e == undefined) {
-        notify("Please select a monomer insert after");
+        notify("Please select a monomer insert after", "alert");
         return;
     }
     edit.insert(e, seq);
@@ -369,15 +371,15 @@ function setSeqWrapper() {
     let seq = view.getInputValue("sequence").toUpperCase();
     let setCompl = view.getInputBool("setCompl");
     if (seq == "") {
-        notify("Please type a sequence into the box");
+        notify("Please type a sequence into the box", "alert");
         return;
     }
     if (selectedBases.size == 0) {
-        notify("Please select nucleotides to apply sequence to");
+        notify("Please select nucleotides to apply sequence to", "alert");
         return;
     }
     if (selectedBases.size > seq.length) {
-        notify("Sequence is shorter than the selection");
+        notify("Sequence is shorter than the selection", "alert");
         return;
     }
     editHistory.do(new RevertableSequenceEdit(selectedBases, seq, setCompl));
@@ -420,7 +422,7 @@ function deleteNetworkWrapper(nid) {
 function fillEdgesWrapper(nid, edgecase) {
     // Easy expansion for other edge methods
     if (networks.length == 0 || nid < 0) {
-        notify('No Networks Found, Please Create Network');
+        notify('No Networks Found, Please Create Network', "alert");
     }
     else {
         let net = networks[nid];
@@ -428,7 +430,7 @@ function fillEdgesWrapper(nid, edgecase) {
             case 0:
                 let cutoff = view.getInputNumber("edgeCutoff");
                 if (typeof (cutoff) != "number" || cutoff > 1000000 || cutoff <= 0 || isNaN(cutoff)) {
-                    notify("Please enter recongized value into 'Edge Cutoff' box");
+                    notify("Please enter recongized value into 'Edge Cutoff' box", "alert");
                 }
                 else {
                     net.edgesByCutoff(cutoff);
@@ -440,7 +442,7 @@ function fillEdgesWrapper(nid, edgecase) {
             case 2:
                 let cutoffe = view.getInputNumber("edgeCutoff");
                 if (typeof (cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)) {
-                    notify("Please enter recongized value into 'Edge Cutoff' box");
+                    notify("Please enter recongized value into 'Edge Cutoff' box", "alert");
                 }
                 else {
                     net.edgesANMT(cutoffe);
@@ -452,7 +454,7 @@ function fillEdgesWrapper(nid, edgecase) {
 function visualizeNetworkWrapper(nid) {
     let net = networks[nid];
     if (net.reducedEdges.total == 0) {
-        notify("Connections must be assigned prior to Network Visualization");
+        notify("Connections must be assigned prior to Network Visualization", "alert");
         return;
     }
     net.toggleVis();
@@ -464,7 +466,7 @@ function selectNetworkWrapper(nid) {
         net = networks[nid];
     }
     catch (e) {
-        notify("Network " + (nid + 1).toString() + " Does Not Exist");
+        notify("Network " + (nid + 1).toString() + " Does Not Exist", "alert");
         return;
     }
     selectednetwork = nid; // global declared in main
@@ -476,7 +478,7 @@ function copyNetworkWrapper(nid) {
         net = networks[nid];
     }
     catch (e) {
-        notify("Network " + (nid + 1).toString() + " Does Not Exist");
+        notify("Network " + (nid + 1).toString() + " Does Not Exist", "alert");
         return;
     }
     if (selectedBases.size == 0) { // Need Elements
@@ -485,7 +487,7 @@ function copyNetworkWrapper(nid) {
     }
     let elems = Array.from(selectedBases);
     if (selectedBases.size != net.particles.length) {
-        notify("Source Network Elements and Target Elements do not match in Size");
+        notify("Source Network Elements and Target Elements do not match in Size", "alert");
         return;
     }
     let newNid = networks.length;
@@ -496,12 +498,12 @@ function copyNetworkWrapper(nid) {
 }
 function discretizeMassWrapper(option) {
     if (selectedBases.size == 0) { // Need Elements
-        notify("Please select Bases");
+        notify("Please select Bases", "alert");
         return;
     }
     let cellSize = view.getInputNumber("cellSize");
     if (cellSize <= 0 || typeof (cellSize) != "number" || isNaN(cellSize)) { //Valid value for cellsize
-        notify("Please Enter Valid Cell Size into the Cell Size Box");
+        notify("Please Enter Valid Cell Size into the Cell Size Box", "alert");
         return;
     }
     else {
