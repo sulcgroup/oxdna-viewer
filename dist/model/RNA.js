@@ -45,8 +45,12 @@ class RNANucleotide extends Nucleotide {
         // Current nucleotide information
         const oldA1 = this.getA1();
         const oldA3 = this.getA3();
-        // You can define the helix axis based on a1 and a3.  This is the inverse of how a3 is assigned below.
-        dir = (oldA3.clone().sub(oldA1.clone().multiplyScalar(Math.sin(inclination))).divideScalar(-(Math.cos(inclination) - Math.pow(Math.sin(inclination), 2))));
+        // You can define the helix axis based on a1 and a3.
+        // The helix direction is the inverse of the normal vector a3 ajusted for the inclination.
+        let normA1A3 = oldA1.clone().cross(oldA3); // normal vector to the plane defined by a1 and a3
+        let q_dir = new THREE.Quaternion(); // quaternion to rotate a3 to the correct orientation
+        q_dir.setFromAxisAngle(normA1A3, inclination); // rotate a3 to 
+        let dir = oldA3.clone().applyQuaternion(q_dir).multiplyScalar(-1);
         dir.normalize();
         // Correctly orient the helix for the direction you're going
         if (direction == "n5") {
