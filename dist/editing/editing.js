@@ -112,6 +112,7 @@ function extendWrapper(double) {
     //let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
     let elems = [];
     if (extendDuplex) {
+        // When extending, the sequence extends from the selected nucleotide.  It is not necessarily 5-3.
         let c = seq[0];
         seq = seq.slice(1);
         elems = edit.extendStrand(e, c);
