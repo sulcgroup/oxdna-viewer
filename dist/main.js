@@ -105,6 +105,8 @@ const pdbFileInfo = []; //Stores all PDB Info (Necessary for future Protein Mode
 const unfFileInfo = []; // Stores UNF file info (Necessary for writing out UNF files)
 var confNum = 0; // Current configuration number in a trajectory
 var box = new THREE.Vector3(); // Box size of the current scene
+// BaseSelector stuff
+var selectionMode = 'Monomer';
 // ANM stuff
 const networks = []; // Only used for networks, replaced anms
 var selectednetwork = 0; // Only used for networks

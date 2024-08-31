@@ -118,6 +118,9 @@ const unfFileInfo: Record<string, any>[] = []; // Stores UNF file info (Necessar
 var confNum: number = 0; // Current configuration number in a trajectory
 var box = new THREE.Vector3(); // Box size of the current scene
 
+// BaseSelector stuff
+var selectionMode = 'Monomer'
+
 // ANM stuff
 const networks: Network[] = []; // Only used for networks, replaced anms
 var selectednetwork: number = 0; // Only used for networks

@@ -258,6 +258,7 @@ function selectAll() {
 }
 
 function selectPaired(e: BasicElement) {
+	e.toggle()
 	if (e instanceof Nucleotide) {
 		let pair = (<Nucleotide>e).pair;
 		if (pair) {
@@ -584,7 +585,6 @@ class BoxSelector {
 };
 
 // Selection menu
-let selectionMode = 'Monomer'
 function changeSelectionMode(mode: string) {
 	for (let button of document.getElementById("selection-modes").children) {
 		if (mode != button.getAttribute('title')) {
