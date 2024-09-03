@@ -382,6 +382,8 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-camera">Camera</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
+            <li ondblclick="view.sectionClicked()"><a href="#section-plugins">Plugins</a></li>
+            
         </ul>
 
         <div class="content-holder">
@@ -1178,6 +1180,18 @@
                     </button>
                 </div>
             </div>
+
+
+            <!-- Plugin pane-->
+                        <!--Trajectory-->
+            <div class="section" id="section-plugins">
+                <div class=" group" style="width: 300px">
+                    <div class="row flex-align-center" id="plugin-pane">
+                                         
+                    </div>
+                </div>
+            </div>
+
         </div>
     </nav>
 
@@ -1343,6 +1357,8 @@
         <script src="./dist/file_handling/plateDB.js"></script>
         <script src="./dist/editing/distance.js"></script>
         <script src="./dist/editing/selections.js"></script>
+        <script src="./dist/api/plugin_api.js"></script>
+        
         <script>
             //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
             function inIframe () {
