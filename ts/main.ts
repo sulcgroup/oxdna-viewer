@@ -140,6 +140,62 @@ const editHistory = new EditHistory(); // Track do/undo
 var tmpSystems: System[] = [] // Track memory for newly created systems
 var topologyEdited: Boolean = false; // to keep track of if the topology was edited at any point.
 
+function resetScene() {
+    elements.clear();
+    
+    while(systems.length > 0) { 
+        systems[systems.length - 1].backbone.parent.remove(systems[systems.length - 1].backbone)
+        systems[systems.length - 1].nucleoside.parent.remove(systems[systems.length - 1].nucleoside)
+        systems[systems.length - 1].connector.parent.remove(systems[systems.length - 1].connector)
+        systems[systems.length - 1].bbconnector.parent.remove(systems[systems.length - 1].bbconnector)
+        systems[systems.length - 1].dummyBackbone.parent.remove(systems[systems.length - 1].dummyBackbone)
+        systems.pop() 
+    }
+    while(tmpSystems.length > 0) { 
+        tmpSystems[tmpSystems.length - 1].backbone.parent.remove(tmpSystems[tmpSystems.length - 1].backbone)
+        tmpSystems[tmpSystems.length - 1].nucleoside.parent.remove(tmpSystems[tmpSystems.length - 1].nucleoside)
+        tmpSystems[tmpSystems.length - 1].connector.parent.remove(tmpSystems[tmpSystems.length - 1].connector)
+        tmpSystems[tmpSystems.length - 1].bbconnector.parent.remove(tmpSystems[tmpSystems.length - 1].bbconnector)
+        tmpSystems[tmpSystems.length - 1].dummyBackbone.parent.remove(tmpSystems[tmpSystems.length - 1].dummyBackbone)
+        tmpSystems.pop() 
+    }
+    
+    selectedBases.clear()
+    clusterCounter = 0; //idk about this one...
+
+    // File reading stuff
+    pdbtemp = []; // stores output from worker, so worker can terminate
+    while (pdbFileInfo.length > 0) { pdbFileInfo.pop() }
+    while (unfFileInfo.length > 0) { unfFileInfo.pop() }
+    confNum = 0; // Current configuration number in a trajectory
+    box = new THREE.Vector3(); // Box size of the current scene
+
+    // BaseSelector stuff
+    selectionMode = 'Monomer'
+
+    // ANM stuff
+    while (networks.length > 0) { networks.pop() }
+    while (graphDatasets.length > 0) { graphDatasets.pop() }
+    selectednetwork = 0; // Only used for networks
+
+    // Forces stuff
+    forces = [];  
+    forcesTable = [];
+    forceHandler = undefined;
+
+    // color overlay stuff
+    defaultColormap = "cooltowarm";
+    lut = [];
+    devs = [];
+
+    // Editing stuff
+    editHistory.clear();
+    tmpSystems = []
+    topologyEdited = false; 
+    controls.reset();
+    render()
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                       File input                           ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

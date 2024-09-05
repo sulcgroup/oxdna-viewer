@@ -60,6 +60,10 @@ class EditHistory {
         if (view.isWindowOpen('systemHierarchyWindow'))
             drawSystemHierarchy();
     }
+    clear() {
+        this.undoStack = new Stack();
+        this.redoStack = new Stack();
+    }
 }
 class RevertableEdit {
     undo;
