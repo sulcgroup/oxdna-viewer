@@ -122,7 +122,7 @@ var lut, devs;
 const editHistory = new EditHistory(); // Track do/undo
 var tmpSystems = []; // Track memory for newly created systems
 var topologyEdited = false; // to keep track of if the topology was edited at any point.
-function resetScene() {
+function resetScene(resetCamera = true) {
     elements.clear();
     while (systems.length > 0) {
         systems[systems.length - 1].backbone.parent.remove(systems[systems.length - 1].backbone);
@@ -174,7 +174,9 @@ function resetScene() {
     editHistory.clear();
     tmpSystems = [];
     topologyEdited = false;
-    controls.reset();
+    if (resetCamera) {
+        controls.reset();
+    }
     render();
 }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
