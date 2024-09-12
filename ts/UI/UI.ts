@@ -181,6 +181,10 @@ function drawSystemHierarchy() {
     */
 }
 
+
+
+
+
 function handleMenuAction(event: String) {
     switch (event) {
         case "undo": editHistory.undo(); break;
@@ -280,6 +284,48 @@ function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
     view.coloringMode.set("Custom");
 
     clearSelection();
+}
+
+
+function calMeltingTemp(){ // to be used with MeltingTempButton, creates a json file for overlay
+    if (systems.length == 1){
+        let temp_array:number[] = new Array(systems[0].systemLength())
+
+        // find scaffold length
+        let scaf_len:number = systems[0].MAX_strandLen(); 
+        let a = systems[0].strands.filter(s=>s.getLength() < scaf_len);  // the strands
+
+        for(let j = 0; j < a.length; j++){
+            let indv_strand = a[j]; 
+            let Tm = indv_strand.get_Tm() ; 
+            let moner_ids = indv_strand.getMonomers().map(e=>e.sid);
+
+            // set temp in for each element in the temp_array
+            for (let k = 0; k < moner_ids.length ; k++){
+                temp_array[moner_ids[k]] = Tm; 
+            }
+        }
+
+        makeTextFile('meltingTemps.json',JSON.stringify({'Temp (celcius)':temp_array})); 
+    }
+    else{notify("More than one systems.Please ensure that there is only one system.");}
+}
+
+function MeltingTempButton(){ // creates a json file for overlay
+    if (view.getInputBool("MeltingTempButton")){
+        if (systems[0].colormapFile == undefined){ // download the file
+            let my_msg:string = "Changing color, please be patient...";
+            view.longCalculation(calMeltingTemp,my_msg); 
+        }
+        
+        else{ updateColoring("Overlay");  
+        }      
+    }   
+
+    else{// change back to orignal color
+        updateColoring("Custom");
+        api.removeColorbar();
+        }
 }
 
 //toggles display of coloring by json file / structure modeled off of base selector

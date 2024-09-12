@@ -221,10 +221,8 @@ abstract class Nucleotide extends BasicElement {
             if (strand.isNucleicAcid()) {
                 strand.forEach((e: Nucleotide) =>{
                     if (this.n3 != e && this.n5 != e &&
-                        this.getTypeNumber() != e.getTypeNumber() && (
-                            (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0 ||
-                            (this.isRNA && ((e.type == 'G' && this.type == 'U') || (e.type == 'U' && this.type == 'G'))
-                        ))
+                        this.getTypeNumber() != e.getTypeNumber() &&
+                        (this.getTypeNumber() + e.getTypeNumber()) % 3 == 0
                     ) {
                         //check distance
                         let dist = e.getInstanceParameter3("nsOffsets").distanceTo(thisPos);
@@ -241,6 +239,20 @@ abstract class Nucleotide extends BasicElement {
             }
         }
         return bestCandidate;
+    }
+
+    // function used in melting temp calculations
+    makePair():boolean{ // makes pair if there is one and returns true if paried
+        if (!this.isPaired()){
+            let bestCandidate = this.findPair();
+
+            if (bestCandidate !== null){
+                this.pair = bestCandidate; 
+                return true; 
+            }
+            else{return false;}
+        }
+        else{return true;}
     }
 
     isPaired() {

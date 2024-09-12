@@ -73,6 +73,25 @@ class System {
         return count;
     };
 
+    // function to give max length of the strand, if there are more than one max length then the output is +1 greater then max length
+    // used in meltingtemp calc for filtering scaffold
+    MAX_strandLen():number{  
+        let a = systems[0].strands; 
+        let len_list:number[] = []; 
+
+        for (let j = 0 ; j < a.length ; j++){
+        len_list.push(a[j].getLength());
+        }
+
+        let max_len = Math.max(...len_list); 
+
+        // check if there are multiple scaffolds
+        if (len_list.filter(item=>item === max_len).length > 1)
+            return max_len+1; 
+        else{
+            return max_len}
+    }
+
     isEmpty(): Boolean {
         return this.strands.length == 0;
     }
