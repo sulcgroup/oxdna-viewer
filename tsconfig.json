@@ -35,6 +35,7 @@
       "./ts/file_handling/GLTFExporter.ts",
       "./ts/file_handling/xyz_reader.ts",
       "./ts/model/aminoAcid.ts",
+      "./ts/model/ammar.ts",
       "./ts/model/basicElement.ts",
       "./ts/model/DNA.ts",
       "./ts/model/nucleotide.ts",
