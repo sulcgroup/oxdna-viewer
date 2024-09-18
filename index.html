@@ -1183,11 +1183,25 @@
 
 
             <!-- Plugin pane-->
-                        <!--Trajectory-->
             <div class="section" id="section-plugins">
-                <div class=" group" style="width: 300px">
-                    <div class="row flex-align-center" id="plugin-pane">
-                                         
+                <div class=" group" style="height: 100px">
+                    <div class="row flex-align-center" >
+                        <div class="row">   
+                            <div class="group">
+                                <div >
+                                    <button class="ribbon-button" onclick="localStorage.setItem('plugins', {});"
+                                        title="Clean all plugins from memory.">
+                                        <!-- <span class="mif-2x">VR</span> -->
+                                        <img src="img/ico/delete.svg" height="18px">
+                                        <span class="caption">Clean Plugins</span>
+                                    </button>
+
+                                </div>
+                                <span class="title">Plugin control</span>
+                            </div>
+                         
+                            <div class="group" id="plugin-pane"></div>
+                        </div>     
                     </div>
                 </div>
             </div>
