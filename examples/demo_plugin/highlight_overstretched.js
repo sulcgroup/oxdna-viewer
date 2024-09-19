@@ -13,8 +13,8 @@ function HSO_Plugin() {
     // we will add an event listener to the button
     button.addEventListener("click", () => {
         // we go over all the elements, collecting the strands of the ones that are overstretched
-        // you can change the threshold to a different value but say anything which is longer than .6 is overstretched
-        const delta = 0.6;
+        // you can change the threshold to a different value but say anything which is longer than 1.2 is overstretched
+        const delta = 1.2;
 
             // find everything that is more than 5 ox units away from its n3
             let p3_extended = new Set();
