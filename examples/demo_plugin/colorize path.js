@@ -8,7 +8,7 @@ let plugin_code = `
 
     function colorisePath(){
         // the path is stored in the selected bases
-        let path = [...selectedBases][0].strand.getMonomers();
+        let path = [...selectedBases];
         // we set the color based on the path length as HSL
         let len = path.length;
         for (let i = 0; i < len; i++){
