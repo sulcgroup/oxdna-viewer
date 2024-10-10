@@ -88,7 +88,7 @@ async function handleFiles(files) {
             auxFiles.push(new File2reader(files[i], 'json', readJson));
         }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force"))) {
-            auxFiles.push(new File2reader(files[i], 'force', readTrap));
+            auxFiles.push(new File2reader(files[i], 'force', readForce));
         }
         else if (ext === "txt" && (fileName.includes("_m"))) {
             auxFiles.push(new File2reader(files[i], 'mass', readMassFile));
