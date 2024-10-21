@@ -371,17 +371,11 @@ class ForceHandler {
                 opacity: 0.5 // Set the desired opacity (0.0 to 1.0)
             });
             let plane = new THREE.Mesh(geometry, material);
-            let targetPosition = f.dir.clone().multiplyScalar(f.position);
-            plane.lookAt(targetPosition);
+            plane.lookAt(f.dir.clone());
             plane.position.set(-f.position * f.dir.x, -f.position * f.dir.y, -f.position * f.dir.z);
             scene.add(plane);
             this.sceneObjects.push(plane);
-            // this.forcePlanes.push(plane);
-            //~10 nm grid helper
-            // let size2 = 1000/.85;
-            // let divisions2 = 100 ;
-            // let gridHelper2 = new THREE.GridHelper( size2, divisions2 );
-            // scene.add( gridHelper2 )
+            this.forcePlanes.push(plane);
         });
     }
     redraw() {
