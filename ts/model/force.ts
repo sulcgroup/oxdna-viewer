@@ -351,7 +351,7 @@ class ForceHandler{
     }
 
     set(forces: Force[]) {
-        this.clear_forces_from_scene();
+        // this.clear_forces_from_scene();
         this.traps = <PairwiseForce[]> forces.filter(f=>this.knownTrapForces.includes(f.type));
         this.draw_traps();
         this.planes = <PlaneForce[]> forces.filter(f=>this.knownPlaneForces.includes(f.type));
@@ -406,9 +406,7 @@ class ForceHandler{
     }
 
     draw_planes() {
-        notify("Drawing planes");
         this.planes.forEach(f => {
-            console.log("Drawing plane for force " + f);
             let _extent: number = 512;
             let _color = this.planeColors[this.planes.indexOf(f) % this.planeColors.length];
 

@@ -292,7 +292,7 @@ class ForceHandler {
         this.set(forces);
     }
     set(forces) {
-        this.clear_forces_from_scene();
+        // this.clear_forces_from_scene();
         this.traps = forces.filter(f => this.knownTrapForces.includes(f.type));
         this.draw_traps();
         this.planes = forces.filter(f => this.knownPlaneForces.includes(f.type));
@@ -339,9 +339,7 @@ class ForceHandler {
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
     draw_planes() {
-        notify("Drawing planes");
         this.planes.forEach(f => {
-            console.log("Drawing plane for force " + f);
             let _extent = 512;
             let _color = this.planeColors[this.planes.indexOf(f) % this.planeColors.length];
             //  draw text on plane
