@@ -163,26 +163,148 @@ class SkewTrap extends PairwiseForce {
         ];
     }
 }
+// Forces which can be drawn as a plane
+class PlaneForce extends Force {
+    set(particles, stiff = 0.09, position = 0, dir = new THREE.Vector3(0, 0, 1)) {
+        this.particles = particles;
+        this.stiff = stiff;
+        this.dir = dir;
+        this.position = position;
+        this.update();
+    }
+    setFromParsedJson(parsedjson) {
+        console.log(parsedjson);
+        for (var param in parsedjson) {
+            if (param === 'particle') {
+                const particleData = parsedjson[param];
+                if (Array.isArray(particleData)) {
+                    this.particles = particleData.map(id => elements.get(id)).filter(p => p !== undefined);
+                }
+                else if (particleData === -1) {
+                    this.particles = -1;
+                }
+                else {
+                    const singleParticle = elements.get(particleData);
+                    if (singleParticle === undefined) {
+                        const err = `Particle ${particleData} in parsed force file does not exist.`;
+                        notify(err, "alert");
+                        throw (err);
+                    }
+                    this.particles = [singleParticle];
+                }
+            }
+            else if (param === "dir") {
+                const dirData = parsedjson[param];
+                if (Array.isArray(dirData) && dirData.length === 3 && dirData.every(num => typeof num === 'number')) {
+                    this.dir = new THREE.Vector3(...dirData);
+                }
+                else {
+                    const err = `Invalid dir format: ${dirData}`;
+                    notify(err, "alert");
+                    throw (err);
+                }
+            }
+            else {
+                this[param] = parsedjson[param];
+            }
+        }
+        this.update();
+    }
+    toJSON() {
+        let particleData;
+        particleData = Array.isArray(this.particles) ? this.particles.map(p => p.id) : this.particles;
+        return {
+            type: this.type,
+            particle: particleData,
+            stiff: this.stiff,
+            dir: this.dir,
+            position: this.position
+        };
+    }
+    toString(idMap) {
+        let particleRepresentation;
+        if (Array.isArray(this.particles)) {
+            particleRepresentation = this.particles.map(p => idMap ? idMap.get(p) : p.id).join(", ");
+        }
+        else {
+            particleRepresentation = this.particles.toString();
+        }
+        return (`{
+    type = ${this.type}
+    particle = ${particleRepresentation}
+    stiff = ${this.stiff}
+    dir = ${this.dir}
+    position = ${this.position}
+}`);
+    }
+    description() {
+        if (this.particles === -1) {
+            return "Plane trap pulling particle all particles towards itself";
+        }
+        else {
+            let particleRepresentation;
+            if (Array.isArray(this.particles)) {
+                particleRepresentation = this.particles.map(p => p.id).join(", ");
+            }
+            else {
+                particleRepresentation = this.particles.toString();
+            }
+            return `Plane trap pulling particles ${particleRepresentation} towards itself`;
+        }
+    }
+    update() {
+        // plane position and orientation are persistent, so no need to update
+    }
+}
+class RepulsionPlane extends PlaneForce {
+    type = 'repulsion_plane';
+    particles = -1; // Can be an array of particles or -1 (all)
+    stiff; // stiffness of the harmonic repulsion potential.
+    dir;
+    position;
+}
+class AttractionPlane extends PlaneForce {
+    type = 'attraction_plane';
+    particles = -1; // Can be an array of particles or -1 (all)
+    stiff; // stiffness of the harmonic repulsion potential and strength of the attractive force
+    dir;
+    position;
+}
 class ForceHandler {
-    traps;
     types;
     sceneObjects = [];
+    knownTrapForces = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw via lines
+    knownPlaneForces = ["repulsion_plane", "attraction_plane"]; //these are the forces I know how to draw via planes
+    traps;
     forceLines = [];
     eqDistLines;
     forceColors = [
         new THREE.Color(0x0000FF),
         new THREE.Color(0xFF0000),
     ];
-    knownForces = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw
+    planeColors = [
+        new THREE.Color(0x00FF00),
+        new THREE.Color(0xFF00FF),
+    ];
+    planes;
+    forcePlanes = [];
     constructor(forces) {
         this.set(forces);
     }
     set(forces) {
+        // this.clear_forces_from_scene();
+        this.traps = forces.filter(f => this.knownTrapForces.includes(f.type));
+        this.draw_traps();
+        this.planes = forces.filter(f => this.knownPlaneForces.includes(f.type));
+        this.draw_planes();
+    }
+    clear_forces_from_scene() {
         // Remove any old geometry (nothing happens if undefined)
         scene.remove(this.eqDistLines);
         this.forceLines.forEach(fl => scene.remove(fl));
-        // We can only draw pairwise traps so far:
-        this.traps = forces.filter(f => this.knownForces.includes(f.type));
+        this.forcePlanes.forEach(fp => scene.remove(fp));
+    }
+    draw_traps() {
         // find out how many different types there are
         this.types = Array.from((new Set(this.traps.map(trap => trap.type))));
         let v1 = [];
@@ -216,7 +338,49 @@ class ForceHandler {
         //trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, this.update);
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
+    draw_planes() {
+        this.planes.forEach(f => {
+            let _extent = 512;
+            let _color = this.planeColors[this.planes.indexOf(f) % this.planeColors.length];
+            //  draw text on plane
+            let ccanvas = document.createElement('canvas');
+            let context = ccanvas.getContext('2d');
+            ccanvas.width = _extent;
+            ccanvas.height = _extent;
+            context.fillStyle = '#' + _color.getHex().toString(16).padStart(6, '0');
+            context.fillRect(0, 0, ccanvas.width, ccanvas.height);
+            // text on plane
+            context.font = '8px Arial';
+            context.fillStyle = 'black'; // Text color
+            context.textAlign = 'left'; // Align text to the right
+            let _text = f.type + "\nposition: " + f.position + "\ndir: " + f.dir.x + " " + f.dir.y + " " + f.dir.z;
+            // Split the text into lines and draw each line separately
+            let lines = _text.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                context.fillText(lines[i], ccanvas.width - 70, ccanvas.height - 10 - (lines.length - 1 - i) * 10);
+            }
+            // Create plane from canvas
+            let texture = new THREE.CanvasTexture(ccanvas);
+            let geometry = new THREE.PlaneGeometry(_extent, _extent);
+            let material = new THREE.MeshBasicMaterial({
+                map: texture,
+                side: THREE.DoubleSide,
+                transparent: true, // Enable transparency
+                opacity: 0.5 // Set the desired opacity (0.0 to 1.0)
+            });
+            let plane = new THREE.Mesh(geometry, material);
+            plane.lookAt(f.dir.clone());
+            plane.position.set(-f.position * f.dir.x, -f.position * f.dir.y, -f.position * f.dir.z);
+            scene.add(plane);
+            this.sceneObjects.push(plane);
+            this.forcePlanes.push(plane);
+        });
+    }
     redraw() {
+        this.redraw_traps();
+        render();
+    }
+    redraw_traps() {
         let v1 = [];
         let v2 = [];
         for (let i = 0; i < this.types.length; i++) {
@@ -237,7 +401,6 @@ class ForceHandler {
         });
         this.eqDistLines.geometry = new THREE.BufferGeometry();
         this.eqDistLines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
-        render();
     }
 }
 function makeTrapsFromSelection() {
