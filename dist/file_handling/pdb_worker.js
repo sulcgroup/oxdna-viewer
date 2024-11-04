@@ -734,25 +734,22 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
     // Helper values/ functions
     let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
     let pairs;
-    //Helper Function
-    // Stack Overflow<3 Permutator
-    const permutator = (inputArr) => {
-        let result = [];
-        const permute = (arr, m = []) => {
-            if (arr.length === 0) {
-                result.push(m);
-            }
-            else {
-                for (let i = 0; i < arr.length; i++) {
-                    let curr = arr.slice();
-                    let next = curr.splice(i, 1);
-                    permute(curr.slice(), m.concat(next));
+    // Stack Overflow<3 subset permutations
+    function* subsets(array, length, start = 0) {
+        if (start >= array.length || length < 1) {
+            yield new Array();
+        }
+        else {
+            while (start <= array.length - length) {
+                let first = array[start];
+                for (let subset of subsets(array, length - 1, start + 1)) {
+                    subset.push(first);
+                    yield subset;
                 }
+                ++start;
             }
-        };
-        permute(inputArr);
-        return result;
-    };
+        }
+    }
     // This Function calculates all necessary info for a Nuclcleotide in PDB format and writes it to initInfo
     let CalcInfoNC = (res) => {
         // Info we want from PDB
@@ -760,13 +757,13 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
         //Residue Number in PDB File
         pdbid = res.pdbResIdent;
         let nuccom = new THREE.Vector3;
-        let baseCom = new THREE.Vector3;
+        let sugarCom = new THREE.Vector3;
         //Calculate Base atoms Center of Mass
-        let base_atoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
-        baseCom.x = base_atoms.map(a => a.x).reduce((a, b) => a + b);
-        baseCom.y = base_atoms.map(a => a.y).reduce((a, b) => a + b);
-        baseCom.z = base_atoms.map(a => a.z).reduce((a, b) => a + b);
-        baseCom.divideScalar(base_atoms.length);
+        let sugarAtoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
+        sugarCom.x = sugarAtoms.map(a => a.x).reduce((a, b) => a + b);
+        sugarCom.y = sugarAtoms.map(a => a.y).reduce((a, b) => a + b);
+        sugarCom.z = sugarAtoms.map(a => a.z).reduce((a, b) => a + b);
+        sugarCom.divideScalar(sugarAtoms.length);
         let nanCheck = false;
         let Bfacts = res.atoms.map(a => {
             let b = parseFloat(a.tempFactor);
@@ -779,39 +776,42 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
         });
         if (nanCheck)
             return;
-        let Bfactavg = Bfacts.map(a => a).reduce((a, b) => a + b);
-        Bfactavg /= res.atoms.length;
-        //sum bfactors of ind atoms
-        let o4atom = res.atoms.filter(a => a.atomType == "O4'" || a.atomType == "O4*")[0];
-        if (o4atom === undefined) {
-            console.log("No o4' found for Nucleotide initialization");
-            return;
-        }
-        let o4pos = new THREE.Vector3(o4atom.x, o4atom.y, o4atom.z);
-        let parallel_to = o4pos.sub(baseCom);
         //Calculate Center of Mass
         nuccom.x = res.atoms.map(a => a.x).reduce((a, b) => a + b);
         nuccom.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
         nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
         let l = res.atoms.length;
         let pos = nuccom.divideScalar(l);
-        // Compute a1 Vector
-        let ring_poss = permutator(ring_names);
+        let Bfactavg = Bfacts.map(a => a).reduce((a, b) => a + b);
+        Bfactavg /= res.atoms.length;
+        //sum bfactors of ind atoms
+        // The original Taco script used the O4' atom and the center of the base as the reference for a3.
+        // This is bad for RNA, we use the C3'-C5' vector instead.  It's better.
+        let c5atom = res.atoms.filter(a => a.atomType == "C5'" || a.atomType == "C5*")[0];
+        let c3atom = res.atoms.filter(a => a.atomType == "C3'" || a.atomType == "C3*")[0];
+        if (c5atom === undefined || c3atom === undefined) {
+            console.log("No C5' or C3' found for Nucleotide initialization");
+            return;
+        }
+        let c5pos = new THREE.Vector3(c5atom.x, c5atom.y, c5atom.z);
+        let c3pos = new THREE.Vector3(c3atom.x, c3atom.y, c3atom.z);
+        let parallel_to = c5pos.sub(c3pos);
+        // Compute a3 Vector
+        let ring_poss = subsets(ring_names, 3);
         let a3 = new THREE.Vector3;
-        for (let i = 0; i < ring_poss.length; i++) {
-            let types = ring_poss[i];
+        for (let types of ring_poss) {
             let p = res.atoms.filter(a => a.atomType == types[0])[0];
             let q = res.atoms.filter(a => a.atomType == types[1])[0];
             let r = res.atoms.filter(a => a.atomType == types[2])[0];
             if (p === undefined || q === undefined || r === undefined) {
                 if (p === undefined) {
-                    console.log('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
+                    notify('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID, type = 'alert');
                 }
                 if (q === undefined) {
-                    console.log('Atom ' + types[1] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
+                    notify('Atom ' + types[1] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID, type = 'alert');
                 }
                 if (r === undefined) {
-                    console.log('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID);
+                    notify('Atom ' + types[0] + " not found in residue " + res.pdbResIdent + " in chain " + res.chainID, type = 'alert');
                 }
                 break;
             }
@@ -824,10 +824,10 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                 v2.x = p.x - r.x;
                 v2.y = p.y - r.y;
                 v2.z = p.z - r.z;
-                let nv1 = v1.clone().normalize();
-                let nv2 = v2.clone().normalize();
-                if (Math.abs(nv1.dot(nv2)) > 0.01) {
-                    let tmpa3 = nv1.cross(nv2);
+                v1.normalize();
+                v2.normalize();
+                if (Math.abs(v1.dot(v2)) > 0.01) {
+                    let tmpa3 = v1.cross(v2);
                     tmpa3.normalize();
                     if (tmpa3.dot(parallel_to) < 0) {
                         tmpa3.negate();
