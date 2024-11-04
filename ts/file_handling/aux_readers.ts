@@ -115,34 +115,46 @@ const handleCSV = (file:File)=>{
     });
 }
 
-//parse a trap file
-function readTrap(trapFile) {
+function readForce(forceFile) {
 
-    trapFile.text().then(text=>{
+    forceFile.text().then(text=>{
         //{ can be replaced with \n to make sure no parameter is lost
         while(text.indexOf("{")>=0)
             text = text.replace("{","\n");
-        // traps can be split by } because everything between {} is one trap
-        let traps = text.split("}");
+        // forces can be split by } because everything between {} is one force
+        let forces = text.split("}");
 
         let trap_objs = [];
-        traps.forEach((trap) =>{
-            let lines = trap.split('\n');
-            //empty lines and empty traps need not be processed as well as comments
+        forces.forEach((force) =>{
+            let lines = force.split('\n');
+                //empty lines and empty traps need not be processed as well as comments
             lines = lines.filter((line)=> line !== "" && !line.startsWith("#"));
             if(lines.length == 0) return;
 
             let trap_obj = {};
             lines.forEach((line)  =>{
+                // remove comments
                 let com_pos = line.indexOf("#");
                 if (com_pos >= 0) line =  line.slice(0, com_pos).trim();
-                //another chance an empty line can be encountered. Remove whitespace
+                // another chance an empty line can be encountered. Remove whitespace
                 if(line.trim().length == 0) return;
-                //split into option name and value
+                // split into option name and value
                 let options = line.split("=");
                 let lft = options[0].trim();
                 let rght = options[1].trim();
-                trap_obj[lft] = Number.isNaN(parseFloat(rght)) ? rght : parseFloat(rght);
+
+                // Check if the string represents a list of floats (numbers separated by commas)
+                if (rght.includes(',')) {
+                    // Split the string by commas and convert each part to a float
+                    let floatList = rght.split(',').map(Number);
+                    trap_obj[lft] = floatList;
+                } else if (/^-?\d+(\.\d+)?$/.test(rght)) {
+                    // Check if the entire string is a valid number
+                    trap_obj[lft] = parseFloat(rght);
+                } else {
+                    // Otherwise, treat it as a string
+                    trap_obj[lft] = rght;
+                }
             });
             if(Object.keys(trap_obj).length > 0)
                 trap_objs.push(trap_obj);
@@ -150,7 +162,7 @@ function readTrap(trapFile) {
 
         //handle the different traps
         trap_objs.forEach(f=>{
-            switch(f.type){
+            switch(f.type){                
                 case "mutual_trap":
                     let mutTrap = new MutualTrap();
                     mutTrap.setFromParsedJson(f);
@@ -163,8 +175,20 @@ function readTrap(trapFile) {
                     skewTrap.update();
                     forces.push(skewTrap);
                     break;
+                case "repulsion_plane":
+                    let repPlane = new RepulsionPlane();
+                    repPlane.setFromParsedJson(f);
+                    repPlane.update();
+                    forces.push(repPlane);
+                    break;
+                case "attraction_plane":
+                    let attrPlane = new AttractionPlane();
+                    attrPlane.setFromParsedJson(f);
+                    attrPlane.update();
+                    forces.push(attrPlane);
+                    break;
                 default:
-                    notify(`External force ${f["type"]} type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
+                    notify(`External force -${f["type"]}- type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
                     break;
             }
         });
