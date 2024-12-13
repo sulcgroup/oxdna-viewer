@@ -62,7 +62,7 @@ function listForces() {
     forceDOM.innerHTML = "";
     forceHandler.forceTable = forceHandler.forces.map(force=>[force.description(), force.type]);
     forceDOM.appendChild(createTable(forceHandler.forceTable, ['Description', 'Type'], 'forcesTable'));
-    if (forceHandler) {
+    if (forceHandler.forces.length > 0) {
         forceHandler.redraw_traps();
     }
 }
@@ -80,7 +80,7 @@ function deleteSelectedForces() {
     });
     
     listForces();
-    forceHandler.clear_forces_from_scene()
+    forceHandler.clearForcesFromScene()
     forceHandler.draw_traps()
 }
 

@@ -359,13 +359,10 @@ class ForceHandler{
         return <PlaneForce[]>this.forces.filter(f => this.knownPlaneForces.includes(f.type));
     }
 
-    clear_forces_from_scene() {
+    clearForcesFromScene() {
         // Remove any old geometry (nothing happens if undefined)
         this.sceneObjects.forEach(o => scene.remove(o))
         render()
-        //scene.remove(this.eqDistLines);
-        //this.forceLines.forEach(fl => scene.remove(fl));
-        //this.forcePlanes.forEach(fp => scene.remove(fp));
     }
 
     draw_traps() {
