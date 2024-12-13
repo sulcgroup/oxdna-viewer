@@ -127,9 +127,7 @@ var selectednetwork: number = 0; // Only used for networks
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 
 // Forces stuff
-var forces: Force[] = [];  // Can't be const because of the current implementation of removing forces.
-var forcesTable: string[][] = [];
-var forceHandler;
+var forceHandler: ForceHandler = new ForceHandler();
 
 // color overlay stuff
 var defaultColormap: string = "cooltowarm";
@@ -180,9 +178,7 @@ function resetScene(resetCamera:boolean=true) {
     selectednetwork = 0; // Only used for networks
 
     // Forces stuff
-    forces = [];  
-    forcesTable = [];
-    forceHandler = undefined;
+    forceHandler = new ForceHandler();
 
     // color overlay stuff
     defaultColormap = "cooltowarm";

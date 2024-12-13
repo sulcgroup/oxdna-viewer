@@ -99,8 +99,8 @@ class RigidClusterSimulator {
      */
     simulate() {
         this.integrate(this.dt);
-        if (forceHandler)
-            forceHandler.redraw();
+        if (forceHandler.forces.length > 0)
+            forceHandler.redraw_traps();
         let shouldContinue = document.getElementById("clusterSim")["checked"];
         if (shouldContinue) {
             requestAnimationFrame(this.simulate.bind(this));
@@ -144,7 +144,6 @@ class Cluster {
         // http://scienceworld.wolfram.com/physics/MomentofInertiaSphere.html
         this.momentOfInertia_inv = new THREE.Matrix3(); // Identity matrix
         this.momentOfInertia_inv.multiplyScalar(5 / (2 * this.mass * Math.pow(this.radius, 2)));
-        let traps = forces.filter(f => f instanceof PairwiseForce);
         clusterElements.forEach((e) => {
             // Pull toghether inter-cluster backbone bonds
             if (e.n3 && e.n3.clusterId !== e.clusterId) {
@@ -154,7 +153,7 @@ class Cluster {
                 this.conPoints.push(new ClusterConnectionPoint(e, e.n5));
             }
             // Pull together inter-cluster traps
-            traps.forEach((t) => {
+            forceHandler.getTraps().forEach((t) => {
                 if (t.particle == e) {
                     this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
                 }

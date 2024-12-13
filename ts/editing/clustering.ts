@@ -101,6 +101,7 @@ function selectionToCluster() {
  */
 function clusterAndForcesFromClusterTopology(line: string) {
     const clusters = line.match(/\[.+?\]/g);
+    const forces: Force[] = [];
 
     for (const cluster of clusters) {
         const matches = cluster.match(/(\d+) -> \(((?:\d+ ?)+)\)/g);
@@ -121,10 +122,6 @@ function clusterAndForcesFromClusterTopology(line: string) {
             });
         }
     }
-    if (!forceHandler) {
-        forceHandler = new ForceHandler(forces);
-    } else {
-        forceHandler.set(forces);
-    }
+    forceHandler.set(forces)
     view.coloringMode.set("Cluster");
 }

@@ -331,7 +331,6 @@ class TrajectoryReader {
         system.callAllUpdates();
         tmpSystems.forEach(s => s.callAllUpdates())
         centerAndPBC(system.getMonomers(), newBox);
-        if (forceHandler) forceHandler.redraw();
 
         // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));

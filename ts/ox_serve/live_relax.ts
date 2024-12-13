@@ -98,7 +98,7 @@ class OXServeSocket extends WebSocket{
             if ("dat_file" in message) {
                 let lines = message["dat_file"].split(/[\n]+/g);
                 oxServeTrajReader.parseConf(lines);
-                if (forceHandler) forceHandler.redraw();
+                if (forceHandler) forceHandler.redraw_traps();
             }
         }
     };
@@ -162,7 +162,7 @@ class OXServeSocket extends WebSocket{
         console.log(`Simulation type is ${sim_type}`);
         let settings_list = relax_scenarios[sim_type];
 
-        if(forces.length > 0){
+        if(forceHandler.forces.length > 0){
             conf["trap_file"] = forcesToString(newElementIDs);
         }
 

@@ -544,6 +544,7 @@ function parseOxViewString(s: string) {
     }
 
     if (data.forces) {
+        const forces: Force[] = []
         data.forces.forEach(f => {
             switch(f.type){
                 case "mutual_trap":
@@ -558,16 +559,22 @@ function parseOxViewString(s: string) {
                     skewTrap.update();
                     forces.push(skewTrap);
                     break;
+                case "repulsion_plane":
+                    let repPlane = new RepulsionPlane();
+                    repPlane.setFromParsedJson(f);
+                    repPlane.update();
+                    forces.push(repPlane);
+                case "attraction_plane":
+                    let attPlane = new AttractionPlane();
+                    attPlane.setFromParsedJson(f);
+                    attPlane.update();
+                    forces.push(attPlane);
                 default:
                     notify(`External force ${f["type"]} type not supported yet, feel free to implement in file_reading.ts and force.ts`);
                     break;
             }
         });
-        if (!forceHandler) {
-            forceHandler = new ForceHandler(forces);
-        } else {
-            forceHandler.set(forces);
-        }
+        forceHandler.set(forces);
     }
     if (createdSystems.length > 1) {
         notify("Warning additional files only affect the last file in a multi-system file", "warning")

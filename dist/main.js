@@ -112,9 +112,7 @@ const networks = []; // Only used for networks, replaced anms
 var selectednetwork = 0; // Only used for networks
 const graphDatasets = []; // Only used for fluctuation graph
 // Forces stuff
-var forces = []; // Can't be const because of the current implementation of removing forces.
-var forcesTable = [];
-var forceHandler;
+var forceHandler = new ForceHandler();
 // color overlay stuff
 var defaultColormap = "cooltowarm";
 var lut, devs;
@@ -163,9 +161,7 @@ function resetScene(resetCamera = true) {
     }
     selectednetwork = 0; // Only used for networks
     // Forces stuff
-    forces = [];
-    forcesTable = [];
-    forceHandler = undefined;
+    forceHandler = new ForceHandler();
     // color overlay stuff
     defaultColormap = "cooltowarm";
     lut = [];
