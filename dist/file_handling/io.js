@@ -280,6 +280,10 @@ class TrajectoryReader {
         system.callAllUpdates();
         tmpSystems.forEach(s => s.callAllUpdates());
         centerAndPBC(system.getMonomers(), newBox);
+        // Force files tend to read faster than configuration files, so there's a race condition.
+        if (forceHandler.forces.length > 0) {
+            forceHandler.redrawTraps();
+        }
         // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));
     }

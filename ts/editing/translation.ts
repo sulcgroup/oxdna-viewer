@@ -10,7 +10,7 @@ function rotateElements(elements: Set<BasicElement>, axis: THREE.Vector3, angle:
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
-    if(forceHandler.forces.length > 0) forceHandler.redraw_traps();
+    if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
 }
 
 function getRandomRotation(): THREE.Quaternion {
@@ -242,7 +242,7 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
             networks[i].updatePositions();
         }
     }
-    if(forceHandler.forces.length > 0) forceHandler.redraw_traps();
+    if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
     render();
 }
 

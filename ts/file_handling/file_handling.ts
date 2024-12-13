@@ -93,18 +93,19 @@ async function handleFiles(files: File[]) {
     // Create a system from a file and resolve with a reference to the system
     function getOrMakeSystem() {
         return new Promise<System> (function (resolve, reject) {
-            let system:System
-            if (systemFiles.length == 0) {system = systems[systems.length-1]} // If we're not making a new system
-            else if (systemFiles.length == 1) {system = systemFiles[0].reader(systemFiles[0].file, systemHelpers)} // If we're reading a file to make a system
+            if (systemFiles.length == 0) { resolve(systems[systems.length-1]) } // If we're not making a new system
+            else if (systemFiles.length == 1) {
+                const sysPromise = systemFiles[0].reader(systemFiles[0].file, systemHelpers);
+                sysPromise.then((system) => resolve(system))
+            } // If we're reading a file to make a system
             else {throw new Error("Systems must be defined by a single file (there can be helper files)!")}
-            resolve(system)
         });
     }
 
     function readAuxiliaryFiles(system) {
         let readList:Promise<unknown>[] = auxFiles.map((auxFile) => 
             new Promise(function (resolve, reject) {
-                let result = auxFile.reader(auxFile.file, system);
+                const result = auxFile.reader(auxFile.file, system);
                 resolve(result);
             })
         );

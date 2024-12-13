@@ -98,7 +98,7 @@ class OXServeSocket extends WebSocket{
             if ("dat_file" in message) {
                 let lines = message["dat_file"].split(/[\n]+/g);
                 oxServeTrajReader.parseConf(lines);
-                if (forceHandler) forceHandler.redraw_traps();
+                if (forceHandler) forceHandler.redrawTraps();
             }
         }
     };

@@ -55,9 +55,6 @@ function listForces() {
     forceDOM.innerHTML = "";
     forceHandler.forceTable = forceHandler.forces.map(force => [force.description(), force.type]);
     forceDOM.appendChild(createTable(forceHandler.forceTable, ['Description', 'Type'], 'forcesTable'));
-    if (forceHandler.forces.length > 0) {
-        forceHandler.redraw_traps();
-    }
 }
 function deleteSelectedForces() {
     // Remove all forces selected in the force window
@@ -71,7 +68,7 @@ function deleteSelectedForces() {
     });
     listForces();
     forceHandler.clearForcesFromScene();
-    forceHandler.draw_traps();
+    forceHandler.drawTraps();
 }
 function drawSystemHierarchy() {
     let checkboxhtml = (label) => `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;

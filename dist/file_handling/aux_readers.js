@@ -151,21 +151,25 @@ function readForce(forceFile) {
                 case "mutual_trap":
                     let mutTrap = new MutualTrap();
                     mutTrap.setFromParsedJson(f);
+                    mutTrap.update();
                     forceObjs.push(mutTrap);
                     break;
                 case "skew_trap":
                     let skewTrap = new SkewTrap();
                     skewTrap.setFromParsedJson(f);
+                    skewTrap.update();
                     forceObjs.push(skewTrap);
                     break;
                 case "repulsion_plane":
                     let repPlane = new RepulsionPlane();
                     repPlane.setFromParsedJson(f);
+                    repPlane.update();
                     forceObjs.push(repPlane);
                     break;
                 case "attraction_plane":
                     let attrPlane = new AttractionPlane();
                     attrPlane.setFromParsedJson(f);
+                    attrPlane.update();
                     forceObjs.push(attrPlane);
                     break;
                 default:

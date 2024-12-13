@@ -38,7 +38,7 @@ function shiftWithinBox(v, elems, targetBox) {
     affectedSystems.forEach(s => s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
     if (forceHandler.forces.length > 0)
-        forceHandler.redraw_traps();
+        forceHandler.redrawTraps();
     render();
 }
 /**

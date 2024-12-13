@@ -100,7 +100,7 @@ class MutualTrap extends PairwiseForce {
             p1, p1.clone().add(dir.clone().multiplyScalar(this.r0))
         ];        
         
-        //draw force 
+        // length and direction of line segement 
         dir = p2.clone().sub(p1);
         let force_v = dir.clone().normalize().multiplyScalar(
             (dir.length() - this.r0 )* this.stiff
@@ -347,8 +347,8 @@ class ForceHandler{
 
     set(forces: Force[]) {
         this.forces.push(...forces)
-        this.draw_traps();
-        this.draw_planes();
+        this.drawTraps();
+        this.drawPlanes();
     }
 
     getTraps() {
@@ -365,7 +365,7 @@ class ForceHandler{
         render()
     }
 
-    draw_traps() {
+    drawTraps() {
         // find out how many different types there are
         const traps = this.getTraps()
         this.types = Array.from((new Set(traps.map(trap=>trap.type))));
@@ -405,7 +405,7 @@ class ForceHandler{
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
 
-    draw_planes() {
+    drawPlanes() {
         const planes = this.getPlanes()
         planes.forEach(f => {
             let _extent: number = 512;
@@ -449,7 +449,7 @@ class ForceHandler{
         });
     }
 
-    redraw_traps() {
+    redrawTraps() {
         let v1 = [];
         let v2 = [];
         for (let i = 0; i < this.types.length; i++) {
@@ -523,5 +523,5 @@ function makeTrapsFromPairs() {
         })})
     }
     forceHandler.set(forces);
-    if(forceHandler.forces.length > 0) forceHandler.redraw_traps();
+    if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
 }

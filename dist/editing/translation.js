@@ -10,7 +10,7 @@ function rotateElements(elements, axis, angle, about) {
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
     if (forceHandler.forces.length > 0)
-        forceHandler.redraw_traps();
+        forceHandler.redrawTraps();
 }
 function getRandomRotation() {
     let u = Math.random();
@@ -214,7 +214,7 @@ function translateElements(elements, v) {
         }
     }
     if (forceHandler.forces.length > 0)
-        forceHandler.redraw_traps();
+        forceHandler.redrawTraps();
     render();
 }
 //dragControls.activate();
