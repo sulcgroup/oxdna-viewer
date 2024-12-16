@@ -1,5 +1,5 @@
 function forcesToString(newElementIDs) {
-    return forces.map(f => f.toString(newElementIDs)).join('\n\n');
+    return forceHandler.forces.map(f => f.toString(newElementIDs)).join('\n\n');
 }
 class Force {
     type;
@@ -77,7 +77,7 @@ class MutualTrap extends PairwiseForce {
         this.eqDists = [
             p1, p1.clone().add(dir.clone().multiplyScalar(this.r0))
         ];
-        //draw force 
+        // length and direction of line segement 
         dir = p2.clone().sub(p1);
         let force_v = dir.clone().normalize().multiplyScalar((dir.length() - this.r0) * this.stiff);
         dir.normalize();
@@ -173,7 +173,6 @@ class PlaneForce extends Force {
         this.update();
     }
     setFromParsedJson(parsedjson) {
-        console.log(parsedjson);
         for (var param in parsedjson) {
             if (param === 'particle') {
                 const particleData = parsedjson[param];
@@ -272,12 +271,8 @@ class AttractionPlane extends PlaneForce {
 }
 class ForceHandler {
     types;
-    sceneObjects = [];
     knownTrapForces = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw via lines
     knownPlaneForces = ["repulsion_plane", "attraction_plane"]; //these are the forces I know how to draw via planes
-    traps;
-    forceLines = [];
-    eqDistLines;
     forceColors = [
         new THREE.Color(0x0000FF),
         new THREE.Color(0xFF0000),
@@ -286,27 +281,33 @@ class ForceHandler {
         new THREE.Color(0x00FF00),
         new THREE.Color(0xFF00FF),
     ];
-    planes;
+    forceLines = [];
+    eqDistLines;
     forcePlanes = [];
-    constructor(forces) {
-        this.set(forces);
-    }
+    forces = [];
+    sceneObjects = [];
+    forceTable;
+    constructor() { }
     set(forces) {
-        // this.clear_forces_from_scene();
-        this.traps = forces.filter(f => this.knownTrapForces.includes(f.type));
-        this.draw_traps();
-        this.planes = forces.filter(f => this.knownPlaneForces.includes(f.type));
-        this.draw_planes();
+        this.forces.push(...forces);
+        this.drawTraps();
+        this.drawPlanes();
     }
-    clear_forces_from_scene() {
+    getTraps() {
+        return this.forces.filter(f => this.knownTrapForces.includes(f.type));
+    }
+    getPlanes() {
+        return this.forces.filter(f => this.knownPlaneForces.includes(f.type));
+    }
+    clearForcesFromScene() {
         // Remove any old geometry (nothing happens if undefined)
-        scene.remove(this.eqDistLines);
-        this.forceLines.forEach(fl => scene.remove(fl));
-        this.forcePlanes.forEach(fp => scene.remove(fp));
+        this.sceneObjects.forEach(o => scene.remove(o));
+        render();
     }
-    draw_traps() {
+    drawTraps() {
         // find out how many different types there are
-        this.types = Array.from((new Set(this.traps.map(trap => trap.type))));
+        const traps = this.getTraps();
+        this.types = Array.from((new Set(traps.map(trap => trap.type))));
         let v1 = [];
         let v2 = [];
         let forceGeoms = [];
@@ -315,7 +316,7 @@ class ForceHandler {
             forceGeoms.push(new THREE.BufferGeometry());
         }
         let eqDistGeom = new THREE.BufferGeometry();
-        this.traps.forEach(f => {
+        traps.forEach(f => {
             let idx = this.types.findIndex(t => t == f.type);
             v1[idx].push(f.force[0].x, f.force[0].y, f.force[0].z);
             v1[idx].push(f.force[1].x, f.force[1].y, f.force[1].z);
@@ -338,10 +339,11 @@ class ForceHandler {
         //trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, this.update);
         //trajReader.previousConfig = api.observable.wrap(trajReader.previousConfig, this.update);    
     }
-    draw_planes() {
-        this.planes.forEach(f => {
+    drawPlanes() {
+        const planes = this.getPlanes();
+        planes.forEach(f => {
             let _extent = 512;
-            let _color = this.planeColors[this.planes.indexOf(f) % this.planeColors.length];
+            let _color = this.planeColors[planes.indexOf(f) % this.planeColors.length];
             //  draw text on plane
             let ccanvas = document.createElement('canvas');
             let context = ccanvas.getContext('2d');
@@ -365,7 +367,7 @@ class ForceHandler {
             let material = new THREE.MeshBasicMaterial({
                 map: texture,
                 side: THREE.DoubleSide,
-                transparent: true, // Enable transparency
+                transparent: true,
                 opacity: 0.5 // Set the desired opacity (0.0 to 1.0)
             });
             let plane = new THREE.Mesh(geometry, material);
@@ -376,17 +378,13 @@ class ForceHandler {
             this.forcePlanes.push(plane);
         });
     }
-    redraw() {
-        this.redraw_traps();
-        render();
-    }
-    redraw_traps() {
+    redrawTraps() {
         let v1 = [];
         let v2 = [];
         for (let i = 0; i < this.types.length; i++) {
             v1.push([]);
         }
-        this.traps.forEach(f => {
+        this.getTraps().forEach(f => {
             f.update();
             let idx = this.types.findIndex(t => t == f.type);
             v1[idx].push(f.force[0].x, f.force[0].y, f.force[0].z);
@@ -401,12 +399,14 @@ class ForceHandler {
         });
         this.eqDistLines.geometry = new THREE.BufferGeometry();
         this.eqDistLines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        render();
     }
 }
 function makeTrapsFromSelection() {
     let stiffness = parseFloat(document.getElementById("txtForceValue").value);
     let r0 = parseFloat(document.getElementById('r0').value);
     let selection = Array.from(selectedBases);
+    const forces = [];
     // For every other element in selection
     for (let i = 0; i < selection.length; i += 2) {
         // If there is another nucleotide in the pair
@@ -424,16 +424,12 @@ function makeTrapsFromSelection() {
             notify("The last selected base does not have a pair and thus cannot be included in the Mutual Trap File."); //give error message
         }
     }
-    if (!forceHandler) {
-        forceHandler = new ForceHandler(forces);
-    }
-    else {
-        forceHandler.set(forces);
-    }
+    forceHandler.set(forces);
 }
 function makeTrapsFromPairs() {
     let stiffness = parseFloat(document.getElementById("txtForceValue").value);
     let nopairs = true;
+    const forces = [];
     elements.forEach(e => {
         // If element is paired, add a trap
         if (e.isPaired()) {
@@ -451,12 +447,7 @@ function makeTrapsFromPairs() {
             });
         });
     }
-    if (!forceHandler) {
-        forceHandler = new ForceHandler(forces);
-    }
-    else {
-        forceHandler.set(forces);
-    }
-    if (forceHandler)
-        forceHandler.redraw();
+    forceHandler.set(forces);
+    if (forceHandler.forces.length > 0)
+        forceHandler.redrawTraps();
 }

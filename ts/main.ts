@@ -71,6 +71,11 @@ class ElementMap extends Map<number, BasicElement>{
     getNextId(): number {
         return this.idCounter;
     }
+
+    reset() {
+        this.clear()
+        this.idCounter = 0;
+    }
 }
 
 class smartSet<Type> extends Set<Type> {
@@ -127,9 +132,7 @@ var selectednetwork: number = 0; // Only used for networks
 const graphDatasets: graphData[] = []; // Only used for fluctuation graph
 
 // Forces stuff
-var forces: Force[] = [];  // Can't be const because of the current implementation of removing forces.
-var forcesTable: string[][] = [];
-var forceHandler;
+var forceHandler: ForceHandler = new ForceHandler();
 
 // color overlay stuff
 var defaultColormap: string = "cooltowarm";
@@ -142,7 +145,7 @@ var topologyEdited: Boolean = false; // to keep track of if the topology was edi
 
 
 function resetScene(resetCamera:boolean=true) {
-    elements.clear();
+    elements.reset();
     
     while(systems.length > 0) { 
         systems[systems.length - 1].backbone.parent.remove(systems[systems.length - 1].backbone)
@@ -180,9 +183,9 @@ function resetScene(resetCamera:boolean=true) {
     selectednetwork = 0; // Only used for networks
 
     // Forces stuff
-    forces = [];  
-    forcesTable = [];
-    forceHandler = undefined;
+    forceHandler.clearForcesFromScene();
+    forceHandler = new ForceHandler();
+    if (document.getElementById("forces")) { listForces() }
 
     // color overlay stuff
     defaultColormap = "cooltowarm";

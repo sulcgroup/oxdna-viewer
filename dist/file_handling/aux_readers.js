@@ -105,9 +105,9 @@ function readForce(forceFile) {
         while (text.indexOf("{") >= 0)
             text = text.replace("{", "\n");
         // forces can be split by } because everything between {} is one force
-        let forces = text.split("}");
+        let forceTxt = text.split("}");
         let trap_objs = [];
-        forces.forEach((force) => {
+        forceTxt.forEach((force) => {
             let lines = force.split('\n');
             //empty lines and empty traps need not be processed as well as comments
             lines = lines.filter((line) => line !== "" && !line.startsWith("#"));
@@ -144,6 +144,7 @@ function readForce(forceFile) {
             if (Object.keys(trap_obj).length > 0)
                 trap_objs.push(trap_obj);
         });
+        const forceObjs = [];
         //handle the different traps
         trap_objs.forEach(f => {
             switch (f.type) {
@@ -151,37 +152,32 @@ function readForce(forceFile) {
                     let mutTrap = new MutualTrap();
                     mutTrap.setFromParsedJson(f);
                     mutTrap.update();
-                    forces.push(mutTrap);
+                    forceObjs.push(mutTrap);
                     break;
                 case "skew_trap":
                     let skewTrap = new SkewTrap();
                     skewTrap.setFromParsedJson(f);
                     skewTrap.update();
-                    forces.push(skewTrap);
+                    forceObjs.push(skewTrap);
                     break;
                 case "repulsion_plane":
                     let repPlane = new RepulsionPlane();
                     repPlane.setFromParsedJson(f);
                     repPlane.update();
-                    forces.push(repPlane);
+                    forceObjs.push(repPlane);
                     break;
                 case "attraction_plane":
                     let attrPlane = new AttractionPlane();
                     attrPlane.setFromParsedJson(f);
                     attrPlane.update();
-                    forces.push(attrPlane);
+                    forceObjs.push(attrPlane);
                     break;
                 default:
                     notify(`External force -${f["type"]}- type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
                     break;
             }
         });
-        if (!forceHandler) {
-            forceHandler = new ForceHandler(forces);
-        }
-        else {
-            forceHandler.set(forces);
-        }
+        forceHandler.set(forceObjs);
         render();
     });
 }
@@ -416,12 +412,7 @@ function parseDotBracket(input) {
 }
 function readDotBracket(file) {
     const updateForceHandler = (forces) => {
-        if (!forceHandler) {
-            forceHandler = new ForceHandler(forces);
-        }
-        else {
-            forceHandler.set(forces);
-        }
+        forceHandler.set(forces);
         render();
     };
     file.text().then(txt => {
@@ -436,6 +427,7 @@ function readDotBracket(file) {
         // - unless there are selected bases, in which case the trap will be created only for the selected bases
         // preprocess the file
         // strip spaces and newlines
+        const forces = [];
         let lines = txt.split("\n").map(s => s.replace(/\s/g, '')).filter(s => s.length > 0);
         // now let's parse the file
         let file_length = lines.length;

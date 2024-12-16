@@ -40,7 +40,7 @@ function makeOutputFiles() { //makes .dat and .top files from the current scene;
 
     let force_download = view.getInputBool("forceDownload");
     if (force_download) {
-        if (forces.length > 0) {
+        if (forceHandler.forces.length > 0) {
             let file_name = name.concat('_force.txt');
             let contents = forcesToString(newElementIDs)
             setTimeout(() => makeTextFile(file_name, contents), 40);
@@ -426,7 +426,7 @@ function makeOxViewJsonFile(name? : string, space?: string | number) {
         date: new Date(),
         box: box.toArray(),
         systems: systems,
-        forces: forces,
+        forces: forceHandler.forces,
         selections : selectionListHandler.serialize()
     }, null, space));
 }

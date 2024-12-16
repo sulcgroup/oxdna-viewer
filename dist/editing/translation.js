@@ -9,8 +9,8 @@ function rotateElements(elements, axis, angle, about) {
     let q = new THREE.Quaternion();
     q.setFromAxisAngle(axis, angle);
     rotateElementsByQuaternion(elements, q, about);
-    if (forceHandler)
-        forceHandler.redraw();
+    if (forceHandler.forces.length > 0)
+        forceHandler.redrawTraps();
 }
 function getRandomRotation() {
     let u = Math.random();
@@ -213,8 +213,8 @@ function translateElements(elements, v) {
             networks[i].updatePositions();
         }
     }
-    if (forceHandler)
-        forceHandler.redraw();
+    if (forceHandler.forces.length > 0)
+        forceHandler.redrawTraps();
     render();
 }
 //dragControls.activate();

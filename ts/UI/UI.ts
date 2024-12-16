@@ -31,15 +31,20 @@ function select5psWrapper() {
     }
 }
 
-
-function createTable(dataName: string, header: string[]) {
+function createTable(data:string[][], header: string[], tableName:string) {
     let table = document.createElement("table");
-    table.id = dataName;
+    table.id = tableName;
     table.classList.add("table", "striped")
     table.dataset.role = "table";
     table.dataset.static = "false";
-    table.dataset.body = dataName;
     table.dataset.check = 'true';
+    data.forEach(d => {
+        let row = table.insertRow()
+        d.forEach((v, i) => {
+            let cell = row.insertCell(i)
+            cell.innerHTML = v
+        })
+    })
     let thead = document.createElement("thead");
     let tr = document.createElement("tr");
     header.forEach(name => {
@@ -55,25 +60,25 @@ function createTable(dataName: string, header: string[]) {
 function listForces() {
     let forceDOM = document.getElementById("forces");
     forceDOM.innerHTML = "";
-    forcesTable = forces.map(force=>[force.description(), force.type]);
-    forceDOM.appendChild(createTable('forcesTable', ['Description', 'Type']));
-    if (forceHandler) {
-        forceHandler.redraw();
-    }
+    forceHandler.forceTable = forceHandler.forces.map(force=>[force.description(), force.type]);
+    forceDOM.appendChild(createTable(forceHandler.forceTable, ['Description', 'Type'], 'forcesTable'));
 }
 
 function deleteSelectedForces() {
     // Remove all forces selected in the force window
     var table = $('#forcesTable').data('table');
-    let removeIndices = table.getSelectedItems().map(s=>forcesTable.indexOf(s));
+    let removeIndices = table.getSelectedItems().map(s=>forceHandler.forceTable.indexOf(s));
 
     // consider changing to https://stackoverflow.com/a/35116966/9738112 so it can be in-place
-    forces = forces.filter((f,i)=>!removeIndices.includes(i));
-    forcesTable = forcesTable.filter((f,i)=>!removeIndices.includes(i));
-
-    forceHandler.set(forces);
-
+    // Remove force from both the list of forces and from the table
+    forceHandler.forceTable = forceHandler.forceTable.filter((f,i)=>!removeIndices.includes(i));
+    removeIndices.forEach(i => {
+        forceHandler.forces.splice(i, 1)
+    });
+    
     listForces();
+    forceHandler.clearForcesFromScene()
+    forceHandler.drawTraps()
 }
 
 

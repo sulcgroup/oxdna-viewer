@@ -40,7 +40,7 @@ function shiftWithinBox(v: THREE.Vector3, elems?: BasicElement[], targetBox?: TH
     });
     affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
-    if(forceHandler) forceHandler.redraw();
+    if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
     render();
 }
 
@@ -67,7 +67,6 @@ function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
     });
     affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
-    if(forceHandler) forceHandler.redraw();
     if (networks.length > 0) {
         networks.forEach(n => {
             n.recalculateVis();
