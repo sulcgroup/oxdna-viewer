@@ -9,6 +9,7 @@
         //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase     
         "moduleResolution": "node"       
     },
+    "include": ["./cdn-modules.d.ts"],
     "files": [
       "./ts/main.ts",
       "./ts/api/editing_api.ts",
@@ -61,6 +62,9 @@
       "./ts/editing/distance.ts",
       "./ts/file_handling/plateDB.ts",
       "./ts/editing/selections.ts",
-      "./ts/api/plugin_api.ts"
+      "./ts/api/plugin_api.ts",
+      "./ts/utils/historyStorageService.ts",
+      "./ts/utils/submitStructureWindow-script.ts",
+      "./ts/utils/library.ts"
     ]
 }

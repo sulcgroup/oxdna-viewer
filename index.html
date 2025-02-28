@@ -502,6 +502,13 @@
                         <li><a href="https://doi.org/10.1093/nar/gkaa417"><span class="mif-file-text icon"></span>&nbsp; Nucleic Acids Research 2020</a></li>
                     </ul>
                 </div>
+
+
+                <div class="group">
+                    <button type="submitWindow" onclick="view.toggleWindow('submitStructureWindow')">Submit structure to Nanobase</button>
+                    <button type="save" onclick="saveStructure()">Save structure</button>
+                    <button type="save" onclick="loadStructure()">Load structure</button>
+                  </div>
                 
             </div>
 
@@ -1372,7 +1379,9 @@
         <script src="./dist/editing/distance.js"></script>
         <script src="./dist/editing/selections.js"></script>
         <script src="./dist/api/plugin_api.js"></script>
-        
+        <script src="./dist/utils/submitStructureWindow-script.js"></script>
+        <script type="module" src="./dist/utils/historyStorageService.js"></script>
+
         <script>
             //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
             function inIframe () {

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+  <head>
+    <link rel="shortcut icon" type="image/png" href="favicon.png" />
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "UA-171800090-1");
+    </script>
+
+    <title>oxView</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <!-- Metro 4 -->
+    <link rel="stylesheet" href="css/metro.min.css" />
+    <link rel="stylesheet" href="css/metro-colors.min.css" />
+    <link rel="stylesheet" href="css/metro-icons.min.css" />
+
+    <link rel="stylesheet" href="css/library-display.css" />
+  </head>
+
+  <body>
+    <h1 class="library-title">Library</h1>
+    <div id="library-container" class="library-grid-container"></div>
+    <button onclick="view.toggleWindow('createStructureWindow')">
+      Create new
+    </button>
+
+    <script type="module" src="./dist/utils/library.js"></script>
+    <!-- Metro 4 -->
+    <script src="./ts/lib/metro.min.js"></script>
+    <div class="main">
+      <!--all files to be loaded onload of html file-->
+      <script src="./ts/lib/chart.min.js"></script>
+      <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
+      <script src="./ts/lib/three.js"></script>
+      <script src="./ts/lib/tacoxdna.js"></script>
+      <script src="./ts/lib/Lut.js"></script>
+      <script src="./ts/lib/justcontext.js"></script>
+      <script src="./ts/lib/VRButton.js"></script>
+      <script src="./ts/controls/TransformControls.js"></script>
+      <script src="./ts/controls/TrackballControls.js"></script>
+      <script src="./ts/geometries/ConvexHull.js"></script>
+      <script src="./ts/geometries/ConvexGeometry.js"></script>
+      <script src="./dist/scene/scene_setup.js"></script>
+      <script src="./dist/scene/instancing.js"></script>
+      <script src="./dist/scene/mesh_setup.js"></script>
+      <script src="./dist/file_handling/io.js"></script>
+      <script src="./dist/model/force.js"></script>
+      <script src="./dist/scene/PBC_switchbox.js"></script>
+      <script src="./dist/file_handling/file_getters.js"></script>
+      <script src="./dist/file_handling/file_handling.js"></script>
+      <script src="./dist/file_handling/system_readers.js"></script>
+      <script src="./dist/file_handling/aux_readers.js"></script>
+      <script src="./dist/file_handling/script_reader.js"></script>
+      <script src="./dist/file_handling/tacoxdna_worker.js"></script>
+      <script src="./dist/editing/editing.js"></script>
+      <script src="./dist/editing/doUndo.js"></script>
+      <script src="./dist/editing/dijkstra.js"></script>
+      <script src="./dist/editing/rigid-body_simulation.js"></script>
+      <script src="./dist/UI/UI.js"></script>
+      <script src="./dist/main.js"></script>
+      <script src="./dist/model/basicElement.js"></script>
+      <script src="./dist/model/aminoAcid.js"></script>
+      <script src="./dist/model/nucleotide.js"></script>
+      <script src="./dist/model/DNA.js"></script>
+      <script src="./dist/model/RNA.js"></script>
+      <script src="./dist/model/strand.js"></script>
+      <script src="./dist/model/system.js"></script>
+      <script src="./dist/model/anm.js"></script>
+      <script src="./dist/model/network.js"></script>
+      <script src="./dist/model/genericSphere.js"></script>
+      <script src="./dist/model/svd.js"></script>
+      <script src="./dist/model/leastSquares.js"></script>
+      <script src="./dist/UI/base_selector.js"></script>
+      <script src="./dist/UI/keybindings.js"></script>
+      <script src="./dist/file_handling/output_file.js"></script>
+      <script src="./dist/file_handling/pdb_lib.js"></script>
+      <script src="./dist/file_handling/UNF_reader.js"></script>
+      <script src="./dist/file_handling/xyz_reader.js"></script>
+      <script src="./dist/file_handling/video.js"></script>
+      <script src="./dist/editing/translation.js"></script>
+      <script src="./ts/controls/SceneUtils.js"></script>
+      <script src="./dist/api/scene_api.js"></script>
+      <script src="./dist/api/editing_api.js"></script>
+      <script src="./dist/api/observable_api.js"></script>
+      <script src="./dist/editing/clustering.js"></script>
+      <script src="./dist/file_handling/stl_exporter.js"></script>
+      <script src="./dist/file_handling/GLTFExporter.js"></script>
+      <script src="./dist/ox_serve/relax_scenarios.js"></script>
+      <script src="./dist/ox_serve/live_relax.js"></script>
+      <script src="./dist/file_handling/order_parameter_selector.js"></script>
+      <script src="./dist/file_handling/plateDB.js"></script>
+      <script src="./dist/editing/distance.js"></script>
+      <script src="./dist/editing/selections.js"></script>
+      <script src="./dist/api/plugin_api.js"></script>
+      <script src="./dist/utils/submitStructureWindow-script.js"></script>
+      <script
+        type="module"
+        src="./dist/utils/historyStorageService.js"
+      ></script>
+
+      <script>
+        //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
+        function inIframe() {
+          try {
+            return window.self !== window.top;
+          } catch (e) {
+            return true;
+          }
+        }
+        let menu = document.getElementById("menu");
+        let floatingMenu = document.getElementById("floatingMenu");
+
+        if (inIframe()) {
+          menu.hidden = true;
+          floatingMenu.hidden = true;
+        }
+      </script>
+      <!-- electron interaction  -->
+      <script src="./renderer.js"></script>
+    </div>
+  </body>
+</html>

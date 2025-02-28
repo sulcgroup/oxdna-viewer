@@ -184,3 +184,147 @@ td.empty {
     padding: 10px;
   }
 
+/* Container for the form */
+.loginwindow-container {
+  width: 90%;
+  max-width: 500px;
+  margin: 80px auto;
+  font-family: sans-serif;
+}
+
+/* Title styles */
+.loginwindow-title {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* Form spacing */
+.loginwindow-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Label and input styling */
+.loginwindow-form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.loginwindow-form-group label {
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.loginwindow-form-group input {
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  background-color: rgba(115, 115, 115, 0.2); /* Similar to bg-stone-400/20 */
+}
+
+/* Sign in button */
+.loginwindow-button {
+  background-color: #000;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.loginwindow-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Sign up text and link */
+.loginwindow-text-sm {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.loginwindow-link {
+  color: #1D4ED8; /* Tailwind's blue-800 */
+  text-decoration: underline;
+}
+
+/* Responsive text alignment for smaller screens */
+@media (max-width: 600px) {
+  .loginwindow-container {
+    margin: 40px auto;
+  }
+  .loginwindow-title {
+    font-size: 1.5rem;
+  }
+}
+
+
+/* Container */
+.submitstructure-container {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Title */
+.submitstructure-title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Form Groups */
+.submitstructure-form-group {
+  margin-bottom: 15px;
+}
+
+/* Labels */
+.submitstructure-label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+/* Inputs & Textarea */
+.submitstructure-input,
+.submitstructure-textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #aaa;
+  border-radius: 3px;
+}
+
+/* Submit Button */
+.submitstructure-button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  border: none;
+  color: white;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.submitstructure-button:hover {
+  background-color: #0056b3;
+}
+
+/* Message Display */
+.submitstructure-message {
+  margin-top: 20px;
+  padding: 10px;
+  text-align: center;
+}
+
+.submitstructure-success {
+  color: green;
+  border: 1px solid green;
+}
+
+.submitstructure-error {
+  color: red;
+  border: 1px solid red;
+}

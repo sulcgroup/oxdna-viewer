@@ -724,6 +724,34 @@ class View {
 
     public toggleWindow(id: string, oncreate?: ()=>void) {
         let elem = this.doc.getElementById(id);
+
+        if (id === "submitStructureWindow" && this.isWindowOpen(id)) {
+          const token = localStorage.getItem("token");
+          const tokenParts = token.split('.');
+          if (tokenParts.length !== 3) throw new Error('Invalid token');
+
+          const base64Payload = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64Payload)
+            .split('')
+            .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+            .join('')
+          );
+
+          const { exp } = JSON.parse(jsonPayload);
+
+          let isLoggedIn = false;
+          if (token) {
+            if (Date.now() < exp * 1000) {
+              isLoggedIn = true;
+            }
+          }
+
+          if (!isLoggedIn) {
+            id = "loginWindow";
+          }
+        }
+
         if (elem) {
             Metro.window.toggle(elem);
         } else {

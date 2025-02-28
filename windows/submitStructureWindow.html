@@ -1,0 +1,153 @@
+<div class="submitstructure-container">
+  <h1 class="submitstructure-title">Upload Structure</h1>
+
+  <!-- Title -->
+  <div class="submitstructure-form-group">
+    <label for="title" class="submitstructure-label">Title</label>
+    <input
+      type="text"
+      id="title"
+      name="title"
+      class="submitstructure-input"
+      required
+    />
+  </div>
+
+  <!-- Type -->
+  <div class="submitstructure-form-group">
+    <label for="type" class="submitstructure-label">Type</label>
+    <input
+      type="text"
+      id="type"
+      name="type"
+      class="submitstructure-input"
+      required
+    />
+  </div>
+
+  <!-- Description -->
+  <div class="submitstructure-form-group">
+    <label for="description" class="submitstructure-label">Description</label>
+    <textarea
+      id="description"
+      name="description"
+      class="submitstructure-textarea"
+      rows="3"
+      required
+    ></textarea>
+  </div>
+
+  <!-- Date Published -->
+  <div class="submitstructure-form-group">
+    <label for="datePublished" class="submitstructure-label"
+      >Date Published</label
+    >
+    <input
+      type="date"
+      id="datePublished"
+      name="datePublished"
+      class="submitstructure-input"
+      required
+    />
+  </div>
+
+  <!-- Citation -->
+  <div class="submitstructure-form-group">
+    <label for="citation" class="submitstructure-label">Citation</label>
+    <input
+      type="text"
+      id="citation"
+      name="citation"
+      class="submitstructure-input"
+    />
+  </div>
+
+  <!-- Paper Link -->
+  <div class="submitstructure-form-group">
+    <label for="paperLink" class="submitstructure-label">Paper Link</label>
+    <input
+      type="url"
+      id="paperLink"
+      name="paperLink"
+      class="submitstructure-input"
+    />
+  </div>
+
+  <!-- Licensing -->
+  <div class="submitstructure-form-group">
+    <label for="licensing" class="submitstructure-label">Licensing</label>
+    <input
+      type="text"
+      id="licensing"
+      name="licensing"
+      class="submitstructure-input"
+      required
+    />
+  </div>
+
+  <!-- Private -->
+  <div class="submitstructure-form-group">
+    <label class="submitstructure-label">
+      <input
+        type="checkbox"
+        id="private"
+        name="private"
+        class="submitstructure-checkbox"
+      />
+      Private
+    </label>
+  </div>
+
+  <!-- Keywords -->
+  <div class="submitstructure-form-group">
+    <label for="keywords" class="submitstructure-label"
+      >Keywords (comma-separated)</label
+    >
+    <input
+      type="text"
+      id="keywords"
+      name="keywords"
+      class="submitstructure-input"
+    />
+  </div>
+
+  <!-- Images -->
+  <div class="submitstructure-form-group">
+    <label for="images" class="submitstructure-label">Images</label>
+    <input
+      type="file"
+      id="images"
+      name="images"
+      class="submitstructure-input"
+      accept="image/*"
+      multiple
+    />
+  </div>
+
+  <!-- File Name -->
+  <div class="submitstructure-form-group">
+    <label for="submitStructureName" class="submitstructure-label"
+      >File name</label
+    >
+    <input
+      type="text"
+      id="submitStructureName"
+      name="files"
+      class="submitstructure-input"
+    />
+  </div>
+
+  <!-- Submit Button -->
+  <div class="submitstructure-form-group">
+    <button
+      type="button"
+      class="submitstructure-button"
+      onclick="uploadStructure()"
+    >
+      Upload Structure
+    </button>
+  </div>
+
+  <!-- Message Display -->
+  <div id="submitstructure-message" class="submitstructure-message"></div>
+</div>

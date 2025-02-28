@@ -1,0 +1,38 @@
+<div class="loginwindow-container">
+  <h1 class="loginwindow-title">Sign in</h1>
+  <div id="loginwindow-signin-form" class="loginwindow-form">
+    <div class="loginwindow-form-group">
+      <label for="email">Email</label>
+      <input
+        type="email"
+        id="email"
+        name="email"
+        placeholder="Email..."
+        required
+      />
+    </div>
+
+    <div class="loginwindow-form-group">
+      <label for="password">Password</label>
+      <input
+        type="password"
+        id="password"
+        name="password"
+        placeholder="Password..."
+        required
+      />
+    </div>
+
+    <button onclick="login()">Sign in</button>
+  </div>
+  <p class="loginwindow-text-sm">
+    Don’t have an account?
+    <a
+      href="https://nanobase.org/sign-up"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="loginwindow-link"
+      >Sign up</a
+    >
+  </p>
+</div>
