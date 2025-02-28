@@ -52,6 +52,17 @@ function createCard(item: LibraryItem): HTMLElement {
   card.appendChild(nameP);
   card.appendChild(dateP);
 
+  // Create a delete button
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "Delete";
+  // Prevent the click from triggering the anchor navigation.
+  deleteBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    event.preventDefault();
+    deleteStructure(item.id);
+  });
+  card.appendChild(deleteBtn);
+
   // Create an anchor element and set its href to include the item's id
   const link = document.createElement("a");
   link.href = `/?structureId=${item.id}&load=true`;
@@ -59,6 +70,44 @@ function createCard(item: LibraryItem): HTMLElement {
   link.appendChild(card);
 
   return link;
+}
+
+function deleteStructure(id: number) {
+  // Assuming "db" is your Dexie instance and "structures" is your table
+  structureData.delete(id)
+    .then(() => {
+      console.log(`Structure with id ${id} deleted successfully.`);
+      // Refresh the library cards to remove stale data
+      refreshLibraryCards();
+    })
+    .catch((error: any) => {
+      console.error(`Failed to delete structure with id ${id}:`, error);
+    });
+}
+
+// Example function to refresh the library cards
+function refreshLibraryCards() {
+  // Clear the existing library container
+  const container = document.getElementById("library-container");
+  if (container) {
+    container.innerHTML = "";
+  }
+
+  // Fetch the updated list of structures from Dexie
+  structureData.toArray()
+    .then((items: EntryType[]) => {
+      items.forEach(item => {
+        const cardElement = createCard({
+          date:item.date,
+          id:item.id,
+          name:item.name, 
+        });
+        container?.appendChild(cardElement);
+      });
+    })
+    .catch((error: any) => {
+      console.error("Failed to refresh library cards:", error);
+    });
 }
 
 async function initLibrary() {
