@@ -322,7 +322,7 @@ class AttractionPlane extends PlaneForce {
 }
 
 class ForceHandler{
-    types: string[];
+    types: string[] = [];
     knownTrapForces: string[] = ['mutual_trap', 'skew_trap']; //these are the forces I know how to draw via lines
     knownPlaneForces: string[] = ["repulsion_plane", "attraction_plane"]; //these are the forces I know how to draw via planes
     forceColors: THREE.Color[] = [ //add more if you implement more forces
@@ -450,6 +450,7 @@ class ForceHandler{
     }
 
     redrawTraps() {
+        if (this.forces.length == 0) { return }
         let v1 = [];
         let v2 = [];
         for (let i = 0; i < this.types.length; i++) {
