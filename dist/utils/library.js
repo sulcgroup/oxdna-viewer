@@ -12,7 +12,7 @@ async function fetchLibraryData() {
     const allStructures = await structureData.toArray();
     return allStructures.map((i) => {
         return {
-            name: i.name,
+            name: i.structureName,
             date: i.date,
             id: i.id,
         };
@@ -50,7 +50,8 @@ function createCard(item) {
 }
 function deleteStructure(id) {
     // Assuming "db" is your Dexie instance and "structures" is your table
-    structureData.delete(id)
+    structureData
+        .delete(id)
         .then(() => {
         console.log(`Structure with id ${id} deleted successfully.`);
         // Refresh the library cards to remove stale data
@@ -68,13 +69,14 @@ function refreshLibraryCards() {
         container.innerHTML = "";
     }
     // Fetch the updated list of structures from Dexie
-    structureData.toArray()
+    structureData
+        .toArray()
         .then((items) => {
-        items.forEach(item => {
+        items.forEach((item) => {
             const cardElement = createCard({
                 date: item.date,
                 id: item.id,
-                name: item.name,
+                name: item.structureName,
             });
             container?.appendChild(cardElement);
         });
@@ -106,8 +108,8 @@ async function createNew() {
         }
         else {
             const newId = await structureData.add({
-                structure: { data: [] },
-                name: nameElement.value,
+                structure: [],
+                structureName: nameElement.value,
                 date: Date.now(),
             });
             // Redirect to the new structure's page using its ID.

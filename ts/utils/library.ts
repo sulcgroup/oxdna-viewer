@@ -5,8 +5,8 @@ import Dexie from "https://cdn.skypack.dev/dexie";
 
 interface EntryType {
   id?: number;
-  structure: { data: ArrayBuffer[] };
-  name: string;
+  structure: { data: ArrayBuffer; commitName: string }[];
+  structureName: string;
   date: number;
 }
 
@@ -28,7 +28,7 @@ async function fetchLibraryData(): Promise<LibraryItem[]> {
   const allStructures = await structureData.toArray();
   return allStructures.map((i) => {
     return {
-      name: i.name,
+      name: i.structureName,
       date: i.date,
       id: i.id,
     };
@@ -74,7 +74,8 @@ function createCard(item: LibraryItem): HTMLElement {
 
 function deleteStructure(id: number) {
   // Assuming "db" is your Dexie instance and "structures" is your table
-  structureData.delete(id)
+  structureData
+    .delete(id)
     .then(() => {
       console.log(`Structure with id ${id} deleted successfully.`);
       // Refresh the library cards to remove stale data
@@ -94,13 +95,14 @@ function refreshLibraryCards() {
   }
 
   // Fetch the updated list of structures from Dexie
-  structureData.toArray()
+  structureData
+    .toArray()
     .then((items: EntryType[]) => {
-      items.forEach(item => {
+      items.forEach((item) => {
         const cardElement = createCard({
-          date:item.date,
-          id:item.id,
-          name:item.name, 
+          date: item.date,
+          id: item.id,
+          name: item.structureName,
         });
         container?.appendChild(cardElement);
       });
@@ -134,8 +136,8 @@ async function createNew(): Promise<void> {
       alert("Please give a name");
     } else {
       const newId = await structureData.add({
-        structure: { data: [] },
-        name: nameElement.value,
+        structure: [],
+        structureName: nameElement.value,
         date: Date.now(),
       });
       // Redirect to the new structure's page using its ID.
