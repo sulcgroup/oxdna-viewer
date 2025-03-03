@@ -52,7 +52,19 @@ canvas.addEventListener("keydown", event => {
             deleteWrapper();
             break;
         case 'l':
-            ligateWrapper();
+            console.log("here");
+            if (event.ctrlKey && event.shiftKey) {
+                let s = document.getElementById("section-library");
+                if (!s.classList.contains("active")) {
+                    const otherActive = document.querySelectorAll('.section.active')[0];
+                    otherActive.classList.remove("active");
+                    document.getElementsByClassName("section");
+                    s.classList.add("active");
+                }
+            }
+            else {
+                ligateWrapper();
+            }
             break;
         case 'n':
             nickWrapper();

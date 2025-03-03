@@ -40,7 +40,20 @@ canvas.addEventListener("keydown", event =>{
 
         // Editing shortcuts
         case 'delete': deleteWrapper(); break;
-        case 'l': ligateWrapper(); break;
+        case 'l': 
+            console.log("here")
+            if (event.ctrlKey && event.shiftKey) {
+                let s = document.getElementById("section-library") as HTMLElement;
+                if (!s.classList.contains("active")) {
+                    const otherActive = document.querySelectorAll('.section.active')[0] as HTMLElement;
+                    otherActive.classList.remove("active");
+                    document.getElementsByClassName("section")
+                    s.classList.add("active")
+                }
+            } else {
+                ligateWrapper();
+            }
+            break;
         case 'n': nickWrapper(); break;
 
         // Undo: ctrl-z, cmd-z
@@ -66,7 +79,6 @@ canvas.addEventListener("keydown", event =>{
                     shiftWithinBox(new THREE.Vector3(0,1,0))
                 }
             } break;
-
         // Select everything not selected:
         case 'i': if (event.ctrlKey || event.metaKey) {event.preventDefault(); invertSelection()} break;
 
