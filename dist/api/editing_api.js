@@ -224,6 +224,8 @@ var edit;
             if (n5) {
                 strand5 = splitStrand(n5);
             }
+            // Remove associated forces
+            forceHandler.removeByElement(victims, true);
             // Remove pairing
             if (e.isPaired()) {
                 if (e.pair.pair === e) {

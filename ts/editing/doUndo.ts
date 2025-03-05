@@ -116,8 +116,21 @@ class RevertableDeletion extends RevertableEdit {
     victims: BasicElement[];
     constructor(victims: BasicElement[]) {
         const saved = victims.map(e=> new InstanceCopy(e));
-        let undo = function() {this.victims = edit.addElements(saved)};
-        let redo = function() {edit.deleteElements(this.victims)};
+        const savedForces = forceHandler.getByElement(victims).slice();
+        let undo = function() {
+            // Add elements back to the scene. This creates new elements in a tmpSys.
+            this.victims = edit.addElements(saved); 
+            // Map the saved forces onto the newly-created elements.
+            savedForces.forEach(f => {
+                f.particle = this.victims[saved.findIndex(e => e.id == f.particle.id)]
+                if (saved.map(ic => ic.id).includes(f.ref_particle.id)) {
+                    f.ref_particle = this.victims[saved.findIndex(e => e.id == f.ref_particle.id)]
+                }
+            });
+            console.log(savedForces);
+            forceHandler.set(savedForces)
+        };
+        let redo = function() { edit.deleteElements(this.victims) };
         super(undo, redo);
         this.victims = victims;
     };
