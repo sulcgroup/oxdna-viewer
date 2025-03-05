@@ -527,8 +527,10 @@ class ForceHandler{
 
     redrawTraps() {
         if (this.forces.length == 0) { return }
+
         let v1:number[][] = [];
         let v2:number[] = [];
+
         for (let i = 0; i < this.types.length; i++) {
             v1.push([]);
         }
