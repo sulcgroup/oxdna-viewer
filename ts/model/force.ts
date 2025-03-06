@@ -18,6 +18,14 @@ abstract class PairwiseForce extends Force {
     abstract ref_particle: BasicElement;
     abstract force: THREE.Vector3[];
     abstract eqDists: THREE.Vector3[];
+
+    equals(compareForce:PairwiseForce) {
+        if (!(compareForce instanceof PairwiseForce) ) { return false }
+        return(
+            this.particle === compareForce.particle &&
+            this.ref_particle === compareForce.ref_particle
+        )
+    }
 }
 
 class MutualTrap extends PairwiseForce {
@@ -39,6 +47,17 @@ class MutualTrap extends PairwiseForce {
         this.r0 = r0;
         this.PBC = PBC;
         this.update()
+    }
+
+    equals(compareForce: MutualTrap): boolean {
+        if (!(compareForce instanceof MutualTrap) ) { return false }
+        return(
+            this.particle === compareForce.particle &&
+            this.ref_particle === compareForce.ref_particle &&
+            this.stiff === compareForce.stiff &&
+            this.r0 === compareForce.r0 &&
+            this.PBC === compareForce.PBC
+        )
     }
 
     setFromParsedJson(parsedjson) {
@@ -136,6 +155,18 @@ class SkewTrap extends PairwiseForce {
         this.update()
     }
 
+    equals(compareForce: SkewTrap): boolean {
+        if (!(compareForce instanceof SkewTrap) ) { return false }
+        return(
+            this.particle === compareForce.particle &&
+            this.ref_particle === compareForce.ref_particle &&
+            this.stdev === compareForce.stdev &&
+            this.shape === compareForce.shape &&
+            this.r0 === compareForce.r0 &&
+            this.PBC === compareForce.PBC
+        )
+    }
+
     setFromParsedJson(parsedjson) {
         for (var param in parsedjson) {
             if (['particle', 'ref_particle'].includes(param)) {
@@ -211,6 +242,15 @@ abstract class PlaneForce extends Force {
     abstract position: number;
     abstract stiff: number;
 
+    equals(compareForce:PairwiseForce) {
+        if (!(compareForce instanceof PlaneForce) ) { return false }
+        return(
+            this.particles === compareForce.particles &&
+            this.dir === compareForce.dir &&
+            this.position === compareForce.position &&
+            this.stiff === compareForce.stiff
+        )
+    }
 
     set(particles: BasicElement[] | number, stiff=0.09, position=0, dir=new THREE.Vector3(0,0,1)) {
         this.particles = particles;
@@ -303,7 +343,6 @@ abstract class PlaneForce extends Force {
 
 }
 
-
 class RepulsionPlane extends PlaneForce {
     type = 'repulsion_plane';
     particles: BasicElement[] | number = -1; // Can be an array of particles or -1 (all)
@@ -347,8 +386,44 @@ class ForceHandler{
 
     set(forces: Force[]) {
         this.forces.push(...forces)
-        this.drawTraps();
-        this.drawPlanes();
+        try {
+            if (this.sceneObjects.length > 0) { this.clearForcesFromScene() }
+            this.drawTraps();
+            this.drawPlanes();
+        }
+        catch (exceptionVar) {
+            forces.forEach(_ => this.forces.pop())
+            notify("Adding forces failed! See console for more information.", "alert")
+            console.error(exceptionVar)
+        }
+    }
+
+    removeByElement(elems: BasicElement[], removePair:boolean=false) {
+        // Get traps which contain the element
+        const pairwiseForces = this.getTraps()
+        let toRemove:Set<Force>
+        if (removePair){ toRemove = new Set(pairwiseForces.filter(f => elems.includes(f.particle) || elems.includes(f.ref_particle))) }
+        else {toRemove = new Set(pairwiseForces.filter(f => elems.includes(f.particle)))}
+        if (toRemove.size == 0) { return }
+
+        // Remove the offending traps
+        this.forces = this.forces.filter(f => !toRemove.has(f))
+        listForces()
+        this.clearForcesFromScene()
+        if (this.forces.length > 0) { this.drawTraps() }
+    }
+
+    removeById(ids: number[]){
+        ids.forEach(i => {
+            this.forces.splice(i, 1)
+        });
+        listForces()
+        this.clearForcesFromScene()
+        if (this.forces.length > 0) { this.drawTraps() }
+    }
+
+    getByElement(elems: BasicElement[]) {
+        return this.getTraps().filter(f => elems.includes(f.particle))
     }
 
     getTraps() {
@@ -399,6 +474,7 @@ class ForceHandler{
         this.eqDistLines = new THREE.LineSegments(eqDistGeom, materials[0]);
         scene.add(this.eqDistLines);
         this.sceneObjects.push(this.eqDistLines);
+        render();
 
         //possibly a better way to fire update
         //trajReader.nextConfig = api.observable.wrap(trajReader.nextConfig, this.update);
@@ -451,8 +527,10 @@ class ForceHandler{
 
     redrawTraps() {
         if (this.forces.length == 0) { return }
-        let v1 = [];
-        let v2 = [];
+
+        let v1:number[][] = [];
+        let v2:number[] = [];
+
         for (let i = 0; i < this.types.length; i++) {
             v1.push([]);
         }
@@ -466,13 +544,16 @@ class ForceHandler{
             v2.push(f.eqDists[1].x,f.eqDists[1].y,f.eqDists[1].z);
         });
         this.types.forEach((t, i) => {
-            this.forceLines[i].geometry = new THREE.BufferGeometry();
-            let a = this.forceLines[i].geometry as THREE.BufferGeometry;
-            a.addAttribute('position', new THREE.Float32BufferAttribute(v1[i], 3));
+            for (let j = 0; j < v1[i].length; j++) {
+                this.forceLines[i].geometry["attributes"]["position"].array[j] = v1[i][j]
+            }
+            this.forceLines[i].geometry["attributes"]['position'].needsUpdate = true;
         });
         
-        this.eqDistLines.geometry = new THREE.BufferGeometry();
-        this.eqDistLines.geometry.addAttribute('position', new THREE.Float32BufferAttribute(v2, 3));
+        for (let i = 0; i < v2.length; i++) {
+            this.eqDistLines.geometry["attributes"]['position'].array[i] = v2[i]
+        }
+        this.eqDistLines.geometry["attributes"]['position'].needsUpdate = true;
 
         render()
     }
@@ -506,23 +587,23 @@ function makeTrapsFromSelection() {
 
 function makeTrapsFromPairs() {
     let stiffness = parseFloat((document.getElementById("txtForceValue") as HTMLInputElement).value);
-    let nopairs = true;
-    const forces: PairwiseForce[] = []
-    elements.forEach(e=>{
-        // If element is paired, add a trap
-        if (e.isPaired()) {
-            let trap = new MutualTrap();
-            trap.set(e, (e as Nucleotide).pair, stiffness);
-            forces.push(trap);
-            nopairs = false;
-        }
-    });
+    let nopairs = !systems.every(sys => sys.checkedForBasepairs);
     if (nopairs) {
         ask("No basepair info found", "Do you want to run an automatic basepair search?",
-        ()=>{view.longCalculation(findBasepairs, view.basepairMessage,()=>{
-            makeTrapsFromPairs(); listForces(); // recall this as we now have pairs
-        })})
+        ()=>{view.longCalculation(findBasepairs, view.basepairMessage, makeTrapsFromPairs)})
     }
+
+    const forces: PairwiseForce[] = []
+    elements.forEach(e=>{
+        // If element is paired and the trap doesn't already exist, add a trap
+        if (e.isPaired()) {
+            const currForces = forceHandler.getByElement([e]);
+            let trap = new MutualTrap();
+            trap.set(e, (e as Nucleotide).pair, stiffness);
+            const alreadyExists = currForces.filter(f => f.equals(trap));
+            if (alreadyExists.length === 0) { forces.push(trap); }
+        }
+    });
     forceHandler.set(forces);
-    if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
+    listForces()
 }
