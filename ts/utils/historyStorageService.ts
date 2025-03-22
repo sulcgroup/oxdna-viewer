@@ -104,6 +104,9 @@ export async function loadStructure(): Promise<void> {
           const file = new File([uncompressed], "output.oxview", {
             type: "text/plain",
           });
+          view.inboxingMode.set("None");
+          view.centeringMode.set("None");
+
           handleFiles([file]);
         } else {
           console.error("Invalid structure id parameter.");
