@@ -60,6 +60,7 @@ canvas.addEventListener("keydown", event =>{
         // Redo: ctrl-shift-z, ctrl-y, cmd-shift-z, cmd-y
         case 'z':
             if (event.ctrlKey || event.metaKey) {
+                event.preventDefault()
                 if (event.shiftKey) {editHistory.redo();}
                 else {editHistory.undo();}
             } else {

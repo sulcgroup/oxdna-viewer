@@ -269,6 +269,9 @@ module edit{
                 strand5 = splitStrand(n5);
             }
 
+            // Remove associated forces
+            forceHandler.removeByElement(victims, true);
+
             // Remove pairing
             if(e.isPaired()) {
                 if ((e as Nucleotide).pair.pair === e) {

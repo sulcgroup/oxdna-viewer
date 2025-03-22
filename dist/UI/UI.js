@@ -52,6 +52,9 @@ function createTable(data, header, tableName) {
 }
 function listForces() {
     let forceDOM = document.getElementById("forces");
+    if (!forceDOM) {
+        return;
+    }
     forceDOM.innerHTML = "";
     forceHandler.forceTable = forceHandler.forces.map(force => [force.description(), force.type]);
     forceDOM.appendChild(createTable(forceHandler.forceTable, ['Description', 'Type'], 'forcesTable'));
@@ -59,16 +62,18 @@ function listForces() {
 function deleteSelectedForces() {
     // Remove all forces selected in the force window
     var table = $('#forcesTable').data('table');
-    let removeIndices = table.getSelectedItems().map(s => forceHandler.forceTable.indexOf(s));
+    const selected = table.getSelectedItems();
+    let removeIndices = selected.map(s => selected.indexOf(s));
+    removeIndices.sort((a, b) => { b - a; });
+    removeIndices.reverse();
     // consider changing to https://stackoverflow.com/a/35116966/9738112 so it can be in-place
     // Remove force from both the list of forces and from the table
     forceHandler.forceTable = forceHandler.forceTable.filter((f, i) => !removeIndices.includes(i));
-    removeIndices.forEach(i => {
-        forceHandler.forces.splice(i, 1);
-    });
-    listForces();
-    forceHandler.clearForcesFromScene();
-    forceHandler.drawTraps();
+    forceHandler.removeById(removeIndices);
+}
+function deleteForcesFromBases() {
+    const victims = Array.from(selectedBases);
+    forceHandler.removeByElement(victims, false);
 }
 function drawSystemHierarchy() {
     let checkboxhtml = (label) => `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;
