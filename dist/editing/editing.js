@@ -130,10 +130,17 @@ function extendWrapper(double) {
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
     topologyEdited = true;
 }
-function createWrapper() {
-    let seq = view.getInputValue("sequence").toUpperCase();
-    let createDuplex = view.getInputBool("setCompl");
-    let type = view.getInputValue("NA_toggle");
+function createWrapper(seq, createDuplex, type, pos) {
+    // if no argument is given, use the values from the input fields
+    if (seq == undefined) {
+        seq = view.getInputValue("sequence").toUpperCase();
+    }
+    if (createDuplex == undefined) {
+        createDuplex = view.getInputBool("setCompl");
+    }
+    if (type == undefined) {
+        type = view.getInputValue("NA_toggle");
+    }
     let isRNA = type === 'RNA' ? true : false;
     if (seq == "") {
         notify("Please type a sequence into the box", "alert");
@@ -141,9 +148,19 @@ function createWrapper() {
     }
     let elems = edit.createStrand(seq, createDuplex, isRNA);
     let instanceCopies = elems.map(e => { return new InstanceCopy(e); });
-    let pos = new THREE.Vector3();
-    elems.forEach(e => pos.add(e.getPos()));
-    pos.divideScalar(elems.length);
+    let cms_pos = new THREE.Vector3();
+    elems.forEach(e => cms_pos.add(e.getPos()));
+    cms_pos.divideScalar(elems.length);
+    // if pos is not given, than we use the center of mass of the created elements
+    if (pos == undefined) {
+        pos = cms_pos;
+    }
+    else {
+        // otherwise we translate the elements to the given position
+        translateElements(new Set(elems), cms_pos.clone().negate());
+        // and position the center of mass at the given position
+        translateElements(new Set(elems), pos);
+    }
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
     topologyEdited = true;

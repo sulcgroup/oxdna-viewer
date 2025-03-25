@@ -67,6 +67,7 @@ class OXServeSocket extends WebSocket {
         let oxServeTrajReader = new TrajectoryReader(new File([], 'oxServe'), systems[systems.length - 1]);
         this.onmessage = (response) => {
             if (!this.abort) { //ignore all incomming messages when we stop the simulation
+                //console.log(response.data);
                 let message = JSON.parse(response.data);
                 if ("console_log" in message) {
                     console.log(message["console_log"]);
@@ -76,6 +77,13 @@ class OXServeSocket extends WebSocket {
                     oxServeTrajReader.parseConf(lines);
                     if (forceHandler)
                         forceHandler.redrawTraps();
+                }
+                if ("eval" in message) {
+                    let lines = message["eval"];
+                    let res = eval(lines);
+                    // this.send(
+                    //     JSON.stringify({'eval':res})
+                    // )
                 }
             }
         };
