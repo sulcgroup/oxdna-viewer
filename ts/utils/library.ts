@@ -1,10 +1,11 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
 
+import { createId } from "@paralleldrive/cuid2";
 import Dexie from "https://cdn.skypack.dev/dexie";
 
 interface EntryType {
-  id?: number;
+  id: string;
   structure: { data: ArrayBuffer; commitName: string }[];
   structureName: string;
   date: number;
@@ -12,7 +13,7 @@ interface EntryType {
 
 const db = new Dexie("Structures");
 db.version(1).stores({
-  structureData: "++id, name", // auto-increment primary key
+  structureData: "id, name", // auto-increment primary key
 });
 
 // Helper to get our table with proper type information.
@@ -20,7 +21,7 @@ const structureData = db.table<EntryType>("structureData");
 interface LibraryItem {
   name: string;
   date: number;
-  id: number;
+  id: string;
 }
 
 // Async function that simulates fetching the data.
@@ -72,7 +73,7 @@ function createCard(item: LibraryItem): HTMLElement {
   return link;
 }
 
-function deleteStructure(id: number) {
+function deleteStructure(id: string) {
   // Assuming "db" is your Dexie instance and "structures" is your table
   structureData
     .delete(id)
@@ -136,6 +137,7 @@ async function createNew(): Promise<void> {
       alert("Please give a name");
     } else {
       const newId = await structureData.add({
+        id: createId(),
         structure: [],
         structureName: nameElement.value,
         date: Date.now(),

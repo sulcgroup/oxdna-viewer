@@ -50,6 +50,7 @@
     }
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
     "@types/chart.js": "^2.9.31",
     "@types/chartjs-plugin-annotation": "^0.5.1",
     "@types/jquery": "^3.5.6",

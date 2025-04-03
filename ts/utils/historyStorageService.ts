@@ -5,7 +5,7 @@ import Dexie from "https://cdn.skypack.dev/dexie";
 import { deflate, inflate } from "https://cdn.skypack.dev/pako";
 
 interface EntryType {
-  id?: number;
+  id: string;
   structure: { data: ArrayBuffer; commitName: string }[];
   structureName: string;
   date: number;
@@ -13,7 +13,7 @@ interface EntryType {
 
 const db = new Dexie("Structures");
 db.version(1).stores({
-  structureData: "++id, name", // auto-increment primary key
+  structureData: "id, name", // auto-increment primary key
 });
 
 // Helper to get our table with proper type information.
@@ -50,8 +50,8 @@ export async function saveStructure(): Promise<void> {
     const urlParams = new URLSearchParams(queryString);
 
     if (urlParams.has("structureId")) {
-      const id = parseInt(urlParams.get("structureId") as string, 10);
-      if (!isNaN(id)) {
+      const id = urlParams.get("structureId") as string;
+      if (id) {
         const old = await structureData.get(id);
         if (old) {
           const newDataArr: { data: ArrayBuffer; commitName: string }[] = [
@@ -84,8 +84,8 @@ export async function loadStructure(): Promise<void> {
 
     if (urlParams.has("structureId")) {
       if (urlParams.has("commit")) {
-        const id = parseInt(urlParams.get("structureId") as string, 10);
-        if (!isNaN(id)) {
+        const id = urlParams.get("structureId") as string;
+        if (id) {
           const storedData = await structureData.get(id);
           if (!storedData) {
             console.error(`No structure found with id ${id}.`);
@@ -112,8 +112,8 @@ export async function loadStructure(): Promise<void> {
           console.error("Invalid structure id parameter.");
         }
       } else {
-        const id = parseInt(urlParams.get("structureId") as string, 10);
-        if (!isNaN(id)) {
+        const id = urlParams.get("structureId") as string;
+        if (id) {
           const storedData = await structureData.get(id);
           if (!storedData) {
             console.error(`No structure found with id ${id}.`);
@@ -164,7 +164,7 @@ async function viewHistory() {
   }
 
   // Convert the parameter to a number (assuming your ids are numeric)
-  const structureId = parseInt(structureIdParam, 10);
+  const structureId = structureIdParam;
 
   try {
     // Retrieve the entry from the Dexie database by its id
