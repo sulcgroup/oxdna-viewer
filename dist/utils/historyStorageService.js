@@ -4,7 +4,7 @@ import Dexie from "https://cdn.skypack.dev/dexie";
 import { deflate, inflate } from "https://cdn.skypack.dev/pako";
 const db = new Dexie("Structures");
 db.version(1).stores({
-    structureData: "++id, name", // auto-increment primary key
+    structureData: "id, structureName", // updated schema to match the interface property
 });
 // Helper to get our table with proper type information.
 const structureData = db.table("structureData");
@@ -31,8 +31,8 @@ export async function saveStructure() {
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.has("structureId")) {
-            const id = parseInt(urlParams.get("structureId"), 10);
-            if (!isNaN(id)) {
+            const id = urlParams.get("structureId");
+            if (id) {
                 const old = await structureData.get(id);
                 if (old) {
                     const newDataArr = [
@@ -65,8 +65,8 @@ export async function loadStructure() {
         const urlParams = new URLSearchParams(queryString);
         if (urlParams.has("structureId")) {
             if (urlParams.has("commit")) {
-                const id = parseInt(urlParams.get("structureId"), 10);
-                if (!isNaN(id)) {
+                const id = urlParams.get("structureId");
+                if (id) {
                     const storedData = await structureData.get(id);
                     if (!storedData) {
                         console.error(`No structure found with id ${id}.`);
@@ -82,6 +82,8 @@ export async function loadStructure() {
                     const file = new File([uncompressed], "output.oxview", {
                         type: "text/plain",
                     });
+                    view.inboxingMode.set("None");
+                    view.centeringMode.set("None");
                     handleFiles([file]);
                 }
                 else {
@@ -89,8 +91,8 @@ export async function loadStructure() {
                 }
             }
             else {
-                const id = parseInt(urlParams.get("structureId"), 10);
-                if (!isNaN(id)) {
+                const id = urlParams.get("structureId");
+                if (id) {
                     const storedData = await structureData.get(id);
                     if (!storedData) {
                         console.error(`No structure found with id ${id}.`);
@@ -138,7 +140,7 @@ async function viewHistory() {
         return;
     }
     // Convert the parameter to a number (assuming your ids are numeric)
-    const structureId = parseInt(structureIdParam, 10);
+    const structureId = structureIdParam;
     try {
         // Retrieve the entry from the Dexie database by its id
         const entry = await structureData.get(structureId);

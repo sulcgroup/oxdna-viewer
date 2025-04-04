@@ -1,9 +1,31 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
 import Dexie from "https://cdn.skypack.dev/dexie";
+function createId() {
+    if (typeof crypto !== "undefined" &&
+        typeof crypto.randomUUID === "function") {
+        // Modern browsers have a built-in randomUUID method.
+        return crypto.randomUUID();
+    }
+    // Fallback to a manual implementation if crypto.randomUUID isn't available.
+    let dt = new Date().getTime();
+    let dt2 = (performance && performance.now && performance.now() * 1000) || 0;
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        let r = Math.random() * 16;
+        if (dt > 0) {
+            r = (dt + r) % 16 | 0;
+            dt = Math.floor(dt / 16);
+        }
+        else {
+            r = (dt2 + r) % 16 | 0;
+            dt2 = Math.floor(dt2 / 16);
+        }
+        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+    });
+}
 const db = new Dexie("Structures");
 db.version(1).stores({
-    structureData: "++id, name", // auto-increment primary key
+    structureData: "id, structureName", // updated schema to match your interface
 });
 // Helper to get our table with proper type information.
 const structureData = db.table("structureData");
@@ -49,7 +71,7 @@ function createCard(item) {
     return link;
 }
 function deleteStructure(id) {
-    // Assuming "db" is your Dexie instance and "structures" is your table
+    // Delete the structure with the provided id.
     structureData
         .delete(id)
         .then(() => {
@@ -107,7 +129,10 @@ async function createNew() {
             alert("Please give a name");
         }
         else {
-            const newId = await structureData.add({
+            const newId = createId();
+            console.log("i got called", newId);
+            await structureData.add({
+                id: newId,
                 structure: [],
                 structureName: nameElement.value,
                 date: Date.now(),
@@ -115,11 +140,13 @@ async function createNew() {
             // Redirect to the new structure's page using its ID.
             window.location.href = `/?structureId=${newId}`;
         }
-        // Create a new structure with an empty data array.
     }
     catch (error) {
         console.error("Error creating a new structure:", error);
     }
 }
+(() => {
+    console.log("hello");
+})();
 initLibrary();
 window.createNew = createNew;

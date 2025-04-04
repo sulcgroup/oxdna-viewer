@@ -13,7 +13,7 @@ interface EntryType {
 
 const db = new Dexie("Structures");
 db.version(1).stores({
-  structureData: "id, name", // auto-increment primary key
+  structureData: "id, structureName", // updated schema to match the interface property
 });
 
 // Helper to get our table with proper type information.

@@ -4,11 +4,6 @@ declare module "https://cdn.skypack.dev/dexie" {
   export { EntityTable };
 }
 
-declare module "https://cdn.jsdelivr.net/npm/@paralleldrive/cuid2@2.2.2/index.min.js" {
-  function createId(): string;
-  export default createId;
-}
-
 declare module "https://cdn.skypack.dev/pako" {
   export interface DeflateOptions {
     level?: number;
