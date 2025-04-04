@@ -1,23 +1,7 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-import Dexie from "https://cdn.skypack.dev/dexie";
 import { deflate, inflate } from "https://cdn.skypack.dev/pako";
-
-interface EntryType {
-  id: string;
-  structure: { data: ArrayBuffer; commitName: string }[];
-  structureName: string;
-  date: number;
-}
-
-const db = new Dexie("Structures");
-db.version(1).stores({
-  structureData: "id, structureName", // updated schema to match the interface property
-});
-
-// Helper to get our table with proper type information.
-const structureData = db.table<EntryType>("structureData");
 
 export function createCompressedOxViewFile(
   space?: string | number,
@@ -52,14 +36,14 @@ export async function saveStructure(): Promise<void> {
     if (urlParams.has("structureId")) {
       const id = urlParams.get("structureId") as string;
       if (id) {
-        const old = await structureData.get(id);
+        const old = await (window as any).DexieDB.structureData.get(id);
         if (old) {
           const newDataArr: { data: ArrayBuffer; commitName: string }[] = [
             ...old.structure,
             { data: compressedData, commitName: commitNameElement.value },
           ];
 
-          await structureData.put({
+          await (window as any).DexieDB.structureData.put({
             id,
             structure: newDataArr,
             date: old.date,
@@ -86,7 +70,9 @@ export async function loadStructure(): Promise<void> {
       if (urlParams.has("commit")) {
         const id = urlParams.get("structureId") as string;
         if (id) {
-          const storedData = await structureData.get(id);
+          const storedData = await (window as any).DexieDB.structureData.get(
+            id,
+          );
           if (!storedData) {
             console.error(`No structure found with id ${id}.`);
             return;
@@ -114,7 +100,9 @@ export async function loadStructure(): Promise<void> {
       } else {
         const id = urlParams.get("structureId") as string;
         if (id) {
-          const storedData = await structureData.get(id);
+          const storedData = await (window as any).DexieDB.structureData.get(
+            id,
+          );
           if (!storedData) {
             console.error(`No structure found with id ${id}.`);
             return;
@@ -168,7 +156,7 @@ async function viewHistory() {
 
   try {
     // Retrieve the entry from the Dexie database by its id
-    const entry = await structureData.get(structureId);
+    const entry = await (window as any).DexieDB.structureData.get(structureId);
 
     if (!entry) {
       console.error(`No entry found for structureId: ${structureId}`);
@@ -204,6 +192,72 @@ async function viewHistory() {
   }
 }
 
+async function pushToServer() {
+  try {
+    // Get the structureId query parameter from the URL
+    const params = new URLSearchParams(window.location.search);
+    const structureIdParam = params.get("structureId");
+
+    if (!structureIdParam) {
+      console.error("No structureId query parameter found in the URL.");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("Authentication token is missing. Please log in.");
+    }
+    const response = await fetch(`${apiRoot}/oxview/save-structure`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        structureId: structureIdParam,
+      }),
+    });
+
+    // Convert the parameter to a number (assuming your ids are numeric)
+    const structureId = structureIdParam;
+
+    // Retrieve the entry from the Dexie database by its id
+    const entry = await (window as any).DexieDB.structureData.get(structureId);
+
+    if (!entry) {
+      console.error(`No entry found for structureId: ${structureId}`);
+      return;
+    }
+
+    // Find the div where the links will be inserted
+    const commitListDiv = document.getElementById("commitList");
+    if (!commitListDiv) {
+      console.error("Div with id 'commitList' not found.");
+      return;
+    }
+
+    // Clear any existing content in the div
+    commitListDiv.innerHTML = "";
+
+    // Loop through each commit in the entry's structure array and create an <a> element
+    entry.structure.forEach((commit: { commitName: string }) => {
+      const link = document.createElement("a");
+      // Here you can set the href as needed; currently it is set to '#' as a placeholder.
+      link.href = `/?structureId=${structureId}&load=true&commit=${commit.commitName}`;
+      link.textContent = commit.commitName;
+
+      // Optionally, wrap each link in a div or add a line break for formatting
+      const lineBreak = document.createElement("br");
+
+      // Append the link and line break to the target div
+      commitListDiv.appendChild(link);
+      commitListDiv.appendChild(lineBreak);
+    });
+  } catch (error) {
+    console.error("Error retrieving data from Dexie DB:", error);
+  }
+}
+
 (window as any).saveStructure = saveStructure;
 (window as any).loadStructure = loadStructure;
 (window as any).viewHistory = viewHistory;
+(window as any).pushToServer = pushToServer;

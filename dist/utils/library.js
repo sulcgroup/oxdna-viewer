@@ -1,6 +1,5 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
-import Dexie from "https://cdn.skypack.dev/dexie";
 function createId() {
     if (typeof crypto !== "undefined" &&
         typeof crypto.randomUUID === "function") {
@@ -23,15 +22,9 @@ function createId() {
         return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
     });
 }
-const db = new Dexie("Structures");
-db.version(1).stores({
-    structureData: "id, structureName", // updated schema to match your interface
-});
-// Helper to get our table with proper type information.
-const structureData = db.table("structureData");
 // Async function that simulates fetching the data.
 async function fetchLibraryData() {
-    const allStructures = await structureData.toArray();
+    const allStructures = await window.DexieDB.structureData.toArray();
     return allStructures.map((i) => {
         return {
             name: i.structureName,
@@ -72,7 +65,7 @@ function createCard(item) {
 }
 function deleteStructure(id) {
     // Delete the structure with the provided id.
-    structureData
+    window.DexieDB.structureData
         .delete(id)
         .then(() => {
         console.log(`Structure with id ${id} deleted successfully.`);
@@ -91,7 +84,7 @@ function refreshLibraryCards() {
         container.innerHTML = "";
     }
     // Fetch the updated list of structures from Dexie
-    structureData
+    window.DexieDB.structureData
         .toArray()
         .then((items) => {
         items.forEach((item) => {
@@ -131,7 +124,7 @@ async function createNew() {
         else {
             const newId = createId();
             console.log("i got called", newId);
-            await structureData.add({
+            await window.DexieDB.structureData.add({
                 id: newId,
                 structure: [],
                 structureName: nameElement.value,
@@ -145,8 +138,5 @@ async function createNew() {
         console.error("Error creating a new structure:", error);
     }
 }
-(() => {
-    console.log("hello");
-})();
 initLibrary();
 window.createNew = createNew;

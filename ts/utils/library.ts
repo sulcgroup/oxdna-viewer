@@ -1,7 +1,6 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
 
-import Dexie from "https://cdn.skypack.dev/dexie";
 function createId(): string {
   if (
     typeof crypto !== "undefined" &&
@@ -34,14 +33,6 @@ interface EntryType {
   date: number;
 }
 
-const db = new Dexie("Structures");
-db.version(1).stores({
-  structureData: "id, structureName", // updated schema to match your interface
-});
-
-// Helper to get our table with proper type information.
-const structureData = db.table<EntryType>("structureData");
-
 interface LibraryItem {
   name: string;
   date: number;
@@ -50,7 +41,7 @@ interface LibraryItem {
 
 // Async function that simulates fetching the data.
 async function fetchLibraryData(): Promise<LibraryItem[]> {
-  const allStructures = await structureData.toArray();
+  const allStructures = await (window as any).DexieDB.structureData.toArray();
   return allStructures.map((i) => {
     return {
       name: i.structureName,
@@ -99,7 +90,7 @@ function createCard(item: LibraryItem): HTMLElement {
 
 function deleteStructure(id: string) {
   // Delete the structure with the provided id.
-  structureData
+  (window as any).DexieDB.structureData
     .delete(id)
     .then(() => {
       console.log(`Structure with id ${id} deleted successfully.`);
@@ -120,7 +111,7 @@ function refreshLibraryCards() {
   }
 
   // Fetch the updated list of structures from Dexie
-  structureData
+  (window as any).DexieDB.structureData
     .toArray()
     .then((items: EntryType[]) => {
       items.forEach((item) => {
@@ -162,7 +153,7 @@ async function createNew(): Promise<void> {
     } else {
       const newId = createId();
       console.log("i got called", newId);
-      await structureData.add({
+      await (window as any).DexieDB.structureData.add({
         id: newId,
         structure: [],
         structureName: nameElement.value,
@@ -175,10 +166,6 @@ async function createNew(): Promise<void> {
     console.error("Error creating a new structure:", error);
   }
 }
-
-(() => {
-  console.log("hello");
-})();
 
 initLibrary();
 

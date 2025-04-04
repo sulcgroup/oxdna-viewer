@@ -65,6 +65,7 @@
       "./ts/api/plugin_api.ts",
       "./ts/utils/historyStorageService.ts",
       "./ts/utils/submitStructureWindow-script.ts",
-      "./ts/utils/library.ts"
+      "./ts/utils/library.ts",
+      "./ts/utils/dexieHelpers.ts"
     ]
 }

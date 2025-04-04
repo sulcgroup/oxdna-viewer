@@ -1219,7 +1219,7 @@
                     </div>
                     <span class="title "> <b>Library</b></span>
                 </div>
-                 <div class="group">
+                <div class="group">
                     <ul style="list-style-type:none" height="70px">
                         <li> 
                             <button type="submitWindow" onclick="view.toggleWindow('submitStructureWindow')">Submit structure to Nanobase</button>
@@ -1230,8 +1230,11 @@
                             <input type="text" name="commitName" id="commitName" />
                             <button type="save" onclick="view.toggleWindow('commitHistoryWindow', viewHistory())">View history</button>
                         </li>
+                        <li>
+                            <button type="submit" onclick="pushToServer()">Push to server</button>
+                        </li>
                     </ul>
-                 </div>
+                </div>
 
             </div>
 
@@ -1401,6 +1404,7 @@
         <script src="./dist/editing/distance.js"></script>
         <script src="./dist/editing/selections.js"></script>
         <script src="./dist/api/plugin_api.js"></script>
+        <script type="module" src="./dist/utils/dexieHelpers.js"></script>
         <script src="./dist/utils/submitStructureWindow-script.js"></script>
         <script type="module" src="./dist/utils/historyStorageService.js"></script>
 
