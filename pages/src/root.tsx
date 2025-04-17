@@ -7,11 +7,11 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 import { apiRoot } from "./consts";
-import { useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 
 const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 interface FormData {
-  jobName: string;
+  job_name: string;
   method: "MC" | "MD";
   type: boolean;
   steps: string;
@@ -25,6 +25,19 @@ interface FormData {
   advancedOptions: string;
 }
 
+//payload.append("job_name", formData.job_name);
+//payload.append("method", formData.method);
+//payload.append("type", String(formData.type));
+//payload.append("steps", String(parsedSteps));
+//payload.append("e_t_print_interval", String(parsedInterval));
+//payload.append("dt", String(formData.dt));
+//payload.append("interaction_type", String(formData.interaction_type));
+//payload.append("h_bon_restrain", String(formData.h_bon_restrain));
+//payload.append("temperature", String(formData.temperature));
+//payload.append("salt_concentration", String(formData.salt_concentration));
+//payload.append("verlet", String(formData.verlet));
+//payload.append("advancedOptions", formData.advancedOptions);
+
 const interactionTypeOptions = [
   { name: "DNA2", value: 0 },
   { name: "RNA2", value: 1 },
@@ -37,7 +50,7 @@ const interactionTypeOptions = [
   { name: "Forward Flux", value: 8 },
 ];
 
-const JobSubmissionForm = () => {
+export default function RootPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,7 +75,7 @@ const JobSubmissionForm = () => {
   }, []);
 
   const [formData, setFormData] = useState<FormData>({
-    jobName: "",
+    job_name: "",
     method: "MC",
     type: false,
     steps: "1e5",
@@ -156,7 +169,7 @@ const JobSubmissionForm = () => {
 
     // Build payload
     const payload = new FormData();
-    payload.append("jobName", formData.jobName);
+    payload.append("job_name", formData.job_name);
     payload.append("method", formData.method);
     payload.append("type", String(formData.type));
     payload.append("steps", String(parsedSteps));
@@ -185,7 +198,7 @@ const JobSubmissionForm = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const text = await res.text();
+        const text = await res.json();
         throw new Error(text || "Unknown server error");
       }
       alert("Job submitted successfully!");
@@ -598,10 +611,10 @@ const JobSubmissionForm = () => {
               Submit Job
             </button>
           </div>
+
+          <NavLink to="/dist/pages/server-status">Check server status</NavLink>
         </form>
       </div>
     </div>
   );
-};
-
-export default JobSubmissionForm;
+}

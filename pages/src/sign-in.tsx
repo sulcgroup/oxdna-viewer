@@ -1,12 +1,13 @@
 import { ChangeEvent, useState } from "react";
 import { Button } from "@headlessui/react";
 import { apiRoot } from "./consts";
-import { NavLink } from "react-router";
+import { NavLink, useNavigate } from "react-router";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -28,6 +29,7 @@ export default function SignIn() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("token", data.token);
+        navigate("/dist/pages/");
       } else {
         const data = await response.json();
         setErrorMessage(
@@ -77,7 +79,7 @@ export default function SignIn() {
               htmlFor="password"
               className="flex justify-between text-sm font-medium text-gray-700"
             >
-              <span>Password</span>{" "}
+              <span>Password</span>
               <span>
                 <NavLink
                   to="https://nanobase-rewrite-v1.vercel.app/reset-password"
@@ -112,9 +114,31 @@ export default function SignIn() {
             </p>
             <Button
               type="submit"
-              className="cursor-pointer rounded-lg bg-black px-4 py-2 text-white duration-200 hover:-translate-y-1 hover:shadow-xl"
               disabled={loading}
+              className={`relative flex items-center rounded-lg bg-black px-4 py-2 text-white duration-200 hover:-translate-y-1 hover:shadow-xl ${loading ? "cursor-not-allowed opacity-70 hover:translate-y-0 hover:shadow-none" : ""} `}
             >
+              {loading && (
+                <svg
+                  className="mr-2 -ml-1 h-5 w-5 animate-spin text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+              )}
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </div>
