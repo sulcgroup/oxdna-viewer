@@ -384,7 +384,7 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-plugins">Plugins</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-library">Library</a></li>
-            
+            <li><a href="/dist/pages/" target="_blank">Jobs</a></li>
         </ul>
 
         <div class="content-holder">
@@ -1235,9 +1235,36 @@
                         </li>
                     </ul>
                 </div>
-
             </div>
 
+            <!--Jobs pane-->
+            <div class="section" id="section-jobs">
+                <div class="group">
+                    <a href="/library.html" class="ribbon-button primary"  title="Go to library" id="import-button" style="width: 50px;">
+                        <span class="caption"><b>Go to library</b></span>
+                    </a>
+                    <div id="reportWindow" style="margin-left:10px" hidden="true">
+                    </div>
+                    <span class="title "> <b>Library</b></span>
+                </div>
+                <div class="group">
+                    <ul style="list-style-type:none" height="70px">
+                        <li> 
+                            <button type="submitWindow" onclick="view.toggleWindow('submitStructureWindow')">Submit structure to Nanobase</button>
+                            <button type="save" onclick="saveStructure()">Save structure</button>
+                            <button type="save" onclick="loadStructure()">Load structure</button>
+                        </li>
+                        <li>
+                            <input type="text" name="commitName" id="commitName" />
+                            <button type="save" onclick="view.toggleWindow('commitHistoryWindow', viewHistory())">View history</button>
+                        </li>
+                        <li>
+                            <button type="submit" onclick="pushToServer()">Push to server</button>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
         </div>
     </nav>
 
