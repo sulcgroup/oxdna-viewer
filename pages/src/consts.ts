@@ -25,10 +25,10 @@ export const status_giver = (): status_item[] => {
   return [
     {
       node_id: "node-001",
-      node_name: "Node 1",
+      node_name: "Pronghorn",
       gpu: {
         total: 16,
-        left: 8,
+        left: 8.5,
       },
       cpu: {
         total: 32,
@@ -41,10 +41,10 @@ export const status_giver = (): status_item[] => {
     },
     {
       node_id: "node-002",
-      node_name: "Node 2",
+      node_name: "Ringtail",
       gpu: {
         total: 32,
-        left: 16,
+        left: 16.2,
       },
       cpu: {
         total: 64,
@@ -57,10 +57,10 @@ export const status_giver = (): status_item[] => {
     },
     {
       node_id: "node-003",
-      node_name: "Node 3",
+      node_name: "Leonardo",
       gpu: {
         total: 8,
-        left: 4,
+        left: 2.5,
       },
       cpu: {
         total: 16,

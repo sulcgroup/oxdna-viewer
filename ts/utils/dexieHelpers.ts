@@ -19,4 +19,4 @@ DexieDB.version(1).stores({
 });
 
 (window as any).DexieDB = DexieDB;
-(window as any).apiRoot= apiRoot;
+(window as any).apiRoot = apiRoot;

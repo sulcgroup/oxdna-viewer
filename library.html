@@ -1,8 +1,23 @@
 <!doctype html>
-<html lang="en" xmlns="http://www.w3.org/1999/html">
+<html lang="en">
   <head>
-    <link rel="shortcut icon" type="image/png" href="favicon.png" />
-    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <meta charset="utf-8" />
+    <title>oxView</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <!-- Metro 4 (keep for all your Metro JS/CSS dependencies) -->
+    <link rel="stylesheet" href="css/metro.min.css" />
+    <link rel="stylesheet" href="css/metro-colors.min.css" />
+    <link rel="stylesheet" href="css/metro-icons.min.css" />
+    <link rel="stylesheet" href="css/library-display.css" />
+
+    <!-- Tailwind CDN (for the new layout) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Analytics (unchanged) -->
     <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"
@@ -15,35 +30,36 @@
       gtag("js", new Date());
       gtag("config", "UA-171800090-1");
     </script>
-
-    <title>oxView</title>
-    <!-- Required meta tags -->
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
-
-    <!-- Metro 4 -->
-    <link rel="stylesheet" href="css/metro.min.css" />
-    <link rel="stylesheet" href="css/metro-colors.min.css" />
-    <link rel="stylesheet" href="css/metro-icons.min.css" />
-
-    <link rel="stylesheet" href="css/library-display.css" />
   </head>
 
-  <body>
-    <h1 class="library-title">Library</h1>
-    <div id="library-container" class="library-grid-container"></div>
-    <button onclick="view.toggleWindow('createStructureWindow')">
-      Create new
-    </button>
+  <body class="bg-gray-100">
+    <div class="flex min-h-screen justify-center p-4">
+      <div class="w-full max-w-4xl rounded-lg bg-white p-8">
+        <!-- header -->
+        <div class="mb-6 flex items-center justify-between">
+          <h1 class="text-3xl font-bold">Library</h1>
+          <button
+            onclick="view.toggleWindow('createStructureWindow')"
+            class="relative flex items-center rounded-lg bg-black px-4 py-2 text-white duration-200 hover:-translate-y-1 hover:shadow-xl"
+          >
+            Create new
+          </button>
+        </div>
 
+        <!-- grid container -->
+        <div
+          id="library-container"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
+        ></div>
+      </div>
+    </div>
+
+    <!-- all your existing Metro & custom scripts (order preserved) -->
+
+    <script type="module" src="./dist/utils/dexieHelpers.js"></script>
     <script type="module" src="./dist/utils/library.js"></script>
-    <!-- Metro 4 -->
     <script src="./ts/lib/metro.min.js"></script>
     <div class="main">
-      <!--all files to be loaded onload of html file-->
       <script src="./ts/lib/chart.min.js"></script>
       <script src="./ts/lib/chartjs-plugin-annotation.min.js"></script>
       <script src="./ts/lib/three.js"></script>
@@ -107,15 +123,15 @@
       <script src="./dist/editing/distance.js"></script>
       <script src="./dist/editing/selections.js"></script>
       <script src="./dist/api/plugin_api.js"></script>
-      <script type="module" src="./dist/utils/dexieHelpers.js"></script>
+
       <script src="./dist/utils/submitStructureWindow-script.js"></script>
       <script
         type="module"
         src="./dist/utils/historyStorageService.js"
       ></script>
+      <script src="./dist/utils/submitStructureWindow-script.js"></script>
 
       <script>
-        //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
         function inIframe() {
           try {
             return window.self !== window.top;
@@ -123,15 +139,12 @@
             return true;
           }
         }
-        let menu = document.getElementById("menu");
-        let floatingMenu = document.getElementById("floatingMenu");
-
+        const menu = document.getElementById("menu");
+        const floatingMenu = document.getElementById("floatingMenu");
         if (inIframe()) {
-          menu.hidden = true;
-          floatingMenu.hidden = true;
+          menu.hidden = floatingMenu.hidden = true;
         }
       </script>
-      <!-- electron interaction  -->
       <script src="./renderer.js"></script>
     </div>
   </body>

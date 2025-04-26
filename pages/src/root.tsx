@@ -25,19 +25,6 @@ interface FormData {
   advancedOptions: string;
 }
 
-//payload.append("job_name", formData.job_name);
-//payload.append("method", formData.method);
-//payload.append("type", String(formData.type));
-//payload.append("steps", String(parsedSteps));
-//payload.append("e_t_print_interval", String(parsedInterval));
-//payload.append("dt", String(formData.dt));
-//payload.append("interaction_type", String(formData.interaction_type));
-//payload.append("h_bon_restrain", String(formData.h_bon_restrain));
-//payload.append("temperature", String(formData.temperature));
-//payload.append("salt_concentration", String(formData.salt_concentration));
-//payload.append("verlet", String(formData.verlet));
-//payload.append("advancedOptions", formData.advancedOptions);
-
 const interactionTypeOptions = [
   { name: "DNA2", value: 0 },
   { name: "RNA2", value: 1 },
@@ -55,7 +42,6 @@ export default function RootPage() {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    console.log(token);
     if (token) {
       try {
         const { exp } = jwtDecode(token) as {
@@ -219,6 +205,24 @@ export default function RootPage() {
         )}
 
         <form className="space-y-6" onSubmit={handleSubmit}>
+          <div>
+            <label
+              htmlFor="job_name"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Job name
+            </label>
+            <input
+              id="jobs_name"
+              name="job_name"
+              type="text"
+              placeholder="My job"
+              value={formData.job_name}
+              onChange={handleChange}
+              className={`mt-1 block w-full rounded-md border border-gray-300 p-2 focus:border-blue-500 focus:ring-blue-500`}
+            />
+          </div>
+
           {/* Simulation Mode */}
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -613,6 +617,7 @@ export default function RootPage() {
           </div>
 
           <NavLink to="/dist/pages/server-status">Check server status</NavLink>
+          <NavLink to="/dist/pages/job-status">Check job status</NavLink>
         </form>
       </div>
     </div>
