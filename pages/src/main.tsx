@@ -6,10 +6,12 @@ import SignIn from "./sign-in";
 import ServerStatus from "./server-status";
 import RootPage from "./root";
 import JobStatusPage from "./job-status";
+import Navbar from "./components/Navbar";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
+      <Navbar />
       <Routes>
         <Route path="/dist/pages/" element={<RootPage />} />
         <Route path="/dist/pages/sign-in/" element={<SignIn />} />

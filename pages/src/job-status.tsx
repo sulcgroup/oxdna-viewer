@@ -14,15 +14,14 @@ export type JobStatus = {
 const get_all_job_ids = async (): Promise<string[]> => {
   const token = localStorage.getItem("token");
 
-  const res = await fetch(`${apiRoot}/jobs/get-all-jobs`, {
+  const res = await fetch(`${apiRoot}/jobs/get-all-job-ids`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
 
   const json = await res.json();
-  const arr: string[] = [];
-  json.jobs.map((j: { id: string }) => arr.push(j.id));
-  return arr;
+
+  return json.job_ids;
 };
 
 const stats_fetcher = async (job_id: string) => {
@@ -128,7 +127,7 @@ export default function JobStatusPage() {
           >
             <h2 className="mb-2 text-xl font-semibold">{job.job_name}</h2>
             <div className="mb-2 flex items-center justify-between text-sm text-gray-700">
-              <span>Time Remaining:</span>
+              <span>Running time:</span>
               <span>{job.runningTime}</span>
             </div>
             <div className="mb-1 flex items-center justify-between text-sm font-medium text-gray-700">

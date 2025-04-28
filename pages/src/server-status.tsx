@@ -29,14 +29,6 @@ export default function ServerStatusPage() {
     setLoading(true);
     setErrorMessage("");
     try {
-      //const res = await fetch(
-      //  // `${apiRoot}/status`
-      //  "/api/status"
-      //);
-      //if (!res.ok) {
-      //  throw new Error(`Server responded ${res.status}`);
-      //}
-      //const data: status_item[] = await res.json();
       const data = status_giver();
       setStatusItems(data);
     } catch (err: any) {
