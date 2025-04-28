@@ -1,7 +1,7 @@
 import { ChangeEvent, useState } from "react";
 import { Button } from "@headlessui/react";
 import { apiRoot } from "./consts";
-import { NavLink, useNavigate } from "react-router";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function SignIn() {
   const [formData, setFormData] = useState({ email: "", password: "" });

@@ -7,7 +7,7 @@ import {
   ListboxOption,
 } from "@headlessui/react";
 import { apiRoot } from "./consts";
-import { NavLink, useNavigate } from "react-router";
+import { useNavigate } from "react-router-dom";
 
 const NUMBER_RE = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 interface FormData {
@@ -615,9 +615,6 @@ export default function RootPage() {
               Submit Job
             </button>
           </div>
-
-          <NavLink to="/dist/pages/server-status">Check server status</NavLink>
-          <NavLink to="/dist/pages/job-status">Check job status</NavLink>
         </form>
       </div>
     </div>

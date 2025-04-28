@@ -1,49 +1,82 @@
-import { decode } from "jsonwebtoken";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+
+type DecodedToken = {
+  exp: number;
+  name: string;
+  id: string;
+};
 
 type User = { name: string; id: string };
 
+/** Parses a JWT’s payload (no validation!) */
+function parseJwt<T = any>(token: string): T {
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("Invalid JWT");
+  // base64url → base64
+  const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+  // atob + decodeURIComponent to handle utf-8
+  const json = decodeURIComponent(
+    atob(b64)
+      .split("")
+      .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+      .join("")
+  );
+  return JSON.parse(json);
+}
+
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
-
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      if (pathname !== "/sign-in") navigate("/sign-in");
+      if (!pathname.includes("/dist/pages/sign-in")) {
+        navigate("/dist/pages/sign-in/");
+      }
       return;
     }
 
+    let decoded: DecodedToken;
     try {
-      const { exp, name, id } = decode(token) as {
-        exp: number;
-        name: string;
-        id: string;
-      };
-      if (Date.now() < exp * 1000) {
-        setUser({ name, id });
-      } else {
-        if (pathname !== "/sign-in") navigate("/sign-in");
-      }
+      decoded = parseJwt<DecodedToken>(token);
     } catch {
-      if (pathname !== "/sign-in") navigate("/sign-in");
+      if (!pathname.includes("/dist/pages/sign-in")) {
+        navigate("/dist/pages/sign-in/");
+      }
+      return;
+    }
+
+    const { exp, name, id } = decoded;
+    if (Date.now() < exp * 1000) {
+      setUser({ name, id });
+    } else {
+      // expired
+      if (!pathname.includes("/dist/pages/sign-in")) {
+        navigate("/dist/pages/sign-in/");
+      }
     }
   }, [navigate, pathname]);
 
   return (
-    <nav style={{ padding: "1rem", borderBottom: "1px solid #ccc" }}>
-      <Link to="/dist/pages/server-status/" style={{ marginRight: "1rem" }}>
-        Server Status
-      </Link>
-      <Link to="/dist/pages/job-status/" style={{ marginRight: "1rem" }}>
-        Job Status
-      </Link>
-      <Link to="/dist/pages/" style={{ marginRight: "1rem" }}>
-        Submit a job
-      </Link>
-      {user && <span>Signed in as {user.name}</span>}
+    <nav className="relative flex items-center border-b border-gray-300 p-4">
+      <div className="mx-auto flex space-x-6">
+        <Link to="/dist/pages/server-status/" className="font-bold underline">
+          Server Status
+        </Link>
+        <Link to="/dist/pages/job-status/" className="font-bold underline">
+          Job Status
+        </Link>
+        <Link to="/dist/pages/" className="font-bold underline">
+          Submit a job
+        </Link>
+      </div>
+
+      {user && (
+        <span className="absolute right-4">Signed in as {user.name}</span>
+      )}
     </nav>
   );
 }
