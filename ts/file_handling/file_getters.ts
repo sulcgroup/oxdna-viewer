@@ -52,20 +52,6 @@ function readPDBFromId(pdbID: string) {
     readFilesFromURLPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
 }
 
-// Get a file from Nanobase
-function readNanobaseFromURL(url: string) {
-    const id = url.split('/').pop();
-    const path = `https://nanobase.org/oxdna/${id}`
-    let req = new XMLHttpRequest();
-    req.open("GET", path);
-    req.onload = () => {
-        let file_names = req.response.split('|');
-        file_names = file_names.map(file_name => `https://nanobase.org/file/${id}/structure/${file_name}`)
-        readFilesFromURLPath(file_names);
-    }
-    req.send();
-}
-
 // Get files from messages
 function handleMessage(data) {
     if (data.message === 'drop') {
