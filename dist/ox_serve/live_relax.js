@@ -59,6 +59,18 @@ function addOXServeURL() {
         document.getElementById("newHostText").innerText = "";
     }
 }
+//Dirty redirect of log output 
+const originalLog = console.log;
+const logMessages = [];
+console.log = function (...args) {
+    logMessages.push(args);
+    originalLog.apply(console, args);
+};
+const originalInfo = console.info;
+console.info = function (...args) {
+    logMessages.push(args);
+    originalInfo.apply(console, args);
+};
 class OXServeSocket extends WebSocket {
     abort = true;
     constructor(url) {
@@ -80,10 +92,20 @@ class OXServeSocket extends WebSocket {
                 }
                 if ("eval" in message) {
                     let lines = message["eval"];
-                    let res = eval(lines);
-                    // this.send(
-                    //     JSON.stringify({'eval':res})
-                    // )
+                    let result;
+                    try {
+                        result = eval(lines);
+                    }
+                    catch (e) {
+                        result = `Error: ${e.message}`;
+                    }
+                    const output = JSON.stringify({
+                        out: typeof result === "undefined" ? null : result,
+                        console_log: logMessages.join("\n")
+                    });
+                    logMessages.length = 0;
+                    //console.log(output)
+                    this.send(output);
                 }
             }
         };

@@ -186,9 +186,6 @@ function createWrapper(seq: string, createDuplex: boolean, type: string, pos?: T
         translateElements(new Set(elems), pos);
     }
 
-
-
-
     // Add to history
     editHistory.add(new RevertableAddition(instanceCopies, elems, pos));
     topologyEdited = true;

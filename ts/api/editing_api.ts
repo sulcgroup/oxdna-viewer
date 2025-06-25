@@ -822,104 +822,100 @@ module edit{
      * @param sequence
      * @param createDuplex (optional) Create a duplex?
      * @param isRNA (optional) Is this an RNA strand?
+     * @param initialPosition (optional) the position of the first base 
+     * @param helixOrientation (optional) helix will be aligned to this "- a3" vector of oxDNA 
      */
-    export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
+    export function createStrand(
+        sequence: string,
+        createDuplex?: boolean,
+        isRNA?: boolean,
+        initialPosition?: THREE.Vector3,
+        helixOrientation?: THREE.Vector3
+      ) {
         isRNA = (isRNA === undefined) ? false : isRNA;
         let type = isRNA ? 'RNA' : 'DNA';
-
-        // Initialize a dummy system to put the monomers in 
+      
+        // Initialize a dummy system.
         const tmpSys = new System(tmpSystems.length, 0);
-        // This looks weird, but createBP() makes that nucleotide in its own tmpSys so it's 2n-1 for the duplex case.
-        tmpSys.initInstances(sequence.length * (createDuplex ? 2:1) + (createDuplex ? -1:0));
+        tmpSys.initInstances(sequence.length * (createDuplex ? 2 : 1) + (createDuplex ? -1 : 0));
         tmpSystems.push(tmpSys);
-
-        // The strand gets added to the last-added system.
-        // Or make a new system if you're crazy and trying to build something from scratch
+      
+        // Obtain or create the real system.
         let realSys: System;
         let blank = false;
         if (systems.length > 0) {
-            realSys = systems.slice(-1)[0];
+          realSys = systems.slice(-1)[0];
+        } else {
+          blank = true;
+          realSys = new System(systems.length, elements.getNextId());
+          realSys.initInstances(0);
+          systems.push(realSys);
+          addSystemToScene(realSys);
+          box = new THREE.Vector3(1000, 1000, 1000);
         }
-        else {
-            blank = true;
-            realSys = new System(systems.length, elements.getNextId())
-            realSys.initInstances(0);
-            systems.push(realSys);
-            addSystemToScene(realSys);
-            // This is ugly, but if we don't have a box, everything will be
-            // squashed into the origin when centering.
-            box = new THREE.Vector3(1000,1000,1000);
-        }
-
-        // Create a new strand
-       let strand = realSys.addNewNucleicAcidStrand(type);
-
-        // Initialise proper nucleotide
-        let e = isRNA ? new RNANucleotide(undefined, strand):new DNANucleotide(undefined, strand);
-
+      
+        // Create a new strand and initialize the first nucleotide.
+        let strand = realSys.addNewNucleicAcidStrand(type);
+        let e = isRNA ? new RNANucleotide(undefined, strand) : new DNANucleotide(undefined, strand);
         let addedElems = [];
-
-        elements.push(e); // Add element and assign id
+        elements.push(e);
         e.dummySys = tmpSys;
         e.sid = 0;
         e.setType(sequence[0]);
         e.n3 = null;
         e.strand = strand;
         strand.setFrom(e);
-
         addedElems.push(e);
-
-        let pos:THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3;
-        if (blank) {
-            // Place new strand at origin if the scene is empty
-            pos = new THREE.Vector3(0, 0, 0);
-            if (isRNA) {
-                // This puts the helix axis up the Z axis
-                a1 = new THREE.Vector3(0, 0.9636304532086232, -0.2672383760782569);
-                a3 = a1.clone().cross(new THREE.Vector3(1, 0, 0));
-            }
-            else {
-                // DNA is so easy
-                a1 = new THREE.Vector3(0,1,0);
-                a3 = new THREE.Vector3(0,0,-1);
-            }
+      
+        let pos: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3;
+        if (helixOrientation) {
+          // Provided helixOrientation controls the orientation (a3) and a1 controls the rotation.
+          a3 = helixOrientation.clone().normalize().negate();
+          let ref = new THREE.Vector3(0, 1, 0);
+          if (Math.abs(a3.dot(ref)) > 0.99) {
+            ref = new THREE.Vector3(1, 0, 0);
+          }
+          a1 = ref.sub(a3.clone().multiplyScalar(ref.dot(a3))).normalize();
+          pos = initialPosition ? initialPosition.clone() : (blank ? new THREE.Vector3(0, 0, 0) : camera.position.clone().add(a3.clone().multiplyScalar(20)));
+        } else if (blank) {
+          pos = initialPosition ? initialPosition.clone() : new THREE.Vector3(0, 0, 0);
+          if (isRNA) {
+            // Default RNA: a1 (rotation) and a3 (orientation) as in the original.
+            a1 = new THREE.Vector3(0, 0.9636304532086232, -0.2672383760782569);
+            a3 = a1.clone().cross(new THREE.Vector3(1, 0, 0));
+          } else {
+            a1 = new THREE.Vector3(0, 1, 0);
+            a3 = new THREE.Vector3(0, 0, -1);
+          }
         } else {
-            // Otherwise, place the new strand 10 units in front of the camera
-            // with its a1 vector parallel to the camera heading
-            // and a3 the cross product of the a1 vector and the camera's up vector
-            a1 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-            pos = camera.position.clone().add(a1.clone().multiplyScalar(20));
-            a3 = a1.clone().cross(camera.up);
+          a1 = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+          pos = initialPosition ? initialPosition.clone() : camera.position.clone().add(a1.clone().multiplyScalar(20));
+          a3 = a1.clone().cross(camera.up);
         }
         e.calcPositions(pos, a1, a3);
         e.dummySys = tmpSys;
-
-        // Extends the strand 3'->5' with the rest of the sequence
-        // and return all added elements.
-
+      
         if (createDuplex) {
-            // create base pair if end doesn't have one already
-            if (!e.findPair()) {
-                e.pair = createBP(e);
-                addedElems.push(e.pair);
-            }
-            addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1),tmpSys, "n3", "n5", 1));
+          if (!e.findPair()) {
+            e.pair = createBP(e);
+            addedElems.push(e.pair);
+          }
+          addedElems = addedElems.concat(addDuplexBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         } else {
-            addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
+          addedElems = addedElems.concat(addElementsBySeq(e, sequence.substring(1), tmpSys, "n3", "n5", 1));
         }
         strand.updateEnds();
-
-        // Make created strand(s) a new cluster, for convenience.
+      
         clusterCounter++;
-        addedElems.forEach(e=> {
-            e.clusterId=clusterCounter
-            e.defaultColor()
+        addedElems.forEach(e => {
+          e.clusterId = clusterCounter;
+          e.defaultColor();
         });
-
-        tmpSys.callAllUpdates()
-
+      
+        tmpSys.callAllUpdates();
+      
         return addedElems;
-    }
+      }
 
     /**
      * Experimental Function that Discretizes Density of system (every selected particle has same mass currently 1)
