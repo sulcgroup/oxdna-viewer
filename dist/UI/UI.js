@@ -701,13 +701,34 @@ class View {
             return false;
         }
     }
-    toggleWindow(id, oncreate) {
+    toggleWindow(id, oncreate, structureId) {
         let elem = this.doc.getElementById(id);
+        if (id === "submitStructureWindow" && this.isWindowOpen(id)) {
+            const token = localStorage.getItem("token");
+            const tokenParts = token.split('.');
+            if (tokenParts.length !== 3)
+                throw new Error('Invalid token');
+            const base64Payload = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64Payload)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join(''));
+            const { exp } = JSON.parse(jsonPayload);
+            let isLoggedIn = false;
+            if (token) {
+                if (Date.now() < exp * 1000) {
+                    isLoggedIn = true;
+                }
+            }
+            if (!isLoggedIn) {
+                id = "loginWindow";
+            }
+        }
         if (elem) {
             Metro.window.toggle(elem);
         }
         else {
-            this.createWindow(id, oncreate);
+            this.createWindow(id, oncreate, structureId);
         }
     }
     toggleFluxWindow(id, oncreate) {
@@ -724,14 +745,36 @@ class View {
             flux.toggleDatasetsandNetworks();
         }
     }
-    createWindow(id, oncreate) {
+    createWindow(id, oncreate, structureId) {
         fetch(`windows/${id}.json`)
             .then(response => response.json())
             .then(data => {
             let w = Metro.window.create(data);
             w[0].id = id;
-            w.load(`windows/${id}.html`).then(oncreate);
+            w.load(`windows/${id}.html`).then(() => {
+                if (oncreate)
+                    oncreate();
+                if (id === 'commitHistoryWindow' && structureId) {
+                    this.openCommitHistoryModal(structureId);
+                }
+            });
         });
+    }
+    openCommitHistoryModal(structureId) {
+        if (!structureId) {
+            const queryString = window.location.search;
+            const urlParams = new URLSearchParams(queryString);
+            structureId = urlParams.get("structureId");
+        }
+        if (!structureId) {
+            console.error("openCommitHistoryModal: structureId is missing.");
+            Metro.toast.create("Cannot open history. Structure ID is missing.", null, 5000, "alert");
+            return;
+        }
+        this.toggleWindow("commitHistoryWindow", (id) => {
+            console.log("commitHistoryWindow created for structureId:", id);
+            window.initCommitHistory(structureId);
+        }, structureId);
     }
     showHoverInfo(pos, e) {
         let hoverInfo = document.getElementById('hoverInfo');

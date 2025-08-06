@@ -383,7 +383,8 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-dynamics">Dynamics</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-plugins">Plugins</a></li>
-            
+            <li ondblclick="view.sectionClicked()"><a href="#section-library">Library</a></li>
+            <li><a href="/dist/pages/" target="_blank">Jobs</a></li>
         </ul>
 
         <div class="content-holder">
@@ -502,7 +503,8 @@
                         <li><a href="https://doi.org/10.1093/nar/gkaa417"><span class="mif-file-text icon"></span>&nbsp; Nucleic Acids Research 2020</a></li>
                     </ul>
                 </div>
-                
+
+
             </div>
 
             <!--Cam-->
@@ -1206,6 +1208,63 @@
                 </div>
             </div>
 
+
+            <!--Library pane-->
+            <div class="section" id="section-library">
+                <div class="group">
+                    <a href="/library.html" class="ribbon-button primary"  title="Go to library" id="import-button" style="width: 50px;">
+                        <span class="caption"><b>Go to library</b></span>
+                    </a>
+                    <div id="reportWindow" style="margin-left:10px" hidden="true">
+                    </div>
+                    <span class="title "> <b>Library</b></span>
+                </div>
+                <div class="group">
+                    <ul style="list-style-type:none" height="70px">
+                        <li> 
+                            <button type="submitWindow" onclick="view.toggleWindow('submitStructureWindow')">Submit structure to Nanobase</button>
+                            <button type="save" onclick="saveStructure()">Save structure</button>
+                            <button type="save" onclick="loadStructure()">Load structure</button>
+                        </li>
+                        <li>
+                            <input type="text" name="commitName" id="commitName" />
+                            <button type="save" onclick="view.openCommitHistoryModal()">View history</button>
+                        </li>
+                        <li>
+                            <button type="submit" onclick="pushToServer()">Push to server</button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!--Jobs pane-->
+            <div class="section" id="section-jobs">
+                <div class="group">
+                    <a href="/library.html" class="ribbon-button primary"  title="Go to library" id="import-button" style="width: 50px;">
+                        <span class="caption"><b>Go to library</b></span>
+                    </a>
+                    <div id="reportWindow" style="margin-left:10px" hidden="true">
+                    </div>
+                    <span class="title "> <b>Library</b></span>
+                </div>
+                <div class="group">
+                    <ul style="list-style-type:none" height="70px">
+                        <li> 
+                            <button type="submitWindow" onclick="view.toggleWindow('submitStructureWindow')">Submit structure to Nanobase</button>
+                            <button type="save" onclick="saveStructure()">Save structure</button>
+                            <button type="save" onclick="loadStructure()">Load structure</button>
+                        </li>
+                        <li>
+                            <input type="text" name="commitName" id="commitName" />
+                            <button type="save" onclick="view.openCommitHistoryModal()">View history</button>
+                        </li>
+                        <li>
+                            <button type="submit" onclick="pushToServer()">Push to server</button>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
         </div>
     </nav>
 
@@ -1372,7 +1431,11 @@
         <script src="./dist/editing/distance.js"></script>
         <script src="./dist/editing/selections.js"></script>
         <script src="./dist/api/plugin_api.js"></script>
-        
+        <script type="module" src="./dist/utils/dexieHelpers.js"></script>
+        <script src="./dist/utils/commitHistoryWindow-script.js"></script>
+        <script src="./dist/utils/submitStructureWindow-script.js"></script>
+        <script type="module" src="./dist/utils/historyStorageService.js"></script>
+
         <script>
             //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
             function inIframe () {

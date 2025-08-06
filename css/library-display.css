@@ -1,0 +1,23 @@
+body {
+  margin: 20px;
+  text-align: center;
+}
+
+.library-title {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.library-grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.library-card {
+  border: 1px solid #888;
+  border-radius: 8px;
+  padding: 10px;
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>oxView</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <!-- Metro 4 (keep for all your Metro JS/CSS dependencies) -->
+    <link rel="stylesheet" href="css/metro.min.css" />
+    <link rel="stylesheet" href="css/metro-colors.min.css" />
+    <link rel="stylesheet" href="css/metro-icons.min.css" />
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/library-display.css" />
+
+    <!-- Google Analytics (unchanged) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag("js", new Date());
+        gtag("config", "UA-171800090-1");
+    </script>
+</head>
+
+<body class="m4-cloak">
+    <aside class="sidebar pos-absolute z-2" data-role="sidebar" data-toggle="#sidebar-toggle"
+        data-shift=".shifted-content">
+        <div class="sidebar-header bg-grayMouse">
+            <a href="/" class="fg-white">
+                <span class="title">oxView</span>
+                <span class="subtitle">An oxDNA viewer and editor</span>
+            </a>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/"><span class="mif-github icon"></span>Github</a>
+            </li>
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/blob/master/README.md"><span
+                        class="mif-books icon"></span>Documentation</a></li>
+            <li><a href="https://github.com/sulcgroup/oxdna-viewer/tree/master/examples"><span
+                        class="mif-files-empty icon"></span>Examples</a></li>
+            <li><a href="https://www.youtube.com/channel/UC4ClrQ8xMypSbDZG2QCehpA"><span
+                        class="mif-youtube-play icon"></span>Video tutorials</a></li>
+            <li class="divider"></li>
+            <li> Please cite our papers:</li>
+            <li><a href="https://doi.org/10.1038/s41596-022-00688-5"><span class="mif-file-text icon"></span>Nature
+                    Protocols 2022</a></li>
+            <li><a href="https://doi.org/10.1093/nar/gkaa417"><span class="mif-file-text icon"></span>Nucleic Acids
+                    Research 2020</a></li>
+        </ul>
+    </aside>
+
+    <div class="shifted-content h-100">
+        <div class="navview">
+            <div class="navview-pane">
+                <button class="pull-button">
+                    <span class="default-icon-menu"></span>
+                </button>
+                <ul class="navview-menu">
+                    <li class="item-header">Main</li>
+                    <li>
+                        <a href="/">
+                            <span class="icon"><span class="mif-home"></span></span>
+                            <span class="caption">Home</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="/library.html">
+                            <span class="icon"><span class="mif-library"></span></span>
+                            <span class="caption">Library</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="navview-content d-flex flex-column">
+                <div class="row flex-align-center">
+                    <div class="cell-md-4"></div>
+                    <div class="cell-md-4 text-center">
+                        <h2 class="p-3">Library</h2>
+                    </div>
+                    <div class="cell-md-4 d-flex flex-justify-end">
+                        <button onclick="view.toggleWindow('createStructureWindow')" class="button primary m-2">
+                            Create new
+                        </button>
+                    </div>
+                </div>
+                <div id="library-container" class="grid p-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- all your existing Metro & custom scripts (order preserved) -->
+
+    <script type="module" src="./dist/utils/dexieHelpers.js"></script>
+    <script type="module" src="./dist/utils/library.js"></script>
+    <script src="./ts/lib/metro.min.js"></script>
+    <div class="main">
+        <script src="./dist/main.js"></script>
+        <script src="./dist/UI/UI.js"></script>
+        <script src="./dist/UI/keybindings.js"></script>
+        <script src="./dist/api/observable_api.js"></script>
+        <script src="./dist/api/plugin_api.js"></script>
+
+        <script src="./dist/utils/commitHistoryWindow-script.js"></script>
+        <script src="./dist/utils/submitStructureWindow-script.js"></script>
+        <script type="module" src="./dist/utils/historyStorageService.js"></script>
+
+        <script>
+            function inIframe() {
+                try {
+                    return window.self !== window.top;
+                } catch (e) {
+                    return true;
+                }
+            }
+            const menu = document.getElementById("menu");
+            const floatingMenu = document.getElementById("floatingMenu");
+            if (inIframe()) {
+                menu.hidden = floatingMenu.hidden = true;
+            }
+        </script>
+        <script src="./renderer.js"></script>
+    </div>
+</body>
+
+</html>

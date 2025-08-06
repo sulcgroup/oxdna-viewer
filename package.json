@@ -50,6 +50,7 @@
     }
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
     "@types/chart.js": "^2.9.31",
     "@types/chartjs-plugin-annotation": "^0.5.1",
     "@types/jquery": "^3.5.6",
@@ -58,6 +59,7 @@
     "@types/sizzle": "2.3.2",
     "@types/webvr-api": "0.0.36",
     "@zip.js/zip.js": "^2.3.17",
+    "dexie": "^4.0.11",
     "electron-settings": "^4.0.2",
     "electron-squirrel-startup": "^1.0.0",
     "reload": "^3.2.0",
@@ -71,6 +73,8 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.59",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.59",
     "@electron-forge/maker-zip": "^6.0.0-beta.59",
-    "electron": "22.0.0"
+    "@types/dexie": "^1.3.32",
+    "electron": "22.0.0",
+    "vite": "^6.3.2"
   }
 }
