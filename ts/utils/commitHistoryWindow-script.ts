@@ -25,10 +25,18 @@ interface CommitNode {
 
 async function initCommitHistory(structureId?: string) {
     console.log("initCommitHistory: Starting function.");
-    const commitGraphElement = document.getElementById('commit-graph');
+
+    // Wait for the element to be available
+    let commitGraphElement = document.getElementById('commit-graph');
     if (!commitGraphElement) {
-        console.error('initCommitHistory ERROR: Could not find commit-graph element. Aborting.');
-        return;
+        console.log('initCommitHistory: Waiting for commit-graph element...');
+        // Wait a bit and try again
+        await new Promise(resolve => setTimeout(resolve, 100));
+        commitGraphElement = document.getElementById('commit-graph');
+        if (!commitGraphElement) {
+            console.error('initCommitHistory ERROR: Could not find commit-graph element. Aborting.');
+            return;
+        }
     }
     commitGraphElement.innerHTML = '<p>Loading commit history from script...</p>';
     console.log("initCommitHistory: Found commit-graph element.", commitGraphElement);
@@ -224,4 +232,8 @@ async function initCommitHistory(structureId?: string) {
     }
 }
 
-initCommitHistory();
+// Don't auto-initialize, wait for the modal to be opened
+// initCommitHistory();
+
+// Export the function for manual initialization
+(window as any).initCommitHistory = initCommitHistory;

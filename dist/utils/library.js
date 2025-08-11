@@ -74,6 +74,15 @@ function createCard(item) {
         view.openCommitHistoryModal(item.id);
     });
     cardFooter.appendChild(historyBtn);
+    const shareBtn = document.createElement("button");
+    shareBtn.textContent = "Generate Link";
+    shareBtn.className = "button primary";
+    shareBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openBranchSelectionModal(item.id);
+    });
+    cardFooter.appendChild(shareBtn);
     card.appendChild(cardFooter);
     link.appendChild(card);
     cell.appendChild(link);
@@ -91,6 +100,17 @@ function deleteStructure(id) {
         .catch((error) => {
         console.error(`Failed to delete structure with id ${id}:`, error);
     });
+}
+function openBranchSelectionModal(structureId) {
+    // Store the structure ID for the modal to use
+    window.branchSelectionStructureId = structureId;
+    // Open the branch selection window using the view object
+    if (typeof view !== 'undefined' && view.openBranchSelectionModal) {
+        view.openBranchSelectionModal(structureId);
+    }
+    else {
+        console.error('view.openBranchSelectionModal is not available');
+    }
 }
 // Example function to refresh the library cards
 function refreshLibraryCards() {

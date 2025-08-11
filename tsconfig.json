@@ -68,6 +68,8 @@
       "./ts/utils/submitStructureWindow-script.ts",
       "./ts/utils/library.ts",
       "./ts/utils/dexieHelpers.ts",
+      "./ts/utils/branchSelectionWindow-script.ts",
+      "./ts/utils/sharedStructureService.ts",
       "./ts/auth.ts",
       "./ts/api/sync.ts"
     ]
