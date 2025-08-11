@@ -1,6 +1,6 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
-const apiRoot = "http://localhost:3002/api/v1";
+const apiRoot = "http://api.nanobase.org/api/v1";
 async function login() {
     const emailField = document.getElementById("email");
     const passwordField = document.getElementById("password");

@@ -1,7 +1,6 @@
 import Dexie from "https://cdn.skypack.dev/dexie";
 
-const apiRoot = "http://localhost:3002/api/v1";
-// const apiRoot = "https://api.nanobase.org/api/v1";
+const apiRoot = "https://api.nanobase.org/api/v1";
 
 interface ShareInfo {
   shareUrl: string;
