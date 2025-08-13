@@ -227,27 +227,21 @@ async function initCommitHistory(structureId?: string) {
                 console.log(`renderTree: Added branch label '${branchName}' to commit ${node.commit.commitId}`);
             }
 
-            // Add share link if this commit has been shared
+            // Always add a "Share" link that opens the popup, regardless of share status
+            const shareLink = document.createElement('a');
+            shareLink.classList.add('share-link');
+            shareLink.href = '#';
+            shareLink.textContent = 'Share';
             if (node.commit.shareInfo) {
-                const shareLink = document.createElement('a');
-                shareLink.classList.add('share-link');
-                shareLink.href = node.commit.shareInfo.shareUrl;
-                shareLink.textContent = 'Share';
                 shareLink.title = `Shared on ${new Date(node.commit.shareInfo.createdAt).toLocaleDateString()}`;
-                detailsDiv.appendChild(shareLink);
             } else {
-                // Add a "Share" link that will generate a new share
-                const shareLink = document.createElement('a');
-                shareLink.classList.add('share-link');
-                shareLink.href = '#';
-                shareLink.textContent = 'Share';
                 shareLink.title = 'Generate shareable link';
-                shareLink.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    await handleCommitShareWithPopup(structureId, node.commit);
-                });
-                detailsDiv.appendChild(shareLink);
             }
+            shareLink.addEventListener('click', async (e) => {
+                e.preventDefault();
+                await handleCommitShareWithPopup(structureId, node.commit);
+            });
+            detailsDiv.appendChild(shareLink);
 
             nodeDiv.appendChild(detailsDiv);
 
@@ -340,19 +334,13 @@ async function generateShareInfo(structureId: string, commit: Commit) {
 // Function to handle sharing for a specific commit and show popup
 async function handleCommitShareWithPopup(structureId: string, commit: Commit) {
     try {
-        const commitGraphElement = document.getElementById('commit-graph');
-
-        // Show loading state
-        if (commitGraphElement) {
-            commitGraphElement.innerHTML = '<p>Generating share link...</p>';
+        // If already shared, use existing shareInfo, else generate
+        let shareInfo = commit.shareInfo;
+        if (!shareInfo) {
+            // Show loading state (optional: could show spinner, but not clearing UI)
+            shareInfo = await generateShareInfo(structureId, commit);
         }
-
-        // Generate the share info
-        const shareInfo = await generateShareInfo(structureId, commit);
-
-        // Get the share URL from the updated commit
         const shareUrl = shareInfo.shareUrl;
-
         if (!shareUrl) {
             throw new Error("Failed to generate share URL");
         }
@@ -434,12 +422,6 @@ async function handleCommitShareWithPopup(structureId: string, commit: Commit) {
             document.body.removeChild(popup);
             document.body.removeChild(overlay);
         });
-
-        // Refresh the UI to show the share link
-        if (commitGraphElement) {
-            initCommitHistory(structureId);
-        }
-
     } catch (error) {
         console.error("Error generating permanent link:", error);
         alert("Failed to generate permanent link. Please try again.");
