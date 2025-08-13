@@ -776,22 +776,6 @@ class View {
             window.initCommitHistory(structureId);
         }, structureId);
     }
-    openBranchSelectionModal(structureId) {
-        if (!structureId) {
-            const queryString = window.location.search;
-            const urlParams = new URLSearchParams(queryString);
-            structureId = urlParams.get("structureId");
-        }
-        if (!structureId) {
-            console.error("openBranchSelectionModal: structureId is missing.");
-            Metro.toast.create("Cannot open branch selection. Structure ID is missing.", null, 5000, "alert");
-            return;
-        }
-        this.toggleWindow("branchSelectionWindow", (id) => {
-            console.log("branchSelectionWindow created for structureId:", id);
-            window.initBranchSelection(structureId);
-        }, structureId);
-    }
     showHoverInfo(pos, e) {
         let hoverInfo = document.getElementById('hoverInfo');
         let color = e.elemToColor(e.type).getHexString();

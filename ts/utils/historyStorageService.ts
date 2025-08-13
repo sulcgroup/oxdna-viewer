@@ -41,13 +41,75 @@ export async function saveStructure(): Promise<void> {
     const loadedCommitId = urlParams.get("commit"); // Get loaded commit ID from URL
 
     if (!structureId) {
-      console.log("ID parameter not found.");
+      // Prompt user to create a new structure
+      const structureName = prompt("No structure found in library. Enter a name for your new structure:");
+      if (!structureName) {
+        alert("Structure creation cancelled.");
+        return;
+      }
+      // Generate new structureId
+      const newStructureId = crypto.randomUUID();
+      const newCommitId = crypto.randomUUID();
+      const compressedData = createCompressedOxViewFile();
+      const commitName = commitNameElement.value || prompt("Name your first commit:");
+      if (!commitName) {
+        alert("Commit creation cancelled.");
+        return;
+      }
+      const newCommit = {
+        data: compressedData,
+        commitName: commitName,
+        commitId: newCommitId,
+        parent: null,
+      };
+      const newStructure = {
+        id: newStructureId,
+        structure: [newCommit],
+        date: Date.now(),
+        structureName: structureName,
+        branches: { main: [newCommitId] },
+      };
+      await (window as any).DexieDB.structureData.put(newStructure);
+      alert("Structure created and saved to library!");
+      // Redirect to new structure page
+      window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
       return;
     }
 
     const oldStructure = await (window as any).DexieDB.structureData.get(structureId);
     if (!oldStructure) {
-      console.error("Invalid structure id parameter.");
+      // Prompt user to create a new structure
+      const structureName = prompt("No structure found in library. Enter a name for your new structure:");
+      if (!structureName) {
+        alert("Structure creation cancelled.");
+        return;
+      }
+      // Generate new structureId
+      const newStructureId = crypto.randomUUID();
+      const newCommitId = crypto.randomUUID();
+      const compressedData = createCompressedOxViewFile();
+      const commitName = commitNameElement.value || prompt("Name your first commit:");
+      if (!commitName) {
+        alert("Commit creation cancelled.");
+        return;
+      }
+      const newCommit = {
+        data: compressedData,
+        commitName: commitName,
+        commitId: newCommitId,
+        parent: null,
+      };
+      const newStructure = {
+        id: newStructureId,
+        structure: [newCommit],
+        date: Date.now(),
+        structureName: structureName,
+        branches: { main: [newCommitId] },
+      };
+      await (window as any).DexieDB.structureData.put(newStructure);
+      alert("Structure created and saved to library!");
+      // Redirect to new structure page
+      window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
       return;
     }
 
@@ -77,7 +139,7 @@ export async function saveStructure(): Promise<void> {
         parentCommitId = loadedCommitId; // New commit's parent is the loaded commit
         newBranches[newBranchName].push(newCommitId); // Add new commit to the new branch
         // Redirect to the new branch after commit
-        window.location.href = `/?structureId=${structureId}&branch=${newBranchName}`;
+        window.location.href = `/?structureId=${structureId}&branch=${newBranchName}&load=true`;
 
       } else { // User chose to override (delete future commits)
         if (currentBranchCommits) {
@@ -187,11 +249,11 @@ export async function loadStructure(): Promise<void> {
       }
 
       if (!commitToLoad && storedData.structure.length > 0) {
-          commitToLoad = storedData.structure[storedData.structure.length - 1];
-          console.warn(`loadStructure: Falling back to last commit in structure ${id} as no specific commit or branch head could be determined.`);
+        commitToLoad = storedData.structure[storedData.structure.length - 1];
+        console.warn(`loadStructure: Falling back to last commit in structure ${id} as no specific commit or branch head could be determined.`);
       }
     }
-    
+
     if (commitToLoad) {
       console.log("loadStructure: Commit selected for loading.", commitToLoad);
       console.log("loadStructure: Decompressing data...");

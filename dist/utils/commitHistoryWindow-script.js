@@ -145,6 +145,15 @@ async function initCommitHistory(structureId) {
         .current-branch-label {
             background-color: #e67e22;
         }
+        .share-link {
+            color: #27ae60;
+            text-decoration: none;
+            margin-left: 10px;
+            font-size: 0.8em;
+        }
+        .share-link:hover {
+            text-decoration: underline;
+        }
     `;
     commitGraphElement.appendChild(style);
     function renderTree(nodes, container) {
@@ -175,6 +184,28 @@ async function initCommitHistory(structureId) {
                 detailsDiv.appendChild(branchLabel);
                 console.log(`renderTree: Added branch label '${branchName}' to commit ${node.commit.commitId}`);
             }
+            // Add share link if this commit has been shared
+            if (node.commit.shareInfo) {
+                const shareLink = document.createElement('a');
+                shareLink.classList.add('share-link');
+                shareLink.href = node.commit.shareInfo.shareUrl;
+                shareLink.textContent = 'Share';
+                shareLink.title = `Shared on ${new Date(node.commit.shareInfo.createdAt).toLocaleDateString()}`;
+                detailsDiv.appendChild(shareLink);
+            }
+            else {
+                // Add a "Share" link that will generate a new share
+                const shareLink = document.createElement('a');
+                shareLink.classList.add('share-link');
+                shareLink.href = '#';
+                shareLink.textContent = 'Share';
+                shareLink.title = 'Generate shareable link';
+                shareLink.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await handleCommitShare(structureId, node.commit);
+                });
+                detailsDiv.appendChild(shareLink);
+            }
             nodeDiv.appendChild(detailsDiv);
             if (node.children.length > 0) {
                 console.log(`renderTree: Node ${node.commit.commitId} has ${node.children.length} children. Descending.`);
@@ -191,6 +222,87 @@ async function initCommitHistory(structureId) {
         renderTree(rootNodes, graphContainer);
         commitGraphElement.appendChild(graphContainer);
         console.log("initCommitHistory: Render process complete.");
+    }
+}
+// Function to handle sharing for a specific commit
+async function handleCommitShare(structureId, commit) {
+    try {
+        const apiRoot = window.apiRoot;
+        // Show loading state
+        const commitGraphElement = document.getElementById('commit-graph');
+        if (commitGraphElement) {
+            commitGraphElement.innerHTML = '<p>Generating share link...</p>';
+        }
+        // Get the structure to access its name
+        const structure = await window.DexieDB.structureData.get(structureId);
+        if (!structure) {
+            throw new Error("Structure not found");
+        }
+        // Convert ArrayBuffer to base64 string
+        const uint8Array = new Uint8Array(commit.data);
+        const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
+        const base64Data = btoa(binaryString);
+        const requestBody = {
+            structureData: {
+                structureName: structure.structureName,
+                commit: {
+                    commitId: commit.commitId,
+                    commitName: commit.commitName,
+                    data: base64Data,
+                    parent: commit.parent
+                },
+                metadata: {
+                    createdAt: new Date()
+                }
+            }
+        };
+        const response = await fetch(`${apiRoot}/oxview/share`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        // Construct the full shareable URL
+        const baseUrl = window.location.origin;
+        const shareUrl = `${baseUrl}/?shared=${result.shareId}`;
+        const shareInfo = {
+            shareUrl: shareUrl,
+            shareId: result.shareId,
+            createdAt: new Date(result.createdAt || Date.now()),
+            expiresAt: new Date(result.expiresAt)
+        };
+        // Update the commit with share info and save to database
+        commit.shareInfo = shareInfo;
+        await updateCommitShareInfo(structureId, commit.commitId, shareInfo);
+        // Refresh the UI to show the share link
+        if (commitGraphElement) {
+            initCommitHistory(structureId);
+        }
+    }
+    catch (error) {
+        console.error("Error generating permanent link:", error);
+        alert("Failed to generate permanent link. Please try again.");
+    }
+}
+async function updateCommitShareInfo(structureId, commitId, shareInfo) {
+    try {
+        const structure = await window.DexieDB.structureData.get(structureId);
+        if (!structure)
+            return;
+        // Find and update the specific commit
+        const commitIndex = structure.structure.findIndex((c) => c.commitId === commitId);
+        if (commitIndex !== -1) {
+            structure.structure[commitIndex].shareInfo = shareInfo;
+            await window.DexieDB.structureData.put(structure);
+        }
+    }
+    catch (error) {
+        console.error("Error updating commit share info:", error);
     }
 }
 // Don't auto-initialize, wait for the modal to be opened
