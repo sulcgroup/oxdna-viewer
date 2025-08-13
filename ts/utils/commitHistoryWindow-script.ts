@@ -244,7 +244,7 @@ async function initCommitHistory(structureId?: string) {
                 shareLink.title = 'Generate shareable link';
                 shareLink.addEventListener('click', async (e) => {
                     e.preventDefault();
-                    await handleCommitShare(structureId, node.commit);
+                    await handleCommitShareWithPopup(structureId, node.commit);
                 });
                 detailsDiv.appendChild(shareLink);
             }
@@ -269,16 +269,10 @@ async function initCommitHistory(structureId?: string) {
     }
 }
 
-// Function to handle sharing for a specific commit
-async function handleCommitShare(structureId: string, commit: Commit) {
+// Function to handle sharing for a specific commit and return share info
+async function generateShareInfo(structureId: string, commit: Commit) {
     try {
         const apiRoot = (window as any).apiRoot;
-
-        // Show loading state
-        const commitGraphElement = document.getElementById('commit-graph');
-        if (commitGraphElement) {
-            commitGraphElement.innerHTML = '<p>Generating share link...</p>';
-        }
 
         // Get the structure to access its name
         const structure = await (window as any).DexieDB.structureData.get(structureId);
@@ -335,6 +329,112 @@ async function handleCommitShare(structureId: string, commit: Commit) {
         commit.shareInfo = shareInfo;
         await updateCommitShareInfo(structureId, commit.commitId, shareInfo);
 
+        return shareInfo;
+
+    } catch (error) {
+        console.error("Error generating permanent link:", error);
+        throw error;
+    }
+}
+
+// Function to handle sharing for a specific commit and show popup
+async function handleCommitShareWithPopup(structureId: string, commit: Commit) {
+    try {
+        const commitGraphElement = document.getElementById('commit-graph');
+
+        // Show loading state
+        if (commitGraphElement) {
+            commitGraphElement.innerHTML = '<p>Generating share link...</p>';
+        }
+
+        // Generate the share info
+        const shareInfo = await generateShareInfo(structureId, commit);
+
+        // Get the share URL from the updated commit
+        const shareUrl = shareInfo.shareUrl;
+
+        if (!shareUrl) {
+            throw new Error("Failed to generate share URL");
+        }
+
+        // Create popup element
+        const popup = document.createElement('div');
+        popup.id = 'share-popup';
+        popup.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+        `;
+
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        `;
+
+        // Create content
+        const content = document.createElement('div');
+        content.innerHTML = `
+            <h3>Share Link</h3>
+            <p>Your share link:</p>
+            <input type="text" id="share-url-input" value="${shareUrl}" readonly style="width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px;">
+            <button id="copy-button" style="padding: 8px 16px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer;">Copy to Clipboard</button>
+            <button id="close-button" style="margin-left: 10px; padding: 8px 16px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        `;
+
+        popup.appendChild(content);
+        document.body.appendChild(overlay);
+        document.body.appendChild(popup);
+
+        // Add event listeners
+        const copyButton = popup.querySelector('#copy-button') as HTMLButtonElement;
+        const closeButton = popup.querySelector('#close-button') as HTMLButtonElement;
+        const inputField = popup.querySelector('#share-url-input') as HTMLInputElement;
+
+        copyButton.addEventListener('click', () => {
+            inputField.select();
+            try {
+                navigator.clipboard.writeText(inputField.value).then(() => {
+                    // Visual feedback
+                    const originalText = copyButton.textContent;
+                    copyButton.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyButton.textContent = originalText;
+                    }, 2000);
+                });
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                document.execCommand('copy');
+            }
+        });
+
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(popup);
+            document.body.removeChild(overlay);
+        });
+
+        // Close popup when clicking outside
+        overlay.addEventListener('click', () => {
+            document.body.removeChild(popup);
+            document.body.removeChild(overlay);
+        });
+
         // Refresh the UI to show the share link
         if (commitGraphElement) {
             initCommitHistory(structureId);
@@ -361,6 +461,8 @@ async function updateCommitShareInfo(structureId: string, commitId: string, shar
         console.error("Error updating commit share info:", error);
     }
 }
+
+
 
 // Don't auto-initialize, wait for the modal to be opened
 // initCommitHistory();
