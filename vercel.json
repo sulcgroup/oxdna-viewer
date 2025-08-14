@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/dist/dash/:path((?!_next|api|favicon.ico|sw.js).*)",
+      "destination": "/dist/dash/:path.html"
+    }
+  ]
+}
