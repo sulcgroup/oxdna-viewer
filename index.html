@@ -384,7 +384,7 @@
             <li ondblclick="view.sectionClicked()"><a href="#section-protein">Protein</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-plugins">Plugins</a></li>
             <li ondblclick="view.sectionClicked()"><a href="#section-library">Library</a></li>
-            <li><a href="/dist/dash/" target="_blank">Jobs</a></li>
+                        <li><a href="/dist/dash/" target="_blank" id="jobsLink">Jobs</a></li>
         </ul>
 
         <div class="content-holder">
@@ -1436,6 +1436,7 @@
         <script src="./dist/utils/submitStructureWindow-script.js"></script>
         <script type="module" src="./dist/utils/historyStorageService.js"></script>
         <script type="module" src="./dist/utils/sharedStructureService.js"></script>
+        <script type="module" src="./dist/file_handling/temp_storage.js"></script>
 
         <script>
             //https://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t

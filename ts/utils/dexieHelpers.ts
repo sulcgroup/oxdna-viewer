@@ -25,14 +25,22 @@ interface EntryType {
   branches: { [key: string]: string[] };
 }
 
+interface TemporaryStructure {
+  id: string;
+  topFile: string;
+  datFile: string;
+}
+
 const DexieDB = new Dexie("Structures") as Dexie & {
   structureData: Dexie.Table<EntryType, string>;
   remoteStructureData: Dexie.Table<EntryType, string>;
+  temporaryStructure: Dexie.Table<TemporaryStructure, string>;
 };
 
 DexieDB.version(1).stores({
   structureData: "id, structureName",
   remoteStructureData: "id, structureName",
+  temporaryStructure: "id",
 });
 
 (window as any).DexieDB = DexieDB;

@@ -70,6 +70,7 @@
       "./ts/utils/dexieHelpers.ts",
       "./ts/utils/sharedStructureService.ts",
       "./ts/auth.ts",
-      "./ts/api/sync.ts"
+      "./ts/api/sync.ts",
+      "./ts/file_handling/temp_storage.ts"
     ]
 }
