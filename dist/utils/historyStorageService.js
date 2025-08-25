@@ -19,10 +19,9 @@ export function createCompressedOxViewFile(space) {
 export async function saveStructure() {
     try {
         const commitNameElement = document.getElementById("commitName");
-        if (!commitNameElement || commitNameElement.value === "") {
-            alert("No commit name given");
-            return;
-        }
+        // Note: allow empty/missing commit name input here. If user supplied
+        // a name we'll use it; otherwise we'll derive a name later from the
+        // previous commit name plus an incrementing numeric suffix.
         const compressedData = createCompressedOxViewFile();
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
@@ -146,9 +145,56 @@ export async function saveStructure() {
             }
             newBranches[currentBranchName].push(newCommitId);
         }
+        // Compute commitName: prefer the input value if present, otherwise
+        // derive from the previous (head) commit by appending a numeric
+        // suffix that starts at 1 and increments ("PrevName 1", "PrevName 2", ...).
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+        let commitName = null;
+        if (commitNameElement && commitNameElement.value && commitNameElement.value.trim() !== "") {
+            commitName = commitNameElement.value.trim();
+        }
+        else {
+            // Determine base name from previous commit (head of current branch). If not available,
+            // fall back to the most recent commit in the structure. If still not available (shouldn't
+            // happen for an existing structure), use a generic base name.
+            let baseName = "Commit";
+            if (headCommitId) {
+                const prev = oldStructure.structure.find((c) => c.commitId === headCommitId);
+                if (prev && prev.commitName)
+                    baseName = prev.commitName;
+            }
+            else if (oldStructure.structure && oldStructure.structure.length > 0) {
+                const prev = oldStructure.structure[oldStructure.structure.length - 1];
+                if (prev && prev.commitName)
+                    baseName = prev.commitName;
+            }
+            // If the previous commit name already ends with a numeric suffix ("Name N"),
+            // strip it so we don't produce names like "Name 1 1".
+            const trailingNumMatch = baseName.match(/^(.*)\s+(\d+)$/);
+            if (trailingNumMatch && trailingNumMatch[1]) {
+                baseName = trailingNumMatch[1];
+            }
+            // Find existing numeric suffixes for this baseName among all commits.
+            const re = new RegExp(`^${escapeRegExp(baseName)}\\s+(\\d+)$`);
+            const nums = [];
+            for (const c of oldStructure.structure) {
+                if (!c || !c.commitName)
+                    continue;
+                const m = c.commitName.match(re);
+                if (m && m[1]) {
+                    const n = parseInt(m[1], 10);
+                    if (!Number.isNaN(n))
+                        nums.push(n);
+                }
+            }
+            const next = nums.length > 0 ? Math.max(...nums) + 1 : 1;
+            commitName = `${baseName} ${next}`;
+        }
         const newCommit = {
             data: compressedData,
-            commitName: commitNameElement.value,
+            commitName: commitName,
             commitId: newCommitId,
             parent: parentCommitId,
         };
@@ -161,6 +207,15 @@ export async function saveStructure() {
             branches: newBranches,
         });
         alert("Structure saved successfully!");
+        // Metro-style notification (if available)
+        if (window.notify) {
+            try {
+                window.notify(`Commit saved with ${commitName}`, 'success');
+            }
+            catch (e) {
+                // noop - don't break save flow if notify fails
+            }
+        }
     }
     catch (error) {
         console.error("Error saving structure:", error);
