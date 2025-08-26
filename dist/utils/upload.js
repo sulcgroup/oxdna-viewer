@@ -59,12 +59,21 @@ function setupFileInputs() {
                 return;
             const fileInput = document.querySelector(`.${type}-file-input`);
             const descInput = document.querySelector(`.${type}-desc-input`);
-            if (fileInput && fileInput.files && fileInput.files.length > 0 && descInput && descInput.value) {
+            if (!fileInput || !descInput)
+                return;
+            const fileWidget = window.Metro.getPlugin(fileInput, 'file');
+            const files = fileWidget ? fileWidget.files : fileInput.files;
+            if (files && files.length > 0 && descInput.value) {
                 const description = descInput.value;
-                const file = fileInput.files[0];
+                const file = files[0];
                 fileStore[type].push({ file, description });
                 renderFileList(type);
-                fileInput.value = ''; // Clear the input
+                if (fileWidget && typeof fileWidget.clear === 'function') {
+                    fileWidget.clear();
+                }
+                else {
+                    fileInput.value = '';
+                }
                 descInput.value = '';
             }
             else {
