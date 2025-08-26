@@ -88,7 +88,7 @@ async function handleUploadSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
-    const apiRoot = "https://api.nanobase.org/v1"; // Using nanobase.org as a placeholder
+    const apiRoot = "https://api.nanobase.org/api/v1"; // Using nanobase.org as a placeholder
     const requestData = {};
     formData.forEach((value, key) => {
         if (key === 'private') {
@@ -183,7 +183,7 @@ async function handleLogin(e) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     if (email && password) {
-        const apiRoot = "https://api.nanobase.org/v1";
+        const apiRoot = "https://api.nanobase.org/api/v1";
         const formData = { email, password };
         try {
             const response = await fetch(`${apiRoot}/auth/login`, {

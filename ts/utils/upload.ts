@@ -102,7 +102,7 @@ async function handleUploadSubmit(e: Event) {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
-    const apiRoot = "https://api.nanobase.org/v1"; // Using nanobase.org as a placeholder
+    const apiRoot = "https://api.nanobase.org/api/v1"; // Using nanobase.org as a placeholder
 
     const requestData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
@@ -205,7 +205,7 @@ async function handleLogin(e: Event) {
     const password = (document.getElementById('password') as HTMLInputElement).value;
 
     if (email && password) {
-        const apiRoot = "https://api.nanobase.org/v1";
+        const apiRoot = "https://api.nanobase.org/api/v1";
         const formData = { email, password };
 
         try {
