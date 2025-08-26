@@ -29,7 +29,7 @@ function prepopulateOxViewSnapshot() {
     const jsonContent = createOxViewFileContent();
     if (!jsonContent)
         return;
-    const file = new File([jsonContent], "oxview_snapshot.json", { type: "application/json" });
+    const file = new File([jsonContent], "oxview_snapshot.oxview", { type: "application/json" });
     const fileEntry = { file, description: "oxView Snapshot of current scene" };
     fileStore.structureFiles.push(fileEntry);
     renderFileList('structureFiles');

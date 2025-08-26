@@ -29,22 +29,34 @@ function prepopulateOxViewSnapshot() {
     const jsonContent = createOxViewFileContent();
     if (!jsonContent)
         return;
-    const file = new File([jsonContent], "oxview_snapshot.json", { type: "application/json" });
-    const fileEntry = { file, description: "oxView Snapshot of current scene" };
+    const file = new File([jsonContent], "oxview_snapshot.oxview", { type: "application/json" });
+    // Add snapshot with empty description so the user can provide it
+    const fileEntry = { file, description: "" };
     fileStore.structureFiles.push(fileEntry);
     renderFileList('structureFiles');
+    // Focus the newly-created description input so the user can type
+    const idx = fileStore.structureFiles.length - 1;
+    setTimeout(() => {
+        const descInput = document.querySelector(`.file-desc-input[data-type="structureFiles"][data-index="${idx}"]`);
+        if (descInput)
+            descInput.focus();
+    }, 50);
 }
 function renderFileList(type) {
     const listElement = document.getElementById(`${type}-list`);
     if (!listElement)
         return;
     listElement.innerHTML = '';
-    fileStore[type].forEach((entry, index) => {
+    const entries = fileStore[type] || [];
+    entries.forEach((entry, index) => {
         const listItem = document.createElement('li');
         listItem.className = 'file-list-item';
+        const descHtml = (entry.description && entry.description.trim()) ?
+            `<em class="file-desc-text">${entry.description}</em>` :
+            `<input type="text" class="file-desc-input" data-type="${type}" data-index="${index}" placeholder="Add description..."> <button type="button" class="button small success save-desc-btn" data-type="${type}" data-index="${index}">Save</button>`;
         listItem.innerHTML = `
             <div>
-                <span class="text-bold">${entry.file.name}</span> - <em>${entry.description}</em>
+                <span class="text-bold">${entry.file.name}</span> - ${descHtml}
             </div>
             <button type="button" class="button alert small" data-type="${type}" data-index="${index}">Delete</button>
         `;
@@ -57,62 +69,168 @@ function setupFileInputs() {
             const type = button.dataset.type;
             if (!type)
                 return;
-            const fileInput = document.querySelector(`.${type}-file-input`);
-            const descInput = document.querySelector(`.${type}-desc-input`);
+            // Try class-based selectors first (matches the markup), but fall back to searching
+            // inside the same panel `.content` as the clicked button for better resilience
+            let fileInput = document.querySelector(`.${type}-file-input`);
+            let descInput = document.querySelector(`.${type}-desc-input`);
+            const container = button.closest('.content') || document;
+            // If the class selector returned a wrapper (e.g. Metro wraps the file input in a <label>),
+            // try to find the actual input inside that wrapper.
+            if (fileInput && (fileInput.nodeName !== 'INPUT')) {
+                const inner = fileInput.querySelector && fileInput.querySelector('input[type=file]');
+                if (inner)
+                    fileInput = inner;
+            }
+            // If descInput is a wrapper (div/input container), prefer the actual input/textarea inside the same panel
+            if (descInput && !['INPUT', 'TEXTAREA'].includes(descInput.nodeName)) {
+                const innerDesc = descInput.querySelector && descInput.querySelector('input[type=text], textarea');
+                if (innerDesc)
+                    descInput = innerDesc;
+            }
+            // Final fallback: locate inputs inside the nearest content container
+            if (!fileInput)
+                fileInput = container.querySelector('input[type=file]') || null;
+            if (!descInput)
+                descInput = container.querySelector('input[type=text], textarea');
             if (!fileInput || !descInput)
                 return;
-            const fileWidget = window.Metro.getPlugin(fileInput, 'file');
-            const files = fileWidget ? fileWidget.files : fileInput.files;
-            if (files && files.length > 0 && descInput.value) {
-                const description = descInput.value;
+            // Narrow types for TypeScript so we can access .files and .value safely
+            const realFileInput = (fileInput instanceof HTMLInputElement) ? fileInput : null;
+            const realDescInput = (descInput instanceof HTMLInputElement || descInput instanceof HTMLTextAreaElement) ? descInput : null;
+            // Prefer native input.files when available, fall back to Metro plugin when present
+            const metro = window.Metro;
+            const fileWidget = (metro && typeof metro.getPlugin === 'function') ? metro.getPlugin(realFileInput || fileInput, 'file') : null;
+            let files = null;
+            if (realFileInput && realFileInput.files && realFileInput.files.length) {
+                files = realFileInput.files;
+            }
+            else if (fileWidget && fileWidget.files && fileWidget.files.length) {
+                files = fileWidget.files;
+            }
+            else {
+                // Final fallback: if the input exists but is a Metro-wrapped control, try searching
+                // for any file input in the same container.
+                const container = button.closest('.content') || document;
+                const altFile = container.querySelector('input[type=file]');
+                if (altFile && altFile.files && altFile.files.length)
+                    files = altFile.files;
+            }
+            // Read description value defensively - some UI wrappers may not expose a .value string
+            let descRaw = '';
+            try {
+                descRaw = descInput.value;
+            }
+            catch (e) {
+                descRaw = '';
+            }
+            if (!descRaw) {
+                // try other ways to read the displayed text
+                try {
+                    descRaw = descInput.textContent || descInput.innerText || descInput.getAttribute && descInput.getAttribute('value') || '';
+                }
+                catch (e) {
+                    descRaw = '';
+                }
+            }
+            const descValue = (typeof descRaw === 'string') ? descRaw.trim() : '';
+            // Debug info to help track problems where Metro or other UI wrappers don't expose .value
+            try {
+                console.debug('[upload] add-file', { type, fileInput, fileWidget: window.Metro ? window.Metro.getPlugin(fileInput, 'file') : null, files, descRaw, descValue });
+            }
+            catch (e) { /* ignore debug errors */ }
+            if (files && files.length > 0 && descValue) {
+                const description = descValue;
                 const file = files[0];
+                if (!fileStore[type])
+                    fileStore[type] = [];
                 fileStore[type].push({ file, description });
                 renderFileList(type);
                 if (fileWidget && typeof fileWidget.clear === 'function') {
                     fileWidget.clear();
                 }
                 else {
-                    fileInput.value = '';
+                    try {
+                        if (realFileInput)
+                            realFileInput.value = '';
+                    }
+                    catch (e) { /* ignore */ }
                 }
-                descInput.value = '';
+                try {
+                    if (realDescInput)
+                        realDescInput.value = '';
+                }
+                catch (e) { /* ignore */ }
             }
             else {
                 alert("Please select a file and provide a description.");
             }
         });
     });
+    // Use delegated listener and closest() to handle clicks on nested elements inside the button
     document.addEventListener('click', (e) => {
         const target = e.target;
-        if (target.classList.contains('button') && target.dataset.type && target.dataset.index) {
-            const type = target.dataset.type;
-            const index = parseInt(target.dataset.index || '-1', 10);
-            if (type && index > -1) {
+        // Delete button handling
+        const deleteBtn = target.closest('button[data-type][data-index].alert');
+        if (deleteBtn) {
+            const type = deleteBtn.dataset.type;
+            const index = parseInt(deleteBtn.dataset.index || '-1', 10);
+            if (type && index > -1 && Array.isArray(fileStore[type])) {
                 fileStore[type].splice(index, 1);
                 renderFileList(type);
             }
+            return;
+        }
+        // Save description handling
+        const saveBtn = target.closest('button.save-desc-btn');
+        if (saveBtn) {
+            const type = saveBtn.dataset.type;
+            const index = parseInt(saveBtn.dataset.index || '-1', 10);
+            if (!type || index < 0)
+                return;
+            const input = document.querySelector(`.file-desc-input[data-type="${type}"][data-index="${index}"]`);
+            if (!input)
+                return;
+            const val = (input.value || '').trim();
+            if (!fileStore[type] || !fileStore[type][index])
+                return;
+            fileStore[type][index].description = val;
+            renderFileList(type);
+            return;
         }
     });
 }
 async function handleUploadSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const formData = new FormData(form);
     const apiRoot = "https://api.nanobase.org/api/v1"; // Using nanobase.org as a placeholder
+    // Build request payload explicitly and defensively
+    const incoming = new FormData(form);
     const requestData = {};
-    formData.forEach((value, key) => {
-        if (key === 'private') {
-            requestData[key] = form.querySelector('#private').checked;
-        }
-        else {
-            requestData[key] = value;
-        }
+    incoming.forEach((value, key) => {
+        // For checkboxes such as 'private' we prefer to read the checked state directly
+        requestData[key] = value;
     });
+    const privateEl = form.querySelector('#private');
+    if (privateEl)
+        requestData['private'] = !!privateEl.checked;
     const formDataToSend = new FormData();
     for (const key in requestData) {
-        formDataToSend.append(key, requestData[key]);
+        const val = requestData[key];
+        // Convert booleans/numbers to strings for FormData
+        if (typeof val === 'boolean' || typeof val === 'number') {
+            formDataToSend.append(key, String(val));
+        }
+        else if (val instanceof File) {
+            formDataToSend.append(key, val);
+        }
+        else {
+            formDataToSend.append(key, String(val));
+        }
     }
     for (const type in fileStore) {
-        fileStore[type].forEach(entry => {
+        const entries = fileStore[type] || [];
+        entries.forEach(entry => {
+            // Use explicit field names; keep API backwards-compatible by defaulting to original behavior
             formDataToSend.append(type, entry.file);
             formDataToSend.append(`${type}Description`, entry.description);
         });
@@ -141,9 +259,13 @@ async function handleUploadSubmit(e) {
     }
 }
 function checkAuth() {
-    console.log("hehere?");
     const loginContainer = document.getElementById('login-container');
     const uploadContainer = document.getElementById('upload-container');
+    if (!loginContainer || !uploadContainer) {
+        // If expected containers are missing, fail gracefully without throwing
+        console.warn('Upload window containers not present in DOM. Skipping auth UI toggle.');
+        return;
+    }
     if (isTokenValid()) {
         loginContainer.style.display = 'none';
         uploadContainer.style.display = 'block';
