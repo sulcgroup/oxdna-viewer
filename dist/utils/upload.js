@@ -59,8 +59,8 @@ function setupFileInputs() {
                 return;
             const fileInput = document.querySelector(`.${type}-file-input`);
             const descInput = document.querySelector(`.${type}-desc-input`);
-            if (fileInput && fileInput.files && fileInput.files.length > 0 && descInput) {
-                const description = descInput.value || 'No description';
+            if (fileInput && fileInput.files && fileInput.files.length > 0 && descInput && descInput.value) {
+                const description = descInput.value;
                 const file = fileInput.files[0];
                 fileStore[type].push({ file, description });
                 renderFileList(type);
