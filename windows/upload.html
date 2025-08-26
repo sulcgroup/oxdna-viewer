@@ -22,7 +22,7 @@
             </form>
         </div>
 
-        <div id="upload-container">
+        <div id="upload-container" style="display: none;">
             <h1 class="text-light">Upload Structure</h1>
             <form id="upload-form">
                 <ul data-role="tabs" data-expand="true">
@@ -179,4 +179,19 @@
             </form>
         </div>
     </div>
+    <script>
+        (function() {
+            const token = localStorage.getItem('token');
+            const loginContainer = document.getElementById('login-container');
+            const uploadContainer = document.getElementById('upload-container');
+
+            if (token) {
+                loginContainer.style.display = 'none';
+                uploadContainer.style.display = 'block';
+            } else {
+                loginContainer.style.display = 'block';
+                uploadContainer.style.display = 'none';
+            }
+        })();
+    </script>
 </div>
