@@ -88,7 +88,7 @@ async function handleUploadSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
-    const apiRoot = "https://nanobase.org/api"; // Using nanobase.org as a placeholder
+    const apiRoot = "https://api.nanobase.org/v1"; // Using nanobase.org as a placeholder
     const requestData = {};
     formData.forEach((value, key) => {
         if (key === 'private') {
@@ -132,6 +132,7 @@ async function handleUploadSubmit(e) {
     }
 }
 function checkAuth() {
+    console.log("hehere?");
     const loginContainer = document.getElementById('login-container');
     const uploadContainer = document.getElementById('upload-container');
     if (isTokenValid()) {
@@ -143,41 +144,68 @@ function checkAuth() {
         uploadContainer.style.display = 'none';
     }
 }
+function decode(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    }
+    catch (e) {
+        console.error("Invalid token format", e);
+        return null;
+    }
+}
 /**
  * Returns true if a token exists in localStorage and is not expired.
  */
 function isTokenValid() {
     const token = localStorage.getItem('token');
-    const tokenExpiry = localStorage.getItem('tokenExpiry');
-    if (!token || !tokenExpiry)
+    if (!token)
         return false;
-    const expiryNum = parseInt(tokenExpiry, 10);
-    if (Number.isNaN(expiryNum))
+    try {
+        const decodedToken = decode(token);
+        if (!decodedToken || !decodedToken.exp) {
+            return false;
+        }
+        // exp is in seconds, Date.now() is in milliseconds
+        return Date.now() < decodedToken.exp * 1000;
+    }
+    catch (e) {
+        console.error("Token validation failed", e);
         return false;
-    return Date.now() < expiryNum;
+    }
 }
 async function handleLogin(e) {
     e.preventDefault();
-    // Dummy login logic
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     if (email && password) {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const dummyToken = 'dummy-token-' + new Date().getTime();
-        const expiryTime = new Date().getTime() + (60 * 60 * 1000); // 1 hour expiry
-        localStorage.setItem('token', dummyToken);
-        localStorage.setItem('tokenExpiry', expiryTime.toString());
-        checkAuth();
-    }
-    else {
-        alert('Please enter email and password.');
+        const apiRoot = "https://api.nanobase.org/v1";
+        const formData = { email, password };
+        try {
+            const response = await fetch(`${apiRoot}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.token);
+                checkAuth();
+            }
+        }
+        catch (error) {
+            console.error(error);
+        }
     }
 }
-document.addEventListener('DOMContentLoaded', () => {
+function initUploadWindow() {
     setupFileInputs();
     document.getElementById('snapshot-btn')?.addEventListener('click', prepopulateOxViewSnapshot);
     document.getElementById('upload-form')?.addEventListener('submit', handleUploadSubmit);
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
     checkAuth();
-});
+}

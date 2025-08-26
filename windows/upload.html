@@ -6,7 +6,7 @@
     </div>
     <div class="window-content p-4">
         <div id="login-container">
-            <h1 class="text-light">Login Required</h1>
+            <h1 class="text-light">Login with your Nanobase account</h1>
             <form id="login-form" class="login-form p-6">
                 <div class="form-group">
                     <label>Email</label>
@@ -179,19 +179,5 @@
             </form>
         </div>
     </div>
-    <script>
-        (function() {
-            const token = localStorage.getItem('token');
-            const loginContainer = document.getElementById('login-container');
-            const uploadContainer = document.getElementById('upload-container');
-
-            if (token) {
-                loginContainer.style.display = 'none';
-                uploadContainer.style.display = 'block';
-            } else {
-                loginContainer.style.display = 'block';
-                uploadContainer.style.display = 'none';
-            }
-        })();
-    </script>
+    <script src="../dist/utils/upload.js"></script>
 </div>

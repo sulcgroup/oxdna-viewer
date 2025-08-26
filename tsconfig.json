@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",        // path to output directory
-        //"sourceMap": true,          // allow sourcemap support
-        "strictNullChecks": false,   // disable strict null checking because it doesn't like our file parsing code
-        "module": "esnext",            // specify module code generation
-        //"jsx": "react",             // use typescript to transpile jsx to js
-        "target": "esnext",            // specify ECMAScript target version
-        //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase     
-        "moduleResolution": "node"       
+      "outDir": "./dist/", // path to output directory
+      //"sourceMap": true,          // allow sourcemap support
+      "strictNullChecks": false, // disable strict null checking because it doesn't like our file parsing code
+      "module": "esnext", // specify module code generation
+      //"jsx": "react",             // use typescript to transpile jsx to js
+      "target": "esnext", // specify ECMAScript target version
+      //"allowJs": true,             // allow a partial TypeScript and JavaScript codebase     
+      "moduleResolution": "node"
     },
-    "include": ["./cdn-modules.d.ts"],
+    "include": [
+      "./cdn-modules.d.ts"
+    ],
     "files": [
       "./ts/main.ts",
       "./ts/api/editing_api.ts",
@@ -69,7 +71,6 @@
       "./ts/utils/library.ts",
       "./ts/utils/dexieHelpers.ts",
       "./ts/utils/sharedStructureService.ts",
-      "./ts/auth.ts",
       "./ts/api/sync.ts",
       "./ts/file_handling/temp_storage.ts",
       "./ts/utils/upload.ts"

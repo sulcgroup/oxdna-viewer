@@ -1227,7 +1227,7 @@
                 <div class="group">
                     <ul style="list-style-type:none" height="70px">
                         <li> 
-                            <button type="submitWindow" onclick="view.toggleWindow('upload')">Submit structure to Nanobase</button>
+                            <button type="submitWindow" onclick="view.toggleWindow('upload', initUploadWindow)">Submit structure to Nanobase</button>
                             <button type="save" onclick="saveStructure()">Save structure</button>
                             <button type="save" onclick="loadStructure()">Load structure</button>
                         </li>
@@ -1235,9 +1235,6 @@
                             <input type="text" name="commitName" id="commitName" />
                             <button type="save" onclick="view.openCommitHistoryModal()">View history</button>
                         </li>
-                        <!-- <li> -->
-                        <!--     <button type="submit" onclick="pushToServer()">Push to server</button> -->
-                        <!-- </li> -->
                     </ul>
                 </div>
             </div>
@@ -1407,6 +1404,7 @@
         <script src="./dist/editing/distance.js"></script>
         <script src="./dist/editing/selections.js"></script>
         <script src="./dist/api/plugin_api.js"></script>
+        <script src="./dist/utils/upload.js"></script>
         <script type="module" src="./dist/utils/dexieHelpers.js"></script>
         <script src="./dist/utils/commitHistoryWindow-script.js"></script>
         <script src="./dist/utils/submitStructureWindow-script.js"></script>

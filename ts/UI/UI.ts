@@ -213,13 +213,13 @@ function updateColorPalette() {
             let c = document.createElement('input');
             c.type = 'color';
             c.value = "#" + m.getHexString();
-            c.onchange = function () {
+            c.onchange = function() {
                 backboneColors[i] = new THREE.Color(c.value);
                 updateColorPalette();
             }
 
             //deletes color on right click
-            c.oncontextmenu = function (event) {
+            c.oncontextmenu = function(event) {
                 event.preventDefault();
                 backboneColors.splice(i, 1);
                 updateColorPalette();
@@ -385,7 +385,7 @@ function notify(message: string, type?: string, keepOpen = false, title?: string
 function setBackgroundImage() {
     let file = (document.getElementById("backgroundInput") as HTMLInputElement).files[0];
     let reader = new FileReader();
-    reader.onloadend = function () {
+    reader.onloadend = function() {
         document.getElementById('threeCanvas').style.backgroundImage = "url(" + reader.result + ")";
     }
     if (file) {
@@ -645,7 +645,7 @@ class View {
             // (looks like the model is rotating)
             // Perhaps not needed for 6-DoF devices
             var rotation = 0;
-            vrRenderer.setAnimationLoop(function () {
+            vrRenderer.setAnimationLoop(function() {
                 rotation += 0.001;
                 rig.position.x = Math.sin(rotation) * 5;
                 rig.position.z = Math.cos(rotation) * 5;
@@ -726,33 +726,6 @@ class View {
 
     public toggleWindow(id: string, oncreate?: (structureId?: string) => void, structureId?: string) {
         let elem = this.doc.getElementById(id);
-
-        if (id === "submitStructureWindow" && this.isWindowOpen(id)) {
-            const token = localStorage.getItem("token");
-            const tokenParts = token.split('.');
-            if (tokenParts.length !== 3) throw new Error('Invalid token');
-
-            const base64Payload = tokenParts[1].replace(/-/g, '+').replace(/_/g, '/');
-            const jsonPayload = decodeURIComponent(
-                atob(base64Payload)
-                    .split('')
-                    .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-                    .join('')
-            );
-
-            const { exp } = JSON.parse(jsonPayload);
-
-            let isLoggedIn = false;
-            if (token) {
-                if (Date.now() < exp * 1000) {
-                    isLoggedIn = true;
-                }
-            }
-
-            if (!isLoggedIn) {
-                id = "loginWindow";
-            }
-        }
 
         if (elem) {
             Metro.window.toggle(elem);
@@ -855,7 +828,7 @@ class View {
             scaleFactor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
         }
         function saveImage() {
-            canvas.toBlob(function (blob) {
+            canvas.toBlob(function(blob) {
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
@@ -865,7 +838,7 @@ class View {
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
                 renderColorbar();
-                colorbarCanvas.toBlob(function (blob) {
+                colorbarCanvas.toBlob(function(blob) {
                     var a = document.createElement('a');
                     var url = URL.createObjectURL(blob);
                     a.href = url;
@@ -975,7 +948,7 @@ class View {
             li.setAttribute('value', String(gid));
             li.appendChild(sp1);
             li.appendChild(sp2);
-            li.onclick = function () { flux.toggleData(li.value) };
+            li.onclick = function() { flux.toggleData(li.value) };
             ul.appendChild(li);
         }
     }
@@ -998,7 +971,7 @@ class View {
                 li.setAttribute('value', String(nid));
                 li.appendChild(sp1);
                 li.appendChild(sp2);
-                li.onclick = function () {
+                li.onclick = function() {
                     flux.fitData(li.value)
                 };
                 ul.appendChild(li);
@@ -1573,10 +1546,10 @@ class fluxGraph {
                 let temp = view.getInputNumber('temp');
 
                 function activate() {
-                    var promise = new Promise(function (resolve, reject) {
+                    var promise = new Promise(function(resolve, reject) {
                         var counter = 0;
                         // var array = [];
-                        var callback = function (message) {
+                        var callback = function(message) {
                             counter++;
 
                             msf = msf.concat(message.data);
@@ -1637,7 +1610,7 @@ class fluxGraph {
 
     prepIndxButton(indx) {
         let ib = document.getElementById('indxbutton');
-        ib.onclick = function () { makeIndxFile(indx) };
+        ib.onclick = function() { makeIndxFile(indx) };
         flux.currentindexinfo = indx.slice();
         // $('indxbutton').on("click", function() {
         //     makeIndxFile(indx);
@@ -1646,7 +1619,7 @@ class fluxGraph {
 
     prepJSONButton(nid) { // this function doesn't really belong here
         let jb = document.getElementById('jsonbutton');
-        jb.onclick = function () { makeNetworkJSONFile(nid) };
+        jb.onclick = function() { makeNetworkJSONFile(nid) };
     };
 
 }

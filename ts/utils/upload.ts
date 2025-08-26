@@ -1,11 +1,5 @@
 /// <reference path="../../ts/typescript_definitions/oxView.d.ts" />
 /// <reference path="../../ts/typescript_definitions/index.d.ts" />
-
-declare const box: any;
-declare const systems: any;
-declare const forceHandler: any;
-declare const selectionListHandler: any;
-
 interface FileEntry {
     file: File;
     description: string;
@@ -108,7 +102,7 @@ async function handleUploadSubmit(e: Event) {
     const form = e.target as HTMLFormElement;
     const formData = new FormData(form);
 
-    const apiRoot = "https://nanobase.org/api"; // Using nanobase.org as a placeholder
+    const apiRoot = "https://api.nanobase.org/v1"; // Using nanobase.org as a placeholder
 
     const requestData: { [key: string]: any } = {};
     formData.forEach((value, key) => {
@@ -157,6 +151,7 @@ async function handleUploadSubmit(e: Event) {
 }
 
 function checkAuth() {
+    console.log("hehere?")
     const loginContainer = document.getElementById('login-container') as HTMLElement;
     const uploadContainer = document.getElementById('upload-container') as HTMLElement;
 
@@ -169,44 +164,73 @@ function checkAuth() {
     }
 }
 
+function decode(token: string) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        console.error("Invalid token format", e);
+        return null;
+    }
+}
+
 /**
  * Returns true if a token exists in localStorage and is not expired.
  */
 function isTokenValid(): boolean {
     const token = localStorage.getItem('token');
-    const tokenExpiry = localStorage.getItem('tokenExpiry');
-    if (!token || !tokenExpiry) return false;
-    const expiryNum = parseInt(tokenExpiry, 10);
-    if (Number.isNaN(expiryNum)) return false;
-    return Date.now() < expiryNum;
+    if (!token) return false;
+
+    try {
+        const decodedToken = decode(token);
+        if (!decodedToken || !decodedToken.exp) {
+            return false;
+        }
+        // exp is in seconds, Date.now() is in milliseconds
+        return Date.now() < decodedToken.exp * 1000;
+    } catch (e) {
+        console.error("Token validation failed", e);
+        return false;
+    }
 }
 
 async function handleLogin(e: Event) {
     e.preventDefault();
-    // Dummy login logic
     const email = (document.getElementById('email') as HTMLInputElement).value;
     const password = (document.getElementById('password') as HTMLInputElement).value;
 
     if (email && password) {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 500));
+        const apiRoot = "https://api.nanobase.org/v1";
+        const formData = { email, password };
 
-        const dummyToken = 'dummy-token-' + new Date().getTime();
-        const expiryTime = new Date().getTime() + (60 * 60 * 1000); // 1 hour expiry
+        try {
+            const response = await fetch(`${apiRoot}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
+            });
 
-        localStorage.setItem('token', dummyToken);
-        localStorage.setItem('tokenExpiry', expiryTime.toString());
-
-        checkAuth();
-    } else {
-        alert('Please enter email and password.');
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.token);
+                checkAuth();
+            }
+        } catch (error) {
+            console.error(error);
+        }
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function initUploadWindow() {
     setupFileInputs();
     document.getElementById('snapshot-btn')?.addEventListener('click', prepopulateOxViewSnapshot);
     document.getElementById('upload-form')?.addEventListener('submit', handleUploadSubmit);
     document.getElementById('login-form')?.addEventListener('submit', handleLogin);
     checkAuth();
-});
+}
+
