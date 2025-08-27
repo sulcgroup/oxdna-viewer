@@ -188,8 +188,23 @@ function resetScene(resetCamera:boolean=true) {
     if (document.getElementById("forces")) { listForces() }
 
     // color overlay stuff
+    if (colorbarScene.children.length > 0) {
+        // copy-paste of removeColorbar to avoid circular imports
+        let l = colorbarScene.children.length;
+        for (let i = 0; i < l; i++) {
+            if (colorbarScene.children[i].type == "Sprite" || colorbarScene.children[i].type == "Line") {
+                colorbarScene.remove(colorbarScene.children[i]);
+                i -= 1;
+                l -= 1;
+            }
+        }
+        colorbarScene.remove(lut.legend.mesh)
+        //reset light to default
+        pointlight.intensity = 1.1;
+        renderColorbar();
+    }
     defaultColormap = "cooltowarm";
-    lut = [];
+    lut = undefined;
     devs = [];
 
     // Editing stuff
