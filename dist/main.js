@@ -172,7 +172,7 @@ function resetScene(resetCamera = true) {
     }
     // color overlay stuff
     defaultColormap = "cooltowarm";
-    lut = [];
+    lut = undefined;
     devs = [];
     // Editing stuff
     editHistory.clear();
