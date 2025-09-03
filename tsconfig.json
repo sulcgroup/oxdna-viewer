@@ -71,7 +71,6 @@
       "./ts/utils/library.ts",
       "./ts/utils/dexieHelpers.ts",
       "./ts/utils/sharedStructureService.ts",
-      "./ts/api/sync.ts",
       "./ts/file_handling/temp_storage.ts",
       "./ts/utils/upload.ts"
     ]
