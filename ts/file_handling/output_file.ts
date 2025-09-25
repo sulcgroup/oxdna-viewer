@@ -67,7 +67,7 @@ function make3dOutput(){ //makes stl or gltf export from the scene
     
     const include_backbone = view.getInputBool("backbone_toggle");
     const include_nucleoside = view.getInputBool("nucleoside_toggle");
-    const include_connector = view.getInputBool("connector_toggle");
+    const include_connector = view.getInputBool("connector1_toggle");
     const include_bbconnector = view.getInputBool("bbconnector_toggle");
 
     const faces_mul = view.getInputNumber("3dExportFacesMul");
@@ -77,7 +77,7 @@ function make3dOutput(){ //makes stl or gltf export from the scene
             include_backbone, include_nucleoside,
             include_connector, include_bbconnector,
             view.backboneScale, view.nucleosideScale,
-            view.connectorScale, view.bbconnectorScale,
+            view.connector1Scale, view.bbconnectorScale,
             faces_mul
         );
     } else if (fileFormat === 'gltf' || fileFormat === 'glb') {
@@ -94,8 +94,8 @@ function make3dOutput(){ //makes stl or gltf export from the scene
         let objects = exportGLTF(systems,
             include_backbone, include_nucleoside,
             include_connector, include_bbconnector,
-            view.backboneScale, view.nucleosideScale,
-            view.connectorScale, view.bbconnectorScale,
+            view.backboneScale, view.nucleosideScale, view.cmScale,
+            view.connector1Scale, view.connector2Scale, view.bbconnectorScale,
             faces_mul, flattenHierarchy,
             nsRoughness, bbRoughness,
             nsMetalness, bbMetalness

@@ -57,11 +57,11 @@ function make3dOutput() {
     const fileFormat = view.getInputValue("3dExportFormat");
     const include_backbone = view.getInputBool("backbone_toggle");
     const include_nucleoside = view.getInputBool("nucleoside_toggle");
-    const include_connector = view.getInputBool("connector_toggle");
+    const include_connector = view.getInputBool("connector1_toggle");
     const include_bbconnector = view.getInputBool("bbconnector_toggle");
     const faces_mul = view.getInputNumber("3dExportFacesMul");
     if (fileFormat === 'stl') {
-        saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.connectorScale, view.bbconnectorScale, faces_mul);
+        saveSTL(name, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.connector1Scale, view.bbconnectorScale, faces_mul);
     }
     else if (fileFormat === 'gltf' || fileFormat === 'glb') {
         let binary = fileFormat === 'glb';
@@ -71,7 +71,7 @@ function make3dOutput() {
         const bbRoughness = view.getSliderInputNumber("3dExport_bbRoughness");
         const nsRoughness = view.getSliderInputNumber("3dExport_nsRoughness");
         const includeCamera = view.getInputBool("3dExport_camera");
-        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.connectorScale, view.bbconnectorScale, faces_mul, flattenHierarchy, nsRoughness, bbRoughness, nsMetalness, bbMetalness);
+        let objects = exportGLTF(systems, include_backbone, include_nucleoside, include_connector, include_bbconnector, view.backboneScale, view.nucleosideScale, view.cmScale, view.connector1Scale, view.connector2Scale, view.bbconnectorScale, faces_mul, flattenHierarchy, nsRoughness, bbRoughness, nsMetalness, bbMetalness);
         if (includeCamera) {
             objects.push(camera);
         }

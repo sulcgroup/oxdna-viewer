@@ -26,18 +26,30 @@ class Nucleotide extends BasicElement {
         let a2 = a1.clone().cross(a3);
         // compute backbone position
         let bb = this.calcBBPos(p, a1, a2, a3);
-        // compute nucleoside cm
-        let ns = new THREE.Vector3(p.x + 0.4 * a1.x, p.y + 0.4 * a1.y, p.z + 0.4 * a1.z);
+        // compute nucleoside cm (stacking site)
+        let ns = new THREE.Vector3(p.x + 0.34 * a1.x, p.y + 0.34 * a1.y, p.z + 0.34 * a1.z);
         // compute nucleoside rotation
         const baseRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), a3);
         //compute connector position
-        const con = bb.clone().add(ns).divideScalar(2);
+        //const con = bb.clone().add(ns).divideScalar(2);
+        const con1 = bb.clone().add(p).divideScalar(2);
+        const con2 = ns.clone().add(p).divideScalar(2);
         // compute connector rotation
-        const rotationCon = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), con.clone().sub(ns).normalize());
+        //const rotationCon = new THREE.Quaternion().setFromUnitVectors(
+        //    new THREE.Vector3(0, 1, 0),
+        //    con.clone().sub(ns).normalize());
+        const rotationCon1 = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), p.clone().sub(con1).normalize());
+        //const rotationCon1 = new THREE.Quaternion(1, 0, 0, 0)
+        //const rotationCon2 = new THREE.Quaternion(0, 1, 0, 0)
+        const rotationCon2 = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), p.clone().sub(ns).normalize());
         // compute connector length
-        let conLen = this.bbnsDist;
+        //let conLen = this.bbnsDist;
+        let con1Len = bb.clone().sub(p).length();
+        let con2Len = ns.clone().sub(p).length();
         if (a1.length() == 0 && a2.length() == 0) {
-            conLen = 0;
+            //conLen = 0;
+            con1Len = 0;
+            con2Len = 0;
         }
         // compute sugar-phosphate positions/rotations, or set them all to 0 if there is no sugar-phosphate.
         let sp, spLen, spRotation;
@@ -61,13 +73,20 @@ class Nucleotide extends BasicElement {
         sys.fillVec('bbOffsets', 3, sid, bb.toArray());
         sys.fillVec('nsOffsets', 3, sid, ns.toArray());
         sys.fillVec('nsRotation', 4, sid, [baseRotation.w, baseRotation.z, baseRotation.y, baseRotation.x]);
-        sys.fillVec('conOffsets', 3, sid, con.toArray());
-        sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
+        //sys.fillVec('conOffsets', 3, sid, con.toArray());
+        //sys.fillVec('conRotation', 4, sid, [rotationCon.w, rotationCon.z, rotationCon.y, rotationCon.x]);
+        sys.fillVec('con1Offsets', 3, sid, con1.toArray());
+        sys.fillVec('con1Rotation', 4, sid, [rotationCon1.w, rotationCon1.z, rotationCon1.y, rotationCon1.x]);
+        sys.fillVec('con2Offsets', 3, sid, con2.toArray());
+        sys.fillVec('con2Rotation', 4, sid, [rotationCon2.w, rotationCon2.z, rotationCon2.y, rotationCon2.x]);
         sys.fillVec('bbconOffsets', 3, sid, sp.toArray());
         sys.fillVec('bbconRotation', 4, sid, [spRotation.w, spRotation.z, spRotation.y, spRotation.x]);
         sys.fillVec('scales', 3, sid, [1, 1, 1]);
+        sys.fillVec('cmScales', 3, sid, [0.5, 0.5, 0.5]);
         sys.fillVec('nsScales', 3, sid, [0.7, 0.3, 0.7]);
-        sys.fillVec('conScales', 3, sid, [1, conLen, 1]);
+        //sys.fillVec('conScales', 3, sid, [1, conLen, 1]);
+        sys.fillVec('con1Scales', 3, sid, [1, con1Len, 1]);
+        sys.fillVec('con2Scales', 3, sid, [1, con2Len, 1]);
         if (spLen == 0) {
             sys.fillVec('bbconScales', 3, sid, [0, 0, 0]);
         }
@@ -89,9 +108,15 @@ class Nucleotide extends BasicElement {
         sys.nsOffsets[sid * 3] += amount.x;
         sys.nsOffsets[sid * 3 + 1] += amount.y;
         sys.nsOffsets[sid * 3 + 2] += amount.z;
-        sys.conOffsets[sid * 3] += amount.x;
-        sys.conOffsets[sid * 3 + 1] += amount.y;
-        sys.conOffsets[sid * 3 + 2] += amount.z;
+        //sys.conOffsets[sid * 3] += amount.x;
+        //sys.conOffsets[sid * 3 + 1] += amount.y;
+        //sys.conOffsets[sid * 3 + 2] += amount.z;
+        sys.con1Offsets[sid * 3] += amount.x;
+        sys.con1Offsets[sid * 3 + 1] += amount.y;
+        sys.con1Offsets[sid * 3 + 2] += amount.z;
+        sys.con2Offsets[sid * 3] += amount.x;
+        sys.con2Offsets[sid * 3 + 1] += amount.y;
+        sys.con2Offsets[sid * 3 + 2] += amount.z;
         sys.bbconOffsets[sid * 3] += amount.x;
         sys.bbconOffsets[sid * 3 + 1] += amount.y;
         sys.bbconOffsets[sid * 3 + 2] += amount.z;

@@ -15,9 +15,11 @@ class System {
     lines2ele;
     instanceParams = new Map([
         ['cmOffsets', 3], ['bbOffsets', 3], ['nsOffsets', 3],
-        ['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+        //['nsRotation', 4], ['conOffsets', 3], ['conRotation', 4],
+        ['nsRotation', 4], ['con1Offsets', 3], ['con1Rotation', 4], ['con2Offsets', 3], ['con2Rotation', 4],
         ['bbconOffsets', 3], ['bbconRotation', 4], ['bbColors', 3],
-        ['scales', 3], ['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+        //['scales', 3] ,['nsScales', 3], ['conScales', 3], ['bbconScales', 3],
+        ['scales', 3], ['cmScales', 3], ['nsScales', 3], ['con1Scales', 3], ['con2Scales', 3], ['bbconScales', 3],
         ['visibility', 3], ['nsColors', 3], ['bbLabels', 3]
     ]);
     //the system contains all the data from a dat file in its instancing arrays
@@ -27,8 +29,12 @@ class System {
     bbRotation;
     nsOffsets;
     nsRotation;
-    conOffsets;
-    conRotation;
+    //conOffsets: Float32Array;
+    //conRotation: Float32Array;
+    con1Offsets;
+    con1Rotation;
+    con2Offsets;
+    con2Rotation;
     bbconOffsets;
     bbconRotation;
     bbconScales;
@@ -36,18 +42,27 @@ class System {
     bbColors;
     nsColors;
     scales;
+    cmScales;
     nsScales;
-    conScales;
+    //conScales: Float32Array;
+    con1Scales;
+    con2Scales;
     visibility;
     bbLabels;
+    cmGeometry;
     backboneGeometry;
     nucleosideGeometry;
-    connectorGeometry;
+    //connectorGeometry: THREE.InstancedBufferGeometry;
+    connector1Geometry;
+    connector2Geometry;
     spGeometry;
     pickingGeometry;
+    cm;
     backbone;
     nucleoside;
-    connector;
+    //connector: THREE.Mesh;
+    connector1;
+    connector2;
     bbconnector;
     dummyBackbone;
     checkedForBasepairs = false;
@@ -74,8 +89,12 @@ class System {
         this.bbRotation = new Float32Array(this.INSTANCES * 4);
         this.nsOffsets = new Float32Array(this.INSTANCES * 3);
         this.nsRotation = new Float32Array(this.INSTANCES * 4);
-        this.conOffsets = new Float32Array(this.INSTANCES * 3);
-        this.conRotation = new Float32Array(this.INSTANCES * 4);
+        //this.conOffsets = new Float32Array(this.INSTANCES * 3);
+        //this.conRotation = new Float32Array(this.INSTANCES * 4);
+        this.con1Offsets = new Float32Array(this.INSTANCES * 3);
+        this.con1Rotation = new Float32Array(this.INSTANCES * 4);
+        this.con2Offsets = new Float32Array(this.INSTANCES * 3);
+        this.con2Rotation = new Float32Array(this.INSTANCES * 4);
         this.bbconOffsets = new Float32Array(this.INSTANCES * 3);
         this.bbconRotation = new Float32Array(this.INSTANCES * 4);
         this.bbconScales = new Float32Array(this.INSTANCES * 3);
@@ -83,16 +102,22 @@ class System {
         this.bbColors = new Float32Array(this.INSTANCES * 3);
         this.nsColors = new Float32Array(this.INSTANCES * 3);
         this.scales = new Float32Array(this.INSTANCES * 3);
+        this.cmScales = new Float32Array(this.INSTANCES * 3);
         this.nsScales = new Float32Array(this.INSTANCES * 3);
-        this.conScales = new Float32Array(this.INSTANCES * 3);
+        //this.conScales = new Float32Array(this.INSTANCES * 3);
+        this.con1Scales = new Float32Array(this.INSTANCES * 3);
+        this.con2Scales = new Float32Array(this.INSTANCES * 3);
         this.visibility = new Float32Array(this.INSTANCES * 3);
         this.bbLabels = new Float32Array(this.INSTANCES * 3);
     }
     callUpdates(names) {
         names.forEach((name) => {
+            this.cm.geometry["attributes"][name].needsUpdate = true;
             this.backbone.geometry["attributes"][name].needsUpdate = true;
             this.nucleoside.geometry["attributes"][name].needsUpdate = true;
-            this.connector.geometry["attributes"][name].needsUpdate = true;
+            //this.connector.geometry["attributes"][name].needsUpdate = true;
+            this.connector1.geometry["attributes"][name].needsUpdate = true;
+            this.connector2.geometry["attributes"][name].needsUpdate = true;
             this.bbconnector.geometry["attributes"][name].needsUpdate = true;
             if (name == "instanceScale" || name == "instanceRotation") {
             }
@@ -245,9 +270,15 @@ class System {
             this.nsOffsets[i] += amount.x;
             this.nsOffsets[i + 1] += amount.y;
             this.nsOffsets[i + 2] += amount.z;
-            this.conOffsets[i] += amount.x;
-            this.conOffsets[i + 1] += amount.y;
-            this.conOffsets[i + 2] += amount.z;
+            //this.conOffsets[i] += amount.x;
+            //this.conOffsets[i + 1] += amount.y;
+            //this.conOffsets[i + 2] += amount.z;
+            this.con1Offsets[i] += amount.x;
+            this.con1Offsets[i + 1] += amount.y;
+            this.con1Offsets[i + 2] += amount.z;
+            this.con2Offsets[i] += amount.x;
+            this.con2Offsets[i + 1] += amount.y;
+            this.con2Offsets[i + 2] += amount.z;
             this.bbconOffsets[i] += amount.x;
             this.bbconOffsets[i + 1] += amount.y;
             this.bbconOffsets[i + 2] += amount.z;

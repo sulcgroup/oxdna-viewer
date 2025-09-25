@@ -105,10 +105,10 @@ function handleMessage(data) {
                 setArrowsVisibility(view_settings["Arrows"]);
             }
         }
-        //set the names and extensions for every passed file
+        // Files passed via message passing do not include their name
+        // Therefore we have to set the extension as a passed argument
         for(let i =0; i< files.length; i++){
             files[i].name = `${i}.${ext[i]}`;
-            
         }
         handleFiles(files);
         return

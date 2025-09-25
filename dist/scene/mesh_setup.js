@@ -7,6 +7,10 @@ var instancedNucleoside = new THREE.InstancedBufferGeometry();
 instancedNucleoside.copy(new THREE.SphereBufferGeometry(.3, 10, 10));
 var instancedConnector = new THREE.InstancedBufferGeometry();
 instancedConnector.copy(new THREE.CylinderBufferGeometry(.1, .1, 1, 8));
+//var instancedConnector1 = new THREE.InstancedBufferGeometry();
+//instancedConnector1.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
+//var instancedConnector2 = new THREE.InstancedBufferGeometry();
+//instancedConnector2.copy(new THREE.CylinderBufferGeometry(.1,.1,1, 8) as unknown as THREE.InstancedBufferGeometry);
 var instancedBBconnector = new THREE.InstancedBufferGeometry();
 instancedBBconnector.copy(new THREE.CylinderBufferGeometry(.1, .02, 1, 8));
 var instanceMaterial2 = new THREE.MeshPhysicalMaterial({
@@ -29,9 +33,12 @@ instanceMaterial3["defines"] = instanceMaterial3["defines"] || {};
 instanceMaterial3["defines"]['INSTANCED'] = "";
 function switchMaterial(material) {
     systems.forEach(s => {
+        s.cm.material = material;
         s.backbone.material = material;
         s.nucleoside.material = material;
-        s.connector.material = material;
+        //s.connector.material = material;
+        s.connector1.material = material;
+        s.connector2.material = material;
         s.bbconnector.material = material;
     });
     render();

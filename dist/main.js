@@ -129,7 +129,9 @@ function resetScene(resetCamera = true) {
     while (systems.length > 0) {
         systems[systems.length - 1].backbone.parent.remove(systems[systems.length - 1].backbone);
         systems[systems.length - 1].nucleoside.parent.remove(systems[systems.length - 1].nucleoside);
-        systems[systems.length - 1].connector.parent.remove(systems[systems.length - 1].connector);
+        //systems[systems.length - 1].connector.parent.remove(systems[systems.length - 1].connector)
+        systems[systems.length - 1].connector1.parent.remove(systems[systems.length - 1].connector1);
+        systems[systems.length - 1].connector2.parent.remove(systems[systems.length - 1].connector2);
         systems[systems.length - 1].bbconnector.parent.remove(systems[systems.length - 1].bbconnector);
         systems[systems.length - 1].dummyBackbone.parent.remove(systems[systems.length - 1].dummyBackbone);
         systems.pop();
@@ -137,7 +139,9 @@ function resetScene(resetCamera = true) {
     while (tmpSystems.length > 0) {
         tmpSystems[tmpSystems.length - 1].backbone.parent.remove(tmpSystems[tmpSystems.length - 1].backbone);
         tmpSystems[tmpSystems.length - 1].nucleoside.parent.remove(tmpSystems[tmpSystems.length - 1].nucleoside);
-        tmpSystems[tmpSystems.length - 1].connector.parent.remove(tmpSystems[tmpSystems.length - 1].connector);
+        //tmpSystems[tmpSystems.length - 1].connector.parent.remove(tmpSystems[tmpSystems.length - 1].connector)
+        tmpSystems[tmpSystems.length - 1].connector1.parent.remove(tmpSystems[tmpSystems.length - 1].connector1);
+        tmpSystems[tmpSystems.length - 1].connector2.parent.remove(tmpSystems[tmpSystems.length - 1].connector2);
         tmpSystems[tmpSystems.length - 1].bbconnector.parent.remove(tmpSystems[tmpSystems.length - 1].bbconnector);
         tmpSystems[tmpSystems.length - 1].dummyBackbone.parent.remove(tmpSystems[tmpSystems.length - 1].dummyBackbone);
         tmpSystems.pop();

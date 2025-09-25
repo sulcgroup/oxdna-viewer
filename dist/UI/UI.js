@@ -457,7 +457,9 @@ class View {
     vrEnabled = false;
     backboneScale = 1;
     nucleosideScale = 1;
-    connectorScale = 1;
+    connector1Scale = 1;
+    connector2Scale = 1;
+    cmScale = 1;
     bbconnectorScale = 1;
     constructor(doc) {
         this.doc = doc;
@@ -528,8 +530,14 @@ class View {
             case 'nucleoside':
                 this.nucleosideScale *= factor;
                 break;
-            case 'connector':
-                this.connectorScale *= factor;
+            case 'connector1':
+                this.connector1Scale *= factor;
+                break;
+            case 'connector2':
+                this.connector2Scale *= factor;
+                break;
+            case 'cm':
+                this.cmScale *= factor;
                 break;
             case 'bbconnector':
                 this.bbconnectorScale *= factor;
@@ -593,8 +601,14 @@ class View {
             case 'nucleoside':
                 scale /= this.nucleosideScale;
                 break;
-            case 'connector':
-                scale /= this.connectorScale;
+            case 'connector1':
+                scale /= this.connector1Scale;
+                break;
+            case 'connector2':
+                scale /= this.connector2Scale;
+                break;
+            case 'cm':
+                scale /= this.cmScale;
                 break;
             case 'bbconnector':
                 scale /= this.bbconnectorScale;

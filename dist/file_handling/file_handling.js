@@ -248,12 +248,20 @@ async function addSystemToScene(system) {
     else {
         // Classic nucleic acid geometries
         // Add the geometries to the systems
+        system.cmGeometry = instancedBackbone.clone();
         system.backboneGeometry = instancedBackbone.clone();
         system.nucleosideGeometry = instancedNucleoside.clone();
-        system.connectorGeometry = instancedConnector.clone();
+        //system.connectorGeometry = instancedConnector.clone();
+        system.connector1Geometry = instancedConnector.clone();
+        system.connector2Geometry = instancedConnector.clone();
         system.spGeometry = instancedBBconnector.clone();
         system.pickingGeometry = instancedBackbone.clone();
         // Feed data arrays to the geometries
+        system.cmGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.cmOffsets, 3));
+        system.cmGeometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bbRotation, 4));
+        system.cmGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.cmGeometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.cmScales, 3));
+        system.cmGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
         system.backboneGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
         system.backboneGeometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bbRotation, 4));
         system.backboneGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
@@ -264,11 +272,21 @@ async function addSystemToScene(system) {
         system.nucleosideGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.nsColors, 3));
         system.nucleosideGeometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.nsScales, 3));
         system.nucleosideGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
-        system.connectorGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.conOffsets, 3));
-        system.connectorGeometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));
-        system.connectorGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
-        system.connectorGeometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));
-        system.connectorGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
+        //system.connectorGeometry.addAttribute( 'instanceOffset', new THREE.InstancedBufferAttribute(system.conOffsets, 3));
+        //system.connectorGeometry.addAttribute( 'instanceRotation', new THREE.InstancedBufferAttribute(system.conRotation, 4));
+        //system.connectorGeometry.addAttribute( 'instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        //system.connectorGeometry.addAttribute( 'instanceScale', new THREE.InstancedBufferAttribute(system.conScales, 3));
+        //system.connectorGeometry.addAttribute( 'instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3 ) );
+        system.connector1Geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.con1Offsets, 3));
+        system.connector1Geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.con1Rotation, 4));
+        system.connector1Geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.connector1Geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.con1Scales, 3));
+        system.connector1Geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
+        system.connector2Geometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.con2Offsets, 3));
+        system.connector2Geometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.con2Rotation, 4));
+        system.connector2Geometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
+        system.connector2Geometry.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(system.con2Scales, 3));
+        system.connector2Geometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
         system.spGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bbconOffsets, 3));
         system.spGeometry.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(system.bbconRotation, 4));
         system.spGeometry.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(system.bbColors, 3));
@@ -278,20 +296,29 @@ async function addSystemToScene(system) {
         system.pickingGeometry.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(system.bbOffsets, 3));
         system.pickingGeometry.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(system.visibility, 3));
         // Those were geometries, the mesh is actually what gets drawn
+        system.cm = new THREE.Mesh(system.cmGeometry, instanceMaterial);
+        system.cm.frustumCulled = false;
         system.backbone = new THREE.Mesh(system.backboneGeometry, instanceMaterial);
         system.backbone.frustumCulled = false; //you have to turn off culling because instanced materials all exist at (0, 0, 0)
         system.nucleoside = new THREE.Mesh(system.nucleosideGeometry, instanceMaterial);
         system.nucleoside.frustumCulled = false;
-        system.connector = new THREE.Mesh(system.connectorGeometry, instanceMaterial);
-        system.connector.frustumCulled = false;
+        //system.connector = new THREE.Mesh(system.connectorGeometry, instanceMaterial);
+        //system.connector.frustumCulled = false;
+        system.connector1 = new THREE.Mesh(system.connector1Geometry, instanceMaterial);
+        system.connector1.frustumCulled = false;
+        system.connector2 = new THREE.Mesh(system.connector2Geometry, instanceMaterial);
+        system.connector2.frustumCulled = false;
         system.bbconnector = new THREE.Mesh(system.spGeometry, instanceMaterial);
         system.bbconnector.frustumCulled = false;
         system.dummyBackbone = new THREE.Mesh(system.pickingGeometry, pickingMaterial);
         system.dummyBackbone.frustumCulled = false;
         // Add everything to the scene (if they are toggled)
+        view.setPropertyInScene('cm', system);
         view.setPropertyInScene('backbone', system);
         view.setPropertyInScene('nucleoside', system);
-        view.setPropertyInScene('connector', system);
+        //view.setPropertyInScene('connector', system);
+        view.setPropertyInScene('connector1', system);
+        view.setPropertyInScene('connector2', system);
         view.setPropertyInScene('bbconnector', system);
         pickingScene.add(system.dummyBackbone);
     }

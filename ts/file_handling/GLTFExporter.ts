@@ -62,16 +62,20 @@ function exportGLTF (
 	systems : System[],
 	include_backbone : boolean, include_nucleoside: boolean,
 	include_connector: boolean, include_bbconnector: boolean, 
-	backboneScale: number, nucleosideScale: number,
-	connectorScale: number, bbconnectorScale: number,
+	backboneScale: number, nucleosideScale: number, cmScale: number,
+	//connectorScale: number, bbconnectorScale: number,
+	connector1Scale: number, connector2Scale: number, bbconnectorScale: number,
 	faces_mul : number, flattenHierarchy?: boolean,
 	nsRoughness=0.2, bbRoughness=0.2,
 	nsMetalness=0, bbMetalness=0)
 {
 	// Setup geometries
+	const cm          = new THREE.SphereBufferGeometry(.2 * cmScale , 10 * faces_mul, 10 * faces_mul);
 	const backbone    = new THREE.SphereBufferGeometry(.2 * backboneScale , 10 * faces_mul, 10 * faces_mul);
 	const nucleoside  = new THREE.SphereBufferGeometry(.3 * nucleosideScale , 10 * faces_mul, 10 * faces_mul);
-	const connector   = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1  * connectorScale, 1, 8 * faces_mul);
+	//const connector   = new THREE.CylinderBufferGeometry(.1 * connectorScale, .1  * connectorScale, 1, 8 * faces_mul);
+	const connector1   = new THREE.CylinderBufferGeometry(.1 * connector1Scale, .1  * connector1Scale, 1, 8 * faces_mul);
+	const connector2   = new THREE.CylinderBufferGeometry(.1 * connector2Scale, .1  * connector2Scale, 1, 8 * faces_mul);
 	// Open question, why does the top and bottom radius need to be flipped here compared to the definition in mesh_setup.ts?
 	// This solves the problem of having the backbones point in the correct direction, but it is a pretty ugly fix...
 	const bbConnector = new THREE.CylinderBufferGeometry(.02 * bbconnectorScale, .1 * bbconnectorScale, 1, 8 * faces_mul);
@@ -83,15 +87,23 @@ function exportGLTF (
 		let elemObj = new THREE.Group();
 
 		// Get instance parameters
+		let cmOffsets = e.getInstanceParameter3('cmOffsets');
 		let bbOffsets = e.getInstanceParameter3('bbOffsets');
 		let nsOffsets = e.getInstanceParameter3('nsOffsets');
 		let nsRotation = e.getInstanceParameter4('nsRotation');
-		let conOffsets = e.getInstanceParameter3('conOffsets');
-		let conRotation = e.getInstanceParameter4('conRotation');
+		//let conOffsets = e.getInstanceParameter3('conOffsets');
+		let con1Offsets = e.getInstanceParameter3('con1Offsets');
+		let con2Offsets = e.getInstanceParameter3('con2Offsets');
+		//let conRotation = e.getInstanceParameter4('conRotation');
+		let con1Rotation = e.getInstanceParameter4('con1Rotation');
+		let con2Rotation = e.getInstanceParameter4('con2Rotation');
 		let bbconOffsets = e.getInstanceParameter3('bbconOffsets');
 		let bbconRotation = e.getInstanceParameter4('bbconRotation');
 		let nsScales = e.getInstanceParameter3('nsScales');
-		let conScales = e.getInstanceParameter3('conScales');
+		let cmScales = e.getInstanceParameter3('cmScales');
+		//let conScales = e.getInstanceParameter3('conScales');
+		let con1Scales = e.getInstanceParameter3('con1Scales');
+		let con2Scales = e.getInstanceParameter3('con2Scales');
 		let bbconScales = e.getInstanceParameter3('bbconScales');
 		let nsColor = new THREE.Color().fromArray(e.getInstanceParameter3('nsColors').toArray()).getHex();
 		let bbColor = new THREE.Color().fromArray(e.getInstanceParameter3('bbColors').toArray()).getHex();
@@ -126,12 +138,26 @@ function exportGLTF (
 			nucleoside_mesh.name = `nucleoside_${e.id}`;
 			elemObj.add(nucleoside_mesh);
 		} if (include_connector) {
-			let connector_mesh = new THREE.Mesh(connector, materialMap.get(bbColor));
-			connector_mesh.applyMatrix(new THREE.Matrix4().makeScale(conScales.x, conScales.y, conScales.z));
-			connector_mesh.quaternion.copy(glsl2three(conRotation));
-			connector_mesh.position.copy(conOffsets);
-			connector_mesh.name = `connector_${e.id}`;
-			elemObj.add(connector_mesh);
+			//let connector_mesh = new THREE.Mesh(connector, materialMap.get(bbColor));
+			let connector1_mesh = new THREE.Mesh(connector1, materialMap.get(bbColor));
+			let connector2_mesh = new THREE.Mesh(connector2, materialMap.get(bbColor));
+			connector1_mesh.applyMatrix(new THREE.Matrix4().makeScale(con1Scales.x, con1Scales.y, con1Scales.z));
+			connector1_mesh.quaternion.copy(glsl2three(con1Rotation));
+			connector1_mesh.position.copy(con1Offsets);
+			connector1_mesh.name = `connector_${e.id}`;
+			elemObj.add(connector1_mesh);
+
+			connector2_mesh.applyMatrix(new THREE.Matrix4().makeScale(con2Scales.x, con2Scales.y, con2Scales.z));
+			connector2_mesh.quaternion.copy(glsl2three(con2Rotation));
+			connector2_mesh.position.copy(con2Offsets);
+			connector2_mesh.name = `connector_${e.id}`;
+			elemObj.add(connector2_mesh);
+
+			let cm_mesh = new THREE.Mesh(cm, materialMap.get(bbColor));
+			cm_mesh.applyMatrix(new THREE.Matrix4().makeScale(cmScales.x, cmScales.y, cmScales.z));
+			cm_mesh.position.copy(cmOffsets);
+			cm_mesh.name = `c,_${e.id}`;
+			elemObj.add(cm_mesh);
 		} if (include_bbconnector) {
 			let bbconnector_mesh = new THREE.Mesh(bbConnector, materialMap.get(bbColor));	
 			bbconnector_mesh.applyMatrix(new THREE.Matrix4().makeScale(bbconScales.x, bbconScales.y, bbconScales.z));

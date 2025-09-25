@@ -60,51 +60,69 @@ function rotateElementsByQuaternion(elements: Set<BasicElement>, q: THREE.Quater
             let cmPos = e.getPos();
             let bbPos = e.getInstanceParameter3("bbOffsets");
             let nsPos = e.getInstanceParameter3("nsOffsets");
-            let conPos = e.getInstanceParameter3("conOffsets");
+            //let conPos = e.getInstanceParameter3("conOffsets");
+            let con1Pos = e.getInstanceParameter3("con1Offsets");
+            let con2Pos = e.getInstanceParameter3("con2Offsets");
             let bbconPos = e.getInstanceParameter3("bbconOffsets");
 
             //the rotation center needs to be (0,0,0)
             cmPos.sub(about);
             bbPos.sub(about);
             nsPos.sub(about);
-            conPos.sub(about);
+            //conPos.sub(about);
+            con1Pos.sub(about);
+            con2Pos.sub(about);
             bbconPos.sub(about);
 
             cmPos.applyQuaternion(q);
             bbPos.applyQuaternion(q);
             nsPos.applyQuaternion(q);
-            conPos.applyQuaternion(q);
+            //conPos.applyQuaternion(q);
+            con1Pos.applyQuaternion(q);
+            con2Pos.applyQuaternion(q);
             bbconPos.applyQuaternion(q);
 
             //get current rotations and convert to THREE coordinates
             let nsRotationV = e.getInstanceParameter4("nsRotation");
             let nsRotation =  glsl2three(nsRotationV);
-            let conRotationV = e.getInstanceParameter4("conRotation");
-            let conRotation = glsl2three(conRotationV);
+            //let conRotationV = e.getInstanceParameter4("conRotation");
+            //let conRotation = glsl2three(conRotationV);
+            let con1RotationV = e.getInstanceParameter4("con1Rotation");
+            let con1Rotation = glsl2three(con1RotationV);
+            let con2RotationV = e.getInstanceParameter4("con2Rotation");
+            let con2Rotation = glsl2three(con2RotationV);
             let bbconRotationV = e.getInstanceParameter4("bbconRotation");
             let bbconRotation = glsl2three(bbconRotationV);
 
             //apply individual object rotation
             nsRotation.multiply(q2);
-            conRotation.multiply(q2);
+            //conRotation.multiply(q2);
+            con1Rotation.multiply(q2);
+            con2Rotation.multiply(q2);
             bbconRotation.multiply(q2);
 
             //move the object back to its original position
             cmPos.add(about);
             bbPos.add(about);
             nsPos.add(about);
-            conPos.add(about);
+            //conPos.add(about);
+            con1Pos.add(about);
+            con2Pos.add(about);
             bbconPos.add(about);
 
             //update the instancing matrices
             sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
             sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
             sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            //sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('con1Offsets', 3, sid, [con1Pos.x, con1Pos.y, con1Pos.z]);
+            sys.fillVec('con2Offsets', 3, sid, [con2Pos.x, con2Pos.y, con2Pos.z]);
             sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
 
             sys.fillVec('nsRotation', 4, sid, [nsRotation.w, nsRotation.z, nsRotation.y, nsRotation.x]);
-            sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
+            //sys.fillVec('conRotation', 4, sid, [conRotation.w, conRotation.z, conRotation.y, conRotation.x]);
+            sys.fillVec('con1Rotation', 4, sid, [con1Rotation.w, con1Rotation.z, con1Rotation.y, con1Rotation.x]);
+            sys.fillVec('con2Rotation', 4, sid, [con2Rotation.w, con2Rotation.z, con2Rotation.y, con2Rotation.x]);
             sys.fillVec('bbconRotation', 4, sid, [bbconRotation.w, bbconRotation.z, bbconRotation.y, bbconRotation.x]);
         }
     });
@@ -198,19 +216,25 @@ function translateElements(elements: Set<BasicElement>, v: THREE.Vector3) {
             let cmPos = e.getPos();
             let bbPos = e.getInstanceParameter3("bbOffsets");
             let nsPos = e.getInstanceParameter3("nsOffsets");
-            let conPos = e.getInstanceParameter3("conOffsets");
+            //let conPos = e.getInstanceParameter3("conOffsets");
+            let con1Pos = e.getInstanceParameter3("con1Offsets");
+            let con2Pos = e.getInstanceParameter3("con2Offsets");
             let bbconPos = e.getInstanceParameter3("bbconOffsets");
 
             cmPos.add(v);
             bbPos.add(v);
             nsPos.add(v);
-            conPos.add(v);
+            //conPos.add(v);
+            con1Pos.add(v);
+            con2Pos.add(v);
             bbconPos.add(v);
 
             sys.fillVec('cmOffsets', 3, sid, [cmPos.x, cmPos.y, cmPos.z]);
             sys.fillVec('bbOffsets', 3, sid, [bbPos.x, bbPos.y, bbPos.z]);
             sys.fillVec('nsOffsets', 3, sid, [nsPos.x, nsPos.y, nsPos.z]);
-            sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            //sys.fillVec('conOffsets', 3, sid, [conPos.x, conPos.y, conPos.z]);
+            sys.fillVec('con1Offsets', 3, sid, [con1Pos.x, con1Pos.y, con1Pos.z]);
+            sys.fillVec('con2Offsets', 3, sid, [con2Pos.x, con2Pos.y, con2Pos.z]);
             sys.fillVec('bbconOffsets', 3, sid, [bbconPos.x, bbconPos.y, bbconPos.z]);
         }
     });
