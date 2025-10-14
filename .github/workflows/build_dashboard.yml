@@ -1,0 +1,43 @@
+name: Build Dashboard From External Repo
+
+on:
+  repository_dispatch:
+    types: [update-dashboard]
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout oxdna-viewer repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT_FOR_PUSH }}
+
+      - name: Update and build oxCloudDash
+        run: |
+          # Remove old directory to ensure a clean clone
+          rm -rf oxCloudDash
+          # Clone the latest version of the dashboard
+          git clone https://github.com/subhajit-Roy-Partho/oxclouddash.git oxCloudDash
+
+          # Navigate into the directory, install, and build
+          cd oxCloudDash
+          npm install
+          npm run build
+        env:
+          NODE_ENV: production # Ensures your next.config.ts uses the correct distDir
+
+      - name: Commit and push build files
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          # The '-f' flag is important to add files that might be in .gitignore
+          git add -f dist/dash
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No new build files to commit."
+          else
+            git commit -m "build: Update oxCloudDash from external trigger"
+            git push
+          fi
