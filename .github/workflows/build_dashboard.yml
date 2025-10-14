@@ -12,29 +12,36 @@ jobs:
       - name: Checkout oxdna-viewer repository
         uses: actions/checkout@v3
         with:
+          # This token is necessary to push the build files back to the repo
           token: ${{ secrets.PAT_FOR_PUSH }}
 
       - name: Update and build oxCloudDash
         run: |
-          # Remove old directory to ensure a clean clone
-          rm -rf oxCloudDash
-          # Clone the latest version of the dashboard
-          git clone https://github.com/subhajit-Roy-Partho/oxclouddash.git oxCloudDash
-
-          # Navigate into the directory, install, and build
-          cd oxCloudDash
+          # If the directory exists and is a git repo, pull the latest changes.
+          if [ -d "oxCloudDash/.git" ]; then
+            echo "oxCloudDash found, pulling latest changes."
+            cd oxCloudDash && git pull
+          # Otherwise, clone it for the first time.
+          else
+            echo "oxCloudDash not found, cloning repository."
+            rm -rf oxCloudDash # Clean up just in case
+            git clone https://github.com/subhajit-Roy-Partho/oxclouddash.git oxCloudDash
+            cd oxCloudDash
+          fi
+          
+          # Now, install dependencies and build
+          echo "Installing dependencies and building..."
           npm install
           npm run build
         env:
-          NODE_ENV: production # Ensures your next.config.ts uses the correct distDir
+          NODE_ENV: production
 
       - name: Commit and push build files
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          # The '-f' flag is important to add files that might be in .gitignore
           git add -f dist/dash
-          # Check if there are changes to commit
+          # Only commit and push if there are actual changes to the build files
           if git diff --staged --quiet; then
             echo "No new build files to commit."
           else
