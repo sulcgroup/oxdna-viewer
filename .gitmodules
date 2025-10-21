@@ -1,0 +1,3 @@
+[submodule "oxCloudDash"]
+	path = oxCloudDash
+	url = https://github.com/mlsample/oxCloudDash.git
