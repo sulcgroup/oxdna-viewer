@@ -10,7 +10,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
-    "load": "tsc -w & reload -b"
+    "load": "tsc -w & reload -b",
+    "serve-spa": "node ./serve_spa.js"
   },
   "repository": {
     "type": "git",
@@ -62,6 +63,7 @@
     "dexie": "^4.0.11",
     "electron-settings": "^4.0.2",
     "electron-squirrel-startup": "^1.0.0",
+    "express": "^5.1.0",
     "reload": "^3.2.0",
     "rpmbuild": "0.0.23",
     "typescript": "^4.9.5",
