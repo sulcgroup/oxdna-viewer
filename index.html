@@ -24,6 +24,17 @@
     <link rel="stylesheet" href="css/metro-icons.min.css">
 
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .static-ribbon-button:hover {
+            background-color: transparent !important;
+            border-color: transparent !important;
+            cursor: default;
+        }
+        a.ribbon-button {
+            color: #000000;
+            text-decoration: none;
+        }
+    </style>
 </head>
 
 <body onload="view.updateImageResolutionText()"
@@ -1214,30 +1225,54 @@
             </div>
 
 
-            <!--Library pane-->
-            <div class="section" id="section-library">
-                <div class="group">
-                    <a href="/library.html" class="ribbon-button primary"  title="Go to library" id="import-button" style="width: 50px;">
-                        <span class="caption"><b>Go to library</b></span>
-                    </a>
-                    <div id="reportWindow" style="margin-left:10px" hidden="true">
-                    </div>
-                    <span class="title "> <b>Library</b></span>
+    <!--Library pane-->
+    <div class="section" id="section-library">
+        <div class="group">
+            <div style="display: flex; justify-content: center; align-items: flex-start;">
+                <button class="ribbon-button" onclick="createNewProject()" title="Create a new project in the local library">
+                    <span class="mif-file-empty mif-2x" style="height: 32px; display: flex; align-items: center; justify-content: center;"></span>
+                    <span class="caption">New Project</span>
+                </button>
+                <a href="/library.html" class="ribbon-button" title="Open the library to browse all saved projects">
+                    <span class="mif-books mif-2x" style="height: 32px; display: flex; align-items: center; justify-content: center;"></span>
+                    <span class="caption">Open Library</span>
+                </a>
+            </div>
+            <span class="title">Project</span>
+        </div>
+
+        <div class="group">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="flex-column" style="flex-grow: 1;">
+                    <input type="text" data-role="input" id="commitName" data-prepend="Commit Message" placeholder="Write commit message" style="height: 28px;"/>
+                    <button class="button" onclick="saveStructure()" style="width: 100%;">
+                        <span class="mif-floppy-disk"></span> Commit Current Work
+                    </button>
                 </div>
-                <div class="group">
-                    <ul style="list-style-type:none" height="70px">
-                        <li> 
-                            <button type="submitWindow" onclick="view.toggleWindow('upload', initUploadWindow)">Submit structure to Nanobase</button>
-                            <button type="save" onclick="saveStructure()">Save structure</button>
-                            <button type="save" onclick="loadStructure()">Load structure</button>
-                        </li>
-                        <li>
-                            <input type="text" name="commitName" id="commitName" />
-                            <button type="save" onclick="view.openCommitHistoryModal()">View history</button>
-                        </li>
-                    </ul>
+                <div class="ribbon-button static-ribbon-button" id="project-name-display" style="display: none;" title="Name of the current open project">
+                    <span class="mif-bookmark mif-2x"></span>
+                    <span class="caption" id="current-project-name"></span>
                 </div>
             </div>
+            <button class="ribbon-button" onclick="view.openCommitHistoryModal()" title="View all saved versions of the current project">
+                <span class="mif-history mif-2x"></span>
+                <span class="caption">View History</span>
+            </button>
+            <button class="ribbon-button" onclick="loadStructure()" title="Reload the latest saved version of this project">
+                <span class="mif-folder-open mif-2x"></span>
+                <span class="caption">Reload Latest</span>
+            </button>
+            <span class="title">Versioning</span>
+        </div>
+
+        <div class="group">
+             <button class="ribbon-button" onclick="view.toggleWindow('upload', initUploadWindow)" title="Submit structure to nanobase.org">
+                <span class="mif-upload mif-2x"></span>
+                <span class="caption">Submit to Nanobase</span>
+            </button>
+            <span class="title">Sharing</span>
+        </div>
+    </div>
 
     </nav>
 

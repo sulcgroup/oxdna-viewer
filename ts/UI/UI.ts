@@ -773,7 +773,7 @@ class View {
 
         if (!structureId) {
             console.error("openCommitHistoryModal: structureId is missing.");
-            Metro.toast.create("Cannot open history. Structure ID is missing.", null, 5000, "alert");
+            Metro.toast.create("Cannot open history. To open history please load a project.", null, 5000, "alert");
             return;
         }
         this.toggleWindow("commitHistoryWindow", (id) => {

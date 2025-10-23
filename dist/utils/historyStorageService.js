@@ -29,38 +29,8 @@ export async function saveStructure() {
         const currentBranchName = urlParams.get("branch") || "main"; // Get current branch from URL
         const loadedCommitId = urlParams.get("commit"); // Get loaded commit ID from URL
         if (!structureId) {
-            // Prompt user to create a new structure
-            const structureName = prompt("No structure found in library. Enter a name for your new structure:");
-            if (!structureName) {
-                alert("Structure creation cancelled.");
-                return;
-            }
-            // Generate new structureId
-            const newStructureId = crypto.randomUUID();
-            const newCommitId = crypto.randomUUID();
-            const compressedData = createCompressedOxViewFile();
-            const commitName = commitNameElement.value || prompt("Name your first commit:");
-            if (!commitName) {
-                alert("Commit creation cancelled.");
-                return;
-            }
-            const newCommit = {
-                data: compressedData,
-                commitName: commitName,
-                commitId: newCommitId,
-                parent: null,
-            };
-            const newStructure = {
-                id: newStructureId,
-                structure: [newCommit],
-                date: Date.now(),
-                structureName: structureName,
-                branches: { main: [newCommitId] },
-            };
-            await window.DexieDB.structureData.put(newStructure);
-            alert("Structure created and saved to library!");
-            // Redirect to new structure page
-            window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
+            // If no project is loaded, delegate to the createNewProject function.
+            await createNewProject();
             return;
         }
         const oldStructure = await window.DexieDB.structureData.get(structureId);
@@ -298,6 +268,7 @@ export async function loadStructure() {
             console.log("loadStructure: File object created. Calling handleFiles...");
             view.inboxingMode.set("None");
             view.centeringMode.set("None");
+            window._isLoadingFromLibrary = true;
             handleFiles([file]);
             console.log("loadStructure: handleFiles called. Function complete.");
         }
@@ -308,6 +279,98 @@ export async function loadStructure() {
     catch (error) {
         console.error("loadStructure: Error during execution:", error);
     }
+}
+/**
+ * Creates a new, empty project in the library.
+ */
+export async function createNewProject() {
+    try {
+        // A simple check to see if there's anything on the canvas.
+        const isWorkInProgress = systems && systems.length > 0 && systems[0].strands.length > 0;
+        if (isWorkInProgress) {
+            // Scenario: Something is on the canvas.
+            if (confirm("A structure is currently loaded. Do you want to save this as the first version of a new project?")) {
+                // User wants to save the current work into a new project.
+                const structureName = prompt("Enter a name for your new project:");
+                if (!structureName) {
+                    alert("Project creation cancelled.");
+                    return;
+                }
+                const commitNameElement = document.getElementById("commitName");
+                const commitName = commitNameElement.value.trim() || "Initial commit";
+                const newStructureId = crypto.randomUUID();
+                const newCommitId = crypto.randomUUID();
+                const compressedData = createCompressedOxViewFile();
+                const newCommit = {
+                    data: compressedData,
+                    commitName: commitName,
+                    commitId: newCommitId,
+                    parent: null,
+                };
+                const newStructure = {
+                    id: newStructureId,
+                    structure: [newCommit],
+                    date: Date.now(),
+                    structureName: structureName,
+                    branches: { main: [newCommitId] },
+                };
+                await window.DexieDB.structureData.put(newStructure);
+                alert(`Project "${structureName}" created and initial version saved!`);
+                // Redirect to the new project page, loading the saved data.
+                window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
+            }
+            else {
+                // User does NOT want to save the current work.
+                if (confirm("Are you sure? Your current unsaved work will be discarded.")) {
+                    // Proceed with creating a blank project.
+                    await createBlankProject();
+                }
+                // If they cancel the second confirmation, do nothing.
+            }
+        }
+        else {
+            // Scenario: Canvas is empty. Just create a blank project.
+            await createBlankProject();
+        }
+    }
+    catch (error) {
+        console.error("Error creating new project:", error);
+        alert("Failed to create new project. See console for details.");
+    }
+}
+async function createBlankProject() {
+    const structureName = prompt("Enter a name for your new project:");
+    if (!structureName || structureName.trim() === "") {
+        alert("Project creation cancelled: A name is required.");
+        return;
+    }
+    // Generate new IDs for the structure and the initial commit
+    const newStructureId = crypto.randomUUID();
+    const newCommitId = crypto.randomUUID();
+    // Create a compressed representation of the current (empty) scene
+    const compressedData = createCompressedOxViewFile();
+    // Use the commit message from the input box if available, otherwise default.
+    const commitNameElement = document.getElementById("commitName");
+    const commitName = commitNameElement.value.trim() || "Initial commit";
+    // Create the initial commit object
+    const initialCommit = {
+        data: compressedData,
+        commitName: commitName,
+        commitId: newCommitId,
+        parent: null,
+    };
+    // Create the new structure object, including the initial commit
+    const newStructure = {
+        id: newStructureId,
+        structure: [initialCommit],
+        date: Date.now(),
+        structureName: structureName,
+        branches: { main: [newCommitId] }, // Main branch points to the initial commit
+    };
+    await window.DexieDB.structureData.put(newStructure);
+    alert(`Project "${structureName}" created successfully!`);
+    // Redirect to the new project page, and load the initial empty state.
+    window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
 }
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
@@ -354,7 +417,49 @@ async function pullFromRemote() {
     alert("Pulled from remote!");
     window.location.reload();
 }
+/**
+ * Updates the UI to display the name of the currently loaded project.
+ */
+async function updateProjectNameDisplay() {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const structureId = urlParams.get("structureId");
+        const projectNameDisplay = document.getElementById("project-name-display");
+        const currentProjectNameSpan = document.getElementById("current-project-name");
+        if (!projectNameDisplay || !currentProjectNameSpan)
+            return;
+        if (structureId) {
+            const structure = await window.DexieDB.structureData.get(structureId);
+            if (structure && structure.structureName) {
+                currentProjectNameSpan.textContent = structure.structureName;
+                projectNameDisplay.style.display = "block";
+            }
+            else {
+                // This case handles if the ID is in the URL but not in the DB
+                currentProjectNameSpan.textContent = "No Project Loaded";
+                projectNameDisplay.style.display = "block";
+            }
+        }
+        else {
+            // This is the new part: handles when no project ID is in the URL
+            currentProjectNameSpan.textContent = "No Project Loaded";
+            projectNameDisplay.style.display = "block";
+        }
+    }
+    catch (error) {
+        console.error("Error updating project name display:", error);
+        const projectNameDisplay = document.getElementById("project-name-display");
+        if (projectNameDisplay) {
+            projectNameDisplay.style.display = "none";
+        }
+    }
+}
 window.saveStructure = saveStructure;
 window.loadStructure = loadStructure;
 window.pushToRemote = pushToRemote;
 window.pullFromRemote = pullFromRemote;
+window.createNewProject = createNewProject;
+// Call the function on page load to ensure the project name is displayed if a project is open.
+document.addEventListener("DOMContentLoaded", () => {
+    updateProjectNameDisplay();
+});
