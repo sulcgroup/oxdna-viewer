@@ -21,7 +21,6 @@ function roundRange(arr) {
         if (max < arr[i])
             max = arr[i];
     }
-    console.log(min, max);
     const roundedMin = Math.floor(min) + (min % 1 >= 0.5 ? 0.5 : 0);
     const roundedMax = Math.ceil(max) - ((max % 1) < 0.5 ? 0.5 : 0);
     return [roundedMin, roundedMax];
