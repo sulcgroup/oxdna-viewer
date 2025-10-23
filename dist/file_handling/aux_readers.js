@@ -12,21 +12,31 @@ function readJson(jsonFile, system) {
 function readParFile(parFile, system) {
     return parseFileWith(parFile, parsePar, [system]);
 }
-// Creates color overlays
-function makeLut(data, key, system) {
-    let arr = data[key];
+// Nicer lower and upper bound 
+function roundRange(arr) {
     let min = arr[0], max = arr[0];
     for (let i = 0; i < arr.length; i++) {
         if (min > arr[i])
             min = arr[i];
-        if (max <= arr[i])
+        if (max < arr[i])
             max = arr[i];
     }
+    console.log(min, max);
+    const roundedMin = Math.floor(min) + (min % 1 >= 0.5 ? 0.5 : 0);
+    const roundedMax = Math.ceil(max) - ((max % 1) >= 0.5 ? 0.5 : 0);
+    return [roundedMin, roundedMax];
+}
+// Creates color overlays
+function makeLut(data, key, system) {
+    let arr = data[key];
+    let [min, max] = roundRange(arr);
+    // we have no Lut 
     if (lut == undefined) {
-        lut = new THREE.Lut(defaultColormap, 512);
+        lut = new THREE.Lut(defaultColormap, 500);
         lut.setMax(max);
         lut.setMin(min);
     }
+    // we need update 
     if (max > lut.maxV) {
         lut.setMax(max);
         api.removeColorbar();
@@ -36,12 +46,7 @@ function makeLut(data, key, system) {
         api.removeColorbar();
     }
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
-    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
-    //update every system's color map
-    const end = system.systemLength();
-    for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-        system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
-    }
+    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format 
 }
 // export the current camera position
 const exportCam = () => {
@@ -189,7 +194,19 @@ function parseJson(json, system) {
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
                 system.setColorFile(data);
                 makeLut(data, key, system);
+                //update every system's color map
+                systems.forEach(s => {
+                    s.doVisuals(() => {
+                        const end = s.systemLength();
+                        for (let j = 0; j < end; j++) //insert lut colors into lutCols[] 
+                            s.lutCols[j] = lut.getColor(Number(s.colormapFile[key][j]));
+                    });
+                });
                 view.coloringMode.set("Overlay");
+                //const end = system.systemLength();
+                //for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
+                //    system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
+                //} 
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                 const end = system.systemLength() + system.globalStartId;
