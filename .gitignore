@@ -94,4 +94,4 @@ typings/
 # Electron-Forge
 out/
 
-dist/dash/
+# dist/dash/
