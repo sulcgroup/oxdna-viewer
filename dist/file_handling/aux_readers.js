@@ -23,7 +23,7 @@ function roundRange(arr) {
     }
     console.log(min, max);
     const roundedMin = Math.floor(min) + (min % 1 >= 0.5 ? 0.5 : 0);
-    const roundedMax = Math.ceil(max) - ((max % 1) >= 0.5 ? 0.5 : 0);
+    const roundedMax = Math.ceil(max) - ((max % 1) < 0.5 ? 0.5 : 0);
     return [roundedMin, roundedMax];
 }
 // Creates color overlays
@@ -203,10 +203,6 @@ function parseJson(json, system) {
                     });
                 });
                 view.coloringMode.set("Overlay");
-                //const end = system.systemLength();
-                //for (let j = 0; j < end; j++) { //insert lut colors into lutCols[] to toggle Lut coloring later
-                //    system.lutCols[j] = lut.getColor(Number(system.colormapFile[key][elements.get(system.globalStartId + j).sid]));
-                //} 
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                 const end = system.systemLength() + system.globalStartId;
