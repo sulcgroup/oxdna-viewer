@@ -776,7 +776,16 @@ class View {
             Metro.toast.create("Cannot open history. To open history please load a project.", null, 5000, "alert");
             return;
         }
-        this.toggleWindow("commitHistoryWindow", (id) => {
+
+        const windowId = "commitHistoryWindow";
+        const elem = this.doc.getElementById(windowId);
+
+        // If the window element exists but is not currently open, remove it from the DOM.
+        if (elem && !this.isWindowOpen(windowId)) {
+            elem.parentElement.parentElement.remove();
+        }
+
+        this.toggleWindow(windowId, (id) => {
             console.log("commitHistoryWindow created for structureId:", id);
             window.initCommitHistory(structureId)
         }, structureId);

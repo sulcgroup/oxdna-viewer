@@ -90,16 +90,32 @@ function createCard(item) {
     return cell;
 }
 function deleteStructure(id) {
-    // Delete the structure with the provided id.
-    window.DexieDB.structureData
-        .delete(id)
-        .then(() => {
-        console.log(`Structure with id ${id} deleted successfully.`);
-        // Refresh the library cards to remove stale data
-        refreshLibraryCards();
-    })
-        .catch((error) => {
-        console.error(`Failed to delete structure with id ${id}:`, error);
+    window.Metro.dialog.create({
+        title: "Delete Structure",
+        content: `<div>Are you sure you want to delete this structure? This action cannot be undone.</div>`,
+        actions: [
+            {
+                caption: "Yes",
+                cls: "js-dialog-close alert",
+                onclick: () => {
+                    // Delete the structure with the provided id.
+                    window.DexieDB.structureData
+                        .delete(id)
+                        .then(() => {
+                        console.log(`Structure with id ${id} deleted successfully.`);
+                        // Refresh the library cards to remove stale data
+                        refreshLibraryCards();
+                    })
+                        .catch((error) => {
+                        console.error(`Failed to delete structure with id ${id}:`, error);
+                    });
+                },
+            },
+            {
+                caption: "No",
+                cls: "js-dialog-close",
+            },
+        ],
     });
 }
 // Example function to refresh the library cards
