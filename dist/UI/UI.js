@@ -747,10 +747,16 @@ class View {
         }
         if (!structureId) {
             console.error("openCommitHistoryModal: structureId is missing.");
-            Metro.toast.create("Cannot open history. Structure ID is missing.", null, 5000, "alert");
+            Metro.toast.create("Cannot open history. To open history please load a project.", null, 5000, "alert");
             return;
         }
-        this.toggleWindow("commitHistoryWindow", (id) => {
+        const windowId = "commitHistoryWindow";
+        const elem = this.doc.getElementById(windowId);
+        // If the window element exists but is not currently open, remove it from the DOM.
+        if (elem && !this.isWindowOpen(windowId)) {
+            elem.parentElement.parentElement.remove();
+        }
+        this.toggleWindow(windowId, (id) => {
             console.log("commitHistoryWindow created for structureId:", id);
             window.initCommitHistory(structureId);
         }, structureId);

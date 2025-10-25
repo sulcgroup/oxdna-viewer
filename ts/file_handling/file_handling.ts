@@ -46,6 +46,27 @@ function parseFileWith(file: File, parser: Function, args:unknown[]=[]): Promise
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
 async function handleFiles(files: File[]) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isProjectOpen = urlParams.has('structureId');
+
+    // This logic is only needed to resolve the conflict when a project is open.
+    if (isProjectOpen) {
+        // If we are NOT loading from the library, it must be a new file drop.
+        // In this case, we re-enable centering.
+        if (!(window as any)._isLoadingFromLibrary) {
+            console.log("Project is open and new file is being loaded. Re-enabling default view settings.");
+            view.centeringMode.set("Origin");
+            view.inboxingMode.set("Monomer");
+        } else {
+            console.log("Loading from library within a project, preserving view settings.");
+        }
+    }
+
+    // Unset the flag immediately after checking it, so it doesn't persist.
+    if ((window as any)._isLoadingFromLibrary) {
+        (window as any)._isLoadingFromLibrary = false;
+    }
+
     renderer.domElement.style.cursor = "wait";
     const systemFiles:File2reader[] = [];
     const systemHelpers:Object = {}; // These can be named whatever.

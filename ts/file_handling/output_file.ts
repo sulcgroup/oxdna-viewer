@@ -420,15 +420,26 @@ function makeSequenceFile() {
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
 
-function makeOxViewJsonFile(name? : string, space?: string | number) {
-    let file_name = name ? name + ".oxview"  : "output.oxview";
-    makeTextFile(file_name, JSON.stringify({
+function makeOxViewJsonFile(name?: string, space?: string | number, postToParent = false, targetOrigin = '*') {
+    let file_name = name ? name + ".oxview" : "output.oxview";
+    const data = {
         date: new Date(),
         box: box.toArray(),
         systems: systems,
         forces: forceHandler.forces,
-        selections : selectionListHandler.serialize()
-    }, null, space));
+        selections: selectionListHandler.serialize()
+    };
+    const jsonString = JSON.stringify(data, null, space);
+
+    if (postToParent) {
+        window.parent.postMessage({
+            type: 'oxViewJsonFile',
+            fileName: file_name,
+            data: jsonString
+        }, targetOrigin);
+    } else {
+        makeTextFile(file_name, jsonString);
+    }
 }
 
 function makeTextFile(filename: string, text: string) { //take the supplied text and download it as filename
