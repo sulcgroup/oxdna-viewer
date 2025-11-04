@@ -21,6 +21,7 @@
 
     <!--<link rel="shortcut icon" type="image/png" href="/favicons/favicon.ico"> -->
 
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-171800090-1"></script>
     <script>
@@ -172,10 +173,10 @@
     <div id='importNanobaseDialog' class="dialog" data-role="dialog">
         <h2>Import Nanobase</h2>
         Type the link of a Nanobase structure to load it into oxView.
-        <input type="text" value="https://nanobase.org/structure/15" data-role="input" data-prepend="URL" id="importNanobase">
+        <input type="text" value="https://nanobase.org/structures/15" data-role="input" data-prepend="URL" id="importNanobase">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="readNanobaseFromURL(document.getElementById('importNanobase').value)" class="button primary js-dialog-close">Import</button>
+            <button id="importFromNanobaseButton" class="button primary js-dialog-close">Import</button>
         </div>
     </div>
 
@@ -1346,6 +1347,50 @@
         <script src="./dist/model/force.js"></script>
         <script src="./dist/scene/PBC_switchbox.js"></script>
         <script src="./dist/file_handling/file_getters.js"></script>
+        <script type="module">
+            // const apiRoot= "http://localhost:3002/api/v1";
+            const apiRoot= "https://api.nanobase.org/api/v1";
+
+            function readNanobaseFromURL(structureId) {
+                (async () => {
+                    const response = await fetch(`${apiRoot}/structure/getStructureOxdnaFiles?id=${structureId}`);
+
+                    if (!response.ok) {
+                        console.error("Failed to fetch oxdna files:", response.status);
+                        return;
+                    }
+
+                    const fileDataBlob = await response.blob();
+                    try {
+                        const zip = await JSZip.loadAsync(fileDataBlob);
+
+                        const files = await Promise.all(
+                            Object.keys(zip.files).map(async (fileName) => {
+                                const blob = await zip.files[fileName].async("blob");
+                                return new File([blob], fileName);
+                            })
+                        )
+                        handleFiles(files);
+                    } catch (error) {
+                        console.error("Error processing zip file:", error);
+                    }
+                })();
+            }
+
+            const importButton = document.getElementById('importFromNanobaseButton');
+
+            // Attach the event listener within the module's scope
+            importButton.addEventListener('click', () => {
+                const inputElement = document.getElementById('importNanobase');
+                if (inputElement) {
+                    const url = new URL(inputElement.value);
+                    const structureId = url.pathname.split('/').pop();
+                    readNanobaseFromURL(structureId);
+                } else {
+                    console.error("Input element with ID 'importNanobase' not found.");
+                }
+            });
+        </script>
         <script src="./dist/file_handling/file_handling.js"></script>
         <script src="./dist/file_handling/system_readers.js"></script>
         <script src="./dist/file_handling/aux_readers.js"></script>
