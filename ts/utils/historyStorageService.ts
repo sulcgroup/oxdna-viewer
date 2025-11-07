@@ -215,6 +215,7 @@ export async function saveStructure(): Promise<void> {
  */
 export async function loadStructure(): Promise<void> {
   try {
+    (window as any).resetScene();
     console.log("loadStructure: Starting function.");
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
