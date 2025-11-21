@@ -1,4 +1,5 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
+/// <reference path="../typescript_definitions/index.d.ts" />
 
 // This script is loaded when the commit history modal is opened.
 console.log("commitHistoryWindow-script.ts: Script loaded.");
@@ -18,10 +19,12 @@ interface Commit {
 
 interface Structure {
     id: string;
-    structure: Commit[];
+    commits: Commit[]; // Renamed from 'structure' to 'commits'
     branches: { [key: string]: string[] };
     structureName: string;
     date: number;
+    isSynced: boolean; // NEW: Indicates if project is synced to backend
+    syncedProjectId: string | null; // NEW: References SyncedOxviewProject.id
 }
 
 interface CommitNode {
@@ -69,12 +72,16 @@ async function initCommitHistory(structureId?: string) {
         return;
     }
 
-    if (!structure || !structure.structure || !Array.isArray(structure.structure)) {
+    if (!structure || !structure.commits || !Array.isArray(structure.commits)) { // Updated to use 'commits'
         console.error(`initCommitHistory ERROR: Structure with id ${structureId} not found or is malformed.`, structure);
         commitGraphElement.innerHTML = `<p>Error: Structure with id ${structureId} not found or is invalid.</p>`;
         return;
     }
     console.log("initCommitHistory: Successfully retrieved structure:", structure);
+
+    // Ensure commits are processed chronologically (oldest -> newest)
+    const commitsSorted = structure.commits.slice();
+    commitsSorted.sort((a: any, b: any) => (a.createdAt || 0) - (b.createdAt || 0));
 
     const currentBranchName = urlParams.get('branch') || 'main';
     console.log(`initCommitHistory: Current branch name is '${currentBranchName}'`);
@@ -82,7 +89,7 @@ async function initCommitHistory(structureId?: string) {
     // Create a map for quick commit lookup and to store children
     const commitMap = new Map<string, CommitNode>();
     console.log("initCommitHistory: Building commit map...");
-    structure.structure.forEach(commit => {
+    commitsSorted.forEach(commit => { // Updated to use 'commits'
         if (!commit.commitId) {
             console.warn("initCommitHistory WARNING: Found a commit without a commitId.", commit);
             return;
@@ -93,7 +100,7 @@ async function initCommitHistory(structureId?: string) {
 
     // Populate children for each commit node
     console.log("initCommitHistory: Building parent-child relationships...");
-    structure.structure.forEach(commit => {
+    commitsSorted.forEach(commit => { // Updated to use 'commits'
         if (commit.parent) {
             const parentNode = commitMap.get(commit.parent);
             if (parentNode) {
@@ -111,7 +118,7 @@ async function initCommitHistory(structureId?: string) {
     console.log("initCommitHistory: Parent-child relationships built.");
 
     // Find root commits (those without parents in the structure)
-    const rootNodes = structure.structure
+    const rootNodes = commitsSorted // Updated to use 'commits'
         .filter(commit => !commit.parent || !commitMap.has(commit.parent))
         .map(commit => commitMap.get(commit.commitId)!
         ).filter(node => node); // ensure no undefined nodes
@@ -266,8 +273,6 @@ async function initCommitHistory(structureId?: string) {
 // Function to handle sharing for a specific commit and return share info
 async function generateShareInfo(structureId: string, commit: Commit) {
     try {
-        const apiRoot = (window as any).apiRoot;
-
         // Get the structure to access its name
         const structure = await (window as any).DexieDB.structureData.get(structureId);
         if (!structure) {
@@ -280,43 +285,31 @@ async function generateShareInfo(structureId: string, commit: Commit) {
         const base64Data = btoa(binaryString);
 
         const requestBody = {
-            structureData: {
-                structureName: structure.structureName,
-                commit: {
-                    commitId: commit.commitId,
-                    commitName: commit.commitName,
-                    data: base64Data,
-                    parent: commit.parent
-                },
-                metadata: {
-                    createdAt: new Date()
-                }
+            structureName: structure.structureName,
+            commit: {
+                commitId: commit.commitId,
+                commitName: commit.commitName,
+                data: base64Data,
+                parent: commit.parent
             }
         };
 
-        const response = await fetch(`${apiRoot}/oxview/share`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+        // Use the new shareCommit API function
+        const result = await shareCommit(requestBody);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        if (!result) {
+            throw new Error("Failed to share commit");
         }
-
-        const result = await response.json();
 
         // Construct the full shareable URL
         const baseUrl = window.location.origin;
-        const shareUrl = `${baseUrl}/?shared=${result.shareId}`;
+        const shareUrl = result.shareUrl || `${baseUrl}/shared?shareId=${result.shareId}`;
 
         const shareInfo = {
             shareUrl: shareUrl,
             shareId: result.shareId,
             createdAt: new Date(result.createdAt || Date.now()),
-            expiresAt: new Date(result.expiresAt)
+            expiresAt: new Date(result.expiresAt || Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days
         };
 
         // Update the commit with share info and save to database
@@ -434,9 +427,9 @@ async function updateCommitShareInfo(structureId: string, commitId: string, shar
         if (!structure) return;
 
         // Find and update the specific commit
-        const commitIndex = structure.structure.findIndex((c: any) => c.commitId === commitId);
+        const commitIndex = structure.commits.findIndex((c: any) => c.commitId === commitId); // Updated to use 'commits'
         if (commitIndex !== -1) {
-            structure.structure[commitIndex].shareInfo = shareInfo;
+            structure.commits[commitIndex].shareInfo = shareInfo; // Updated to use 'commits'
             await (window as any).DexieDB.structureData.put(structure);
         }
     } catch (error) {

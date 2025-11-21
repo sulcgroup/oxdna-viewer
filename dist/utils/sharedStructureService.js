@@ -4,11 +4,11 @@ import { inflate } from "https://cdn.skypack.dev/pako";
 /**
  * Loads a shared structure from the backend API
  */
-export async function loadSharedStructure(shareId) {
+async function loadSharedStructure(shareId) {
     try {
         console.log(`loadSharedStructure: Loading shared structure with ID: ${shareId}`);
-        const apiRoot = window.apiRoot;
-        const response = await fetch(`${apiRoot}/oxview/shared/${shareId}`);
+        const apiRoot = window.getAPIBaseURL();
+        const response = await fetch(`${apiRoot}/share/commit/${shareId}`);
         if (!response.ok) {
             if (response.status === 404) {
                 alert("Shared structure not found or has expired.");
@@ -19,7 +19,7 @@ export async function loadSharedStructure(shareId) {
         const sharedData = await response.json();
         console.log("loadSharedStructure: Retrieved shared data:", sharedData);
         // Convert base64 back to compressed data
-        const binaryString = atob(sharedData.structure.data);
+        const binaryString = atob(sharedData.structure.data); // Keep original API response field name
         const compressedData = new Uint8Array(binaryString.length);
         for (let i = 0; i < binaryString.length; i++) {
             compressedData[i] = binaryString.charCodeAt(i);
@@ -38,24 +38,25 @@ export async function loadSharedStructure(shareId) {
         view.centeringMode.set("None");
         handleFiles([file]);
         // Show info about the shared structure
-        const createdAt = new Date(sharedData.structure.createdAt);
-        console.log(`loadSharedStructure: Loaded shared structure "${sharedData.structure.structureName}" created on ${createdAt.toLocaleDateString()}`);
+        const createdAt = new Date(sharedData.structure.createdAt); // Keep original API response field name
+        console.log(`loadSharedStructure: Loaded shared structure "${sharedData.structure.structureName}" created on ${createdAt.toLocaleDateString()}`); // Keep original API response field name
         // Optional: Show a notification to the user
         if (window.notify) {
-            window.notify(`Loaded shared structure: "${sharedData.structure.structureName}" (${sharedData.structure.commitName})`, 'info');
+            window.notify(`Loaded shared structure: "${sharedData.structure.structureName}" (${sharedData.structure.commitName})`, // Keep original API response field name
+            'info');
         }
     }
     catch (error) {
-        console.error("loadSharedStructure: Error loading shared structure:", error);
-        alert("Failed to load shared structure. Please check the link and try again.");
+        console.error("loadSharedStructure: Error loading shared structure:", error); // Keep original error message
+        alert("Failed to load shared structure. Please check the link and try again."); // Keep original error message
     }
 }
 /**
  * Check if the current URL is for a shared structure and load it
  */
-export function checkForSharedStructure() {
+function checkForSharedStructure() {
     const urlParams = new URLSearchParams(window.location.search);
-    const shareId = urlParams.get("shared");
+    const shareId = urlParams.get("shareId");
     if (shareId) {
         console.log(`checkForSharedStructure: Found shared structure ID: ${shareId}`);
         loadSharedStructure(shareId);

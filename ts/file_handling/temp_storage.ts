@@ -1,4 +1,4 @@
-export async function generateAndStoreCurrentStructure() {
+async function generateAndStoreCurrentStructure() {
     try {
         const name = "temp_structure"; // Fixed name for temporary storage
 

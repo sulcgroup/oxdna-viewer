@@ -47,6 +47,14 @@ async function login() {
 function logout() {
     localStorage.removeItem("token");
     Metro.toast.create("You have been logged out.", null, 5000, "info");
+
+    // Clean up remote structures on logout
+    if (typeof cleanupRemoteStructures === 'function') {
+        cleanupRemoteStructures().catch(error => {
+            console.error("Error during logout cleanup:", error);
+        });
+    }
+
     // Potentially refresh the library view
     if (typeof refreshLibraryCards === "function") {
         refreshLibraryCards();

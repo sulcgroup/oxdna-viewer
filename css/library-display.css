@@ -33,8 +33,32 @@ body {
 }
 
 .card .card-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 8px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+  /* Allow footer buttons to wrap to new line instead of overflowing */
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Make action buttons in card footers smaller so they don't overflow and scale better */
+.card .card-footer .button {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  min-width: 48px;
+}
+
+/* Slightly reduce spacing on very small screens */
+@media (max-width: 640px) {
+  .card .card-footer {
+    gap: 6px;
+    padding: 6px;
+  }
+  .card .card-footer .button {
+    padding: 0.28rem 0.45rem;
+    font-size: 0.8rem;
+    min-width: 40px;
+  }
 }

@@ -1,7 +1,7 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
 /// <reference path="../typescript_definitions/index.d.ts" />
 import { deflate, inflate } from "https://cdn.skypack.dev/pako";
-export function createCompressedOxViewFile(space) {
+function createCompressedOxViewFile(space) {
     // Prepare your data object
     const data = {
         date: new Date(),
@@ -13,10 +13,60 @@ export function createCompressedOxViewFile(space) {
     const jsonString = JSON.stringify(data, null, space);
     return deflate(jsonString, { level: 9 });
 }
+// Helper: normalize createdAt into numeric timestamp
+function commitTimestamp(c) {
+    if (!c)
+        return 0;
+    if (c.createdAt)
+        return new Date(c.createdAt).getTime();
+    if (c.date)
+        return new Date(c.date).getTime();
+    return 0;
+}
+// Helper: sort commits ascending by createdAt (oldest -> newest)
+function sortCommitsChronologically(commits) {
+    commits.sort((a, b) => commitTimestamp(a) - commitTimestamp(b));
+}
+// Helper: reconstruct branches from parent links
+function reconstructBranchesFromParents(commits) {
+    const branches = {};
+    if (!commits || commits.length === 0)
+        return branches;
+    const childMap = new Map();
+    const parentMap = new Map();
+    commits.forEach(c => {
+        parentMap.set(c.commitId, c.parent || null);
+        if (c.parent) {
+            if (!childMap.has(c.parent))
+                childMap.set(c.parent, []);
+            childMap.get(c.parent).push(c.commitId);
+        }
+    });
+    // Identify leaves (no children)
+    const leaves = commits.filter(c => !childMap.has(c.commitId));
+    if (leaves.length === 0) {
+        // no branching, put everything in main
+        branches['main'] = commits.map(c => c.commitId);
+        return branches;
+    }
+    leaves.forEach((leaf, idx) => {
+        const branchName = idx === 0 ? 'main' : `branch ${idx + 1}`;
+        const branchCommits = [];
+        let current = leaf.commitId;
+        const visited = new Set();
+        while (current && !visited.has(current)) {
+            visited.add(current);
+            branchCommits.unshift(current);
+            current = parentMap.get(current) || null;
+        }
+        branches[branchName] = branchCommits;
+    });
+    return branches;
+}
 /**
  * Saves the current structure as a new commit in the specified branch.
  */
-export async function saveStructure() {
+async function saveStructure() {
     try {
         const commitNameElement = document.getElementById("commitName");
         // Note: allow empty/missing commit name input here. If user supplied
@@ -42,8 +92,8 @@ export async function saveStructure() {
                 return;
             }
             // Generate new structureId
-            const newStructureId = crypto.randomUUID();
-            const newCommitId = crypto.randomUUID();
+            const newStructureId = window.createId();
+            const newCommitId = window.createId();
             const compressedData = createCompressedOxViewFile();
             const commitName = commitNameElement.value || prompt("Name your first commit:");
             if (!commitName) {
@@ -58,22 +108,24 @@ export async function saveStructure() {
             };
             const newStructure = {
                 id: newStructureId,
-                structure: [newCommit],
+                commits: [newCommit],
                 date: Date.now(),
                 structureName: structureName,
                 branches: { main: [newCommitId] },
+                isSynced: false,
+                syncedProjectId: null, // NEW: No synced project ID yet
             };
             await window.DexieDB.structureData.put(newStructure);
             alert("Structure created and saved to library!");
-            // Redirect to new structure page
             window.location.href = `/?structureId=${newStructureId}&branch=main&load=true`;
             return;
         }
+        // (no normalization here)
         const currentBranchCommits = oldStructure.branches[currentBranchName];
         const headCommitId = currentBranchCommits ? currentBranchCommits[currentBranchCommits.length - 1] : null;
-        let newCommitId = crypto.randomUUID();
+        let newCommitId = window.createId();
         let parentCommitId = headCommitId;
-        let newStructureArray = [...oldStructure.structure];
+        let newStructureArray = [...oldStructure.commits]; // Updated to use 'commits'
         let newBranches = { ...oldStructure.branches };
         // Scenario: Committing from an older commit (not the head of the current branch)
         if (loadedCommitId && loadedCommitId !== headCommitId) {
@@ -131,12 +183,12 @@ export async function saveStructure() {
             // happen for an existing structure), use a generic base name.
             let baseName = "Commit";
             if (headCommitId) {
-                const prev = oldStructure.structure.find((c) => c.commitId === headCommitId);
+                const prev = oldStructure.commits.find((c) => c.commitId === headCommitId); // Updated to use 'commits'
                 if (prev && prev.commitName)
                     baseName = prev.commitName;
             }
-            else if (oldStructure.structure && oldStructure.structure.length > 0) {
-                const prev = oldStructure.structure[oldStructure.structure.length - 1];
+            else if (oldStructure.commits && oldStructure.commits.length > 0) { // Updated to use 'commits'
+                const prev = oldStructure.commits[oldStructure.commits.length - 1]; // Updated to use 'commits'
                 if (prev && prev.commitName)
                     baseName = prev.commitName;
             }
@@ -149,7 +201,7 @@ export async function saveStructure() {
             // Find existing numeric suffixes for this baseName among all commits.
             const re = new RegExp(`^${escapeRegExp(baseName)}\\s+(\\d+)$`);
             const nums = [];
-            for (const c of oldStructure.structure) {
+            for (const c of oldStructure.commits) { // Updated to use 'commits'
                 if (!c || !c.commitName)
                     continue;
                 const m = c.commitName.match(re);
@@ -167,14 +219,20 @@ export async function saveStructure() {
             commitName: commitName,
             commitId: newCommitId,
             parent: parentCommitId,
+            createdAt: Date.now(),
         };
         newStructureArray.push(newCommit);
+        // Ensure chronological order and rebuild branches so branch ordering matches timestamps
+        sortCommitsChronologically(newStructureArray);
+        newBranches = reconstructBranchesFromParents(newStructureArray);
         await window.DexieDB.structureData.put({
             id: structureId,
-            structure: newStructureArray,
+            commits: newStructureArray,
             date: Date.now(),
             structureName: oldStructure.structureName,
             branches: newBranches,
+            isSynced: oldStructure.isSynced || false,
+            syncedProjectId: oldStructure.syncedProjectId || null, // Preserve synced project ID
         });
         alert("Structure saved successfully!");
         // Metro-style notification (if available)
@@ -195,16 +253,171 @@ export async function saveStructure() {
  * Loads a structure from the database.
  * Can load a specific commit, the head of a branch, or the head of the main branch.
  */
-export async function loadStructure() {
+async function loadStructure() {
     try {
         window.resetScene();
         console.log("loadStructure: Starting function.");
         const queryString = window.location.search;
         const urlParams = new URLSearchParams(queryString);
         console.log("loadStructure: URL Parameters:", Object.fromEntries(urlParams.entries()));
-        const id = urlParams.get("structureId");
+        let id = urlParams.get("structureId");
+        const publicProjectId = urlParams.get("publicProject");
+        // Support public project loading when structureId is absent but publicProject is provided
+        if (!id && publicProjectId) {
+            console.log(`loadStructure: No structureId, attempting public project load for id ${publicProjectId}`);
+            try {
+                const publicProject = await window.getPublicProject(publicProjectId);
+                if (!publicProject) {
+                    console.error(`loadStructure: Public project ${publicProjectId} not found or not public.`);
+                    return;
+                }
+                const explicitCommit = urlParams.get("commit");
+                const commitToFetchId = explicitCommit || publicProject.latestCommitId;
+                if (!commitToFetchId) {
+                    console.error("loadStructure: No commit available for public project.");
+                    return;
+                }
+                const publicCommits = await window.getPublicProjectCommits(publicProjectId);
+                const matchedCommitMeta = publicCommits.find((c) => c.id === commitToFetchId);
+                const commitName = matchedCommitMeta ? matchedCommitMeta.commitName : "Public Commit";
+                const commitDataBuffer = await window.readPublicCommitData(publicProjectId, commitToFetchId);
+                if (!commitDataBuffer) {
+                    console.error("loadStructure: Failed to fetch public commit data.");
+                    return;
+                }
+                const saveChoice = confirm("This is a public project. Save it to your library? (Cancel to view temporarily)");
+                if (!saveChoice) {
+                    console.log("loadStructure: User opted for temporary view of public project.");
+                    // Decompress and load directly without persisting
+                    const compData = new Uint8Array(commitDataBuffer);
+                    const uncompressed = inflate(compData, { to: "string" });
+                    const file = new File([uncompressed], "public.oxview", { type: "text/plain" });
+                    view.inboxingMode.set("None");
+                    view.centeringMode.set("None");
+                    window._isLoadingFromLibrary = true;
+                    handleFiles([file]);
+                    return; // Exit early; no storedData path
+                }
+                // Persist full history clone locally with publicSourceId marker
+                // Build full commit objects list (avoid refetch of the already downloaded commit)
+                const commitsToStore = [];
+                for (const c of publicCommits) {
+                    let dataBuf = null;
+                    if (c.id === commitToFetchId) {
+                        dataBuf = commitDataBuffer; // reuse already downloaded data
+                    }
+                    else {
+                        dataBuf = await window.readPublicCommitData(publicProjectId, c.id);
+                        if (!dataBuf) {
+                            console.warn(`loadStructure: Skipping commit ${c.id} - data fetch failed.`);
+                            continue;
+                        }
+                    }
+                    commitsToStore.push({
+                        commitId: c.id,
+                        commitName: c.commitName || 'Commit',
+                        data: dataBuf,
+                        parent: c.parentCommitId || null,
+                        createdAt: c.createdAt || null
+                    });
+                }
+                // Order commits oldest -> newest
+                const orderedCommits = commitsToStore.slice();
+                sortCommitsChronologically(orderedCommits);
+                // Check if we have any parent information (heuristic to detect old/missing data)
+                // We expect at least one commit to have a parent if there are > 1 commits and it's a valid tree.
+                // If all non-first commits have null parents, we assume data is missing and linearize.
+                const hasParentInfo = orderedCommits.length <= 1 || orderedCommits.some((c, i) => i > 0 && c.parent !== null);
+                if (!hasParentInfo && orderedCommits.length > 1) {
+                    console.warn("loadStructure: No parent information found in public project. Falling back to linear history.");
+                    // Fill missing parents linearly
+                    for (let i = 0; i < orderedCommits.length; i++) {
+                        if (!orderedCommits[i].parent) {
+                            orderedCommits[i].parent = i === 0 ? null : orderedCommits[i - 1].commitId;
+                        }
+                    }
+                }
+                // Reconstruct branches from parent pointers
+                // This ensures that if we have a tree structure, we create appropriate branches
+                // so the visualizer can display them correctly.
+                const branches = {};
+                if (hasParentInfo) {
+                    const childMap = new Map();
+                    const parentMap = new Map();
+                    orderedCommits.forEach(c => {
+                        parentMap.set(c.commitId, c.parent);
+                        if (c.parent) {
+                            if (!childMap.has(c.parent))
+                                childMap.set(c.parent, []);
+                            childMap.get(c.parent).push(c.commitId);
+                        }
+                    });
+                    // Identify leaves (commits with no children)
+                    const leaves = orderedCommits.filter(c => !childMap.has(c.commitId));
+                    // Create a branch for each leaf
+                    leaves.forEach((leaf, index) => {
+                        const branchName = index === 0 ? 'main' : `branch ${index + 1}`;
+                        const branchCommits = [];
+                        let current = leaf.commitId;
+                        // Trace back to root
+                        const visited = new Set();
+                        while (current && !visited.has(current)) {
+                            visited.add(current);
+                            branchCommits.unshift(current);
+                            current = parentMap.get(current) || null;
+                        }
+                        branches[branchName] = branchCommits;
+                    });
+                }
+                // Fallback: if no branches created (e.g. linear fallback or empty), put all in main
+                if (Object.keys(branches).length === 0) {
+                    branches['main'] = orderedCommits.map(c => c.commitId);
+                }
+                const existing = await window.DexieDB.structureData.get(publicProjectId);
+                if (!existing) {
+                    await window.DexieDB.structureData.put({
+                        id: publicProjectId,
+                        commits: orderedCommits,
+                        date: Date.now(),
+                        structureName: publicProject.projectName,
+                        branches: branches,
+                        isSynced: false,
+                        syncedProjectId: null,
+                        isPublic: true,
+                        isRemote: false,
+                        publicSourceId: publicProjectId
+                    });
+                    console.log(`loadStructure: Stored cloned public project with ${orderedCommits.length} commits locally.`);
+                }
+                else {
+                    // Merge: add missing commits
+                    const existingIds = new Set(existing.commits.map((c) => c.commitId));
+                    let added = 0;
+                    for (const oc of orderedCommits) {
+                        if (!existingIds.has(oc.commitId)) {
+                            existing.commits.push(oc);
+                            added++;
+                        }
+                    }
+                    // Now sort the combined commits and reconstruct branches based on parent links
+                    sortCommitsChronologically(existing.commits);
+                    existing.branches = reconstructBranchesFromParents(existing.commits);
+                    if (!existing.publicSourceId)
+                        existing.publicSourceId = publicProjectId;
+                    existing.date = Date.now();
+                    await window.DexieDB.structureData.put(existing);
+                    console.log(`loadStructure: Merged public project history; added ${added} new commits.`);
+                }
+                id = publicProjectId;
+                console.log(`loadStructure: Public project saved; continuing with id ${id}.`);
+            }
+            catch (e) {
+                console.error("loadStructure: Error while preparing public project:", e);
+                return;
+            }
+        }
         if (!id) {
-            console.log("loadStructure: structureId parameter not found. Exiting.");
+            console.log("loadStructure: structureId parameter not found and no publicProject provided. Exiting.");
             return;
         }
         console.log(`loadStructure: Attempting to retrieve structure with ID: ${id} from IndexedDB.`);
@@ -219,7 +432,7 @@ export async function loadStructure() {
         const branchName = urlParams.get("branch");
         if (commitId) {
             console.log(`loadStructure: Specific commitId provided: ${commitId}.`);
-            commitToLoad = storedData.structure.find((c) => c.commitId === commitId);
+            commitToLoad = storedData.commits.find((c) => c.commitId === commitId); // Updated to use 'commits'
             if (!commitToLoad) {
                 console.error(`loadStructure: Commit with ID ${commitId} not found in structure ${id}.`);
                 return; // Exit early if specific commit not found
@@ -233,7 +446,7 @@ export async function loadStructure() {
                 const branch = storedData.branches[branchName];
                 if (branch && branch.length > 0) {
                     const headCommitId = branch[branch.length - 1];
-                    commitToLoad = storedData.structure.find((c) => c.commitId === headCommitId);
+                    commitToLoad = storedData.commits.find((c) => c.commitId === headCommitId); // Updated to use 'commits'
                     console.log(`loadStructure: Head commit of branch ${branchName} is: ${headCommitId}.`);
                 }
                 else {
@@ -245,15 +458,15 @@ export async function loadStructure() {
                 const mainBranch = storedData.branches["main"];
                 if (mainBranch && mainBranch.length > 0) {
                     const headCommitId = mainBranch[mainBranch.length - 1];
-                    commitToLoad = storedData.structure.find((c) => c.commitId === headCommitId);
+                    commitToLoad = storedData.commits.find((c) => c.commitId === headCommitId); // Updated to use 'commits'
                     console.log(`loadStructure: Head commit of 'main' branch is: ${headCommitId}.`);
                 }
                 else {
                     console.warn(`loadStructure: 'main' branch not found or empty for structure ${id}.`);
                 }
             }
-            if (!commitToLoad && storedData.structure.length > 0) {
-                commitToLoad = storedData.structure[storedData.structure.length - 1];
+            if (!commitToLoad && storedData.commits.length > 0) { // Updated to use 'commits'
+                commitToLoad = storedData.commits[storedData.commits.length - 1]; // Updated to use 'commits'
                 console.warn(`loadStructure: Falling back to last commit in structure ${id} as no specific commit or branch head could be determined.`);
             }
         }
@@ -284,7 +497,7 @@ export async function loadStructure() {
 /**
  * Creates a new, empty project in the library.
  */
-export async function createNewProject() {
+async function createNewProject() {
     try {
         // A simple check to see if there's anything on the canvas.
         const isWorkInProgress = systems && systems.length > 0 && systems[0].strands.length > 0;
@@ -299,21 +512,24 @@ export async function createNewProject() {
                 }
                 const commitNameElement = document.getElementById("commitName");
                 const commitName = commitNameElement.value.trim() || "Initial commit";
-                const newStructureId = crypto.randomUUID();
-                const newCommitId = crypto.randomUUID();
+                const newStructureId = window.createId();
+                const newCommitId = window.createId();
                 const compressedData = createCompressedOxViewFile();
                 const newCommit = {
                     data: compressedData,
                     commitName: commitName,
                     commitId: newCommitId,
                     parent: null,
+                    createdAt: Date.now(),
                 };
                 const newStructure = {
                     id: newStructureId,
-                    structure: [newCommit],
+                    commits: [newCommit],
                     date: Date.now(),
                     structureName: structureName,
                     branches: { main: [newCommitId] },
+                    isSynced: false,
+                    syncedProjectId: null, // NEW: No synced project ID yet
                 };
                 await window.DexieDB.structureData.put(newStructure);
                 alert(`Project "${structureName}" created and initial version saved!`);
@@ -346,8 +562,8 @@ async function createBlankProject() {
         return;
     }
     // Generate new IDs for the structure and the initial commit
-    const newStructureId = crypto.randomUUID();
-    const newCommitId = crypto.randomUUID();
+    const newStructureId = window.createId();
+    const newCommitId = window.createId();
     // Create a compressed representation of the current (empty) scene
     const compressedData = createCompressedOxViewFile();
     // Use the commit message from the input box if available, otherwise default.
@@ -359,14 +575,17 @@ async function createBlankProject() {
         commitName: commitName,
         commitId: newCommitId,
         parent: null,
+        createdAt: Date.now(),
     };
     // Create the new structure object, including the initial commit
     const newStructure = {
         id: newStructureId,
-        structure: [initialCommit],
+        commits: [initialCommit],
         date: Date.now(),
         structureName: structureName,
-        branches: { main: [newCommitId] }, // Main branch points to the initial commit
+        branches: { main: [newCommitId] },
+        isSynced: false,
+        syncedProjectId: null, // NEW: No synced project ID yet
     };
     await window.DexieDB.structureData.put(newStructure);
     alert(`Project "${structureName}" created successfully!`);
@@ -460,7 +679,205 @@ window.loadStructure = loadStructure;
 window.pushToRemote = pushToRemote;
 window.pullFromRemote = pullFromRemote;
 window.createNewProject = createNewProject;
+// Export new sync functions
+window.markProjectAsSynced = markProjectAsSynced;
+window.isProjectSynced = isProjectSynced;
+window.cleanupRemoteStructures = cleanupRemoteStructures;
 // Call the function on page load to ensure the project name is displayed if a project is open.
 document.addEventListener("DOMContentLoaded", () => {
     updateProjectNameDisplay();
 });
+/**
+ * Marks a project as synced to the backend
+ * @param localId - The local project ID
+ * @param syncedProjectId - The backend synced project ID
+ */
+async function markProjectAsSynced(localId, syncedProjectId) {
+    try {
+        await window.DexieDB.structureData.update(localId, {
+            isSynced: true,
+            syncedProjectId: syncedProjectId,
+            isRemote: true // Mark as remote for cleanup on logout
+        });
+        console.log(`Project ${localId} marked as synced with backend project ${syncedProjectId}`);
+    }
+    catch (error) {
+        console.error("Error marking project as synced:", error);
+        throw error;
+    }
+}
+/**
+ * Checks if a project is synced to the backend
+ * @param localId - The local project ID
+ * @returns Promise<boolean> - True if project is synced, false otherwise
+ */
+async function isProjectSynced(localId) {
+    try {
+        const project = await window.DexieDB.structureData.get(localId);
+        return project?.isSynced || false;
+    }
+    catch (error) {
+        console.error("Error checking if project is synced:", error);
+        return false;
+    }
+}
+/**
+ * Cleanup function to delete all remote structures on logout
+ * Deletes all structures where isRemote is true
+ */
+async function cleanupRemoteStructures() {
+    try {
+        console.log("Cleaning up remote structures...");
+        // Get all remote structures
+        const remoteStructures = await window.DexieDB.structureData
+            .where('isRemote')
+            .equals(true)
+            .toArray();
+        console.log(`Found ${remoteStructures.length} remote structures to delete`);
+        // Delete each remote structure
+        for (const structure of remoteStructures) {
+            await window.DexieDB.structureData.delete(structure.id);
+            console.log(`Deleted remote structure: ${structure.structureName} (${structure.id})`);
+        }
+        console.log("Remote structures cleanup completed");
+    }
+    catch (error) {
+        console.error("Error cleaning up remote structures:", error);
+        throw error;
+    }
+    /**
+     * Gets the synced project ID for a local project
+     * @param localId - The local project ID
+     * @returns Promise<string | null> - The backend synced project ID or null if not synced
+     */
+    async function getSyncedProjectId(localId) {
+        try {
+            const project = await window.DexieDB.structureData.get(localId);
+            return project?.syncedProjectId || null;
+        }
+        catch (error) {
+            console.error("Error getting synced project ID:", error);
+            return null;
+        }
+    }
+    /**
+     * Marks a project as not synced (useful for sync failures or manual unsync)
+     * @param localId - The local project ID
+     */
+    async function markProjectAsUnsynced(localId) {
+        try {
+            await window.DexieDB.structureData.update(localId, {
+                isSynced: false,
+                syncedProjectId: null
+            });
+            console.log(`Project ${localId} marked as unsynced`);
+        }
+        catch (error) {
+            console.error("Error marking project as unsynced:", error);
+            throw error;
+        }
+    }
+    /**
+     * Fetch remote projects and their metadata
+     */
+    async function fetchRemoteProjects() {
+        try {
+            // Check if user is logged in
+            if (!window.isLoggedIn || !window.isLoggedIn()) {
+                return [];
+            }
+            // Get remote projects
+            const remoteProjects = await window.getRemoteStructures();
+            return remoteProjects || [];
+        }
+        catch (error) {
+            console.error("Error fetching remote projects:", error);
+            return [];
+        }
+    }
+    /**
+     * Pull remote project to local IndexedDB
+     */
+    async function pullRemoteProject(remoteProject) {
+        try {
+            // Show loading indicator
+            const notify = window.Metro?.notify;
+            if (notify) {
+                notify.create("Pulling remote project...", null, {
+                    cls: "info",
+                    keepOpen: true,
+                    element: '#pull-notification'
+                });
+            }
+            // Get all commits for the remote project
+            const remoteCommits = await window.getProjectCommits(remoteProject.id);
+            if (!remoteCommits || remoteCommits.length === 0) {
+                if (notify) {
+                    notify.create("No commits found in remote project", null, {
+                        cls: "warning",
+                        keepOpen: false
+                    });
+                }
+                return false;
+            }
+            // Download commit data for each commit
+            const localCommits = [];
+            for (const commit of remoteCommits) {
+                // Get commit data
+                const commitData = await window.readCommitData(remoteProject.id, commit.id);
+                if (!commitData) {
+                    if (notify) {
+                        notify.create(`Failed to download commit ${commit.commitName}`, null, {
+                            cls: "alert",
+                            keepOpen: false
+                        });
+                    }
+                    return false;
+                }
+                // Add to local commits array
+                localCommits.push({
+                    commitId: commit.id,
+                    commitName: commit.commitName,
+                    data: commitData,
+                    parent: commit.parentCommitId || null,
+                    createdAt: commit.createdAt
+                });
+            }
+            // Ensure commits are in chronological order oldest -> newest
+            sortCommitsChronologically(localCommits);
+            const branchesObj = reconstructBranchesFromParents(localCommits);
+            // Create new local project using remote project ID as local ID
+            const newProject = {
+                id: remoteProject.id,
+                commits: localCommits,
+                structureName: remoteProject.projectName,
+                date: Date.now(),
+                branches: Object.keys(branchesObj).length ? branchesObj : { main: localCommits.map(c => c.commitId) },
+                isSynced: true,
+                syncedProjectId: remoteProject.id,
+                isRemote: true // Mark as remote for cleanup on logout
+            };
+            // Save to IndexedDB
+            await window.DexieDB.structureData.put(newProject);
+            // Show success message
+            if (notify) {
+                notify.create("Remote project pulled successfully!", null, {
+                    cls: "success",
+                    keepOpen: false
+                });
+            }
+            return true;
+        }
+        catch (error) {
+            console.error("Error pulling remote project:", error);
+            const notify = window.Metro?.notify;
+            if (notify) {
+                notify.create("Failed to pull remote project", null, {
+                    cls: "alert",
+                    keepOpen: false
+                });
+            }
+            return false;
+        }
+    }
+}

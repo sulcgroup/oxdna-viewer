@@ -82,7 +82,10 @@
                     <div class="cell-md-4 text-center">
                         <h2 class="p-3">Library</h2>
                     </div>
-                    <div class="cell-md-4 d-flex flex-justify-end">
+                    <div class="cell-md-4 d-flex flex-justify-end align-center">
+                        <div id="auth-status" class="d-flex align-center mr-2">
+                            <!-- Authentication status will be inserted here -->
+                        </div>
                         <button onclick="view.toggleWindow('createStructureWindow')" class="button primary m-2">
                             Create new
                         </button>
@@ -95,20 +98,28 @@
 
     <!-- all your existing Metro & custom scripts (order preserved) -->
 
-    <script type="module" src="./dist/utils/dexieHelpers.js"></script>
-    <script type="module" src="./dist/utils/library.js"></script>
     <script src="./ts/lib/metro.min.js"></script>
     <div class="main">
-        <script src="./dist/main.js"></script>
-        <script src="./dist/UI/UI.js"></script>
-        <script src="./dist/UI/keybindings.js"></script>
-        <script src="./dist/api/observable_api.js"></script>
-        <script src="./dist/api/plugin_api.js"></script>
+        <!--all files to be loaded onload of html file-->
+      
 
+        <script src="./dist/UI/UI.js"></script>
+        <script src="./dist/main.js"></script>
+        <script src="./dist/UI/keybindings.js"></script>
+        <script src="./ts/controls/SceneUtils.js"></script>
+        <script src="./dist/editing/selections.js"></script>
+        <script src="./dist/api/plugin_api.js"></script>
+        <script src="./dist/utils/upload.js"></script>
+        <script src="./dist/utils/generateUUID.js"></script>
+        <script src="./dist/api/sync.js"></script>
+        <script type="module" src="./dist/utils/dexieHelpers.js"></script>
+        <script type="module" src="./dist/utils/auth.js"></script>
         <script src="./dist/utils/commitHistoryWindow-script.js"></script>
         <script src="./dist/utils/submitStructureWindow-script.js"></script>
         <script type="module" src="./dist/utils/historyStorageService.js"></script>
         <script type="module" src="./dist/utils/sharedStructureService.js"></script>
+        <script type="module" src="./dist/file_handling/temp_storage.js"></script>
+        <script type="module" src="./dist/utils/library.js"></script>
 
         <script>
             function inIframe() {
@@ -125,6 +136,118 @@
             }
         </script>
         <script src="./renderer.js"></script>
+        
+        <!-- Authentication Functions -->
+        <script>
+            // JWT token decoding function
+            function decode(token) {
+                try {
+                    const base64Url = token.split('.')[1];
+                    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                    const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                    return JSON.parse(jsonPayload);
+                } catch (e) {
+                    console.log(e);
+                    return null;
+                }
+            }
+
+            // Check authentication status and update UI
+            function updateAuthStatus() {
+                const token = localStorage.getItem("token");
+                const authStatusDiv = document.getElementById("auth-status");
+                
+                if (token) {
+                    try {
+                        const decoded = decode(token);
+                        if (!decoded || !decoded.exp) {
+                            throw new Error("Invalid token structure");
+                        }
+                        
+                        const exp = decoded.exp;
+                        const name = decoded.name || decoded.email || "User"; // Fallback to email if name not available
+                        
+                        if (Date.now() < exp * 1000) {
+                            // Valid token - show logged in status
+                            authStatusDiv.innerHTML = `
+                                <span class="fg-gray mr-2">Logged in as ${name}</span>
+                                <button class="button secondary button-sm" onclick="logout()">Logout</button>
+                            `;
+                        } else {
+                            // Expired token - show login button
+                            showLoginButton();
+                        }
+                    } catch (e) {
+                        console.log("Token validation error:", e);
+                        showLoginButton();
+                    }
+                } else {
+                    // No token - show login button
+                    showLoginButton();
+                }
+            }
+
+            // Show login button
+            function showLoginButton() {
+                const authStatusDiv = document.getElementById("auth-status");
+                authStatusDiv.innerHTML = `
+                    <button class="button primary button-sm" onclick="view.toggleWindow('loginWindow')">
+                        Sign In
+                    </button>
+                `;
+            }
+
+            // Logout function
+            function logout() {
+                // Use global logout function if available, otherwise use local implementation
+                if (typeof window.logout === 'function') {
+                    window.logout();
+                } else {
+                    localStorage.removeItem("token");
+                    
+                    // Clean up remote structures on logout
+                    if (typeof cleanupRemoteStructures === 'function') {
+                        cleanupRemoteStructures().catch(error => {
+                            console.error("Error during logout cleanup:", error);
+                        });
+                    }
+                    
+                    updateAuthStatus();
+                    // Refresh library to show/hide authenticated content
+                    if (typeof refreshLibraryCards === 'function') {
+                        refreshLibraryCards();
+                    }
+                }
+            }
+
+            // Initialize authentication status when page loads
+            document.addEventListener('DOMContentLoaded', function() {
+                updateAuthStatus();
+            });
+            
+            // Also update auth status when window is focused (in case user logged in from another tab)
+            window.addEventListener('focus', function() {
+                updateAuthStatus();
+            });
+            
+            // Listen for storage events (when token changes in another tab)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'token') {
+                    updateAuthStatus();
+                }
+            });
+            
+            // Update auth status when library is initialized
+            const originalInitLibrary = window.initLibrary;
+            window.initLibrary = function() {
+                updateAuthStatus();
+                if (originalInitLibrary) {
+                    return originalInitLibrary.apply(this, arguments);
+                }
+            };
+        </script>
     </div>
 </body>
 

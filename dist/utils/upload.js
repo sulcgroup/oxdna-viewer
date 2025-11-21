@@ -202,7 +202,7 @@ function setupFileInputs() {
 async function handleUploadSubmit(e) {
     e.preventDefault();
     const form = e.target;
-    const apiRoot = "https://api.nanobase.org/api/v1"; // Using nanobase.org as a placeholder
+    const apiRoot = window.getAPIBaseURL();
     // Build request payload explicitly and defensively
     const incoming = new FormData(form);
     const requestData = {};
@@ -314,7 +314,7 @@ async function handleLogin(e) {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     if (email && password) {
-        const apiRoot = "https://api.nanobase.org/api/v1";
+        const apiRoot = window.getAPIBaseURL();
         const formData = { email, password };
         try {
             const response = await fetch(`${apiRoot}/auth/login`, {

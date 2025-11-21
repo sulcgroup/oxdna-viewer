@@ -3,7 +3,7 @@
 
 import { inflate } from "https://cdn.skypack.dev/pako";
 
-export interface SharedStructureResponse {
+interface SharedStructureResponse {
   success: boolean;
   structure: {
     structureName: string;
@@ -18,12 +18,12 @@ export interface SharedStructureResponse {
 /**
  * Loads a shared structure from the backend API
  */
-export async function loadSharedStructure(shareId: string): Promise<void> {
+async function loadSharedStructure(shareId: string): Promise<void> {
   try {
     console.log(`loadSharedStructure: Loading shared structure with ID: ${shareId}`);
-    const apiRoot = (window as any).apiRoot;
+    const apiRoot = window.getAPIBaseURL();
 
-    const response = await fetch(`${apiRoot}/oxview/shared/${shareId}`);
+    const response = await fetch(`${apiRoot}/share/commit/${shareId}`);
 
     if (!response.ok) {
       if (response.status === 404) {
@@ -37,7 +37,7 @@ export async function loadSharedStructure(shareId: string): Promise<void> {
     console.log("loadSharedStructure: Retrieved shared data:", sharedData);
 
     // Convert base64 back to compressed data
-    const binaryString = atob(sharedData.structure.data);
+    const binaryString = atob(sharedData.structure.data); // Keep original API response field name
     const compressedData = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
       compressedData[i] = binaryString.charCodeAt(i);
@@ -49,7 +49,7 @@ export async function loadSharedStructure(shareId: string): Promise<void> {
 
     // Create a File object from the decompressed data
     console.log("loadSharedStructure: Creating File object...");
-    const file = new File([uncompressed], "shared_structure.oxview", {
+    const file = new File([uncompressed], "shared_structure.oxview", { // Keep original filename
       type: "text/plain",
     });
 
@@ -60,30 +60,30 @@ export async function loadSharedStructure(shareId: string): Promise<void> {
     handleFiles([file]);
 
     // Show info about the shared structure
-    const createdAt = new Date(sharedData.structure.createdAt);
+    const createdAt = new Date(sharedData.structure.createdAt); // Keep original API response field name
 
-    console.log(`loadSharedStructure: Loaded shared structure "${sharedData.structure.structureName}" created on ${createdAt.toLocaleDateString()}`);
+    console.log(`loadSharedStructure: Loaded shared structure "${sharedData.structure.structureName}" created on ${createdAt.toLocaleDateString()}`); // Keep original API response field name
 
     // Optional: Show a notification to the user
     if ((window as any).notify) {
       (window as any).notify(
-        `Loaded shared structure: "${sharedData.structure.structureName}" (${sharedData.structure.commitName})`,
+        `Loaded shared structure: "${sharedData.structure.structureName}" (${sharedData.structure.commitName})`, // Keep original API response field name
         'info'
       );
     }
 
   } catch (error) {
-    console.error("loadSharedStructure: Error loading shared structure:", error);
-    alert("Failed to load shared structure. Please check the link and try again.");
+    console.error("loadSharedStructure: Error loading shared structure:", error); // Keep original error message
+    alert("Failed to load shared structure. Please check the link and try again."); // Keep original error message
   }
 }
 
 /**
  * Check if the current URL is for a shared structure and load it
  */
-export function checkForSharedStructure(): void {
+function checkForSharedStructure(): void {
   const urlParams = new URLSearchParams(window.location.search);
-  const shareId = urlParams.get("shared");
+  const shareId = urlParams.get("shareId");
 
   if (shareId) {
     console.log(`checkForSharedStructure: Found shared structure ID: ${shareId}`);
