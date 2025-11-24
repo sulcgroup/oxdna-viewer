@@ -92,7 +92,7 @@
                         <div id="auth-status" class="d-flex align-center mr-2">
                             <!-- Authentication status will be inserted here -->
                         </div>
-                        <button onclick="view.toggleWindow('createStructureWindow')" class="button primary m-2">
+                        <button onclick="view.toggleWindow('createStructureWindow')" class="button primary mr-2">
                             Create new
                         </button>
                     </div>
@@ -179,7 +179,7 @@
                             // Valid token - show logged in status
                             authStatusDiv.innerHTML = `
                                 <span class="fg-gray mr-2">Logged in as ${name}</span>
-                                <button class="button secondary button-sm" onclick="logout()">Logout</button>
+                                <button class="button secondary" onclick="logout()">Logout</button>
                             `;
                         } else {
                             // Expired token - show login button
@@ -199,7 +199,7 @@
             function showLoginButton() {
                 const authStatusDiv = document.getElementById("auth-status");
                 authStatusDiv.innerHTML = `
-                    <button class="button primary button-sm" onclick="view.toggleWindow('loginWindow')">
+                    <button class="button primary" onclick="view.toggleWindow('loginWindow')">
                         Sign In
                     </button>
                 `;
