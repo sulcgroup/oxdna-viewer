@@ -449,7 +449,7 @@ class ForceHandler {
             let material = new THREE.MeshBasicMaterial({
                 map: texture,
                 side: THREE.DoubleSide,
-                transparent: true, // Enable transparency
+                transparent: true,
                 opacity: 0.5 // Set the desired opacity (0.0 to 1.0)
             });
             let plane = new THREE.Mesh(geometry, material);

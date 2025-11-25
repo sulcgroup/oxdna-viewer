@@ -48,9 +48,9 @@ abstract class Nucleotide extends BasicElement {
 
         // compute nucleoside cm
         let ns = new THREE.Vector3(
-            p.x + 0.4 * a1.x,
-            p.y + 0.4 * a1.y,
-            p.z + 0.4 * a1.z
+            p.x + 0.34 * a1.x,
+            p.y + 0.34 * a1.y,
+            p.z + 0.34 * a1.z
         )
 
         // compute nucleoside rotation
@@ -290,7 +290,7 @@ abstract class Nucleotide extends BasicElement {
     getA1 () {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
-        return ns.clone().sub(cm).divideScalar(0.4).normalize();
+        return ns.clone().sub(cm).divideScalar(0.34).normalize();
     }
 
     abstract getA2(): THREE.Vector3;

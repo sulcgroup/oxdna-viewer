@@ -27,7 +27,7 @@ class Nucleotide extends BasicElement {
         // compute backbone position
         let bb = this.calcBBPos(p, a1, a2, a3);
         // compute nucleoside cm
-        let ns = new THREE.Vector3(p.x + 0.4 * a1.x, p.y + 0.4 * a1.y, p.z + 0.4 * a1.z);
+        let ns = new THREE.Vector3(p.x + 0.34 * a1.x, p.y + 0.34 * a1.y, p.z + 0.34 * a1.z);
         // compute nucleoside rotation
         const baseRotation = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), a3);
         //compute connector position
@@ -244,7 +244,7 @@ class Nucleotide extends BasicElement {
     getA1() {
         const cm = this.getPos();
         const ns = this.getInstanceParameter3("nsOffsets");
-        return ns.clone().sub(cm).divideScalar(0.4).normalize();
+        return ns.clone().sub(cm).divideScalar(0.34).normalize();
     }
     toJSON() {
         // Get superclass attributes
