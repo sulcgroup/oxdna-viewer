@@ -227,7 +227,7 @@ function parseJson(json, system) {
                     const length = direction.length();
                     // midpoint for cylinder position
                     const midpoint = new THREE.Vector3().addVectors(pos1, pos2).multiplyScalar(0.5);
-                    const geometry = new THREE.CylinderGeometry(radius, radius, length);
+                    const geometry = new THREE.CylinderGeometry(radius, radius, length, 64);
                     const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); // red
                     const cylinder = new THREE.Mesh(geometry, material);
                     // align cylinder along direction vector (rotate the cylinder so that its y-axis points from pos1 to pos2)
