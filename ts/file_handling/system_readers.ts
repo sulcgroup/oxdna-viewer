@@ -214,7 +214,8 @@ function parseTop(s: string) {
             }
             strID = parseInt(l[0]);
                 
-            if (strID != lastStrand) { //if new strand id, make new strand                        
+            if (strID != lastStrand) { //if new strand id, make new strand     
+                currentStrand.updateEnds();                  
                 type = strandTypeFromLine(l)
                 currentStrand = system.createStrandTyped(type);
             };
@@ -261,7 +262,6 @@ function parseTop(s: string) {
                 
             lastStrand = strID;
         });
-        nucCount = elements.getNextId();
     }
 
     const system = new System(systems.length, elements.getNextId());
