@@ -11,7 +11,7 @@ let plugins = {};
 // it will be called at the beginning of the program
 function loadPlugins() {
     let pluginsString = localStorage.getItem("plugins");
-    if (pluginsString) {
+    if (pluginsString && pluginsString != "[object Object]" ) {
         plugins = JSON.parse(pluginsString);
     }
     // if there are no plugins in local storage, we will create an empty object
