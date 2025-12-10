@@ -230,14 +230,13 @@ function parseJson(json, system) {
         }
     }
 }
-function readSelectFile(reader) {
+function readSelectFile(file) {
     if (systems.length > 1) {
         notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning');
     }
-    const ids = reader.result.split(' ').map(function (i) {
-        return parseInt(i, 10);
+    file.text().then(txt => {
+        api.selectElementIDs(txt.split(' ').map(i => parseInt(i, 10)), true);
     });
-    api.selectElementIDs(ids, true);
 }
 //reads in an anm parameter file and associates it with the last loaded system.
 function parsePar(lines, system) {

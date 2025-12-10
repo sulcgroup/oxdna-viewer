@@ -253,14 +253,16 @@ function parseJson(json:string, system:System) {
     }
 }
 
-function readSelectFile(reader) {
+function readSelectFile(file:File) { // TODO: needs further checking and integration with the promise system
     if (systems.length > 1) {
         notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning')
     }
-    const ids = (reader.result as string).split(' ').map(function(i) {
-        return parseInt(i, 10)
-    });
-    api.selectElementIDs(ids, true)
+    file.text().then(txt=>{
+        api.selectElementIDs(
+            txt.split(' ').map(i=>parseInt(i,10)),
+            true
+        )
+    })
 }
 
 //reads in an anm parameter file and associates it with the last loaded system.
