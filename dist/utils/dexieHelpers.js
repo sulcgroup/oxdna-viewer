@@ -19,13 +19,20 @@ class CommitType {
     parent;
     createdAt;
     shareInfo;
-    constructor(data, commitName, commitId, parent, shareInfo, createdAt) {
+    // NEW: Encryption metadata
+    isEncrypted;
+    encryptedData;
+    iv;
+    constructor(data, commitName, commitId, parent, shareInfo, createdAt, isEncrypted, encryptedData, iv) {
         this.data = data;
         this.commitName = commitName;
         this.commitId = commitId;
         this.parent = parent;
         this.shareInfo = shareInfo;
         this.createdAt = createdAt;
+        this.isEncrypted = isEncrypted;
+        this.encryptedData = encryptedData;
+        this.iv = iv;
     }
 }
 class EntryType {
@@ -41,7 +48,11 @@ class EntryType {
     publicSourceId;
     // Whether this local copy is marked as public (synced with backend)
     isPublic;
-    constructor(id, commits, structureName, date, branches, isSynced, syncedProjectId, isRemote, publicSourceId, isPublic) {
+    // NEW: Encryption metadata for the entire project
+    isEncrypted;
+    encryptedAt;
+    encryptionVersion;
+    constructor(id, commits, structureName, date, branches, isSynced, syncedProjectId, isRemote, publicSourceId, isPublic, isEncrypted, encryptedAt, encryptionVersion) {
         this.id = id;
         this.commits = commits;
         this.structureName = structureName;
@@ -52,6 +63,9 @@ class EntryType {
         this.isRemote = isRemote;
         this.publicSourceId = publicSourceId;
         this.isPublic = isPublic;
+        this.isEncrypted = isEncrypted;
+        this.encryptedAt = encryptedAt;
+        this.encryptionVersion = encryptionVersion;
     }
 }
 class TemporaryStructure {

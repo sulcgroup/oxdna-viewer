@@ -1,4 +1,5 @@
 /// <reference path="../typescript_definitions/oxView.d.ts" />
+/// <reference path="../typescript_definitions/index.d.ts" />
 // This script is loaded when the commit history modal is opened.
 console.log("commitHistoryWindow-script.ts: Script loaded.");
 async function initCommitHistory(structureId) {
@@ -37,18 +38,21 @@ async function initCommitHistory(structureId) {
         commitGraphElement.innerHTML = `<p>Error: Could not retrieve structure data.</p>`;
         return;
     }
-    if (!structure || !structure.structure || !Array.isArray(structure.structure)) {
+    if (!structure || !structure.commits || !Array.isArray(structure.commits)) { // Updated to use 'commits'
         console.error(`initCommitHistory ERROR: Structure with id ${structureId} not found or is malformed.`, structure);
         commitGraphElement.innerHTML = `<p>Error: Structure with id ${structureId} not found or is invalid.</p>`;
         return;
     }
     console.log("initCommitHistory: Successfully retrieved structure:", structure);
+    // Ensure commits are processed chronologically (oldest -> newest)
+    const commitsSorted = structure.commits.slice();
+    commitsSorted.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     const currentBranchName = urlParams.get('branch') || 'main';
     console.log(`initCommitHistory: Current branch name is '${currentBranchName}'`);
     // Create a map for quick commit lookup and to store children
     const commitMap = new Map();
     console.log("initCommitHistory: Building commit map...");
-    structure.structure.forEach(commit => {
+    commitsSorted.forEach(commit => {
         if (!commit.commitId) {
             console.warn("initCommitHistory WARNING: Found a commit without a commitId.", commit);
             return;
@@ -58,7 +62,7 @@ async function initCommitHistory(structureId) {
     console.log("initCommitHistory: Commit map built.", commitMap);
     // Populate children for each commit node
     console.log("initCommitHistory: Building parent-child relationships...");
-    structure.structure.forEach(commit => {
+    commitsSorted.forEach(commit => {
         if (commit.parent) {
             const parentNode = commitMap.get(commit.parent);
             if (parentNode) {
@@ -77,7 +81,7 @@ async function initCommitHistory(structureId) {
     });
     console.log("initCommitHistory: Parent-child relationships built.");
     // Find root commits (those without parents in the structure)
-    const rootNodes = structure.structure
+    const rootNodes = commitsSorted // Updated to use 'commits'
         .filter(commit => !commit.parent || !commitMap.has(commit.parent))
         .map(commit => commitMap.get(commit.commitId)).filter(node => node); // ensure no undefined nodes
     console.log("initCommitHistory: Found root nodes:", rootNodes);
@@ -221,7 +225,6 @@ async function initCommitHistory(structureId) {
 // Function to handle sharing for a specific commit and return share info
 async function generateShareInfo(structureId, commit) {
     try {
-        const apiRoot = window.apiRoot;
         // Get the structure to access its name
         const structure = await window.DexieDB.structureData.get(structureId);
         if (!structure) {
@@ -232,38 +235,27 @@ async function generateShareInfo(structureId, commit) {
         const binaryString = Array.from(uint8Array, byte => String.fromCharCode(byte)).join('');
         const base64Data = btoa(binaryString);
         const requestBody = {
-            structureData: {
-                structureName: structure.structureName,
-                commit: {
-                    commitId: commit.commitId,
-                    commitName: commit.commitName,
-                    data: base64Data,
-                    parent: commit.parent
-                },
-                metadata: {
-                    createdAt: new Date()
-                }
+            structureName: structure.structureName,
+            commit: {
+                commitId: commit.commitId,
+                commitName: commit.commitName,
+                data: base64Data,
+                parent: commit.parent
             }
         };
-        const response = await fetch(`${apiRoot}/oxview/share`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        // Use the new shareCommit API function
+        const result = await shareCommit(requestBody);
+        if (!result) {
+            throw new Error("Failed to share commit");
         }
-        const result = await response.json();
         // Construct the full shareable URL
         const baseUrl = window.location.origin;
-        const shareUrl = `${baseUrl}/?shared=${result.shareId}`;
+        const shareUrl = result.shareUrl || `${baseUrl}/shared?shareId=${result.shareId}`;
         const shareInfo = {
             shareUrl: shareUrl,
             shareId: result.shareId,
             createdAt: new Date(result.createdAt || Date.now()),
-            expiresAt: new Date(result.expiresAt)
+            expiresAt: new Date(result.expiresAt || Date.now() + 30 * 24 * 60 * 60 * 1000) // Default 30 days
         };
         // Update the commit with share info and save to database
         commit.shareInfo = shareInfo;
@@ -371,9 +363,9 @@ async function updateCommitShareInfo(structureId, commitId, shareInfo) {
         if (!structure)
             return;
         // Find and update the specific commit
-        const commitIndex = structure.structure.findIndex((c) => c.commitId === commitId);
+        const commitIndex = structure.commits.findIndex((c) => c.commitId === commitId); // Updated to use 'commits'
         if (commitIndex !== -1) {
-            structure.structure[commitIndex].shareInfo = shareInfo;
+            structure.commits[commitIndex].shareInfo = shareInfo; // Updated to use 'commits'
             await window.DexieDB.structureData.put(structure);
         }
     }

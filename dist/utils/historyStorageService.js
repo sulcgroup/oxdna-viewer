@@ -472,10 +472,149 @@ async function loadStructure() {
         }
         if (commitToLoad) {
             console.log("loadStructure: Commit selected for loading.", commitToLoad);
+            // Handle encrypted commits - decrypt on-the-fly
+            let dataToDecompress = commitToLoad.data;
+            if (commitToLoad.isEncrypted && commitToLoad.encryptedData && commitToLoad.iv) {
+                console.log("loadStructure: Commit is encrypted, decrypting on-the-fly...");
+                try {
+                    // Get token for decryption
+                    const token = typeof window !== 'undefined' ? window.localStorage.getItem('token') : null;
+                    if (token) {
+                        // Simple JWT decode function (copied from upload.ts)
+                        function decodeJWT(token) {
+                            try {
+                                const base64Url = token.split('.')[1];
+                                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
+                                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                                }).join(''));
+                                return JSON.parse(jsonPayload);
+                            }
+                            catch (e) {
+                                console.error("Failed to decode JWT:", e);
+                                return null;
+                            }
+                        }
+                        // Decode token to get payload
+                        const decoded = decodeJWT(token);
+                        if (!decoded || !decoded.exp) {
+                            throw new Error('Invalid token structure');
+                        }
+                        // Encryption configuration (matching oxCloudDash)
+                        const ENCRYPTION_ALGORITHM = 'AES-GCM';
+                        const KEY_DERIVATION_SALT = 'oxview-encryption-salt-v1';
+                        // Check if crypto.subtle is available
+                        if (!crypto.subtle) {
+                            throw new Error('Web Crypto API is not available. Please use HTTPS or localhost.');
+                        }
+                        // Create a base key material from token + salt + expiration
+                        const keyMaterial = `${token}:${KEY_DERIVATION_SALT}:${decoded.exp}`;
+                        // Convert to ArrayBuffer
+                        const encoder = new TextEncoder();
+                        const keyData = encoder.encode(keyMaterial);
+                        // Import the key material
+                        const baseKey = await crypto.subtle.importKey('raw', keyData, 'PBKDF2', false, ['deriveKey']);
+                        // Derive AES-GCM key
+                        const salt = encoder.encode(KEY_DERIVATION_SALT);
+                        const aesKey = await crypto.subtle.deriveKey({
+                            name: 'PBKDF2',
+                            salt: salt,
+                            iterations: 100000,
+                            hash: 'SHA-256'
+                        }, baseKey, {
+                            name: ENCRYPTION_ALGORITHM,
+                            length: 256
+                        }, false, ['decrypt']);
+                        // Decrypt the data
+                        const decryptedData = await crypto.subtle.decrypt({
+                            name: ENCRYPTION_ALGORITHM,
+                            iv: new Uint8Array(commitToLoad.iv)
+                        }, aesKey, commitToLoad.encryptedData);
+                        // Check if decrypted data is valid
+                        if (!decryptedData || decryptedData.byteLength === 0) {
+                            console.error("loadStructure: Decryption resulted in empty data");
+                            if (typeof window.Metro !== 'undefined') {
+                                window.Metro.notify({
+                                    title: 'Decryption Failed',
+                                    message: 'Failed to decrypt commit data: Decrypted data is empty',
+                                    type: 'alert',
+                                });
+                            }
+                            return;
+                        }
+                        // Use the decrypted data for decompression
+                        dataToDecompress = decryptedData;
+                        console.log("loadStructure: Commit decrypted successfully");
+                    }
+                    else {
+                        console.error("loadStructure: Cannot decrypt commit - no token available");
+                        // Show error to user
+                        if (typeof window.Metro !== 'undefined') {
+                            window.Metro.notify({
+                                title: 'Decryption Failed',
+                                message: 'Failed to decrypt commit data. Please ensure you are logged in.',
+                                type: 'alert',
+                            });
+                        }
+                        return;
+                    }
+                }
+                catch (error) {
+                    console.error("loadStructure: Failed to decrypt commit:", error);
+                    // Show error to user
+                    if (typeof window.Metro !== 'undefined') {
+                        window.Metro.notify({
+                            title: 'Decryption Failed',
+                            message: 'Failed to decrypt commit data. Please try again.',
+                            type: 'alert',
+                        });
+                    }
+                    return;
+                }
+            }
             console.log("loadStructure: Decompressing data...");
-            const compData = new Uint8Array(commitToLoad.data);
+            const compData = new Uint8Array(dataToDecompress);
             const uncompressed = inflate(compData, { to: "string" });
             console.log("loadStructure: Data decompressed. Creating File object...");
+            // Validate the decompressed data before creating file
+            if (uncompressed === undefined || uncompressed === null || uncompressed === "") {
+                console.error("loadStructure: Decompressed data is invalid (undefined, null, or empty)");
+                if (typeof window.Metro !== 'undefined') {
+                    window.Metro.notify({
+                        title: 'Data Error',
+                        message: 'Failed to load structure: Invalid data after decompression',
+                        type: 'alert',
+                    });
+                }
+                return;
+            }
+            // Additional validation to ensure it's valid JSON
+            try {
+                JSON.parse(uncompressed);
+            }
+            catch (error) {
+                console.error("loadStructure: Decompressed data is not valid JSON:", error);
+                if (typeof window.Metro !== 'undefined') {
+                    window.Metro.notify({
+                        title: 'Data Error',
+                        message: 'Failed to load structure: Data is not valid JSON format',
+                        type: 'alert',
+                    });
+                }
+                return;
+            }
+            // Double-check that we have valid string content
+            if (typeof uncompressed !== 'string') {
+                console.error("loadStructure: Decompressed data is not a string:", typeof uncompressed);
+                if (typeof window.Metro !== 'undefined') {
+                    window.Metro.notify({
+                        title: 'Data Error',
+                        message: 'Failed to load structure: Decompressed data is not in expected format',
+                        type: 'alert',
+                    });
+                }
+                return;
+            }
             const file = new File([uncompressed], "output.oxview", {
                 type: "text/plain",
             });
@@ -485,6 +624,12 @@ async function loadStructure() {
             window._isLoadingFromLibrary = true;
             handleFiles([file]);
             console.log("loadStructure: handleFiles called. Function complete.");
+            // Clear sensitive data from memory after loading
+            setTimeout(() => {
+                if (typeof window !== 'undefined' && window.gc) {
+                    window.gc();
+                }
+            }, 100);
         }
         else {
             console.error("loadStructure: No commit found to load.");

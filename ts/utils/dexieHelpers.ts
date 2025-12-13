@@ -28,6 +28,10 @@ class CommitType {
   parent: string | null;
   createdAt?: number | Date;
   shareInfo?: ShareInfo;
+  // NEW: Encryption metadata
+  isEncrypted?: boolean;
+  encryptedData?: ArrayBuffer;
+  iv?: ArrayBuffer;
 
   constructor(
     data: ArrayBuffer,
@@ -35,7 +39,10 @@ class CommitType {
     commitId: string,
     parent: string | null,
     shareInfo?: ShareInfo,
-    createdAt?: number | Date
+    createdAt?: number | Date,
+    isEncrypted?: boolean,
+    encryptedData?: ArrayBuffer,
+    iv?: ArrayBuffer
   ) {
     this.data = data;
     this.commitName = commitName;
@@ -43,6 +50,9 @@ class CommitType {
     this.parent = parent;
     this.shareInfo = shareInfo;
     this.createdAt = createdAt;
+    this.isEncrypted = isEncrypted;
+    this.encryptedData = encryptedData;
+    this.iv = iv;
   }
 }
 
@@ -59,6 +69,10 @@ class EntryType {
   publicSourceId?: string;
   // Whether this local copy is marked as public (synced with backend)
   isPublic?: boolean;
+  // NEW: Encryption metadata for the entire project
+  isEncrypted?: boolean;
+  encryptedAt?: number;
+  encryptionVersion?: string;
 
   constructor(
     id: string,
@@ -70,7 +84,10 @@ class EntryType {
     syncedProjectId: string | null,
     isRemote?: boolean,
     publicSourceId?: string,
-    isPublic?: boolean
+    isPublic?: boolean,
+    isEncrypted?: boolean,
+    encryptedAt?: number,
+    encryptionVersion?: string
   ) {
     this.id = id;
     this.commits = commits;
@@ -82,6 +99,9 @@ class EntryType {
     this.isRemote = isRemote;
     this.publicSourceId = publicSourceId;
     this.isPublic = isPublic;
+    this.isEncrypted = isEncrypted;
+    this.encryptedAt = encryptedAt;
+    this.encryptionVersion = encryptionVersion;
   }
 }
 
@@ -111,3 +131,13 @@ DexieDB.version(1).stores({
 });
 
 (window as any).DexieDB = DexieDB;
+
+// Type for encrypted commit storage
+interface EncryptedCommitType {
+  encryptedData: ArrayBuffer;
+  iv: ArrayBuffer;
+  originalCommitId: string;
+  originalCommitName: string;
+  originalParent: string | null;
+  originalCreatedAt?: number | Date;
+}

@@ -337,15 +337,26 @@ function makeSequenceFile() {
     }
     makeTextFile("sequences.csv", seqTxts.join("\n"));
 }
-function makeOxViewJsonFile(name, space) {
+function makeOxViewJsonFile(name, space, postToParent = false, targetOrigin = '*') {
     let file_name = name ? name + ".oxview" : "output.oxview";
-    makeTextFile(file_name, JSON.stringify({
+    const data = {
         date: new Date(),
         box: box.toArray(),
         systems: systems,
         forces: forceHandler.forces,
         selections: selectionListHandler.serialize()
-    }, null, space));
+    };
+    const jsonString = JSON.stringify(data, null, space);
+    if (postToParent) {
+        window.parent.postMessage({
+            type: 'oxViewJsonFile',
+            fileName: file_name,
+            data: jsonString
+        }, targetOrigin);
+    }
+    else {
+        makeTextFile(file_name, jsonString);
+    }
 }
 function makeTextFile(filename, text) {
     let blob = new Blob([text], { type: 'text' });
