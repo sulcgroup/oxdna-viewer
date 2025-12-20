@@ -3,6 +3,6 @@
 4:I[79119,["/dist/dash/_next/static/chunks/e452130188f0ea85.js","/dist/dash/_next/static/chunks/fd10b9a146863e70.js"],"MetadataBoundary"]
 5:"$Sreact.suspense"
 7:I[89987,["/dist/dash/_next/static/chunks/e452130188f0ea85.js","/dist/dash/_next/static/chunks/fd10b9a146863e70.js"],"IconMark"]
-0:{"buildId":"AEDU1XsfZye--S2G9PtOy","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"r_1Jk6lfQuumOBNw_v0Kd","rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L2",null,{"children":"$@3"}],["$","div",null,{"hidden":true,"children":["$","$L4",null,{"children":["$","$5",null,{"name":"Next.Metadata","children":"$@6"}]}]}],["$","meta",null,{"name":"next-size-adjust","content":""}]]}],"loading":null,"isPartial":false}
 3:[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}]]
 6:[["$","title","0",{"children":"oxCloud Dashboard"}],["$","meta","1",{"name":"description","content":"Simulate and analyze DNA structures with oxDNA via oxCloud."}],["$","link","2",{"rel":"icon","href":"/dist/dash/favicon.ico?favicon.7ed73651.ico","sizes":"48x48","type":"image/x-icon"}],["$","$L7","3",{}]]
