@@ -515,70 +515,36 @@ async function loadStructure(): Promise<void> {
         console.log("loadStructure: Commit is encrypted, decrypting on-the-fly...");
 
         try {
-          // Get token for decryption
+          // Get token for backend key fetch
           const token = typeof window !== 'undefined' ? (window as any).localStorage.getItem('token') : null;
 
           if (token) {
-            // Simple JWT decode function (copied from upload.ts)
-            function decodeJWT(token: string): any {
-              try {
-                const base64Url = token.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function (c) {
-                  return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                return JSON.parse(jsonPayload);
-              } catch (e) {
-                console.error("Failed to decode JWT:", e);
-                return null;
+            // Fetch the encryption key from backend
+            const apiBaseUrl = typeof window !== 'undefined' ? (window as any).NEXT_PUBLIC_API_BASE_URL || 'https://api.nanobase.org/api/v1' : 'https://api.nanobase.org/api/v1';
+            
+            const keyResponse = await fetch(`${apiBaseUrl}/encryption-key`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
               }
+            });
+
+            if (!keyResponse.ok) {
+              throw new Error(`Failed to fetch encryption key from backend: ${keyResponse.status}`);
             }
 
-            // Decode token to get payload
-            const decoded = decodeJWT(token);
-            if (!decoded || !decoded.exp) {
-              throw new Error('Invalid token structure');
+            const keyData = await keyResponse.json();
+            if (!keyData || !keyData.key) {
+              throw new Error('Invalid encryption key response from backend');
             }
 
-            // Encryption configuration (matching oxCloudDash)
-            const ENCRYPTION_ALGORITHM = 'AES-GCM';
-            const KEY_DERIVATION_SALT = 'oxview-encryption-salt-v1';
-
-            // Check if crypto.subtle is available
-            if (!crypto.subtle) {
-              throw new Error('Web Crypto API is not available. Please use HTTPS or localhost.');
-            }
-
-            // Create a base key material from token + salt + expiration
-            const keyMaterial = `${token}:${KEY_DERIVATION_SALT}:${decoded.exp}`;
-
-            // Convert to ArrayBuffer
-            const encoder = new TextEncoder();
-            const keyData = encoder.encode(keyMaterial);
-
-            // Import the key material
-            const baseKey = await crypto.subtle.importKey(
+            // Convert base64 key to CryptoKey
+            const keyBuffer = Uint8Array.from(atob(keyData.key), c => c.charCodeAt(0));
+            const aesKey = await crypto.subtle.importKey(
               'raw',
-              keyData,
-              'PBKDF2',
-              false,
-              ['deriveKey']
-            );
-
-            // Derive AES-GCM key
-            const salt = encoder.encode(KEY_DERIVATION_SALT);
-            const aesKey = await crypto.subtle.deriveKey(
-              {
-                name: 'PBKDF2',
-                salt: salt,
-                iterations: 100000,
-                hash: 'SHA-256'
-              },
-              baseKey,
-              {
-                name: ENCRYPTION_ALGORITHM,
-                length: 256
-              },
+              keyBuffer,
+              { name: 'AES-GCM', length: 256 },
               false,
               ['decrypt']
             );
@@ -586,7 +552,7 @@ async function loadStructure(): Promise<void> {
             // Decrypt the data
             const decryptedData = await crypto.subtle.decrypt(
               {
-                name: ENCRYPTION_ALGORITHM,
+                name: 'AES-GCM',
                 iv: new Uint8Array(commitToLoad.iv)
               },
               aesKey,
