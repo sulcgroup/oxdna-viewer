@@ -2,6 +2,12 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 /**
  * Check if token is expired
+ *
+ * SECURITY NOTE: This only decodes the token, it does NOT verify the signature.
+ * - JWT signature verification happens server-side on every API request
+ * - Client-side verification would require exposing the secret key (major security risk)
+ * - We only check expiration here to avoid sending expired tokens to the backend
+ * - The backend authenticates all requests via middleware with signature verification
  */
 function isTokenExpired(token) {
     try {
@@ -48,7 +54,7 @@ async function refreshToken() {
         });
         if (response.ok) {
             const data = await response.json();
-            const newToken = data.accessToken || data.token;
+            const newToken = data.token;
             localStorage.setItem("token", newToken);
             console.log("[Auth] Token refreshed successfully");
             return true;
