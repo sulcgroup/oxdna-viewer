@@ -515,88 +515,76 @@ async function loadStructure(): Promise<void> {
         console.log("loadStructure: Commit is encrypted, decrypting on-the-fly...");
 
         try {
-          // Get token for backend key fetch
-          const token = typeof window !== 'undefined' ? (window as any).localStorage.getItem('token') : null;
+          // Get key from localStorage (with expiration check)
+          const getStoredKey = (): string | null => {
+            try {
+              const stored = localStorage.getItem('enc_key_data');
+              if (!stored) return null;
 
-          if (token) {
-            // Fetch the encryption key from backend
-            const apiBaseUrl = typeof window !== 'undefined' ? (window as any).NEXT_PUBLIC_API_BASE_URL || 'https://api.nanobase.org/api/v1' : 'https://api.nanobase.org/api/v1';
-            
-            const keyResponse = await fetch(`${apiBaseUrl}/encryption-key`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+              const data = JSON.parse(stored);
+
+              // Check expiration (24 hours)
+              if (Date.now() >= data.expiresAt) {
+                console.warn('Encryption key expired');
+                localStorage.removeItem('enc_key_data');
+                return null;
               }
-            });
 
-            if (!keyResponse.ok) {
-              throw new Error(`Failed to fetch encryption key from backend: ${keyResponse.status}`);
+              return data.key;
+            } catch {
+              return null;
             }
+          };
 
-            const keyData = await keyResponse.json();
-            if (!keyData || !keyData.key) {
-              throw new Error('Invalid encryption key response from backend');
-            }
+          const keyBase64 = getStoredKey();
 
-            // Convert base64 key to CryptoKey
-            const keyBuffer = Uint8Array.from(atob(keyData.key), c => c.charCodeAt(0));
-            const aesKey = await crypto.subtle.importKey(
-              'raw',
-              keyBuffer,
-              { name: 'AES-GCM', length: 256 },
-              false,
-              ['decrypt']
-            );
+          if (!keyBase64) {
+            console.error("loadStructure: No valid encryption key - redirecting to login");
+            alert('Your encryption key has expired. Please log in again to access encrypted structures.');
+            window.location.href = '/login';
+            return;
+          }
 
-            // Decrypt the data
-            const decryptedData = await crypto.subtle.decrypt(
-              {
-                name: 'AES-GCM',
-                iv: new Uint8Array(commitToLoad.iv)
-              },
-              aesKey,
-              commitToLoad.encryptedData
-            );
+          // Convert base64 key to CryptoKey
+          const keyBuffer = Uint8Array.from(atob(keyBase64), c => c.charCodeAt(0));
+          const aesKey = await crypto.subtle.importKey(
+            'raw',
+            keyBuffer,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+          );
 
-            // Check if decrypted data is valid
-            if (!decryptedData || decryptedData.byteLength === 0) {
-              console.error("loadStructure: Decryption resulted in empty data");
-              if (typeof (window as any).Metro !== 'undefined') {
-                (window as any).Metro.notify({
-                  title: 'Decryption Failed',
-                  message: 'Failed to decrypt commit data: Decrypted data is empty',
-                  type: 'alert',
-                });
-              }
-              return;
-            }
+          // Decrypt the data
+          const decryptedData = await crypto.subtle.decrypt(
+            {
+              name: 'AES-GCM',
+              iv: new Uint8Array(commitToLoad.iv)
+            },
+            aesKey,
+            commitToLoad.encryptedData
+          );
 
-            // Use the decrypted data for decompression
-            dataToDecompress = decryptedData;
-            console.log("loadStructure: Commit decrypted successfully");
-          } else {
-            console.error("loadStructure: Cannot decrypt commit - no token available");
-            // Show error to user
+          // Validate decrypted data
+          if (!decryptedData || decryptedData.byteLength === 0) {
+            console.error("loadStructure: Decryption resulted in empty data");
             if (typeof (window as any).Metro !== 'undefined') {
               (window as any).Metro.notify({
                 title: 'Decryption Failed',
-                message: 'Failed to decrypt commit data. Please ensure you are logged in.',
+                message: 'Failed to decrypt commit data',
                 type: 'alert',
               });
             }
             return;
           }
+
+          dataToDecompress = decryptedData;
+          console.log("loadStructure: Commit decrypted successfully");
+
         } catch (error) {
           console.error("loadStructure: Failed to decrypt commit:", error);
-          // Show error to user
-          if (typeof (window as any).Metro !== 'undefined') {
-            (window as any).Metro.notify({
-              title: 'Decryption Failed',
-              message: 'Failed to decrypt commit data. Please try again.',
-              type: 'alert',
-            });
-          }
+          alert('Failed to decrypt structure. Please log in again.');
+          window.location.href = '/login';
           return;
         }
       }
