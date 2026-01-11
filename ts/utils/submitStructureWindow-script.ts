@@ -2,11 +2,11 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
 const apiRoot = window.getAPIBaseURL();
-interface LoginResponse {
-  token: string;
-}
 
-function uploadStructure(): void {
+/**
+ * Upload structure with authentication and token refresh support
+ */
+async function uploadStructure(): Promise<void> {
   const messageDiv = document.getElementById(
     "submitstructure-message",
   ) as HTMLElement;
@@ -16,6 +16,37 @@ function uploadStructure(): void {
     "submitstructure-success",
     "submitstructure-error",
   );
+
+  // Check if user is logged in
+  const token = localStorage.getItem("token");
+  if (!token) {
+    messageDiv.textContent = "Please log in to upload structures.";
+    messageDiv.classList.add("submitstructure-error");
+    view.toggleWindow("loginWindow");
+    return;
+  }
+
+  // Check if token is expired (using utility from auth.ts)
+  const isTokenExpired = (window as any).isTokenExpired;
+  if (isTokenExpired && isTokenExpired(token)) {
+    console.log("[UploadStructure] Token expired, attempting refresh...");
+    const refreshToken = (window as any).refreshToken;
+
+    if (refreshToken) {
+      const refreshed = await refreshToken();
+      if (!refreshed) {
+        messageDiv.textContent = "Session expired. Please log in again.";
+        messageDiv.classList.add("submitstructure-error");
+        view.toggleWindow("loginWindow");
+        return;
+      }
+    } else {
+      messageDiv.textContent = "Session expired. Please log in again.";
+      messageDiv.classList.add("submitstructure-error");
+      view.toggleWindow("loginWindow");
+      return;
+    }
+  }
 
   const formData = new FormData();
 
@@ -36,6 +67,14 @@ function uploadStructure(): void {
   ) as HTMLInputElement;
   const privateInput = document.getElementById("private") as HTMLInputElement;
   const keywordsInput = document.getElementById("keywords") as HTMLInputElement;
+
+  // Validate required fields
+  if (!titleInput.value || !typeInput.value || !descriptionInput.value ||
+      !datePublishedInput.value || !licensingInput.value) {
+    messageDiv.textContent = "Please fill in all required fields.";
+    messageDiv.classList.add("submitstructure-error");
+    return;
+  }
 
   formData.append("title", titleInput.value);
   formData.append("type", typeInput.value);
@@ -67,36 +106,100 @@ function uploadStructure(): void {
   ) as HTMLInputElement;
   formData.append("files", returnOxViewJsonFile(submitStructureName.value));
 
-  const token = localStorage.getItem("token") || "";
+  // Show uploading message
+  messageDiv.textContent = "Uploading structure...";
+  messageDiv.classList.remove("submitstructure-error");
 
-  fetch(`${apiRoot}/structure/createStructure`, {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      // Do not set 'Content-Type' header when using FormData.
-    },
-    body: formData,
-  })
-    .then(async (response): Promise<{ status: number; body: any }> => {
-      const data = await response.json();
-      return { status: response.status, body: data };
-    })
-    .then((result) => {
-      if (result.status >= 200 && result.status < 300) {
-        messageDiv.textContent =
-          result.body.message || "Structure uploaded successfully!";
-        messageDiv.classList.add("submitstructure-success");
-      } else {
-        messageDiv.textContent =
-          result.body.message || "Failed to upload structure";
-        messageDiv.classList.add("submitstructure-error");
-      }
-    })
-    .catch((error) => {
-      console.error("Error uploading structure:", error);
-      messageDiv.textContent = "An error occurred while uploading.";
-      messageDiv.classList.add("submitstructure-error");
+  try {
+    const currentToken = localStorage.getItem("token") || "";
+
+    const response = await fetch(`${apiRoot}/structure/createStructure`, {
+      method: "POST",
+      credentials: "include", // Include refresh token cookie
+      headers: {
+        Authorization: "Bearer " + currentToken,
+        // Do not set 'Content-Type' header when using FormData.
+      },
+      body: formData,
     });
+
+    // Handle 401 with token refresh
+    if (response.status === 401) {
+      console.log("[UploadStructure] Got 401, attempting token refresh...");
+      const refreshToken = (window as any).refreshToken;
+
+      if (refreshToken) {
+        const refreshed = await refreshToken();
+        if (refreshed) {
+          // Retry upload with new token
+          const newToken = localStorage.getItem("token") || "";
+          const retryResponse = await fetch(`${apiRoot}/structure/createStructure`, {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              Authorization: "Bearer " + newToken,
+            },
+            body: formData,
+          });
+
+          const retryData = await retryResponse.json();
+
+          if (retryResponse.ok) {
+            messageDiv.textContent =
+              retryData.message || "Structure uploaded successfully!";
+            messageDiv.classList.add("submitstructure-success");
+
+            // Clear form
+            (document.getElementById("title") as HTMLInputElement).value = "";
+            (document.getElementById("type") as HTMLInputElement).value = "";
+            (document.getElementById("description") as HTMLTextAreaElement).value = "";
+            (document.getElementById("citation") as HTMLInputElement).value = "";
+            (document.getElementById("paperLink") as HTMLInputElement).value = "";
+            (document.getElementById("keywords") as HTMLInputElement).value = "";
+            (document.getElementById("submitStructureName") as HTMLInputElement).value = "";
+
+            return;
+          } else {
+            messageDiv.textContent =
+              retryData.message || "Failed to upload structure";
+            messageDiv.classList.add("submitstructure-error");
+            return;
+          }
+        }
+      }
+
+      // Refresh failed, show login
+      messageDiv.textContent = "Session expired. Please log in again.";
+      messageDiv.classList.add("submitstructure-error");
+      view.toggleWindow("loginWindow");
+      return;
+    }
+
+    const data = await response.json();
+
+    if (response.ok) {
+      messageDiv.textContent =
+        data.message || "Structure uploaded successfully!";
+      messageDiv.classList.add("submitstructure-success");
+
+      // Clear form on success
+      (document.getElementById("title") as HTMLInputElement).value = "";
+      (document.getElementById("type") as HTMLInputElement).value = "";
+      (document.getElementById("description") as HTMLTextAreaElement).value = "";
+      (document.getElementById("citation") as HTMLInputElement).value = "";
+      (document.getElementById("paperLink") as HTMLInputElement).value = "";
+      (document.getElementById("keywords") as HTMLInputElement).value = "";
+      (document.getElementById("submitStructureName") as HTMLInputElement).value = "";
+    } else {
+      messageDiv.textContent =
+        data.message || "Failed to upload structure";
+      messageDiv.classList.add("submitstructure-error");
+    }
+  } catch (error) {
+    console.error("[UploadStructure] Error uploading structure:", error);
+    messageDiv.textContent = "An error occurred while uploading. Please try again.";
+    messageDiv.classList.add("submitstructure-error");
+  }
 }
 
 function returnOxViewJsonFile(name: string, space?: string | number): File {
