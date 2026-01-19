@@ -58,12 +58,12 @@ let loadHyperSelector = () => {
                 // mode:"dataset", // it is possible to remove the line view from the plot 
                 // intersect:true  // on hover, but i find it to distracting 
             },
-            responsiveAnimationDuration: 0,
+            responsiveAnimationDuration: 0, // animation duration after a resize
             scales: {
                 xAxes: [{ display: true, scaleLabel: { display: true, labelString: 'Time' }, gridLines: { drawOnChartArea: false } }],
                 yAxes: [{ display: true, gridLines: { drawOnChartArea: false } }],
             },
-            spanGaps: true,
+            spanGaps: true, // handle null in the chart data
             annotation: {
                 events: ["click"],
                 annotations: [
@@ -143,7 +143,7 @@ let handleParameterDrop = (files) => {
             else {
                 console.log("adding new axis");
                 myChart.options.scales.yAxes.push({
-                    type: 'linear',
+                    type: 'linear', // only linear but allow scale type registration. This allows extensions to exist solely for log scale for instance
                     display: true,
                     position: 'left',
                     id: `y-axis-id${axis_counter}`,
@@ -159,7 +159,7 @@ let handleParameterDrop = (files) => {
                         labels: labels,
                         datasets: [
                             {
-                                label: parameter_name,
+                                label: parameter_name, //files[0].name.split(".")[0],
                                 data: data,
                                 fill: false,
                                 borderColor: chartColorMap.get(),
@@ -170,7 +170,7 @@ let handleParameterDrop = (files) => {
                 }
                 else {
                     myChart.data.datasets.push({
-                        label: parameter_name,
+                        label: parameter_name, //files[i].name.split(".")[0],
                         data: data,
                         fill: false,
                         borderColor: chartColorMap.get(),
