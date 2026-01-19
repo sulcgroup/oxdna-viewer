@@ -393,6 +393,7 @@ function setBackgroundImage() {
     }
 }
 
+// Note that there's also api.setBackgroundColor() which lets you pass an argument
 function setBackgroundColor() {
     let color = (document.getElementById("backgroundColor") as HTMLInputElement).value;
     document.getElementById('threeCanvas').style.background = color;

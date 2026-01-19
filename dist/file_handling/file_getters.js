@@ -81,6 +81,9 @@ function handleMessage(data) {
             if ("Arrows" in view_settings) {
                 setArrowsVisibility(view_settings["Arrows"]);
             }
+            if ("Background" in view_settings) {
+                api.setBackgroundColor(view_settings["Background"]);
+            }
         }
         //set the names and extensions for every passed file
         for (let i = 0; i < files.length; i++) {

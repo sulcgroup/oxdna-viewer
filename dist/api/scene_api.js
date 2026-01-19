@@ -391,6 +391,10 @@ var api;
         render();
     }
     api.switchCamera = switchCamera;
+    function setBackgroundColor(color) {
+        document.getElementById('threeCanvas').style.background = color;
+    }
+    api.setBackgroundColor = setBackgroundColor;
     //export function flipConnectors() {
     //    instancedBBconnector.
     //}

@@ -403,6 +403,10 @@ module api{
         render();
     }
 
+    export function setBackgroundColor(color) {
+        document.getElementById('threeCanvas').style.background = color;
+    }
+
     //export function flipConnectors() {
     //    instancedBBconnector.
     //}

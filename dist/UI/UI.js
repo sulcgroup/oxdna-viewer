@@ -384,6 +384,7 @@ function setBackgroundImage() {
         reader.readAsDataURL(file);
     }
 }
+// Note that there's also api.setBackgroundColor() which lets you pass an argument
 function setBackgroundColor() {
     let color = document.getElementById("backgroundColor").value;
     document.getElementById('threeCanvas').style.background = color;
