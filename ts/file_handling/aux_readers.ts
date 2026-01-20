@@ -224,6 +224,12 @@ function parseJson(json:string, system:System) {
                     }) 
                 });
                 view.coloringMode.set("Overlay");
+
+                if (key.toLowerCase().includes("binary")){
+                    api.changeColormap("BuPu")
+                }
+                
+
             }
             if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
                 const end = system.systemLength() + system.globalStartId
@@ -237,14 +243,161 @@ function parseJson(json:string, system:System) {
                 }
             }
         }
-        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
-            for (let entry of data[key]) {
-                const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
-                const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
-                vec.normalize();
-                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
-                scene.add(arrowHelper);
+        
+        else if (data[key][0].length == 6) { // if each entry is 6 elements long
+
+            const hasCylinder = key.toLowerCase().includes("cylinder"); // if the key of the dictionary includes the substring "cylinder"
+            const hasLine     = key.toLowerCase().includes("line"); // if the key of the dictionary includes the substring "line"
+
+            if (hasCylinder) {// Draw cyclinders. The first three and the last three values in each entry are the coordinates of the start- and end-points of the axis.
+
+                for (let entry of data[key]) {  
+
+                    const pos1 = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const pos2 = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                    const radius = 0.8
+
+                    const direction = new THREE.Vector3().subVectors(pos2, pos1);
+                    const length = direction.length();
+
+                    // midpoint for cylinder position
+                    const midpoint = new THREE.Vector3().addVectors(pos1, pos2).multiplyScalar(0.5);
+
+                    const geometry = new THREE.CylinderGeometry(radius, radius, length, 64); 
+                    const material = new THREE.MeshStandardMaterial({color:0xff0000 }); // red
+                    const cylinder = new THREE.Mesh(geometry, material);
+
+                    // align cylinder along direction vector (rotate the cylinder so that its y-axis points from pos1 to pos2)
+                    cylinder.position.copy(midpoint);
+                    cylinder.quaternion.setFromUnitVectors(
+                        new THREE.Vector3(0, 1, 0), // cylinder default points up along Y
+                        direction.clone().normalize()
+                    );
+
+                    scene.add(cylinder);
+
+                    // remove nucleotide and connector for better visualisation
+                    view.setPropertyInScene('nucleoside', system, false);
+                    view.setPropertyInScene('connector', system, false);
+                }
             }
+                
+            else if (hasLine) { // Draw lines. The first three and the last three values of each entry are the coordinates of the start- and end-points of the line.
+                for (let entry of data[key]) {
+
+                    const pos1 = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const pos2 = new THREE.Vector3(entry[3], entry[4], entry[5]);
+
+                    const geometry = new THREE.BufferGeometry().setFromPoints([pos1, pos2]);
+                    const material = new THREE.LineBasicMaterial({ color: 0xff0000, linewidth: 0.9 });
+                    const line = new THREE.Line(geometry, material); //a red line that starts at pos1 and ends at pos2
+                    scene.add(line);
+
+                    // remove nucleotide and connector for better visualisation
+                    view.setPropertyInScene('nucleoside', system, false);
+                    view.setPropertyInScene('connector', system, false);
+
+                }
+            }
+
+            else { //draw arbitrary arrows on the scene. First three values of each entry are the coordinates for the starting point, the last three make up the vector.
+                for (let entry of data[key]) {
+                    const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                    vec.normalize();
+                    const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                    scene.add(arrowHelper);
+                }
+            }
+
+      
+        }
+
+        else if (data[key][0].length == 9) { // Draw planes
+            
+            const hasPlane = key.toLowerCase().includes("plane"); // if the key of the dictionary includes the substring "cylinder"
+            const hasPoint    = key.toLowerCase().includes("point"); // if the key of the dictionary includes the substring "line"
+
+
+            if (hasPlane) {
+                for (let entry of data[key]) {  
+
+                    const pos1 = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const pos2 = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                    const pos3 = new THREE.Vector3(entry[6], entry[7], entry[8]);
+
+
+                    // get the normal vector from the 3 points
+                    const v1 = new THREE.Vector3().subVectors(pos2, pos1);
+                    const v2 = new THREE.Vector3().subVectors(pos3, pos1);
+                    const normal = new THREE.Vector3().crossVectors(v1, v2).normalize();
+
+                    // construct the plane
+                    const geometry = new THREE.PlaneGeometry( 7, 7 );
+                    const material = new THREE.MeshBasicMaterial( { color: 0xff0000, side: THREE.DoubleSide, transparent: true, opacity: 0.5 } ); 
+                    const plane = new THREE.Mesh( geometry, material );
+
+                    plane.quaternion.setFromUnitVectors(
+                            new THREE.Vector3(0, 0, 1), 
+                            normal,
+                        );
+
+                    // move it such that it goes through point 2 (middle helix?)
+                    plane.position.copy(pos2);
+                
+                    scene.add(plane);
+                    
+                    // remove nucleotide and connector for better visualisation
+                    // view.setPropertyInScene('nucleoside', system, true);
+                    // view.setPropertyInScene('connector', system, true);
+
+                }
+            }
+
+            else if (hasPoint) {
+                for (let entry of data[key]) {  
+
+                    const pos1 = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const pos2 = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                    const pos3 = new THREE.Vector3(entry[6], entry[7], entry[8]);
+
+                    const sphereGeom = new THREE.SphereGeometry(0.1, 16, 16);
+
+                    const mat = new THREE.MeshBasicMaterial({ color: 0x000000});
+
+                    const s1 = new THREE.Mesh(sphereGeom, mat);
+                    const s2 = new THREE.Mesh(sphereGeom, mat);
+                    const s3 = new THREE.Mesh(sphereGeom, mat);
+
+                    s1.position.copy(pos1);
+                    s2.position.copy(pos2);
+                    s3.position.copy(pos3);
+
+                    scene.add(s1);
+                    scene.add(s2);
+                    scene.add(s3);
+                }
+            }
+
+        }
+
+        else if (data[key][0].length == 3) {
+            for (let entry of data[key]) {  
+
+                    const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+
+                    const sphereGeom = new THREE.SphereGeometry(0.1, 16, 16);
+                    const mat = new THREE.MeshBasicMaterial({ color: 0x000000});
+                    const s = new THREE.Mesh(sphereGeom, mat);
+
+                    s.position.copy(pos);
+
+                    scene.add(s);
+
+                    view.setPropertyInScene('nucleoside', system, false);
+                    view.setPropertyInScene('connector', system, false);
+        
+                }
         }
         else { //if json and dat files do not match, display error message and set filesLen to 2 (not necessary)
             notify(".json and .top files are not compatible.", "alert");
