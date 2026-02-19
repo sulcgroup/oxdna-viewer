@@ -264,52 +264,199 @@ function readForce(forceFile) {
     })
 }
 
+// Frame-indexed overlay: key -> frames[frameIdx][particleIdx]
+let frameOverlays: Record<string, number[][]> = {};
+
+// Stable overlay ranges: key -> [min,max]
+let frameOverlayRanges: Record<string, [number, number]> = {};
+
+function applyFrameOverlay(system: System, key: string, frameIdx: number) {
+    const frames = frameOverlays[key];
+    if (!frames || frames.length === 0) return;
+
+    const idx = Math.max(0, Math.min(frameIdx, frames.length - 1));
+    const stress = frames[idx];
+
+    // Feed into the existing overlay pipeline (colormapFile + lutCols)
+    system.setColorFile({ [key]: stress });
+
+    // Ensure LUT range matches the stable precomputed range for this overlay
+    const range = frameOverlayRanges[key];
+    if (range && lut !== undefined) {
+        const [minR, maxR] = range;
+        if (lut.minV !== minR || lut.maxV !== maxR) {
+            lut.setMin(minR);
+            lut.setMax(maxR);
+            api.removeColorbar();
+        }
+        lut.setLegendOn({
+            layout: "horizontal",
+            position: { x: 0, y: 0, z: 0 },
+            dimensions: { width: 2, height: 12 }
+        });
+        lut.setLegendLabels({ title: key, ticks: 5 });
+    }
+
+    systems.forEach(s => {
+        s.doVisuals(() => {
+            const end = s.systemLength();
+            for (let j = 0; j < end; j++) {
+                s.lutCols[j] = lut.getColor(Number(s.colormapFile[key][j]));
+            }
+        });
+    });
+
+    view.coloringMode.set("Overlay");
+    render();
+}
 
 // Json files can be a lot of things, read them.
-function parseJson(json:string, system:System) {
+function parseJson(json: string, system: System) {
     const data = JSON.parse(json);
-    for (var key in data) {
-        if (data[key].length == system.systemLength()) { //if json and dat files match/same length
-            if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
+
+    for (const key in data) {
+        const val = data[key];
+
+        // -----------------------------
+        // Case A: per-particle arrays (existing behavior)
+        // -----------------------------
+        if (Array.isArray(val) && val.length === system.systemLength()) {
+            // Scalars -> overlay colors
+            if (typeof val[0] === "number") {
                 system.setColorFile(data);
                 makeLut(data, key, system);
-                //update every system's color map
-                systems.forEach(s=>{
-                    s.doVisuals(()=>{
+
+                systems.forEach(s => {
+                    s.doVisuals(() => {
                         const end = s.systemLength();
-                        for(let j=0; j < end; j++)  //insert lut colors into lutCols[] 
+                        for (let j = 0; j < end; j++) {
                             s.lutCols[j] = lut.getColor(Number(s.colormapFile[key][j]));
-                    }) 
+                        }
+                    });
                 });
+
                 view.coloringMode.set("Overlay");
             }
-            if (data[key][0].length == 3) { //we assume that 3D vectors denote motion
-                const end = system.systemLength() + system.globalStartId
+
+            // 3D vectors -> motion arrows
+            if (Array.isArray(val[0]) && val[0].length === 3) {
+                const end = system.systemLength() + system.globalStartId;
                 for (let i = system.globalStartId; i < end; i++) {
-                    const vec = new THREE.Vector3(data[key][i][0], data[key][i][1], data[key][i][2]);
+                    const vec = new THREE.Vector3(val[i][0], val[i][1], val[i][2]);
                     const len = vec.length();
                     vec.normalize();
-                    const arrowHelper = new THREE.ArrowHelper(vec, elements.get(i).getInstanceParameter3("bbOffsets"), len, 0x000000);
+                    const arrowHelper = new THREE.ArrowHelper(
+                        vec,
+                        elements.get(i).getInstanceParameter3("bbOffsets"),
+                        len,
+                        0x000000
+                    );
                     arrowHelper.name = i + "disp";
                     scene.add(arrowHelper);
                 }
             }
+
+            continue;
         }
-        else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
-            for (let entry of data[key]) {
+
+        // -----------------------------
+        // Case B: Stress (MPa) frames -> per-particle arrays
+        // -----------------------------
+        if (key === "Stress (MPa)") {
+            // Expect number[][] : frames[frameIdx][particleIdx]
+            if (!Array.isArray(val) || val.length === 0 || !Array.isArray(val[0])) {
+                notify(`"${key}" must be a list of lists: frames[frameIdx][particleIdx].`, "error");
+                return;
+            }
+
+            console.log("TESTE");
+
+            const frames = val as number[][];
+            const N = system.systemLength();
+
+            // Validate inner lengths
+            for (let fi = 0; fi < frames.length; fi++) {
+                if (!Array.isArray(frames[fi]) || frames[fi].length !== N) {
+                    notify(
+                        `"${key}" frame ${fi} has length ${Array.isArray(frames[fi]) ? frames[fi].length : "??"} but system has ${N}.`,
+                        "error"
+                    );
+                    return;
+                }
+            }
+
+            // Compute GLOBAL min/max once (stable colorbar)
+            let globalMin = Number.POSITIVE_INFINITY;
+            let globalMax = Number.NEGATIVE_INFINITY;
+
+            for (let fi = 0; fi < frames.length; fi++) {
+                const arr = frames[fi];
+                for (let i = 0; i < arr.length; i++) {
+                    const v = arr[i];
+                    if (Number.isFinite(v)) {
+                        if (v < globalMin) globalMin = v;
+                        if (v > globalMax) globalMax = v;
+                    }
+                }
+            }
+
+            const [minR, maxR] = roundRange([globalMin, globalMax]) as [number, number];
+            frameOverlays[key] = frames;
+            frameOverlayRanges[key] = [minR, maxR];
+
+            // Ensure LUT exists and uses the stable range for this overlay key
+            if (lut === undefined) {
+                lut = new THREE.Lut(defaultColormap, 500);
+            }
+            if (lut.minV !== minR || lut.maxV !== maxR) {
+                lut.setMin(minR);
+                lut.setMax(maxR);
+                api.removeColorbar();
+            }
+            lut.setLegendOn({
+                layout: "horizontal",
+                position: { x: 0, y: 0, z: 0 },
+                dimensions: { width: 2, height: 12 }
+            });
+            lut.setLegendLabels({ title: key, ticks: 5 });
+
+            // Apply immediately (best-effort: try to detect current frame)
+            let currentFrame = 0;
+            const r: any = system.reader as any;
+            if (r) {
+                if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
+                else if (typeof r.frame === "number") currentFrame = r.frame;
+                else if (typeof r.current_frame === "number") currentFrame = r.current_frame;
+            }
+
+            applyFrameOverlay(system, key, currentFrame);
+
+            // Expose a hook so the TrajectoryReader can update the overlay when frames change
+            (system as any)._applyStressFrame = (fi: number) => applyFrameOverlay(system, key, fi);
+
+            continue;
+        }
+
+        // -----------------------------
+        // Case C: arbitrary 6D arrows (existing behavior)
+        // -----------------------------
+        if (Array.isArray(val) && Array.isArray(val[0]) && val[0].length === 6) {
+            for (const entry of val) {
                 const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
                 const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
                 vec.normalize();
-                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x000000);
                 scene.add(arrowHelper);
             }
+            continue;
         }
-        else { //if json and dat files do not match, display error message and set filesLen to 2 (not necessary)
-            notify(".json and .top files are not compatible.", "alert");
-            return;
-        }
+
+        // Otherwise: incompatible
+        notify(".json and .top files are not compatible.", "alert");
+        return;
     }
 }
+
 
 function readSelectFile(file:File) { // TODO: needs further checking and integration with the promise system
     if (systems.length > 1) {

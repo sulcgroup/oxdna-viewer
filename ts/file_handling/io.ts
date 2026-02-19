@@ -138,6 +138,8 @@ class TrajectoryReader {
                 //try display the retrieved conf
                 this.parseConf(lines);
                 this.trajectorySlider.setAttribute("value",this.idx.toString());
+                // Apply any frame-synced overlays (e.g., Stress (MPa))
+                (this.system as any)?._applyStressFrame?.(this.idx);
                 if(myChart){
                     // hacky way to propagate the line annotation
                     myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];

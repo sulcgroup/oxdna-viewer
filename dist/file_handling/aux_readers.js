@@ -243,6 +243,23 @@ function readForce(forceFile) {
         render();
     });
 }
+
+// BEM AQUI
+function countLists(obj) {
+    let count = 0;
+  
+    function recurse(value) {
+      if (Array.isArray(value)) {
+        count++;              // Count this list
+        value.forEach(recurse); // Recurse into its elements
+      } else if (value !== null && typeof value === "object") {
+        Object.values(value).forEach(recurse);
+      }
+    }
+  
+    recurse(obj);
+    return count;
+  }
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
     const data = JSON.parse(json);
@@ -273,12 +290,109 @@ function parseJson(json, system) {
                 }
             }
         }
+        else if (key === "Stress (MPa)") {
+            const frames = data[key];
+        
+            // Expect: frames = [ [per-particle values], [per-particle values], ... ]
+            if (!Array.isArray(frames) || frames.length === 0 || !Array.isArray(frames[0])) {
+                notify('"' + key + '" must be a list of lists (frame -> values).', "error");
+                return;
+            }
+        
+            const N = system.systemLength();
+        
+            // Validate each frame length
+            for (let fi = 0; fi < frames.length; fi++) {
+                if (!Array.isArray(frames[fi]) || frames[fi].length !== N) {
+                    notify(
+                        '"' + key + '" frame ' + fi + " has length " +
+                        (Array.isArray(frames[fi]) ? frames[fi].length : "??") +
+                        " but system has " + N + ".",
+                        "error"
+                    );
+                    return;
+                }
+            }
+        
+            // ---------- GLOBAL MIN/MAX so colorbar stays stable ----------
+            let globalMin = Infinity;
+            let globalMax = -Infinity;
+        
+            for (let fi = 0; fi < frames.length; fi++) {
+                const arr = frames[fi];
+                for (let i = 0; i < arr.length; i++) {
+                    const v = arr[i];
+                    if (typeof v === "number" && isFinite(v)) {
+                        if (v < globalMin) globalMin = v;
+                        if (v > globalMax) globalMax = v;
+                    }
+                }
+            }
+        
+            const rounded = roundRange([globalMin, globalMax]);
+            const minR = rounded[0];
+            const maxR = rounded[1];
+        
+            // ---------- Ensure LUT exists ----------
+            if (lut === undefined) {
+                lut = new THREE.Lut(defaultColormap, 500);
+            }
+        
+            if (lut.minV !== minR || lut.maxV !== maxR) {
+                lut.setMin(minR);
+                lut.setMax(maxR);
+                api.removeColorbar();
+            }
+        
+            lut.setLegendOn({
+                layout: "horizontal",
+                position: { x: 0, y: 0, z: 0 },
+                dimensions: { width: 2, height: 12 }
+            });
+        
+            lut.setLegendLabels({ title: key, ticks: 5 });
+        
+            // ---------- Function to apply stress for a frame ----------
+            function applyStressFrame(frameIdx) {
+                var idx = Math.max(0, Math.min(frameIdx, frames.length - 1));
+                var stress = frames[idx];
+        
+                // Feed into existing overlay pipeline
+                system.setColorFile({ [key]: stress });
+        
+                systems.forEach(function (s) {
+                    s.doVisuals(function () {
+                        var end = s.systemLength();
+                        for (var j = 0; j < end; j++) {
+                            s.lutCols[j] = lut.getColor(Number(s.colormapFile[key][j]));
+                        }
+                    });
+                });
+        
+                view.coloringMode.set("Overlay");
+                render();
+            }
+        
+            // ---------- Apply immediately using current frame ----------
+            var currentFrame = 0;
+        
+            if (system.reader) {
+                if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+                else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
+                else if (typeof system.reader.current_frame === "number") currentFrame = system.reader.current_frame;
+            }
+
+            applyStressFrame(currentFrame);
+        
+            // ---------- Expose hook so frame slider / animation can call it ----------
+            system._applyStressFrame = applyStressFrame;
+        }        
         else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
             for (let entry of data[key]) {
                 const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
                 const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
                 vec.normalize();
-                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x000000);
                 scene.add(arrowHelper);
             }
         }
