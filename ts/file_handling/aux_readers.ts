@@ -177,11 +177,24 @@ function readForce(forceFile) {
                     mutTrap.update();
                     forceObjs.push(mutTrap);
                     break;
+                case "sphere": {
+                    const s = new RepulsiveSphere();
+                    s.setFromParsedJson(f); // supports: particle, stiff, r0, rate, center
+                    s.update();
+                    forceObjs.push(s);
+                    break;
+                    }
                 case "skew_trap":
                     let skewTrap = new SkewTrap();
                     skewTrap.setFromParsedJson(f);
                     skewTrap.update();
                     forceObjs.push(skewTrap);
+                    break;
+                case "com":
+                    let COM = new COMForce();
+                    COM.setFromParsedJson(f);
+                    COM.update();
+                    forceObjs.push(COM);
                     break;
                 case "repulsion_plane":
                     let repPlane = new RepulsionPlane();
@@ -195,8 +208,52 @@ function readForce(forceFile) {
                     attrPlane.update();
                     forceObjs.push(attrPlane);
                     break;
+                case "repulsion_plane_moving":
+                    let Move_Repl = new RepulsionPlaneMoving();
+                    Move_Repl.setFromParsedJson(f);
+                    Move_Repl.update();
+                    forceObjs.push(Move_Repl);
+                    break;
+                case "repulsive_sphere_moving":
+                    let Move_Sphere = new RepulsiveSphereMoving();
+                    Move_Sphere.setFromParsedJson(f);
+                    Move_Sphere.update();
+                    forceObjs.push(Move_Sphere);
+                    break;
+                case "AFMMovingSphere":
+                    let AFM = new AFMMovingSphere();
+                    AFM.setFromParsedJson(f);
+                    AFM.update();
+                    forceObjs.push(AFM);
+                    break;
+                case "ellipsoid":
+                    let RE = new RepulsiveEllipsoid();
+                    RE.setFromParsedJson(f);
+                    RE.update();
+                    forceObjs.push(RE);
+                    break;
+                case "Box":
+                    let box = new Box;
+                    box.setFromParsedJson(f);
+                    box.update();
+                    notify('BOX');
+                    forceObjs.push(box);
+                    break;
+                case "string":
+                    let string = new StringForce();
+                    string.setFromParsedJson(f);
+                    string.update();
+                    forceObjs.push(string);
+                    break;
+                case "repulsive_kepler_poinsot":
+                    let KP = new RepulsiveKeplerPoinsot();
+                    KP.setFromParsedJson(f);
+                    KP.update();
+                    forceObjs.push(KP);
+                    break;
                 default:
                     notify(`External force -${f["type"]}- type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
+                    // notify('aux_readers.ts');
                     break;
             }
         });
@@ -206,6 +263,7 @@ function readForce(forceFile) {
         render();
     })
 }
+
 
 // Json files can be a lot of things, read them.
 function parseJson(json:string, system:System) {
