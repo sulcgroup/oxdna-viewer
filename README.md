@@ -61,6 +61,7 @@ You can also watch the tutorial: [Creating oxDNA videos in oxView](https://www.y
 
 ### Input Format
 The topology and trajectory/configuration have to be in oxDNA format. You can convert from other formats (such as PDB, LAMMPS, caDNAno) using TacoxDNA converter: http://tacoxdna.sissa.it/
+Note that in the new topology format, a color for each strand can be defined via hex code.
 
 ---
 
