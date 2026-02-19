@@ -310,6 +310,23 @@ function applyFrameOverlay(system: System, key: string, frameIdx: number) {
     render();
 }
 
+function isFrameScalarOverlay(val: any, N: number): val is number[][] {
+    if (!Array.isArray(val) || val.length === 0) return false;
+    if (!Array.isArray(val[0]) || val[0].length !== N) return false;
+
+    // ensure it's scalar-ish: entries are numbers (sample a few)
+    const sampleFrames = Math.min(val.length, 3);
+    for (let fi = 0; fi < sampleFrames; fi++) {
+        const frame = val[fi];
+        if (!Array.isArray(frame) || frame.length !== N) return false;
+        const sampleVals = Math.min(frame.length, 10);
+        for (let i = 0; i < sampleVals; i++) {
+            if (typeof frame[i] !== "number" || !Number.isFinite(frame[i])) return false;
+        }
+    }
+    return true;
+}
+
 // Json files can be a lot of things, read them.
 function parseJson(json: string, system: System) {
     const data = JSON.parse(json);
@@ -362,7 +379,7 @@ function parseJson(json: string, system: System) {
         // -----------------------------
         // Case B: Stress (MPa) frames -> per-particle arrays
         // -----------------------------
-        if (key === "Stress (MPa)") {
+        if (isFrameScalarOverlay(val, system.systemLength())) {
             // Expect number[][] : frames[frameIdx][particleIdx]
             if (!Array.isArray(val) || val.length === 0 || !Array.isArray(val[0])) {
                 notify(`"${key}" must be a list of lists: frames[frameIdx][particleIdx].`, "error");

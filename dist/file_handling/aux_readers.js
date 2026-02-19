@@ -260,6 +260,26 @@ function countLists(obj) {
     recurse(obj);
     return count;
   }
+
+  function isFrameScalarOverlay(val, N) {
+    if (!Array.isArray(val) || val.length === 0) return false;
+    if (!Array.isArray(val[0]) || val[0].length !== N) return false;
+
+    // sample a few frames and a few values to confirm it's numeric scalars
+    var sampleFrames = Math.min(val.length, 3);
+    for (var fi = 0; fi < sampleFrames; fi++) {
+        var frame = val[fi];
+        if (!Array.isArray(frame) || frame.length !== N) return false;
+
+        var sampleVals = Math.min(frame.length, 10);
+        for (var i = 0; i < sampleVals; i++) {
+            var v = frame[i];
+            if (typeof v !== "number" || !isFinite(v)) return false;
+        }
+    }
+    return true;
+}
+
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
     const data = JSON.parse(json);
@@ -290,7 +310,7 @@ function parseJson(json, system) {
                 }
             }
         }
-        else if (key === "Stress (MPa)") {
+        else if (isFrameScalarOverlay(data[key], system.systemLength())) {
             const frames = data[key];
         
             // Expect: frames = [ [per-particle values], [per-particle values], ... ]
