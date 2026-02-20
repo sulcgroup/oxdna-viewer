@@ -732,12 +732,13 @@ function readPdbFile(file) {
                     gdata = undefined;
                     gd = undefined;
                     // redraw box so nucleotides will be drawn with backbone connectors
-                    if (box.x < dims[0])
-                        box.x = dims[0] * 1.25;
-                    if (box.y < dims[1])
-                        box.y = dims[1] * 1.25;
-                    if (box.z < dims[2])
-                        box.z = dims[2] * 1.25;
+                    let maxDim = Math.max(...dims);
+                    if (box.x < maxDim)
+                        box.x = maxDim * 1.5;
+                    if (box.y < maxDim)
+                        box.y = maxDim * 1.5;
+                    if (box.z < maxDim)
+                        box.z = maxDim * 1.5;
                     redrawBox();
                     dims = undefined;
                     for (let i = 0; i < pdbtemp[0].length; i++) {
