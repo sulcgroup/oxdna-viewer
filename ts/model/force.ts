@@ -1172,9 +1172,10 @@ class RepulsiveKeplerPoinsot extends Force {
   update(): void {
     // oxDNA applies growth = 1 + rate * step (see RepulsiveKeplerPoinsot::value()).
     // We mirror the same behavior using the viewer's best-guess current frame/step.
-    const step = (window as any)?.currentFrameIndex ?? (window as any)?.currentSimTime ?? 0;
+    const step = (window as any)?.currentSimTime ?? (window as any)?.currentFrameIndex ?? 0;
     const growth = 1.0 + (Number(this.rate) || 0) * Number(step || 0);
     this.currentScale = (Number.isFinite(growth) && growth > 0) ? growth : 0.0;
+    console.log("Kepler Step:", step);
   }
 
   toString(idMap?: Map<BasicElement, number>): string {

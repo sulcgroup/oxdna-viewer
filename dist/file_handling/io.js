@@ -113,8 +113,8 @@ class TrajectoryReader {
             //try display the retrieved conf
             this.parseConf(lines);
             this.trajectorySlider.setAttribute("value", this.idx.toString());
-            // Apply any frame-synced overlays (e.g., Stress (MPa))
-            this.system._applyStressFrame && this.system._applyStressFrame(this.idx);
+            // // Apply any frame-synced overlays (e.g., Stress (MPa))
+            // this.system._applyStressFrame && this.system._applyStressFrame(this.idx);
             if (myChart) {
                 // hacky way to propagate the line annotation
                 myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];
@@ -245,6 +245,41 @@ class TrajectoryReader {
         // Parse time and update time displays
         const time = parseInt(lines[0].split(/\s+/)[2]);
         this.time = time;
+
+        // -------------------------------
+        // Publish current frame/time globally (forces + overlays rely on this)
+        // -------------------------------
+        this.currentFrame = this.idx;   // used by aux overlays
+        this.frame = this.idx;          // compatibility
+        this.current_frame = this.idx;  // compatibility
+        this.confIndex = this.idx;      // some codepaths look for confIndex
+
+        // global "step" signals (used by time-dependent forces)
+        window.currentFrameIndex = this.idx;
+        window.currentSimTime = time;
+
+        // If you have frame-synced overlays (e.g. Stress (MPa)), update them here too
+        if (this.system && this.system._applyStressFrame) {
+        this.system._applyStressFrame(this.idx);
+        }
+
+        // -------------------------------
+        // Publish current frame/time globally (forces + overlays rely on this)
+        // -------------------------------
+        this.currentFrame = this.idx;   // used by aux overlays
+        this.frame = this.idx;          // compatibility
+        this.current_frame = this.idx;  // compatibility
+        this.confIndex = this.idx;      // some codepaths look for confIndex
+
+        // global "step" signals (used by time-dependent forces)
+        window.currentFrameIndex = this.idx;
+        window.currentSimTime = time;
+
+        // If you have frame-synced overlays (e.g. Stress (MPa)), update them here too
+        if (this.system && this.system._applyStressFrame) {
+        this.system._applyStressFrame(this.idx);
+        }
+
         confNum += 1;
         console.log(confNum, "t =", time);
         let timedisp = document.getElementById("trajTimestep");
@@ -285,6 +320,9 @@ class TrajectoryReader {
         // Force files tend to read faster than configuration files, so there's a race condition.
         if (forceHandler.forces.length > 0) {
             forceHandler.redrawTraps();
+            if (typeof forceHandler.redrawSpheres === "function") forceHandler.redrawSpheres();
+            if (typeof forceHandler.redrawBoxes === "function") forceHandler.redrawBoxes();
+            if (typeof forceHandler.redrawPlanes === "function") forceHandler.redrawPlanes();
         }
         // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));
