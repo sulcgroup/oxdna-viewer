@@ -13,6 +13,133 @@ function readJson(jsonFile:File, system:System){ // this still doesn't work for 
     return parseFileWith(jsonFile, parseJson, [system])
 }
 
+function readStressBinary(binFile: File, system: System) {
+    return initStressBinary(binFile, system);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////        Streaming binary per-frame scalar overlay (.bin)      //////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Binary format (little-endian):
+//   int32 nFrames
+//   int32 nParticles
+//   float32 globalMin
+//   float32 globalMax
+//   float32 data[nFrames * nParticles]  (frame-major)
+function initStressBinary(binFile: File, system: System): Promise<{ nFrames: number, nParticles: number, gmin: number, gmax: number }> {
+    const KEY = "overlay"; // generic key (do not depend on file naming)
+    const label = (binFile && (binFile as any).name) ? (binFile as any).name.replace(/\.[^/.]+$/, "") : "Overlay";
+    const headerBytes = 16;
+
+    function readSlice(start: number, end: number): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onerror = () => reject(r.error);
+            r.onload = () => resolve(r.result as ArrayBuffer);
+            r.readAsArrayBuffer(binFile.slice(start, end));
+        });
+    }
+
+    return readSlice(0, headerBytes).then((buf: ArrayBuffer) => {
+        const dv = new DataView(buf);
+        const nFrames = dv.getInt32(0, true);
+        const nParticles = dv.getInt32(4, true);
+        const gmin = dv.getFloat32(8, true);
+        const gmax = dv.getFloat32(12, true);
+
+        if (nParticles !== system.systemLength()) {
+            notify(`Binary overlay mismatch: file=${nParticles}, system=${system.systemLength()}`, "error");
+            throw new Error("Overlay particle mismatch");
+        }
+
+        const [minR, maxR] = roundRange([gmin, gmax]);
+
+        if (lut === undefined) {
+            lut = new THREE.Lut(defaultColormap, 500);
+        }
+        if ((lut as any).minV !== minR || (lut as any).maxV !== maxR) {
+            lut.setMin(minR);
+            lut.setMax(maxR);
+            api.removeColorbar();
+        }
+
+        lut.setLegendOn({
+            layout: "horizontal",
+            position: { x: 0, y: 0, z: 0 },
+            dimensions: { width: 2, height: 12 }
+        });
+
+        lut.setLegendLabels({ title: label, ticks: 5 });
+
+        const frameBytes = nParticles * 4;
+        const dataStart = headerBytes;
+
+        const cache = new Map<number, Float32Array>();
+        const MAX_CACHE = 4;
+
+        function cachePut(k: number, v: Float32Array) {
+            cache.set(k, v);
+            if (cache.size > MAX_CACHE) {
+                const firstKey = cache.keys().next().value;
+                cache.delete(firstKey);
+            }
+        }
+
+        function applyFrameArray(frameArr: Float32Array) {
+            // system.setColorFile expects an object with key -> per-particle array
+            (system as any).setColorFile({ [KEY]: frameArr });
+
+            systems.forEach((s: any) => {
+                s.doVisuals(() => {
+                    const end = s.systemLength();
+                    for (let j = 0; j < end; j++) {
+                        s.lutCols[j] = lut.getColor(Number(s.colormapFile[KEY][j]));
+                    }
+                });
+            });
+
+            view.coloringMode.set("Overlay");
+            render();
+        }
+
+        function applyOverlayFrame(frameIdx: number) {
+            const idx = Math.max(0, Math.min(frameIdx, nFrames - 1));
+
+            if (cache.has(idx)) {
+                applyFrameArray(cache.get(idx)!);
+                return;
+            }
+
+            const start = dataStart + idx * frameBytes;
+            const end = start + frameBytes;
+
+            readSlice(start, end).then((frameBuf: ArrayBuffer) => {
+                const arr = new Float32Array(frameBuf);
+                cachePut(idx, arr);
+                applyFrameArray(arr);
+            }).catch((err) => {
+                console.error("Failed reading overlay frame", idx, err);
+                notify(`Failed reading overlay frame ${idx}`, "error");
+            });
+        }
+
+        // Hook for frame updates (keeps existing name used elsewhere)
+        (system as any)._applyStressFrame = applyOverlayFrame;
+
+        let currentFrame = 0;
+        if ((system as any).reader) {
+            const r = (system as any).reader;
+            if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
+            else if (typeof r.frame === "number") currentFrame = r.frame;
+            else if (typeof r.current_frame === "number") currentFrame = r.current_frame;
+        }
+        applyOverlayFrame(currentFrame);
+
+        return { nFrames, nParticles, gmin, gmax };
+    });
+}
+
+
 function readParFile(parFile:File, system:System) {
     return parseFileWith(parFile, parsePar, [system])
 }
@@ -327,9 +454,107 @@ function isFrameScalarOverlay(val: any, N: number): val is number[][] {
     return true;
 }
 
+function initStressBinary(file: File, system: System) {
+    // Binary format:
+    //   int32 nFrames
+    //   int32 nParticles
+    //   float32 globalMin
+    //   float32 globalMax
+    //   then nFrames blocks of nParticles float32 values (little-endian)
+    const KEY = "overlay"; // generic key; UI label comes from filename
+    const label = (file && file.name) ? file.name.replace(/\.[^/.]+$/, "") : "Overlay";
+
+    const headerBytes = 16; // 4 + 4 + 4 + 4
+    const frameBytesFor = (nParticles: number) => nParticles * 4;
+
+    function readSlice(start: number, end: number): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onerror = () => reject(r.error);
+            r.onload = () => resolve(r.result as ArrayBuffer);
+            r.readAsArrayBuffer(file.slice(start, end));
+        });
+    }
+
+    return readSlice(0, headerBytes).then(buf => {
+        const dv = new DataView(buf);
+        const nFrames = dv.getInt32(0, true);
+        const nParticles = dv.getInt32(4, true);
+        const gmin = dv.getFloat32(8, true);
+        const gmax = dv.getFloat32(12, true);
+
+        if (nParticles !== system.systemLength()) {
+            notify(`Binary overlay mismatch: file=${nParticles}, system=${system.systemLength()}`, "error");
+            throw new Error("Overlay particle mismatch");
+        }
+
+        const [minR, maxR] = roundRange([gmin, gmax]) as [number, number];
+
+        if (lut === undefined) lut = new THREE.Lut(defaultColormap, 500);
+        lut.setMin(minR);
+        lut.setMax(maxR);
+        api.removeColorbar();
+
+        lut.setLegendOn({
+            layout: "horizontal",
+            position: { x: 0, y: 0, z: 0 },
+            dimensions: { width: 2, height: 12 }
+        });
+        lut.setLegendLabels({ title: label, ticks: 5 });
+
+        const frameBytes = frameBytesFor(nParticles);
+        const dataStart = headerBytes;
+
+        function applyFrameArray(frameArr: Float32Array) {
+            // Important: setColorFile expects normal arrays in some codepaths,
+            // but it works fine with typed arrays as indexable objects.
+            system.setColorFile({ [KEY]: frameArr as any });
+
+            systems.forEach(s => {
+                s.doVisuals(() => {
+                    const N = s.systemLength();
+                    for (let j = 0; j < N; j++) {
+                        s.lutCols[j] = lut.getColor(Number((s.colormapFile as any)[KEY][j]));
+                    }
+                });
+            });
+
+            view.coloringMode.set("Overlay");
+            render();
+        }
+
+        function applyOverlayFrame(frameIdx: number) {
+            const idx = Math.max(0, Math.min(frameIdx, nFrames - 1));
+            const start = dataStart + idx * frameBytes;
+            const end = start + frameBytes;
+
+            readSlice(start, end).then(frameBuf => {
+                applyFrameArray(new Float32Array(frameBuf));
+            }).catch(err => {
+                console.error("Failed reading overlay frame", idx, err);
+                notify(`Failed reading overlay frame ${idx}`, "error");
+            });
+        }
+
+        (system as any)._applyStressFrame = applyOverlayFrame;
+        const r: any = system.reader as any;
+        const cur = (r && typeof r.currentFrame === "number") ? r.currentFrame : 0;
+        applyOverlayFrame(cur);
+
+        return { nFrames, nParticles };
+    });
+}
+
 // Json files can be a lot of things, read them.
 function parseJson(json: string, system: System) {
-    const data = JSON.parse(json);
+    let data: any;
+    try {
+        data = JSON.parse(json);
+    } catch (e) {
+        console.error("Failed to parse JSON overlay:", e);
+        notify("Failed to parse JSON. If this file is very large, convert it to a .bin overlay (streamed) instead of JSON.", "error");
+        return;
+    }
 
     for (const key in data) {
         const val = data[key];

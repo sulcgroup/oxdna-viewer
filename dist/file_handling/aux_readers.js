@@ -9,6 +9,135 @@ function readTraj(trajFile, system) {
 function readJson(jsonFile, system) {
     return parseFileWith(jsonFile, parseJson, [system]);
 }
+function readStressBinary(binFile, system) {
+    // Does NOT load the whole file; initStressBinary uses FileReader.readAsArrayBuffer(file.slice(...))
+    return initStressBinary(binFile, system);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////        Streaming binary per-frame scalar overlay (.bin)      //////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Binary format (little-endian):
+//   int32 nFrames
+//   int32 nParticles
+//   float32 globalMin
+//   float32 globalMax
+//   float32 data[nFrames * nParticles]  (frame-major)
+//
+// This avoids loading multi-GB JSON into memory and allows random access per frame using Blob.slice().
+function initStressBinary(binFile, system) {
+    const KEY = "overlay"; // generic key (do not depend on file naming)
+    const label = (binFile && binFile.name) ? binFile.name.replace(/\.[^/.]+$/, "") : "Overlay";
+    const headerBytes = 16;
+
+    function readSlice(start, end) {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onerror = () => reject(r.error);
+            r.onload = () => resolve(r.result);
+            r.readAsArrayBuffer(binFile.slice(start, end));
+        });
+    }
+
+    return readSlice(0, headerBytes).then((buf) => {
+        const dv = new DataView(buf);
+        const nFrames = dv.getInt32(0, true);
+        const nParticles = dv.getInt32(4, true);
+        const gmin = dv.getFloat32(8, true);
+        const gmax = dv.getFloat32(12, true);
+
+        if (nParticles !== system.systemLength()) {
+            notify(`Binary overlay mismatch: file=${nParticles}, system=${system.systemLength()}`, "error");
+            throw new Error("Overlay particle mismatch");
+        }
+
+        // Initialize LUT once from global min/max stored in header
+        const [minR, maxR] = roundRange([gmin, gmax]);
+
+        if (lut === undefined) {
+            lut = new THREE.Lut(defaultColormap, 500);
+        }
+        if (lut.minV !== minR || lut.maxV !== maxR) {
+            lut.setMin(minR);
+            lut.setMax(maxR);
+            api.removeColorbar();
+        }
+
+        lut.setLegendOn({
+            layout: "horizontal",
+            position: { x: 0, y: 0, z: 0 },
+            dimensions: { width: 2, height: 12 }
+        });
+        lut.setLegendLabels({ title: label, ticks: 5 });
+
+        const frameBytes = nParticles * 4;
+        const dataStart = headerBytes;
+
+        // Small cache of most recent frames (helps scrubbing)
+        const cache = new Map(); // frameIdx -> Float32Array
+        const MAX_CACHE = 4;
+
+        function cachePut(k, v) {
+            cache.set(k, v);
+            if (cache.size > MAX_CACHE) {
+                const firstKey = cache.keys().next().value;
+                cache.delete(firstKey);
+            }
+        }
+
+        function applyFrameArray(frameArr) {
+            system.setColorFile({ [KEY]: frameArr });
+
+            systems.forEach((s) => {
+                s.doVisuals(() => {
+                    const end = s.systemLength();
+                    for (let j = 0; j < end; j++) {
+                        s.lutCols[j] = lut.getColor(Number(s.colormapFile[KEY][j]));
+                    }
+                });
+            });
+
+            view.coloringMode.set("Overlay");
+            render();
+        }
+
+        function applyOverlayFrame(frameIdx) {
+            const idx = Math.max(0, Math.min(frameIdx, nFrames - 1));
+
+            // Cache hit
+            if (cache.has(idx)) {
+                applyFrameArray(cache.get(idx));
+                return;
+            }
+
+            const start = dataStart + idx * frameBytes;
+            const end = start + frameBytes;
+
+            readSlice(start, end).then((frameBuf) => {
+                const arr = new Float32Array(frameBuf);
+                cachePut(idx, arr);
+                applyFrameArray(arr);
+            }).catch((err) => {
+                console.error("Failed reading overlay frame", idx, err);
+                notify(`Failed reading overlay frame ${idx}`, "error");
+            });
+        }
+
+        // Expose hook so frame slider/animation can call it (keep existing name used elsewhere)
+        system._applyStressFrame = applyOverlayFrame;
+
+        // Apply immediately using current frame if available
+        let currentFrame = 0;
+        if (system.reader) {
+            if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+            else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
+            else if (typeof system.reader.current_frame === "number") currentFrame = system.reader.current_frame;
+        }
+        applyOverlayFrame(currentFrame);
+
+        return { nFrames, nParticles, gmin, gmax };
+    });
+}
 function readParFile(parFile, system) {
     return parseFileWith(parFile, parsePar, [system]);
 }
@@ -282,7 +411,14 @@ function countLists(obj) {
 
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
-    const data = JSON.parse(json);
+    let data;
+    try {
+        data = JSON.parse(json);
+    } catch (e) {
+        console.error("Failed to parse JSON overlay:", e);
+        notify("Failed to parse JSON. If this file is very large, convert it to a .bin overlay (streamed) instead of JSON.", "error");
+        return;
+    }
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map

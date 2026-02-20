@@ -76,6 +76,7 @@ async function handleFiles(files: File[]) {
         // These file types modify an existing system
         else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') { auxFiles.push(new File2reader(files[i], 'trajectory', readTraj)); }
         else if (ext === "json") { auxFiles.push(new File2reader(files[i], 'json', readJson)); }
+        else if (ext === "bin") { auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary)); }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) { auxFiles.push(new File2reader(files[i], 'force', readForce)); }
         else if (ext === "txt" && (fileName.includes("_m"))) { auxFiles.push(new File2reader(files[i], 'mass', readMassFile)); }
         else if (ext === "txt" && (fileName.includes("select"))) { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }
