@@ -314,6 +314,3 @@ async function addSystemToScene(system: System) {
         canvas.focus();
     }
 }
-
-
-
