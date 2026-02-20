@@ -93,3 +93,6 @@ typings/
 
 # Electron-Forge
 out/
+
+# Mac Double
+/._*

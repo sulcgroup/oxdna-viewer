@@ -87,6 +87,10 @@ async function handleFiles(files) {
         else if (ext === "json") {
             auxFiles.push(new File2reader(files[i], 'json', readJson));
         }
+        else if (ext === "bin") {
+            // Large per-frame scalar overlays should use the binary format (avoids loading multi-GB JSON into memory)
+            auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
+        }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force"))) {
             auxFiles.push(new File2reader(files[i], 'force', readForce));
         }
