@@ -63,7 +63,8 @@ async function handleFiles(files: File[]) {
         // These file types lead to creation of a new system(s)
         if      (ext === 'top') { systemFiles.push(new File2reader(files[i], 'topology', await identifyTopologyParser(files[i]))); } 
         else if (ext === "oxview") { systemFiles.push(new File2reader(files[i], 'oxview', readOxViewFile)); }
-        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); } 
+        else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") { systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile)); }
+        else if (ext === "cif" || ext === "mmcif") { systemFiles.push(new File2reader(files[i], 'mmcif', readMmcifFile)); }
         else if (ext === "unf") { systemFiles.push(new File2reader(files[i], 'unf', readUNFFile)); } 
         else if (ext === "xyz") { systemFiles.push(new File2reader(files[i], 'xyz', readXYZFile)); } 
         else if (ext === "mgl") { systemFiles.push(new File2reader(files[i], 'mgl', readMGL)); }  

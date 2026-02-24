@@ -11,6 +11,7 @@ A browser-based visualization tool that uses the [Three.js](https://threejs.org/
  ## Table of Contents
   * [Examples](#examples)
   * [Editing Features](#editing-features)
+  * [Supported File Formats](#supported-file-formats)
   * [Video Options](#video-options)
     + [Video types](#video-types)
     + [Output Formats](#output-formats)
@@ -42,6 +43,58 @@ Please provide feedback if you encounter any bugs or have suggestions for how to
 Edited strands can also be exported for ordering purposes in CSV format by clicking the "Download Sequences" button.
 
 See a tutorial [here](https://www.youtube.com/watch?v=arhmT0LStUQ).
+
+---
+
+## Supported File Formats
+
+Files can be loaded by drag-and-drop, the "Open" button, or (for PDB/mmCIF structures) directly from the RCSB by ID using the ribbon button. Multiple files can be dropped at once; oxView matches them by extension.
+
+### Structure files (create a new system)
+
+| Extension(s) | Format | Notes |
+|---|---|---|
+| `.top` + `.dat` / `.conf` / `.oxdna` | **oxDNA** topology + configuration | Core format. The `.top` file defines strand topology; the configuration file provides coordinates. Multiple topology variants are auto-detected (DNA/RNA/protein vs. patchy particles). |
+| `.oxview` | **oxView JSON** | Native format that preserves cluster membership and base-pairing data. Can encode multiple systems in a single file. Preferred format for saving intermediate design work. |
+| `.cif` / `.mmcif` | **mmCIF** | Modern RCSB structure format. Supports DNA, RNA, and protein chains. Parseable directly (drag-and-drop) or fetched from the RCSB by 4-character PDB ID via the "Import mmCIF" ribbon button. |
+| `.pdb` / `.pdb1` / `.pdb2` | **PDB** (legacy) | Legacy Protein Data Bank format. Supports DNA, RNA, and protein. Still accepted but mmCIF is preferred for new structures. |
+| `.unf` | **UNF** | Unified Nanotechnology Format. May contain multiple systems. |
+| `.xyz` | **XYZ** | Generic XYZ coordinate file. |
+| `.mgl` | **MGL** | Patchy-sphere MGL format. |
+| Patchy helper files | **Patchy particles** | Files whose name contains `particles`, `loro`, or `matrix` are treated as patchy particle definitions; files containing `patches` define patch geometry; `.patchspec` files specify LORO patch types. Drop all relevant files together with the topology. |
+
+### Formats converted via TacoxDNA
+
+These formats are imported through the **"Import"** dialog (not by direct drag-and-drop). oxView runs the [TacoxDNA](http://tacoxdna.sissa.it/) converter internally and then loads the result.
+
+| Format | File | Notes |
+|---|---|---|
+| **caDNAno** | `.json` | Square or honeycomb lattice DNA origami. Scaffold sequence and lattice type are selectable in the dialog. |
+| **RPOLY** | `.rpoly` | Polyhedral wireframe DNA designs. |
+| **Tiamat** | `.dnajson` | Tiamat DNA nanostructures (export from Tiamat as `.dnajson` first; raw `.dna` files are not supported). |
+
+### Auxiliary files (modify an existing system)
+
+These files are read alongside — or dropped on top of — an already-loaded system.
+
+| Extension / naming | Format | Effect |
+|---|---|---|
+| `.dat` / `.conf` / `.oxdna` | **Trajectory / configuration** | Loads additional frames; enables trajectory playback controls. |
+| `.json` | **JSON overlay** | Per-particle scalar or vector data mapped onto colors using the colorbar. |
+| `.txt` (name contains `trap` or `force`) | **oxDNA external force file** | Draws force arrows / springs on the relevant particles. |
+| `.txt` (name contains `_m`) | **Mass file** | Per-particle masses (used by the ANM solver). |
+| `.txt` (name contains `select`) or `.idx` | **Selection file** | Selects the listed particle indices in the viewer. |
+| `.cam` | **Camera file** | Restores a previously exported camera position and orientation. |
+| `.csv` | **Sequence CSV** | caDNAno sequence export or a plain one-sequence-per-line list; highlights matching sequences in the loaded system. |
+| `.par` | **ANM parameter file** | Anisotropic network model spring parameters. |
+| `.hb` | **Hydrogen bond file** | Explicit hydrogen bond connectivity overlay. |
+| `.db` | **Dot-bracket** | RNA secondary structure annotation in dot-bracket notation. |
+
+### Script files
+
+| Extension | Effect |
+|---|---|
+| `.js` | Executed as a JavaScript script in the viewer's global scope. Useful for programmatic batch edits via the `api` and `edit` APIs. |
 
 ---
 

@@ -47,9 +47,14 @@ function readFilesFromURLParams() {
     }
 }
 
-// Get a file from the PDB
+// Get a file from the PDB (legacy PDB format)
 function readPDBFromId(pdbID: string) {
     readFilesFromURLPath([`https://files.rcsb.org/download/${pdbID}.pdb`]);
+}
+
+// Get a mmCIF file from the RCSB
+function readMMCIFFromId(pdbID: string) {
+    readFilesFromURLPath([`https://files.rcsb.org/download/${pdbID}.cif`]);
 }
 
 // Get files from messages
