@@ -1,4 +1,27 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// File size guard for non-chunked readers
+// - Uses Blob.size: https://developer.mozilla.org/en-US/docs/Web/API/Blob/size
+// - If a file is > 512 MB and we don't have a chunked reader for it, refuse to parse to avoid
+//   browser memory/string limits and confusing JSON parse errors.
+const MAX_UNCHUNKED_FILE_BYTES = 512 * 1024 * 1024;
+
+function enforceMaxUnchunkedFileSize(file, contextLabel) {
+    try {
+        if (file && typeof file.size === "number" && file.size > MAX_UNCHUNKED_FILE_BYTES) {
+            const mb = (file.size / (1024 * 1024)).toFixed(1);
+            notify(`${contextLabel} is too large (${mb} MB). Consider converting to a streamed .bin overlay instead of JSON.`, "error");
+            return false;
+        }
+    } catch (e) {
+        // If something is weird about the file object, don't block parsing here.
+    }
+    console.log("File Size:", file.size);
+    return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////               Read a file, modify the scene                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7,6 +30,10 @@ function readTraj(trajFile, system) {
     return system.reader.lookupReader.promise;
 }
 function readJson(jsonFile, system) {
+    if (!enforceMaxUnchunkedFileSize(jsonFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+
     return parseFileWith(jsonFile, parseJson, [system]);
 }
 function readStressBinary(binFile, system) {
@@ -139,6 +166,10 @@ function initStressBinary(binFile, system) {
     });
 }
 function readParFile(parFile, system) {
+    if (!enforceMaxUnchunkedFileSize(parFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+
     return parseFileWith(parFile, parsePar, [system]);
 }
 // Nicer lower and upper bound 
@@ -189,6 +220,8 @@ const exportCam = () => {
 };
 // Read a camera export file
 const readCamFile = (file) => {
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     file.text().then(txt => {
         const cam = JSON.parse(txt);
         camera.position.set(cam.position.x, cam.position.y, cam.position.z);
@@ -199,6 +232,8 @@ const readCamFile = (file) => {
 };
 // Highlight sequences found in cadnano or sequence csv
 const handleCSV = (file) => {
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     // highlight all the sequences complying with the cadnano file
     // or a line by line sequence file 
     const search_func = (system, seq) => {
@@ -233,6 +268,8 @@ const handleCSV = (file) => {
     });
 };
 function readForce(forceFile) {
+    if (!enforceMaxUnchunkedFileSize(forceFile, "Force file")) return;
+
     forceFile.text().then(text => {
         //{ can be replaced with \n to make sure no parameter is lost
         while (text.indexOf("{") >= 0)
@@ -559,6 +596,8 @@ function parseJson(json, system) {
     }
 }
 function readSelectFile(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "Selection file")) return;
+
     if (systems.length > 1) {
         notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning');
     }
@@ -611,6 +650,8 @@ function parsePar(lines, system) {
 // reads hydrogen bonding file generated with Chimera
 // hbondinfo is then stored in the pdbfiledatasets
 function readHBondFile(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "H-bond file")) return;
+
     let reader = new FileReader();
     let pdbInfoIndx = pdbFileInfo.length - 1;
     if (pdbInfoIndx == -1) {
@@ -750,6 +791,8 @@ function parseDotBracket(input) {
     return output;
 }
 function readDotBracket(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "Dot-bracket file")) return;
+
     const updateForceHandler = (forces) => {
         forceHandler.set(forces);
         render();

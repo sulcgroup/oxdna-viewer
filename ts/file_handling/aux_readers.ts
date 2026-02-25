@@ -1,5 +1,27 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// File size guard for non-chunked readers
+// - Uses Blob.size: https://developer.mozilla.org/en-US/docs/Web/API/Blob/size
+// - If a file is > 512 MB and we don't have a chunked reader for it, refuse to parse to avoid
+//   browser memory/string limits and confusing JSON parse errors.
+const MAX_UNCHUNKED_FILE_BYTES = 512 * 1024 * 1024;
+
+function enforceMaxUnchunkedFileSize(file: Blob, contextLabel: string): boolean {
+    try {
+        if (file && typeof (file as any).size === "number" && (file as any).size > MAX_UNCHUNKED_FILE_BYTES) {
+            const mb = (((file as any).size as number) / (1024 * 1024)).toFixed(1);
+            notify(`${contextLabel} is too large (${mb} MB). Consider converting to a streamed .bin overlay instead of JSON.`, "error");
+            return false;
+        }
+    } catch (e) {
+        // If something is weird about the file object, don't block parsing here.
+    }
+    return true;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////               Read a file, modify the scene                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9,7 +31,11 @@ function readTraj(trajFile:File, system:System):Promise<string> {
     return system.reader.lookupReader.promise
 }
 
-function readJson(jsonFile:File, system:System){ // this still doesn't work for some reason.  It might be a bigger problem tho.
+function readJson(jsonFile:File, system:System){
+    if (!enforceMaxUnchunkedFileSize(jsonFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+ // this still doesn't work for some reason.  It might be a bigger problem tho.
     return parseFileWith(jsonFile, parseJson, [system])
 }
 
@@ -141,6 +167,10 @@ function initStressBinary(binFile: File, system: System): Promise<{ nFrames: num
 
 
 function readParFile(parFile:File, system:System) {
+    if (!enforceMaxUnchunkedFileSize(parFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+
     return parseFileWith(parFile, parsePar, [system])
 }
 
@@ -201,6 +231,8 @@ const exportCam = ()=>{
 }
 // Read a camera export file
 const readCamFile = (file:File)=>{
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     file.text().then(txt=>{
         const cam = JSON.parse(txt);
         camera.position.set(cam.position.x,cam.position.y,cam.position.z);
@@ -212,6 +244,8 @@ const readCamFile = (file:File)=>{
 
 // Highlight sequences found in cadnano or sequence csv
 const handleCSV = (file:File)=>{
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     // highlight all the sequences complying with the cadnano file
     // or a line by line sequence file
     const search_func = (system,seq) => {
@@ -251,6 +285,8 @@ const handleCSV = (file:File)=>{
 }
 
 function readForce(forceFile) {
+    if (!enforceMaxUnchunkedFileSize(forceFile, "Force file")) return;
+
     forceFile.text().then(text=>{
         //{ can be replaced with \n to make sure no parameter is lost
         while(text.indexOf("{")>=0)
@@ -698,7 +734,9 @@ function parseJson(json: string, system: System) {
 }
 
 
-function readSelectFile(file:File) { // TODO: needs further checking and integration with the promise system
+function readSelectFile(file:File) {
+    if (!enforceMaxUnchunkedFileSize(file, "Selection file")) return;
+ // TODO: needs further checking and integration with the promise system
     if (systems.length > 1) {
         notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning')
     }
@@ -767,6 +805,8 @@ function parsePar(lines, system) {
 // reads hydrogen bonding file generated with Chimera
 // hbondinfo is then stored in the pdbfiledatasets
 function readHBondFile(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "H-bond file")) return;
+
     let reader = new FileReader();
     let pdbInfoIndx = pdbFileInfo.length - 1;
 
@@ -935,6 +975,8 @@ function parseDotBracket(input: string): number[] {
 }
 
 function readDotBracket(file:File){
+    if (!enforceMaxUnchunkedFileSize(file, "Dot-bracket file")) return;
+
     const updateForceHandler = (forces:Force[])=>{
         forceHandler.set(forces)
         render()
