@@ -117,6 +117,15 @@ class TrajectoryReader {
     firstConf = true;
     lookupReader : LookupReader;
     idx = 0;
+
+    // ------------------------------------------------------------------
+    // Frame index compatibility accessors
+    // ------------------------------------------------------------------
+    // Canonical state is `idx`. These getters exist so older codepaths and
+    // aux overlay loaders can read the current frame without duplicating state.
+    get currentFrame(): number { return this.idx; }   // legacy alias
+    get frame(): number { return this.idx; }          // legacy alias
+
     offset = 0;
     time:number;
     firstRead:boolean=true;
@@ -295,10 +304,7 @@ class TrajectoryReader {
         // -------------------------------
         // Publish current frame/time globally (forces + overlays rely on this)
         // -------------------------------
-        (this as any).currentFrame = this.idx;   // used by aux overlays
-        (this as any).frame = this.idx;          // compatibility
-        (this as any).current_frame = this.idx;  // compatibility
-        (this as any).confIndex = this.idx;      // some codepaths look for confIndex
+        // current frame is exposed via TrajectoryReader.idx (and legacy getter aliases)
 
         // global "step" signals (used by time-dependent forces)
         (window as any).currentFrameIndex = this.idx;

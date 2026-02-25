@@ -158,7 +158,7 @@ function initStressBinary(binFile, system) {
         if (system.reader) {
             if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
             else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
-            else if (typeof system.reader.current_frame === "number") currentFrame = system.reader.current_frame;
+            else if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
         }
         applyOverlayFrame(currentFrame);
 
@@ -572,7 +572,7 @@ function parseJson(json, system) {
             if (system.reader) {
                 if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
                 else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
-                else if (typeof system.reader.current_frame === "number") currentFrame = system.reader.current_frame;
+                else if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
             }
 
             applyStressFrame(currentFrame);

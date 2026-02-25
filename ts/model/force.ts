@@ -350,8 +350,7 @@ private _currentSimStep(): number {
             : undefined;
         const r = sys?.reader;
         step =
-            (Number.isFinite(r?.confIndex) ? r.confIndex :
-            Number.isFinite(r?.frameIndex) ? r.frameIndex :
+            (Number.isFinite(r?.frameIndex) ? r.frameIndex :
             Number.isFinite(r?.current)    ? r.current    :
             Number.isFinite(r?.frame)      ? r.frame      : 0);
     } catch (_) {}
@@ -1588,8 +1587,7 @@ class AFMMovingSphere extends Force {
                 : undefined;
             const r = (sys as any)?.reader;
             step =
-                (Number.isFinite(r?.confIndex) ? r.confIndex :
-                Number.isFinite(r?.frameIndex) ? r.frameIndex :
+                (Number.isFinite(r?.frameIndex) ? r.frameIndex :
                 Number.isFinite(r?.current)    ? r.current    :
                 Number.isFinite(r?.frame)      ? r.frame      : 0);
         } catch (_) {}

@@ -157,7 +157,7 @@ function initStressBinary(binFile: File, system: System): Promise<{ nFrames: num
             const r = (system as any).reader;
             if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
             else if (typeof r.frame === "number") currentFrame = r.frame;
-            else if (typeof r.current_frame === "number") currentFrame = r.current_frame;
+            else if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
         }
         applyOverlayFrame(currentFrame);
 
@@ -702,7 +702,7 @@ function parseJson(json: string, system: System) {
             if (r) {
                 if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
                 else if (typeof r.frame === "number") currentFrame = r.frame;
-                else if (typeof r.current_frame === "number") currentFrame = r.current_frame;
+                else if (typeof r.currentFrame === "number") currentFrame = r.currentFrame;
             }
 
             applyFrameOverlay(system, key, currentFrame);

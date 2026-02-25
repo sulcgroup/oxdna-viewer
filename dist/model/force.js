@@ -242,8 +242,7 @@ _currentSimStep() {
     const sys = (typeof systems !== 'undefined' && systems.length > 0) ? systems[systems.length - 1] : undefined;
     const r = sys?.reader;
     step =
-      (Number.isFinite(r?.confIndex) ? r.confIndex :
-       Number.isFinite(r?.frameIndex) ? r.frameIndex :
+      (Number.isFinite(r?.frameIndex) ? r.frameIndex :
        Number.isFinite(r?.current)    ? r.current    :
        Number.isFinite(r?.frame)      ? r.frame      : 0);
   } catch (_) {}
@@ -738,8 +737,7 @@ update() {
       const sys = (typeof systems !== 'undefined' && systems.length > 0) ? systems[systems.length - 1] : undefined;
       const r = sys?.reader;
       step =
-        (Number.isFinite(r?.confIndex) ? r.confIndex :
-         Number.isFinite(r?.frameIndex) ? r.frameIndex :
+        (Number.isFinite(r?.frameIndex) ? r.frameIndex :
          Number.isFinite(r?.current)    ? r.current    :
          Number.isFinite(r?.frame)      ? r.frame      : 0);
     } catch (_) {}
@@ -894,8 +892,7 @@ class RepulsiveSphere extends Force {
         const sys = (typeof systems !== 'undefined' && systems.length > 0) ? systems[systems.length - 1] : undefined;
         const r = sys?.reader;
         step =
-          (Number.isFinite(r?.confIndex) ? r.confIndex :
-           Number.isFinite(r?.frameIndex) ? r.frameIndex :
+          (Number.isFinite(r?.frameIndex) ? r.frameIndex :
            Number.isFinite(r?.current)    ? r.current    :
            Number.isFinite(r?.frame)      ? r.frame      : 0);
       } catch (_) {}
@@ -1154,8 +1151,7 @@ update() {
       const sys = (typeof systems !== 'undefined' && systems.length > 0) ? systems[systems.length - 1] : undefined;
       const r = sys?.reader;
       step =
-        (Number.isFinite(r?.confIndex) ? r.confIndex :
-          Number.isFinite(r?.frameIndex) ? r.frameIndex :
+          (Number.isFinite(r?.frameIndex) ? r.frameIndex :
           Number.isFinite(r?.current)    ? r.current    :
           Number.isFinite(r?.frame)      ? r.frame      : 0);
     } catch (_) {}
@@ -1315,8 +1311,7 @@ update() {
       : undefined;
     const r = sys?.reader;
     step =
-      (Number.isFinite(r?.confIndex) ? r.confIndex :
-       Number.isFinite(r?.frameIndex) ? r.frameIndex :
+      (Number.isFinite(r?.frameIndex) ? r.frameIndex :
        Number.isFinite(r?.current)    ? r.current    :
        Number.isFinite(r?.frame)      ? r.frame      : 0);
   } catch (_) {}
@@ -1590,8 +1585,7 @@ _currentSimStep() {
       : undefined;
     const r = sys?.reader;
     step =
-      (Number.isFinite(r?.confIndex) ? r.confIndex :
-       Number.isFinite(r?.frameIndex) ? r.frameIndex :
+      (Number.isFinite(r?.frameIndex) ? r.frameIndex :
        Number.isFinite(r?.current)    ? r.current    :
        Number.isFinite(r?.frame)      ? r.frame      : 0);
   } catch (_) {}

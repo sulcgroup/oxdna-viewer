@@ -93,6 +93,15 @@ class TrajectoryReader {
     firstConf = true;
     lookupReader;
     idx = 0;
+
+    // ------------------------------------------------------------------
+    // Frame index compatibility accessors
+    // ------------------------------------------------------------------
+    // Canonical state is `idx`. These getters exist so older codepaths and
+    // aux overlay loaders can read the current frame without duplicating state.
+    get currentFrame() { return this.idx; }   // legacy alias
+    get frame() { return this.idx; }          // legacy alias
+
     offset = 0;
     time;
     firstRead = true;
@@ -249,27 +258,7 @@ class TrajectoryReader {
         // -------------------------------
         // Publish current frame/time globally (forces + overlays rely on this)
         // -------------------------------
-        this.currentFrame = this.idx;   // used by aux overlays
-        this.frame = this.idx;          // compatibility
-        this.current_frame = this.idx;  // compatibility
-        this.confIndex = this.idx;      // some codepaths look for confIndex
-
-        // global "step" signals (used by time-dependent forces)
-        window.currentFrameIndex = this.idx;
-        window.currentSimTime = time;
-
-        // If you have frame-synced overlays (e.g. Stress (MPa)), update them here too
-        if (this.system && this.system._applyStressFrame) {
-        this.system._applyStressFrame(this.idx);
-        }
-
-        // -------------------------------
-        // Publish current frame/time globally (forces + overlays rely on this)
-        // -------------------------------
-        this.currentFrame = this.idx;   // used by aux overlays
-        this.frame = this.idx;          // compatibility
-        this.current_frame = this.idx;  // compatibility
-        this.confIndex = this.idx;      // some codepaths look for confIndex
+        // current frame is exposed via TrajectoryReader.idx (and legacy getter aliases)
 
         // global "step" signals (used by time-dependent forces)
         window.currentFrameIndex = this.idx;
