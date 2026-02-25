@@ -144,7 +144,7 @@ function readParFile(parFile:File, system:System) {
     return parseFileWith(parFile, parsePar, [system])
 }
 
-// Nicer lower and upper bound 
+// Nicer lower and upper bound
 function roundRange(arr) {
   let min = arr[0], max = arr[0];
   for(let i = 0; i < arr.length; i++)
@@ -152,7 +152,7 @@ function roundRange(arr) {
       if(min > arr[i]) min = arr[i];
       if(max < arr[i]) max = arr[i];
   }
-  
+
   const roundedMin = Math.floor(min) + (min % 1 >= 0.5 ? 0.5 : 0);
   const roundedMax = Math.ceil(max) - (max % 1 > 0 && max % 1 <= 0.5 ? 0.5 : 0);
 
@@ -164,16 +164,16 @@ function makeLut(data, key, system) {
 
     let arr = data[key];
     let [min, max] = roundRange(arr);
-   
-    // we have no Lut 
+
+    // we have no Lut
     if (lut == undefined){
-        
+
         lut = new THREE.Lut(defaultColormap, 500);
         lut.setMax(max);
-        lut.setMin(min); 
+        lut.setMin(min);
     }
 
-    // we need update 
+    // we need update
     if (max > lut.maxV){
         lut.setMax(max);
         api.removeColorbar();
@@ -185,7 +185,7 @@ function makeLut(data, key, system) {
 
 
     lut.setLegendOn({ 'layout': 'horizontal', 'position': { 'x': 0, 'y': 0, 'z': 0 }, 'dimensions': { 'width': 2, 'height': 12 } }); //create legend
-    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format 
+    lut.setLegendLabels({ 'title': key, 'ticks': 5 }); //set up legend format
 }
 
 // export the current camera position
@@ -213,7 +213,7 @@ const readCamFile = (file:File)=>{
 // Highlight sequences found in cadnano or sequence csv
 const handleCSV = (file:File)=>{
     // highlight all the sequences complying with the cadnano file
-    // or a line by line sequence file 
+    // or a line by line sequence file
     const search_func = (system,seq) => {
         system.strands.forEach(strand => {
             strand.search(seq).forEach(match => {
@@ -246,7 +246,7 @@ const handleCSV = (file:File)=>{
             }
         }
         render();
-            
+
     });
 }
 
@@ -297,7 +297,7 @@ function readForce(forceFile) {
         const forceObjs:Force[] = []
         //handle the different traps
         trap_objs.forEach(f=>{
-            switch(f.type){                
+            switch(f.type){
                 case "mutual_trap":
                     let mutTrap = new MutualTrap();
                     mutTrap.setFromParsedJson(f);
@@ -611,8 +611,6 @@ function parseJson(json: string, system: System) {
                 return;
             }
 
-            console.log("TESTE");
-
             const frames = val as number[][];
             const N = system.systemLength();
 
@@ -733,7 +731,7 @@ function parsePar(lines, system) {
             eqDist = parseFloat(l[2]),
             type = l[3],
             strength = parseFloat(l[4]);
-        
+
         if (!Number.isInteger(p) || !Number.isInteger(q) || !Number.isFinite(eqDist) || !Number.isFinite(strength)) {
             notify("Cannot read par file, see console for bad line", 'error')
             console.log("Error on par line", i)
@@ -946,7 +944,7 @@ function readDotBracket(file:File){
         // - each line can be a db string or a sequence
         // - they have to alternate and be separated by a newline
         // - if a line is a sequence, the next line has to be a db string
-        // - if a line is a db string, the next line has to be a sequence 
+        // - if a line is a db string, the next line has to be a sequence
         // - the function will search in all the systems for a strand with the same length and sequence as the sequence line
         // - if it finds one, it will create a trap between the bases according to the db string
         // - if the file contains only 1 line it has to be a db string and the trap will be created for the last system for all strands with the same length as the db string
@@ -961,7 +959,7 @@ function readDotBracket(file:File){
         let file_length = lines.length
         let db_strings = []
         let sequences = []
-        
+
         for (let i = 0; i < file_length; i++){
             if (i % 2 == 0){
                 db_strings.push(lines[i])
@@ -977,12 +975,12 @@ function readDotBracket(file:File){
 
             // we always work with either the last system or the selectedBases
             let to_process;
-            // so do we have selected bases ? 
+            // so do we have selected bases ?
             if (selectedBases.size > 0) {
                 // we do and do only on selectedBases
                 to_process = [[... selectedBases].sort( (a,b)=> a.id - b.id)]
                 if (to_process[0].length != db_string.length)
-                    to_process = [] //make sure we have enough bases selected 
+                    to_process = [] //make sure we have enough bases selected
             }
             else {
                 // we work with the last system
@@ -1011,7 +1009,7 @@ function readDotBracket(file:File){
 
         // if we have multiple lines, we have to search the strands for the subsequences
         // and we'll use the first match we find
-        
+
         for (let i = 0; i < sequences.length; i++){
             let to_process = []
             let db_string = db_strings[i]
@@ -1036,6 +1034,6 @@ function readDotBracket(file:File){
                 })
             })
             updateForceHandler(forces)
-        }  
+        }
     })
 }
