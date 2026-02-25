@@ -602,7 +602,7 @@ function parseJson(json: string, system: System) {
         }
 
         // -----------------------------
-        // Case B: Stress (MPa) frames -> per-particle arrays
+        // Case B: Multiple Frames -> per-particle arrays
         // -----------------------------
         if (isFrameScalarOverlay(val, system.systemLength())) {
             // Expect number[][] : frames[frameIdx][particleIdx]
