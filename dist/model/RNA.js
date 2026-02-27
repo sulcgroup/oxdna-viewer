@@ -8,20 +8,20 @@ class RNANucleotide extends Nucleotide {
     }
     ;
     calcBBPos(p, a1, a2, a3) {
-        return new THREE.Vector3(p.x - (0.4 * a1.x + 0.2 * a3.x), p.y - (0.4 * a1.y + 0.2 * a3.y), p.z - (0.4 * a1.z + 0.2 * a3.z));
+        return new THREE.Vector3(p.x + (-0.4 * a1.x + 0.2 * a3.x), p.y + (-0.4 * a1.y + 0.2 * a3.y), p.z + (-0.4 * a1.z + 0.2 * a3.z));
     }
     ;
     getA2() {
         const a1 = this.getA1();
         const a3 = this.getA3();
-        const a2 = a1.clone().cross(a3).normalize();
+        const a2 = a1.clone().cross(a3).multiplyScalar(-1).normalize();
         return a2;
     }
     getA3() {
         const cm = this.getPos();
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
-        const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(-0.2).normalize();
+        const a3 = bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.4)).divideScalar(0.2).normalize();
         return a3;
     }
     ;
