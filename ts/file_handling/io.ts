@@ -117,6 +117,15 @@ class TrajectoryReader {
     firstConf = true;
     lookupReader : LookupReader;
     idx = 0;
+
+    // ------------------------------------------------------------------
+    // Frame index compatibility accessors
+    // ------------------------------------------------------------------
+    // Canonical state is `idx`. These getters exist so older codepaths and
+    // aux overlay loaders can read the current frame without duplicating state.
+    get currentFrame(): number { return this.idx; }   // legacy alias
+    get frame(): number { return this.idx; }          // legacy alias
+
     offset = 0;
     time:number;
     firstRead:boolean=true;
@@ -138,6 +147,8 @@ class TrajectoryReader {
                 //try display the retrieved conf
                 this.parseConf(lines);
                 this.trajectorySlider.setAttribute("value",this.idx.toString());
+                // // Apply any frame-synced overlays (e.g., Stress (MPa))
+                // (this.system as any)?._applyStressFrame?.(this.idx);
                 if(myChart){
                     // hacky way to propagate the line annotation
                     myChart["annotation"].elements['hline'].options.value = this.lookupReader.position_lookup[this.idx][2];
@@ -289,6 +300,18 @@ class TrajectoryReader {
         // Parse time and update time displays
         const time = parseInt(lines[0].split(/\s+/)[2]);
         this.time = time;
+
+        // -------------------------------
+        // Publish current frame/time globally (forces + overlays rely on this)
+        // -------------------------------
+        // current frame is exposed via TrajectoryReader.idx (and legacy getter aliases)
+
+        // global "step" signals (used by time-dependent forces)
+        (window as any).currentFrameIndex = this.idx;
+        (window as any).currentSimTime = time;
+
+        // If you have frame-synced overlays (e.g., Stress (MPa)), update them here too
+        (this.system as any)?._applyStressFrame?.(this.idx);
         confNum += 1
         console.log(confNum, "t =", time);
         
@@ -332,7 +355,16 @@ class TrajectoryReader {
         tmpSystems.forEach(s => s.callAllUpdates())
         centerAndPBC(system.getMonomers(), newBox);
         // Force files tend to read faster than configuration files, so there's a race condition.
-        if (forceHandler.forces.length > 0) { forceHandler.redrawTraps() }
+        if (forceHandler.forces.length > 0) {
+            forceHandler.redrawTraps();
+
+            // Repulsive spheres/ellipsoids/Kepler-Poinsot live under "spheres", not "traps"
+            if (typeof (forceHandler as any).redrawSpheres === "function") (forceHandler as any).redrawSpheres();
+
+            // If you have any force-drawn boxes/planes, keep them in sync too
+            if (typeof (forceHandler as any).redrawBoxes === "function") (forceHandler as any).redrawBoxes();
+            if (typeof (forceHandler as any).redrawPlanes === "function") (forceHandler as any).redrawPlanes();
+        }
 
         // Signal that config has been loaded. This is used by the trajectory video loader.
         document.dispatchEvent(new Event('nextConfigLoaded'));

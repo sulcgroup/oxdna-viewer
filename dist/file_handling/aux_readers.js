@@ -1,4 +1,27 @@
 /// <reference path="../typescript_definitions/index.d.ts" />
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// File size guard for non-chunked readers
+// - Uses Blob.size: https://developer.mozilla.org/en-US/docs/Web/API/Blob/size
+// - If a file is > 512 MB and we don't have a chunked reader for it, refuse to parse to avoid
+//   browser memory/string limits and confusing JSON parse errors.
+const MAX_UNCHUNKED_FILE_BYTES = 512 * 1024 * 1024;
+
+function enforceMaxUnchunkedFileSize(file, contextLabel) {
+    try {
+        if (file && typeof file.size === "number" && file.size > MAX_UNCHUNKED_FILE_BYTES) {
+            const mb = (file.size / (1024 * 1024)).toFixed(1);
+            notify(`${contextLabel} is too large (${mb} MB). Consider converting to a streamed .bin overlay instead of JSON.`, "error");
+            return false;
+        }
+    } catch (e) {
+        // If something is weird about the file object, don't block parsing here.
+    }
+    console.log("File Size:", file.size);
+    return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////               Read a file, modify the scene                ////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -7,9 +30,146 @@ function readTraj(trajFile, system) {
     return system.reader.lookupReader.promise;
 }
 function readJson(jsonFile, system) {
+    if (!enforceMaxUnchunkedFileSize(jsonFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+
     return parseFileWith(jsonFile, parseJson, [system]);
 }
+function readStressBinary(binFile, system) {
+    // Does NOT load the whole file; initStressBinary uses FileReader.readAsArrayBuffer(file.slice(...))
+    return initStressBinary(binFile, system);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+///////////////////        Streaming binary per-frame scalar overlay (.bin)      //////////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Binary format (little-endian):
+//   int32 nFrames
+//   int32 nParticles
+//   float32 globalMin
+//   float32 globalMax
+//   float32 data[nFrames * nParticles]  (frame-major)
+//
+// This avoids loading multi-GB JSON into memory and allows random access per frame using Blob.slice().
+function initStressBinary(binFile, system) {
+    const KEY = "overlay"; // generic key (do not depend on file naming)
+    const label = (binFile && binFile.name) ? binFile.name.replace(/\.[^/.]+$/, "") : "Overlay";
+    const headerBytes = 16;
+
+    function readSlice(start, end) {
+        return new Promise((resolve, reject) => {
+            const r = new FileReader();
+            r.onerror = () => reject(r.error);
+            r.onload = () => resolve(r.result);
+            r.readAsArrayBuffer(binFile.slice(start, end));
+        });
+    }
+
+    return readSlice(0, headerBytes).then((buf) => {
+        const dv = new DataView(buf);
+        const nFrames = dv.getInt32(0, true);
+        const nParticles = dv.getInt32(4, true);
+        const gmin = dv.getFloat32(8, true);
+        const gmax = dv.getFloat32(12, true);
+
+        if (nParticles !== system.systemLength()) {
+            notify(`Binary overlay mismatch: file=${nParticles}, system=${system.systemLength()}`, "error");
+            throw new Error("Overlay particle mismatch");
+        }
+
+        // Initialize LUT once from global min/max stored in header
+        const [minR, maxR] = roundRange([gmin, gmax]);
+
+        if (lut === undefined) {
+            lut = new THREE.Lut(defaultColormap, 500);
+        }
+        if (lut.minV !== minR || lut.maxV !== maxR) {
+            lut.setMin(minR);
+            lut.setMax(maxR);
+            api.removeColorbar();
+        }
+
+        lut.setLegendOn({
+            layout: "horizontal",
+            position: { x: 0, y: 0, z: 0 },
+            dimensions: { width: 2, height: 12 }
+        });
+        lut.setLegendLabels({ title: label, ticks: 5 });
+
+        const frameBytes = nParticles * 4;
+        const dataStart = headerBytes;
+
+        // Small cache of most recent frames (helps scrubbing)
+        const cache = new Map(); // frameIdx -> Float32Array
+        const MAX_CACHE = 4;
+
+        function cachePut(k, v) {
+            cache.set(k, v);
+            if (cache.size > MAX_CACHE) {
+                const firstKey = cache.keys().next().value;
+                cache.delete(firstKey);
+            }
+        }
+
+        function applyFrameArray(frameArr) {
+            system.setColorFile({ [KEY]: frameArr });
+
+            systems.forEach((s) => {
+                s.doVisuals(() => {
+                    const end = s.systemLength();
+                    for (let j = 0; j < end; j++) {
+                        s.lutCols[j] = lut.getColor(Number(s.colormapFile[KEY][j]));
+                    }
+                });
+            });
+
+            view.coloringMode.set("Overlay");
+            render();
+        }
+
+        function applyOverlayFrame(frameIdx) {
+            const idx = Math.max(0, Math.min(frameIdx, nFrames - 1));
+
+            // Cache hit
+            if (cache.has(idx)) {
+                applyFrameArray(cache.get(idx));
+                return;
+            }
+
+            const start = dataStart + idx * frameBytes;
+            const end = start + frameBytes;
+
+            readSlice(start, end).then((frameBuf) => {
+                const arr = new Float32Array(frameBuf);
+                cachePut(idx, arr);
+                applyFrameArray(arr);
+            }).catch((err) => {
+                console.error("Failed reading overlay frame", idx, err);
+                notify(`Failed reading overlay frame ${idx}`, "error");
+            });
+        }
+
+        // Expose hook so frame slider/animation can call it (keep existing name used elsewhere)
+        system._applyStressFrame = applyOverlayFrame;
+
+        // Apply immediately using current frame if available
+        let currentFrame = 0;
+        if (system.reader) {
+            if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+            else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
+            else if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+        }
+        applyOverlayFrame(currentFrame);
+
+        return { nFrames, nParticles, gmin, gmax };
+    });
+}
 function readParFile(parFile, system) {
+    if (!enforceMaxUnchunkedFileSize(parFile, "File")) {
+        return Promise.reject(new Error("File too large"));
+    }
+
     return parseFileWith(parFile, parsePar, [system]);
 }
 // Nicer lower and upper bound 
@@ -60,6 +220,8 @@ const exportCam = () => {
 };
 // Read a camera export file
 const readCamFile = (file) => {
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     file.text().then(txt => {
         const cam = JSON.parse(txt);
         camera.position.set(cam.position.x, cam.position.y, cam.position.z);
@@ -70,6 +232,8 @@ const readCamFile = (file) => {
 };
 // Highlight sequences found in cadnano or sequence csv
 const handleCSV = (file) => {
+    if (!enforceMaxUnchunkedFileSize(file, "File")) return;
+
     // highlight all the sequences complying with the cadnano file
     // or a line by line sequence file 
     const search_func = (system, seq) => {
@@ -104,6 +268,8 @@ const handleCSV = (file) => {
     });
 };
 function readForce(forceFile) {
+    if (!enforceMaxUnchunkedFileSize(forceFile, "Force file")) return;
+
     forceFile.text().then(text => {
         //{ can be replaced with \n to make sure no parameter is lost
         while (text.indexOf("{") >= 0)
@@ -158,11 +324,25 @@ function readForce(forceFile) {
                     mutTrap.update();
                     forceObjs.push(mutTrap);
                     break;
+                case "sphere": {
+                    // New: repulsive sphere support
+                    const s = new RepulsiveSphere();
+                    s.setFromParsedJson(f);   // expects: particle | -1, stiff, r0, rate, center=[x,y,z]
+                    s.update();
+                    forceObjs.push(s);
+                    break;
+                    }
                 case "skew_trap":
                     let skewTrap = new SkewTrap();
                     skewTrap.setFromParsedJson(f);
                     skewTrap.update();
                     forceObjs.push(skewTrap);
+                    break;
+                case "com":
+                    let COM = new COMForce();
+                    COM.setFromParsedJson(f);
+                    COM.update();
+                    forceObjs.push(COM);
                     break;
                 case "repulsion_plane":
                     let repPlane = new RepulsionPlane();
@@ -176,8 +356,52 @@ function readForce(forceFile) {
                     attrPlane.update();
                     forceObjs.push(attrPlane);
                     break;
+                case "repulsion_plane_moving":
+                    let Move_Repl = new RepulsionPlaneMoving();
+                    Move_Repl.setFromParsedJson(f);
+                    Move_Repl.update();
+                    forceObjs.push(Move_Repl);
+                    break;
+                case "repulsive_sphere_moving":
+                    let Move_Sphere = new RepulsiveSphereMoving();
+                    Move_Sphere.setFromParsedJson(f);
+                    Move_Sphere.update();
+                    forceObjs.push(Move_Sphere);
+                    break;
+                case "AFMMovingSphere":
+                    let AFM = new AFMMovingSphere();
+                    AFM.setFromParsedJson(f);
+                    AFM.update();
+                    forceObjs.push(AFM);
+                    break;
+                case "ellipsoid":
+                    let RE = new RepulsiveEllipsoid();
+                    RE.setFromParsedJson(f);
+                    RE.update();
+                    forceObjs.push(RE);
+                    break;
+                case "Box":
+                    // notify('BOX.js');
+                    let box = new Box();
+                    box.setFromParsedJson(f);
+                    box.update();
+                    forceObjs.push(box);
+                    break;
+                case "string":  
+                    let string = new StringForce();
+                    string.setFromParsedJson(f);
+                    string.update();
+                    forceObjs.push(string);
+                    break;
+                case "repulsive_kepler_poinsot":
+                    let KP = new RepulsiveKeplerPoinsot();
+                    KP.setFromParsedJson(f);
+                    KP.update();
+                    forceObjs.push(KP);
+                    break;
                 default:
                     notify(`External force -${f["type"]}- type not supported yet, feel free to implement in aux_readers.ts and force.ts`);
+                    // notify('aux_readers');
                     break;
             }
         });
@@ -185,9 +409,53 @@ function readForce(forceFile) {
         render();
     });
 }
+
+// BEM AQUI
+function countLists(obj) {
+    let count = 0;
+  
+    function recurse(value) {
+      if (Array.isArray(value)) {
+        count++;              // Count this list
+        value.forEach(recurse); // Recurse into its elements
+      } else if (value !== null && typeof value === "object") {
+        Object.values(value).forEach(recurse);
+      }
+    }
+  
+    recurse(obj);
+    return count;
+  }
+
+  function isFrameScalarOverlay(val, N) {
+    if (!Array.isArray(val) || val.length === 0) return false;
+    if (!Array.isArray(val[0]) || val[0].length !== N) return false;
+
+    // sample a few frames and a few values to confirm it's numeric scalars
+    var sampleFrames = Math.min(val.length, 3);
+    for (var fi = 0; fi < sampleFrames; fi++) {
+        var frame = val[fi];
+        if (!Array.isArray(frame) || frame.length !== N) return false;
+
+        var sampleVals = Math.min(frame.length, 10);
+        for (var i = 0; i < sampleVals; i++) {
+            var v = frame[i];
+            if (typeof v !== "number" || !isFinite(v)) return false;
+        }
+    }
+    return true;
+}
+
 // Json files can be a lot of things, read them.
 function parseJson(json, system) {
-    const data = JSON.parse(json);
+    let data;
+    try {
+        data = JSON.parse(json);
+    } catch (e) {
+        console.error("Failed to parse JSON overlay:", e);
+        notify("Failed to parse JSON. If this file is very large, convert it to a .bin overlay (streamed) instead of JSON.", "error");
+        return;
+    }
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
@@ -215,12 +483,109 @@ function parseJson(json, system) {
                 }
             }
         }
+        else if (isFrameScalarOverlay(data[key], system.systemLength())) {
+            const frames = data[key];
+        
+            // Expect: frames = [ [per-particle values], [per-particle values], ... ]
+            if (!Array.isArray(frames) || frames.length === 0 || !Array.isArray(frames[0])) {
+                notify('"' + key + '" must be a list of lists (frame -> values).', "error");
+                return;
+            }
+        
+            const N = system.systemLength();
+        
+            // Validate each frame length
+            for (let fi = 0; fi < frames.length; fi++) {
+                if (!Array.isArray(frames[fi]) || frames[fi].length !== N) {
+                    notify(
+                        '"' + key + '" frame ' + fi + " has length " +
+                        (Array.isArray(frames[fi]) ? frames[fi].length : "??") +
+                        " but system has " + N + ".",
+                        "error"
+                    );
+                    return;
+                }
+            }
+        
+            // ---------- GLOBAL MIN/MAX so colorbar stays stable ----------
+            let globalMin = Infinity;
+            let globalMax = -Infinity;
+        
+            for (let fi = 0; fi < frames.length; fi++) {
+                const arr = frames[fi];
+                for (let i = 0; i < arr.length; i++) {
+                    const v = arr[i];
+                    if (typeof v === "number" && isFinite(v)) {
+                        if (v < globalMin) globalMin = v;
+                        if (v > globalMax) globalMax = v;
+                    }
+                }
+            }
+        
+            const rounded = roundRange([globalMin, globalMax]);
+            const minR = rounded[0];
+            const maxR = rounded[1];
+        
+            // ---------- Ensure LUT exists ----------
+            if (lut === undefined) {
+                lut = new THREE.Lut(defaultColormap, 500);
+            }
+        
+            if (lut.minV !== minR || lut.maxV !== maxR) {
+                lut.setMin(minR);
+                lut.setMax(maxR);
+                api.removeColorbar();
+            }
+        
+            lut.setLegendOn({
+                layout: "horizontal",
+                position: { x: 0, y: 0, z: 0 },
+                dimensions: { width: 2, height: 12 }
+            });
+        
+            lut.setLegendLabels({ title: key, ticks: 5 });
+        
+            // ---------- Function to apply stress for a frame ----------
+            function applyStressFrame(frameIdx) {
+                var idx = Math.max(0, Math.min(frameIdx, frames.length - 1));
+                var stress = frames[idx];
+        
+                // Feed into existing overlay pipeline
+                system.setColorFile({ [key]: stress });
+        
+                systems.forEach(function (s) {
+                    s.doVisuals(function () {
+                        var end = s.systemLength();
+                        for (var j = 0; j < end; j++) {
+                            s.lutCols[j] = lut.getColor(Number(s.colormapFile[key][j]));
+                        }
+                    });
+                });
+        
+                view.coloringMode.set("Overlay");
+                render();
+            }
+        
+            // ---------- Apply immediately using current frame ----------
+            var currentFrame = 0;
+        
+            if (system.reader) {
+                if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+                else if (typeof system.reader.frame === "number") currentFrame = system.reader.frame;
+                else if (typeof system.reader.currentFrame === "number") currentFrame = system.reader.currentFrame;
+            }
+
+            applyStressFrame(currentFrame);
+        
+            // ---------- Expose hook so frame slider / animation can call it ----------
+            system._applyStressFrame = applyStressFrame;
+        }        
         else if (data[key][0].length == 6) { //draw arbitrary arrows on the scene
             for (let entry of data[key]) {
                 const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
                 const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
                 vec.normalize();
-                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x000000);
                 scene.add(arrowHelper);
             }
         }
@@ -231,6 +596,8 @@ function parseJson(json, system) {
     }
 }
 function readSelectFile(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "Selection file")) return;
+
     if (systems.length > 1) {
         notify("Warning: Selection files select on global ID, not system ID.  There are multiple systems loaded.", 'warning');
     }
@@ -283,6 +650,8 @@ function parsePar(lines, system) {
 // reads hydrogen bonding file generated with Chimera
 // hbondinfo is then stored in the pdbfiledatasets
 function readHBondFile(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "H-bond file")) return;
+
     let reader = new FileReader();
     let pdbInfoIndx = pdbFileInfo.length - 1;
     if (pdbInfoIndx == -1) {
@@ -422,6 +791,8 @@ function parseDotBracket(input) {
     return output;
 }
 function readDotBracket(file) {
+    if (!enforceMaxUnchunkedFileSize(file, "Dot-bracket file")) return;
+
     const updateForceHandler = (forces) => {
         forceHandler.set(forces);
         render();
