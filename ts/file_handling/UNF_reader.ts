@@ -374,12 +374,12 @@ function parseUNFString(s: string) {
                     ns.multiplyScalar(lenFactor);
 
                     // calculate a2
-                    let a2 = a1.clone().cross(a3);
+                    let a2 = a1.clone().cross(a3).multiplyScalar(-1).normalize();
 
                     //calculate real COM position
                     let cm = new THREE.Vector3().copy(bb)
                     if (e.isDNA()) {
-                        cm.add(a1.clone().multiplyScalar(0.34).add(a2.clone().multiplyScalar(0.3408)));
+                        cm.add(a1.clone().multiplyScalar(0.34).add(a2.clone().multiplyScalar(-0.3408)));
                     }
                     else if (e.isRNA()) {
                         cm.add(a1.clone().multiplyScalar(0.4).add(a3.clone().multiplyScalar(0.2)));
