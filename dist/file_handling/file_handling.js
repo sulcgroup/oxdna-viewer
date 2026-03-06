@@ -36,6 +36,41 @@ function parseFileWith(file, parser, args = []) {
     let result = reader.promise;
     return result;
 }
+async function isVTJEncoded(file) {
+    const buf = await file.slice(0, 4).arrayBuffer();
+    if (buf.byteLength < 4)
+        return false;
+    const bytes = new Uint8Array(buf);
+    const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+    return magic === "VTJ1";
+}
+function notifyVTJEncoded(file) {
+    console.log(`(VTJ encoded) ${file.name}`);
+    if (typeof notify === "function") {
+        notify(`(VTJ encoded) ${file.name}`);
+    }
+}
+async function isObservableOutputCompressed(file) {
+    const buf = await file.slice(0, 8).arrayBuffer();
+    if (buf.byteLength < 8)
+        return false;
+    const bytes = new Uint8Array(buf);
+    return (bytes[0] === 0x4f &&
+        bytes[1] === 0x58 &&
+        bytes[2] === 0x44 &&
+        bytes[3] === 0x01 &&
+        bytes[4] === 0x01);
+}
+async function decompressObservableOutput(file, system) {
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    const payload = bytes.slice(8);
+    const decompressedBytes = decompressZstd(payload);
+    const text = new TextDecoder().decode(decompressedBytes);
+    const blob = new Blob([text], { type: "text/plain" });
+    const fakeFile = new File([blob], file.name + ".dat", { type: "text/plain" });
+    return readTraj(fakeFile, system);
+}
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
 async function handleFiles(files) {
@@ -90,6 +125,9 @@ async function handleFiles(files) {
         else if (ext === "bin") {
             if (await isVTJEncoded(files[i])) {
                 notifyVTJEncoded(files[i]);
+            }
+            else if (await isObservableOutputCompressed(files[i])) {
+                auxFiles.push(new File2reader(files[i], 'trajectory', decompressObservableOutput));
             }
             else {
                 auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
@@ -158,21 +196,6 @@ async function handleFiles(files) {
     }
     getOrMakeSystem().then((sys) => readAuxiliaryFiles(sys)).then(() => executeScript());
 }
-async function isVTJEncoded(file) {
-    const buf = await file.slice(0, 4).arrayBuffer();
-    if (buf.byteLength < 4)
-        return false;
-    const bytes = new Uint8Array(buf);
-    const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
-    return magic === "VTJ1";
-}
-function notifyVTJEncoded(file) {
-    console.log(`(VTJ encoded) ${file.name}`);
-    if (typeof notify === "function") {
-        notify(`(VTJ encoded) ${file.name}`);
-    }
-}
-// Create Three geometries and meshes that get drawn in the scene.
 async function addSystemToScene(system) {
     // If you make any modifications to the drawing matricies here, they will take effect before anything draws
     // however, if you want to change once stuff is already drawn, you need to add "<attribute>.needsUpdate" before the render() call.

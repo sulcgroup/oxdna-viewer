@@ -62,6 +62,40 @@ function notifyVTJEncoded(file: File): void {
     }
 }
 
+async function isObservableOutputCompressed(file: File): Promise<boolean> {
+    const buf = await file.slice(0, 8).arrayBuffer();
+    if (buf.byteLength < 8) return false;
+
+    const bytes = new Uint8Array(buf);
+
+    return (
+        bytes[0] === 0x4f && // 'O'
+        bytes[1] === 0x58 && // 'X'
+        bytes[2] === 0x44 && // 'D'
+        bytes[3] === 0x01 &&
+        bytes[4] === 0x01
+    );
+}
+
+async function decompressObservableOutput(file: File, system) {
+    const buffer = await file.arrayBuffer();
+
+    // ObservableOutput writes an 8-byte custom header, then appends
+    // independent zstd-compressed blocks (one per printed line).
+    const bytes = new Uint8Array(buffer);
+    const payload = bytes.slice(8);
+
+    // This requires a zstd decompressor to be available in the browser.
+    // Example: zstd-codec or another compatible decoder exposed as decompressZstd().
+    const decompressedBytes = decompressZstd(payload);
+
+    const text = new TextDecoder().decode(decompressedBytes);
+    const blob = new Blob([text], { type: "text/plain" });
+    const fakeFile = new File([blob], file.name + ".dat", { type: "text/plain" });
+
+    return readTraj(fakeFile, system);
+}
+
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
 async function handleFiles(files: File[]) {
@@ -99,6 +133,8 @@ async function handleFiles(files: File[]) {
         else if (ext === "bin") {
             if (await isVTJEncoded(files[i])) {
                 notifyVTJEncoded(files[i]);
+            } else if (await isObservableOutputCompressed(files[i])) {
+                auxFiles.push(new File2reader(files[i], 'trajectory', decompressObservableOutput));
             } else {
                 auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
             }
