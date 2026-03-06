@@ -43,6 +43,25 @@ function parseFileWith(file: File, parser: Function, args:unknown[]=[]): Promise
     return result
 }
 
+async function isVTJEncoded(file: File): Promise<boolean> {
+    const buf = await file.slice(0, 4).arrayBuffer();
+    if (buf.byteLength < 4) return false;
+
+    const bytes = new Uint8Array(buf);
+    const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+
+    return magic === "VTJ1";
+}
+
+function notifyVTJEncoded(file: File): void {
+    console.log(`(VTJ encoded) ${file.name}`);
+
+    // Optional UI notification if notify exists in oxView
+    if (typeof notify === "function") {
+        notify(`(VTJ encoded) ${file.name}`);
+    }
+}
+
 // organizes files into files that create a new system, auxiliary files, and script files.
 // Then fires the reads sequentially
 async function handleFiles(files: File[]) {
@@ -76,7 +95,15 @@ async function handleFiles(files: File[]) {
         // These file types modify an existing system
         else if (ext == 'dat' || ext == 'conf' || ext == 'oxdna') { auxFiles.push(new File2reader(files[i], 'trajectory', readTraj)); }
         else if (ext === "json") { auxFiles.push(new File2reader(files[i], 'json', readJson)); }
-        else if (ext === "bin") { auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary)); }
+
+        else if (ext === "bin") {
+            if (await isVTJEncoded(files[i])) {
+                notifyVTJEncoded(files[i]);
+            } else {
+                auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
+            }
+        }
+
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force") )) { auxFiles.push(new File2reader(files[i], 'force', readForce)); }
         else if (ext === "txt" && (fileName.includes("_m"))) { auxFiles.push(new File2reader(files[i], 'mass', readMassFile)); }
         else if (ext === "txt" && (fileName.includes("select"))) { auxFiles.push(new File2reader(files[i], 'select', readSelectFile)); }

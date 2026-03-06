@@ -88,8 +88,12 @@ async function handleFiles(files) {
             auxFiles.push(new File2reader(files[i], 'json', readJson));
         }
         else if (ext === "bin") {
-            // Large per-frame scalar overlays should use the binary format (avoids loading multi-GB JSON into memory)
-            auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
+            if (await isVTJEncoded(files[i])) {
+                notifyVTJEncoded(files[i]);
+            }
+            else {
+                auxFiles.push(new File2reader(files[i], 'binary_overlay', readStressBinary));
+            }
         }
         else if (ext === "txt" && (fileName.includes("trap") || fileName.includes("force"))) {
             auxFiles.push(new File2reader(files[i], 'force', readForce));
@@ -153,6 +157,20 @@ async function handleFiles(files) {
         return Promise.all(readList);
     }
     getOrMakeSystem().then((sys) => readAuxiliaryFiles(sys)).then(() => executeScript());
+}
+async function isVTJEncoded(file) {
+    const buf = await file.slice(0, 4).arrayBuffer();
+    if (buf.byteLength < 4)
+        return false;
+    const bytes = new Uint8Array(buf);
+    const magic = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
+    return magic === "VTJ1";
+}
+function notifyVTJEncoded(file) {
+    console.log(`(VTJ encoded) ${file.name}`);
+    if (typeof notify === "function") {
+        notify(`(VTJ encoded) ${file.name}`);
+    }
 }
 // Create Three geometries and meshes that get drawn in the scene.
 async function addSystemToScene(system) {
