@@ -1,4 +1,4 @@
-function parseUNFString(s) {
+async function parseUNFString(s) {
     //the peptide and nucleic acid strands actually have almost the same structure, but different names...
     function isNa(obj) {
         if (obj.naType === 'DNA' || obj.naType === 'RNA' || obj.naType === 'XNA') {
@@ -381,7 +381,7 @@ function parseUNFString(s) {
     if (appendedData != '') {
         let blob = new Blob([appendedData], { type: 'text/plain' });
         let f = new File([blob], 'tmp.pdb', { type: 'text/plain' });
-        let sys = readPdbFile(f);
+        let sys = await readPdbFile(f);
         createdSystems.push(sys);
     }
     if (createdSystems.length > 1) {

@@ -934,7 +934,7 @@ function readPdbFile(file) {
                     if(flux.fluxWindowOpen) view.addGraphData(graphDatasets.length-1); // add to flux window if open, otherwise it'll be added on next opening
 
                     // notify("ANM Fitting Complete, Please check under Available Datasets in the Fluctuation Solver");
-                    resolve(message.data);
+                    resolve(sys);
                 }
             }
             worker.onmessage = callback;
@@ -945,9 +945,8 @@ function readPdbFile(file) {
         return promise;
     }
 
-    activate();
     pdbtemp=[];
-    return(sys)
+    return activate();
 
 }
 
@@ -1075,7 +1074,7 @@ function readMmcifFile(file) {
 
                     if(flux.fluxWindowOpen) view.addGraphData(graphDatasets.length-1);
 
-                    resolve(message.data);
+                    resolve(sys);
                 }
             }
             worker.onmessage = callback;
@@ -1085,8 +1084,7 @@ function readMmcifFile(file) {
         return promise;
     }
 
-    activate();
     pdbtemp=[];
-    return(sys)
+    return activate();
 
 }
