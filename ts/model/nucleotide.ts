@@ -40,8 +40,8 @@ abstract class Nucleotide extends BasicElement {
         if (this.dummySys !== null) {
             sys = this.dummySys;
         }
-        // according to base.py a2 is the cross of a1 and a3
-        let a2 = a1.clone().cross(a3);
+        // a2 is the negative cross product of a1 and a3
+        let a2 = a1.clone().cross(a3).multiplyScalar(-1).normalize();
         
         // compute backbone position
         let bb = this.calcBBPos(p, a1, a2, a3);
