@@ -226,6 +226,10 @@ window.addEventListener("message", (event) => {
         handleMessage(event.data);
     }
 }, false);
+// Signal to any parent frame that this viewer is ready to receive messages
+if (window.parent !== window) {
+    window.parent.postMessage({ message: 'oxview_ready' }, '*');
+}
 render();
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////                      Random functions                      ////////////////////
