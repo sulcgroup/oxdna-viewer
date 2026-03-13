@@ -1007,7 +1007,7 @@ class fluxGraph {
                 //    this.chart.toBase64Image();
                 //}
             },
-            responsiveAnimationDuration: 0,
+            responsiveAnimationDuration: 0, // animation duration after a resize
             responsive: true,
             title: {
                 display: true,
@@ -1549,3 +1549,82 @@ class fluxGraph {
 }
 // Fluctuation Chart Manager
 const flux = new fluxGraph("msf", "A_sqr");
+function openEnergyWatcher() {
+    // function also uses fluxGraph class to avoid adding unnecessary classes
+    const delay = (ms) => new Promise(res => setTimeout(res, ms));
+    // delay because the window and its DOM elements do not exist yet at the moment the callback runs
+    const wait = async () => {
+        await delay(150);
+        try {
+            // Get the energy watcher window directly
+            const lastWin = document.getElementById("energyWatcher") ||
+                document.querySelector('[id*="energyWatcher"]');
+            if (!lastWin) {
+                notify("Energy watcher window not found");
+                return;
+            }
+            // Metro window visible content area is usually .window-content
+            const content = lastWin.querySelector(".window-content") ||
+                lastWin.querySelector(".content") ||
+                lastWin;
+            // IMPORTANT: fluxGraph.initChart() expects a canvas with id="flux"
+            content.innerHTML = `
+                <div style="padding:10px; height:350px; box-sizing:border-box;">
+                    <canvas id="flux" style="width:100%; height:100%;"></canvas>
+                </div>
+            `;
+            // Adjust labels/titles BEFORE creating the chart
+            flux.xaxislabel = "time (SU)";
+            flux.yaxislabel = "potential energy [SU]";
+            // Update the chart options to match
+            flux.chartoptions.scales.xAxes[0].scaleLabel.labelString = flux.xaxislabel;
+            flux.chartoptions.scales.yAxes[0].scaleLabel.labelString = flux.yaxislabel;
+            // no title (since it would be redundant)
+            flux.chartoptions.title.display = false;
+            // Clear any previous chartdata (important if reopened)
+            flux.chartdata.labels = [];
+            flux.chartdata.datasets = [];
+            // Create the chart (fluxGraph has its own internal delay)
+            flux.initChart();
+            // Wait for flux.initChart() to actually create flux.chart
+            await delay(450);
+            if (!flux.chart) {
+                notify("Energy watcher chart did not initialize");
+                return;
+            }
+            flux.chart.data.datasets = [{
+                    label: "potential energy [SU]",
+                    data: [],
+                    fill: false,
+                    pointRadius: 0,
+                    borderWidth: 2 // line width of the energy plot 
+                }];
+            flux.chart.update(0);
+        }
+        catch (e) {
+            notify("Energy watcher could not be opened");
+            console.error(e);
+        }
+    };
+    wait();
+}
+function energyWatcherAddPoint(t_su, e_pot_su) {
+    if (!flux || !flux.chart)
+        return;
+    // skip plotting first few points after backend switch to avoid misreading and therefore spikes in the chart
+    if (window.__energy_skip > 0) {
+        window.__energy_skip -= 1;
+        return; // do not add to chart
+    }
+    flux.chart.data.labels.push(t_su);
+    flux.chart.data.datasets[0].data.push(e_pot_su);
+    // keep last N points
+    const MAX = 2000;
+    if (flux.chart.data.labels.length > MAX) {
+        flux.chart.data.labels.shift();
+        flux.chart.data.datasets[0].data.shift();
+    }
+    flux.chart.update(0);
+}
+// make it callable from the socket code
+window.energyWatcherAddPoint = energyWatcherAddPoint;
