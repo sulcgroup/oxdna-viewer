@@ -161,12 +161,12 @@
     </div>
 
     <div id='importPDBDialog' class="dialog" data-role="dialog">
-        <h2>Import PDB</h2>
-        Type a PDB identifier below to load the corresponding structure into oxView. If you already have a PDB file on your computer you can simply drag and drop it (or use the "Open" dialog).
+        <h2>Import mmCIF</h2>
+        Type a PDB identifier below to load the corresponding mmCIF structure into oxView. If you already have a .cif file on your computer you can simply drag and drop it (or use the "Open" dialog).
         <input type="text" value="6KIX" data-role="input" data-prepend="PDB ID" id="importPDBID">
         <div class="dialog-actions">
             <button class="button js-dialog-close">Cancel</button>
-            <button onclick="readPDBFromId(document.getElementById('importPDBID').value)" class="button primary js-dialog-close">Import</button>
+            <button onclick="readMMCIFFromId(document.getElementById('importPDBID').value)" class="button primary js-dialog-close">Import</button>
         </div>
     </div>
     
@@ -438,7 +438,7 @@
                         <img src="img/ico/taco_logo.png" height="30px">
                         <span class="caption">Taco</span>
                     </button>
-                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import PDB from ID" id="import-button" style="width: 50px;">
+                    <button class="ribbon-button primary" onclick="Metro.dialog.open('#importPDBDialog')" title="Import mmCIF from ID" id="import-button" style="width: 50px;">
                         <!-- <span class="mif-file-upload mif-2x"></span> -->
                         <img src="https://www.rcsb.org/favicon.ico" height="40px">
                         <!--<span class="caption">PDB</span>-->
@@ -1417,6 +1417,7 @@
         <script src="./dist/UI/keybindings.js"></script>
         <script src="./dist/file_handling/output_file.js"></script>
         <script src="./dist/file_handling/pdb_lib.js"></script>
+        <script src="./dist/file_handling/mmcif_lib.js"></script>
         <script src="./dist/file_handling/UNF_reader.js"></script>
         <script src="./dist/file_handling/xyz_reader.js"></script>
         <script src="./dist/file_handling/video.js"></script>

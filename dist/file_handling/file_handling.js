@@ -61,6 +61,9 @@ async function handleFiles(files) {
         else if (ext === "pdb" || ext === "pdb1" || ext === "pdb2") {
             systemFiles.push(new File2reader(files[i], 'pdb', readPdbFile));
         }
+        else if (ext === "cif" || ext === "mmcif") {
+            systemFiles.push(new File2reader(files[i], 'mmcif', readMmcifFile));
+        }
         else if (ext === "unf") {
             systemFiles.push(new File2reader(files[i], 'unf', readUNFFile));
         }

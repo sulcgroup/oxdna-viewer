@@ -8,19 +8,19 @@ class DNANucleotide extends Nucleotide {
     }
     ;
     calcBBPos(p, a1, a2, a3) {
-        return new THREE.Vector3(p.x - (0.34 * a1.x + 0.3408 * a2.x), p.y - (0.34 * a1.y + 0.3408 * a2.y), p.z - (0.34 * a1.z + 0.3408 * a2.z));
+        return new THREE.Vector3(p.x + (-0.34 * a1.x + 0.3408 * a2.x), p.y + (-0.34 * a1.y + 0.3408 * a2.y), p.z + (-0.34 * a1.z + 0.3408 * a2.z));
     }
     ;
     getA2() {
         const cm = this.getPos();
         const bb = this.getInstanceParameter3("bbOffsets");
         const a1 = this.getA1();
-        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(-0.3408).normalize();
+        return bb.clone().sub(cm).add(a1.clone().multiplyScalar(0.34)).divideScalar(0.3408).normalize();
     }
     getA3() {
         const a1 = this.getA1();
         const a2 = this.getA2();
-        const a3 = a1.clone().cross(a2).divideScalar(-a1.dot(a1)).normalize();
+        const a3 = a1.clone().cross(a2).normalize();
         return a3;
     }
     ;
