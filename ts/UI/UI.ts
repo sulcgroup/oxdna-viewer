@@ -4,34 +4,34 @@ var VRButton: any;
 
 
 function select3psWrapper() {
-    if(selectedBases.size==0){
+    if (selectedBases.size == 0) {
         api.highlight3ps();
     }
-    else{
+    else {
         let strands = new Set<Strand>();
-        selectedBases.forEach(b=>{
+        selectedBases.forEach(b => {
             strands.add(b.strand)
         });
         clearSelection();
-        api.selectElements(Array.from(strands).map(s=>s.end3));
+        api.selectElements(Array.from(strands).map(s => s.end3));
     }
 }
 
 function select5psWrapper() {
-    if(selectedBases.size==0){
+    if (selectedBases.size == 0) {
         api.highlight5ps();
     }
-    else{
+    else {
         let strands = new Set<Strand>();
-        selectedBases.forEach(b=>{
+        selectedBases.forEach(b => {
             strands.add(b.strand)
         });
         clearSelection();
-        api.selectElements(Array.from(strands).map(s=>s.end5));
+        api.selectElements(Array.from(strands).map(s => s.end5));
     }
 }
 
-function createTable(data:string[][], header: string[], tableName:string) {
+function createTable(data: string[][], header: string[], tableName: string) {
     let table = document.createElement("table");
     table.id = tableName;
     table.classList.add("table", "striped")
@@ -61,7 +61,7 @@ function listForces() {
     let forceDOM = document.getElementById("forces");
     if (!forceDOM) { return }
     forceDOM.innerHTML = "";
-    forceHandler.forceTable = forceHandler.forces.map(force=>[force.description(), force.type]);
+    forceHandler.forceTable = forceHandler.forces.map(force => [force.description(), force.type]);
     forceDOM.appendChild(createTable(forceHandler.forceTable, ['Description', 'Type'], 'forcesTable'));
 }
 
@@ -69,13 +69,13 @@ function deleteSelectedForces() {
     // Remove all forces selected in the force window
     var table = $('#forcesTable').data('table');
     const selected = table.getSelectedItems()
-    let removeIndices = selected.map(s=>selected.indexOf(s));
-    removeIndices.sort((a, b) => {b-a})
+    let removeIndices = selected.map(s => selected.indexOf(s));
+    removeIndices.sort((a, b) => { b - a })
     removeIndices.reverse()
 
     // consider changing to https://stackoverflow.com/a/35116966/9738112 so it can be in-place
     // Remove force from both the list of forces and from the table
-    forceHandler.forceTable = forceHandler.forceTable.filter((f,i)=>!removeIndices.includes(i));
+    forceHandler.forceTable = forceHandler.forceTable.filter((f, i) => !removeIndices.includes(i));
     forceHandler.removeById(removeIndices);
 }
 
@@ -85,34 +85,34 @@ function deleteForcesFromBases() {
 }
 
 function drawSystemHierarchy() {
-    let checkboxhtml = (label)=> `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;
+    let checkboxhtml = (label) => `<input onchange="render()" data-role="checkbox" data-caption="${label}">`;
 
     const includeMonomers = (document.getElementById("hierarchyMonomers") as HTMLInputElement).checked;
 
     const content: HTMLElement = document.getElementById("hierarchyContent");
     content.innerText = '';
 
-     let hierarchy = Metro.makePlugin(content, "treeview", {
+    let hierarchy = Metro.makePlugin(content, "treeview", {
         onCheckClick: (state, check, node, tree) => {
             let n = $(node);
             let element: BasicElement = n.data('monomer');
             if (element) {
-                if (check.checked) {element.select()}
-                else {element.deselect()}
+                if (check.checked) { element.select() }
+                else { element.deselect() }
                 updateView(element.getSystem());
                 return;
             }
             let strand: Strand = n.data('strand');
             if (strand) {
-                if (check.checked) {strand.select()}
-                else {strand.deselect()}
+                if (check.checked) { strand.select() }
+                else { strand.deselect() }
                 updateView(strand.system);
                 return;
             }
             let system = n.data('system');
             if (system) {
-                if (check.checked) {system.select()}
-                else {system.deselect()}
+                if (check.checked) { system.select() }
+                else { system.deselect() }
                 updateView(system);
                 return;
             }
@@ -124,17 +124,17 @@ function drawSystemHierarchy() {
     let checkboxMap: Map<number, HTMLInputElement> = new Map();
 
     // Add checkbox nodes for, systems, strands and monomers
-    for(const system of systems) {
+    for (const system of systems) {
         let systemNode = treeview.addTo(null, {
             html: checkboxhtml(system.label ? system.label : `System ${system.id}`)
         });
         systemNode.data('system', system);
-        for(const strand of system.strands) {
+        for (const strand of system.strands) {
             let monomers = strand.getMonomers();
             let strandNode = treeview.addTo(systemNode, {
                 html: checkboxhtml(
                     strand.label ? strand.label : `Strand ${strand.id}` +
-                    ` (${monomers.length}${strand.isCircular() ? ' circular':''})`
+                        ` (${monomers.length}${strand.isCircular() ? ' circular' : ''})`
                 )
             });
             strandNode.data('strand', strand);
@@ -147,23 +147,23 @@ function drawSystemHierarchy() {
                             `<span style="background:#${color}4f; padding: 5px">${monomer.type}</span>`
                     });
                     monomerNode.data('monomer', monomer);
-    
+
                     // Save reference for checbox in map:
                     let checkbox = monomerNode.find("input")[0];
                     checkbox.checked = selectedBases.has(monomer);
                     checkboxMap.set(monomer.id, checkbox);
                 }
-                for(const [i, monomer] of monomers.entries()) {
-                    if (i<20) {
+                for (const [i, monomer] of monomers.entries()) {
+                    if (i < 20) {
                         addMonomer(monomer);
                     } else {
                         let moreNode = treeview.addTo(strandNode, {
-                            caption: `View remaining ${monomers.length-i} monomers`,
+                            caption: `View remaining ${monomers.length - i} monomers`,
                             icon: '<span class="mif-plus"></span>'
                         });
-                        moreNode[0].onclick = ()=>{
+                        moreNode[0].onclick = () => {
                             treeview.del(moreNode);
-                            for(let j=i; j<monomers.length; j++) {
+                            for (let j = i; j < monomers.length; j++) {
                                 addMonomer(monomers[j]);
                             }
                         }
@@ -187,6 +187,7 @@ function drawSystemHierarchy() {
     });
     */
 }
+
 
 function handleMenuAction(event: String) {
     switch (event) {
@@ -217,7 +218,7 @@ function updateColorPalette() {
                 backboneColors[i] = new THREE.Color(c.value);
                 updateColorPalette();
             }
-            
+
             //deletes color on right click
             c.oncontextmenu = function (event) {
                 event.preventDefault();
@@ -229,12 +230,12 @@ function updateColorPalette() {
         }
 
         //actually update things in the scene
-        elements.forEach(e=>{
+        elements.forEach(e => {
             if (!selectedBases.has(e)) {
                 e.updateColor();
             }
         });
-        systems.forEach(s=> {
+        systems.forEach(s => {
             s.callUpdates(['instanceColor'])
         });
 
@@ -253,8 +254,8 @@ function initLutCols(systems: System[]) {
             const r = system.bbColors[j];
             const g = system.bbColors[j + 1];
             const b = system.bbColors[j + 2];
-            
-            system.lutCols[j/3] = new THREE.Color(r,g,b);
+
+            system.lutCols[j / 3] = new THREE.Color(r, g, b);
         }
     }
 }
@@ -276,11 +277,11 @@ function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
         elems = Array.from(selectedBases);
     }
 
-    if(elems.length == 0) {
+    if (elems.length == 0) {
         notify("Please first select the elements you wish to color");
     }
 
-    elems.forEach(e=>{
+    elems.forEach(e => {
         e.color = color;
     });
 
@@ -291,7 +292,7 @@ function colorElements(color?: THREE.Color, elems?: BasicElement[]) {
 
 //toggles display of coloring by json file / structure modeled off of base selector
 function updateColoring(mode?: string) {
-    if(!mode) {
+    if (!mode) {
         mode = view.coloringMode.get()
     } else {
         view.coloringMode.set(mode);
@@ -331,10 +332,10 @@ function toggleVisArbitrary() {
     // arbitrary visibility toggling
     // toggle hidden monomers
     if (selectedBases.size == 0) {
-        systems.forEach(system=>{
-            system.strands.forEach(strand=>{
-                strand.forEach(monomer=>{
-                    if(monomer.getInstanceParameter3("visibility").x == 0)
+        systems.forEach(system => {
+            system.strands.forEach(strand => {
+                strand.forEach(monomer => {
+                    if (monomer.getInstanceParameter3("visibility").x == 0)
                         monomer.toggleVisibility();
                 });
             });
@@ -344,7 +345,7 @@ function toggleVisArbitrary() {
     else {
         selectedBases.forEach(e => e.toggleVisibility());
     }
-    
+
     systems.forEach(sys => sys.callUpdates(['instanceVisibility']));
     tmpSystems.forEach(tempSys => tempSys.callUpdates(['instanceVisibility']));
     clearSelection();
@@ -369,9 +370,9 @@ function ask(title, content, onYes?, onNo?) {
     });
 }
 
-function notify(message: string, type?: string, keepOpen=false, title?: string) {
+function notify(message: string, type?: string, keepOpen = false, title?: string) {
     let n = Metro.notify;
-    if(!type) {
+    if (!type) {
         type = "info";
     }
     n.create(message, title, {
@@ -385,7 +386,7 @@ function notify(message: string, type?: string, keepOpen=false, title?: string) 
 function setBackgroundImage() {
     let file = (document.getElementById("backgroundInput") as HTMLInputElement).files[0];
     let reader = new FileReader();
-    reader.onloadend = function() {
+    reader.onloadend = function () {
         document.getElementById('threeCanvas').style.backgroundImage = "url(" + reader.result + ")";
     }
     if (file) {
@@ -402,9 +403,9 @@ function setBackgroundColor() {
 class ToggleGroup {
     private id: string;
     private doc: Document;
-    private onChange: (toggleGroup: ToggleGroup)=>void;
+    private onChange: (toggleGroup: ToggleGroup) => void;
 
-    constructor(id: string, doc: Document, onChange?:(toggleGroup: ToggleGroup)=>void) {
+    constructor(id: string, doc: Document, onChange?: (toggleGroup: ToggleGroup) => void) {
         this.id = id;
         this.doc = doc;
         this.onChange = onChange;
@@ -436,7 +437,7 @@ class ToggleGroupWithDisable extends ToggleGroup {
     private lastActive: string;
     private disabled: string;
 
-    constructor(id: string, doc: Document, lastActive: string, disabled: string, onChange?: (toggleGroup: ToggleGroupWithDisable)=>void) {
+    constructor(id: string, doc: Document, lastActive: string, disabled: string, onChange?: (toggleGroup: ToggleGroupWithDisable) => void) {
         super(id, doc, onChange);
         this.lastActive = lastActive;
         this.disabled = disabled;
@@ -486,12 +487,12 @@ class View {
         this.doc = doc;
 
         // Initialise toggle groups
-        this.coloringMode = new ToggleGroup('coloringMode', doc, ()=>{updateColoring()});
+        this.coloringMode = new ToggleGroup('coloringMode', doc, () => { updateColoring() });
         this.centeringMode = new ToggleGroupWithDisable('centering', doc, 'Origin', 'None');
         this.inboxingMode = new ToggleGroupWithDisable('inboxing', doc, 'Monomer', 'None');
         // this.selectionMode = new ToggleGroupWithDisable('selectionScope', doc, 'Monomer', 'Disabled');
-        this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable)=>{
-        // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
+        this.transformMode = new ToggleGroupWithDisable('transform', doc, 'Translate', 'None', (g: ToggleGroupWithDisable) => {
+            // this.fluxSideBarDisplayed = false; // Bool keeping track of status of aside side bar in the fluctuation window
             // If we should show something
             if (g.enabled()) {
                 // Make sure something is selected
@@ -547,8 +548,8 @@ class View {
             case 'backbone': this.backboneScale *= factor; break;
             case 'nucleoside': this.nucleosideScale *= factor; break;
             case 'connector': this.connectorScale *= factor; break;
-            case 'bbconnector': this.bbconnectorScale*= factor; break;
-            default: console.error("Unknown component name: "+name); break;
+            case 'bbconnector': this.bbconnectorScale *= factor; break;
+            default: console.error("Unknown component name: " + name); break;
         }
         // Scale components in all systems
         for (const system of [systems, tmpSystems].flat()) {
@@ -560,20 +561,20 @@ class View {
                 // Don't scale the length of connectors
                 g.scale(factor, 1, factor);
             } else {
-                console.error("Unknown component name: "+name);
+                console.error("Unknown component name: " + name);
             }
         }
         render();
     }
 
-    public update3pMarker(e: BasicElement, diameter=5, length=1, spacing=.25) {
+    public update3pMarker(e: BasicElement, diameter = 5, length = 1, spacing = .25) {
         //console.assert, "Not a 3' end!");
         if (e !== e.strand.end3)
             return;
 
         if ((document.getElementById("marker3pToggle") as HTMLInputElement).checked) {
             // Place in front of backbone, pointing in the A3 direction
-            const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length/2 + spacing));
+            const p = e.getInstanceParameter3("bbOffsets").sub(e.getA3().multiplyScalar(length / 2 + spacing));
             const q = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(0, -1, 0),
                 e.getA3()
@@ -601,13 +602,13 @@ class View {
      * @param name Geometry name, e.g. 'backbone'
      * @param scale New scale of component, leave blank to reset scale to 1
      */
-    public setComponentScale(name: string, scale=1) {
+    public setComponentScale(name: string, scale = 1) {
         switch (name) {
             case 'backbone': scale /= this.backboneScale; break;
             case 'nucleoside': scale /= this.nucleosideScale; break;
             case 'connector': scale /= this.connectorScale; break;
             case 'bbconnector': scale /= this.bbconnectorScale; break;
-            default: console.error("Unknown component name: "+name); break;
+            default: console.error("Unknown component name: " + name); break;
         }
         this.scaleComponent(name, scale);
     }
@@ -646,17 +647,17 @@ class View {
             // (looks like the model is rotating)
             // Perhaps not needed for 6-DoF devices
             var rotation = 0;
-            vrRenderer.setAnimationLoop(function(){
+            vrRenderer.setAnimationLoop(function () {
                 rotation += 0.001;
                 rig.position.x = Math.sin(rotation) * 5;
                 rig.position.z = Math.cos(rotation) * 5;
-                rig.lookAt(new THREE.Vector3(0,0,0));
+                rig.lookAt(new THREE.Vector3(0, 0, 0));
                 vrRenderer.render(scene, camera);
             });
 
             // Make controller click go to next config
             const selectListener = (event) => {
-                systems[systems.length-1].reader.nextConfig();
+                systems[systems.length - 1].reader.nextConfig();
             };
             const controller = vrRenderer.vr.getController(0);
             controller.addEventListener('select', selectListener);
@@ -671,7 +672,7 @@ class View {
     }
 
     public getRandomHue(): THREE.Color {
-        return new THREE.Color(`hsl(${Math.random()*360}, 100%, 50%)`);
+        return new THREE.Color(`hsl(${Math.random() * 360}, 100%, 50%)`);
     }
 
     public getInputNumber(id: string): number {
@@ -691,7 +692,7 @@ class View {
         return (<HTMLInputElement>this.doc.getElementById(id)).value;
     }
 
-    public  getInputElement(id: string):HTMLInputElement{
+    public getInputElement(id: string): HTMLInputElement {
         return <HTMLInputElement>this.doc.getElementById(id);
     }
 
@@ -699,18 +700,18 @@ class View {
         return (<HTMLInputElement>this.doc.getElementById(id)).checked;
     }
 
-    public setInputBool(id: string, value:boolean): boolean { 
+    public setInputBool(id: string, value: boolean): boolean {
         let problem: boolean = false
         let e: HTMLInputElement = <HTMLInputElement>this.doc.getElementById(id);
-        if (e.type === 'checkbox') { 
+        if (e.type === 'checkbox') {
             e.checked = value;
         }
         else {
             console.log("ERROR:", id, "is not a boolean input element.");
             problem = true;
         }
-    
-        return(problem)
+
+        return (problem)
     }
 
     public isWindowOpen(id: string): boolean {
@@ -722,10 +723,10 @@ class View {
         } else {
             return false;
         }
-        
+
     }
 
-    public toggleWindow(id: string, oncreate?: ()=>void) {
+    public toggleWindow(id: string, oncreate?: () => void) {
         let elem = this.doc.getElementById(id);
         if (elem) {
             Metro.window.toggle(elem);
@@ -734,7 +735,7 @@ class View {
         }
     }
 
-    public toggleFluxWindow(id: string, oncreate?: ()=>void){
+    public toggleFluxWindow(id: string, oncreate?: () => void) {
         let elem = this.doc.getElementById(id);
         if (elem) {
             Metro.window.toggle(elem);
@@ -748,7 +749,7 @@ class View {
         }
     }
 
-    public createWindow(id: string, oncreate?: ()=>void) {
+    public createWindow(id: string, oncreate?: () => void) {
         fetch(`windows/${id}.json`)
             .then(response => response.json())
             .then(data => {
@@ -756,7 +757,7 @@ class View {
                 w[0].id = id;
                 w.load(`windows/${id}.html`).then(oncreate);
             }
-        );
+            );
     }
 
     public showHoverInfo(pos: THREE.Vector2, e: BasicElement) {
@@ -767,8 +768,8 @@ class View {
         } else {
             hoverInfo.innerHTML = `<span style="background:#${color}4f; padding: 5px">${e.type} ${e.getSystem().id}:${e.strand.id}:${e.id}</span>`;
         }
-        hoverInfo.style.left = pos.x  + 'px';
-        hoverInfo.style.top =  pos.y + 20 + 'px';
+        hoverInfo.style.left = pos.x + 'px';
+        hoverInfo.style.top = pos.y + 20 + 'px';
         hoverInfo.hidden = false;
     }
     public hideHoverInfo() {
@@ -790,11 +791,11 @@ class View {
         elem.innerHTML = `${width} x ${height}`;
     }
 
-    public scaleCanvas(scalingFactor=2) {
+    public scaleCanvas(scalingFactor = 2) {
         const width = canvas.width;
         const height = canvas.height;
-        canvas.width = width*scalingFactor;
-        canvas.height = height*scalingFactor;
+        canvas.width = width * scalingFactor;
+        canvas.height = height * scalingFactor;
         const ctx = canvas.getContext('webgl');
         ctx.viewport(0, 0, canvas.width, canvas.height);
         render();
@@ -805,7 +806,7 @@ class View {
             scaleFactor = parseFloat((document.getElementById('saveImageScalingFactor') as HTMLInputElement).value);
         }
         function saveImage() {
-            canvas.toBlob(function(blob) {
+            canvas.toBlob(function (blob) {
                 var a = document.createElement('a');
                 var url = URL.createObjectURL(blob);
                 a.href = url;
@@ -815,7 +816,7 @@ class View {
             //get the colorbar too
             if (colorbarScene.children.length != 0) {
                 renderColorbar();
-                colorbarCanvas.toBlob(function(blob) {
+                colorbarCanvas.toBlob(function (blob) {
                     var a = document.createElement('a');
                     var url = URL.createObjectURL(blob);
                     a.href = url;
@@ -833,9 +834,9 @@ class View {
             } catch (error) {
                 notify("Canvas is too large to save, please try a smaller scaling factor", "alert");
             }
-            this.scaleCanvas(1/scaleFactor);
+            this.scaleCanvas(1 / scaleFactor);
         });
-        
+
     }
 
     public longCalculation(calc: () => void, message: string, callback?: () => void) {
@@ -855,26 +856,26 @@ class View {
                 var t0 = performance.now();
                 calc();
                 var t1 = performance.now();
-            console.log("Long calculation took " + (t1 - t0) + " milliseconds.")
+                console.log("Long calculation took " + (t1 - t0) + " milliseconds.")
             } catch (error) {
-               notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
+                notify(`Sorry, something went wrong with the calculation: ${error}`, "alert");
             }
 
-        // Change cursor back and remove modal
-        dom['style'].cursor = "auto";
-        Metro.activity.close(activity);
-        if(callback) {
-            callback();
-        }
-    }));
+            // Change cursor back and remove modal
+            dom['style'].cursor = "auto";
+            Metro.activity.close(activity);
+            if (callback) {
+                callback();
+            }
+        }));
     }
 
     //Network Selector Methods (Protein tab)
-    public addNetwork(nid : number){
-        let name = "Network " + (nid+1).toString();
-        let id = "Network " + (nid+1).toString() + " Select";
+    public addNetwork(nid: number) {
+        let name = "Network " + (nid + 1).toString();
+        let id = "Network " + (nid + 1).toString() + " Select";
         let exists = !!document.getElementById(id);
-        if(!exists){
+        if (!exists) {
             let ul = document.getElementById("networks")
             let li = document.createElement("li");
             li.setAttribute('id', id);
@@ -884,22 +885,22 @@ class View {
         }
     }
 
-    public removeNetwork(nid: number){
-        let id = "Network " + (nid+1).toString() + " Select";
+    public removeNetwork(nid: number) {
+        let id = "Network " + (nid + 1).toString() + " Select";
         let exists = !!document.getElementById(id);
 
-        if(exists) {
+        if (exists) {
             let ul = document.getElementById("networks");
             let item = document.getElementById(id);
             ul.removeChild(item);
         }
     }
 
-    public toggleDataset(gid: number){
+    public toggleDataset(gid: number) {
         let GD = graphDatasets[gid];
         let name = "Dataset: " + GD.label + " Format: " + GD.datatype;
         let exists = !!document.getElementById(name);
-        if(!exists){
+        if (!exists) {
             //exists
             this.removeGraphData(gid);
         } else {
@@ -908,11 +909,11 @@ class View {
     }
 
     // UI methods for adding and removing info from lists in Fluctuation tab
-    public addGraphData(gid : number){
+    public addGraphData(gid: number) {
         let GD = graphDatasets[gid];
         let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype; // Main label
         let elementExists = !!document.getElementById(name); // boolean return if element exists
-        if(!elementExists){
+        if (!elementExists) {
             let ul = document.getElementById("datalist") //In fluctuation Window
             let li = document.createElement("li");
             let sp1 = document.createElement("span");
@@ -925,15 +926,15 @@ class View {
             li.setAttribute('value', String(gid));
             li.appendChild(sp1);
             li.appendChild(sp2);
-            li.onclick = function() {flux.toggleData(li.value)};
+            li.onclick = function () { flux.toggleData(li.value) };
             ul.appendChild(li);
         }
     }
 
-    public addNetworkData(nid: number){
-        let name = "Network " + (nid+1).toString();
+    public addNetworkData(nid: number) {
+        let name = "Network " + (nid + 1).toString();
         let exists = !!document.getElementById(name);
-        if(!exists) {
+        if (!exists) {
             if (networks[nid].fittingReady) { // only adds networks if they are ready (edges filled basically)
                 let ul = document.getElementById("readynetlist") //In fluctuation Window
                 let li = document.createElement("li");
@@ -956,21 +957,21 @@ class View {
         }
     }
 
-    public removeGraphData(gid : number){
+    public removeGraphData(gid: number) {
         let GD = graphDatasets[gid];
         let name = "Dataset: " + GD.label + " Format: " + GD.oDatatype;
         let elementExists = !!document.getElementById(name); // boolean return if element exists
-        if(elementExists) {
+        if (elementExists) {
             let ul = document.getElementById("datalist");
             let li = document.getElementById(name);
             ul.removeChild(li);
         }
     }
 
-    public removeNetworkData(nid : number){
-        if(networks[nid].fittingReady){
+    public removeNetworkData(nid: number) {
+        if (networks[nid].fittingReady) {
             let ul = document.getElementById("readynetlist");
-            let name = "Network " + (nid+1).toString();
+            let name = "Network " + (nid + 1).toString();
             let li = document.getElementById(name);
             ul.removeChild(li);
         }
@@ -1024,8 +1025,8 @@ class fluxGraph {
             flatblue: 'rgb(102, 131, 156)',
         }
         this.colorarr = [this.colors.red, this.colors.green, this.colors.yellow, this.colors.blue,
-            this.colors.purple, this.colors.hotpink, this.colors.grey, this.colors.lightgreen,
-            this.colors.lavender, this.colors.lightblue, this.colors.armygreen, this.colors.flatblue];
+        this.colors.purple, this.colors.hotpink, this.colors.grey, this.colors.lightgreen,
+        this.colors.lavender, this.colors.lightblue, this.colors.armygreen, this.colors.flatblue];
         this.type = type;
         this.temp = 0;
         this.chart = null;
@@ -1103,13 +1104,13 @@ class fluxGraph {
         wait();
     }
 
-    toggleDatasetsandNetworks(){
+    toggleDatasetsandNetworks() {
         const delay = ms => new Promise(res => setTimeout(res, ms));
         const wait = async () => {
             await delay(300);
             try {
                 flux.fluxWindowOpen = !flux.fluxWindowOpen;
-                if(flux.fluxWindowOpen){
+                if (flux.fluxWindowOpen) {
                     flux.loadDatasetsandNetworks();
                 } else {
                     flux.flushDatasetsandNetworks();
@@ -1122,34 +1123,34 @@ class fluxGraph {
     }
 
     loadDatasetsandNetworks() {
-        if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {view.addGraphData(gid);})
-        if(networks.length > 0) networks.forEach((n, nid) => {if(n.fittingReady) {view.addNetworkData(nid);}})
+        if (graphDatasets.length > 0) graphDatasets.forEach((g, gid) => { view.addGraphData(gid); })
+        if (networks.length > 0) networks.forEach((n, nid) => { if (n.fittingReady) { view.addNetworkData(nid); } })
     }
 
     flushDatasetsandNetworks() {
-        if(graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {
-            try{
+        if (graphDatasets.length > 0) graphDatasets.forEach((g, gid) => {
+            try {
                 view.removeGraphData(gid);
-            } catch (e) {}
+            } catch (e) { }
         })
-        if(networks.length > 0) networks.forEach((n, nid) => {
+        if (networks.length > 0) networks.forEach((n, nid) => {
             if (n.fittingReady) {
                 try {
                     view.removeNetworkData(nid);
-                } catch (e) {}
+                } catch (e) { }
             }
         })
     }
 
     clearGraph() {
-        if(this.gids.length != 0) this.gids.forEach(g => this.toggleData(g));
+        if (this.gids.length != 0) this.gids.forEach(g => this.toggleData(g));
     }
 
     getYaxis(units: string) {
-        return {'A_sqr': "A^2", "nm_sqr": "nm^2"}[units]; //quick conversion key
+        return { 'A_sqr': "A^2", "nm_sqr": "nm^2" }[units]; //quick conversion key
     }
 
-    loadFluxData(){
+    loadFluxData() {
         let input = <HTMLInputElement>document.querySelector('#fluxfile');
         let files = input.files;
         let filearr = Array.from(files)
@@ -1161,18 +1162,18 @@ class fluxGraph {
         };
         jsonReader.onloadend = () => {
             let num_gds = graphDatasets.length - oldGDIndx;
-            if(num_gds > 0){
+            if (num_gds > 0) {
                 let filename = (filearr.pop().name).split(".")[0];
-                for(let i = 0; i < num_gds; i++) {
+                for (let i = 0; i < num_gds; i++) {
                     let old_label = graphDatasets[oldGDIndx + i].label;
                     graphDatasets[oldGDIndx + i].label = old_label + filename; //rename
-                    if(this.fluxWindowOpen) view.addGraphData(oldGDIndx + i); //add to flux window sidebar if its displayed
+                    if (this.fluxWindowOpen) view.addGraphData(oldGDIndx + i); //add to flux window sidebar if its displayed
                 }
                 oldGDIndx = graphDatasets.length;
             }
         }
 
-        if(files.length == 0) notify('Please Select a File');
+        if (files.length == 0) notify('Please Select a File');
         else {
             for (let i = 0; i < files.length; i++) { //added to graphDatasets
                 jsonReader.readAsText(files[i]);
@@ -1180,7 +1181,7 @@ class fluxGraph {
         }
     }
 
-    loadjson(jsonReader: FileReader){ //Creates Fluctuation Dataset from file
+    loadjson(jsonReader: FileReader) { //Creates Fluctuation Dataset from file
         const file = jsonReader.result as string;
         const data = JSON.parse(file);
         // const data = JSON.parse(jsonfile);
@@ -1190,29 +1191,29 @@ class fluxGraph {
         let coordkey = "coordinates";
         let radiikey = "radii";
         let cgkeys = ["Bfactor", "Bfactor (exp)", "Masses (ox units)", coordkey, "temp", "force constant matrix (ox units)", radiikey];
-        if(rmsfkey in data){
+        if (rmsfkey in data) {
             this.loadfluxjson(data[rmsfkey])
-        } else if(rmsdkey in data) {
+        } else if (rmsdkey in data) {
             this.loadfluxjson(data[rmsdkey])
-        } else if(masskey in data && coordkey in data && radiikey in data){
+        } else if (masskey in data && coordkey in data && radiikey in data) {
             this.loadnetworkjson(data[masskey], data[coordkey], data[radiikey])
-        } else if(cgkeys[0] in data && cgkeys[5] in data) {
+        } else if (cgkeys[0] in data && cgkeys[5] in data) {
             this.loadcgjson(data[cgkeys[0]], data[cgkeys[1]], data[cgkeys[2]], data[cgkeys[3]], data[cgkeys[4]], data[cgkeys[5]], data[cgkeys[6]])
         } else {
             notify('Could Not Load Json File');
         }
     }
 
-    loadcgjson(bfactors, bfactors_exp, masses, coords, temp, fc_matrix, radii){
+    loadcgjson(bfactors, bfactors_exp, masses, coords, temp, fc_matrix, radii) {
         this.loadnetworkjson(masses, coords, radii);
-        let monomers = systems[systems.length-1].getMonomers();
+        let monomers = systems[systems.length - 1].getMonomers();
         const net = new Network(networks.length, monomers);
 
         let N = masses.length;
-        for(let i = 0; i < N; i++){
-            for(let j = i+1; j < N; j++){
-                if(fc_matrix[i*N+j] != null && fc_matrix[i*N+j] != 0.){
-                    net.reducedEdges.addEdge(i, j, net.elemcoords.distance(i, j), 's', fc_matrix[i*N+j]);
+        for (let i = 0; i < N; i++) {
+            for (let j = i + 1; j < N; j++) {
+                if (fc_matrix[i * N + j] != null && fc_matrix[i * N + j] != 0.) {
+                    net.reducedEdges.addEdge(i, j, net.elemcoords.distance(i, j), 's', fc_matrix[i * N + j]);
                 }
             }
         }
@@ -1227,7 +1228,7 @@ class fluxGraph {
         selectednetwork = net.nid; // auto select network just loaded
         view.addNetwork(net.nid);
 
-        let xdata = bfactors.map((val, ind) => ind+1);
+        let xdata = bfactors.map((val, ind) => ind + 1);
         let GD = new graphData('cg_analytical', bfactors, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
         graphDatasets.push(GD);
 
@@ -1238,19 +1239,19 @@ class fluxGraph {
     }
 
 
-    loadfluxjson(fluxdata){
-        let msddata = fluxdata.map(x => x**2); //rmsf to msf
-        let xdata = msddata.map((val, ind) => ind+1);
+    loadfluxjson(fluxdata) {
+        let msddata = fluxdata.map(x => x ** 2); //rmsf to msf
+        let xdata = msddata.map((val, ind) => ind + 1);
         let GD = new graphData('flux', msddata, xdata, 'msf', 'nm_sqr'); //label needs to be re written
         graphDatasets.push(GD);
     }
 
-    loadnetworkjson(masses, coordinates, radii){
-        coordinates = coordinates.map(x => x.map(y => y/ 8.518)); //convert to simulation units
-        radii = radii.map(x => x/ 8.518); //convert to simulation units
+    loadnetworkjson(masses, coordinates, radii) {
+        coordinates = coordinates.map(x => x.map(y => y / 8.518)); //convert to simulation units
+        radii = radii.map(x => x / 8.518); //convert to simulation units
         //find center of mass
-        let com = coordinates.reduce((a, b) => {return [a[0]+b[0], a[1]+b[1], a[2]+b[2]]});
-        com = com.map(x=>x/masses.length)
+        let com = coordinates.reduce((a, b) => { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]] });
+        com = com.map(x => x / masses.length)
         // shift coordinates so com is dead center
         coordinates = coordinates.map(x => {
             x[0] -= com[0];
@@ -1259,25 +1260,25 @@ class fluxGraph {
             return x;
         })
 
-        let xpos = coordinates.map((info) => {return info[0];});
-        let ypos = coordinates.map((info) => {return info[1];});
-        let zpos = coordinates.map((info) => {return info[2];});
-        let xmax = xpos.reduce((a,b) => {return Math.max(a, b)})
-        let xmin = xpos.reduce((a,b) => {return Math.min(a, b)})
-        let ymax = ypos.reduce((a,b) => {return Math.max(a, b)})
-        let ymin = ypos.reduce((a,b) => {return Math.min(a, b)})
-        let zmax = zpos.reduce((a,b) => {return Math.max(a, b)})
-        let zmin = zpos.reduce((a,b) => {return Math.min(a, b)})
-        let xdim= xmax - xmin;
-        let ydim= ymax - ymin;
-        let zdim= zmax - zmin;
-        if(xdim < 2) xdim = 2.5;
-        if(ydim < 2) ydim = 2.5;
-        if(zdim < 2) zdim = 2.5;
+        let xpos = coordinates.map((info) => { return info[0]; });
+        let ypos = coordinates.map((info) => { return info[1]; });
+        let zpos = coordinates.map((info) => { return info[2]; });
+        let xmax = xpos.reduce((a, b) => { return Math.max(a, b) })
+        let xmin = xpos.reduce((a, b) => { return Math.min(a, b) })
+        let ymax = ypos.reduce((a, b) => { return Math.max(a, b) })
+        let ymin = ypos.reduce((a, b) => { return Math.min(a, b) })
+        let zmax = zpos.reduce((a, b) => { return Math.max(a, b) })
+        let zmin = zpos.reduce((a, b) => { return Math.min(a, b) })
+        let xdim = xmax - xmin;
+        let ydim = ymax - ymin;
+        let zdim = zmax - zmin;
+        if (xdim < 2) xdim = 2.5;
+        if (ydim < 2) ydim = 2.5;
+        if (zdim < 2) zdim = 2.5;
 
-        if(box.x < xdim) box.x = xdim*1.25;
-        if(box.y < ydim) box.y = ydim*1.25;
-        if(box.z < zdim) box.z = zdim*1.25;
+        if (box.x < xdim) box.x = xdim * 1.25;
+        if (box.y < ydim) box.y = ydim * 1.25;
+        if (box.z < zdim) box.z = zdim * 1.25;
         redrawBox();
 
         let dumb = new System(tmpSystems.length, 0);
@@ -1293,15 +1294,15 @@ class fluxGraph {
         let gstrand = realSys.addNewGenericSphereStrand();
         let newElems: GenericSphere[] = [];
         let last;
-        for(let i: number = 0; i < masses.length; i++) {
+        for (let i: number = 0; i < masses.length; i++) {
             let be = gstrand.createBasicElement(currentelemsize + i);
             elements.push(be);
             be.sid = i;
             be.dummySys = dumb;
             be.type = 'gs';
             be.n5 = null;
-            if(i != 0) {
-                let prev = newElems[i-1];
+            if (i != 0) {
+                let prev = newElems[i - 1];
                 be.n3 = prev;
                 prev.n5 = be;
             } else {
@@ -1363,7 +1364,7 @@ class fluxGraph {
             this.initializeGraph();
         }
         // Rewrites graph width with the chart.data.labels
-        let currlens = this.gids.map(g => {return graphDatasets[g].xdata.length});
+        let currlens = this.gids.map(g => { return graphDatasets[g].xdata.length });
         let longest = Math.max(...currlens) > GD.xdata.length ? Math.max(...currlens) : GD.xdata.length;
         if (longest != this.chart.data.labels.length) {
             this.chart.data.labels = [...Array(longest).keys()]; // Rewrites x data to always start from 0 and go up
@@ -1374,8 +1375,8 @@ class fluxGraph {
         if (GD.cutoff > 0) { // If it's data that's been fit it get's dashed
             this.chart.data.datasets.push({
                 label: GD.label,
-                backgroundColor: this.colorarr[gid%this.colorarr.length],
-                borderColor: this.colorarr[gid%this.colorarr.length],
+                backgroundColor: this.colorarr[gid % this.colorarr.length],
+                borderColor: this.colorarr[gid % this.colorarr.length],
                 borderDash: [5, 5],
                 data: GD.data,
                 fill: false,
@@ -1383,8 +1384,8 @@ class fluxGraph {
         } else {
             this.chart.data.datasets.push({
                 label: GD.label,
-                backgroundColor: this.colorarr[gid%this.colorarr.length],
-                borderColor: this.colorarr[gid%this.colorarr.length],
+                backgroundColor: this.colorarr[gid % this.colorarr.length],
+                borderColor: this.colorarr[gid % this.colorarr.length],
                 data: GD.data,
                 fill: false,
             })
@@ -1419,8 +1420,8 @@ class fluxGraph {
         }
     };
 
-    applyCurrentIndx(mode:string = "avg") {
-        if(this.gids.length != 1){
+    applyCurrentIndx(mode: string = "avg") {
+        if (this.gids.length != 1) {
             notify("Please Select a Single Dataset to Apply Indexing To");
             return;
         }
@@ -1430,14 +1431,14 @@ class fluxGraph {
         try {
             let newData = [];
             let newXData = [];
-            if(mode == 'avg'){
-                let currentYdata =  this.currentindexinfo.map(d => { //get particle numbers same as index
-                    return d.map(x => {return GD.data[x]});
+            if (mode == 'avg') {
+                let currentYdata = this.currentindexinfo.map(d => { //get particle numbers same as index
+                    return d.map(x => { return GD.data[x] });
                 })
-                for(let i = 0; i < this.currentindexinfo.length; i++){
+                for (let i = 0; i < this.currentindexinfo.length; i++) {
                     let parents = this.currentindexinfo[i]; //list of particle ids representing each particle i
                     let parentvals = currentYdata[i].slice();
-                    let avg = parentvals.reduce((a, b) => a+b)/parents.length; //average
+                    let avg = parentvals.reduce((a, b) => a + b) / parents.length; //average
                     newData.push(avg);
                     newXData.push(i);
                 }
@@ -1478,7 +1479,7 @@ class fluxGraph {
     };
 
     fitData(nid: number) {
-        if(this.gids.length != 1){
+        if (this.gids.length != 1) {
             notify("Please Select only One Dataset to Begin Fitting");
             return;
         }
@@ -1489,8 +1490,8 @@ class fluxGraph {
 
         // make format msf for fitting
         let Targetmsf;
-        if(GD.datatype == "bfactor") {
-            Targetmsf = GD.data.slice().map(b => b*(3/(8*Math.pow(Math.PI, 2))));
+        if (GD.datatype == "bfactor") {
+            Targetmsf = GD.data.slice().map(b => b * (3 / (8 * Math.pow(Math.PI, 2))));
         } else {
             Targetmsf = GD.data.slice(); //must be msf
         }
@@ -1498,28 +1499,28 @@ class fluxGraph {
         // get network, make sure edges are there, otherwise nothing to calculate
         let net = networks[nid];
 
-        if(net.particles.length > 1500){
+        if (net.particles.length > 1500) {
             notify("Large Networks (n>1500) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
             return;
         }
 
-        if(net.reducedEdges.total == 0) {
+        if (net.reducedEdges.total == 0) {
             notify("Network's Edges must be filled prior to Fitting");
             return;
         }
 
         // checks data you are fitting is exact same length, might need to make changes to this later
-        if(net.particles.length != Targetmsf.length) {
+        if (net.particles.length != Targetmsf.length) {
             notify("Target Data is a different length than network, will not Fit");
             return;
         }
 
         // ANM Solving, only one for a little bit
-        if(net.networktype == 'ANM' || net.networktype == 'ANMT'){
+        if (net.networktype == 'ANM' || net.networktype == 'ANMT') {
             let msf = [];
             if (window.Worker) {
                 const mainWorker = new Worker('./dist/model/anm_worker.js');
-                notify("Fitting Network " + (nid+1).toString() + " to " + " Dataset " + GD.label);
+                notify("Fitting Network " + (nid + 1).toString() + " to " + " Dataset " + GD.label);
                 let temp = view.getInputNumber('temp');
 
                 function activate() {
@@ -1536,14 +1537,14 @@ class fluxGraph {
                                 let fit = findLineByLeastSquaresNoIntercept(msf, Targetmsf);
                                 let xvals = fit[0];
                                 let fitval = fit[1];
-                                let m = <number> fit[2];
-                                let k = 1/m; //N*10^-10/A (k*100 = pN/A)
-                                let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
+                                let m = <number>fit[2];
+                                let k = 1 / m; //N*10^-10/A (k*100 = pN/A)
+                                let sim_k = k / net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
 
                                 // msf is returned currently to check the Hessian inversion process
                                 let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "msf", "A_sqr");
                                 gendata.gammaSim = sim_k;
-                                net.reducedEdges.ks = net.reducedEdges.ks.map(k => {return sim_k;});
+                                net.reducedEdges.ks = net.reducedEdges.ks.map(k => { return sim_k; });
                                 let ngid = graphDatasets.length;
                                 graphDatasets.push(gendata);
                                 view.addGraphData(ngid);
@@ -1554,8 +1555,8 @@ class fluxGraph {
 
                         mainWorker.onmessage = callback;
                         mainWorker.postMessage([net.elemcoords.xI.slice(), net.elemcoords.yI.slice(), net.elemcoords.zI.slice(),
-                            net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
-                            net.masses.slice(), temp]);
+                        net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
+                        net.masses.slice(), temp]);
 
                     });
                     return promise;
@@ -1571,7 +1572,7 @@ class fluxGraph {
         }
     };
 
-    downloadChart(){
+    downloadChart() {
         var a = document.createElement('a');
         a.href = this.chart.toBase64Image(); //declared in chart.options.animate
         a.download = 'fluxchart.png';
@@ -1579,27 +1580,133 @@ class fluxGraph {
         a.click();
     };
 
-    downloadGraphDatasets(){
+    downloadGraphDatasets() {
         this.gids.forEach(g => {
             makeFluctuationFile(g);
         });
     };
 
-    prepIndxButton(indx){
+    prepIndxButton(indx) {
         let ib = document.getElementById('indxbutton');
-        ib.onclick = function(){makeIndxFile(indx)};
+        ib.onclick = function () { makeIndxFile(indx) };
         flux.currentindexinfo = indx.slice();
         // $('indxbutton').on("click", function() {
         //     makeIndxFile(indx);
         // })
     };
 
-    prepJSONButton(nid){ // this function doesn't really belong here
+    prepJSONButton(nid) { // this function doesn't really belong here
         let jb = document.getElementById('jsonbutton');
-        jb.onclick = function(){makeNetworkJSONFile(nid)};
+        jb.onclick = function () { makeNetworkJSONFile(nid) };
     };
 
 }
 
 // Fluctuation Chart Manager
 const flux = new fluxGraph("msf", "A_sqr");
+
+function openEnergyWatcher() {
+    // function also uses fluxGraph class to avoid adding unnecessary classes
+
+    const delay = (ms) => new Promise(res => setTimeout(res, ms));
+    // delay because the window and its DOM elements do not exist yet at the moment the callback runs
+
+    const wait = async () => {
+
+        await delay(150);
+
+        try {
+            // Get the energy watcher window directly
+            const lastWin = 
+                (document.getElementById("energyWatcher") as HTMLElement) ||
+                (document.querySelector('[id*="energyWatcher"]') as HTMLElement);
+            if (!lastWin) {
+                notify("Energy watcher window not found");
+                return;
+            }
+
+            // Metro window visible content area is usually .window-content
+            const content =
+                (lastWin.querySelector(".window-content") as HTMLElement) ||
+                (lastWin.querySelector(".content") as HTMLElement) ||
+                lastWin;
+
+            // IMPORTANT: fluxGraph.initChart() expects a canvas with id="flux"
+            content.innerHTML = `
+                <div style="padding:10px; height:350px; box-sizing:border-box;">
+                    <canvas id="flux" style="width:100%; height:100%;"></canvas>
+                </div>
+            `;
+
+            // Adjust labels/titles BEFORE creating the chart
+            flux.xaxislabel = "time (SU)";
+            flux.yaxislabel = "potential energy [SU]";
+
+            // Update the chart options to match
+            flux.chartoptions.scales.xAxes[0].scaleLabel.labelString = flux.xaxislabel;
+            flux.chartoptions.scales.yAxes[0].scaleLabel.labelString = flux.yaxislabel;
+
+            // no title (since it would be redundant)
+            flux.chartoptions.title.display = false;
+
+            // Clear any previous chartdata (important if reopened)
+            flux.chartdata.labels = [];
+            flux.chartdata.datasets = [];
+
+
+            // Create the chart (fluxGraph has its own internal delay)
+            flux.initChart();
+
+            // Wait for flux.initChart() to actually create flux.chart
+            await delay(450);
+
+            if (!flux.chart) {
+                notify("Energy watcher chart did not initialize");
+                return;
+            }
+
+            flux.chart.data.datasets = [{
+                 label: "potential energy [SU]",
+                 data: [],
+                 fill: false,
+                 pointRadius: 0,
+                 borderWidth: 2 // line width of the energy plot 
+            }];
+
+            flux.chart.update(0);
+
+        } catch (e) {
+            notify("Energy watcher could not be opened");
+            console.error(e);
+        }
+    };
+
+    wait();
+}
+
+function energyWatcherAddPoint(t_su: number, e_pot_su: number) {
+    if (!flux || !flux.chart) return;
+
+    // skip plotting first few points after backend switch to avoid misreading and therefore spikes in the chart
+    if ((window as any).__energy_skip > 0) {
+        (window as any).__energy_skip -= 1;
+        return; // do not add to chart
+    }
+
+    flux.chart.data.labels.push(t_su);
+    flux.chart.data.datasets[0].data.push(e_pot_su);
+
+    // keep last N points
+    const MAX = 2000;
+    if (flux.chart.data.labels.length > MAX) {
+        flux.chart.data.labels.shift();
+        flux.chart.data.datasets[0].data.shift();
+    }
+
+    flux.chart.update(0);
+}
+
+// make it callable from the socket code
+(window as any).energyWatcherAddPoint = energyWatcherAddPoint;
+
+

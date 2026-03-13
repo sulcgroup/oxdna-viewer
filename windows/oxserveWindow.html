@@ -6,8 +6,12 @@ Simulation settings:
 </fieldset>
 
 <fieldset>
-    <button class="button" id="oxIP${id}_1" onclick="if(socket) socket.stop_simulation()" title="Delete entry">x</button>
-    <button class="button" id="oxIP${id}_2" onclick="if(socket) socket.start_simulation()" title="Establish connection">►</button>                      
+    <button class="button" id="oxIP${id}_1" onclick="stopSimulationHandler()" title="Delete entry">x</button>
+    <button class="button" id="oxIP${id}_2" onclick="startSimulationHandler()" title="Establish connection">►</button>        
+    <button class="button" id="oxIP${id}_3" onclick="view.toggleWindow('energyWatcher', openEnergyWatcher)" title="energy_watcher">  <img src="/energy_watcher_icon.png"></button>        
+      <!-- in Dynamics -> Ox-Serve - Settings -> button (with a little graph on it)
+       window ID: energyWatcher.html/json; upon first press-> openEnergyWatcher function -->  
+  
 <fieldset>
 
 <fieldset id="relax_MC_settings" >

@@ -79,7 +79,22 @@ function addOXServeURL(){
 
 
 
+function startSimulationHandler(){
+    if(socket){ 
+        socket.stop_simulation();
+        socket.abort=true;
+        socket.start_simulation();
 
+    }
+}
+
+
+function stopSimulationHandler(){
+    if(socket) {
+        socket.stop_simulation();
+        socket.abort=true;
+    }
+}
 
 class OXServeSocket extends WebSocket{
     abort = true;
@@ -92,9 +107,23 @@ class OXServeSocket extends WebSocket{
     this.onmessage = (response) => {
         if(!this.abort){ //ignore all incomming messages when we stop the simulation
             let message = JSON.parse(response.data);
-            if ("console_log" in message){
-                console.log(message["console_log"]);
-            }
+            if ("console_log" in message) {
+                const line = String(message["console_log"]); // get console output 
+                console.log(line);
+                const parts = line.trim().split(/\s+/); // split into numeric columns
+                
+                const idx = parseFloat(parts[4]) === 0 ? 1:2;
+                // trying to differentiate between MC and MD output: for MD output, last column is (usually) 0
+                // for MC, Epot output is the second column (index 1), for MD, it's the third (index 2)
+                
+                const Epot = parseFloat(parts[idx]);
+                
+                const step = parseInt(parts[0], 10);   // e.g. 150000 from: "no; 150000 450.0000 ..."
+                if (!Number.isNaN(step)) {
+                    (window as any).energyWatcherAddPoint(step, Epot);
+}
+                
+        }
             if ("dat_file" in message) {
                 let lines = message["dat_file"].split(/[\n]+/g);
                 oxServeTrajReader.parseConf(lines);
@@ -160,7 +189,10 @@ class OXServeSocket extends WebSocket{
         } 
         
         console.log(`Simulation type is ${sim_type}`);
+        (this as any).runningSimType = sim_type;
         let settings_list = relax_scenarios[sim_type];
+
+        (window as any).__energy_skip = 2; // for energyWatcher -> skip the first few output lines
 
         if(forceHandler.forces.length > 0){
             conf["trap_file"] = forcesToString(newElementIDs);
