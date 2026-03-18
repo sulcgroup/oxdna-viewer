@@ -136,34 +136,45 @@ function readFilesFromPathArgs(args){
     }
 
     const get_request = (paths:string[]) => {
-        let files:File[] = [];
-
-        while(paths) {
-            let path = paths.pop();
+        const requests = paths.map(path => new Promise<File>((resolve, reject) => {
             let req = new XMLHttpRequest();
-            const fileName = path.toLowerCase();
+            const fileName = path.split(/[\\/]/).pop() || path;
 
-            console.log("get_request://",fileName);
+            console.log("get_request://", path);
             req.open("GET", path);
             req.responseType = "blob";
 
             req.onload = () => {
-                const file = new File([req.response], fileName);
-                files.push(file)
+                if (req.status !== 0 && (req.status < 200 || req.status >= 300)) {
+                    reject(new Error(`Unable to load ${path}: HTTP ${req.status}`));
+                    return;
                 }
+                resolve(new File([req.response], fileName));
+            };
 
-            req.onerror = () => {done()};
+            req.onerror = () => {
+                reject(new Error(`Unable to load ${path}`));
+            };
+
             req.send();
-        }
-        return(files)
-    }
+        }));
+
+        return Promise.all(requests);
+    };
 
     if(args.length > 0) {
-        let files = get_request(args);
-        //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
-        handleFiles(files)
+        get_request(args).then(files => {
+            //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
+            return handleFiles(files);
+        }).catch(error => {
+            console.error(error);
+            activity.text = `ERROR: ${error.message}`;
+        }).finally(() => {
+            done();
+        });
     }
     else {
         activity.text = "ERROR: No files provided"
+        done();
     }
 }
