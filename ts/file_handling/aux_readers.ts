@@ -267,8 +267,10 @@ function readSelectFile(file:File) { // TODO: needs further checking and integra
 
 //reads in an anm parameter file and associates it with the last loaded system.
 function parsePar(lines, system) {
-
-    lines = lines.split(/[\n]+/g);
+    lines = lines
+        .split(/\r?\n/g)
+        .map(line => line.trim())
+        .filter(line => line.length > 0 && !line.startsWith('#'));
     //remove the header
     lines = lines.slice(1)
 
