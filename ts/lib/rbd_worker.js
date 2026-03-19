@@ -136,8 +136,8 @@ self.onmessage = function(e) {
                 if (d2 < 1e-16) continue;
                 const dist = Math.sqrt(d2);
                 const ext  = dist - relaxed;
-                if (ext <= 0) continue;
-                const s = Math.min(springK * ext, maxForce) / dist;
+                if (Math.abs(ext) < 1e-8) continue;
+                const s = Math.sign(ext) * Math.min(springK * Math.abs(ext), maxForce) / dist;
                 const ffx = dx*s, ffy = dy*s, ffz = dz*s;
                 forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
                 const rx = fx0-cxi, ry = fy0-cyi, rz = fz0-czi;

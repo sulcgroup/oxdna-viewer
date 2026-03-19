@@ -2,41 +2,69 @@
 declare const RAPIER: any;
 
 let rigidClusterSimulator: RigidClusterSimulator;
+let standaloneColliderViz: ColliderVisualizer | null = null;
 
 function toggleClusterSim() {
     if (!view.getInputBool("clusterSim")) {
-        // simulate()'s RAF loop detects the unchecked state and handles cleanup.
-        return;
-    }
-    if (!rigidClusterSimulator) {
-        if (typeof RAPIER === 'undefined') {
-            notify("Rapier physics engine not ready yet – please try again in a moment.");
-            document.getElementById("clusterSim")["checked"] = false;
-            return;
-        }
-        rigidClusterSimulator = new RigidClusterSimulator();
-        if (rigidClusterSimulator.getNumberOfClusters() < 2) {
-            notify("Please create at least 2 clusters");
-            view.toggleWindow("clusteringWindow");
-            document.getElementById("clusterSim")["checked"] = false;
+        // Stop immediately — don't wait for the RAF loop.
+        if (rigidClusterSimulator) {
+            editHistory.add(new RevertableClusterSim(rigidClusterSimulator.getClusters()));
             rigidClusterSimulator.dispose();
             rigidClusterSimulator = null;
-            return;
+            if (view.getInputBool('rbd_showColliders')) {
+                const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
+                if (clustered.length > 0) standaloneColliderViz = new ColliderVisualizer(clustered);
+            }
         }
-        if (view.getInputBool('rbd_showColliders')) {
-            rigidClusterSimulator.enableColliderViz();
-        }
+        return;
+    }
+
+    // Discard any existing simulator (handles re-enable without re-checking race).
+    if (rigidClusterSimulator) {
+        rigidClusterSimulator.dispose();
+        rigidClusterSimulator = null;
+    }
+    if (standaloneColliderViz) { standaloneColliderViz.dispose(); standaloneColliderViz = null; }
+
+    if (typeof RAPIER === 'undefined') {
+        notify("Rapier physics engine not ready yet – please try again in a moment.");
+        document.getElementById("clusterSim")["checked"] = false;
+        return;
+    }
+    rigidClusterSimulator = new RigidClusterSimulator();
+    if (rigidClusterSimulator.getNumberOfClusters() < 2) {
+        notify("Please create at least 2 clusters");
+        view.toggleWindow("clusteringWindow");
+        document.getElementById("clusterSim")["checked"] = false;
+        rigidClusterSimulator.dispose();
+        rigidClusterSimulator = null;
+        return;
+    }
+    if (view.getInputBool('rbd_showColliders')) {
+        rigidClusterSimulator.enableColliderViz();
     }
     rigidClusterSimulator.simulate();
 }
 
 function toggleColliderViz() {
-    if (!rigidClusterSimulator) return;
-    if (view.getInputBool('rbd_showColliders')) {
-        rigidClusterSimulator.enableColliderViz();
-    } else {
-        rigidClusterSimulator.disableColliderViz();
+    if (rigidClusterSimulator) {
+        if (view.getInputBool('rbd_showColliders')) {
+            rigidClusterSimulator.enableColliderViz();
+        } else {
+            rigidClusterSimulator.disableColliderViz();
+        }
+        return;
     }
+    // No simulation running — standalone viz
+    if (view.getInputBool('rbd_showColliders')) {
+        if (!standaloneColliderViz) {
+            const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
+            if (clustered.length > 0) standaloneColliderViz = new ColliderVisualizer(clustered);
+        }
+    } else {
+        if (standaloneColliderViz) { standaloneColliderViz.dispose(); standaloneColliderViz = null; }
+    }
+    render();
 }
 
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
@@ -62,12 +90,6 @@ class RigidClusterSimulator {
     private world: any;
     private viz: ColliderVisualizer | null = null;
 
-    connectionRelaxedLength: number;
-    connectionSpringConst: number;
-    connectionMaxForce: number;
-    contactRepulsion: number;
-    dt: number;
-
     private worker: Worker;
     private workerBusy = false;
     private pendingNetTrans: Float32Array | null = null;
@@ -82,14 +104,8 @@ class RigidClusterSimulator {
     private totalConns:  number;
 
     constructor() {
-        this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
-        this.connectionSpringConst   = view.getInputNumber('rbd_connectionSpringConst');
-        this.connectionMaxForce      = view.getInputNumber('rbd_connectionMaxForce');
-        this.contactRepulsion        = view.getInputNumber('rbd_contactRepulsion');
-        this.dt                      = view.getInputNumber('rbd_dt');
-
         this.world = new RAPIER.World({ x: 0, y: 0, z: 0 });
-        this.world.timestep = this.dt;
+        this.world.timestep = view.getInputNumber('rbd_dt');
 
         const m = new Map<number, Set<BasicElement>>();
         elements.forEach(e => {
@@ -162,6 +178,10 @@ class RigidClusterSimulator {
             this.pendingNetQuat  = e.data.netQuat;
             this.workerBusy = false;
         };
+        this.worker.onerror = e => {
+            console.error('RBD worker error:', e);
+            this.workerBusy = false;
+        };
 
         // Init: send topology + initial positions (transferred, never again)
         this.worker.postMessage(
@@ -176,8 +196,9 @@ class RigidClusterSimulator {
 
     public getWorld(): any { return this.world; }
     public getNumberOfClusters(): number { return this.clusters.length; }
+    public getClusters(): Cluster[] { return this.clusters; }
 
-    public enableColliderViz()  { if (!this.viz) this.viz = new ColliderVisualizer(this.clusters); }
+    public enableColliderViz()  { if (!this.viz) this.viz = new ColliderVisualizer(this.clusters.flatMap(c => c.elements)); }
     public disableColliderViz() { if (this.viz) { this.viz.dispose(); this.viz = null; } }
 
     public integrate(dt: number) {
@@ -226,11 +247,12 @@ class RigidClusterSimulator {
         const selectedMask = new Uint8Array(N); // cheap; N bytes
 
         const params = {
-            contactRepulsion: this.contactRepulsion,
-            springK:   this.connectionSpringConst,
-            relaxed:   this.connectionRelaxedLength,
-            maxForce:  this.connectionMaxForce,
-            dt, stepsPerCall: 4
+            contactRepulsion: view.getInputNumber('rbd_contactRepulsion'),
+            springK:          view.getInputNumber('rbd_connectionSpringConst'),
+            relaxed:          view.getInputNumber('rbd_connectionRelaxedLength'),
+            maxForce:         view.getInputNumber('rbd_connectionMaxForce'),
+            dt:               view.getInputNumber('rbd_dt'),
+            stepsPerCall: 4
         };
 
         if (selectedClusters.size === 0) {
@@ -276,17 +298,11 @@ class RigidClusterSimulator {
     }
 
     public simulate() {
-        this.integrate(this.dt);
+        this.integrate(view.getInputNumber('rbd_dt'));
         if (forceHandler.forces.length > 0) forceHandler.redrawTraps();
-
-        const shouldContinue = document.getElementById("clusterSim")["checked"];
-        if (shouldContinue) {
+        // Continue only while this instance is still the active simulator.
+        if (rigidClusterSimulator === this) {
             requestAnimationFrame(this.simulate.bind(this));
-        } else {
-            editHistory.add(new RevertableClusterSim(this.clusters));
-            console.log("Added simulation result to edit history");
-            this.dispose();
-            rigidClusterSimulator = null;
         }
     }
 
@@ -413,8 +429,8 @@ class ColliderVisualizer {
     private offsetBuffer: Float32Array;
     private orderedElements: BasicElement[] = [];
 
-    constructor(clusters: Cluster[]) {
-        for (const c of clusters) for (const e of c.elements) this.orderedElements.push(e);
+    constructor(elems: BasicElement[]) {
+        this.orderedElements = elems;
 
         const N = this.orderedElements.length;
         if (N === 0) return;
@@ -425,16 +441,13 @@ class ColliderVisualizer {
         const scaleBuffer = new Float32Array(N * 3);
         const visBuffer   = new Float32Array(N * 3);
         const r = ELEMENT_COLLIDER_RADIUS;
-        let prevId = -1, clusterIdx = 0;
 
         this.orderedElements.forEach((elem, i) => {
-            const cid = elem.clusterId;
-            if (cid !== prevId) { clusterIdx = cid; prevId = cid; }
             const pos = elem.getPos();
             this.offsetBuffer[i*3]   = pos.x;
             this.offsetBuffer[i*3+1] = pos.y;
             this.offsetBuffer[i*3+2] = pos.z;
-            const col = colorFromInt(clusterIdx);
+            const col = colorFromInt(elem.clusterId);
             colorBuffer[i*3] = col.r; colorBuffer[i*3+1] = col.g; colorBuffer[i*3+2] = col.b;
             rotBuffer[i*4+3] = 1;
             scaleBuffer[i*3] = scaleBuffer[i*3+1] = scaleBuffer[i*3+2] = r;

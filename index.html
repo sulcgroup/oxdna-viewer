@@ -1083,11 +1083,11 @@
                             <span class="caption">Settings</span>
                         </button>
                         <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: 220px;">
-                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value=1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionSpringConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value=1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionRelaxedLength = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Max bond force</p><input id='rbd_connectionMaxForce' value=5 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionMaxForce = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=10 onchange="if(rigidClusterSimulator){rigidClusterSimulator.contactRepulsion = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>dt</p><input id='rbd_dt' value=0.1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.dt = this.value;}" type="text" data-role="spinner" class="input-small" data-step=0.01 data-fixed="2">
+                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Max bond force</p><input id='rbd_connectionMaxForce' value=5 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=10 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>dt</p><input id='rbd_dt' value=0.1 type="text" data-role="spinner" class="input-small" data-step=0.01 data-fixed="2">
                             <div class="tight group flex-column" style="margin-top:4px;">
                                 <input type="checkbox" id="rbd_showColliders" onchange="toggleColliderViz()" data-role="switch">
                                 <span>Show colliders</span>
