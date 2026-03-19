@@ -36,16 +36,20 @@ function toggleColliderViz() {
     }
 }
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
+// Module-level scratch objects — reused every frame, never allocated in hot path
+const _rbdVec = new THREE.Vector3();
+const _rbdQuat = new THREE.Quaternion();
 /**
  * Gradient-descent rigid-body cluster simulator.
  *
- * The Web Worker runs K gradient-descent steps internally per call, returning
- * one composed (netTrans, netQuat) per cluster. The main thread applies a
- * single translateElements + rotateElements regardless of K — reducing
- * geometry-update work by K× compared to one-step-per-call.
- *
- * Stability: the worker clamps |Δx| ≤ ELEMENT_COLLIDER_RADIUS and
- * |Δθ| ≤ MAX_ANGLE per step, preventing overshooting under large forces.
+ * Performance design:
+ *  • Worker owns all position state. Positions are sent once at init; thereafter
+ *    only selected-cluster positions are sent (sparse update). For the common
+ *    no-selection case: zero position data transferred per frame.
+ *  • Worker runs K=4 steps per call, returning one composed (netTrans, netQuat)
+ *    per cluster → one translateElements + rotateElements per cluster per frame.
+ *  • world.step() is skipped when the collider visualiser is inactive.
+ *  • No heap allocation on the main thread hot path (scratch objects reused).
  */
 class RigidClusterSimulator {
     clusters = [];
@@ -60,18 +64,13 @@ class RigidClusterSimulator {
     workerBusy = false;
     pendingNetTrans = null;
     pendingNetQuat = null;
-    // Topology offsets (static)
+    // Static topology layout
     elemOffsets;
     elemCounts;
     connOffsets;
     connCounts;
     totalElems;
     totalConns;
-    // Reusable position buffers (returned by worker each step)
-    bufClusterPos = null;
-    bufElemPos = null;
-    bufConnFrom = null;
-    bufConnTo = null;
     constructor() {
         this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
         this.connectionSpringConst = view.getInputNumber('rbd_connectionSpringConst');
@@ -80,7 +79,6 @@ class RigidClusterSimulator {
         this.dt = view.getInputNumber('rbd_dt');
         this.world = new RAPIER.World({ x: 0, y: 0, z: 0 });
         this.world.timestep = this.dt;
-        // Build clusters
         const m = new Map();
         elements.forEach(e => {
             const c = e.clusterId;
@@ -108,42 +106,61 @@ class RigidClusterSimulator {
         });
         this.totalElems = eo;
         this.totalConns = co;
-        // Global element index map (flat elemPos index for each element)
+        // Global element index for each element (its position in the flat elemPos array)
         const elemGlobalIdx = new Map();
         let gi = 0;
         this.clusters.forEach(c => c.elements.forEach(e => elemGlobalIdx.set(e, gi++)));
-        // connToGlobalIdx: flat elemPos index of the "to" endpoint for each connection
+        // connToGlobalIdx[c] = flat elemPos index of the "to" endpoint for connection c
         const connToGlobalIdx = new Int32Array(this.totalConns);
         let ci = 0;
-        this.clusters.forEach(c => {
-            c.conPoints.forEach(cp => {
-                connToGlobalIdx[ci++] = elemGlobalIdx.has(cp.to) ? elemGlobalIdx.get(cp.to) : -1;
-            });
-        });
-        // Inertia multiplier per cluster (1 / I_solid, mass=1)
+        this.clusters.forEach(c => c.conPoints.forEach(cp => {
+            connToGlobalIdx[ci++] = elemGlobalIdx.has(cp.to) ? elemGlobalIdx.get(cp.to) : -1;
+        }));
+        // Static per-cluster properties
         const inertiaMult = new Float32Array(N);
         const boundingRadii = new Float32Array(N);
+        this.clusters.forEach((c, i) => { inertiaMult[i] = c.inertiaMult; boundingRadii[i] = c.boundingRadius; });
+        // Pack initial positions — transferred to worker once, never sent again
+        const initialElemPos = new Float32Array(this.totalElems * 3);
+        const initialClusterPos = new Float32Array(N * 3);
+        const initialConnFrom = new Float32Array(this.totalConns * 3);
+        const initialConnTo = new Float32Array(this.totalConns * 3);
+        let ei2 = 0, ci2 = 0;
         this.clusters.forEach((c, i) => {
-            inertiaMult[i] = c.inertiaMult;
-            boundingRadii[i] = c.boundingRadius;
+            const p = c.position;
+            initialClusterPos[i * 3] = p.x;
+            initialClusterPos[i * 3 + 1] = p.y;
+            initialClusterPos[i * 3 + 2] = p.z;
+            for (const e of c.elements) {
+                const ep = e.getPos();
+                initialElemPos[ei2 * 3] = ep.x;
+                initialElemPos[ei2 * 3 + 1] = ep.y;
+                initialElemPos[ei2 * 3 + 2] = ep.z;
+                ei2++;
+            }
+            for (const cp of c.conPoints) {
+                const from = cp.from.getPos(), to = cp.to.getPos();
+                initialConnFrom[ci2 * 3] = from.x;
+                initialConnFrom[ci2 * 3 + 1] = from.y;
+                initialConnFrom[ci2 * 3 + 2] = from.z;
+                initialConnTo[ci2 * 3] = to.x;
+                initialConnTo[ci2 * 3 + 1] = to.y;
+                initialConnTo[ci2 * 3 + 2] = to.z;
+                ci2++;
+            }
         });
-        // Start worker
         this.worker = new Worker('./ts/lib/rbd_worker.js');
         this.worker.onmessage = e => {
             this.pendingNetTrans = e.data.netTrans;
             this.pendingNetQuat = e.data.netQuat;
-            this.bufClusterPos = e.data.clusterPos;
-            this.bufElemPos = e.data.elemPos;
-            this.bufConnFrom = e.data.connFrom;
-            this.bufConnTo = e.data.connTo;
             this.workerBusy = false;
         };
-        this.worker.postMessage({
-            type: 'init', N,
-            boundingRadii, inertiaMult, connToGlobalIdx,
+        // Init: send topology + initial positions (transferred, never again)
+        this.worker.postMessage({ type: 'init', N, boundingRadii, inertiaMult, connToGlobalIdx,
             elemOffsets: this.elemOffsets, elemCounts: this.elemCounts,
             connOffsets: this.connOffsets, connCounts: this.connCounts,
-        });
+            initialElemPos, initialClusterPos, initialConnFrom, initialConnTo }, [initialElemPos.buffer, initialClusterPos.buffer,
+            initialConnFrom.buffer, initialConnTo.buffer]);
     }
     getWorld() { return this.world; }
     getNumberOfClusters() { return this.clusters.length; }
@@ -154,7 +171,7 @@ class RigidClusterSimulator {
         this.viz = null;
     } }
     integrate(dt) {
-        // Identify selected clusters (O(N · |selectedBases|), done once per step)
+        // Identify selected clusters (O(N), once per frame)
         const selectedClusters = new Set();
         if (selectedBases.size > 0) {
             for (const c of this.clusters) {
@@ -166,13 +183,11 @@ class RigidClusterSimulator {
                 }
             }
         }
-        // Sync selected clusters to user-drag position
         for (const c of this.clusters) {
             if (selectedClusters.has(c))
                 c.syncToRapier();
         }
-        // Apply net transform computed by worker over K steps —
-        // one translateElements + rotateElements per cluster regardless of K
+        // Apply net transform from previous worker result (one call per cluster)
         if (this.pendingNetTrans) {
             const nt = this.pendingNetTrans, nq = this.pendingNetQuat;
             this.clusters.forEach((c, i) => {
@@ -181,56 +196,77 @@ class RigidClusterSimulator {
             });
             this.pendingNetTrans = null;
         }
-        // Post current positions to worker (non-blocking)
         if (!this.workerBusy) {
             this.postToWorker(selectedClusters, dt);
             this.workerBusy = true;
         }
-        this.world.step();
+        // world.step() only needed for the collider visualiser
+        if (this.viz)
+            this.world.step();
         if (this.viz)
             this.viz.update();
         if (selectedBases.size > 0 && view.transformMode.enabled())
             transformControls.show();
     }
+    /**
+     * For the common no-selection case: sends only params + empty selectedMask —
+     * zero position data, zero Float32Array allocation for element positions.
+     * For selected clusters: sends a sparse position update (only those clusters).
+     */
     postToWorker(selectedClusters, dt) {
         const N = this.clusters.length;
-        const clusterPos = this.bufClusterPos ?? new Float32Array(N * 3);
-        const elemPos = this.bufElemPos ?? new Float32Array(this.totalElems * 3);
-        const connFrom = this.bufConnFrom ?? new Float32Array(this.totalConns * 3);
-        const connTo = this.bufConnTo ?? new Float32Array(this.totalConns * 3);
-        const selectedMask = new Uint8Array(N);
+        const selectedMask = new Uint8Array(N); // cheap; N bytes
+        const params = {
+            contactRepulsion: this.contactRepulsion,
+            springK: this.connectionSpringConst,
+            relaxed: this.connectionRelaxedLength,
+            maxForce: this.connectionMaxForce,
+            dt, stepsPerCall: 4
+        };
+        if (selectedClusters.size === 0) {
+            // Common case: no allocation, no position data
+            this.worker.postMessage({ type: 'step', selectedMask, params });
+            return;
+        }
+        // Sparse update: pack positions for selected clusters only
+        const selIndices = [];
+        this.clusters.forEach((c, i) => { if (selectedClusters.has(c)) {
+            selectedMask[i] = 1;
+            selIndices.push(i);
+        } });
+        let selElems = 0, selConns = 0;
+        for (const si of selIndices) {
+            selElems += this.elemCounts[si];
+            selConns += this.connCounts[si];
+        }
+        const selClusterIdx = new Int32Array(selIndices);
+        const selClusterPos = new Float32Array(selIndices.length * 3);
+        const selElemPositions = new Float32Array(selElems * 3);
+        const selConnFromPositions = new Float32Array(selConns * 3);
         let ei = 0, ci = 0;
-        this.clusters.forEach((c, i) => {
+        selIndices.forEach((si, k) => {
+            const c = this.clusters[si];
             const p = c.position;
-            clusterPos[i * 3] = p.x;
-            clusterPos[i * 3 + 1] = p.y;
-            clusterPos[i * 3 + 2] = p.z;
-            if (selectedClusters.has(c))
-                selectedMask[i] = 1;
+            selClusterPos[k * 3] = p.x;
+            selClusterPos[k * 3 + 1] = p.y;
+            selClusterPos[k * 3 + 2] = p.z;
             for (const e of c.elements) {
                 const ep = e.getPos();
-                elemPos[ei * 3] = ep.x;
-                elemPos[ei * 3 + 1] = ep.y;
-                elemPos[ei * 3 + 2] = ep.z;
+                selElemPositions[ei * 3] = ep.x;
+                selElemPositions[ei * 3 + 1] = ep.y;
+                selElemPositions[ei * 3 + 2] = ep.z;
                 ei++;
             }
             for (const cp of c.conPoints) {
-                const from = cp.from.getPos(), to = cp.to.getPos();
-                connFrom[ci * 3] = from.x;
-                connFrom[ci * 3 + 1] = from.y;
-                connFrom[ci * 3 + 2] = from.z;
-                connTo[ci * 3] = to.x;
-                connTo[ci * 3 + 1] = to.y;
-                connTo[ci * 3 + 2] = to.z;
+                const from = cp.from.getPos();
+                selConnFromPositions[ci * 3] = from.x;
+                selConnFromPositions[ci * 3 + 1] = from.y;
+                selConnFromPositions[ci * 3 + 2] = from.z;
                 ci++;
             }
         });
-        this.worker.postMessage({ type: 'step', clusterPos, elemPos, connFrom, connTo, selectedMask,
-            params: { contactRepulsion: this.contactRepulsion,
-                springK: this.connectionSpringConst,
-                relaxed: this.connectionRelaxedLength,
-                maxForce: this.connectionMaxForce,
-                dt, stepsPerCall: 4 } }, [clusterPos.buffer, elemPos.buffer, connFrom.buffer, connTo.buffer]);
+        this.worker.postMessage({ type: 'step', selectedMask, selClusterIdx, selClusterPos,
+            selElemPositions, selConnFromPositions, params }, [selClusterPos.buffer, selElemPositions.buffer, selConnFromPositions.buffer]);
     }
     simulate() {
         this.integrate(this.dt);
@@ -259,7 +295,7 @@ class Cluster {
     conPoints = [];
     position;
     boundingRadius;
-    inertiaMult; // 1 / (2/5 * r²), mass=1
+    inertiaMult;
     elementSet;
     sim;
     body;
@@ -302,35 +338,32 @@ class Cluster {
         this.rot_axis = this.position.clone();
     }
     /**
-     * Apply the net transform returned by the worker (K steps composed into one).
+     * Apply the K-step net transform returned by the worker.
      * One translateElements + one rotateElements call regardless of K.
+     * Uses module-level scratch objects — no heap allocation.
      */
     applyNetTransform(netTrans, netQuat, i) {
         const tx = netTrans[i * 3], ty = netTrans[i * 3 + 1], tz = netTrans[i * 3 + 2];
-        // Net translation
-        translateElements(this.elementSet, new THREE.Vector3(tx, ty, tz));
+        translateElements(this.elementSet, _rbdVec.set(tx, ty, tz));
         this.position.x += tx;
         this.position.y += ty;
         this.position.z += tz;
         this.totalTranslation.x += tx;
         this.totalTranslation.y += ty;
         this.totalTranslation.z += tz;
-        // Net rotation — extract axis/angle from composed quaternion
         const qx = netQuat[i * 4], qy = netQuat[i * 4 + 1], qz = netQuat[i * 4 + 2], qw = netQuat[i * 4 + 3];
         const sinHalf = Math.sqrt(qx * qx + qy * qy + qz * qz);
         if (sinHalf > 1e-8) {
-            const angle = 2 * Math.atan2(sinHalf, qw);
             const inv = 1 / sinHalf;
-            const axis = new THREE.Vector3(qx * inv, qy * inv, qz * inv);
-            rotateElements(this.elementSet, axis, angle, this.position);
-            const dq = new THREE.Quaternion(qx, qy, qz, qw);
-            this.totalRotation.premultiply(dq);
-            this.bodyRotation.premultiply(dq);
+            const angle = 2 * Math.atan2(sinHalf, qw);
+            rotateElements(this.elementSet, _rbdVec.set(qx * inv, qy * inv, qz * inv), angle, this.position);
+            _rbdQuat.set(qx, qy, qz, qw);
+            this.totalRotation.premultiply(_rbdQuat);
+            this.bodyRotation.premultiply(_rbdQuat);
         }
         this.rot_axis = this.position.clone();
         this.body.setNextKinematicTranslation({ x: this.position.x, y: this.position.y, z: this.position.z });
-        this.body.setNextKinematicRotation({ x: this.bodyRotation.x, y: this.bodyRotation.y,
-            z: this.bodyRotation.z, w: this.bodyRotation.w });
+        this.body.setNextKinematicRotation({ x: this.bodyRotation.x, y: this.bodyRotation.y, z: this.bodyRotation.z, w: this.bodyRotation.w });
     }
     syncToRapier() {
         this.position.set(0, 0, 0);

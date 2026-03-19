@@ -1,31 +1,32 @@
 'use strict';
-// Web worker: gradient-descent force computation + integration for RBD simulator.
+// Web worker: gradient-descent force computation + K-step integration.
 //
-// Runs K gradient-descent steps internally per call so the main thread only
-// needs to apply one composed transform (translate + rotate) per cluster per
-// worker result, instead of K separate updateElements calls.
-//
-// Stability: each step clamps |Δx| ≤ MAX_TRANS and |Δθ| ≤ MAX_ANGLE so
-// large accumulated forces can't overshoot regardless of system size or dt.
+// Key design decisions:
+//  • All position state is maintained here (workElemPos, etc.) and is NEVER
+//    round-tripped back to the main thread.  The main thread sends positions
+//    only once (init) and then only for selected clusters (sparse updates).
+//    For the common no-selection case: zero position data transferred.
+//  • The spatial hash is built ONCE per K-step batch, not once per step.
+//    Clusters drift ≤ K × MAX_TRANS ≪ CELL_SIZE between steps, so the
+//    hash remains valid across all K steps.
+//  • All per-step arrays (forces, torques, netTrans, netQuat) are allocated
+//    at init and reused — no per-step heap allocation.
 
 const ELEMENT_COLLIDER_RADIUS = 0.5;
 const MIN_DIST  = 2 * ELEMENT_COLLIDER_RADIUS;
 const MIN_DIST2 = MIN_DIST * MIN_DIST;
-const MAX_TRANS = ELEMENT_COLLIDER_RADIUS;       // max displacement per step (oxDNA units)
-const MAX_ANGLE = 0.15;                          // max rotation per step (radians)
+const MAX_TRANS = ELEMENT_COLLIDER_RADIUS; // max translation per step (stability clamp)
+const MAX_ANGLE = 0.15;                    // max rotation per step in radians
 
-// Static topology — sent once at init
+// Static topology
 let N = 0;
 let boundingRadii, elemOffsets, elemCounts, connOffsets, connCounts;
-let inertiaMult;        // Float32Array [N]  — 1 / (2/5 * boundingRadius²)
-let connToGlobalIdx;    // Int32Array [totalConns] — flat elemPos index for each connTo endpoint
+let inertiaMult, connToGlobalIdx;
 let CELL_SIZE = 1.0;
 
-// Persistent working position arrays — allocated once, never GC'd
-let workElemPos    = null;
-let workClusterPos = null;
-let workConnFrom   = null;
-let workConnTo     = null;
+// Persistent working arrays — allocated once at init
+let workElemPos, workClusterPos, workConnFrom, workConnTo;
+let forces, torques, netTrans, netQuat;
 
 self.onmessage = function(e) {
     const msg = e.data;
@@ -44,60 +45,84 @@ self.onmessage = function(e) {
         let maxBR = 0;
         for (let i = 0; i < N; i++) maxBR = Math.max(maxBR, boundingRadii[i]);
         CELL_SIZE = maxBR * 2 + MIN_DIST;
+
+        // Initialise working position state from transferred buffers
+        workElemPos    = msg.initialElemPos;    // Float32Array — transferred ownership
+        workClusterPos = msg.initialClusterPos;
+        workConnFrom   = msg.initialConnFrom;
+        workConnTo     = msg.initialConnTo;
+
+        // Allocate reusable per-step scratch arrays
+        forces   = new Float32Array(N * 3);
+        torques  = new Float32Array(N * 3);
+        netTrans = new Float32Array(N * 3);
+        netQuat  = new Float32Array(N * 4);
         return;
     }
 
     if (msg.type !== 'step') return;
 
-    const { clusterPos, elemPos, connFrom, connTo, selectedMask, params } = msg;
+    const { selectedMask, selClusterIdx, selClusterPos,
+            selElemPositions, selConnFromPositions, params } = msg;
     const { contactRepulsion, springK, relaxed, maxForce, dt, stepsPerCall } = params;
     const K = stepsPerCall | 0 || 4;
 
-    // Copy incoming positions into persistent working arrays
-    if (!workElemPos || workElemPos.length !== elemPos.length) {
-        workElemPos    = new Float32Array(elemPos.length);
-        workClusterPos = new Float32Array(clusterPos.length);
-        workConnFrom   = new Float32Array(connFrom.length);
-        workConnTo     = new Float32Array(connTo.length);
+    // ── Sparse position update for selected clusters ──────────────────────────
+    if (selClusterIdx && selClusterIdx.length > 0) {
+        let sei = 0, sci = 0;
+        for (let k = 0; k < selClusterIdx.length; k++) {
+            const i = selClusterIdx[k];
+            workClusterPos[i*3]   = selClusterPos[k*3];
+            workClusterPos[i*3+1] = selClusterPos[k*3+1];
+            workClusterPos[i*3+2] = selClusterPos[k*3+2];
+
+            const eOff = elemOffsets[i] * 3, eCnt = elemCounts[i] * 3;
+            for (let ia = 0; ia < eCnt; ia++) workElemPos[eOff + ia] = selElemPositions[sei++];
+
+            const cOff = connOffsets[i] * 3, cCnt = connCounts[i] * 3;
+            for (let ia = 0; ia < cCnt; ia++) workConnFrom[cOff + ia] = selConnFromPositions[sci++];
+        }
+        // Refresh connTo endpoints that point into updated elements
+        const nConns = connToGlobalIdx.length;
+        for (let c = 0; c < nConns; c++) {
+            const gi = connToGlobalIdx[c];
+            if (gi < 0) continue;
+            workConnTo[c*3]   = workElemPos[gi*3];
+            workConnTo[c*3+1] = workElemPos[gi*3+1];
+            workConnTo[c*3+2] = workElemPos[gi*3+2];
+        }
     }
-    workElemPos.set(elemPos);
-    workClusterPos.set(clusterPos);
-    workConnFrom.set(connFrom);
-    workConnTo.set(connTo);
 
-    // Per-cluster net transforms (accumulated over K steps)
-    const netTrans = new Float32Array(N * 3);
-    const netQuat  = new Float32Array(N * 4);
-    for (let i = 0; i < N; i++) netQuat[i*4+3] = 1.0; // identity quaternion
-
-    // Temporary force/torque arrays — reused each step
-    const forces  = new Float32Array(N * 3);
-    const torques = new Float32Array(N * 3);
-
+    // ── Build spatial hash ONCE for the whole K-step batch ───────────────────
+    // Clusters drift ≤ K × MAX_TRANS << CELL_SIZE between steps, so the hash
+    // built from step-0 positions is valid for steps 1…K−1.
+    const grid = new Map();
     const invCell = 1.0 / CELL_SIZE;
+    for (let i = 0; i < N; i++) {
+        if (selectedMask[i]) continue;
+        const key = cellKey(
+            Math.floor(workClusterPos[i*3]   * invCell),
+            Math.floor(workClusterPos[i*3+1] * invCell),
+            Math.floor(workClusterPos[i*3+2] * invCell)
+        );
+        let cell = grid.get(key);
+        if (!cell) { cell = []; grid.set(key, cell); }
+        cell.push(i);
+    }
 
+    // Reset net-transform accumulators
+    netTrans.fill(0);
+    netQuat.fill(0);
+    for (let i = 0; i < N; i++) netQuat[i*4+3] = 1.0;
+
+    // ── K gradient-descent steps ──────────────────────────────────────────────
     for (let step = 0; step < K; step++) {
         forces.fill(0);
         torques.fill(0);
 
-        // ── Build spatial hash ────────────────────────────────────────────────
-        const grid = new Map();
+        // Force accumulation
         for (let i = 0; i < N; i++) {
             if (selectedMask[i]) continue;
-            const key = cellKey(
-                Math.floor(workClusterPos[i*3]   * invCell),
-                Math.floor(workClusterPos[i*3+1] * invCell),
-                Math.floor(workClusterPos[i*3+2] * invCell)
-            );
-            let cell = grid.get(key);
-            if (!cell) { cell = []; grid.set(key, cell); }
-            cell.push(i);
-        }
-
-        // ── Force accumulation ────────────────────────────────────────────────
-        for (let i = 0; i < N; i++) {
-            if (selectedMask[i]) continue;
-
             const i3  = i * 3;
             const cxi = workClusterPos[i3], cyi = workClusterPos[i3+1], czi = workClusterPos[i3+2];
 
@@ -107,9 +132,11 @@ self.onmessage = function(e) {
                 const c3  = c * 3;
                 const fx0 = workConnFrom[c3],   fy0 = workConnFrom[c3+1], fz0 = workConnFrom[c3+2];
                 const dx  = workConnTo[c3]-fx0, dy  = workConnTo[c3+1]-fy0, dz = workConnTo[c3+2]-fz0;
-                const dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                const d2  = dx*dx + dy*dy + dz*dz;
+                if (d2 < 1e-16) continue;
+                const dist = Math.sqrt(d2);
                 const ext  = dist - relaxed;
-                if (ext <= 0 || dist < 1e-8) continue;
+                if (ext <= 0) continue;
                 const s = Math.min(springK * ext, maxForce) / dist;
                 const ffx = dx*s, ffy = dy*s, ffz = dz*s;
                 forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
@@ -119,12 +146,11 @@ self.onmessage = function(e) {
                 torques[i3+2] += rx*ffy - ry*ffx;
             }
 
-            // Contact repulsion — spatial hash neighbour lookup
+            // Contact repulsion via spatial hash
             const gcx = Math.floor(cxi * invCell);
             const gcy = Math.floor(cyi * invCell);
             const gcz = Math.floor(czi * invCell);
-            const eStartI = elemOffsets[i] * 3;
-            const eEndI   = eStartI + elemCounts[i] * 3;
+            const eStartI = elemOffsets[i] * 3, eEndI = eStartI + elemCounts[i] * 3;
 
             for (let ddx = -1; ddx <= 1; ddx++) {
                 for (let ddy = -1; ddy <= 1; ddy++) {
@@ -134,22 +160,17 @@ self.onmessage = function(e) {
                         for (let ni = 0; ni < neighbors.length; ni++) {
                             const j = neighbors[ni];
                             if (j <= i) continue;
-
                             const j3  = j * 3;
                             const cxj = workClusterPos[j3], cyj = workClusterPos[j3+1], czj = workClusterPos[j3+2];
                             const cdx = cxi-cxj, cdy2 = cyi-cyj, cdz2 = czi-czj;
                             const mcd = boundingRadii[i] + boundingRadii[j] + MIN_DIST;
                             if (cdx*cdx + cdy2*cdy2 + cdz2*cdz2 > mcd*mcd) continue;
 
-                            const eStartJ = elemOffsets[j] * 3;
-                            const eEndJ   = eStartJ + elemCounts[j] * 3;
-
+                            const eStartJ = elemOffsets[j]*3, eEndJ = eStartJ + elemCounts[j]*3;
                             for (let ia = eStartI; ia < eEndI; ia += 3) {
                                 const ax = workElemPos[ia], ay = workElemPos[ia+1], az = workElemPos[ia+2];
                                 for (let ib = eStartJ; ib < eEndJ; ib += 3) {
-                                    const dx = ax - workElemPos[ib];
-                                    const dy = ay - workElemPos[ib+1];
-                                    const dz = az - workElemPos[ib+2];
+                                    const dx = ax-workElemPos[ib], dy = ay-workElemPos[ib+1], dz = az-workElemPos[ib+2];
                                     const d2 = dx*dx + dy*dy + dz*dz;
                                     if (d2 >= MIN_DIST2 || d2 < 1e-16) continue;
                                     const dist = Math.sqrt(d2);
@@ -162,9 +183,9 @@ self.onmessage = function(e) {
                                     torques[i3+2] += rAx*ffy - rAy*ffx;
                                     forces[j3]   -= ffx; forces[j3+1] -= ffy; forces[j3+2] -= ffz;
                                     const rBx = workElemPos[ib]-cxj, rBy = workElemPos[ib+1]-cyj, rBz = workElemPos[ib+2]-czj;
-                                    torques[j3]   += rBy*(-ffz) - rBz*(-ffy);
-                                    torques[j3+1] += rBz*(-ffx) - rBx*(-ffz);
-                                    torques[j3+2] += rBx*(-ffy) - rBy*(-ffx);
+                                    torques[j3]   -= rBy*ffz - rBz*ffy;
+                                    torques[j3+1] -= rBz*ffx - rBx*ffz;
+                                    torques[j3+2] -= rBx*ffy - rBy*ffx;
                                 }
                             }
                         }
@@ -173,66 +194,59 @@ self.onmessage = function(e) {
             }
         }
 
-        // ── Apply gradient step to working positions ──────────────────────────
+        // Apply gradient step with stability clamping
         for (let i = 0; i < N; i++) {
             if (selectedMask[i]) continue;
-
             const i3 = i * 3;
 
-            // Translation — clamp so |Δx| ≤ MAX_TRANS
+            // Translation — clamp |Δx| ≤ MAX_TRANS
             const fx = forces[i3], fy = forces[i3+1], fz = forces[i3+2];
             const fMag = Math.sqrt(fx*fx + fy*fy + fz*fz);
-            const rawTrans = fMag * dt;
-            const tScale   = rawTrans > MAX_TRANS ? MAX_TRANS / rawTrans : 1.0;
-            const dx = fx * dt * tScale, dy = fy * dt * tScale, dz = fz * dt * tScale;
+            const tScale = (fMag * dt > MAX_TRANS) ? MAX_TRANS / (fMag * dt) : 1.0;
+            const dx = fx*dt*tScale, dy = fy*dt*tScale, dz = fz*dt*tScale;
 
             netTrans[i3] += dx; netTrans[i3+1] += dy; netTrans[i3+2] += dz;
             workClusterPos[i3] += dx; workClusterPos[i3+1] += dy; workClusterPos[i3+2] += dz;
 
-            const eStart = elemOffsets[i] * 3, eEnd = eStart + elemCounts[i] * 3;
+            const eStart = elemOffsets[i]*3, eEnd = eStart + elemCounts[i]*3;
             for (let ia = eStart; ia < eEnd; ia += 3) {
                 workElemPos[ia] += dx; workElemPos[ia+1] += dy; workElemPos[ia+2] += dz;
             }
-            const csEnd2 = connOffsets[i] + connCounts[i];
-            for (let c = connOffsets[i]; c < csEnd2; c++) {
+            const cStart = connOffsets[i], cEnd = cStart + connCounts[i];
+            for (let c = cStart; c < cEnd; c++) {
                 workConnFrom[c*3] += dx; workConnFrom[c*3+1] += dy; workConnFrom[c*3+2] += dz;
             }
 
-            // Rotation — clamp so |Δθ| ≤ MAX_ANGLE
+            // Rotation — clamp |Δθ| ≤ MAX_ANGLE  (Rodrigues)
             const im   = inertiaMult[i];
-            const taux = torques[i3], tauy = torques[i3+1], tauz = torques[i3+2];
-            const aax  = taux * im, aay = tauy * im, aaz = tauz * im;
+            const aax  = torques[i3]*im, aay = torques[i3+1]*im, aaz = torques[i3+2]*im;
             const aaMag = Math.sqrt(aax*aax + aay*aay + aaz*aaz);
             const deltaAngle = Math.min(aaMag * dt, MAX_ANGLE);
-
             if (deltaAngle > 1e-8) {
-                const inv   = 1.0 / aaMag;
+                const inv  = 1.0 / aaMag;
                 const ax = aax*inv, ay = aay*inv, az = aaz*inv;
                 const cxi = workClusterPos[i3], cyi = workClusterPos[i3+1], czi = workClusterPos[i3+2];
                 const cosT = Math.cos(deltaAngle), sinT = Math.sin(deltaAngle), omt = 1.0 - cosT;
 
-                // Rodrigues rotation for all elements in cluster i
                 for (let ia = eStart; ia < eEnd; ia += 3) {
                     const rx = workElemPos[ia]-cxi, ry = workElemPos[ia+1]-cyi, rz = workElemPos[ia+2]-czi;
                     const dot = ax*rx + ay*ry + az*rz;
-                    const cx2 = ay*rz - az*ry, cy2 = az*rx - ax*rz, cz2 = ax*ry - ay*rx;
+                    const cx2 = ay*rz-az*ry, cy2 = az*rx-ax*rz, cz2 = ax*ry-ay*rx;
                     workElemPos[ia]   = cxi + rx*cosT + cx2*sinT + ax*dot*omt;
                     workElemPos[ia+1] = cyi + ry*cosT + cy2*sinT + ay*dot*omt;
                     workElemPos[ia+2] = czi + rz*cosT + cz2*sinT + az*dot*omt;
                 }
-
-                // Same for connFrom endpoints belonging to cluster i
-                for (let c = connOffsets[i]; c < csEnd2; c++) {
+                for (let c = cStart; c < cEnd; c++) {
                     const rx = workConnFrom[c*3]-cxi, ry = workConnFrom[c*3+1]-cyi, rz = workConnFrom[c*3+2]-czi;
                     const dot = ax*rx + ay*ry + az*rz;
-                    const cx2 = ay*rz - az*ry, cy2 = az*rx - ax*rz, cz2 = ax*ry - ay*rx;
+                    const cx2 = ay*rz-az*ry, cy2 = az*rx-ax*rz, cz2 = ax*ry-ay*rx;
                     workConnFrom[c*3]   = cxi + rx*cosT + cx2*sinT + ax*dot*omt;
                     workConnFrom[c*3+1] = cyi + ry*cosT + cy2*sinT + ay*dot*omt;
                     workConnFrom[c*3+2] = czi + rz*cosT + cz2*sinT + az*dot*omt;
                 }
 
-                // Compose net quaternion: q_new * q_accumulated
-                const sh = Math.sin(deltaAngle * 0.5), ch = Math.cos(deltaAngle * 0.5);
+                // Compose net rotation quaternion: q_step * q_accumulated
+                const sh = Math.sin(deltaAngle*0.5), ch = Math.cos(deltaAngle*0.5);
                 const qx = ax*sh, qy = ay*sh, qz = az*sh, qw = ch;
                 const ox = netQuat[i*4], oy = netQuat[i*4+1], oz = netQuat[i*4+2], ow = netQuat[i*4+3];
                 netQuat[i*4]   = qw*ox + qx*ow + qy*oz - qz*oy;
@@ -242,28 +256,21 @@ self.onmessage = function(e) {
             }
         }
 
-        // Update connTo positions from the now-updated workElemPos
-        const totalConns = connToGlobalIdx.length;
-        for (let c = 0; c < totalConns; c++) {
+        // Refresh connTo from updated element positions (after all cluster steps)
+        const nConns = connToGlobalIdx.length;
+        for (let c = 0; c < nConns; c++) {
             const gi = connToGlobalIdx[c];
-            if (gi < 0) continue; // to-element not in simulation
-            const gi3 = gi * 3, c3 = c * 3;
-            workConnTo[c3]   = workElemPos[gi3];
-            workConnTo[c3+1] = workElemPos[gi3+1];
-            workConnTo[c3+2] = workElemPos[gi3+2];
+            if (gi < 0) continue;
+            workConnTo[c*3]   = workElemPos[gi*3];
+            workConnTo[c*3+1] = workElemPos[gi*3+1];
+            workConnTo[c*3+2] = workElemPos[gi*3+2];
         }
     }
 
-    // Return net transforms + recycle position input buffers (zero-copy)
-    self.postMessage(
-        { netTrans, netQuat, clusterPos, elemPos, connFrom, connTo },
-        [netTrans.buffer, netQuat.buffer,
-         clusterPos.buffer, elemPos.buffer, connFrom.buffer, connTo.buffer]
-    );
+    // Return net transforms — copied (not transferred) so worker reuses the buffers
+    self.postMessage({ netTrans, netQuat });
 };
 
-// Bit-packed integer cell key — avoids string allocation in the hot build loop.
-// Covers ±16383 cells per axis (sufficient for any realistic simulation volume).
 function cellKey(cx, cy, cz) {
     return ((cx & 0x7FFF)) | ((cy & 0x7FFF) * 32768) | ((cz & 0x7FFF) * 1073741824);
 }
