@@ -250,6 +250,8 @@ class RigidClusterSimulator {
             springK: view.getInputNumber('rbd_connectionSpringConst'),
             relaxed: view.getInputNumber('rbd_connectionRelaxedLength'),
             maxForce: view.getInputNumber('rbd_connectionMaxForce'),
+            electrostaticStrength: view.getInputNumber('rbd_electrostaticStrength'),
+            screeningLength: view.getInputNumber('rbd_screeningLength'),
             dt: view.getInputNumber('rbd_dt'),
             stepsPerCall: 4
         };

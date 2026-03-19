@@ -64,7 +64,8 @@ self.onmessage = function(e) {
 
     const { selectedMask, selClusterIdx, selClusterPos,
             selElemPositions, selConnFromPositions, params } = msg;
-    const { contactRepulsion, springK, relaxed, maxForce, dt, stepsPerCall } = params;
+    const { contactRepulsion, springK, relaxed, maxForce,
+            electrostaticStrength, screeningLength, dt, stepsPerCall } = params;
     const K = stepsPerCall | 0 || 4;
 
     // ── Sparse position update for selected clusters ──────────────────────────
@@ -189,6 +190,33 @@ self.onmessage = function(e) {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        // Electrostatic (Yukawa) repulsion between cluster centers — O(N²), N small
+        if (electrostaticStrength > 0) {
+            const invLambda = 1.0 / screeningLength;
+            for (let i = 0; i < N; i++) {
+                if (selectedMask[i]) continue;
+                const i3 = i * 3;
+                const cxi = workClusterPos[i3], cyi = workClusterPos[i3+1], czi = workClusterPos[i3+2];
+                for (let j = i + 1; j < N; j++) {
+                    const j3 = j * 3;
+                    const dx = cxi - workClusterPos[j3];
+                    const dy = cyi - workClusterPos[j3+1];
+                    const dz = czi - workClusterPos[j3+2];
+                    const r2 = dx*dx + dy*dy + dz*dz;
+                    if (r2 < 1e-8) continue;
+                    const r    = Math.sqrt(r2);
+                    const invR = 1.0 / r;
+                    // Yukawa force magnitude: A * exp(-r/λ) * (1/r² + 1/(r·λ))
+                    const mag  = electrostaticStrength * Math.exp(-r * invLambda) * invR * (invR + invLambda);
+                    const ffx  = dx * invR * mag, ffy = dy * invR * mag, ffz = dz * invR * mag;
+                    forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
+                    if (!selectedMask[j]) {
+                        forces[j3]   -= ffx; forces[j3+1] -= ffy; forces[j3+2] -= ffz;
                     }
                 }
             }

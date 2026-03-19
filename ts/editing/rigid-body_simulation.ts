@@ -247,11 +247,13 @@ class RigidClusterSimulator {
         const selectedMask = new Uint8Array(N); // cheap; N bytes
 
         const params = {
-            contactRepulsion: view.getInputNumber('rbd_contactRepulsion'),
-            springK:          view.getInputNumber('rbd_connectionSpringConst'),
-            relaxed:          view.getInputNumber('rbd_connectionRelaxedLength'),
-            maxForce:         view.getInputNumber('rbd_connectionMaxForce'),
-            dt:               view.getInputNumber('rbd_dt'),
+            contactRepulsion:      view.getInputNumber('rbd_contactRepulsion'),
+            springK:               view.getInputNumber('rbd_connectionSpringConst'),
+            relaxed:               view.getInputNumber('rbd_connectionRelaxedLength'),
+            maxForce:              view.getInputNumber('rbd_connectionMaxForce'),
+            electrostaticStrength: view.getInputNumber('rbd_electrostaticStrength'),
+            screeningLength:       view.getInputNumber('rbd_screeningLength'),
+            dt:                    view.getInputNumber('rbd_dt'),
             stepsPerCall: 4
         };
 
