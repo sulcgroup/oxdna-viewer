@@ -43,32 +43,54 @@ function toggleClusterSim() {
     }
     rigidClusterSimulator.simulate();
 }
-function toggleColliderViz() {
+/**
+ * Single source of truth for collider visualisation state.
+ * Called by both toggles so ordering never matters.
+ *
+ * Sim running:
+ *   sphereMode ON              → sphere viz (bounding sphere + conn-point spheres)
+ *   showColliders ON           → element viz (one sphere per nucleotide)
+ *   sphereMode ON + showColliders ON → sphere viz (sphere mode takes priority)
+ *   both OFF                   → no viz
+ *
+ * Sim not running (standalone):
+ *   showColliders ON, sphereMode OFF → element viz (cluster objects unavailable for sphere mode)
+ *   otherwise                        → no viz
+ */
+function syncColliderViz() {
+    const sphereMode = view.getInputBool('rbd_sphereMode');
+    const showColliders = view.getInputBool('rbd_showColliders');
     if (rigidClusterSimulator) {
-        if (view.getInputBool('rbd_showColliders')) {
-            rigidClusterSimulator.enableColliderViz();
-        }
-        else {
+        const wantViz = sphereMode || showColliders;
+        const wantMode = sphereMode ? 'sphere' : 'element';
+        const curMode = rigidClusterSimulator.colliderVizMode();
+        if (!wantViz) {
+            // Turn off: destroy whatever is active.
             rigidClusterSimulator.disableColliderViz();
         }
+        else if (curMode !== wantMode) {
+            // Type mismatch: destroy old, create correct type.
+            rigidClusterSimulator.disableColliderViz();
+            rigidClusterSimulator.enableColliderViz();
+        }
+        // curMode === wantMode: correct viz already live, leave it alone.
+        render();
         return;
     }
-    // No simulation running — standalone viz
-    if (view.getInputBool('rbd_showColliders')) {
-        if (!standaloneColliderViz) {
-            const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
-            if (clustered.length > 0)
-                standaloneColliderViz = new ColliderVisualizer(clustered);
-        }
+    // No simulation running — standalone element viz only (sphere mode needs Cluster objects).
+    if (standaloneColliderViz) {
+        standaloneColliderViz.dispose();
+        standaloneColliderViz = null;
     }
-    else {
-        if (standaloneColliderViz) {
-            standaloneColliderViz.dispose();
-            standaloneColliderViz = null;
-        }
+    if (showColliders && !sphereMode) {
+        const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
+        if (clustered.length > 0)
+            standaloneColliderViz = new ColliderVisualizer(clustered);
     }
     render();
 }
+function toggleRbdSphereMode() { syncColliderViz(); }
+function toggleColliderViz() { syncColliderViz(); }
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
 // Module-level scratch objects — reused every frame, never allocated in hot path
 const _rbdVec = new THREE.Vector3();
@@ -193,8 +215,22 @@ class RigidClusterSimulator {
     getWorld() { return this.world; }
     getNumberOfClusters() { return this.clusters.length; }
     getClusters() { return this.clusters; }
-    enableColliderViz() { if (!this.viz)
-        this.viz = new ColliderVisualizer(this.clusters.flatMap(c => c.elements)); }
+    /** Returns the current viz type, or null if none. */
+    colliderVizMode() {
+        if (!this.viz)
+            return null;
+        return this.viz instanceof SphereClusterColliderVisualizer ? 'sphere' : 'element';
+    }
+    enableColliderViz() {
+        if (this.viz)
+            return;
+        if (view.getInputBool('rbd_sphereMode')) {
+            this.viz = new SphereClusterColliderVisualizer(this.clusters);
+        }
+        else {
+            this.viz = new ColliderVisualizer(this.clusters.flatMap(c => c.elements));
+        }
+    }
     disableColliderViz() { if (this.viz) {
         this.viz.dispose();
         this.viz = null;
@@ -253,7 +289,8 @@ class RigidClusterSimulator {
             electrostaticStrength: view.getInputNumber('rbd_electrostaticStrength'),
             screeningLength: view.getInputNumber('rbd_screeningLength'),
             dt: view.getInputNumber('rbd_dt'),
-            stepsPerCall: 4
+            stepsPerCall: 4,
+            sphereMode: view.getInputBool('rbd_sphereMode'),
         };
         if (selectedClusters.size === 0) {
             // Common case: no allocation, no position data
@@ -410,6 +447,107 @@ class ClusterConnectionPoint {
     from;
     to;
     constructor(from, to) { this.from = from; this.to = to; }
+}
+const CONN_COLLIDER_RADIUS = 0.5;
+/**
+ * Visualizes the sphere-mode colliders: one bounding sphere per cluster
+ * plus one small sphere at each connection-point endpoint.
+ */
+class SphereClusterColliderVisualizer {
+    mesh = null;
+    offsetBuffer;
+    clusters;
+    clusterCount;
+    constructor(clusters) {
+        this.clusters = clusters;
+        this.clusterCount = clusters.length;
+        const nConns = clusters.reduce((s, c) => s + c.conPoints.length, 0);
+        const N = this.clusterCount + nConns;
+        if (N === 0)
+            return;
+        this.offsetBuffer = new Float32Array(N * 3);
+        const colorBuffer = new Float32Array(N * 3);
+        const rotBuffer = new Float32Array(N * 4);
+        const scaleBuffer = new Float32Array(N * 3);
+        const visBuffer = new Float32Array(N * 3);
+        let idx = 0;
+        for (const c of clusters) {
+            const p = c.position;
+            this.offsetBuffer[idx * 3] = p.x;
+            this.offsetBuffer[idx * 3 + 1] = p.y;
+            this.offsetBuffer[idx * 3 + 2] = p.z;
+            const col = colorFromInt(c.elements[0].clusterId);
+            colorBuffer[idx * 3] = col.r;
+            colorBuffer[idx * 3 + 1] = col.g;
+            colorBuffer[idx * 3 + 2] = col.b;
+            rotBuffer[idx * 4 + 3] = 1;
+            scaleBuffer[idx * 3] = scaleBuffer[idx * 3 + 1] = scaleBuffer[idx * 3 + 2] = c.boundingRadius;
+            visBuffer[idx * 3] = visBuffer[idx * 3 + 1] = visBuffer[idx * 3 + 2] = 1;
+            idx++;
+        }
+        for (const c of clusters) {
+            const col = colorFromInt(c.elements[0].clusterId);
+            for (const cp of c.conPoints) {
+                const p = cp.from.getPos();
+                this.offsetBuffer[idx * 3] = p.x;
+                this.offsetBuffer[idx * 3 + 1] = p.y;
+                this.offsetBuffer[idx * 3 + 2] = p.z;
+                colorBuffer[idx * 3] = col.r;
+                colorBuffer[idx * 3 + 1] = col.g;
+                colorBuffer[idx * 3 + 2] = col.b;
+                rotBuffer[idx * 4 + 3] = 1;
+                scaleBuffer[idx * 3] = scaleBuffer[idx * 3 + 1] = scaleBuffer[idx * 3 + 2] = CONN_COLLIDER_RADIUS;
+                visBuffer[idx * 3] = visBuffer[idx * 3 + 1] = visBuffer[idx * 3 + 2] = 1;
+                idx++;
+            }
+        }
+        const geom = new THREE.InstancedBufferGeometry();
+        geom.copy(new THREE.SphereBufferGeometry(1, 8, 6));
+        geom.addAttribute('instanceOffset', new THREE.InstancedBufferAttribute(this.offsetBuffer, 3));
+        geom.addAttribute('instanceColor', new THREE.InstancedBufferAttribute(colorBuffer, 3));
+        geom.addAttribute('instanceRotation', new THREE.InstancedBufferAttribute(rotBuffer, 4));
+        geom.addAttribute('instanceScale', new THREE.InstancedBufferAttribute(scaleBuffer, 3));
+        geom.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(visBuffer, 3));
+        const mat = instanceMaterial.clone();
+        mat.transparent = true;
+        mat.opacity = 0.25;
+        mat.depthWrite = false;
+        mat['defines'] = { 'INSTANCED': '' };
+        this.mesh = new THREE.Mesh(geom, mat);
+        this.mesh.frustumCulled = false;
+        scene.add(this.mesh);
+    }
+    update() {
+        if (!this.mesh)
+            return;
+        const buf = this.offsetBuffer;
+        let idx = 0;
+        for (const c of this.clusters) {
+            const p = c.position;
+            buf[idx * 3] = p.x;
+            buf[idx * 3 + 1] = p.y;
+            buf[idx * 3 + 2] = p.z;
+            idx++;
+        }
+        for (const c of this.clusters) {
+            for (const cp of c.conPoints) {
+                const p = cp.from.getPos();
+                buf[idx * 3] = p.x;
+                buf[idx * 3 + 1] = p.y;
+                buf[idx * 3 + 2] = p.z;
+                idx++;
+            }
+        }
+        this.mesh.geometry['attributes']['instanceOffset'].needsUpdate = true;
+    }
+    dispose() {
+        if (!this.mesh)
+            return;
+        scene.remove(this.mesh);
+        this.mesh.geometry.dispose();
+        this.mesh.material.dispose();
+        this.mesh = null;
+    }
 }
 class ColliderVisualizer {
     mesh = null;
