@@ -11,10 +11,8 @@ let rigidClusterSimulator: RigidClusterSimulator;
  */
 function toggleClusterSim() {
     if (!view.getInputBool("clusterSim")) {
-        if (rigidClusterSimulator) {
-            rigidClusterSimulator.dispose();
-            rigidClusterSimulator = null;
-        }
+        // simulate()'s RAF loop detects the unchecked state, saves to edit
+        // history, and calls dispose() itself — don't double-dispose here.
         return;
     }
     if (!rigidClusterSimulator) {
@@ -50,19 +48,16 @@ function toggleColliderViz() {
 }
 
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
-// https://rapier.rs/docs/user_guides/javascript/rigid_bodies
 
 /**
- * Rigid-body cluster simulator using gradient descent.
+ * Gradient-descent rigid-body cluster simulator.
  *
- * Each step accumulates spring and soft contact-repulsion forces into
- * per-cluster (f, tau) vectors, then applies a direct position/rotation
- * displacement proportional to the net force: Δx = dt·F/mass, Δθ = dt·I⁻¹τ.
- * There is no velocity and therefore no momentum to accumulate.
- * Forces decay smoothly to zero as the system approaches equilibrium.
+ * Force computation (O(N²·M²) contact loop + spring forces) runs in a Web
+ * Worker so the main thread is never blocked — the UI and renderer stay
+ * responsive regardless of system size.
  *
- * Rapier is used only to maintain the collider hierarchy for the optional
- * collider visualisation overlay.
+ * The main thread only applies one-frame-old forces (imperceptible latency)
+ * and handles Three.js geometry updates (translateElements / rotateElements).
  */
 class RigidClusterSimulator {
     private clusters: Cluster[] = [];
@@ -75,6 +70,20 @@ class RigidClusterSimulator {
     contactRepulsion: number;
     dt: number;
 
+    // Web Worker for off-thread force computation
+    private worker: Worker;
+    private workerBusy = false;
+    private pendingForces:  Float32Array | null = null;
+    private pendingTorques: Float32Array | null = null;
+
+    // Static topology layout sent to worker at init
+    private elemOffsets: Int32Array;
+    private elemCounts:  Int32Array;
+    private connOffsets: Int32Array;
+    private connCounts:  Int32Array;
+    private totalElems:  number;
+    private totalConns:  number;
+
     constructor() {
         this.connectionRelaxedLength = view.getInputNumber('rbd_connectionRelaxedLength');
         this.connectionSpringConst   = view.getInputNumber('rbd_connectionSpringConst');
@@ -86,6 +95,7 @@ class RigidClusterSimulator {
         this.world = new RAPIER.World({ x: 0.0, y: 0.0, z: 0.0 });
         this.world.timestep = this.dt;
 
+        // Build clusters
         const m = new Map<number, Set<BasicElement>>();
         elements.forEach((e) => {
             const c = e.clusterId;
@@ -95,6 +105,35 @@ class RigidClusterSimulator {
         });
         m.forEach((clusterElements) => {
             this.clusters.push(new Cluster(clusterElements, this));
+        });
+
+        // Compute topology offsets for worker
+        const N = this.clusters.length;
+        this.elemOffsets = new Int32Array(N);
+        this.elemCounts  = new Int32Array(N);
+        this.connOffsets = new Int32Array(N);
+        this.connCounts  = new Int32Array(N);
+        let eo = 0, co = 0;
+        this.clusters.forEach((c, i) => {
+            this.elemOffsets[i] = eo; this.elemCounts[i] = c.elements.length; eo += c.elements.length;
+            this.connOffsets[i] = co; this.connCounts[i] = c.conPoints.length; co += c.conPoints.length;
+        });
+        this.totalElems = eo;
+        this.totalConns = co;
+
+        // Start worker and send static topology (once)
+        this.worker = new Worker('./ts/lib/rbd_worker.js');
+        this.worker.onmessage = (e) => {
+            this.pendingForces  = e.data.forces;
+            this.pendingTorques = e.data.torques;
+            this.workerBusy = false;
+        };
+        const boundingRadii = new Float32Array(this.clusters.map(c => c.boundingRadius));
+        this.worker.postMessage({
+            type: 'init', N,
+            boundingRadii,
+            elemOffsets: this.elemOffsets, elemCounts: this.elemCounts,
+            connOffsets: this.connOffsets, connCounts: this.connCounts,
         });
     }
 
@@ -113,94 +152,87 @@ class RigidClusterSimulator {
     }
 
     /**
-     * One gradient-descent step.
+     * One simulation step:
+     *   1. Apply forces computed by the worker last frame.
+     *   2. Post current positions to the worker for next frame (non-blocking).
      *
-     * Forces are accumulated manually into (f, tau) per cluster, then converted
-     * to direct position/rotation displacements.  Contact repulsion uses a soft
-     * Hookean penalty (F = contactRepulsion · overlap) that is exactly zero when
-     * elements don't overlap → forces naturally vanish at equilibrium.
-     *
-     * world.step() is called afterwards to keep Rapier's kinematic collider
-     * positions current for the visualisation overlay.
+     * The worker runs in a separate thread, so step 2 never blocks the UI.
+     * Forces are one animation frame old — imperceptible for this use case.
      */
     public integrate(dt: number) {
-        // Allocate per-cluster force/torque accumulators
-        const acc = new Map<Cluster, [THREE.Vector3, THREE.Vector3]>();
-        this.clusters.forEach(c => acc.set(c, [new THREE.Vector3(), new THREE.Vector3()]));
+        // Pre-compute selected clusters (O(N·|selectedBases|), done once)
+        const selectedClusters = new Set<Cluster>();
+        if (selectedBases.size > 0) {
+            for (const c of this.clusters) {
+                for (const e of c.elements) {
+                    if (selectedBases.has(e as any)) { selectedClusters.add(c); break; }
+                }
+            }
+        }
 
-        this.clusters.forEach((cA, i) => {
-            const isSelectedA = [...selectedBases].some(b => cA.getClusterElements().has(b));
-            if (isSelectedA) { cA.syncToRapier(); return; }
+        // Sync selected clusters to wherever the user dragged them
+        for (const c of this.clusters) {
+            if (selectedClusters.has(c)) c.syncToRapier();
+        }
 
-            const [fA, tauA] = acc.get(cA);
-
-            // Spring / bond forces
-            cA.accumulateConnectionForces(fA, tauA);
-
-            // Soft contact repulsion vs every other free cluster (once per pair)
-            this.clusters.forEach((cB, j) => {
-                if (j <= i) return;
-                if ([...selectedBases].some(b => cB.getClusterElements().has(b))) return;
-                const [fB, tauB] = acc.get(cB);
-                this.accumulateContactRepulsion(cA, cB, fA, tauA, fB, tauB);
+        // Apply forces from the previous worker result
+        if (this.pendingForces) {
+            const pf = this.pendingForces, pt = this.pendingTorques;
+            this.clusters.forEach((c, i) => {
+                if (selectedClusters.has(c)) return;
+                c.accF.set( pf[i*3],  pf[i*3+1],  pf[i*3+2]);
+                c.accTau.set(pt[i*3], pt[i*3+1],  pt[i*3+2]);
+                c.applyGradientStep(dt);
             });
-        });
+        }
 
-        // Apply gradient step: Δpos = dt·F/mass, Δθ = dt·I⁻¹τ
-        this.clusters.forEach(c => {
-            if ([...selectedBases].some(b => c.getClusterElements().has(b))) return;
-            const [f, tau] = acc.get(c);
-            c.applyGradientStep(f, tau, dt);
-        });
+        // Post current positions to worker for next frame — returns immediately
+        if (!this.workerBusy) {
+            this.postToWorker(selectedClusters);
+            this.workerBusy = true;
+        }
 
-        // Keep Rapier world current for collider visualisation
         this.world.step();
-
         if (this.viz) this.viz.update();
         if (selectedBases.size > 0 && view.transformMode.enabled()) transformControls.show();
     }
 
-    /**
-     * Soft per-element contact repulsion between every overlapping pair from
-     * clusters cA and cB.  Force = contactRepulsion · overlap along the
-     * element-to-element axis — zero when elements are not overlapping.
-     */
-    private accumulateContactRepulsion(
-        cA: Cluster, cB: Cluster,
-        fA: THREE.Vector3, tauA: THREE.Vector3,
-        fB: THREE.Vector3, tauB: THREE.Vector3
-    ) {
-        const posA = cA.getPosition();
-        const posB = cB.getPosition();
+    /** Pack current cluster/element/connection positions and dispatch to worker. */
+    private postToWorker(selectedClusters: Set<Cluster>) {
+        const N = this.clusters.length;
+        const clusterPos   = new Float32Array(N * 3);
+        const elemPos      = new Float32Array(this.totalElems * 3);
+        const connFrom     = new Float32Array(this.totalConns * 3);
+        const connTo       = new Float32Array(this.totalConns * 3);
+        const selectedMask = new Uint8Array(N);
 
-        // Broad-phase: skip pair when bounding spheres can't overlap
-        const clusterDist = posA.distanceTo(posB);
-        if (clusterDist > cA.getBoundingRadius() + cB.getBoundingRadius() + 2 * ELEMENT_COLLIDER_RADIUS) {
-            return;
-        }
+        let ei = 0, ci = 0;
+        this.clusters.forEach((c, i) => {
+            const p = c.position;
+            clusterPos[i*3] = p.x; clusterPos[i*3+1] = p.y; clusterPos[i*3+2] = p.z;
+            if (selectedClusters.has(c)) selectedMask[i] = 1;
 
-        const minDist = 2 * ELEMENT_COLLIDER_RADIUS;
-
-        cA.getElements().forEach(eA => {
-            const pA = eA.getPos();
-            cB.getElements().forEach(eB => {
-                const diff = pA.clone().sub(eB.getPos());
-                const dist = diff.length();
-                if (dist >= minDist || dist < 1e-8) return;
-
-                const overlap = minDist - dist;
-                const dir    = diff.divideScalar(dist); // normalised in place
-                const mag    = this.contactRepulsion * overlap;
-
-                const repA = dir.clone().multiplyScalar(mag);
-                fA.add(repA);
-                tauA.add(pA.clone().sub(posA).cross(repA));
-
-                const repB = dir.clone().negate().multiplyScalar(mag);
-                fB.add(repB);
-                tauB.add(eB.getPos().clone().sub(posB).cross(repB));
-            });
+            for (const e of c.elements) {
+                const ep = e.getPos();
+                elemPos[ei*3] = ep.x; elemPos[ei*3+1] = ep.y; elemPos[ei*3+2] = ep.z;
+                ei++;
+            }
+            for (const cp of c.conPoints) {
+                const from = cp.from.getPos(), to = cp.to.getPos();
+                connFrom[ci*3] = from.x; connFrom[ci*3+1] = from.y; connFrom[ci*3+2] = from.z;
+                connTo[ci*3]   = to.x;   connTo[ci*3+1]   = to.y;   connTo[ci*3+2]   = to.z;
+                ci++;
+            }
         });
+
+        this.worker.postMessage(
+            { type: 'step', clusterPos, elemPos, connFrom, connTo, selectedMask,
+              params: { contactRepulsion: this.contactRepulsion,
+                        springK:  this.connectionSpringConst,
+                        relaxed:  this.connectionRelaxedLength,
+                        maxForce: this.connectionMaxForce } },
+            [clusterPos.buffer, elemPos.buffer, connFrom.buffer, connTo.buffer]
+        );
     }
 
     public simulate() {
@@ -214,30 +246,34 @@ class RigidClusterSimulator {
             editHistory.add(new RevertableClusterSim(this.clusters));
             console.log("Added simulation result to edit history");
             this.dispose();
+            rigidClusterSimulator = null;
         }
     }
 
     public dispose() {
         this.disableColliderViz();
         this.world.free();
+        this.worker.terminate();
     }
 }
 
-// Radius of the sphere placed at each element's position (oxDNA units).
 const ELEMENT_COLLIDER_RADIUS = 0.5;
 
 class Cluster {
-    private conPoints: ClusterConnectionPoint[] = [];
-    private clusterElements: Set<BasicElement>;
+    // Public for direct access from RigidClusterSimulator
+    public elements:   BasicElement[];
+    public conPoints:  ClusterConnectionPoint[] = [];
+    public position:   THREE.Vector3;
+    public boundingRadius: number;
+
+    // Pre-allocated force/torque accumulators (set from worker result each frame)
+    public accF   = new THREE.Vector3();
+    public accTau = new THREE.Vector3();
+
+    private elementSet: Set<BasicElement>;  // required by translateElements / rotateElements
     private sim: RigidClusterSimulator;
-
     private body: any; // RAPIER.RigidBody (kinematic)
-
-    private mass: number;
-    private momentOfInertia_inv: THREE.Matrix3;
-    private boundingRadius: number;
-
-    private position: THREE.Vector3;
+    private inertiaMult: number; // 1 / (I_solid) so we can avoid THREE.Matrix3 in hot path
     private bodyRotation = new THREE.Quaternion();
 
     private totalTranslation = new THREE.Vector3();
@@ -245,102 +281,74 @@ class Cluster {
     private rot_axis: THREE.Vector3;
 
     constructor(clusterElements: Set<BasicElement>, simulator: RigidClusterSimulator) {
-        this.clusterElements = clusterElements;
+        this.elementSet = clusterElements;
+        this.elements   = [...clusterElements];
         this.sim = simulator;
-        this.mass = 1;
 
         // Centre of mass
         this.position = new THREE.Vector3();
-        clusterElements.forEach((e) => this.position.add(e.getPos()));
-        this.position.divideScalar(clusterElements.size);
+        for (const e of this.elements) this.position.add(e.getPos());
+        this.position.divideScalar(this.elements.length);
 
-        // Bounding radius and solid-sphere moment of inertia
+        // Bounding radius; solid-sphere moment of inertia (mass = 1)
         this.boundingRadius = ELEMENT_COLLIDER_RADIUS;
-        clusterElements.forEach((e) => {
+        for (const e of this.elements) {
             this.boundingRadius = Math.max(this.boundingRadius, e.getPos().distanceTo(this.position));
-        });
-        const inertia = (2 / 5) * this.mass * this.boundingRadius * this.boundingRadius;
-        this.momentOfInertia_inv = new THREE.Matrix3()
-            .multiplyScalar(1 / inertia);
+        }
+        this.inertiaMult = 1 / ((2 / 5) * this.boundingRadius * this.boundingRadius);
 
-        // Kinematic Rapier body — used only to keep collider positions current for viz
+        // Kinematic Rapier body — collider positions only, used for viz
         const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
             .setTranslation(this.position.x, this.position.y, this.position.z);
         this.body = simulator.getWorld().createRigidBody(bodyDesc);
 
-        // One sphere collider per element for fine collision representation
-        clusterElements.forEach((e) => {
+        for (const e of this.elements) {
             const localPos = e.getPos().clone().sub(this.position);
-            const colliderDesc = RAPIER.ColliderDesc.ball(ELEMENT_COLLIDER_RADIUS)
-                .setTranslation(localPos.x, localPos.y, localPos.z)
-                .setDensity(0)
-                .setRestitution(0)
-                .setFriction(0);
-            simulator.getWorld().createCollider(colliderDesc, this.body);
-        });
+            simulator.getWorld().createCollider(
+                RAPIER.ColliderDesc.ball(ELEMENT_COLLIDER_RADIUS)
+                    .setTranslation(localPos.x, localPos.y, localPos.z)
+                    .setDensity(0).setRestitution(0).setFriction(0),
+                this.body
+            );
+        }
 
         // Spring connection points
-        clusterElements.forEach((e) => {
-            if (e.n3 && e.n3.clusterId !== e.clusterId) {
+        for (const e of this.elements) {
+            if (e.n3 && e.n3.clusterId !== e.clusterId)
                 this.conPoints.push(new ClusterConnectionPoint(e, e.n3));
-            }
-            if (e.n5 && e.n5.clusterId !== e.clusterId) {
+            if (e.n5 && e.n5.clusterId !== e.clusterId)
                 this.conPoints.push(new ClusterConnectionPoint(e, e.n5));
-            }
             forceHandler.getTraps().forEach((t: PairwiseForce) => {
-                if (t.particle == e) {
+                if (t.particle == e)
                     this.conPoints.push(new ClusterConnectionPoint(e, t.ref_particle));
-                }
             });
-        });
+        }
 
         this.rot_axis = this.position.clone();
     }
 
-    public getClusterElements(): Set<BasicElement> { return this.clusterElements; }
-    public getPosition():        THREE.Vector3      { return this.position.clone(); }
-    public getBoundingRadius():  number             { return this.boundingRadius; }
-    public getTotalTranslation(): THREE.Vector3     { return this.totalTranslation.clone(); }
-    public getTotalRotation():   THREE.Quaternion   { return this.totalRotation.clone(); }
-    public getElements():        Set<BasicElement>  { return this.clusterElements; }
-    public getRotationAxis():    THREE.Vector3      { return this.rot_axis.clone(); }
-
     /**
-     * Accumulate spring forces into f/tau.
-     * Force = k·max(extension, 0) capped at connectionMaxForce.
-     * One-sided: zero when the bond is not overstretched.
+     * Apply a gradient-descent step using the forces already written into
+     * accF / accTau (set by the simulator from the worker result).
+     * Δx = dt·F  (mass=1),  Δθ = dt·I⁻¹·τ
      */
-    public accumulateConnectionForces(f: THREE.Vector3, tau: THREE.Vector3) {
-        this.conPoints.forEach((p) => {
-            const extension = p.getDist() - this.sim.connectionRelaxedLength;
-            if (extension <= 0) return;
-            const scalar = Math.min(this.sim.connectionSpringConst * extension, this.sim.connectionMaxForce);
-            const dir = p.getToPos().clone().sub(p.getFromPos());
-            if (dir.length() < 1e-8) return;
-            dir.setLength(scalar);
-            f.add(dir);
-            tau.add(p.getFromPos().clone().sub(this.position).cross(dir));
-        });
-    }
+    public applyGradientStep(dt: number) {
+        const f = this.accF, tau = this.accTau;
 
-    /**
-     * Apply a gradient-descent displacement step: Δx = dt·F/mass, Δθ = dt·I⁻¹τ.
-     * No velocity is stored or carried between frames.
-     * Syncs the kinematic Rapier body for the collider visualisation.
-     */
-    public applyGradientStep(force: THREE.Vector3, torque: THREE.Vector3, dt: number) {
-        // Translation
-        const deltaP = force.clone().multiplyScalar(dt / this.mass);
-        translateElements(this.clusterElements, deltaP);
-        this.position.add(deltaP);
-        this.totalTranslation.add(deltaP);
+        // Translation — raw scalar to avoid Vector3 allocation
+        const dpx = f.x * dt, dpy = f.y * dt, dpz = f.z * dt;
+        translateElements(this.elementSet, new THREE.Vector3(dpx, dpy, dpz));
+        this.position.x += dpx; this.position.y += dpy; this.position.z += dpz;
+        this.totalTranslation.x += dpx; this.totalTranslation.y += dpy; this.totalTranslation.z += dpz;
 
-        // Rotation
-        const angularAcc = torque.clone().applyMatrix3(this.momentOfInertia_inv);
-        const deltaAngle = angularAcc.length() * dt;
+        // Rotation — inertiaMult is a scalar (isotropic solid-sphere inertia)
+        const im = this.inertiaMult;
+        const aax = tau.x * im * dt, aay = tau.y * im * dt, aaz = tau.z * im * dt;
+        const deltaAngle = Math.sqrt(aax*aax + aay*aay + aaz*aaz);
         if (deltaAngle > 1e-8) {
-            const rotAxis = angularAcc.clone().normalize();
-            rotateElements(this.clusterElements, rotAxis, deltaAngle, this.position);
+            const inv = 1 / deltaAngle;
+            const rotAxis = new THREE.Vector3(aax*inv, aay*inv, aaz*inv);
+            rotateElements(this.elementSet, rotAxis, deltaAngle, this.position);
             const dq = new THREE.Quaternion().setFromAxisAngle(rotAxis, deltaAngle);
             this.totalRotation.premultiply(dq);
             this.bodyRotation.premultiply(dq);
@@ -348,44 +356,45 @@ class Cluster {
 
         this.rot_axis = this.position.clone();
 
-        // Sync kinematic body position for collider viz
+        // Sync kinematic Rapier body for collider viz
         this.body.setNextKinematicTranslation(
             { x: this.position.x, y: this.position.y, z: this.position.z }
         );
         this.body.setNextKinematicRotation(
-            { x: this.bodyRotation.x, y: this.bodyRotation.y, z: this.bodyRotation.z, w: this.bodyRotation.w }
+            { x: this.bodyRotation.x, y: this.bodyRotation.y,
+              z: this.bodyRotation.z, w: this.bodyRotation.w }
         );
     }
 
-    /** Freeze to user's drag position (selected clusters). */
+    /** Follow user's drag: recompute COM from current element positions. */
     public syncToRapier() {
-        this.position = new THREE.Vector3();
-        this.clusterElements.forEach((e) => this.position.add(e.getPos()));
-        this.position.divideScalar(this.clusterElements.size);
-
+        this.position.set(0, 0, 0);
+        for (const e of this.elements) this.position.add(e.getPos());
+        this.position.divideScalar(this.elements.length);
         this.body.setNextKinematicTranslation(
             { x: this.position.x, y: this.position.y, z: this.position.z }
         );
     }
+
+    // Accessors required by RevertableClusterSim
+    public getClusterElements(): Set<BasicElement> { return this.elementSet; }
+    public getPosition():        THREE.Vector3      { return this.position.clone(); }
+    public getBoundingRadius():  number             { return this.boundingRadius; }
+    public getTotalTranslation(): THREE.Vector3     { return this.totalTranslation.clone(); }
+    public getTotalRotation():   THREE.Quaternion   { return this.totalRotation.clone(); }
+    public getElements():        BasicElement[]     { return this.elements; }
+    public getRotationAxis():    THREE.Vector3      { return this.rot_axis.clone(); }
 }
 
 class ClusterConnectionPoint {
-    private from: BasicElement;
-    private to:   BasicElement;
-
-    constructor(from: BasicElement, to: BasicElement) {
-        this.from = from;
-        this.to   = to;
-    }
-
-    public getFromPos(): THREE.Vector3 { return this.from.getPos().clone(); }
-    public getToPos():   THREE.Vector3 { return this.to.getPos().clone();   }
-    public getDist():    number        { return this.getFromPos().distanceTo(this.getToPos()); }
+    public from: BasicElement;
+    public to:   BasicElement;
+    constructor(from: BasicElement, to: BasicElement) { this.from = from; this.to = to; }
 }
 
 /**
- * GPU-instanced overlay that renders one transparent sphere per element to
- * visualise the per-element collision bodies.
+ * GPU-instanced overlay — one transparent sphere per element showing
+ * the per-element collision bodies.
  */
 class ColliderVisualizer {
     private mesh: THREE.Mesh | null = null;
@@ -393,16 +402,16 @@ class ColliderVisualizer {
     private orderedElements: BasicElement[] = [];
 
     constructor(clusters: Cluster[]) {
-        clusters.forEach(c => c.getElements().forEach(e => this.orderedElements.push(e)));
+        for (const c of clusters) for (const e of c.elements) this.orderedElements.push(e);
 
         const N = this.orderedElements.length;
         if (N === 0) return;
 
-        this.offsetBuffer       = new Float32Array(N * 3);
-        const colorBuffer       = new Float32Array(N * 3);
-        const rotBuffer         = new Float32Array(N * 4);
-        const scaleBuffer       = new Float32Array(N * 3);
-        const visBuffer         = new Float32Array(N * 3);
+        this.offsetBuffer = new Float32Array(N * 3);
+        const colorBuffer = new Float32Array(N * 3);
+        const rotBuffer   = new Float32Array(N * 4);
+        const scaleBuffer = new Float32Array(N * 3);
+        const visBuffer   = new Float32Array(N * 3);
 
         const r = ELEMENT_COLLIDER_RADIUS;
         let prevId = -1, clusterIdx = 0;
@@ -417,19 +426,10 @@ class ColliderVisualizer {
             this.offsetBuffer[i*3+2] = pos.z;
 
             const col = colorFromInt(clusterIdx);
-            colorBuffer[i*3]   = col.r;
-            colorBuffer[i*3+1] = col.g;
-            colorBuffer[i*3+2] = col.b;
-
-            rotBuffer[i*4+3] = 1; // identity quaternion
-
-            scaleBuffer[i*3]   = r;
-            scaleBuffer[i*3+1] = r;
-            scaleBuffer[i*3+2] = r;
-
-            visBuffer[i*3]   = 1;
-            visBuffer[i*3+1] = 1;
-            visBuffer[i*3+2] = 1;
+            colorBuffer[i*3] = col.r; colorBuffer[i*3+1] = col.g; colorBuffer[i*3+2] = col.b;
+            rotBuffer[i*4+3] = 1;
+            scaleBuffer[i*3] = scaleBuffer[i*3+1] = scaleBuffer[i*3+2] = r;
+            visBuffer[i*3]   = visBuffer[i*3+1]   = visBuffer[i*3+2]   = 1;
         });
 
         const geom = new THREE.InstancedBufferGeometry() as any;
@@ -441,10 +441,8 @@ class ColliderVisualizer {
         geom.addAttribute('instanceVisibility', new THREE.InstancedBufferAttribute(visBuffer, 3));
 
         const mat = (instanceMaterial as THREE.MeshLambertMaterial).clone();
-        mat.transparent = true;
-        mat.opacity     = 0.25;
-        mat.depthWrite  = false;
-        mat['defines']  = { 'INSTANCED': '' };
+        mat.transparent = true; mat.opacity = 0.25; mat.depthWrite = false;
+        mat['defines'] = { 'INSTANCED': '' };
 
         this.mesh = new THREE.Mesh(geom, mat);
         this.mesh.frustumCulled = false;
@@ -453,11 +451,10 @@ class ColliderVisualizer {
 
     public update() {
         if (!this.mesh) return;
+        const buf = this.offsetBuffer;
         this.orderedElements.forEach((elem, i) => {
             const pos = elem.getPos();
-            this.offsetBuffer[i*3]   = pos.x;
-            this.offsetBuffer[i*3+1] = pos.y;
-            this.offsetBuffer[i*3+2] = pos.z;
+            buf[i*3] = pos.x; buf[i*3+1] = pos.y; buf[i*3+2] = pos.z;
         });
         this.mesh.geometry['attributes']['instanceOffset'].needsUpdate = true;
     }
