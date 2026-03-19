@@ -2,7 +2,7 @@
 declare const RAPIER: any;
 
 let rigidClusterSimulator: RigidClusterSimulator;
-let standaloneColliderViz: ColliderVisualizer | null = null;
+let standaloneColliderViz: ColliderVisualizer | SphereClusterColliderVisualizer | null = null;
 
 function toggleClusterSim() {
     if (!view.getInputBool("clusterSim")) {
@@ -11,10 +11,7 @@ function toggleClusterSim() {
             editHistory.add(new RevertableClusterSim(rigidClusterSimulator.getClusters()));
             rigidClusterSimulator.dispose();
             rigidClusterSimulator = null;
-            if (view.getInputBool('rbd_showColliders')) {
-                const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
-                if (clustered.length > 0) standaloneColliderViz = new ColliderVisualizer(clustered);
-            }
+            syncColliderViz();
         }
         return;
     }
@@ -40,9 +37,7 @@ function toggleClusterSim() {
         rigidClusterSimulator = null;
         return;
     }
-    if (view.getInputBool('rbd_showColliders')) {
-        rigidClusterSimulator.enableColliderViz();
-    }
+    syncColliderViz();
     rigidClusterSimulator.simulate();
 }
 
@@ -51,10 +46,9 @@ function toggleClusterSim() {
  * Called by both toggles so ordering never matters.
  *
  * Sim running:
- *   sphereMode ON              → sphere viz (bounding sphere + conn-point spheres)
- *   showColliders ON           → element viz (one sphere per nucleotide)
- *   sphereMode ON + showColliders ON → sphere viz (sphere mode takes priority)
- *   both OFF                   → no viz
+ *   showColliders ON, sphereMode ON  → sphere viz (bounding sphere + conn-point spheres)
+ *   showColliders ON, sphereMode OFF → element viz (one sphere per nucleotide)
+ *   showColliders OFF                → no viz
  *
  * Sim not running (standalone):
  *   showColliders ON, sphereMode OFF → element viz (cluster objects unavailable for sphere mode)
@@ -65,7 +59,7 @@ function syncColliderViz() {
     const showColliders = view.getInputBool('rbd_showColliders');
 
     if (rigidClusterSimulator) {
-        const wantViz  = sphereMode || showColliders;
+        const wantViz  = showColliders;
         const wantMode = sphereMode ? 'sphere' : 'element';
         const curMode  = rigidClusterSimulator.colliderVizMode();
 
@@ -82,11 +76,16 @@ function syncColliderViz() {
         return;
     }
 
-    // No simulation running — standalone element viz only (sphere mode needs Cluster objects).
+    // No simulation running — build cluster geometry from elements.
     if (standaloneColliderViz) { standaloneColliderViz.dispose(); standaloneColliderViz = null; }
-    if (showColliders && !sphereMode) {
-        const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
-        if (clustered.length > 0) standaloneColliderViz = new ColliderVisualizer(clustered);
+    if (showColliders) {
+        if (sphereMode) {
+            const clusterData = buildStandaloneClusterData();
+            if (clusterData.length > 0) standaloneColliderViz = new SphereClusterColliderVisualizer(clusterData);
+        } else {
+            const clustered = [...elements.values()].filter(e => e.clusterId >= 0);
+            if (clustered.length > 0) standaloneColliderViz = new ColliderVisualizer(clustered);
+        }
     }
     render();
 }
@@ -273,7 +272,7 @@ class RigidClusterSimulator {
         // world.step() only needed for the collider visualiser
         if (this.viz) this.world.step();
 
-        if (this.viz) this.viz.update();
+        if (this.viz) { this.viz.update(); render(); }
         if (selectedBases.size > 0 && view.transformMode.enabled()) transformControls.show();
     }
 
@@ -291,8 +290,8 @@ class RigidClusterSimulator {
             springK:               view.getInputNumber('rbd_connectionSpringConst'),
             relaxed:               view.getInputNumber('rbd_connectionRelaxedLength'),
             maxForce:              view.getInputNumber('rbd_connectionMaxForce'),
-            electrostaticStrength: view.getInputNumber('rbd_electrostaticStrength'),
-            screeningLength:       view.getInputNumber('rbd_screeningLength'),
+            electrostaticStrength: 0,
+            screeningLength:       5,
             dt:                    view.getInputNumber('rbd_dt'),
             stepsPerCall: 4,
             sphereMode:            view.getInputBool('rbd_sphereMode'),
@@ -469,6 +468,42 @@ class ClusterConnectionPoint {
 
 const CONN_COLLIDER_RADIUS = 0.5;
 
+interface ICluster {
+    position: THREE.Vector3;
+    boundingRadius: number;
+    elements: { clusterId: number }[];
+    conPoints: { from: { getPos(): THREE.Vector3 } }[];
+}
+
+/** Compute cluster geometry from raw elements without a running simulator. */
+function buildStandaloneClusterData(): ICluster[] {
+    const m = new Map<number, BasicElement[]>();
+    elements.forEach(e => {
+        if (e.clusterId < 0) return;
+        if (!m.has(e.clusterId)) m.set(e.clusterId, []);
+        m.get(e.clusterId).push(e);
+    });
+    return [...m.values()].map(elems => {
+        const cid = elems[0].clusterId;
+        const position = new THREE.Vector3();
+        for (const e of elems) position.add(e.getPos());
+        position.divideScalar(elems.length);
+        let boundingRadius = ELEMENT_COLLIDER_RADIUS;
+        for (const e of elems) {
+            boundingRadius = Math.max(boundingRadius, e.getPos().distanceTo(position));
+        }
+        const conPoints: { from: BasicElement }[] = [];
+        for (const e of elems) {
+            if (e.n3 && e.n3.clusterId !== cid) conPoints.push({ from: e });
+            if (e.n5 && e.n5.clusterId !== cid) conPoints.push({ from: e });
+            forceHandler.getTraps().forEach((t: PairwiseForce) => {
+                if (t.particle === e) conPoints.push({ from: e });
+            });
+        }
+        return { position, boundingRadius, elements: elems, conPoints };
+    });
+}
+
 /**
  * Visualizes the sphere-mode colliders: one bounding sphere per cluster
  * plus one small sphere at each connection-point endpoint.
@@ -476,10 +511,10 @@ const CONN_COLLIDER_RADIUS = 0.5;
 class SphereClusterColliderVisualizer {
     private mesh: THREE.Mesh | null = null;
     private offsetBuffer: Float32Array;
-    private clusters: Cluster[];
+    private clusters: ICluster[];
     private clusterCount: number;
 
-    constructor(clusters: Cluster[]) {
+    constructor(clusters: ICluster[]) {
         this.clusters = clusters;
         this.clusterCount = clusters.length;
         const nConns = clusters.reduce((s, c) => s + c.conPoints.length, 0);

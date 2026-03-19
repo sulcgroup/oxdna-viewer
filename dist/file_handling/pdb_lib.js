@@ -194,31 +194,31 @@ function FillInfoNC(info, NC, CM) {
 }
 // Colors used when drawing PDB structures (shared by pdb_worker and mmcif_worker)
 var backboneColors = [
-    new THREE.Color(0xfdd291),
-    new THREE.Color(0xffb322),
-    new THREE.Color(0x437092),
+    new THREE.Color(0xfdd291), //light yellow
+    new THREE.Color(0xffb322), //goldenrod
+    new THREE.Color(0x437092), //dark blue
     new THREE.Color(0x6ea4cc), //light blue
 ];
 var nucleosideColors = [
-    new THREE.Color(0x4747B8),
-    new THREE.Color(0xFFFF33),
-    new THREE.Color(0x8CFF8C),
-    new THREE.Color(0xFF3333),
-    new THREE.Color(0x660000),
-    new THREE.Color(0xFF7042),
-    new THREE.Color(0xA00042),
-    new THREE.Color(0xFF7C70),
-    new THREE.Color(0xFF4C4C),
-    new THREE.Color(0x7070FF),
-    new THREE.Color(0xEBEBEB),
-    new THREE.Color(0x525252),
-    new THREE.Color(0x00007C),
-    new THREE.Color(0x5E005E),
-    new THREE.Color(0x004C00),
-    new THREE.Color(0x455E45),
-    new THREE.Color(0xB8A042),
-    new THREE.Color(0x534C42),
-    new THREE.Color(0x8C704C),
+    new THREE.Color(0x4747B8), //A or K; Royal Blue
+    new THREE.Color(0xFFFF33), //G or C; Medium Yellow
+    new THREE.Color(0x8CFF8C), //C or A; Medium green
+    new THREE.Color(0xFF3333), //T/U or T; Red
+    new THREE.Color(0x660000), //E; Dark Brown
+    new THREE.Color(0xFF7042), //S; Medium Orange
+    new THREE.Color(0xA00042), //D; Dark Rose
+    new THREE.Color(0xFF7C70), //N; Light Salmon
+    new THREE.Color(0xFF4C4C), //Q; Dark Salmon
+    new THREE.Color(0x7070FF), //H; Medium Blue
+    new THREE.Color(0xEBEBEB), //G; light GREY
+    new THREE.Color(0x525252), //P; Dark Grey
+    new THREE.Color(0x00007C), //R; Dark Blue
+    new THREE.Color(0x5E005E), //V; Dark Purple
+    new THREE.Color(0x004C00), //I; Dark Green
+    new THREE.Color(0x455E45), //L; Olive Green
+    new THREE.Color(0xB8A042), //M; Light Brown
+    new THREE.Color(0x534C42), //F; Olive Grey
+    new THREE.Color(0x8C704C), //Y; Medium Brown
     new THREE.Color(0x4F4600), //W; Olive Brown
 ];
 function addPDBToScene(pdbinfo, pindx, elementIndx) {
