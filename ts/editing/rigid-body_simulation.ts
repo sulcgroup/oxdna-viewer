@@ -116,6 +116,7 @@ class RigidClusterSimulator {
     private world: any;
     private viz: ColliderVisualizer | SphereClusterColliderVisualizer | null = null;
 
+    private disposed = false;
     private worker: Worker;
     private workerBusy = false;
     private pendingNetTrans: Float32Array | null = null;
@@ -241,6 +242,7 @@ class RigidClusterSimulator {
     public disableColliderViz() { if (this.viz) { this.viz.dispose(); this.viz = null; } }
 
     public integrate(dt: number) {
+        if (this.disposed) return;
         // Identify selected clusters (O(N), once per frame)
         const selectedClusters = new Set<Cluster>();
         if (selectedBases.size > 0) {
@@ -349,6 +351,7 @@ class RigidClusterSimulator {
     }
 
     public dispose() {
+        this.disposed = true;
         this.disableColliderViz();
         this.world.free();
         this.worker.terminate();

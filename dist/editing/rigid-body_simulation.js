@@ -111,6 +111,7 @@ class RigidClusterSimulator {
     clusters = [];
     world;
     viz = null;
+    disposed = false;
     worker;
     workerBusy = false;
     pendingNetTrans = null;
@@ -236,6 +237,8 @@ class RigidClusterSimulator {
         this.viz = null;
     } }
     integrate(dt) {
+        if (this.disposed)
+            return;
         // Identify selected clusters (O(N), once per frame)
         const selectedClusters = new Set();
         if (selectedBases.size > 0) {
@@ -349,6 +352,7 @@ class RigidClusterSimulator {
         }
     }
     dispose() {
+        this.disposed = true;
         this.disableColliderViz();
         this.world.free();
         this.worker.terminate();

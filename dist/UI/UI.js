@@ -1007,7 +1007,7 @@ class fluxGraph {
                 //    this.chart.toBase64Image();
                 //}
             },
-            responsiveAnimationDuration: 0, // animation duration after a resize
+            responsiveAnimationDuration: 0,
             responsive: true,
             title: {
                 display: true,
