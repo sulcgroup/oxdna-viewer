@@ -41,6 +41,7 @@ function shiftWithinBox(v: THREE.Vector3, elems?: BasicElement[], targetBox?: TH
     affectedSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     tmpSystems.forEach(s=>s.callUpdates(['instanceOffset']));
     if(forceHandler.forces.length > 0) forceHandler.redrawTraps();
+    notifyColliderVizMoved();
     render();
 }
 
@@ -72,6 +73,7 @@ function centerAndPBC(elems?: BasicElement[], targetBox?: THREE.Vector3) {
             n.recalculateVis();
         })
     }
+    notifyColliderVizMoved();
     render();
 }
 

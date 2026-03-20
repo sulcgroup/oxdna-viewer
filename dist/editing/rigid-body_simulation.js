@@ -101,6 +101,17 @@ function toggleRbdSphereMode() {
     syncColliderViz();
 }
 function toggleColliderViz() { syncColliderViz(); }
+/**
+ * Call after any operation that moves elements without going through the
+ * simulator (centering, PBC, manual translations, etc.) to keep the
+ * standalone collider visualisation in sync.
+ */
+function notifyColliderVizMoved() {
+    if (standaloneColliderViz) {
+        standaloneColliderViz.update();
+        render();
+    }
+}
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
 // Module-level scratch objects — reused every frame, never allocated in hot path
 const _rbdVec = new THREE.Vector3();
@@ -553,6 +564,14 @@ class SphereClusterColliderVisualizer {
     update() {
         if (!this.mesh)
             return;
+        // Recompute each cluster's COM from current element positions so the
+        // bounding sphere tracks moves like centering and PBC correctly.
+        for (const c of this.clusters) {
+            c.position.set(0, 0, 0);
+            for (const e of c.elements)
+                c.position.add(e.getPos());
+            c.position.divideScalar(c.elements.length);
+        }
         const buf = this.offsetBuffer;
         let idx = 0;
         for (const c of this.clusters) {

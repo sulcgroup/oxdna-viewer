@@ -26,6 +26,11 @@ const MIN_DIST2 = MIN_DIST * MIN_DIST;
 const MAX_TRANS = ELEMENT_COLLIDER_RADIUS; // max translation per step (stability clamp)
 const MAX_ANGLE = 0.15;                    // max rotation per step in radians
 
+// How often (in steps) to rebuild the spatial hash inside the K-step loop.
+// With K=200 and MAX_TRANS=0.5 a cluster can drift 100 units per batch, far
+// exceeding CELL_SIZE, so rebuilding periodically prevents missed collisions.
+const HASH_REBUILD_INTERVAL = 10;
+
 // Static topology
 let N = 0;
 let boundingRadii, elemOffsets, elemCounts, connOffsets, connCounts;
@@ -102,22 +107,9 @@ self.onmessage = function(e) {
         }
     }
 
-    // ── Build spatial hash ONCE for the whole K-step batch ───────────────────
-    // Clusters drift ≤ K × MAX_TRANS << CELL_SIZE between steps, so the hash
-    // built from step-0 positions is valid for steps 1…K−1.
+    // Spatial hash — rebuilt inside the K-loop every HASH_REBUILD_INTERVAL steps.
     const grid = new Map();
     const invCell = 1.0 / CELL_SIZE;
-    for (let i = 0; i < N; i++) {
-        if (selectedMask[i]) continue;
-        const key = cellKey(
-            Math.floor(workClusterPos[i*3]   * invCell),
-            Math.floor(workClusterPos[i*3+1] * invCell),
-            Math.floor(workClusterPos[i*3+2] * invCell)
-        );
-        let cell = grid.get(key);
-        if (!cell) { cell = []; grid.set(key, cell); }
-        cell.push(i);
-    }
 
     // Reset net-transform accumulators
     netTrans.fill(0);
@@ -131,6 +123,24 @@ self.onmessage = function(e) {
 
     // ── K gradient-descent steps ──────────────────────────────────────────────
     for (let step = 0; step < K; step++) {
+        // Rebuild spatial hash every HASH_REBUILD_INTERVAL steps so that
+        // clusters which have drifted into new cells are found by their
+        // actual neighbors (prevents tunneling for large K).
+        if (step % HASH_REBUILD_INTERVAL === 0) {
+            grid.clear();
+            for (let i = 0; i < N; i++) {
+                if (selectedMask[i]) continue;
+                const key = cellKey(
+                    Math.floor(workClusterPos[i*3]   * invCell),
+                    Math.floor(workClusterPos[i*3+1] * invCell),
+                    Math.floor(workClusterPos[i*3+2] * invCell)
+                );
+                let cell = grid.get(key);
+                if (!cell) { cell = []; grid.set(key, cell); }
+                cell.push(i);
+            }
+        }
+
         forces.fill(0);
         torques.fill(0);
 
@@ -383,7 +393,103 @@ self.onmessage = function(e) {
             }
         }
 
-        // Refresh connTo from updated element positions (after all cluster steps)
+        // ── Depenetration pass (fine-grained mode only) ───────────────────────
+        // Soft contact forces alone can be overwhelmed by spring attraction,
+        // allowing elements to tunnel through.  This pass directly projects
+        // overlapping element pairs apart (position-based constraint), which
+        // guarantees separation regardless of spring force magnitude.
+        if (!sphereMode) {
+            for (let i = 0; i < N; i++) {
+                if (selectedMask[i]) continue;
+                const i3 = i * 3;
+                // Re-read i's position each outer iteration — it may have been
+                // updated by a previous i-j depenetration within this pass.
+                const cxi_d = workClusterPos[i3], cyi_d = workClusterPos[i3+1], czi_d = workClusterPos[i3+2];
+                const gcx_d = Math.floor(cxi_d * invCell);
+                const gcy_d = Math.floor(cyi_d * invCell);
+                const gcz_d = Math.floor(czi_d * invCell);
+                const eStartI = elemOffsets[i] * 3, eEndI = eStartI + elemCounts[i] * 3;
+
+                for (let ddx = -1; ddx <= 1; ddx++) {
+                    for (let ddy = -1; ddy <= 1; ddy++) {
+                        for (let ddz = -1; ddz <= 1; ddz++) {
+                            const neighbors = grid.get(cellKey(gcx_d+ddx, gcy_d+ddy, gcz_d+ddz));
+                            if (!neighbors) continue;
+                            for (let ni = 0; ni < neighbors.length; ni++) {
+                                const j = neighbors[ni];
+                                if (j <= i) continue;
+                                const j3 = j * 3;
+
+                                // Broad phase: bounding spheres
+                                const cxi_c = workClusterPos[i3],   cyi_c = workClusterPos[i3+1],   czi_c = workClusterPos[i3+2];
+                                const cxj_c = workClusterPos[j3],   cyj_c = workClusterPos[j3+1],   czj_c = workClusterPos[j3+2];
+                                const bcdx = cxi_c-cxj_c, bcdy = cyi_c-cyj_c, bcdz = czi_c-czj_c;
+                                const mcd = boundingRadii[i] + boundingRadii[j] + MIN_DIST;
+                                if (bcdx*bcdx + bcdy*bcdy + bcdz*bcdz > mcd*mcd) continue;
+
+                                const eStartJ = elemOffsets[j]*3, eEndJ = eStartJ + elemCounts[j]*3;
+
+                                // Accumulate overlap correction vector for this cluster pair.
+                                // Each overlapping element pair contributes a push along the
+                                // separation axis scaled by the penetration depth.
+                                let depx = 0, depy = 0, depz = 0, nDep = 0;
+                                for (let ia = eStartI; ia < eEndI; ia += 3) {
+                                    const ax = workElemPos[ia], ay = workElemPos[ia+1], az = workElemPos[ia+2];
+                                    for (let ib = eStartJ; ib < eEndJ; ib += 3) {
+                                        const dx = ax-workElemPos[ib], dy = ay-workElemPos[ib+1], dz = az-workElemPos[ib+2];
+                                        const d2 = dx*dx + dy*dy + dz*dz;
+                                        if (d2 >= MIN_DIST2 || d2 < 1e-16) continue;
+                                        const dist = Math.sqrt(d2);
+                                        const ov = (MIN_DIST - dist) / dist; // overlap / dist
+                                        depx += dx*ov; depy += dy*ov; depz += dz*ov;
+                                        nDep++;
+                                    }
+                                }
+                                if (nDep === 0) continue;
+
+                                // Split the correction equally between the two clusters.
+                                // Clamp each half to MAX_TRANS to stay numerically stable.
+                                let ipx = depx*0.5, ipy = depy*0.5, ipz = depz*0.5;
+                                const iMag = Math.sqrt(ipx*ipx + ipy*ipy + ipz*ipz);
+                                if (iMag > MAX_TRANS) { const s = MAX_TRANS/iMag; ipx*=s; ipy*=s; ipz*=s; }
+
+                                let jpx = -depx*0.5, jpy = -depy*0.5, jpz = -depz*0.5;
+                                const jMag = Math.sqrt(jpx*jpx + jpy*jpy + jpz*jpz);
+                                if (jMag > MAX_TRANS) { const s = MAX_TRANS/jMag; jpx*=s; jpy*=s; jpz*=s; }
+
+                                // Apply to cluster i
+                                workClusterPos[i3]   += ipx; workClusterPos[i3+1] += ipy; workClusterPos[i3+2] += ipz;
+                                for (let ia = eStartI; ia < eEndI; ia += 3) {
+                                    workElemPos[ia]   += ipx; workElemPos[ia+1] += ipy; workElemPos[ia+2] += ipz;
+                                }
+                                const cSi = connOffsets[i], cEi = cSi + connCounts[i];
+                                for (let c = cSi; c < cEi; c++) {
+                                    workConnFrom[c*3] += ipx; workConnFrom[c*3+1] += ipy; workConnFrom[c*3+2] += ipz;
+                                }
+                                netTrans[i3] += ipx; netTrans[i3+1] += ipy; netTrans[i3+2] += ipz;
+
+                                // Apply to cluster j (skip if user-selected)
+                                if (!selectedMask[j]) {
+                                    workClusterPos[j3]   += jpx; workClusterPos[j3+1] += jpy; workClusterPos[j3+2] += jpz;
+                                    for (let ia = eStartJ; ia < eEndJ; ia += 3) {
+                                        workElemPos[ia]   += jpx; workElemPos[ia+1] += jpy; workElemPos[ia+2] += jpz;
+                                    }
+                                    const cSj = connOffsets[j], cEj = cSj + connCounts[j];
+                                    for (let c = cSj; c < cEj; c++) {
+                                        workConnFrom[c*3] += jpx; workConnFrom[c*3+1] += jpy; workConnFrom[c*3+2] += jpz;
+                                    }
+                                    netTrans[j3] += jpx; netTrans[j3+1] += jpy; netTrans[j3+2] += jpz;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Refresh connTo from updated element positions so the next step's
+        // spring forces use current target positions, not positions from the
+        // start of the batch.
         const nConns = connToGlobalIdx.length;
         for (let c = 0; c < nConns; c++) {
             const gi = connToGlobalIdx[c];
@@ -399,5 +505,7 @@ self.onmessage = function(e) {
 };
 
 function cellKey(cx, cy, cz) {
-    return ((cx & 0x7FFF)) | ((cy & 0x7FFF) * 32768) | ((cz & 0x7FFF) * 1073741824);
+    // String key avoids the 32-bit integer overflow that would collapse cz
+    // into only 2 usable bits when using bitwise OR with large multipliers.
+    return cx + ',' + cy + ',' + cz;
 }
