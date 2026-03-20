@@ -1089,7 +1089,7 @@
                             <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
                             <p>dt</p><input id='rbd_dt' value=0.1 type="text" data-role="spinner" class="input-small" data-step=0.01 data-fixed="2">
                             <div class="tight group flex-column" style="margin-top:4px;">
-                                <input type="checkbox" id="rbd_sphereMode" onchange="toggleRbdSphereMode()" data-role="switch" checked>
+                                <input type="checkbox" id="rbd_sphereMode" onchange="toggleRbdSphereMode()" data-role="switch">
                                 <span>Sphere mode</span>
                             </div>
                             <div class="tight group flex-column" style="margin-top:4px;">
@@ -1409,6 +1409,7 @@
         <!-- Rapier physics engine (ES module; stores initialised instance in window.RAPIER) -->
         <script type="module" src="./ts/lib/rapier_init.mjs"></script>
         <script src="./dist/editing/rigid-body_simulation.js"></script>
+        <script>document.getElementById('rbd_sphereMode').checked = true;</script>
         <script src="./dist/UI/UI.js"></script>
         <script src="./dist/main.js"></script>
         <script src="./dist/model/basicElement.js"></script>

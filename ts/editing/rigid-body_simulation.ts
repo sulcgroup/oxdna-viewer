@@ -257,12 +257,16 @@ class RigidClusterSimulator {
             if (selectedClusters.has(c)) c.syncToRapier();
         }
 
-        // Apply net transform from previous worker result (one call per cluster)
+        // Apply net transform from previous worker result (one call per cluster).
+        // Suppress intermediate render() calls fired by translateElements/rotateElements
+        // so the collider viz is never drawn at stale positions.
         if (this.pendingNetTrans) {
             const nt = this.pendingNetTrans, nq = this.pendingNetQuat;
+            renderSuppressed = true;
             this.clusters.forEach((c, i) => {
                 if (!selectedClusters.has(c)) c.applyNetTransform(nt, nq, i);
             });
+            renderSuppressed = false;
             this.pendingNetTrans = null;
         }
 
@@ -274,7 +278,9 @@ class RigidClusterSimulator {
         // world.step() only needed for the collider visualiser
         if (this.viz) this.world.step();
 
+        // Viz update + single render — both origami and colliders always in sync.
         if (this.viz) { this.viz.update(); render(); }
+        else render();
         if (selectedBases.size > 0 && view.transformMode.enabled()) transformControls.show();
     }
 

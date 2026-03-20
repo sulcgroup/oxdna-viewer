@@ -180,20 +180,7 @@ self.onmessage = function(e) {
                                 const Rj  = boundingRadii[j];
                                 const cStart_j = connOffsets[j], cEnd_j = cStart_j + connCounts[j];
 
-                                // 1. Bounding sphere vs bounding sphere
-                                //    Force is along center-center axis → no torque on either side.
-                                const bsdx = cxi-cxj, bsdy = cyi-cyj, bsdz = czi-czj;
-                                const bsd2 = bsdx*bsdx + bsdy*bsdy + bsdz*bsdz;
-                                const sumR = Ri + Rj;
-                                if (bsd2 < sumR*sumR && bsd2 > 1e-16) {
-                                    const bsDist = Math.sqrt(bsd2);
-                                    const mag = contactRepulsion * (sumR - bsDist) / bsDist;
-                                    const ffx = bsdx*mag, ffy = bsdy*mag, ffz = bsdz*mag;
-                                    forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
-                                    forces[j3]   -= ffx; forces[j3+1] -= ffy; forces[j3+2] -= ffz;
-                                }
-
-                                // 2. Connection-point colliders of i vs bounding sphere of j
+                                // Connection-point colliders of i vs bounding sphere of j
                                 //    Force on i acts at the (off-center) conn point → torque on i.
                                 //    Reaction on j acts through j's center → no torque on j.
                                 const thresh_ij  = CONN_COLLIDER_RADIUS + Rj;
@@ -215,7 +202,7 @@ self.onmessage = function(e) {
                                     forces[j3]   -= ffx; forces[j3+1] -= ffy; forces[j3+2] -= ffz;
                                 }
 
-                                // 3. Connection-point colliders of j vs bounding sphere of i
+                                // Connection-point colliders of j vs bounding sphere of i
                                 //    Force on j acts at the (off-center) conn point → torque on j.
                                 //    Reaction on i acts through i's center → no torque on i.
                                 const thresh_ji  = CONN_COLLIDER_RADIUS + Ri;

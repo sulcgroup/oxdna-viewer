@@ -7,7 +7,10 @@
 //    stats.dom
 //);
 // scene update call definition
+let renderSuppressed = false;
 function render() {
+    if (renderSuppressed)
+        return;
     pointlight.position.copy(camera.position);
     renderer.render(scene, camera);
     //renderer.render(pickingScene, camera);
