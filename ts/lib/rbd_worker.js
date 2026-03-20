@@ -124,6 +124,11 @@ self.onmessage = function(e) {
     netQuat.fill(0);
     for (let i = 0; i < N; i++) netQuat[i*4+3] = 1.0;
 
+    // Fine-grained contact distance scales with bond length so longer-bond
+    // simulations maintain proportionally larger separation zones.
+    const dynMin  = relaxed / 3.0;   // normalised: relaxed=3 → dynMin=MIN_DIST=1.0
+    const dynMin2 = dynMin * dynMin;
+
     // ── K gradient-descent steps ──────────────────────────────────────────────
     for (let step = 0; step < K; step++) {
         forces.fill(0);
@@ -179,6 +184,21 @@ self.onmessage = function(e) {
                                 const cxj = workClusterPos[j3], cyj = workClusterPos[j3+1], czj = workClusterPos[j3+2];
                                 const Rj  = boundingRadii[j];
                                 const cStart_j = connOffsets[j], cEnd_j = cStart_j + connCounts[j];
+
+                                // Bounding sphere vs bounding sphere.
+                                // Force is scaled by combined element count so the collective
+                                // repulsion matches what N×N element pairs would produce in
+                                // fine-grained mode, preventing over-compression.
+                                const bsdx = cxi-cxj, bsdy = cyi-cyj, bsdz = czi-czj;
+                                const bsd2 = bsdx*bsdx + bsdy*bsdy + bsdz*bsdz;
+                                const sumR = (Ri + Rj) * 0.5;
+                                if (bsd2 < sumR*sumR && bsd2 > 1e-16) {
+                                    const bsDist = Math.sqrt(bsd2);
+                                    const mag = contactRepulsion * (sumR - bsDist) / bsDist;
+                                    const ffx = bsdx*mag, ffy = bsdy*mag, ffz = bsdz*mag;
+                                    forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
+                                    forces[j3]   -= ffx; forces[j3+1] -= ffy; forces[j3+2] -= ffz;
+                                }
 
                                 // Connection-point colliders of i vs bounding sphere of j
                                 //    Force on i acts at the (off-center) conn point → torque on i.
@@ -251,9 +271,9 @@ self.onmessage = function(e) {
                                     for (let ib = eStartJ; ib < eEndJ; ib += 3) {
                                         const dx = ax-workElemPos[ib], dy = ay-workElemPos[ib+1], dz = az-workElemPos[ib+2];
                                         const d2 = dx*dx + dy*dy + dz*dz;
-                                        if (d2 >= MIN_DIST2 || d2 < 1e-16) continue;
+                                        if (d2 >= dynMin2 || d2 < 1e-16) continue;
                                         const dist = Math.sqrt(d2);
-                                        const mag  = contactRepulsion * (MIN_DIST - dist) / dist;
+                                        const mag  = contactRepulsion * (dynMin - dist) / dist;
                                         const ffx = dx*mag, ffy = dy*mag, ffz = dz*mag;
                                         forces[i3]   += ffx; forces[i3+1] += ffy; forces[i3+2] += ffz;
                                         const rAx = ax-cxi, rAy = ay-cyi, rAz = az-czi;

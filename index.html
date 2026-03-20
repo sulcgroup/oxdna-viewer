@@ -1086,8 +1086,9 @@
                             <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
                             <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value=3 type="text" data-role="spinner" class="input-small" data-step=1>
                             <p>Max bond force</p><input id='rbd_connectionMaxForce' value=5 type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=50 type="text" data-role="spinner" class="input-small" data-step=1>
                             <p>dt</p><input id='rbd_dt' value=0.1 type="text" data-role="spinner" class="input-small" data-step=0.01 data-fixed="2">
+                            <p>Steps per frame</p><input id='rbd_stepsPerFrame' value=200 type="text" data-role="spinner" class="input-small" data-step=50>
                             <div class="tight group flex-column" style="margin-top:4px;">
                                 <input type="checkbox" id="rbd_sphereMode" onchange="toggleRbdSphereMode()" data-role="switch">
                                 <span>Sphere mode</span>
@@ -1406,8 +1407,6 @@
         <script src="./dist/editing/editing.js"></script>
         <script src="./dist/editing/doUndo.js"></script>
         <script src="./dist/editing/dijkstra.js"></script>
-        <!-- Rapier physics engine (ES module; stores initialised instance in window.RAPIER) -->
-        <script type="module" src="./ts/lib/rapier_init.mjs"></script>
         <script src="./dist/editing/rigid-body_simulation.js"></script>
         <script>document.getElementById('rbd_sphereMode').checked = true;</script>
         <script src="./dist/UI/UI.js"></script>

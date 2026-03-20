@@ -1,8 +1,10 @@
-// RAPIER physics engine is loaded globally via ts/lib/rapier_init.mjs
-declare const RAPIER: any;
-
 let rigidClusterSimulator: RigidClusterSimulator;
 let standaloneColliderViz: ColliderVisualizer | SphereClusterColliderVisualizer | null = null;
+
+const RBD_STEPS_SPHERE           = 200;
+const RBD_STEPS_FINEGRAINED      = 10;
+const RBD_REPULSION_SPHERE       = 1;
+const RBD_REPULSION_FINEGRAINED  = 50;
 
 function toggleClusterSim() {
     if (!view.getInputBool("clusterSim")) {
@@ -23,11 +25,6 @@ function toggleClusterSim() {
     }
     if (standaloneColliderViz) { standaloneColliderViz.dispose(); standaloneColliderViz = null; }
 
-    if (typeof RAPIER === 'undefined') {
-        notify("Rapier physics engine not ready yet – please try again in a moment.");
-        document.getElementById("clusterSim")["checked"] = false;
-        return;
-    }
     rigidClusterSimulator = new RigidClusterSimulator();
     if (rigidClusterSimulator.getNumberOfClusters() < 2) {
         notify("Please create at least 2 clusters");
@@ -37,6 +34,7 @@ function toggleClusterSim() {
         rigidClusterSimulator = null;
         return;
     }
+    applyRbdModeDefaults();
     syncColliderViz();
     rigidClusterSimulator.simulate();
 }
@@ -90,7 +88,18 @@ function syncColliderViz() {
     render();
 }
 
-function toggleRbdSphereMode() { syncColliderViz(); }
+function applyRbdModeDefaults() {
+    const sphereMode = view.getInputBool('rbd_sphereMode');
+    (document.getElementById('rbd_stepsPerFrame')     as HTMLInputElement).value =
+        String(sphereMode ? RBD_STEPS_SPHERE      : RBD_STEPS_FINEGRAINED);
+    (document.getElementById('rbd_contactRepulsion')  as HTMLInputElement).value =
+        String(sphereMode ? RBD_REPULSION_SPHERE   : RBD_REPULSION_FINEGRAINED);
+}
+
+function toggleRbdSphereMode() {
+    applyRbdModeDefaults();
+    syncColliderViz();
+}
 function toggleColliderViz()    { syncColliderViz(); }
 
 // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf
@@ -108,12 +117,10 @@ const _rbdQuat = new THREE.Quaternion();
  *    no-selection case: zero position data transferred per frame.
  *  • Worker runs K=4 steps per call, returning one composed (netTrans, netQuat)
  *    per cluster → one translateElements + rotateElements per cluster per frame.
- *  • world.step() is skipped when the collider visualiser is inactive.
  *  • No heap allocation on the main thread hot path (scratch objects reused).
  */
 class RigidClusterSimulator {
     private clusters: Cluster[] = [];
-    private world: any;
     private viz: ColliderVisualizer | SphereClusterColliderVisualizer | null = null;
 
     private disposed = false;
@@ -131,9 +138,6 @@ class RigidClusterSimulator {
     private totalConns:  number;
 
     constructor() {
-        this.world = new RAPIER.World({ x: 0, y: 0, z: 0 });
-        this.world.timestep = view.getInputNumber('rbd_dt');
-
         const m = new Map<number, Set<BasicElement>>();
         elements.forEach(e => {
             const c = e.clusterId;
@@ -141,7 +145,7 @@ class RigidClusterSimulator {
             if (!m.has(c)) m.set(c, new Set());
             m.get(c).add(e);
         });
-        m.forEach(clusterElements => this.clusters.push(new Cluster(clusterElements, this)));
+        m.forEach(clusterElements => this.clusters.push(new Cluster(clusterElements)));
 
         const N = this.clusters.length;
 
@@ -221,7 +225,6 @@ class RigidClusterSimulator {
         );
     }
 
-    public getWorld(): any { return this.world; }
     public getNumberOfClusters(): number { return this.clusters.length; }
     public getClusters(): Cluster[] { return this.clusters; }
 
@@ -254,7 +257,7 @@ class RigidClusterSimulator {
         }
 
         for (const c of this.clusters) {
-            if (selectedClusters.has(c)) c.syncToRapier();
+            if (selectedClusters.has(c)) c.syncPosition();
         }
 
         // Apply net transform from previous worker result (one call per cluster).
@@ -274,9 +277,6 @@ class RigidClusterSimulator {
             this.postToWorker(selectedClusters, dt);
             this.workerBusy = true;
         }
-
-        // world.step() only needed for the collider visualiser
-        if (this.viz) this.world.step();
 
         // Viz update + single render — both origami and colliders always in sync.
         if (this.viz) { this.viz.update(); render(); }
@@ -301,7 +301,7 @@ class RigidClusterSimulator {
             electrostaticStrength: 0,
             screeningLength:       5,
             dt:                    view.getInputNumber('rbd_dt'),
-            stepsPerCall: 4,
+            stepsPerCall: view.getInputNumber('rbd_stepsPerFrame'),
             sphereMode:            view.getInputBool('rbd_sphereMode'),
         };
 
@@ -359,7 +359,6 @@ class RigidClusterSimulator {
     public dispose() {
         this.disposed = true;
         this.disableColliderViz();
-        this.world.free();
         this.worker.terminate();
     }
 }
@@ -374,18 +373,15 @@ class Cluster {
     public inertiaMult:    number;
 
     private elementSet:    Set<BasicElement>;
-    private sim:           RigidClusterSimulator;
-    private body:          any;
     private bodyRotation   = new THREE.Quaternion();
 
     private totalTranslation = new THREE.Vector3();
     private totalRotation    = new THREE.Quaternion();
     private rot_axis:         THREE.Vector3;
 
-    constructor(clusterElements: Set<BasicElement>, simulator: RigidClusterSimulator) {
+    constructor(clusterElements: Set<BasicElement>) {
         this.elementSet = clusterElements;
         this.elements   = [...clusterElements];
-        this.sim        = simulator;
 
         this.position = new THREE.Vector3();
         for (const e of this.elements) this.position.add(e.getPos());
@@ -396,20 +392,6 @@ class Cluster {
             this.boundingRadius = Math.max(this.boundingRadius, e.getPos().distanceTo(this.position));
         }
         this.inertiaMult = 1 / ((2 / 5) * this.boundingRadius * this.boundingRadius);
-
-        const bodyDesc = RAPIER.RigidBodyDesc.kinematicPositionBased()
-            .setTranslation(this.position.x, this.position.y, this.position.z);
-        this.body = simulator.getWorld().createRigidBody(bodyDesc);
-
-        for (const e of this.elements) {
-            const lp = e.getPos().clone().sub(this.position);
-            simulator.getWorld().createCollider(
-                RAPIER.ColliderDesc.ball(ELEMENT_COLLIDER_RADIUS)
-                    .setTranslation(lp.x, lp.y, lp.z)
-                    .setDensity(0).setRestitution(0).setFriction(0),
-                this.body
-            );
-        }
 
         for (const e of this.elements) {
             if (e.n3 && e.n3.clusterId !== e.clusterId)
@@ -449,15 +431,12 @@ class Cluster {
         }
 
         this.rot_axis = this.position.clone();
-        this.body.setNextKinematicTranslation({ x: this.position.x, y: this.position.y, z: this.position.z });
-        this.body.setNextKinematicRotation({ x: this.bodyRotation.x, y: this.bodyRotation.y, z: this.bodyRotation.z, w: this.bodyRotation.w });
     }
 
-    public syncToRapier() {
+    public syncPosition() {
         this.position.set(0, 0, 0);
         for (const e of this.elements) this.position.add(e.getPos());
         this.position.divideScalar(this.elements.length);
-        this.body.setNextKinematicTranslation({ x: this.position.x, y: this.position.y, z: this.position.z });
     }
 
     public getClusterElements(): Set<BasicElement>  { return this.elementSet; }
