@@ -720,6 +720,7 @@ function readPdbFile(file) {
                     let pdbindices = pdbtemp[5];
                     // let pdbinfo = pdbtemp[6]
                     let id = startID;
+                    view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
                     // store PDB data
                     let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
                     pdata.disulphideBonds = pdbtemp[6][3];
@@ -770,8 +771,8 @@ function readPdbFile(file) {
                                 nc.pdbindices = pdbindices[nc.sid];
                                 if (j != 0) {
                                     let prevnc = elements.get(id - 1); //Get previous Element
-                                    nc.n3 = prevnc;
-                                    prevnc.n5 = nc;
+                                    nc.n5 = prevnc;
+                                    prevnc.n3 = nc;
                                 }
                                 elements.push(nc);
                                 id++;
@@ -797,11 +798,13 @@ function readPdbFile(file) {
                             }
                         }
                         else if (strand.isNucleicAcid()) {
-                            for (let k = 0; k < strand.getLength(); k++) {
-                                let Nuc = elements.get(startID + count);
+                            let strandLen = pdbtemp[0][i].length;
+                            // Process 3'→5' so n3 is always positioned before the bbcon is computed
+                            for (let k = strandLen - 1; k >= 0; k--) {
+                                let Nuc = elements.get(startID + count + k);
                                 FillInfoNC(pdbtemp[0][i][k], Nuc, com);
-                                count++;
                             }
+                            count += strandLen;
                         }
                     }
                     //System is set Up just needs to be added to the systems array now I believe
@@ -851,6 +854,7 @@ function readMmcifFile(file) {
                     let dims = pdbtemp[4];
                     let pdbindices = pdbtemp[5];
                     let id = startID;
+                    view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
                     // store PDB data
                     let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
                     pdata.disulphideBonds = pdbtemp[6][3];
@@ -900,8 +904,8 @@ function readMmcifFile(file) {
                                 nc.pdbindices = pdbindices[nc.sid];
                                 if (j != 0) {
                                     let prevnc = elements.get(id - 1);
-                                    nc.n3 = prevnc;
-                                    prevnc.n5 = nc;
+                                    nc.n5 = prevnc;
+                                    prevnc.n3 = nc;
                                 }
                                 elements.push(nc);
                                 id++;
@@ -927,11 +931,13 @@ function readMmcifFile(file) {
                             }
                         }
                         else if (strand.isNucleicAcid()) {
-                            for (let k = 0; k < strand.getLength(); k++) {
-                                let Nuc = elements.get(startID + count);
+                            let strandLen = pdbtemp[0][i].length;
+                            // Process 3'→5' so n3 is always positioned before the bbcon is computed
+                            for (let k = strandLen - 1; k >= 0; k--) {
+                                let Nuc = elements.get(startID + count + k);
                                 FillInfoNC(pdbtemp[0][i][k], Nuc, com);
-                                count++;
                             }
+                            count += strandLen;
                         }
                     }
                     sys.fillDefaultColors();

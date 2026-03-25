@@ -542,10 +542,10 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
             let strandInfo = [];
             let tmptype = nstrand.strandtype;
             strandtype.push(tmptype);
-            let pdbres3to5 = nstrand.residues.reverse();
+            let pdbres5to3 = nstrand.residues;
             for (let j = 0; j < nstrand.residues.length; j++) {
                 try {
-                    let info = CalcInfoNC(pdbres3to5[j]);
+                    let info = CalcInfoNC(pdbres5to3[j]);
                     if (info === undefined)
                         continue; // partial residue (e.g. only backbone atoms resolved)
                     strandInfo.push(info);
@@ -560,8 +560,8 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                     xdata.push(nc.sid);
                     if (j != 0) {
                         let prevnc = elems[elems.length - 1];
-                        nc.n3 = prevnc;
-                        prevnc.n5 = nc;
+                        nc.n5 = prevnc;
+                        prevnc.n3 = nc;
                     }
                     elems.push(nc);
                     nextElementId++;
@@ -600,8 +600,8 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                                 repeatNuc.n5 = null;
                                 if (mid != 0) {
                                     let prevaa = elems[elems.length - 1];
-                                    repeatNuc.n3 = prevaa;
-                                    prevaa.n5 = repeatNuc;
+                                    repeatNuc.n5 = prevaa;
+                                    prevaa.n3 = repeatNuc;
                                 }
                                 elems.push(repeatNuc);
                                 nextElementId++;
