@@ -1082,12 +1082,21 @@
                             </span>
                             <span class="caption">Settings</span>
                         </button>
-                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: 200px;">
-                        <p>Cluster repulsion constant</p><input id='rbd_clusterRepulsionConst' value = 1000 onchange="if(rigidClusterSimulator){rigidClusterSimulator.clusterRepulsionConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1000>
-                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value = 10 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionSpringConst = this.value;}" type="text" data-role="spinner" class="input-small" data-step=10>
-                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value = 3 onchange="if(rigidClusterSimulator){rigidClusterSimulator.connectionRelaxedLength = this.value;}" type="text" data-role="spinner" class="input-small" data-step=1>
-                            <p>Friction</p><input id='rbd_friction' value = 0.25 onchange="if(rigidClusterSimulator){rigidClusterSimulator.friction = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.1 data-fixed="1">
-                            <p>dt</p><input id='rbd_dt' value = 0.1 onchange="if(rigidClusterSimulator){rigidClusterSimulator.dt = this.value;}" type="text" data-role="spinner" class="input-small" data-step=.01 data-fixed="2">
+                        <ul class="ribbon-dropdown" data-role="dropdown" data-duration="100" style="width: 220px;">
+                            <p>Connection spring constant</p><input id='rbd_connectionSpringConst' value=1 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Connection relaxed length</p><input id='rbd_connectionRelaxedLength' value=3 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Max bond force</p><input id='rbd_connectionMaxForce' value=5 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>Contact repulsion</p><input id='rbd_contactRepulsion' value=50 type="text" data-role="spinner" class="input-small" data-step=1>
+                            <p>dt</p><input id='rbd_dt' value=0.1 type="text" data-role="spinner" class="input-small" data-step=0.01 data-fixed="2">
+                            <p>Steps per frame</p><input id='rbd_stepsPerFrame' value=200 type="text" data-role="spinner" class="input-small" data-step=50>
+                            <div class="tight group flex-column" style="margin-top:4px;">
+                                <input type="checkbox" id="rbd_sphereMode" onchange="toggleRbdSphereMode()" data-role="switch">
+                                <span>Sphere mode</span>
+                            </div>
+                            <div class="tight group flex-column" style="margin-top:4px;">
+                                <input type="checkbox" id="rbd_showColliders" onchange="toggleColliderViz()" data-role="switch">
+                                <span>Show colliders</span>
+                            </div>
                         </ul>
                     </div>
                     <span class="title">Rigid-body</span>
@@ -1416,6 +1425,7 @@
         <script src="./dist/editing/doUndo.js"></script>
         <script src="./dist/editing/dijkstra.js"></script>
         <script src="./dist/editing/rigid-body_simulation.js"></script>
+        <script>document.getElementById('rbd_sphereMode').checked = true;</script>
         <script src="./dist/UI/UI.js"></script>
         <script src="./dist/main.js"></script>
         <script src="./dist/model/basicElement.js"></script>
