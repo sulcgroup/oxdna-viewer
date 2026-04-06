@@ -1,36 +1,51 @@
 // section responsible for electron interaction
 if(window && window.process && process.versions['electron']) {
-    
-    const settings = require("electron-settings");
-    //retrieve settings
-    settings.get("BOXCentering").then(BOXCentering => {
-        if(BOXCentering) {
-            window.sessionStorage.centerOption   = BOXCentering.centerOption;
-            window.sessionStorage.inboxingOption = BOXCentering.inboxingOption;
-        }
-    });
-    
     const resolve = require('path').resolve;
+    const electron = require('electron');
+    const remote = electron.remote;
+    const hasRemote = remote && typeof remote.getGlobal === "function";
     //we are in electron
     //ccCapture is not working ;(
     let btn = document.getElementById("videoCreateButton");
     btn.disabled = true; 
     btn.style.visibility="hidden";
 
-    const remote = require('electron').remote;
-    let arguments = remote.getGlobal('sharedObject').argv;
-    
-    //filter out only file arguments
-    let input_files = arguments.filter(s=>!s.startsWith("--"))
-    
-    let resolved =[];
-    input_files.forEach(s=>{
-        let p = resolve(s);
-        console.log(p);
-        resolved.push(p);
-    });
-    if(input_files.length > 0) {
-        readFilesFromPathArgs(resolved);
+    if (hasRemote) {
+        try {
+            const settings = require("electron-settings");
+            //retrieve settings
+            settings.get("BOXCentering").then(BOXCentering => {
+                if(BOXCentering) {
+                    window.sessionStorage.centerOption   = BOXCentering.centerOption;
+                    window.sessionStorage.inboxingOption = BOXCentering.inboxingOption;
+                }
+            }).catch(error => {
+                console.warn("Unable to restore saved centering options:", error);
+            });
+        } catch (error) {
+            console.warn("Electron settings are unavailable in this renderer:", error);
+        }
+    }
+
+    try {
+        if (hasRemote) {
+            let arguments = remote.getGlobal('sharedObject').argv;
+            
+            //filter out only file arguments
+            let input_files = arguments.filter(s=>!s.startsWith("--"))
+            
+            let resolved =[];
+            input_files.forEach(s=>{
+                let p = resolve(s);
+                console.log(p);
+                resolved.push(p);
+            });
+            if(input_files.length > 0) {
+                readFilesFromPathArgs(resolved);
+            }
+        }
+    } catch (error) {
+        console.warn("Electron remote is unavailable in this renderer:", error);
     }
 
 }

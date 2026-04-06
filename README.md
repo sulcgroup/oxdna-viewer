@@ -117,6 +117,42 @@ The topology and trajectory/configuration have to be in oxDNA format. You can co
 
 ---
 
+## Batch Image Export
+
+If you want to generate the same PNG produced by `view.saveCanvasImage()` without manually opening oxView and clicking the export button, there is now a small Electron CLI in [`script/save-canvas-image.js`](./script/save-canvas-image.js).
+
+After installing dependencies with `npm install`, you can run for example:
+
+```bash
+npm run save-canvas-image -- \
+  --input ./examples/2-free-form_design_example-tetrahedron/tetra.oxview \
+  --output ./tetra.png
+```
+
+For an oxDNA topology plus configuration pair:
+
+```bash
+npm run save-canvas-image -- \
+  --input ./examples/triangle/tri.json.top \
+  --input ./examples/triangle/tri.json.oxdna \
+  --output ./triangle.png \
+  --scale 3
+```
+
+Useful flags:
+
+| Flag | Meaning |
+|---|---|
+| `--input <file>` | Input file to load. Repeat for multi-file inputs such as `.top` + `.oxdna`. |
+| `--output <file>` | Target PNG path. Defaults to `./canvas.png`. |
+| `--scale <n>` | Scale factor passed to `view.saveCanvasImage()`. |
+| `--delay-ms <ms>` | Extra delay after the scene becomes ready, useful for large files. |
+| `--show` | Show the Electron window while exporting instead of keeping it hidden. |
+
+If a colorbar is present, the script also saves it next to the main image as `*-colorbar.png`.
+
+---
+
 ## Console Commands
 In addition to the visualization and editing features highlighted in the menu, oxView is scriptable through the browser console.  To facilitate use, there are two APIs containing useful functions for changing visuals and for editing.
 
