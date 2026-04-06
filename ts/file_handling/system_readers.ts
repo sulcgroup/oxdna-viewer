@@ -837,6 +837,8 @@ function readPdbFile(file) {
                     
                     let id = startID;
 
+                    view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
+
                     // store PDB data
                     let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
                     pdata.disulphideBonds = pdbtemp[6][3];
@@ -890,8 +892,8 @@ function readPdbFile(file) {
                                 nc.pdbindices = pdbindices[nc.sid];
                                 if (j != 0) {
                                     let prevnc = elements.get(id-1); //Get previous Element
-                                    nc.n3 = prevnc;
-                                    prevnc.n5 = nc;
+                                    nc.n5 = prevnc;
+                                    prevnc.n3 = nc;
                                 }
                                 elements.push(nc);
                                 id++;
@@ -918,11 +920,13 @@ function readPdbFile(file) {
                                 count++;
                             }
                         } else if (strand.isNucleicAcid()) {
-                            for (let k = 0; k < strand.getLength(); k++) {
-                                let Nuc = elements.get(startID+count) as Nucleotide;
+                            let strandLen = pdbtemp[0][i].length;
+                            // Process 3'→5' so n3 is always positioned before the bbcon is computed
+                            for (let k = strandLen - 1; k >= 0; k--) {
+                                let Nuc = elements.get(startID+count+k) as Nucleotide;
                                 FillInfoNC(pdbtemp[0][i][k], Nuc, com);
-                                count++;
                             }
+                            count += strandLen;
                         }
                     }
 
@@ -984,6 +988,8 @@ function readMmcifFile(file) {
 
                     let id = startID;
 
+                    view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
+
                     // store PDB data
                     let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
                     pdata.disulphideBonds = pdbtemp[6][3];
@@ -1032,8 +1038,8 @@ function readMmcifFile(file) {
                                 nc.pdbindices = pdbindices[nc.sid];
                                 if (j != 0) {
                                     let prevnc = elements.get(id-1);
-                                    nc.n3 = prevnc;
-                                    prevnc.n5 = nc;
+                                    nc.n5 = prevnc;
+                                    prevnc.n3 = nc;
                                 }
                                 elements.push(nc);
                                 id++;
@@ -1060,11 +1066,13 @@ function readMmcifFile(file) {
                                 count++;
                             }
                         } else if (strand.isNucleicAcid()) {
-                            for (let k = 0; k < strand.getLength(); k++) {
-                                let Nuc = elements.get(startID+count) as Nucleotide;
+                            let strandLen = pdbtemp[0][i].length;
+                            // Process 3'→5' so n3 is always positioned before the bbcon is computed
+                            for (let k = strandLen - 1; k >= 0; k--) {
+                                let Nuc = elements.get(startID+count+k) as Nucleotide;
                                 FillInfoNC(pdbtemp[0][i][k], Nuc, com);
-                                count++;
                             }
+                            count += strandLen;
                         }
                     }
 
