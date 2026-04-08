@@ -210,6 +210,15 @@ function readForce(forceFile) {
 // Json files can be a lot of things, read them.
 function parseJson(json:string, system:System) {
     const data = JSON.parse(json);
+
+    if (data["_config"]) {
+        const cfg = data["_config"];
+        (cfg.hide || []).forEach(prop => view.setPropertyInScene(prop, system, false));
+        (cfg.show || []).forEach(prop => view.setPropertyInScene(prop, system, true));
+        delete data["_config"];  // don't process it as geometry
+    }
+
+
     for (var key in data) {
         if (data[key].length == system.systemLength()) { //if json and dat files match/same length
             if (typeof (data[key][0]) == "number") { //we assume that scalars denote a new color map
@@ -246,6 +255,7 @@ function parseJson(json:string, system:System) {
         
         else if (data[key][0].length == 6) { // if each entry is 6 elements long
 
+
             const hasCylinder = key.toLowerCase().includes("cylinder"); // if the key of the dictionary includes the substring "cylinder"
             const hasLine     = key.toLowerCase().includes("line"); // if the key of the dictionary includes the substring "line"
 
@@ -275,10 +285,6 @@ function parseJson(json:string, system:System) {
                     );
 
                     scene.add(cylinder);
-
-                    // remove nucleotide and connector for better visualisation
-                    view.setPropertyInScene('nucleoside', system, false);
-                    view.setPropertyInScene('connector', system, false);
                 }
             }
                 
@@ -293,19 +299,29 @@ function parseJson(json:string, system:System) {
                     const line = new THREE.Line(geometry, material); //a red line that starts at pos1 and ends at pos2
                     scene.add(line);
 
-                    // remove nucleotide and connector for better visualisation
-                    view.setPropertyInScene('nucleoside', system, false);
-                    view.setPropertyInScene('connector', system, false);
-
                 }
             }
 
+            // else { //draw arbitrary arrows on the scene. First three values of each entry are the coordinates for the starting point, the last three make up the vector.
+            //     for (let entry of data[key]) {
+            //         const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
+            //         const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
+            //         vec.normalize();
+            //         const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+            //         scene.add(arrowHelper);
+            //     }
+            // }
+
             else { //draw arbitrary arrows on the scene. First three values of each entry are the coordinates for the starting point, the last three make up the vector.
                 for (let entry of data[key]) {
-                    const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
-                    const vec = new THREE.Vector3(entry[3], entry[4], entry[5]);
-                    vec.normalize();
-                    const arrowHelper = new THREE.ArrowHelper(vec, pos, 5 * vec.length(), 0x00000);
+                    const pos1 = new THREE.Vector3(entry[0], entry[1], entry[2]);
+                    const pos2 = new THREE.Vector3(entry[3], entry[4], entry[5]);
+                    const vec = new THREE.Vector3().subVectors(pos2, pos1);
+
+                    const length = vec.length();  
+                    vec.normalize();  
+
+                    const arrowHelper = new THREE.ArrowHelper(vec, pos1, 0.5*length, 0x000000);
                     scene.add(arrowHelper);
                 }
             }
@@ -314,9 +330,10 @@ function parseJson(json:string, system:System) {
         }
 
         else if (data[key][0].length == 9) { // Draw planes
+
             
-            const hasPlane = key.toLowerCase().includes("plane"); // if the key of the dictionary includes the substring "cylinder"
-            const hasPoint    = key.toLowerCase().includes("point"); // if the key of the dictionary includes the substring "line"
+            const hasPlane = key.toLowerCase().includes("plane"); // if the key of the dictionary includes the substring "plane"
+            const hasPoint    = key.toLowerCase().includes("point"); // if the key of the dictionary includes the substring "point"
 
 
             if (hasPlane) {
@@ -382,6 +399,8 @@ function parseJson(json:string, system:System) {
         }
 
         else if (data[key][0].length == 3) {
+  
+
             for (let entry of data[key]) {  
 
                     const pos = new THREE.Vector3(entry[0], entry[1], entry[2]);
@@ -394,9 +413,6 @@ function parseJson(json:string, system:System) {
 
                     scene.add(s);
 
-                    view.setPropertyInScene('nucleoside', system, false);
-                    view.setPropertyInScene('connector', system, false);
-        
                 }
         }
         else { //if json and dat files do not match, display error message and set filesLen to 2 (not necessary)
