@@ -136,45 +136,34 @@ function readFilesFromPathArgs(args){
     }
 
     const get_request = (paths:string[]) => {
-        const requests = paths.map(path => new Promise<File>((resolve, reject) => {
-            let req = new XMLHttpRequest();
-            const fileName = path.split(/[\\/]/).pop() || path;
+        let files:File[] = [];
 
-            console.log("get_request://", path);
+        while(paths) {
+            let path = paths.pop();
+            let req = new XMLHttpRequest();
+            const fileName = path.toLowerCase();
+
+            console.log("get_request://",fileName);
             req.open("GET", path);
             req.responseType = "blob";
 
             req.onload = () => {
-                if (req.status !== 0 && (req.status < 200 || req.status >= 300)) {
-                    reject(new Error(`Unable to load ${path}: HTTP ${req.status}`));
-                    return;
+                const file = new File([req.response], fileName);
+                files.push(file)
                 }
-                resolve(new File([req.response], fileName));
-            };
 
-            req.onerror = () => {
-                reject(new Error(`Unable to load ${path}`));
-            };
-
+            req.onerror = () => {done()};
             req.send();
-        }));
-
-        return Promise.all(requests);
-    };
+        }
+        return(files)
+    }
 
     if(args.length > 0) {
-        get_request(args).then(files => {
-            //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
-            return handleFiles(files);
-        }).catch(error => {
-            console.error(error);
-            activity.text = `ERROR: ${error.message}`;
-        }).finally(() => {
-            done();
-        });
+        let files = get_request(args);
+        //FileList isn't actually a type with a constructor, but there's nothing in handleFiles() where it doesn't behave like an array.
+        handleFiles(files)
     }
     else {
         activity.text = "ERROR: No files provided"
-        done();
     }
 }
