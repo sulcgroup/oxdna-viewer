@@ -359,23 +359,6 @@ class Peptide extends Strand {
         return json;
     };
 
-    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
-    getMonomers(reverse?:boolean): BasicElement[] {
-        return super.getMonomers(!reverse)
-    }
-
-    forEach(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean, condition?: (value: BasicElement, index: number)=>boolean) {
-        super.forEach(callbackfn, !reverse, condition);
-    }
-
-    map(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean) {
-        return super.map(callbackfn, !reverse);
-    }
-
-    filter(callbackfn: (value: BasicElement, index: number)=>boolean, reverse?:boolean) {
-        return super.filter(callbackfn, !reverse)
-    }
-
     toggleMonomers() {
         this.forEach(e=>e.toggle());
     }
@@ -443,23 +426,6 @@ class Generic extends Strand {
         let json = super.toJSON();
         json['class'] = 'GS';
         return json;
-    }
-
-    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
-    getMonomers(reverse?:boolean): BasicElement[] {
-        return super.getMonomers(!reverse)
-    }
-
-    forEach(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean, condition?: (value: BasicElement, index: number)=>boolean) {
-        super.forEach(callbackfn, !reverse, condition);
-    }
-
-    map(callbackfn: (value: BasicElement, index: number)=>void, reverse?:boolean) {
-        return super.map(callbackfn, !reverse);
-    }
-
-    filter(callbackfn: (value: BasicElement, index: number)=>boolean, reverse?:boolean) {
-        return super.filter(callbackfn, !reverse)
     }
 
     toggleMonomers() {

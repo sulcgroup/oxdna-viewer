@@ -1327,6 +1327,7 @@
 
     <!-- Metro 4 -->
     <script src="./ts/lib/metro.min.js"></script>
+
     <div class="main">
         <!--all files to be loaded onload of html file-->
         <script src="./ts/lib/chart.min.js"></script>
@@ -1357,7 +1358,6 @@
         <script src="./dist/file_handling/aux_readers.js"></script>
         <script src="./dist/model/force.js"></script>
         <script src="./dist/scene/PBC_switchbox.js"></script>
-        <script src="./dist/file_handling/file_getters.js"></script>
         <script type="module">
             // const apiRoot= "http://localhost:3002/api/v1";
             const apiRoot= "https://api.nanobase.org/api/v1";
@@ -1403,14 +1403,6 @@
             });
         </script>
 
-        <script src="https://cdn.jsdelivr.net/npm/fzstd@0.1.1/umd/index.min.js"></script>
-        <script>
-            window.fzstd = fzstd;
-        </script>
-
-        <script src="./dist/file_handling/file_handling.js"></script>
-        <script src="./dist/file_handling/system_readers.js"></script>
-        <script src="./dist/file_handling/aux_readers.js"></script>
         <script src="./dist/file_handling/script_reader.js"></script>
         <script src="./dist/editing/editing.js"></script>
         <script src="./dist/editing/doUndo.js"></script>

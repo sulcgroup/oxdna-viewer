@@ -840,28 +840,18 @@ function readPdbFile(file) {
                     view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
 
                     // store PDB data
-                    let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
+                    const pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
                     pdata.disulphideBonds = pdbtemp[6][3];
                     pdbFileInfo.push(pdata);
 
-                    pdata = undefined;
-                    // pdbinfo = undefined;
-
                     // store B factor Data in global graphDatasets
-                    let gdata = new graphData(gd[0], gd[1], gd[2], gd[3], gd[4]);
+                    const gdata = new graphData(gd[0], gd[1], gd[2], gd[3], gd[4]);
                     graphDatasets.push(gdata);
 
-                    gdata = undefined;
-                    gd = undefined;
-
-                    // redraw box so nucleotides will be drawn with backbone connectors
-                    if(box.x < dims[0]) box.x = dims[0]*1.25;
-                    if(box.y < dims[1]) box.y = dims[1]*1.25;
-                    if(box.z < dims[2]) box.z = dims[2]*1.25;
+                    // Set box size based on loaded structure size
+                    const maxdim = Math.max(...dims)*1.25;
+                    box.clampScalar(maxdim, Infinity);
                     redrawBox();
-
-                    dims = undefined;
-
                     
                     for(let i = 0; i< pdbtemp[0].length; i++){
                         if(strandID[i] == "pro"){
@@ -872,8 +862,8 @@ function readPdbFile(file) {
                                 AA.pdbindices = pdbindices[AA.sid];
                                 if (j != 0) {
                                     let prevaa = elements.get(id-1); //Get previous Element
-                                    AA.n3 = prevaa;
-                                    prevaa.n5 = AA;
+                                    AA.n5 = prevaa;
+                                    prevaa.n3 = AA;
                                 }
                                 elements.push(AA);
                                 id++;
@@ -934,6 +924,8 @@ function readPdbFile(file) {
                     sys.fillDefaultColors();
                     addSystemToScene(sys);
                     systems.push(sys);
+
+                    centerAndPBC(sys.getMonomers(), box)
 
                     if(flux.fluxWindowOpen) view.addGraphData(graphDatasets.length-1); // add to flux window if open, otherwise it'll be added on next opening
 
@@ -1002,12 +994,10 @@ function readMmcifFile(file) {
                     gdata = undefined;
                     gd = undefined;
 
-                    // redraw box so nucleotides will be drawn with backbone connectors
-                    if(box.x < dims[0]) box.x = dims[0]*1.25;
-                    if(box.y < dims[1]) box.y = dims[1]*1.25;
-                    if(box.z < dims[2]) box.z = dims[2]*1.25;
+                    // Set box size based on loaded structure size
+                    const maxdim = Math.max(...dims)*1.25;
+                    box.clampScalar(maxdim, Infinity);
                     redrawBox();
-                    dims = undefined;
 
                     for(let i = 0; i < pdbtemp[0].length; i++){
                         if(strandID[i] == "pro"){
@@ -1018,8 +1008,8 @@ function readMmcifFile(file) {
                                 AA.pdbindices = pdbindices[AA.sid];
                                 if (j != 0) {
                                     let prevaa = elements.get(id-1);
-                                    AA.n3 = prevaa;
-                                    prevaa.n5 = AA;
+                                    AA.n5 = prevaa;
+                                    prevaa.n3 = AA;
                                 }
                                 elements.push(AA);
                                 id++;
@@ -1079,6 +1069,8 @@ function readMmcifFile(file) {
                     sys.fillDefaultColors();
                     addSystemToScene(sys);
                     systems.push(sys);
+
+                    centerAndPBC(sys.getMonomers(), box)
 
                     if(flux.fluxWindowOpen) view.addGraphData(graphDatasets.length-1);
 

@@ -504,8 +504,8 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                     aa.n5 = null;
                     if (j != 0) {
                         let prevaa = elems[elems.length-1];
-                        aa.n3 = prevaa;
-                        prevaa.n5 = aa;
+                        aa.n5 = prevaa;
+                        prevaa.n3 = aa;
                     }
                     elems.push(aa);
                     nextElementId++;
@@ -540,8 +540,8 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                             repeatAmino.n5 = null;
                             if (mid != 0) {
                                 let prevaa = elems[elems.length-1];
-                                repeatAmino.n3 = prevaa;
-                                prevaa.n5 = repeatAmino;
+                                repeatAmino.n5 = prevaa;
+                                prevaa.n3 = repeatAmino;
                             }
                             elems.push(repeatAmino);
                             nextElementId++;
@@ -632,31 +632,25 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
 
     com.divideScalar(sys.systemLength());
 
-    let xpos = strandInit.flat().map((info) => {return info[2][0];});
-    let ypos = strandInit.flat().map((info) => {return info[2][1];});
-    let zpos = strandInit.flat().map((info) => {return info[2][2];});
+    const xpos = strandInit.flat().map((info) => {return info[2][0];});
+    const ypos = strandInit.flat().map((info) => {return info[2][1];});
+    const zpos = strandInit.flat().map((info) => {return info[2][2];});
 
-    let xmax = xpos.reduce((a,b) => {return Math.max(a, b)})
-    let xmin = xpos.reduce((a,b) => {return Math.min(a, b)})
-    let ymax = ypos.reduce((a,b) => {return Math.max(a, b)})
-    let ymin = ypos.reduce((a,b) => {return Math.min(a, b)})
-    let zmax = zpos.reduce((a,b) => {return Math.max(a, b)})
-    let zmin = zpos.reduce((a,b) => {return Math.min(a, b)})
-    let xdim= xmax - xmin;
-    let ydim= ymax - ymin;
-    let zdim= zmax - zmin;
+    const xmax = xpos.reduce((a,b) => {return Math.max(a, b)})
+    const xmin = xpos.reduce((a,b) => {return Math.min(a, b)})
+    const ymax = ypos.reduce((a,b) => {return Math.max(a, b)})
+    const ymin = ypos.reduce((a,b) => {return Math.min(a, b)})
+    const zmax = zpos.reduce((a,b) => {return Math.max(a, b)})
+    const zmin = zpos.reduce((a,b) => {return Math.min(a, b)})
+    let xdim = xmax - xmin;
+    let ydim = ymax - ymin;
+    let zdim = zmax - zmin;
     if(xdim < 2) xdim = 2.5;
     if(ydim < 2) ydim = 2.5;
     if(zdim < 2) zdim = 2.5;
+    
+    const dims = new Array<number>(xdim, ydim, zdim)
 
-    xpos = undefined;
-    ypos = undefined;
-    zpos = undefined;
-    sys = undefined;
-    ring_names = undefined;
-    strands = undefined;
-    initlist = undefined;
-
-    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"], [xdim, ydim, zdim],
+    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"], dims,
         pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds]];
 }

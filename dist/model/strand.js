@@ -329,19 +329,6 @@ class Peptide extends Strand {
         return json;
     }
     ;
-    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
-    getMonomers(reverse) {
-        return super.getMonomers(!reverse);
-    }
-    forEach(callbackfn, reverse, condition) {
-        super.forEach(callbackfn, !reverse, condition);
-    }
-    map(callbackfn, reverse) {
-        return super.map(callbackfn, !reverse);
-    }
-    filter(callbackfn, reverse) {
-        return super.filter(callbackfn, !reverse);
-    }
     toggleMonomers() {
         this.forEach(e => e.toggle());
     }
@@ -395,19 +382,6 @@ class Generic extends Strand {
         let json = super.toJSON();
         json['class'] = 'GS';
         return json;
-    }
-    //the default for DNA/RNA reflects that DNA/RNA are written backwards in oxDNA, but proteins are written the normal way.
-    getMonomers(reverse) {
-        return super.getMonomers(!reverse);
-    }
-    forEach(callbackfn, reverse, condition) {
-        super.forEach(callbackfn, !reverse, condition);
-    }
-    map(callbackfn, reverse) {
-        return super.map(callbackfn, !reverse);
-    }
-    filter(callbackfn, reverse) {
-        return super.filter(callbackfn, !reverse);
     }
     toggleMonomers() {
         this.forEach(e => e.toggle());
