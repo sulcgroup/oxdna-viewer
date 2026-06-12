@@ -293,7 +293,7 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
 
     function makeTopFileNew(name){
         const top: string[] = []; // string of contents of .top file
-        let default_props = ['id', 'type', 'circular']
+        let default_props = ['id', 'type', 'circular', 'color']
 
         let firstLine:string[] = [counts['totParticles'].toString(), counts['totStrands'].toString()];
 
@@ -308,8 +308,21 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
         top.push(firstLine.join(" "));
 
         newStrandIDs.forEach((_id, s) => {
-            let line = [s.getSequence(), "id="+_id.toString(), "type="+s.kwdata['type'], "circular="+s.isCircular(), s.getKwdataString(default_props)]
-            top.push(line.join(" "))
+            // save user color changes in the exported topology file
+            let colorStr = '';
+            let e = s.end5 || s.end3;
+            if (e) {
+                try {
+                    let sys = e.getSystem();
+                    let idx = e.sid * 3;
+                    let bbColor = new THREE.Color(sys.bbColors[idx], sys.bbColors[idx+1], sys.bbColors[idx+2]);
+                    colorStr = 'color=#' + bbColor.getHexString();
+                } catch(err) {
+                    console.warn('Could not read color for strand', _id, err);
+                }
+            }
+            let line = [s.getSequence(), "id="+_id.toString(), "type="+s.kwdata['type'], "circular="+s.isCircular(), colorStr, s.getKwdataString(default_props)]
+            top.push(line.join(" ").trim())
         })
         
         top.push('') // topology has to end in an empty line

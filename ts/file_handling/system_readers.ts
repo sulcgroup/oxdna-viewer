@@ -149,6 +149,14 @@ function parseTop(s: string) {
 
             new_strand.end3 = nuc;
 
+            // set the strand color if specified
+            if (kwdata['color']) {
+                let strandColor = new THREE.Color(kwdata['color']);
+                new_strand.forEach((elem) => {
+                    elem.color = strandColor.clone();
+                });
+            }
+
             if (kwdata["circular"]) {
                 new_strand.end3.n3 = new_strand.end5;
                 new_strand.end5.n5 = new_strand.end3;
@@ -275,6 +283,13 @@ function parseTop(s: string) {
     system.initInstances(system.systemLength())
     system.fillDefaultColors();
     addSystemToScene(system);
+
+    // if any colors are specified, switch to custom color mode
+    let hasTopologyColors = system.strands.some(s => s.kwdata && s.kwdata['color']);
+    if (hasTopologyColors) {
+        view.coloringMode.set("Custom");
+    }
+
     return system
 }
 
