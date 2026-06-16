@@ -39,6 +39,7 @@ function shiftWithinBox(v, elems, targetBox) {
     tmpSystems.forEach(s => s.callUpdates(['instanceOffset']));
     if (forceHandler.forces.length > 0)
         forceHandler.redrawTraps();
+    notifyColliderVizMoved();
     render();
 }
 /**
@@ -69,6 +70,7 @@ function centerAndPBC(elems, targetBox) {
             n.recalculateVis();
         });
     }
+    notifyColliderVizMoved();
     render();
 }
 /**

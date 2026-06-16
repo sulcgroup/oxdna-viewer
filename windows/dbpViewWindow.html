@@ -1,0 +1,31 @@
+<div style="display: flex; flex-direction: column; height: 100%; gap: 5px; padding: 5px;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <input type="checkbox" id="dbpUseMutualTraps" data-role="checkbox"
+            data-caption="Treat mutual traps as pairs"
+            title="When checked, mutual trap forces (A→B and B→A) are treated as base pairs">
+
+        <button onclick="generateDBPText()" class="button primary small"
+            title="Generate extended dot-bracket-plus notation from the loaded design">
+            Generate
+        </button>
+
+        <button onclick="downloadDBPFile()" class="button secondary small"
+            title="Download the dot-bracket-plus as a file to drag into the viewer">
+            Download .dbp
+        </button>
+
+        <button onclick="sendToDBPViewIframe()" class="button success small"
+            title="Attempt to send data to the iframe viewer via postMessage">
+            Send to viewer
+        </button>
+    </div>
+
+    <textarea id="dbpOutput" rows="3" style="width: 100%; font-family: monospace; font-size: 11px; resize: vertical;"
+        placeholder="Click 'Generate' to create dot-bracket-plus notation from the loaded design. Then download and drag into the viewer below."></textarea>
+
+    <iframe id="dbpViewIframe"
+        src="https://zoombya.github.io/dbp_view/"
+        style="flex: 1; width: 100%; border: 1px solid #ccc; min-height: 400px;"
+        allow="clipboard-read; clipboard-write">
+    </iframe>
+</div>
