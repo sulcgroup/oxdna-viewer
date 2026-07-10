@@ -402,7 +402,33 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
         nuccom.y = res.atoms.map(a => a.y).reduce((a, b) => a + b);
         nuccom.z = res.atoms.map(a => a.z).reduce((a, b) => a + b);
         let l = res.atoms.length;
-        let pos = nuccom.divideScalar(l);
+        //let pos = nuccom.divideScalar(l);
+        
+        //#oxDNA3 modification
+        // if self.resn == 'A' or self.resn == 'G':
+        //     pos = self.atom_lookup["C8"]
+        // else:
+        //     pos = self.atom_lookup["C6"]
+
+        let pos; 
+        if (type == 'A' || type == 'G') {
+            let c8atom = res.atoms.filter(a => a.atomType == "C8")[0];
+            if(c8atom === undefined){
+                console.log("No C8 found for Nucleotide initialization, using center of mass instead");
+                pos = nuccom.divideScalar(l);
+            } else {
+                pos = new THREE.Vector3(c8atom.x, c8atom.y, c8atom.z);
+            }
+        } else {
+            let c6atom = res.atoms.filter(a => a.atomType == "C6")[0];
+            if(c6atom === undefined){
+                console.log("No C6 found for Nucleotide initialization, using center of mass instead");
+                pos = nuccom.divideScalar(l);
+            } else {
+                pos = new THREE.Vector3(c6atom.x, c6atom.y, c6atom.z);
+            }
+        }
+        //res.atoms.filter(a => a.atomType == types[0])
 
         let Bfactavg = Bfacts.map(a => a).reduce((a, b) => a+b);
         Bfactavg /= res.atoms.length;
