@@ -1,56 +1,76 @@
-function makeOutputFiles() {
-    let name = view.getInputValue("outputFilename");
+/**
+ * Makes .top, .dat and any auxiliary files (masses, ANM parameters, forces) from the current scene,
+ * with all systems combined into one. Multiple files are downloaded together as a single zip file,
+ * because browsers drop some downloads when several are started at once.
+ */
+async function makeOutputFiles() {
+    const name = view.getInputValue("outputFilename");
     // Determine which order to write the files in
     // Old has backwards NA strands (3'-5') while new has 5'-3'
-    let useNew = view.getInputBool("topFormat");
+    const useNew = view.getInputBool("topFormat");
     // remove any gaps in the particle numbering
     const [newElementIDs, newStrandIds, counts, gsSubtypes] = getNewIds(useNew);
+    const outputFiles = [];
     // Create topology file
-    let top = view.getInputBool("topDownload");
-    if (top) {
-        let { file_name, file } = makeTopFile(name, newElementIDs, newStrandIds, gsSubtypes, counts, useNew);
-        // add timeout because if you try to download multiple files at the same time, the browser often misses the later ones.
-        setTimeout(() => makeTextFile(file_name, file), 10);
+    if (view.getInputBool("topDownload")) {
+        outputFiles.push(makeTopFile(name, newElementIDs, newStrandIds, gsSubtypes, counts, useNew));
     }
     else if (systems.length > 1 || topologyEdited) {
         notify("You have edited the topology of the scene, a new topology file must be generated", "warning");
         return;
     }
     // Create configuration file
-    let dat = view.getInputBool("datDownload");
-    if (dat) {
-        let { file_name, file } = makeDatFile(name, newElementIDs);
-        setTimeout(() => makeTextFile(file_name, file), 20);
+    if (view.getInputBool("datDownload")) {
+        outputFiles.push(makeDatFile(name, newElementIDs));
     }
     if (gsSubtypes.masses.length > 0) { // check for generic sphere presence
-        let file_name = name + "_m.txt";
-        let file = makeMassFile(newElementIDs, gsSubtypes);
-        setTimeout(() => makeTextFile(file_name, file), 20);
+        outputFiles.push({ file_name: name + "_m.txt", file: makeMassFile(newElementIDs, gsSubtypes) });
     }
     if (networks.length > 0) {
-        let { file_name, file } = makeParFile(name, newElementIDs, counts);
-        setTimeout(() => makeTextFile(file_name, file), 30);
+        outputFiles.push(makeParFile(name, newElementIDs, counts));
     }
-    let force_download = view.getInputBool("forceDownload");
-    if (force_download) {
+    if (view.getInputBool("forceDownload")) {
         if (forceHandler.forces.length > 0) {
-            let file_name = name.concat('_force.txt');
-            let contents = forcesToString(newElementIDs);
-            setTimeout(() => makeTextFile(file_name, contents), 40);
+            outputFiles.push({ file_name: name + "_force.txt", file: forcesToString(newElementIDs) });
         }
         else {
             notify('No forces to export. Use the forces editor in the "Dynamics" tab to add new forces.', "warning");
         }
     }
+    if (outputFiles.length == 0) {
+        notify("No files selected for export", "warning");
+        return;
+    }
+    // A single file needs no bundling
+    if (outputFiles.length == 1) {
+        makeTextFile(outputFiles[0].file_name, outputFiles[0].file);
+        return;
+    }
+    if (typeof JSZip === "undefined") {
+        notify("Could not load the zip library, so the files cannot be exported. Please check your internet connection and reload.", "alert");
+        return;
+    }
+    const zip = new JSZip();
+    outputFiles.forEach(f => zip.file(f.file_name, f.file));
+    const zipBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+    downloadBlob(zipBlob, name + ".zip");
 }
-function makeArrayBuffer(buffer, filename) {
-    var link = document.createElement('a');
+/**
+ * Download a blob as a file with the given name
+ */
+function downloadBlob(blob, filename) {
+    const link = document.createElement('a');
     link.style.display = 'none';
-    document.body.appendChild(link); // Firefox workaround, see #6594 threejs
-    let blob = new Blob([buffer], { type: 'application/octet-stream' });
     link.href = URL.createObjectURL(blob);
     link.download = filename;
+    document.body.appendChild(link); // Firefox needs the link to be in the document
     link.click();
+    document.body.removeChild(link);
+    // Revoking straight away can cancel the download in some browsers
+    setTimeout(() => URL.revokeObjectURL(link.href), 10000);
+}
+function makeArrayBuffer(buffer, filename) {
+    downloadBlob(new Blob([buffer], { type: 'application/octet-stream' }), filename);
 }
 function make3dOutput() {
     const name = view.getInputValue("3dExportFilename");
@@ -348,14 +368,7 @@ function makeOxViewJsonFile(name, space) {
     }, null, space));
 }
 function makeTextFile(filename, text) {
-    let blob = new Blob([text], { type: 'text' });
-    var elem = window.document.createElement('a');
-    elem.href = window.URL.createObjectURL(blob);
-    elem.download = filename;
-    document.body.appendChild(elem);
-    elem.click();
-    document.body.removeChild(elem);
-    //window.parent.FakeDataDownload(blob, filename);
+    downloadBlob(new Blob([text], { type: 'text' }), filename);
 }
 ;
 function makeIndxFile(indxarray) {
