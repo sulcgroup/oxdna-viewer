@@ -1,4 +1,4 @@
-// Minimal typing for the JSZip global, loaded from a CDN in index.html
+// Minimal typing for the JSZip global, loaded from ts/lib/jszip.min.js in index.html
 declare class JSZip {
     file(name: string, data: string | Blob): JSZip;
     generateAsync(options: { type: "blob", compression?: "STORE" | "DEFLATE" }): Promise<Blob>;
@@ -64,7 +64,7 @@ async function makeOutputFiles() {
     }
 
     if (typeof JSZip === "undefined") {
-        notify("Could not load the zip library, so the files cannot be exported. Please check your internet connection and reload.", "alert");
+        notify("The zip library (ts/lib/jszip.min.js) is not loaded, so the files cannot be exported.", "alert");
         return;
     }
 

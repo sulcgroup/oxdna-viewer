@@ -47,7 +47,7 @@ async function makeOutputFiles() {
         return;
     }
     if (typeof JSZip === "undefined") {
-        notify("Could not load the zip library, so the files cannot be exported. Please check your internet connection and reload.", "alert");
+        notify("The zip library (ts/lib/jszip.min.js) is not loaded, so the files cannot be exported.", "alert");
         return;
     }
     const zip = new JSZip();
