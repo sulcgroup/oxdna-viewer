@@ -113,6 +113,14 @@ abstract class BasicElement {
         return false;
     }
 
+    typeOptions(type: string) {
+        // https://www.megasoftware.net/web_help_7/rh_iupac_single_letter_codes.htm
+        const wp = this.weakPyrimindine;
+        switch (type) {
+            default: return [type];
+        }
+    }
+
     setType(type: string) {
         this.type = type;
     }
@@ -126,6 +134,17 @@ abstract class BasicElement {
         }
         let newC = this.elemToColor(this.type);
         sys.fillVec('nsColors', 3, this.sid, [newC.r, newC.g, newC.b])
+    }
+
+    isType(type: string) {
+        if (type === this.type) {
+            return true;
+        } else {
+            // We could skip the previous check and run this directly,
+            // but it is quicker to first check for equality since that
+            // is the most common.
+            return this.typeOptions(type).includes(this.type);
+        }
     }
 
     //retrieve this element's values in a 3-parameter instance array

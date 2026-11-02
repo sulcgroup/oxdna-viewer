@@ -395,6 +395,43 @@ var api;
         document.getElementById('threeCanvas').style.background = color;
     }
     api.setBackgroundColor = setBackgroundColor;
+    /**
+    * Find a sequence or nucleotide ID
+    * @param inputs Array of search terms. Can either be numbers-as-strings or sequences. Also accepts a single sequence.
+    * @param zoom Whether or not to zoom to the selection (only works if inputs is length 1)
+    */
+    function findDomain(inputs, zoom = true) {
+        if (typeof (inputs) == 'string') {
+            inputs = [inputs];
+        }
+        inputs.forEach(input => {
+            // select nucleotide if given an ID
+            if (/^[0-9]+$/.test(input)) {
+                const nucleotide = elements.get(parseInt(input));
+                if (nucleotide != undefined) {
+                    nucleotide.select();
+                    // zoom into nucleotide if it is the only input given
+                    if (inputs.length == 1 && zoom) {
+                        api.findElement(nucleotide);
+                    }
+                }
+                return;
+            }
+            // else select sequences
+            const search_func = system => {
+                system.strands.forEach(strand => {
+                    strand.search(input).forEach(match => {
+                        api.selectElements(match, true);
+                    });
+                });
+            };
+            systems.forEach(search_func);
+            tmpSystems.forEach(search_func);
+        });
+        systems.forEach(system => { updateView(system); });
+        render();
+    }
+    api.findDomain = findDomain;
     //export function flipConnectors() {
     //    instancedBBconnector.
     //}

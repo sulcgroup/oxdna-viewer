@@ -170,7 +170,6 @@ class RNANucleotide extends Nucleotide {
                 out[len * 2 - (i + 1)] = [p, a1.clone(), a3.clone()]; // yes, topology is backwards.  See comment in addDuplexBySeq() 
             }
         }
-        console.log(' ');
         return out;
     }
     isRNA() {
