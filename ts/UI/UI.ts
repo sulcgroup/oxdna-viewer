@@ -968,12 +968,8 @@ class View {
     }
 
     public removeNetworkData(nid : number){
-        if(networks[nid].fittingReady){
-            let ul = document.getElementById("readynetlist");
-            let name = "Network " + (nid+1).toString();
-            let li = document.getElementById(name);
-            ul.removeChild(li);
-        }
+        const li = document.getElementById("Network " + (nid+1).toString());
+        if (li) li.remove();
     }
 
 }
@@ -1223,9 +1219,7 @@ class fluxGraph {
         net.fillConnections(); // fills connection array for
 
         net.prepVis(); // Creates Mesh for visualization
-        networks.push(net); // Any network added here shows up in UI network selector
-        selectednetwork = net.nid; // auto select network just loaded
-        view.addNetwork(net.nid);
+        insertNetwork(net); // Any network added here shows up in UI network selector (and is selected)
 
         let xdata = bfactors.map((val, ind) => ind+1);
         let GD = new graphData('cg_analytical', bfactors, xdata, 'bfactor', 'A_sqr'); //label needs to be re written
@@ -1594,9 +1588,10 @@ class fluxGraph {
         // })
     };
 
-    prepJSONButton(nid){ // this function doesn't really belong here
-        let jb = document.getElementById('jsonbutton');
-        jb.onclick = function(){makeNetworkJSONFile(nid)};
+    prepJSONButton(net: Network){ // this function doesn't really belong here
+        const jb = document.getElementById('jsonbutton');
+        // look up nid on click, since networks get renumbered when others are removed
+        jb.onclick = function(){ if (networks.includes(net)) makeNetworkJSONFile(net.nid); };
     };
 
 }

@@ -71,6 +71,34 @@ class Edges {
         }
     }
     ;
+    /**
+     * Build a new Edges object containing only the edges whose endpoints are both
+     * keys of indexMap, with endpoints renumbered to the mapped values.
+     * The map must be order-preserving (monotonic) so that p1 < p2 still holds.
+     * @param indexMap old particle index -> new particle index
+     */
+    subset(indexMap) {
+        const out = new Edges();
+        for (let i = 0; i < this.total; i++) {
+            if (indexMap.has(this.p1[i]) && indexMap.has(this.p2[i])) {
+                out.p1.push(indexMap.get(this.p1[i]));
+                out.p2.push(indexMap.get(this.p2[i]));
+                out.ks.push(this.ks[i]);
+                out.types.push(this.types[i]);
+                out.eqDist.push(this.eqDist[i]);
+                out.extraParams.push(this.extraParams[i].slice());
+                out.total += 1;
+            }
+        }
+        return out;
+    }
+    ;
+    clone() {
+        const identity = new Map();
+        this.p1.concat(this.p2).forEach(i => identity.set(i, i));
+        return this.subset(identity);
+    }
+    ;
     clearAll() {
         this.p1 = [];
         this.p2 = [];
@@ -122,11 +150,11 @@ class Network {
         this.networktype = 'empty';
         this.onscreen = false; // parameter for viewing the networks
         this.cutoff = 0;
+        this.fittingReady = false;
         this.elemcoords = {
-            // coords: this.particles.map(e => e.getPos()),
-            xI: selectedMonomers.map(e => e.getPos().x),
-            yI: selectedMonomers.map(e => e.getPos().y),
-            zI: selectedMonomers.map(e => e.getPos().z),
+            xI: [],
+            yI: [],
+            zI: [],
             distance: function (i, j) {
                 // return this.coords[i].distanceTo(this.coords[j]);
                 return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2);
@@ -143,10 +171,11 @@ class Network {
                 return new THREE.Vector3((this.xI[j] - this.xI[i]), (this.yI[j] - this.yI[i]), (this.zI[j] - this.zI[i]));
             }
         };
+        this.refreshCoords();
         this.center = function (i, j) {
             return this.particles[i].getPos().clone().add(this.particles[j].getPos()).divideScalar(2);
         };
-        flux.prepJSONButton(nid);
+        flux.prepJSONButton(this);
     }
     ;
     //The below functions are for merging the ANM and Network
@@ -187,18 +216,75 @@ class Network {
     ;
     copyNetwork(targetNid) {
         // copies this network info to network specified by targetNid
-        let newNet = networks[targetNid];
+        // (particles are matched by their index in each network)
+        const newNet = networks[targetNid];
         newNet.networktype = this.networktype;
         newNet.cutoff = this.cutoff;
-        newNet.reducedEdges = this.reducedEdges;
-        newNet.networktype = this.networktype;
-        if (newNet.reducedEdges.total != 0) {
-            newNet.initInstances(newNet.reducedEdges.total);
-            newNet.fillConnections();
-            newNet.initEdges();
-            newNet.prepVis();
-            newNet.sendtoUI();
+        newNet.rebuild(newNet.particles, this.reducedEdges.clone());
+    }
+    ;
+    /**
+     * Describe the part of this network that lies within refs, so that it can
+     * later be rebuilt on a different set of elements with networkFromTemplate.
+     * @param refs Reference list of elements; template members index into it
+     * @returns the template, or undefined if no particle of this network is in refs
+     */
+    templateFor(refs) {
+        const refIndex = new Map();
+        refs.forEach((e, i) => refIndex.set(e, i));
+        const members = [];
+        const indexMap = new Map(); // network index -> template member index
+        this.particles.forEach((p, i) => {
+            if (refIndex.has(p)) {
+                indexMap.set(i, members.length);
+                members.push(refIndex.get(p));
+            }
+        });
+        if (members.length == 0)
+            return undefined;
+        return {
+            members: members,
+            edges: this.reducedEdges.subset(indexMap),
+            networktype: this.networktype,
+            cutoff: this.cutoff,
+            onscreen: this.onscreen,
+        };
+    }
+    ;
+    /**
+     * Replace the particles and edges of this network and rebuild everything derived from them.
+     * Takes ownership of edges.
+     */
+    rebuild(particles, edges) {
+        const wasOnscreen = this.onscreen;
+        if (wasOnscreen)
+            this.toggleVis();
+        this.clearConnections();
+        this.particles = particles;
+        this.types = particles.map(p => p.type);
+        this.fillMasses(particles);
+        this.refreshCoords();
+        this.reducedEdges = edges;
+        if (edges.total != 0) {
+            this.initInstances(edges.total);
+            this.fillConnections();
+            this.initEdges();
+            this.prepVis();
+            this.sendtoUI();
+            if (wasOnscreen)
+                this.toggleVis();
         }
+        else {
+            if (this.fittingReady && flux.fluxWindowOpen)
+                view.removeNetworkData(this.nid);
+            this.fittingReady = false;
+        }
+    }
+    ;
+    refreshCoords() {
+        this.elemcoords.xI = this.particles.map(e => e.getPos().x);
+        this.elemcoords.yI = this.particles.map(e => e.getPos().y);
+        this.elemcoords.zI = this.particles.map(e => e.getPos().z);
     }
     ;
     sendtoUI() {
@@ -293,10 +379,7 @@ class Network {
     }
     ;
     updatePositions() {
-        // update all coordinates
-        this.elemcoords.xI = this.particles.map(e => e.getPos().x);
-        this.elemcoords.yI = this.particles.map(e => e.getPos().y);
-        this.elemcoords.zI = this.particles.map(e => e.getPos().z);
+        this.refreshCoords();
         //update all connection positions by finding midpoint of new locations
         for (let t = 0; t < this.reducedEdges.total; t++) {
             let i = this.reducedEdges.p1[t];
@@ -758,4 +841,98 @@ class Network {
         this.particles.forEach(p => p.connections = []); // Empty whatever connections were there, assumes particles only belong to one network
     }
     ;
+}
+/**
+ * Templates for every network with at least one particle in refs.
+ * A partial selection of a network that contains none of its edges is skipped.
+ * Returns an empty array (the common case) if none of refs belong to a network.
+ */
+function captureNetworkTemplates(refs) {
+    if (networks.length == 0)
+        return [];
+    const templates = [];
+    networks.forEach(n => {
+        const t = n.templateFor(refs);
+        if (t && (t.edges.total > 0 || n.reducedEdges.total == 0))
+            templates.push(t);
+    });
+    return templates;
+}
+/**
+ * Create and register a new network from a template.
+ * @param t template to build from
+ * @param refs elements the template members index into
+ */
+function networkFromTemplate(t, refs) {
+    const net = new Network(networks.length, t.members.map(i => refs[i]));
+    net.networktype = t.networktype;
+    net.cutoff = t.cutoff;
+    insertNetwork(net);
+    net.rebuild(net.particles, t.edges.clone());
+    if (t.onscreen && net.reducedEdges.total != 0)
+        net.toggleVis();
+    return net;
+}
+/**
+ * Renumber networks so that nid matches the index in the networks array,
+ * and redraw the network lists in the UI to match.
+ */
+function refreshNetworkUI() {
+    networks.forEach((n, i) => n.nid = i);
+    const selectList = document.getElementById("networks");
+    if (selectList)
+        selectList.innerHTML = "";
+    networks.forEach((n, i) => view.addNetwork(i));
+    if (flux.fluxWindowOpen) {
+        const readyList = document.getElementById("readynetlist");
+        if (readyList)
+            readyList.innerHTML = "";
+        networks.forEach((n, i) => { if (n.fittingReady)
+            view.addNetworkData(i); });
+    }
+}
+/**
+ * Add a network to the networks array at the given position and select it.
+ */
+function insertNetwork(net, index = networks.length) {
+    networks.splice(Math.min(index, networks.length), 0, net);
+    refreshNetworkUI();
+    selectednetwork = net.nid;
+}
+/**
+ * Remove a network from the scene, the networks array and the UI.
+ */
+function removeNetwork(net) {
+    const index = networks.indexOf(net);
+    if (index < 0)
+        return;
+    if (net.onscreen)
+        net.toggleVis();
+    net.clearConnections();
+    networks.splice(index, 1);
+    refreshNetworkUI();
+    if (selectednetwork == index) {
+        selectednetwork = networks.length > 0 ? networks.length - 1 : -1;
+    }
+    else if (selectednetwork > index) {
+        selectednetwork -= 1;
+    }
+}
+/**
+ * Remove deleted particles (and their edges) from all networks.
+ * Networks left without particles are removed entirely.
+ */
+function pruneNetworks(deleted) {
+    networks.slice().forEach(net => {
+        if (!net.particles.some(p => deleted.has(p)))
+            return;
+        const survivors = net.particles.filter(p => !deleted.has(p));
+        if (survivors.length == 0) {
+            removeNetwork(net);
+        }
+        else {
+            // survivors keep network order, so the template members are just 0..n-1
+            net.rebuild(survivors, net.templateFor(survivors).edges);
+        }
+    });
 }

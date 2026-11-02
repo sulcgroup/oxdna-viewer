@@ -795,9 +795,7 @@ function parsePar(lines, system) {
     net.networktype = "par";
 
     net.prepVis(); // Creates Mesh for visualization
-    networks.push(net); // Any network added here shows up in UI network selector
-    selectednetwork = net.nid; // auto select network just loaded
-    view.addNetwork(net.nid);
+    insertNetwork(net); // Any network added here shows up in UI network selector (and is selected)
 
     notify("Par file read! Turn on visualization in the Protein tab")
 }

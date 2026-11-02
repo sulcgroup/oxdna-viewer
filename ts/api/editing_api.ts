@@ -245,8 +245,10 @@ module edit{
      */
     export function deleteElements (victims: BasicElement[]) {
         let needsUpdateList = new Set<System>();
+        const deleted = new Set<BasicElement>();
         victims.forEach((e) => {
             e = elements.get(e.id); // If we add element, then remove it, then undo both edits
+            deleted.add(e);
             let sys = e.dummySys ? e.dummySys : e.getSystem();
             let strand = e.strand;
             let n3 = e.n3;
@@ -298,6 +300,8 @@ module edit{
                 }
             });
         });
+        // Drop deleted particles (and their edges) from any networks
+        if (networks.length > 0) pruneNetworks(deleted);
         needsUpdateList.forEach((s) => {
             s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
         });
@@ -1565,4 +1569,9 @@ module edit{
                 ([... duplex_strands][1] as Strand).end3
             );
         }
+
+    /**
+    * Search for a sequence
+    *
+    */
 }

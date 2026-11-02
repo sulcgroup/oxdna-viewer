@@ -44,15 +44,19 @@ class InstanceCopy {
 }
 
 let copied: InstanceCopy[] = [];
+// Networks (or parts of networks) within the copied elements; members index into `copied`.
+// Empty unless a copied particle belonged to a network.
+let copiedNetworks: NetworkTemplate[] = [];
 
 function copyWrapper() {
     if (selectedBases.size == 0) {
         notify("Please select monomers to copy", "alert");
         return;
     }
-    let toCopy = Array.from(selectedBases).map(e=>e.id); // Save so that we can clear the selection
+    const toCopy = Array.from(selectedBases); // Save so that we can clear the selection
     clearSelection();
-    copied = toCopy.map(i => new InstanceCopy(elements.get(i)));
+    copied = toCopy.map(e => new InstanceCopy(e));
+    copiedNetworks = captureNetworkTemplates(toCopy);
 }
 
 function cutWrapper() {
@@ -62,7 +66,8 @@ function cutWrapper() {
     }
     let elems = Array.from(selectedBases); // Save so that we can clear the selection
     clearSelection();
-    copied = elems.map(e => new InstanceCopy(e));  
+    copied = elems.map(e => new InstanceCopy(e));
+    copiedNetworks = captureNetworkTemplates(elems);
     editHistory.do(new RevertableDeletion(elems));
     topologyEdited = true;
 }
@@ -81,11 +86,12 @@ function pasteWrapper(keepPos?: Boolean) {
         cameraHeading.applyQuaternion(camera.quaternion);
         pos = camera.position.clone().add(cameraHeading.clone().multiplyScalar(20))
     }
-    // Add elements to scene
-    let elems = edit.addElementsAt(copied, pos);
+    // Add elements to scene, along with copies of any networks they were part of
+    const elems = edit.addElementsAt(copied, pos);
+    copiedNetworks.forEach(t => networkFromTemplate(t, elems));
 
     // Add to history
-    editHistory.add(new RevertableAddition(copied, elems, pos));
+    editHistory.add(new RevertableAddition(copied, elems, pos, copiedNetworks));
     topologyEdited = true;
 
     api.selectElements(elems);
@@ -347,34 +353,7 @@ function findDomainWrapper() {
     // which we want to trim 
     const inputs = search_arr.map(s=>s.trim());
 
-    // create array of comma-separated inputs with no whitespaces
-    //const inputs: Array<string> = view.getInputValue("sequence").toUpperCase().replace(/\s/g,"").split(",");
-    inputs.forEach(input => {
-        // select nucleotide if given an ID
-        if (/^[0-9]+$/.test(input)) {
-            const nucleotide: BasicElement = elements.get(parseInt(input));
-            if (nucleotide != undefined) {
-                nucleotide.select();
-                // zoom into nucleotide if it is the only input given
-                if (inputs.length == 1) {
-                    api.findElement(nucleotide);
-                } 
-            }
-            return;
-        }
-        // else select sequences
-        const search_func = system => {
-            system.strands.forEach(strand => {
-                strand.search(input).forEach(match => {
-                    api.selectElements(match, true);
-                });
-            });
-        };
-        systems.forEach(search_func);
-        tmpSystems.forEach(search_func);
-    });
-    systems.forEach(system => {updateView(system)});
-    render();
+    api.findDomain(inputs);
 }
 
 // enter key functions same as search button
@@ -440,31 +419,17 @@ function moveToWrapper(){
 
 function createNetworkWrapper() {
     // Makes a Network
-    let bases = Array.from(selectedBases);
-    // copied = bases.map(e => new InstanceCopy(e)); // this is probably unnecessary
-    let nid = networks.length;
-    editHistory.do(new RevertableNetworkCreation(bases, nid));
-    view.addNetwork(nid) // don't know if it's a good idea to call this here or not?
+    const bases = Array.from(selectedBases);
+    editHistory.do(new RevertableNetworkCreation(bases, networks.length));
 }
 
 function deleteNetworkWrapper(nid: number) {
-    let net = networks[nid];
-    if(net.onscreen){
-        net.toggleVis(); // turn it off
+    const net = networks[nid];
+    if (!net) {
+        notify("Network " + (nid+1).toString() + " Does Not Exist", "alert");
+        return;
     }
-    try{
-        view.removeNetworkData(nid)
-    } catch (e) {}
-
-    networks.splice(nid, 1);
-    if(selectednetwork == nid) {
-        if(networks.length >= 1){
-            selectednetwork = networks[networks.length-1].nid;
-        } else {
-            selectednetwork = -1;
-        }
-    }
-    view.removeNetwork(nid);
+    removeNetwork(net);
 }
 
 function fillEdgesWrapper(nid: number, edgecase: number) {
@@ -508,10 +473,8 @@ function visualizeNetworkWrapper(nid: number) {
 
 function selectNetworkWrapper(nid: number) {
     clearSelection();
-    let net;
-    try{
-        net = networks[nid];
-    } catch (e) {
+    const net = networks[nid];
+    if (!net) {
         notify("Network " + (nid+1).toString() + " Does Not Exist", "alert");
         return;
     }
@@ -520,10 +483,8 @@ function selectNetworkWrapper(nid: number) {
 }
 
 function copyNetworkWrapper(nid: number) {
-    let net;
-    try{
-        net = networks[nid];
-    } catch (e) {
+    const net = networks[nid];
+    if (!net) {
         notify("Network " + (nid+1).toString() + " Does Not Exist", "alert");
         return;
     }
@@ -541,7 +502,6 @@ function copyNetworkWrapper(nid: number) {
     let newNid = networks.length;
     editHistory.do(new RevertableNetworkCreation(elems, newNid));
     net.copyNetwork(newNid);
-    view.addNetwork(newNid) // don't know if it's a good idea to call this here or not?
     clearSelection();
 }
 

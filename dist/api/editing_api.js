@@ -202,8 +202,10 @@ var edit;
      */
     function deleteElements(victims) {
         let needsUpdateList = new Set();
+        const deleted = new Set();
         victims.forEach((e) => {
             e = elements.get(e.id); // If we add element, then remove it, then undo both edits
+            deleted.add(e);
             let sys = e.dummySys ? e.dummySys : e.getSystem();
             let strand = e.strand;
             let n3 = e.n3;
@@ -251,6 +253,9 @@ var edit;
                 }
             });
         });
+        // Drop deleted particles (and their edges) from any networks
+        if (networks.length > 0)
+            pruneNetworks(deleted);
         needsUpdateList.forEach((s) => {
             s.callUpdates(['instanceVisibility', 'instanceScale', 'instanceColor']);
         });
@@ -1406,4 +1411,8 @@ var edit;
         strand2.end5, [...duplex_strands][1].end3);
     }
     edit.interconnectDuplex5p = interconnectDuplex5p;
+    /**
+    * Search for a sequence
+    *
+    */
 })(edit || (edit = {}));

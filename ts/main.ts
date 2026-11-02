@@ -180,6 +180,7 @@ function resetScene(resetCamera:boolean=true) {
     // ANM stuff
     while (networks.length > 0) { networks.pop() }
     while (graphDatasets.length > 0) { graphDatasets.pop() }
+    refreshNetworkUI();
     selectednetwork = 0; // Only used for networks
 
     // Forces stuff

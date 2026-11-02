@@ -163,6 +163,7 @@ function resetScene(resetCamera = true) {
     while (graphDatasets.length > 0) {
         graphDatasets.pop();
     }
+    refreshNetworkUI();
     selectednetwork = 0; // Only used for networks
     // Forces stuff
     forceHandler.clearForcesFromScene();

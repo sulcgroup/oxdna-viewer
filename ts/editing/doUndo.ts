@@ -101,15 +101,67 @@ class RevertableMultiEdit extends RevertableEdit {
 }
 
 class RevertableAddition extends RevertableEdit {
-    constructor(saved:InstanceCopy[], added: BasicElement[], pos?: THREE.Vector3) {
+    /**
+     * @param networkTemplates networks to rebuild on the added elements on redo
+     * (template members index into saved/added). Deleting the elements on undo removes them.
+     */
+    constructor(saved:InstanceCopy[], added: BasicElement[], pos?: THREE.Vector3, networkTemplates: NetworkTemplate[] = []) {
         const s = saved;
         let a = added;
         const p = pos;
 
         let undo = function() {edit.deleteElements(a)};
-        let redo = function() {a = edit.addElementsAt(s, p)};
+        let redo = function() {
+            a = edit.addElementsAt(s, p);
+            networkTemplates.forEach(t => networkFromTemplate(t, a));
+        };
         super(undo, redo);
     };
+}
+
+/** State needed to restore a network after some of its particles are deleted */
+interface SavedNetworkState {
+    net: Network;
+    index: number;          // position in the networks array
+    survivorIds: number[];  // ids of network particles that are not deleted
+    template: NetworkTemplate; // members index into victims followed by survivors
+}
+
+/**
+ * Save every network touched by a deletion, so that it can be restored on undo.
+ * Returns an empty array if none of the victims belong to a network.
+ */
+function saveNetworksForDeletion(victims: BasicElement[]): SavedNetworkState[] {
+    if (networks.length == 0) return [];
+    // Resolve possibly stale references, as edit.deleteElements does
+    victims = victims.map(v => elements.get(v.id));
+    const victimSet = new Set(victims);
+    const states: SavedNetworkState[] = [];
+    networks.forEach((net, index) => {
+        if (!net.particles.some(p => victimSet.has(p))) return;
+        const survivors = net.particles.filter(p => !victimSet.has(p));
+        states.push({
+            net: net,
+            index: index,
+            survivorIds: survivors.map(p => p.id),
+            template: net.templateFor(victims.concat(survivors)),
+        });
+    });
+    return states;
+}
+
+/**
+ * Undo the network pruning done by a deletion.
+ * @param states saved by saveNetworksForDeletion before the deletion
+ * @param restoredVictims re-added elements, in the same order as the original victims
+ */
+function restoreNetworksAfterDeletion(states: SavedNetworkState[], restoredVictims: BasicElement[]) {
+    states.forEach(s => { // in ascending index order, so original positions are restored
+        const refs = restoredVictims.concat(s.survivorIds.map(id => elements.get(id)));
+        if (!networks.includes(s.net)) insertNetwork(s.net, s.index);
+        s.net.rebuild(s.template.members.map(i => refs[i]), s.template.edges.clone());
+        if (s.template.onscreen && !s.net.onscreen && s.net.reducedEdges.total != 0) s.net.toggleVis();
+    });
 }
 
 class RevertableDeletion extends RevertableEdit {
@@ -117,9 +169,11 @@ class RevertableDeletion extends RevertableEdit {
     constructor(victims: BasicElement[]) {
         const saved = victims.map(e=> new InstanceCopy(e));
         const savedForces = forceHandler.getByElement(victims).slice();
+        const savedNetworks = saveNetworksForDeletion(victims);
         let undo = function() {
             // Add elements back to the scene. This creates new elements in a tmpSys.
-            this.victims = edit.addElements(saved); 
+            this.victims = edit.addElements(saved);
+            restoreNetworksAfterDeletion(savedNetworks, this.victims);
             // Map the saved forces onto the newly-created elements.
             savedForces.forEach(f => {
                 f.particle = this.victims[saved.findIndex(e => e.id == f.particle.id)]
@@ -162,19 +216,16 @@ class RevertableMassDiscretization extends RevertableEdit {
 }
 
 class RevertableNetworkCreation extends RevertableEdit {
-    constructor(elems, nid: number){
+    constructor(elems: BasicElement[], nid: number){
         // construct network
-        let lastsel = selectednetwork;
+        const lastsel = selectednetwork;
         const network = new Network(nid, elems);
-        let undo = function () {
-            //Remove Network from networks array
-            networks.splice(nid, 1);
-            selectednetwork = lastsel;
+        const undo = function () {
+            removeNetwork(network);
+            selectednetwork = lastsel < networks.length ? lastsel : networks.length - 1;
         }
-        let redo = function () {
-            //Add network to networks array
-            networks.push(network);
-            selectednetwork = network.nid;
+        const redo = function () {
+            insertNetwork(network, nid);
         }
         super(undo, redo);
     };
