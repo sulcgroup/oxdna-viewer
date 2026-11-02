@@ -420,6 +420,10 @@ function moveToWrapper(){
 function createNetworkWrapper() {
     // Makes a Network
     const bases = Array.from(selectedBases);
+    if (!bases.some(e => e.isAminoAcid() || e.isGS())) {
+        notify("Please select a protein to create a network for", "alert");
+        return;
+    }
     editHistory.do(new RevertableNetworkCreation(bases, networks.length));
 }
 
