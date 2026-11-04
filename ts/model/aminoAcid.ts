@@ -10,9 +10,24 @@ class AminoAcid extends BasicElement {
 
     constructor(id: number, strand: Strand) {
         super(id, strand);
-        this.a1 = new THREE.Vector3();
-        this.a3 = new THREE.Vector3();
+        this.setOrientation();
     };
+
+    /**
+     * Set a1/a3, falling back to (1,0,0)/(0,1,0) if either vector is missing, zero or not finite.
+     * Most sources (PDB, UNF, oxView files without orientations) don't give amino acids an orientation,
+     * and oxDNA can't handle zero orientation vectors in a configuration file.
+     */
+    private setOrientation(a1?: THREE.Vector3, a3?: THREE.Vector3) {
+        const isValid = (v?: THREE.Vector3) => v !== undefined && isFinite(v.lengthSq()) && v.lengthSq() > 1e-12;
+        if (isValid(a1) && isValid(a3)) {
+            this.a1 = a1.clone();
+            this.a3 = a3.clone();
+        } else {
+            this.a1 = new THREE.Vector3(1, 0, 0);
+            this.a3 = new THREE.Vector3(0, 1, 0);
+        }
+    }
 
     getA1() {
         return this.a1;
@@ -47,8 +62,7 @@ class AminoAcid extends BasicElement {
     calcPositions(p: THREE.Vector3, a1?: THREE.Vector3, a3?: THREE.Vector3) {
         const sys = this.getSystem();
         let sid = this.sid;
-        this.a1 = a1.clone();
-        this.a3 = a3.clone();
+        this.setOrientation(a1, a3);
         // compute backbone positions/rotations, or set them all to 0 if there is no neighbor.
         let sp: THREE.Vector3, spLen: number, spRotation: THREE.Quaternion;
         if (this.n3 && this.n3 != this.strand.end5) {

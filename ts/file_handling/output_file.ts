@@ -301,12 +301,13 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
             let n5 = e.n5 ? newElementIDs.get(e.n5) : -1;
             let cons: number[] = []
 
-            // Protein mode
+            // Protein mode: list bonded neighbours with higher ids, except the backbone neighbours,
+            // which are already given in the neighbour columns
             if (counts['totAA'] > 0 || counts['totGS'] > 0) {
                 if (e.isAminoAcid() || e.isGS()) {
                     for (let i = 0; i < e.connections.length; i++) {
-                        let c = e.connections[i];
-                        if (newElementIDs.get(c) > newElementIDs.get(e) && newElementIDs.get(c) != n5) {
+                        const c = e.connections[i];
+                        if (newElementIDs.get(c) > newElementIDs.get(e) && c !== e.n3 && c !== e.n5) {
                             cons.push(newElementIDs.get(c));
                         }
                     }
@@ -314,7 +315,11 @@ function makeTopFile(name:string, newElementIDs:Map<BasicElement, number>, newSt
             }
             if(e.isGS()){
                 top.push([newStrandIDs.get(e.strand), "gs"+gsSubtypes.subtypelist[_id], n3, n5, ...cons].join(' '));
-            }else{
+            } else if (e.isAminoAcid()) {
+                // oxDNA protein convention: "strID aa nside cside", residues listed N->C,
+                // nside = i-1, cside = i+1. Internally the N-terminal neighbour is n5.
+                top.push([newStrandIDs.get(e.strand), e.type, n5, n3, ...cons].join(' '));
+            } else {
                 top.push([newStrandIDs.get(e.strand), e.type, n3, n5, ...cons].join(' '));
             }
         });

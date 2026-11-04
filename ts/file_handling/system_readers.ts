@@ -231,8 +231,15 @@ function parseTop(s: string) {
             // Set cluster id;
             nuc.clusterId = cluster;
     
+            // Nucleic acid lines are "strID base n3 n5".
+            // Protein lines are "strID aa nside cside" (oxDNA convention: residues listed N->C,
+            // nside = i-1, cside = i+1). Internally, proteins run N->C from end5 to end3,
+            // so the N-terminal neighbour is n5 and the C-terminal neighbour is n3.
+            const isPeptide = currentStrand.isPeptide();
+            const n3 = parseInt(isPeptide ? l[3] : l[2]);
+            const n5 = parseInt(isPeptide ? l[2] : l[3]);
+
             //create neighbor 3 element if it doesn't exist
-            let n3 = parseInt(l[2]);
             if (n3 != -1) {
                 if (!elements.get(nucCount + n3)) {
                     elements.set(nucCount + n3, currentStrand.createBasicElement(nucCount + n3));
@@ -245,7 +252,6 @@ function parseTop(s: string) {
             }
     
             //create neighbor 5 element if it doesn't exist
-            let n5 = parseInt(l[3]);
             if (n5 != -1) {
                 if (!elements.get(nucCount + n5)) {
                     elements.set(nucCount + n5, currentStrand.createBasicElement(nucCount + n5));
