@@ -298,22 +298,56 @@ function makeDatFile(name, newElementIDs) {
     });
     return { file_name: name + ".dat", file: dat }; //make .dat file
 }
+/**
+ * The .par file of all networks, with particle indices in output order. Lines are "i j r0 s k" with i < j.
+ * oxDNA's angular interactions (DNACT, RNACT, ACT) read bending/torsion parameters on every line with
+ * j == i + 1, so if any network is ANMT, all those lines get the cosines "a0 b0 c0 d0", followed by
+ * "kb kt" if any network has its own bending and torsion constants. Plain ANM files have no extra columns.
+ */
 function makeParFile(name, newElementIDs, counts) {
-    const par = [];
-    par.push(counts['totAA'] + counts['totGS']);
+    const lines = [];
     networks.forEach((net) => {
-        const t = net.reducedEdges.total;
-        if (t != 0) {
-            for (let i = 0; i < t; i++) {
-                let p1 = net.particles[net.reducedEdges.p1[i]]; // old element old id
-                let p2 = net.particles[net.reducedEdges.p2[i]];
-                const p1ID = newElementIDs.get(p1);
-                const p2ID = newElementIDs.get(p2);
-                const line = [p1ID, p2ID, net.reducedEdges.eqDist[i], net.reducedEdges.types[i], net.reducedEdges.ks[i]].concat(net.reducedEdges.extraParams[i]);
-                par.push(line.join(" "));
+        const e = net.reducedEdges;
+        for (let l = 0; l < e.total; l++) {
+            let p = net.particles[e.p1[l]], q = net.particles[e.p2[l]];
+            const extra = e.extraParams[l].slice();
+            if (newElementIDs.get(p) > newElementIDs.get(q)) {
+                [p, q] = [q, p];
+                if (extra.length >= 2)
+                    [extra[0], extra[1]] = [extra[1], extra[0]]; // a0 and b0 swap roles
             }
+            lines.push({ i: newElementIDs.get(p), j: newElementIDs.get(q), eqDist: e.eqDist[l], type: e.types[l], k: e.ks[l], extra, p, q });
         }
     });
+    lines.sort((a, b) => a.i - b.i || a.j - b.j);
+    const allExtra = networks.flatMap((net) => net.reducedEdges.extraParams);
+    const angular = allExtra.some(x => x.length >= 4);
+    const perPair = allExtra.some(x => x.length >= 6);
+    let missingConstants = false;
+    const par = [String(counts['totAA'] + counts['totGS'])];
+    lines.forEach(l => {
+        const cols = [l.i, l.j, l.eqDist, l.type, l.k];
+        if (angular && l.j - l.i == 1) {
+            cols.push(...(l.extra.length >= 4 ? l.extra.slice(0, 4) : angularCosines(l.p, l.q)));
+            if (perPair) {
+                // pairs without their own constants (not backbone neighbours, or from a plain ANM) get none
+                const constants = l.extra.length >= 6 ? l.extra.slice(4, 6) : [0, 0];
+                if (l.extra.length == 4)
+                    missingConstants = true;
+                cols.push(...constants);
+            }
+        }
+        par.push(cols.join(' '));
+    });
+    if (missingConstants) {
+        notify("Some ANMT networks have no bending/torsion constants of their own (they were set in an input file). Those pairs were written with kb = kt = 0. Fit them in the Fluctuation Solver with ANMT on to set them.", "warning", true);
+    }
+    if (perPair) {
+        notify("The .par file has bending/torsion constants for each pair: use an angular interaction (DNACT, RNACT, ACT) and don't set bending_k or torsion_k in the input file.");
+    }
+    else if (angular) {
+        notify("The .par file has ANMT angular parameters: use an angular interaction (DNACT, RNACT, ACT) and set bending_k and torsion_k in the input file.");
+    }
     return { file_name: name + ".par", file: par.join('\n') };
 }
 function makeMassFile(newElementIDs, gsSubtypes) {

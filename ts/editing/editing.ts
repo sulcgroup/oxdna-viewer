@@ -459,7 +459,8 @@ function fillEdgesWrapper(nid: number, edgecase: number) {
                 if(typeof(cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)){
                     notify("Please enter recongized value into 'Edge Cutoff' box", "alert")
                 } else {
-                    net.edgesANMT(cutoffe)
+                    const torsion = flux.torsionConstants();
+                    net.edgesANMT(cutoffe, torsion.kb, torsion.kt);
                 }
                 break;
         }

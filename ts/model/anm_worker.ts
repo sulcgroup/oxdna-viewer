@@ -1,537 +1,457 @@
-// helper functions https://stackoverflow.com/questions/27205018/multiply-2-matrices-in-javascript
-function matrixDot(A, radim, cadim, B, rbdim, cbdim) {
-    // var result = new Array(A.length).fill(0).map(row => new Array(B[0].length).fill(0));
-    var result = new Array(radim * cbdim).fill(0);
-    return result.map((val, i) => {
-        let ix = Math.floor(i / radim);
-        let jx = i % radim;
-        let sum = 0;
-        for (let k = 0; k < rbdim; k++) {
-            sum += A[ix * cadim + k] * B[k * cbdim + jx]
-        }
-        return sum
-    })
-}
-// guess what this function does
-let ordervector = function (vec: number[], order: number[]): number[] {
-    //let nvec = vec.slice(); // slice is very much deepcopy
-    let tmp = 0;
-    for (let j = 0; j < vec.length; j++) {
-        //nvec[j] = vec[order[j]];
-        tmp = vec[j];
-        vec[j] = vec[order[j]];
-        vec[order[j]] = tmp;
-    }
-    return vec;
-}
+/**
+ * Fluctuation solver for elastic network models (ANM and ANMT), run as a web worker.
+ *
+ * The network's potential is the one oxDNA uses for proteins (ANMInteraction / DNANM / DNACT):
+ *   springs:             k/2 (r - r0)^2
+ *   bending (ANMT only): kb/2 [(r̂_pq·a1_p - a0)^2 + (r̂_qp·a1_q - b0)^2]
+ *   torsion (ANMT only): kt/2 [(a1_p·a1_q - c0)^2 + (a3_p·a3_q - d0)^2]
+ * with the equilibrium values taken from the current structure. At the reference structure every
+ * residual is zero, so the Hessian is exactly sum(k g gᵀ) over the residual gradients g.
+ *
+ * Degrees of freedom are the particle positions and, for ANMT, an infinitesimal rotation of each
+ * particle's a1/a3 frame. The rotations are eliminated with a Schur complement, leaving a 3N x 3N
+ * position Hessian S(s) = s·A + C, where A holds the springs and C the bending/torsion terms.
+ * The spring scale s is fitted so that the predicted mean square fluctuations match the target
+ * (regressing the target on the prediction gives a slope of 1). With no angular terms this is the
+ * usual ANM fit and needs a single solve.
+ *
+ * Inputs and the fitted scale are in oxDNA simulation units; fluctuations are returned in Å^2.
+ */
 
-let ordervector2 = function(u, start, adim, order){
-    let tmp = 0;
-    for (let j = start; j < adim+start; j++) {
-        tmp = u[j];
-        u[j] = u[order[j]];
-        u[order[j]] = tmp;
-    }
-    return u;
-} 
-
-function SVD2(a: number[], adim, withu: boolean, withv: boolean, eps: number) {
-    // Define default parameters
-    withu = withu !== undefined ? withu : true
-    withv = withv !== undefined ? withv : true
-    // eps = eps || Math.pow(2, -52)
-    eps = Math.pow(2, -52);
-    // let tol = 1e-64 / eps
-    let tol = 2e-12;
-
-    // dimensions (square matrix)
-    let dim = adim
-    //accessing a matrix a[i][j] = a[i*adim + j]
-
-    // throw error if a is not defined
-    if (!a) {
-        throw new TypeError('Matrix a is not defined')
-    }
-
-    // Householder's reduction to bidiagonal form
-    // let dims = a.dimensions();
-    // const n = dims['rows']
-    // const m = dims['columns']
-    const n = adim
-    const m = adim
-
-    if (m < n) {
-        throw new TypeError('Invalid matrix: m < n')
-    }
-
-    let i, j, k, l, l1, c, f, g, h, s, x, y, z
-
-    g = 0
-    x = 0
-    const e = []
-
-    // const u = []
-    // const v = []
-
-    const mOrN = (withu === false) ? m : n
-
-    let u = new Array(m * mOrN).fill(0); // first index m[i*m+j]
-    let v = new Array(n * n).fill(0); // first index n [i *n + j]
-    // Initialize q
-    const q = new Array(n).fill(0)
-
-    // // Initialize u
-    // for (i = 0; i < m; i++) {
-    //     u[i] = new Array(mOrN).fill(0)
-    // }
-    //
-    // // Initialize v
-    // for (i = 0; i < n; i++) {
-    //     v[i] = new Array(n).fill(0)
-    // }
-
-
-    console.log('Copy array a in u');
-    // Copy array a in u
-    for (i = 0; i < m; i++) {
-        for (j = 0; j < n; j++) {
-            u[i * m + j] = a[i * adim + j]
-        }
-    }
-
-    for (i = 0; i < n; i++) {
-        e[i] = g
-        s = 0
-        l = i + 1
-        for (j = i; j < m; j++) {
-            s += Math.pow(u[j * m + i], 2)
-        }
-        if (s < tol) {
-            g = 0
-        } else {
-            f = u[i * m + i]
-            g = f < 0 ? Math.sqrt(s) : -Math.sqrt(s)
-            h = f * g - s
-            u[i * m + i] = f - g
-            for (j = l; j < n; j++) {
-                s = 0
-                for (k = i; k < m; k++) {
-                    s += u[k * m + i] * u[k * m + j]
-                }
-                f = s / h
-                for (k = i; k < m; k++) {
-                    u[k * m + j] = u[k * m + j] + f * u[k * m + i]
-                }
-            }
-        }
-        q[i] = g
-        s = 0
-        for (j = l; j < n; j++) {
-            s += Math.pow(u[i * m + j], 2)
-        }
-        if (s < tol) {
-            g = 0
-        } else {
-            f = u[i * m + i + 1]
-            g = f < 0 ? Math.sqrt(s) : -Math.sqrt(s)
-            h = f * g - s
-            u[i * m + i + 1] = f - g
-            for (j = l; j < n; j++) {
-                e[j] = u[i * m + j] / h
-            }
-            for (j = l; j < m; j++) {
-                s = 0
-                for (k = l; k < n; k++) {
-                    s += u[j * m + k] * u[i * m + k]
-                }
-                for (k = l; k < n; k++) {
-                    u[j * m + k] = u[j * m + k] + s * e[k]
-                }
-            }
-        }
-        y = Math.abs(q[i]) + Math.abs(e[i])
-        if (y > x) {
-            x = y
-        }
-    }
-    console.log('Accumulation of right-hand transformations');
-    // Accumulation of right-hand transformations
-    if (withv) {
-        for (i = n - 1; i >= 0; i--) {
-            if (g !== 0) {
-                h = u[i * m + i + 1] * g
-                for (j = l; j < n; j++) {
-                    v[j * n + i] = u[i * m + j] / h
-                }
-                for (j = l; j < n; j++) {
-                    s = 0
-                    for (k = l; k < n; k++) {
-                        s += u[i * m + k] * v[k * n + j]
-                    }
-                    for (k = l; k < n; k++) {
-                        v[k * n + j] = v[k * n + j] + s * v[k * n + i]
-                    }
-                }
-            }
-            for (j = l; j < n; j++) {
-                v[i * n + j] = 0
-                v[j * n + i] = 0
-            }
-            v[i * n + i] = 1
-            g = e[i]
-            l = i
-        }
-    }
-    // Accumulation of left-hand transformations
-    console.log('Accumulation of left-hand transformations');
-    for (i = n; i < m; i++) {
-        for (j = n; j < m; j++) {
-            u[i * m + j] = 0
-        }
-        u[i * m + i] = 1
-    }
-
-    if (withu) {
-        for (i = n - 1; i >= 0; i--) {
-            l = i + 1
-            g = q[i]
-            for (j = l; j < mOrN; j++) {
-                u[i * m + j] = 0
-            }
-            if (g !== 0) {
-                h = u[i * m + i] * g
-                for (j = l; j < mOrN; j++) {
-                    s = 0
-                    for (k = l; k < m; k++) {
-                        s += u[k * m + i] * u[k * m + j]
-                    }
-                    f = s / h
-                    for (k = i; k < m; k++) {
-                        u[k * m + j] = u[k * m + j] + f * u[k * m + i]
-                    }
-                }
-                for (j = i; j < m; j++) {
-                    u[j * m + i] = u[j * m + i] / g
-                }
-            } else {
-                for (j = i; j < m; j++) {
-                    u[j * m + i] = 0
-                }
-            }
-            u[i * m + i] = u[i * m + i] + 1
-        }
-    }
-
-    // Diagonalization of the bidiagonal form
-    console.log('Diagonalization of the bidiagonal form');
-    eps = eps * x;
-    let testConvergence=undefined;
-    for (k = n - 1; k >= 0; k--) {
-        for (let iteration = 0; iteration < 50; iteration++) {
-            // test-f-splitting
-            testConvergence = false
-            for (l = k; l >= 0; l--) {
-                if (Math.abs(e[l]) <= eps) {
-                    testConvergence = true;
-                    break;
-                }
-                if (Math.abs(q[l - 1]) <= eps) {
-                    break;
-                }
-            }
-
-            if (!testConvergence) { // cancellation of e[l] if l>0
-                c = 0
-                s = 1
-                l1 = l - 1
-                for (i = l; i < k + 1; i++) {
-                    f = s * e[i];
-                    e[i] = c * e[i];
-                    if (Math.abs(f) <= eps) {
-                        break // goto test-f-convergence
-                    }
-                    g = q[i];
-                    q[i] = Math.sqrt(f * f + g * g);
-                    h = q[i];
-                    c = g / h;
-                    s = -f / h;
-                    if (withu) {
-                        for (j = 0; j < m; j++) {
-                            y = u[j * m + l1];
-                            z = u[j * m + i];
-                            u[j * m + l1] = y * c + (z * s);
-                            u[j * m + i] = -y * s + (z * c);
-                        }
-                    }
-                }
-            }
-
-            // test f convergence
-            z = q[k];
-            if (l === k) { // convergence
-                if (z < 0) {
-                    // q[k] is made non-negative
-                    q[k] = -z;
-                    if (withv) {
-                        for (j = 0; j < n; j++) {
-                            v[j * n + k] = -v[j * n + k];
-                        }
-                    }
-                }
-                break; // break out of iteration loop and move on to next k value
-            }
-
-            // Shift from bottom 2x2 minor
-            x = q[l];
-            y = q[k - 1];
-            g = e[k - 1];
-            h = e[k];
-            f = ((y - z) * (y + z) + (g - h) * (g + h)) / (2 * h * y);
-            g = Math.sqrt(f * f + 1);
-            f = ((x - z) * (x + z) + h * (y / (f < 0 ? (f - g) : (f + g)) - h)) / x;
-
-            // Next QR transformation
-            c = 1;
-            s = 1;
-            for (i = l + 1; i < k + 1; i++) {
-                g = e[i];
-                y = q[i];
-                h = s * g;
-                g = c * g;
-                z = Math.sqrt(f * f + h * h);
-                e[i - 1] = z;
-                c = f / z;
-                s = h / z;
-                f = x * c + g * s;
-                g = -x * s + g * c;
-                h = y * s;
-                y = y * c;
-                if (withv) {
-                    for (j = 0; j < n; j++) {
-                        x = v[j * n + i - 1];
-                        z = v[j * n + i];
-                        v[j * n + i - 1] = x * c + z * s;
-                        v[j * n + i] = -x * s + z * c;
-                    }
-                }
-                z = Math.sqrt(f * f + h * h);
-                q[i - 1] = z;
-                c = f / z;
-                s = h / z;
-                f = c * g + s * y;
-                x = -s * g + c * y;
-                if (withu) {
-                    for (j = 0; j < m; j++) {
-                        y = u[j * m + i - 1];
-                        z = u[j * m + i];
-                        u[j * m + i - 1] = y * c + z * s;
-                        u[j * m + i] = -y * s + z * c;
-                    }
-                }
-            }
-            e[l] = 0;
-            e[k] = f;
-            q[k] = x;
-        }
-    }
-    console.log('More stuff');
-    // Must replace zeroes by unique identifier that will be set to 0 later
-    // why? so sorting the vectors using indexOf doesn't return the same element multiple times
-    while (q.indexOf(0) != -1) {
-        let ind = q.indexOf(0);
-        q[ind] = (q.length - ind) * 10 ** -15;
-    }
-
-    
-    // Some values of q are zero, Replacing with values that will be below tolerance but unique for full sorting
-
-    // To return in order by singular value,
-    // you have to resort u and vt's individual vectors and the vector order of the matrix
-
-    //Transpose v
-    let vt = v.map((val, idx, arr) => {
-        let [i, j] = [Math.floor(idx / adim), idx % adim]
-        return arr[j * adim + i]
-    });v = null; // free memory
-
-    // let vt = v[0].map((_, colIndex) => v.map(row => row[colIndex])); //transpose v
-
-    //let key: number[] = q.slice();
-    let order = q.map(x => q.indexOf(x)); // get index order to apply same sorting to u and v
-    console.log("order");
-    // let ordervt = JSON.parse(JSON.stringify(vt)); //deepcopy
-    // let orderu = JSON.parse(JSON.stringify(u)); //deepcopy
-
-    //lets reorder
-    let orderu = [];
-    let ordervt = [];
-    //working but bad
-    for (i = 0; i < order.length; i++) {
-        orderu.push(... ordervector(u.slice(order[i] * adim, (order[i] + 1) * adim), order)); //replace new array in correct order
-        ordervt.push(... ordervector(vt.slice(order[i] * adim, (order[i] + 1) * adim), order));
-    }
-
-    // Number below eps should be zero
-    for (i = 0; i < n; i++) {
-        if (q[i] < eps) q[i] = 0;
-    }
-    //console.log(orderu);
-    //console.log(ordervt);
-    return { orderu, q, ordervt }
+interface FluctuationAngularTerms {
+    p: number[];   // lower-index particle of each bonded pair
+    q: number[];   // its backbone neighbour
+    a1: number[];  // 3N, a1 vector of each particle
+    a3: number[];  // 3N, a3 vector of each particle
+    kb: number[];  // bending constant of each pair
+    kt: number[];  // torsion constant of each pair
 }
 
-this.onmessage = function(e) {
-    let elemcoords = {
-        // coords: this.particles.map(e => e.getPos()),
-        xI: e.data[0],
-        yI: e.data[1],
-        zI: e.data[2],
-        distance: function (i: number, j: number) {
-            // return this.coords[i].distanceTo(this.coords[j]);
-            return Math.sqrt((this.xI[i] - this.xI[j]) ** 2 + (this.yI[i] - this.yI[j]) ** 2 + (this.zI[i] - this.zI[j]) ** 2)
-        },
-        center: function (i: number, j: number) { // midpoint b/t two particles
-            // return this.coords[i].clone().add(this.coords[j]).divideScalar(2);
-            return [(this.xI[i] + this.xI[j]) / 2, (this.yI[i] + this.yI[j]) / 2, (this.zI[i] + this.zI[j]) / 2];
-        },
-        diff: function (i: number, j: number) { // returns j - i
-            return [(this.xI[j] - this.xI[i]), (this.yI[j] - this.yI[i]), (this.zI[j] - this.zI[i])];
+interface FluctuationRequest {
+    coords: number[];     // 3N positions, simulation units
+    p1: number[];         // spring endpoints
+    p2: number[];
+    ks: number[];         // spring constants, simulation units
+    angular: FluctuationAngularTerms | null;
+    temperature: number;  // K
+    target: number[];     // target mean square fluctuations, Å^2
+}
+
+interface FluctuationResult {
+    msf?: number[];       // fitted mean square fluctuations, Å^2
+    scale?: number;       // factor to multiply all spring constants by
+    iterations?: number;  // number of linear solves
+    error?: string;
+}
+
+const FLUCT_SIM_LENGTH = 8.518;  // Å per simulation length unit
+
+/** One residual's gradient, as dof indices and values. Positions are dofs 0..3N-1, rotations 3N.. */
+interface FluctGradient { idx: number[]; val: number[]; }
+
+function fluctCross(a: number[], b: number[]): number[] {
+    return [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+}
+
+function fluctDot(a: number[], b: number[]): number {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+function fluctVec(arr: number[], i: number): number[] {
+    return [arr[3 * i], arr[3 * i + 1], arr[3 * i + 2]];
+}
+
+function fluctGradient(blocks: [number, number[]][]): FluctGradient {
+    const g: FluctGradient = { idx: [], val: [] };
+    blocks.forEach(([dof, v]) => {
+        for (let d = 0; d < 3; d++) {
+            g.idx.push(dof + d);
+            g.val.push(v[d]);
+        }
+    });
+    return g;
+}
+
+/** Residual gradients of the bending and torsion terms of one bonded pair, with their stiffness. */
+function fluctAngularGradients(req: FluctuationRequest, t: number, thetaDof: Map<number, number>): [FluctGradient, number][] {
+    const ang = req.angular;
+    const p = ang.p[t], q = ang.q[t];
+    const r = fluctVec(req.coords, q).map((x, d) => x - req.coords[3 * p + d]);
+    const dist = Math.sqrt(fluctDot(r, r));
+    const u = r.map(x => x / dist);
+    const a1 = fluctVec(ang.a1, p), b1 = fluctVec(ang.a1, q);
+    const a3 = fluctVec(ang.a3, p), b3 = fluctVec(ang.a3, q);
+    // derivative of r̂·v with respect to the position of q: (v - (r̂·v) r̂) / |r|
+    const perp = (v: number[]) => { const c = fluctDot(u, v); return v.map((x, d) => (x - c * u[d]) / dist); };
+    const neg = (v: number[]) => v.map(x => -x);
+    const xp = 3 * p, xq = 3 * q, tp = thetaDof.get(p), tq = thetaDof.get(q);
+    const pa1 = perp(a1), pb1 = perp(b1);
+    return [
+        // r̂_pq·a1_p
+        [fluctGradient([[xq, pa1], [xp, neg(pa1)], [tp, fluctCross(a1, u)]]), ang.kb[t]],
+        // r̂_qp·a1_q
+        [fluctGradient([[xq, neg(pb1)], [xp, pb1], [tq, fluctCross(u, b1)]]), ang.kb[t]],
+        // a1_p·a1_q
+        [fluctGradient([[tp, fluctCross(a1, b1)], [tq, fluctCross(b1, a1)]]), ang.kt[t]],
+        // a3_p·a3_q
+        [fluctGradient([[tp, fluctCross(a3, b3)], [tq, fluctCross(b3, a3)]]), ang.kt[t]],
+    ];
+}
+
+/** Symmetric banded matrix (lower half stored) with an in-place Cholesky factorisation. */
+class FluctBandMatrix {
+    n: number;
+    bw: number;
+    data: Float64Array;
+
+    constructor(n: number, bw: number) {
+        this.n = n;
+        this.bw = bw;
+        this.data = new Float64Array(n * (bw + 1));
+    }
+
+    private at(i: number, j: number): number {  // j <= i, i - j <= bw
+        return i * (this.bw + 1) + j - i + this.bw;
+    }
+
+    add(i: number, j: number, v: number) {
+        if (j > i) [i, j] = [j, i];
+        this.data[this.at(i, j)] += v;
+    }
+
+    get(i: number, j: number): number {
+        return this.data[this.at(i, j)];
+    }
+
+    maxDiagonal(): number {
+        let m = 0;
+        for (let i = 0; i < this.n; i++) m = Math.max(m, this.get(i, i));
+        return m;
+    }
+
+    cholesky(): boolean {
+        for (let i = 0; i < this.n; i++) {
+            for (let j = Math.max(0, i - this.bw); j <= i; j++) {
+                let sum = this.data[this.at(i, j)];
+                for (let k = Math.max(0, i - this.bw); k < j; k++) {
+                    sum -= this.data[this.at(i, k)] * this.data[this.at(j, k)];
+                }
+                if (i == j) {
+                    if (sum <= 0) return false;
+                    this.data[this.at(i, i)] = Math.sqrt(sum);
+                } else {
+                    this.data[this.at(i, j)] = sum / this.data[this.at(j, j)];
+                }
+            }
+        }
+        return true;
+    }
+
+    /** Solves (L Lᵀ) x = b in place, after cholesky(). */
+    solve(b: Float64Array) {
+        for (let i = 0; i < this.n; i++) {
+            let sum = b[i];
+            for (let k = Math.max(0, i - this.bw); k < i; k++) sum -= this.data[this.at(i, k)] * b[k];
+            b[i] = sum / this.data[this.at(i, i)];
+        }
+        for (let i = this.n - 1; i >= 0; i--) {
+            let sum = b[i];
+            for (let k = i + 1; k <= Math.min(this.n - 1, i + this.bw); k++) sum -= this.data[this.at(k, i)] * b[k];
+            b[i] = sum / this.data[this.at(i, i)];
+        }
+    }
+}
+
+/** Orders the particles with rotational dofs along their chains, so that the rotation block is banded. */
+function fluctThetaOrder(ang: FluctuationAngularTerms): number[] {
+    const neighbours = new Map<number, number[]>();
+    const link = (a: number, b: number) => {
+        if (!neighbours.has(a)) neighbours.set(a, []);
+        neighbours.get(a).push(b);
+    };
+    ang.p.forEach((p, t) => { link(p, ang.q[t]); link(ang.q[t], p); });
+    const order: number[] = [];
+    const seen = new Set<number>();
+    const walk = (start: number) => {
+        const stack = [start];
+        while (stack.length > 0) {
+            const v = stack.pop();
+            if (seen.has(v)) continue;
+            seen.add(v);
+            order.push(v);
+            neighbours.get(v).forEach(w => { if (!seen.has(w)) stack.push(w); });
         }
     };
+    // start from chain ends first, then whatever is left (rings)
+    const particles = Array.from(neighbours.keys()).sort((a, b) => a - b);
+    particles.forEach(v => { if (neighbours.get(v).length < 2) walk(v); });
+    particles.forEach(v => walk(v));
+    return order;
+}
 
+/**
+ * Bending/torsion contribution to the position Hessian, with the rotations eliminated:
+ * C = Bxx - Bxθ Bθθ⁻¹ Bθx. Returned as a dense 3N x 3N matrix (row-major).
+ */
+function fluctAngularHessian(req: FluctuationRequest, n: number): Float64Array {
+    const ang = req.angular;
+    const order = fluctThetaOrder(ang);
+    const thetaDof = new Map<number, number>();  // particle -> first rotational dof (offset by n)
+    order.forEach((v, k) => thetaDof.set(v, n + 3 * k));
+    const m = 3 * order.length;
 
-    //generate hessian
-    //Initialize Empty Hessian (3Nx3N)
-    let hessian: number[] = new Array(3 * elemcoords.xI.length * 3 * elemcoords.xI.length).fill(0);
-    let reducedEdges = {
-        p1: e.data[3],
-        p2: e.data[4],
-        ks: e.data[5],
-    }
-    let masses = e.data[6];
-    let kb = 0.00138064852;
-    let temp = e.data[7]
-    let adim = 3*elemcoords.xI.length;
+    let bw = 2;
+    ang.p.forEach((p, t) => { bw = Math.max(bw, Math.abs(thetaDof.get(p) - thetaDof.get(ang.q[t])) + 2); });
+    const btt = new FluctBandMatrix(m, Math.min(bw, m - 1));
+    const bxx = new Float64Array(n * n);
+    const bxt: Map<number, number>[] = Array.from({ length: n }, () => new Map<number, number>());
 
-    //Hessian Calc w/ Masses
-    for (let l = 0; l < reducedEdges.p1.length; l++) {
-        let i = reducedEdges.p1[l], j = reducedEdges.p2[l], k = reducedEdges.ks[l];
-        let mi = masses[i];
-        let mj = masses[j];
-        let mij = Math.sqrt(mi * mj); //masses
-        let d = elemcoords.distance(i, j); //distances
-        let d2 = d * d;
-        let diff = elemcoords.diff(i, j);
-        // let diag = diff.clone().multiply(diff).multiplyScalar(k).divideScalar(d2);
-        let diag = diff.map((val, idx)=>{return val*val*k/d2;})
-        let xy = k * (diff[0] * diff[1]) / d2;
-        let xz = k * (diff[0] * diff[2]) / d2;
-        let yz = k * (diff[1] * diff[2]) / d2;
-
-
-        // Couldn't find a more pleasant way to do this
-        // Fills 1 element in hij, hji, hii, hjj on each line
-        // Verified this returns correct Hessian
-        hessian[3*i*adim + 3*j] -= diag[0]/mij;
-        hessian[3*j*adim + 3*i] -= diag[0]/mij;
-
-        hessian[3*i*adim + 3*i] += diag[0]/mi;
-        hessian[3*j*adim + 3*j] += diag[0]/mj;
-
-        hessian[3*i*adim + 3*j + 1] -= xy/mij;
-        hessian[(3*j+1)*adim + 3*i] -= xy/mij;
-
-        hessian[3*i*adim + 3*i + 1] += xy/mi;
-        hessian[3*j*adim + 3*j + 1] += xy/mj;
-
-        hessian[3*i*adim + 3*j + 2] -= xz/mij;
-        hessian[(3*j+2)*adim + 3*i] -= xz/mij;
-
-        hessian[3*i*adim + 3*i+2] += xz/mi;
-        hessian[3*j*adim + 3*j+2] += xz/mj;
-
-        hessian[(3*i+1)*adim + 3*j] -= xy/mij;
-        hessian[3*j*adim + 3*i+1] -= xy/mij;
-
-        hessian[(3*i+1)*adim + 3*i] += xy/mi;
-        hessian[3*j*adim + 3*j+1] += xy/mj;
-
-        //fine
-        hessian[(3*i+1)*adim + 3*j+1] -= diag[1]/mij;
-        hessian[(3*j+1)*adim + 3*i+1] -= diag[1]/mij;
-
-        hessian[(3*i+1)*adim + 3*i+1] += diag[1]/mi;
-        hessian[(3*j+1)*adim + 3*j+1] += diag[1]/mj;
-
-        hessian[(3*i+1)*adim + 3*j+2] -= yz/mij;
-        hessian[(3*j+2)*adim + 3*i+1] -= yz/mij;
-
-        hessian[(3*i+1)*adim + 3*i+2] += yz/mi;
-        hessian[(3*j+2)*adim + 3*j+1] += yz/mj;
-
-        hessian[(3*i+2)*adim + 3*j] -= xz/mij;
-        hessian[3*j*adim + 3*i+2] -= xz/mij;
-
-        hessian[(3*i+2)*adim + 3*i] += xz/mi;
-        hessian[3*j*adim+ 3*j+2] += xz/mj;
-
-        hessian[(3*i+2)*adim + 3*j+1] -= yz/mij;
-        hessian[(3*j+1)*adim + 3*i+2] -= yz/mij;
-
-        hessian[(3*i+2)*adim + 3*i+1] += yz/mi;
-        hessian[(3*j+1)*adim + 3*j+2] += yz/mj;
-
-        //fine
-        hessian[(3*i+2)*adim + 3*j+2] -= diag[2]/mij;
-        hessian[(3*j+2)*adim + 3*i+2] -= diag[2]/mij;
-
-        hessian[(3*i+2)*adim + 3*i+2] += diag[2]/mi;
-        hessian[(3*j+2)*adim + 3*j+2] += diag[2]/mj;
-    }
-    console.log("hessian");
-
-
-    console.log("started SVD");
-    let r = SVD2(hessian, adim, true, true, 1e-10);
-    console.log("finished SVD");
-    let u = r['orderu'], q = r['q'], vt=r['ordervt']; //v needs to be transposed
-
-    let tol = 0.000001;
-
-    // Make diagonal of inverse eigenvalues
-    // let invq: number[][]= [];
-    // for(let i=0; i<3*this.particles.length; i++){ //3N x
-    //     let tmp = new Array(3*this.particles.length) //3N
-    //     for(let j=0; j<3*this.particles.length; j++){
-    //         tmp[j] = 0;
-    //     }
-    //     invq.push(tmp);
-    // }
-
-    // Make diagonal of inverse eigenvalues
-    let invq = new Array(hessian.length).fill(0);
-    hessian = null;
-    //let invq = new Array(q.length).fill(0);
-    //make diagonal
-    for(let i = 0; i < q.length; i++){
-        let qval = q[i];
-        if(qval < tol) invq[i*q.length + i] = 0;
-        else invq[i* q.length + i] = 1/qval;
+    for (let t = 0; t < ang.p.length; t++) {
+        fluctAngularGradients(req, t, thetaDof).forEach(([g, k]) => {
+            if (k == 0) return;
+            for (let a = 0; a < g.idx.length; a++) {
+                for (let b = 0; b < g.idx.length; b++) {
+                    const i = g.idx[a], j = g.idx[b], v = k * g.val[a] * g.val[b];
+                    if (i < n && j < n) bxx[i * n + j] += v;
+                    else if (i < n) bxt[i].set(j - n, (bxt[i].get(j - n) ?? 0) + v);
+                    else if (j < n) continue;  // the transposed block is implied
+                    else if (j <= i) btt.add(i - n, j - n, v);
+                }
+            }
+        });
     }
 
+    // Rotations that no term restrains have zero rows in both Bθθ and Bθx, so a tiny diagonal
+    // shift leaves the Schur complement unchanged while making Bθθ invertible.
+    const shift = 1e-10 * Math.max(btt.maxDiagonal(), 1e-30);
+    for (let i = 0; i < m; i++) btt.add(i, i, shift);
+    if (!btt.cholesky()) throw new Error("Bending/torsion Hessian is not positive definite");
 
+    const rows = Array.from({ length: n }, (_, i) => i).filter(i => bxt[i].size > 0);
+    const col = new Float64Array(m);
+    rows.forEach(c => {
+        col.fill(0);
+        bxt[c].forEach((v, t) => { col[t] = v; });
+        btt.solve(col);
+        rows.forEach(r => {
+            let sum = 0;
+            bxt[r].forEach((v, t) => { sum += v * col[t]; });
+            bxx[r * n + c] -= sum;
+        });
+    });
+    return bxx;
+}
 
-    // multiply
-    let nf = matrixDot(u, q.length, q.length, invq, q.length, q.length); //  U*q
+/** Rigid-body modes of each connected component of the network, orthonormal, in position space. */
+function fluctRigidModes(req: FluctuationRequest, N: number): { particles: number[], vec: Float64Array }[] {
+    const parent = Array.from({ length: N }, (_, i) => i);
+    const find = (i: number): number => { while (parent[i] != i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+    const union = (a: number, b: number) => { parent[find(a)] = find(b); };
+    req.p1.forEach((p, l) => union(p, req.p2[l]));
+    if (req.angular) req.angular.p.forEach((p, t) => union(p, req.angular.q[t]));
 
-    console.log("calculating inverse");
-    // Calculate U q+ V+ (Psuedo-Inverse)
-    let inverse = matrixDot(nf, q.length, q.length, vt, q.length, q.length); // U*q*Vt
-
-    let RMSF = [];
-    for(let i = 0; i < q.length/3; i++){ //for each particle
-        let r = kb * temp * (inverse[3*i*q.length + 3*i] + inverse[(3*i+1)*q.length + 3*i+1] + inverse[(3*i+2)*q.length + 3*i+2]); //A^2
-        RMSF.push(r);
+    const components = new Map<number, number[]>();
+    for (let i = 0; i < N; i++) {
+        const root = find(i);
+        if (!components.has(root)) components.set(root, []);
+        components.get(root).push(i);
     }
-    postMessage(RMSF, undefined);
+
+    const modes: { particles: number[], vec: Float64Array }[] = [];
+    components.forEach(particles => {
+        const size = particles.length;
+        const com = [0, 1, 2].map(d => particles.reduce((s, i) => s + req.coords[3 * i + d], 0) / size);
+        const scale = Math.sqrt(size) * Math.max(1, ...particles.map(i =>
+            Math.hypot(...[0, 1, 2].map(d => req.coords[3 * i + d] - com[d]))));
+        const basis: Float64Array[] = [];
+        for (let mode = 0; mode < 6; mode++) {
+            const v = new Float64Array(3 * size);
+            particles.forEach((i, k) => {
+                if (mode < 3) v[3 * k + mode] = 1;
+                else {
+                    const axis = [0, 0, 0];
+                    axis[mode - 3] = 1;
+                    const rel = [0, 1, 2].map(d => req.coords[3 * i + d] - com[d]);
+                    fluctCross(axis, rel).forEach((x, d) => { v[3 * k + d] = x; });
+                }
+            });
+            basis.forEach(b => {
+                let c = 0;
+                for (let k = 0; k < v.length; k++) c += v[k] * b[k];
+                for (let k = 0; k < v.length; k++) v[k] -= c * b[k];
+            });
+            let norm = 0;
+            for (let k = 0; k < v.length; k++) norm += v[k] * v[k];
+            norm = Math.sqrt(norm);
+            if (norm < 1e-8 * scale) continue;  // e.g. rotation about the axis of a straight component
+            for (let k = 0; k < v.length; k++) v[k] /= norm;
+            basis.push(v);
+        }
+        basis.forEach(vec => modes.push({ particles, vec }));
+    });
+    return modes;
+}
+
+/**
+ * Diagonal of the inverse of a symmetric positive definite matrix (row-major, upper half used).
+ * The matrix is overwritten. Returns null if it isn't positive definite.
+ */
+function fluctInverseDiagonal(mat: Float64Array, n: number): Float64Array {
+    let maxDiag = 0;
+    for (let i = 0; i < n; i++) maxDiag = Math.max(maxDiag, mat[i * n + i]);
+
+    // right-looking Cholesky, mat = UᵀU with U stored in the upper triangle
+    for (let k = 0; k < n; k++) {
+        const pivot = mat[k * n + k];
+        if (!(pivot > 1e-12 * maxDiag)) return null;
+        const ukk = Math.sqrt(pivot);
+        const rowK = k * n;
+        mat[rowK + k] = ukk;
+        for (let j = k + 1; j < n; j++) mat[rowK + j] /= ukk;
+        for (let i = k + 1; i < n; i++) {
+            const uki = mat[rowK + i];
+            if (uki == 0) continue;
+            const rowI = i * n;
+            for (let j = i; j < n; j++) mat[rowI + j] -= uki * mat[rowK + j];
+        }
+    }
+
+    // rows of W = L⁻¹ (L = Uᵀ); diag(mat⁻¹)_j = sum_i W_ij²
+    const diag = new Float64Array(n);
+    const w = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+        w[i] = 1 / mat[i * n + i];
+        diag[i] += w[i] * w[i];
+        for (let j = i - 1; j >= 0; j--) {
+            const rowJ = j * n;
+            let sum = 0;
+            for (let k = j + 1; k <= i; k++) sum += w[k] * mat[rowJ + k];
+            w[j] = -sum / mat[rowJ + j];
+            diag[j] += w[j] * w[j];
+        }
+    }
+    return diag;
+}
+
+/** Mean square fluctuations (Å^2) of the network with all springs multiplied by `scale`. */
+function fluctMsf(req: FluctuationRequest, scale: number, angularHessian: Float64Array,
+                  modes: { particles: number[], vec: Float64Array }[]): number[] {
+    const N = req.coords.length / 3, n = 3 * N;
+    const mat = angularHessian ? angularHessian.slice() : new Float64Array(n * n);
+
+    for (let l = 0; l < req.p1.length; l++) {
+        const i = req.p1[l], j = req.p2[l], k = scale * req.ks[l];
+        const r = fluctVec(req.coords, j).map((x, d) => x - req.coords[3 * i + d]);
+        const r2 = fluctDot(r, r);
+        for (let a = 0; a < 3; a++) {
+            for (let b = 0; b < 3; b++) {
+                const v = k * r[a] * r[b] / r2;
+                mat[(3 * i + a) * n + 3 * i + b] += v;
+                mat[(3 * j + a) * n + 3 * j + b] += v;
+                mat[(3 * i + a) * n + 3 * j + b] -= v;
+                mat[(3 * j + a) * n + 3 * i + b] -= v;
+            }
+        }
+    }
+
+    // Lift the rigid-body zero modes with a penalty c·vvᵀ, and subtract their 1/c afterwards.
+    let c = 0;
+    for (let i = 0; i < n; i++) c += mat[i * n + i];
+    c = c > 0 ? c / n : 1;
+    modes.forEach(({ particles, vec }) => {
+        particles.forEach((pi, a) => {
+            for (let da = 0; da < 3; da++) {
+                const row = (3 * pi + da) * n, va = c * vec[3 * a + da];
+                if (va == 0) continue;
+                particles.forEach((pj, b) => {
+                    for (let db = 0; db < 3; db++) mat[row + 3 * pj + db] += va * vec[3 * b + db];
+                });
+            }
+        });
+    });
+
+    const diag = fluctInverseDiagonal(mat, n);
+    if (diag === null) {
+        throw new Error("The network is underconstrained: some particles can move without stretching any spring. " +
+            "Increase the cutoff, or use ANMT to restrain the backbone.");
+    }
+    modes.forEach(({ particles, vec }) => {
+        particles.forEach((pi, a) => {
+            for (let d = 0; d < 3; d++) diag[3 * pi + d] -= vec[3 * a + d] ** 2 / c;
+        });
+    });
+
+    const kT = req.temperature / 3000;  // simulation energy units
+    const msf: number[] = [];
+    for (let i = 0; i < N; i++) {
+        msf.push(kT * (diag[3 * i] + diag[3 * i + 1] + diag[3 * i + 2]) * FLUCT_SIM_LENGTH ** 2);
+    }
+    return msf;
+}
+
+/** Slope of the least-squares line target = m·msf (no intercept). */
+function fluctSlope(msf: number[], target: number[]): number {
+    let xy = 0, xx = 0;
+    msf.forEach((x, i) => { xy += x * target[i]; xx += x * x; });
+    return xy / xx;
+}
+
+function solveFluctuations(req: FluctuationRequest): FluctuationResult {
+    const N = req.coords.length / 3;
+    const hasAngular = req.angular !== null && req.angular.p.length > 0;
+    const angularHessian = hasAngular ? fluctAngularHessian(req, 3 * N) : null;
+    const modes = fluctRigidModes(req, N);
+
+    let u0 = 0;  // log of the spring scale
+    let msf0 = fluctMsf(req, 1, angularHessian, modes);
+    let g0 = Math.log(fluctSlope(msf0, req.target));
+    if (!isFinite(g0)) throw new Error("Could not fit the network to the target data");
+
+    if (!hasAngular) {
+        // msf is exactly proportional to 1/scale
+        const scale = Math.exp(-g0);
+        return { msf: msf0.map(x => x / scale), scale, iterations: 1 };
+    }
+
+    // ANMT: solve log(slope(log scale)) = 0, which increases with the scale (secant with bracketing)
+    let u1 = u0 - g0;
+    let lo: [number, number] = null, hi: [number, number] = null;  // [u, g] with g < 0 and g > 0
+    const bracket = (u: number, g: number) => {
+        if (g < 0 && (lo === null || u > lo[0])) lo = [u, g];
+        if (g > 0 && (hi === null || u < hi[0])) hi = [u, g];
+    };
+    bracket(u0, g0);
+    for (let it = 2; it <= 40; it++) {
+        if (u1 < Math.log(1e-8)) {
+            throw new Error("The bending and torsion terms alone are stiffer than the target fluctuations. " +
+                "Lower the bending and torsion constants.");
+        }
+        if (u1 > Math.log(1e8)) throw new Error("Could not fit the network to the target data");
+        const msf1 = fluctMsf(req, Math.exp(u1), angularHessian, modes);
+        const g1 = Math.log(fluctSlope(msf1, req.target));
+        if (!isFinite(g1)) throw new Error("Could not fit the network to the target data");
+        if (Math.abs(g1) < 1e-5) return { msf: msf1, scale: Math.exp(u1), iterations: it };
+        bracket(u1, g1);
+
+        let next = g1 != g0 ? u1 - g1 * (u1 - u0) / (g1 - g0) : u1 - g1;
+        if (lo !== null && hi !== null) {
+            if (!(next > lo[0] && next < hi[0])) next = (lo[0] + hi[0]) / 2;
+        } else {
+            next = Math.max(u1 - 5, Math.min(u1 + 5, next));  // don't jump more than e^5 at once
+        }
+        [u0, g0, u1] = [u1, g1, next];
+    }
+    throw new Error("Fitting did not converge");
+}
+
+if (typeof self !== 'undefined' && typeof window === 'undefined') {
+    self.onmessage = (e: MessageEvent<FluctuationRequest>) => {
+        let result: FluctuationResult;
+        try {
+            result = solveFluctuations(e.data);
+        } catch (err) {
+            result = { error: err instanceof Error ? err.message : String(err) };
+        }
+        postMessage(result, undefined);
+    };
 }

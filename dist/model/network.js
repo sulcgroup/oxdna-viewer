@@ -8,7 +8,7 @@ class Edges {
     types;
     eqDist;
     total; // number of edges
-    extraParams;
+    extraParams; // ANMT backbone edges: [a0, b0, c0, d0] or [a0, b0, c0, d0, kb, kt]
     constructor() {
         this.total = 0;
         this.p1 = [];
@@ -109,6 +109,24 @@ class Edges {
         this.total = 0;
     }
     ;
+}
+const DEFAULT_BENDING_K = 50; // oxDNA bending_k for ANMT, simulation units
+const DEFAULT_TORSION_K = 50; // oxDNA torsion_k for ANMT, simulation units
+/**
+ * True if a and b are neighbours on the same strand. In ANMT these pairs carry bending and torsion terms.
+ */
+function isBackbonePair(a, b) {
+    return a.n3 === b || a.n5 === b;
+}
+/**
+ * Equilibrium cosines [a0, b0, c0, d0] of the ANMT bending/torsion terms between p and q at the current
+ * structure, as oxDNA defines them (DNANMInteraction::_protein_ang_pot), with r̂ pointing from p to q:
+ * a0 = r̂·a1_p, b0 = -r̂·a1_q, c0 = a1_p·a1_q, d0 = a3_p·a3_q
+ */
+function angularCosines(p, q) {
+    const u = q.getPos().clone().sub(p.getPos()).normalize();
+    const clamp = (x) => Math.max(-1, Math.min(1, x));
+    return [u.dot(p.getA1()), -u.dot(q.getA1()), p.getA1().dot(q.getA1()), p.getA3().dot(q.getA3())].map(clamp);
 }
 class Network {
     nid; // network id number as these are stored separate to actual systems
@@ -427,10 +445,27 @@ class Network {
     // Functions above are meant to be more universal
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms) {
+        this.fillCutoffEdges(cutoffValueAngstroms);
+        this.networktype = "ANM";
+        this.finishEdges();
+    }
+    ;
+    /**
+     * ANM by cutoff, plus bending and torsion terms between backbone neighbours.
+     */
+    edgesANMT(cutoffValueAngstroms, kb = DEFAULT_BENDING_K, kt = DEFAULT_TORSION_K) {
+        this.fillCutoffEdges(cutoffValueAngstroms);
+        this.setTorsion(kb, kt);
+        this.networktype = "ANMT";
+        this.finishEdges();
+    }
+    ;
+    fillCutoffEdges(cutoffValueAngstroms) {
         this.cutoff = cutoffValueAngstroms;
         this.reducedEdges.clearAll();
         this.clearConnections();
         this.selectNetwork();
+        this.refreshCoords();
         //let elems: BasicElement[] = Array.from(selectedBases);
         // go through coordinates and assign connections if 2 particles
         // are less than the cutoff value apart
@@ -445,8 +480,12 @@ class Network {
                 }
             }
         }
-        // network is ready for solving and visualization
-        this.networktype = "ANM";
+    }
+    ;
+    /**
+     * Network is ready for solving and visualization
+     */
+    finishEdges() {
         if (this.reducedEdges.total != 0) {
             this.initInstances(this.reducedEdges.total);
             this.fillConnections();
@@ -454,6 +493,64 @@ class Network {
             this.prepVis();
             this.sendtoUI();
         }
+    }
+    ;
+    /**
+     * True if the network has ANMT bending/torsion parameters.
+     */
+    isTorsional() {
+        return this.reducedEdges.extraParams.some(x => x.length >= 4);
+    }
+    ;
+    /**
+     * Give every edge between backbone neighbours ANMT parameters: the equilibrium cosines (kept if the edge
+     * already has them, e.g. from a .par file) and the bending and torsion constants. Other edges get none.
+     */
+    setTorsion(kb, kt) {
+        const e = this.reducedEdges;
+        for (let i = 0; i < e.total; i++) {
+            const p = this.particles[e.p1[i]], q = this.particles[e.p2[i]];
+            if (isBackbonePair(p, q)) {
+                const cosines = e.extraParams[i].length >= 4 ? e.extraParams[i].slice(0, 4) : angularCosines(p, q);
+                e.extraParams[i] = cosines.concat([kb, kt]);
+            }
+            else {
+                e.extraParams[i] = [];
+            }
+        }
+        if (this.networktype == "ANM")
+            this.networktype = "ANMT";
+    }
+    ;
+    /**
+     * Remove all ANMT bending/torsion parameters, leaving a plain spring network.
+     */
+    clearTorsion() {
+        this.reducedEdges.extraParams = this.reducedEdges.extraParams.map(() => []);
+        if (this.networktype == "ANMT")
+            this.networktype = "ANM";
+    }
+    ;
+    /**
+     * The network in the form the fluctuation solver (anm_worker) takes.
+     * @param torsion bending and torsion constants for ANMT, or null for a plain ANM
+     */
+    fluctuationRequest(temperature, target, torsion) {
+        this.refreshCoords();
+        const e = this.reducedEdges;
+        const coords = [];
+        this.particles.forEach(p => coords.push(...p.getPos().toArray()));
+        let angular = null;
+        if (torsion) {
+            const pairs = e.p1.map((p, i) => [p, e.p2[i]]).filter(([p, q]) => isBackbonePair(this.particles[p], this.particles[q]));
+            const a1 = [], a3 = [];
+            this.particles.forEach(p => { a1.push(...p.getA1().toArray()); a3.push(...p.getA3().toArray()); });
+            angular = {
+                p: pairs.map(x => x[0]), q: pairs.map(x => x[1]), a1, a3,
+                kb: pairs.map(() => torsion.kb), kt: pairs.map(() => torsion.kt),
+            };
+        }
+        return { coords, p1: e.p1.slice(), p2: e.p2.slice(), ks: e.ks.slice(), angular, temperature, target };
     }
     ;
     edgesMWCENM() {
@@ -478,14 +575,7 @@ class Network {
         this.addSaltBridges(7);
         // network is ready for solving and visualization
         this.networktype = "MWCENM";
-        if (this.reducedEdges.total != 0) {
-            // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
-            this.initInstances(this.reducedEdges.total);
-            this.fillConnections();
-            this.initEdges();
-            this.prepVis();
-            this.sendtoUI();
-        }
+        this.finishEdges();
     }
     ;
     addHydrogenBonds(uniqdatasets, pdbindices) {
@@ -675,44 +765,6 @@ class Network {
                     }
                 }
             }
-        }
-    }
-    ;
-    edgesANMT(cutoffValueAngstroms) {
-        this.cutoff = cutoffValueAngstroms;
-        this.reducedEdges.clearAll();
-        this.clearConnections();
-        this.selectNetwork();
-        //let elems: BasicElement[] = Array.from(selectedBases);
-        // go through coordinates and assign connections if 2 particles
-        // are less than the cutoff value apart
-        let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
-        let a1s = this.particles.map(m => m.a1);
-        let a3s = this.particles.map(m => m.a3);
-        let angkb = 1.3;
-        let angkt = 1.4;
-        for (let i = 0; i < this.elemcoords.xI.length; i++) {
-            for (let j = 1; j < this.elemcoords.xI.length; j++) {
-                if (i >= j)
-                    continue;
-                let dij = this.elemcoords.distance(i, j);
-                if (j - i === 1 && dij <= simCutoffValue) {
-                    let rij = this.elemcoords.diff(i, j);
-                    this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), angkb, angkt]);
-                }
-                else if (dij <= simCutoffValue) {
-                    this.reducedEdges.addEdge(i, j, dij, 's', 1);
-                }
-            }
-        }
-        // network is ready for solving and visualization
-        this.networktype = "ANMT";
-        if (this.reducedEdges.total != 0) {
-            this.initInstances(this.reducedEdges.total);
-            this.fillConnections();
-            this.initEdges();
-            this.prepVis();
-            this.sendtoUI();
         }
     }
     ;

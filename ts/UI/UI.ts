@@ -1471,6 +1471,30 @@ class fluxGraph {
         }
     };
 
+    /**
+     * Bending and torsion constants from the Fluctuation Solver, or the defaults if it isn't open.
+     */
+    torsionConstants(): {kb: number, kt: number} {
+        const read = (id: string, fallback: number) => {
+            const input = document.getElementById(id) as HTMLInputElement;
+            const value = input ? parseFloat(input.value) : NaN;
+            return isFinite(value) && value >= 0 ? value : fallback;
+        };
+        return {kb: read("bendingK", DEFAULT_BENDING_K), kt: read("torsionK", DEFAULT_TORSION_K)};
+    };
+
+    /**
+     * Whether the Fluctuation Solver should fit with ANMT (springs plus bending and torsion) or plain ANM.
+     */
+    useTorsion(): boolean {
+        const toggle = document.getElementById("anmtToggle") as HTMLInputElement;
+        return toggle ? toggle.checked : false;
+    };
+
+    /**
+     * Fit the spring constants of a network to the one dataset shown on the graph. With ANMT on, the network's
+     * backbone neighbours also get bending and torsion terms, which are kept fixed while the springs are fitted.
+     */
     fitData(nid: number) {
         if(this.gids.length != 1){
             notify("Please Select only One Dataset to Begin Fitting");
@@ -1478,19 +1502,13 @@ class fluxGraph {
         }
 
         // get that one and only graph dataset
-        let gid = this.gids[0];
-        let GD = graphDatasets[gid];
+        const GD = graphDatasets[this.gids[0]];
 
-        // make format msf for fitting
-        let Targetmsf;
-        if(GD.datatype == "bfactor") {
-            Targetmsf = GD.data.slice().map(b => b*(3/(8*Math.pow(Math.PI, 2))));
-        } else {
-            Targetmsf = GD.data.slice(); //must be msf
-        }
+        // target as mean square fluctuations in A^2
+        const unitScale = GD.units == "nm_sqr" ? 100 : 1;
+        const target: number[] = GD.data.map((x: number) => unitScale * (GD.datatype == "bfactor" ? x * 3 / (8 * Math.PI ** 2) : x));
 
-        // get network, make sure edges are there, otherwise nothing to calculate
-        let net = networks[nid];
+        const net = networks[nid];
 
         if(net.particles.length > 1500){
             notify("Large Networks (n>1500) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
@@ -1502,67 +1520,55 @@ class fluxGraph {
             return;
         }
 
-        // checks data you are fitting is exact same length, might need to make changes to this later
-        if(net.particles.length != Targetmsf.length) {
+        if(net.particles.length != target.length) {
             notify("Target Data is a different length than network, will not Fit");
             return;
         }
 
-        // ANM Solving, only one for a little bit
-        if(net.networktype == 'ANM' || net.networktype == 'ANMT'){
-            let msf = [];
-            if (window.Worker) {
-                const mainWorker = new Worker('./dist/model/anm_worker.js');
-                notify("Fitting Network " + (nid+1).toString() + " to " + " Dataset " + GD.label);
-                let temp = view.getInputNumber('temp');
+        const torsion = this.useTorsion() ? this.torsionConstants() : null;
+        if (torsion && !net.particles.some(p => p.isAminoAcid())) {
+            notify("ANMT needs amino acids: bending and torsion terms are only defined between residues", "alert");
+            return;
+        }
+        const request = net.fluctuationRequest(view.getInputNumber('temp'), target, torsion);
+        if (torsion && request.angular.p.length == 0) {
+            notify("The network has no springs between backbone neighbours, so ANMT has nothing to add. Fitting a plain ANM.", "warning");
+        }
 
-                function activate() {
-                    var promise = new Promise(function (resolve, reject) {
-                        var counter = 0;
-                        // var array = [];
-                        var callback = function (message) {
-                            counter++;
+        const model = torsion ? "ANMT" : "ANM";
+        notify(`Fitting Network ${nid + 1} (${model}) to Dataset ${GD.label}` +
+            (torsion && net.particles.length > 500 ? ". Large ANMT networks can take a few minutes." : ""));
 
-                            msf = msf.concat(message.data);
-                            //And when all workers ends, resolve the promise
-                            if (counter >= 1 && msf.length > 0) {
-                                //We resolve the promise with the array of results.
-                                let fit = findLineByLeastSquaresNoIntercept(msf, Targetmsf);
-                                let xvals = fit[0];
-                                let fitval = fit[1];
-                                let m = <number> fit[2];
-                                let k = 1/m; //N*10^-10/A (k*100 = pN/A)
-                                let sim_k = k/net.simFC; //convert force constant to simulation reduced units for force constants 1 pN/A = 0.05709
-
-                                // msf is returned currently to check the Hessian inversion process
-                                let gendata = new graphData(GD.label + " Fit " + net.cutoff.toString() + "A", fitval, GD.xdata, "msf", "A_sqr");
-                                gendata.gammaSim = sim_k;
-                                net.reducedEdges.ks = net.reducedEdges.ks.map(k => {return sim_k;});
-                                let ngid = graphDatasets.length;
-                                graphDatasets.push(gendata);
-                                view.addGraphData(ngid);
-                                notify("ANM Fitting Complete, Please check under Available Datasets in the Fluctuation Solver");
-                                resolve(message.data);
-                            }
-                        }
-
-                        mainWorker.onmessage = callback;
-                        mainWorker.postMessage([net.elemcoords.xI.slice(), net.elemcoords.yI.slice(), net.elemcoords.zI.slice(),
-                            net.reducedEdges.p1.slice(), net.reducedEdges.p2.slice(), net.reducedEdges.ks.slice(),
-                            net.masses.slice(), temp]);
-
-                    });
-                    return promise;
-                }
-
-                activate().then(r => mainWorker.terminate());
-
-            } else {
-                console.log("No Webworker Found");
+        const worker = new Worker('./dist/model/anm_worker.js');
+        worker.onmessage = (message: MessageEvent<FluctuationResult>) => {
+            worker.terminate();
+            const result = message.data;
+            if (result.error) {
+                notify("Fitting failed: " + result.error, "alert", true);
                 return;
             }
-            // This should be interesting
-        }
+            if (!networks.includes(net)) return; // deleted while fitting
+
+            net.reducedEdges.ks = net.reducedEdges.ks.map(k => k * result.scale);
+            if (torsion) net.setTorsion(torsion.kb, torsion.kt);
+            else net.clearTorsion();
+            refreshNetworkUI();
+
+            const gamma = net.reducedEdges.ks.reduce((a, b) => a + b, 0) / net.reducedEdges.total;
+            const fitted = new graphData(`${GD.label} ${model} Fit ${net.cutoff}A`, result.msf, GD.xdata, "msf", "A_sqr");
+            fitted.gammaSim = gamma;
+            const ngid = graphDatasets.length;
+            graphDatasets.push(fitted);
+            view.addGraphData(ngid);
+            notify(`${model} fitting complete: mean spring constant ${gamma.toPrecision(4)} (simulation units)` +
+                (torsion ? `, kb = ${torsion.kb}, kt = ${torsion.kt}` : "") +
+                ". The fit is under Available Datasets in the Fluctuation Solver.");
+        };
+        worker.onerror = (e: ErrorEvent) => {
+            worker.terminate();
+            notify("Fitting failed: " + e.message, "alert", true);
+        };
+        worker.postMessage(request);
     };
 
     downloadChart(){
