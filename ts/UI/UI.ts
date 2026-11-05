@@ -949,11 +949,14 @@ class View {
                 li.appendChild(sp1);
                 li.appendChild(sp2);
                 if (networks[nid].particles.length > MAX_FLUCTUATION_PARTICLES) {
+                    // tooltip on the whole entry, not just the small icon, so it shows wherever the user hovers
+                    const tip = `Networks of more than ${MAX_FLUCTUATION_PARTICLES} particles are too large to solve here. ` +
+                        "Use oat anm_fluctuation_solver from oxDNA for larger proteins.";
                     const warning = document.createElement("span");
                     warning.className = "mif-warning fg-red ml-1";
-                    warning.title = `Networks of more than ${MAX_FLUCTUATION_PARTICLES} particles are too large to solve here. ` +
-                        "Use oat anm_fluctuation_solver from oxDNA for larger proteins.";
+                    warning.title = tip;
                     sp1.appendChild(warning);
+                    li.title = tip;
                 }
                 li.onclick = function () {
                     flux.fitData(li.value)
