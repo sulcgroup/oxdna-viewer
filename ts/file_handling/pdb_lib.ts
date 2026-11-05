@@ -171,6 +171,172 @@ class pdbinfowrapper { //Transfers Necessary Data from readPdbFile to addPDBtoSc
     }
 }
 
+// Atoms left out of the side chain when orienting amino-acid beads (the same set as oat anm_fluctuation_solver)
+const SIDE_CHAIN_EXCLUDED_ATOMS = ['N', 'C', 'O', 'OXT', 'H', 'H1', 'H2', 'H3', 'HN'];
+const ANGSTROM_PER_SIM_LENGTH = 8.518;
+// Vectors shorter than this are treated as zero when building bead frames
+const FRAME_ZERO_LENGTH = 1e-9;
+
+/**
+ * The atoms of a residue by name. Where a name has alternate locations, keep the one with the highest occupancy
+ * (the first one on ties), as oat does, so both programs orient the beads from the same atoms.
+ */
+function residueAtomsByName(res: pdbresidue): Map<string, pdbatom> {
+    const occupancy = (a: pdbatom) => {
+        const o = parseFloat(a.occupancy);
+        return isNaN(o) ? 1 : o;
+    };
+    const byName = new Map<string, pdbatom>();
+    res.atoms.forEach(a => {
+        const current = byName.get(a.atomType);
+        if (current === undefined || occupancy(a) > occupancy(current)) byName.set(a.atomType, a);
+    });
+    return byName;
+}
+
+const atomPosition = (a: pdbatom) => new THREE.Vector3(a.x, a.y, a.z);
+
+// Unit vector along the part of v perpendicular to the unit vector ref, or undefined if v is (nearly) parallel to ref
+function perpendicularUnit(v: THREE.Vector3, ref: THREE.Vector3): THREE.Vector3 | undefined {
+    const p = v.clone().addScaledVector(ref, -v.dot(ref));
+    if (p.length() < 1e-3 * Math.max(v.length(), 1e-12)) return undefined;
+    return p.normalize();
+}
+
+// A unit vector perpendicular to v. Last resort only: it depends on how the structure is oriented.
+function anyPerpendicular(v: THREE.Vector3): THREE.Vector3 {
+    const abs = [Math.abs(v.x), Math.abs(v.y), Math.abs(v.z)];
+    const axis = new THREE.Vector3();
+    axis.setComponent(abs.indexOf(Math.min(...abs)), 1);
+    return v.clone().cross(axis).normalize();
+}
+
+/**
+ * Orientation of the amino-acid beads of one chain, used by the ANMT bending and torsion potentials.
+ * Both vectors are defined by the residue and its chain neighbours, so the ANMT parameters do not depend on how the
+ * structure is oriented in the input file. This is the same definition as oat anm_fluctuation_solver (orientation_vectors).
+ *
+ * a1 points from the C-alpha to the centre of the residue's atoms other than the backbone N, C and O (C-alpha included).
+ * If that is zero (glycine) it points to the ideal C-beta position, computed from the backbone N, CA and C, or, if they
+ * are missing, along the normal to the plane of the C-alpha and its two neighbours.
+ * a3 points along the chain (N to C of the residue, or from the previous to the next C-alpha), made perpendicular to a1.
+ *
+ * @param residues The residues of the chain, in order from the N to the C terminus. Every one must have a CA atom.
+ * @returns The C-alpha position and the orthonormal a1/a3 of each residue
+ */
+function aminoAcidFrames(residues: pdbresidue[]): { ca: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3 }[] {
+    const atoms = residues.map(residueAtomsByName);
+    const cas = atoms.map(byName => atomPosition(byName.get('CA')));
+    let arbitrary = 0;
+
+    const frames = atoms.map((byName, r) => {
+        const ca = cas[r];
+        const prev = r > 0 ? cas[r - 1] : undefined;
+        const next = r < cas.length - 1 ? cas[r + 1] : undefined;
+        const n = byName.get('N'), c = byName.get('C');
+        // in Angstrom, the units of the ideal C-beta coefficients below (pdbatom positions are in simulation units)
+        const nToCa = n && ca.clone().sub(atomPosition(n)).multiplyScalar(ANGSTROM_PER_SIM_LENGTH);
+        const caToC = c && atomPosition(c).sub(ca).multiplyScalar(ANGSTROM_PER_SIM_LENGTH);
+
+        // a1: towards the side chain
+        const sideChain = Array.from(byName.entries()).filter(([name]) => !SIDE_CHAIN_EXCLUDED_ATOMS.includes(name));
+        let a1 = new THREE.Vector3();
+        sideChain.forEach(([, a]) => a1.add(atomPosition(a)));
+        a1.divideScalar(sideChain.length).sub(ca);
+        if (a1.length() < FRAME_ZERO_LENGTH) {
+            if (nToCa && caToC) {
+                // ideal C-beta position relative to the C-alpha (the coefficients of trRosetta/AlphaFold)
+                a1 = nToCa.clone().cross(caToC).multiplyScalar(-0.58273431)
+                    .addScaledVector(nToCa, 0.56802827)
+                    .addScaledVector(caToC, -0.54067466);
+            } else if (prev && next) {
+                a1 = next.clone().sub(ca).cross(prev.clone().sub(ca));
+            }
+        }
+        if (a1.length() < FRAME_ZERO_LENGTH) {
+            const bond = next ? next.clone().sub(ca) : prev ? ca.clone().sub(prev) : new THREE.Vector3(0, 0, 1);
+            a1 = anyPerpendicular(bond);
+            arbitrary++;
+        }
+        a1.normalize();
+
+        // a3: along the chain, perpendicular to a1
+        const candidates: THREE.Vector3[] = [];
+        if (nToCa && caToC) candidates.push(caToC.clone().add(nToCa));
+        if (prev && next) candidates.push(next.clone().sub(prev));
+        if (next) candidates.push(next.clone().sub(ca));
+        if (prev) candidates.push(ca.clone().sub(prev));
+        let a3: THREE.Vector3 | undefined;
+        for (const v of candidates) {
+            a3 = perpendicularUnit(v, a1);
+            if (a3) break;
+        }
+        if (!a3) {
+            a3 = anyPerpendicular(a1);
+            arbitrary++;
+        }
+        return { ca, a1, a3 };
+    });
+
+    if (arbitrary > 0) {
+        console.log(`${arbitrary} amino-acid orientation vectors could not be defined from the structure (missing backbone atoms and chain neighbours) and were chosen arbitrarily`);
+    }
+    return frames;
+}
+
+/**
+ * The rotation that best superimposes the points `from` onto the points `to` (least squares, after centring both),
+ * by Horn's quaternion method. Used to orient repeated copies of a chain like the chain they copy.
+ */
+function superpositionRotation(from: THREE.Vector3[], to: THREE.Vector3[]): THREE.Quaternion {
+    const centre = (pts: THREE.Vector3[]) => pts.reduce((s, p) => s.add(p), new THREE.Vector3()).divideScalar(pts.length);
+    const cf = centre(from), ct = centre(to);
+    // s[a][b] = sum of (from - cf)_a (to - ct)_b
+    const s = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    from.forEach((p, i) => {
+        const f = p.clone().sub(cf).toArray(), t = to[i].clone().sub(ct).toArray();
+        for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) s[a][b] += f[a] * t[b];
+    });
+    const [[xx, xy, xz], [yx, yy, yz], [zx, zy, zz]] = s;
+    const m = [
+        [xx + yy + zz, yz - zy, zx - xz, xy - yx],
+        [yz - zy, xx - yy - zz, xy + yx, zx + xz],
+        [zx - xz, xy + yx, -xx + yy - zz, yz + zy],
+        [xy - yx, zx + xz, yz + zy, -xx - yy + zz],
+    ];
+    // Jacobi eigendecomposition of the symmetric 4x4 matrix; the eigenvector of the largest eigenvalue is (w, x, y, z)
+    const v = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    for (let sweep = 0; sweep < 50; sweep++) {
+        let off = 0;
+        for (let p = 0; p < 4; p++) for (let q = p + 1; q < 4; q++) off += m[p][q] * m[p][q];
+        if (off < 1e-30) break;
+        for (let p = 0; p < 4; p++) for (let q = p + 1; q < 4; q++) {
+            if (m[p][q] === 0) continue;
+            const theta = (m[q][q] - m[p][p]) / (2 * m[p][q]);
+            const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+            const c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+            for (let k = 0; k < 4; k++) {
+                const mkp = m[k][p], mkq = m[k][q];
+                m[k][p] = c * mkp - sn * mkq;
+                m[k][q] = sn * mkp + c * mkq;
+            }
+            for (let k = 0; k < 4; k++) {
+                const mpk = m[p][k], mqk = m[q][k];
+                m[p][k] = c * mpk - sn * mqk;
+                m[q][k] = sn * mpk + c * mqk;
+            }
+            for (let k = 0; k < 4; k++) {
+                const vkp = v[k][p], vkq = v[k][q];
+                v[k][p] = c * vkp - sn * vkq;
+                v[k][q] = sn * vkp + c * vkq;
+            }
+        }
+    }
+    let best = 0;
+    for (let k = 1; k < 4; k++) if (m[k][k] > m[best][best]) best = k;
+    return new THREE.Quaternion(v[1][best], v[2][best], v[3][best], v[0][best]).normalize();
+}
+
 // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
 function FillInfoAA(info: [string, string, number[], number[], number[], number], AM: AminoAcid, CM: THREE.Vector3){
     AM.type = info[1];
@@ -314,44 +480,10 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
         }
     }
 
-    let bv1 = new THREE.Vector3(1, 0, 0);
-    let bv2 = new THREE.Vector3(0, 1, 0);
-    let bv3 = new THREE.Vector3(0, 0, 1);
-
-    let type: string = "";
-    let pdbid: string = "";
-    let a3 = new THREE.Vector3();
-
-    let CalcInfoAA = (res: pdbresidue): [string, string, number[], number[], number[], number] => {
-        type = proelem[res.resType];
-        pdbid = res.pdbResIdent;
-        let scHAcom = new THREE.Vector3;
-        res.atoms.forEach(a => {
-            if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
-                scHAcom.x += a.x;
-                scHAcom.y += a.y;
-                scHAcom.z += a.z;
-            }
-        })
-        if (scHAcom.lengthSq() == 0) scHAcom.x = 1;
-        scHAcom.normalize();
-        let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
-        if(CA) {
-            let CApos = new THREE.Vector3(<number>CA.x, <number>CA.y, <number>CA.z);
-            let CABfactor = 0;
-            if(!isNaN(parseFloat(CA.tempFactor))) {
-                CABfactor = parseFloat(CA.tempFactor);
-            }
-            let a1 = scHAcom.clone().sub(CApos).normalize();
-            if (a1.dot(bv1) < 0.99) {
-                a3 = a1.clone().cross(bv1);
-            } else if (a1.dot(bv2) < 0.99) {
-                a3 = a1.clone().cross(bv2);
-            } else if (a1.dot(bv3) < 0.99) {
-                a3 = a1.clone().cross(bv3);
-            }
-            return [pdbid, type, CApos.toArray(), a1.toArray(), a3.toArray(), CABfactor];
-        } else return ["NOCA", "NOCA", bv1.toArray(), bv1.toArray(), bv1.toArray(), 0]
+    // Amino acids are placed on their C-alpha, oriented by aminoAcidFrames
+    const CalcInfoAA = (res: pdbresidue, frame: { ca: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3 }): [string, string, number[], number[], number[], number] => {
+        const bFactor = parseFloat(residueAtomsByName(res).get('CA').tempFactor);
+        return [res.pdbResIdent, proelem[res.resType], frame.ca.toArray(), frame.a1.toArray(), frame.a3.toArray(), isNaN(bFactor) ? 0 : bFactor];
     }
 
     let ring_names: string[] = ["C2", "C4", "C5", "C6", "N1", "N3"];
@@ -374,8 +506,8 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
     }
 
     let CalcInfoNC = (res: pdbresidue): [string, string, number[], number[], number[], number] => {
-        type = nucelem[res.resType];
-        pdbid = res.pdbResIdent;
+        const type: string = nucelem[res.resType];
+        const pdbid = res.pdbResIdent;
         let nuccom = new THREE.Vector3;
         let sugarCom = new THREE.Vector3;
         let sugarAtoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
@@ -489,27 +621,28 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
             let currentStrand: Peptide = sys.addNewPeptideStrand();
             let strandInfo = [];
             strandtype.push("pro");
-            for (let j = 0; j < nstrand.residues.length; j++) {
-                let aa = currentStrand.createBasicElement(nextElementId);
+            // residues without a C-alpha can't be placed and are left out
+            const caResidues = nstrand.residues.filter(res => res.atoms.some(a => a.atomType == 'CA'));
+            const frames = aminoAcidFrames(caResidues);
+            for (let j = 0; j < caResidues.length; j++) {
+                const aa = currentStrand.createBasicElement(nextElementId);
                 aa.sid = nextElementId - oldElementId;
-                let info = CalcInfoAA(nstrand.residues[j]);
-                if(info[1] != "NOCA"){
-                    strandInfo.push(info);
-                    bFactors.push(info[5]);
-                    xdata.push(aa.sid);
-                    com.add(new THREE.Vector3().fromArray(info[2]));
-                    pdbindices.push([pindx, initlist.uniqueIDs[i], info[0]]);
-                    aa.pdbindices = [pindx, initlist.uniqueIDs[i], info[0]];
-                    aa.n3 = null;
-                    aa.n5 = null;
-                    if (j != 0) {
-                        let prevaa = elems[elems.length-1];
-                        aa.n5 = prevaa;
-                        prevaa.n3 = aa;
-                    }
-                    elems.push(aa);
-                    nextElementId++;
+                const info = CalcInfoAA(caResidues[j], frames[j]);
+                strandInfo.push(info);
+                bFactors.push(info[5]);
+                xdata.push(aa.sid);
+                com.add(new THREE.Vector3().fromArray(info[2]));
+                pdbindices.push([pindx, initlist.uniqueIDs[i], info[0]]);
+                aa.pdbindices = [pindx, initlist.uniqueIDs[i], info[0]];
+                aa.n3 = null;
+                aa.n5 = null;
+                if (j != 0) {
+                    const prevaa = elems[elems.length-1];
+                    aa.n5 = prevaa;
+                    prevaa.n3 = aa;
                 }
+                elems.push(aa);
+                nextElementId++;
             }
             strandInit.push(strandInfo);
             if(currentStrand.end3 == undefined){
