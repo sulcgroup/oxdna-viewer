@@ -440,16 +440,6 @@ class Network {
         this.finishEdges();
     }
     ;
-    /**
-     * ANM by cutoff, plus bending and torsion terms between backbone neighbours.
-     */
-    edgesANMT(cutoffValueAngstroms: number, kb: number = DEFAULT_BENDING_K, kt: number = DEFAULT_TORSION_K){
-        this.fillCutoffEdges(cutoffValueAngstroms);
-        this.setTorsion(kb, kt);
-        this.networktype = "ANMT";
-        this.finishEdges();
-    }
-    ;
     private fillCutoffEdges(cutoffValueAngstroms: number){
         this.cutoff = cutoffValueAngstroms;
         this.reducedEdges.clearAll();

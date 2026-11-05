@@ -405,16 +405,6 @@ function fillEdgesWrapper(nid, edgecase) {
                 }
                 break;
             // case 1 was MWCENM, which was never completed (see Network in network.ts)
-            case 2:
-                let cutoffe = view.getInputNumber("edgeCutoff");
-                if (typeof (cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)) {
-                    notify("Please enter recongized value into 'Edge Cutoff' box", "alert");
-                }
-                else {
-                    const torsion = flux.torsionConstants();
-                    net.edgesANMT(cutoffe, torsion.kb, torsion.kt);
-                }
-                break;
         }
     }
 }
