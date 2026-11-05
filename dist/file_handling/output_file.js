@@ -227,16 +227,15 @@ function makeTopFile(name, newElementIDs, newStrandIDs, gsSubtypes, counts, useN
         newElementIDs.forEach((_id, e) => {
             let n3 = e.n3 ? newElementIDs.get(e.n3) : -1;
             let n5 = e.n5 ? newElementIDs.get(e.n5) : -1;
-            let cons = [];
-            // Protein mode: list bonded neighbours with higher ids, except the backbone neighbours,
-            // which are already given in the neighbour columns
-            if (counts['totAA'] > 0 || counts['totGS'] > 0) {
-                if (e.isAminoAcid() || e.isGS()) {
-                    for (let i = 0; i < e.connections.length; i++) {
-                        const c = e.connections[i];
-                        if (newElementIDs.get(c) > newElementIDs.get(e) && c !== e.n3 && c !== e.n5) {
-                            cons.push(newElementIDs.get(c));
-                        }
+            // Generic spheres list their bonded neighbours with higher ids, except the backbone neighbours,
+            // which are already given in the neighbour columns. Amino acids don't: oxDNA reads protein
+            // bonds only from the .par file.
+            const cons = [];
+            if (e.isGS()) {
+                for (let i = 0; i < e.connections.length; i++) {
+                    const c = e.connections[i];
+                    if (newElementIDs.get(c) > newElementIDs.get(e) && c !== e.n3 && c !== e.n5) {
+                        cons.push(newElementIDs.get(c));
                     }
                 }
             }
@@ -246,7 +245,7 @@ function makeTopFile(name, newElementIDs, newStrandIDs, gsSubtypes, counts, useN
             else if (e.isAminoAcid()) {
                 // oxDNA protein convention: "strID aa nside cside", residues listed N->C,
                 // nside = i-1, cside = i+1. Internally the N-terminal neighbour is n5.
-                top.push([newStrandIDs.get(e.strand), e.type, n5, n3, ...cons].join(' '));
+                top.push([newStrandIDs.get(e.strand), e.type, n5, n3].join(' '));
             }
             else {
                 top.push([newStrandIDs.get(e.strand), e.type, n3, n5, ...cons].join(' '));
