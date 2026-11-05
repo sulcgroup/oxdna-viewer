@@ -188,12 +188,19 @@ function fluctAngularHessian(req, n) {
             }
         });
     }
-    // Rotations that no term restrains have zero rows in both Bθθ and Bθx, so a tiny diagonal
-    // shift leaves the Schur complement unchanged while making Bθθ invertible.
-    const shift = 1e-10 * Math.max(btt.maxDiagonal(), 1e-30);
-    for (let i = 0; i < m; i++)
-        btt.add(i, i, shift);
-    if (!btt.cholesky())
+    // Rotations that no term restrains have zero rows in both Bθθ and Bθx, so a tiny diagonal shift leaves the Schur
+    // complement unchanged while making Bθθ invertible. The shift must stay far below the softest restrained rotations
+    // (neighbouring beads with nearly parallel frames restrain each other only weakly, down to ~1e-10 of the largest
+    // diagonal), as it stiffens them; it is only raised if rounding makes the factorisation fail.
+    const unshifted = btt.data.slice();
+    const factorised = [1e-14, 1e-12, 1e-10].some(relShift => {
+        btt.data.set(unshifted);
+        const shift = relShift * Math.max(btt.maxDiagonal(), 1e-30);
+        for (let i = 0; i < m; i++)
+            btt.add(i, i, shift);
+        return btt.cholesky();
+    });
+    if (!factorised)
         throw new Error("Bending/torsion Hessian is not positive definite");
     const rows = Array.from({ length: n }, (_, i) => i).filter(i => bxt[i].size > 0);
     const col = new Float64Array(m);
