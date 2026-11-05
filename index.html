@@ -1145,7 +1145,7 @@
                     <div class="tight group flex-column">
                         <div>
                             <button class="ribbon-icon-button" onclick="createNetworkWrapper()"
-                                    title="Create Network">
+                                    title="Create an ANM network for the selected protein, with springs between residues closer than the Edge Cutoff">
                                 <span class="mif-lightning5 mif-1x"></span>
                                 <span class="caption">Create Network</span>
                             </button>
@@ -1157,7 +1157,7 @@
                             </button>
 
                             <button class="ribbon-icon-button" onclick="visualizeNetworkWrapper(selectednetwork)"
-                                    title="Delete Network">
+                                    title="View Network">
                                 <span class="mif-lightning5 mif-1x"></span>
                                 <span class="caption">View Network</span>
                             </button>
@@ -1175,12 +1175,6 @@
                                 </ul>
                             </div>
 
-                            <div class="dropdown-button">
-                                <button class="button dropdown-toggle">Assign Edges</button>
-                                <ul class="d-menu put-left" data-role="dropdown" id="edges" title="Assigns Edges to Network Selected by Network Selector">
-                                    <li onclick="fillEdgesWrapper(selectednetwork, 0)">Cutoff (ANM)</li>
-                                </ul>
-                            </div>
 
                         </div>
                         <input type="text" data-role="input" title="edgeCutoff" class="mb-1" id="edgeCutoff"

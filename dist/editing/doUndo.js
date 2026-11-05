@@ -192,7 +192,10 @@ class RevertableMassDiscretization extends RevertableEdit {
     ;
 }
 class RevertableNetworkCreation extends RevertableEdit {
-    constructor(elems, nid) {
+    /**
+     * @param cutoff if given, the network gets ANM springs between particles closer than this (Å)
+     */
+    constructor(elems, nid, cutoff) {
         // construct network
         const lastsel = selectednetwork;
         const network = new Network(nid, elems);
@@ -202,6 +205,10 @@ class RevertableNetworkCreation extends RevertableEdit {
         };
         const redo = function () {
             insertNetwork(network, nid);
+            if (network.reducedEdges.total > 0)
+                network.fillConnections(); // removeNetwork cleared them
+            else if (cutoff !== undefined)
+                network.edgesByCutoff(cutoff);
         };
         super(undo, redo);
     }

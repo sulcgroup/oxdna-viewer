@@ -532,7 +532,7 @@ class Network {
     ;
     /*
      * MWCENM (mixed, weighted coarse-grained elastic network model) was never completed, so it has been
-     * removed from the Assign Edges menu. Known problems if anyone picks it up again:
+     * removed from the UI. Known problems if anyone picks it up again:
      * - it only works on proteins loaded from a PDB, and the check for that never triggers (pdbindices is
      *   undefined rather than throwing), so other proteins crash it
      * - hydrogen bonds need a Chimera FindHBond .hb file; without one hydrogenBonds is undefined and it throws
