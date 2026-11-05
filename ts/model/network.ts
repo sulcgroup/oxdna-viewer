@@ -540,6 +540,18 @@ class Network {
         return {coords, p1: e.p1.slice(), p2: e.p2.slice(), ks: e.ks.slice(), angular, temperature, target};
     }
     ;
+    /*
+     * MWCENM (mixed, weighted coarse-grained elastic network model) was never completed, so it has been
+     * removed from the Assign Edges menu. Known problems if anyone picks it up again:
+     * - it only works on proteins loaded from a PDB, and the check for that never triggers (pdbindices is
+     *   undefined rather than throwing), so other proteins crash it
+     * - hydrogen bonds need a Chimera FindHBond .hb file; without one hydrogenBonds is undefined and it throws
+     * - salt bridges compare PDB atom distances in Å with 4/8.518 (sim units), so they never form
+     * - non-polar contacts use Cα–Cα < 4 Å because the side-chain atom check is commented out, so they
+     *   almost never form
+     * - it calls notify() for every bond it adds
+     */
+    /*
     edgesMWCENM(){
         this.reducedEdges.clearAll();
         this.clearConnections();
@@ -759,6 +771,7 @@ class Network {
         }
     }
     ;
+    */
     generateHessian(): number[] {
         // let hessian : number[][] = [];
         if(this.reducedEdges.total==0){

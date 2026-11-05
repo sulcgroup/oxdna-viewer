@@ -404,9 +404,7 @@ function fillEdgesWrapper(nid, edgecase) {
                     net.edgesByCutoff(cutoff);
                 }
                 break;
-            case 1:
-                net.edgesMWCENM();
-                break;
+            // case 1 was MWCENM, which was never completed (see Network in network.ts)
             case 2:
                 let cutoffe = view.getInputNumber("edgeCutoff");
                 if (typeof (cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)) {
