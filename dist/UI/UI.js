@@ -912,6 +912,13 @@ class View {
                 li.setAttribute('value', String(nid));
                 li.appendChild(sp1);
                 li.appendChild(sp2);
+                if (networks[nid].particles.length > MAX_FLUCTUATION_PARTICLES) {
+                    const warning = document.createElement("span");
+                    warning.className = "mif-warning fg-red ml-1";
+                    warning.title = `Networks of more than ${MAX_FLUCTUATION_PARTICLES} particles are too large to solve here. ` +
+                        "Use oat anm_fluctuation_solver from oxDNA for larger proteins.";
+                    sp1.appendChild(warning);
+                }
                 li.onclick = function () {
                     flux.fitData(li.value);
                 };
@@ -936,6 +943,7 @@ class View {
     }
 }
 let view = new View(document);
+const MAX_FLUCTUATION_PARTICLES = 1500; // largest network the Fluctuation Solver will fit in the browser
 // This Class is basically a giant container to deal with all the graphing for the FluctuationWindow
 class fluxGraph {
     title;
@@ -1466,8 +1474,8 @@ class fluxGraph {
         const unitScale = GD.units == "nm_sqr" ? 100 : 1;
         const target = GD.data.map((x) => unitScale * (GD.datatype == "bfactor" ? x * 3 / (8 * Math.PI ** 2) : x));
         const net = networks[nid];
-        if (net.particles.length > 1500) {
-            notify("Large Networks (n>1500) cannot be solved here. Please use the Python scripts provided at https://github.com/sulcgroup/anm-oxdna");
+        if (net.particles.length > MAX_FLUCTUATION_PARTICLES) {
+            notify(`Networks of more than ${MAX_FLUCTUATION_PARTICLES} particles are too large to solve here. Use oat anm_fluctuation_solver from oxDNA for larger proteins.`, "alert");
             return;
         }
         if (net.reducedEdges.total == 0) {

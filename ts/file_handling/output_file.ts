@@ -386,7 +386,7 @@ function makeDatFile(name:string, newElementIDs:Map<BasicElement, number>) {
 
 /**
  * The .par file of all networks, with particle indices in output order. Lines are "i j r0 s k" with i < j.
- * oxDNA's angular interactions (DNACT, RNACT, ACT) read bending/torsion parameters on every line with
+ * oxDNA's angular interactions (DNACT, RNACT, NACT, ACT) read bending/torsion parameters on every line with
  * j == i + 1, so if any network is ANMT, all those lines get the cosines "a0 b0 c0 d0", followed by
  * "kb kt" if any network has its own bending and torsion constants. Plain ANM files have no extra columns.
  */
@@ -431,9 +431,9 @@ function makeParFile(name: string, newElementIDs: Map<BasicElement, number>, cou
         notify("Some ANMT networks have no bending/torsion constants of their own (they were set in an input file). Those pairs were written with kb = kt = 0. Fit them in the Fluctuation Solver with ANMT on to set them.", "warning", true);
     }
     if (perPair) {
-        notify("The .par file has bending/torsion constants for each pair: use an angular interaction (DNACT, RNACT, ACT) and don't set bending_k or torsion_k in the input file.");
+        notify("The .par file has bending/torsion constants for each pair: use an angular interaction (DNACT, RNACT, NACT, ACT) and don't set bending_k or torsion_k in the input file.");
     } else if (angular) {
-        notify("The .par file has ANMT angular parameters: use an angular interaction (DNACT, RNACT, ACT) and set bending_k and torsion_k in the input file.");
+        notify("The .par file has ANMT angular parameters: use an angular interaction (DNACT, RNACT, NACT, ACT) and set bending_k and torsion_k in the input file.");
     }
 
     return {file_name: name+".par", file: par.join('\n') };
