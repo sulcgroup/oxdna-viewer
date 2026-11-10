@@ -721,22 +721,17 @@ function readPdbFile(file) {
                     let strandID = pdbtemp[1];
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
-                    let dims = pdbtemp[4];
-                    let pdbindices = pdbtemp[5];
-                    // let pdbinfo = pdbtemp[6]
+                    let pdbindices = pdbtemp[4];
+                    // let pdbinfo = pdbtemp[5]
                     let id = startID;
                     view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
                     // store PDB data
-                    const pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
-                    pdata.disulphideBonds = pdbtemp[6][3];
+                    const pdata = new pdbinfowrapper(pdbtemp[5][0], pdbtemp[5][1], pdbtemp[5][2]);
+                    pdata.disulphideBonds = pdbtemp[5][3];
                     pdbFileInfo.push(pdata);
                     // store B factor Data in global graphDatasets
                     const gdata = new graphData(gd[0], gd[1], gd[2], gd[3], gd[4]);
                     graphDatasets.push(gdata);
-                    // Set box size based on loaded structure size
-                    const maxdim = Math.max(...dims) * 1.25;
-                    box.clampScalar(maxdim, Infinity);
-                    redrawBox();
                     for (let i = 0; i < pdbtemp[0].length; i++) {
                         if (strandID[i] == "pro") {
                             let currentstrand = sys.addNewPeptideStrand();
@@ -807,6 +802,7 @@ function readPdbFile(file) {
                     sys.fillDefaultColors();
                     addSystemToScene(sys);
                     systems.push(sys);
+                    fitBoxAround(sys.getMonomers());
                     centerAndPBC(sys.getMonomers(), box);
                     if (flux.fluxWindowOpen)
                         view.addGraphData(graphDatasets.length - 1); // add to flux window if open, otherwise it'll be added on next opening
@@ -848,13 +844,12 @@ function readMmcifFile(file) {
                     let strandID = pdbtemp[1];
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
-                    let dims = pdbtemp[4];
-                    let pdbindices = pdbtemp[5];
+                    let pdbindices = pdbtemp[4];
                     let id = startID;
                     view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
                     // store PDB data
-                    let pdata = new pdbinfowrapper(pdbtemp[6][0], pdbtemp[6][1], pdbtemp[6][2]);
-                    pdata.disulphideBonds = pdbtemp[6][3];
+                    let pdata = new pdbinfowrapper(pdbtemp[5][0], pdbtemp[5][1], pdbtemp[5][2]);
+                    pdata.disulphideBonds = pdbtemp[5][3];
                     pdbFileInfo.push(pdata);
                     pdata = undefined;
                     // store B factor Data in global graphDatasets
@@ -862,10 +857,6 @@ function readMmcifFile(file) {
                     graphDatasets.push(gdata);
                     gdata = undefined;
                     gd = undefined;
-                    // Set box size based on loaded structure size
-                    const maxdim = Math.max(...dims) * 1.25;
-                    box.clampScalar(maxdim, Infinity);
-                    redrawBox();
                     for (let i = 0; i < pdbtemp[0].length; i++) {
                         if (strandID[i] == "pro") {
                             let currentstrand = sys.addNewPeptideStrand();
@@ -935,6 +926,7 @@ function readMmcifFile(file) {
                     sys.fillDefaultColors();
                     addSystemToScene(sys);
                     systems.push(sys);
+                    fitBoxAround(sys.getMonomers());
                     centerAndPBC(sys.getMonomers(), box);
                     if (flux.fluxWindowOpen)
                         view.addGraphData(graphDatasets.length - 1);

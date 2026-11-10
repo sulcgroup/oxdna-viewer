@@ -754,25 +754,6 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
         }
     }
     com.divideScalar(sys.systemLength());
-    const xpos = strandInit.flat().map((info) => { return info[2][0]; });
-    const ypos = strandInit.flat().map((info) => { return info[2][1]; });
-    const zpos = strandInit.flat().map((info) => { return info[2][2]; });
-    const xmax = xpos.reduce((a, b) => { return Math.max(a, b); });
-    const xmin = xpos.reduce((a, b) => { return Math.min(a, b); });
-    const ymax = ypos.reduce((a, b) => { return Math.max(a, b); });
-    const ymin = ypos.reduce((a, b) => { return Math.min(a, b); });
-    const zmax = zpos.reduce((a, b) => { return Math.max(a, b); });
-    const zmin = zpos.reduce((a, b) => { return Math.min(a, b); });
-    let xdim = xmax - xmin;
-    let ydim = ymax - ymin;
-    let zdim = zmax - zmin;
-    if (xdim < 2)
-        xdim = 2.5;
-    if (ydim < 2)
-        ydim = 2.5;
-    if (zdim < 2)
-        zdim = 2.5;
-    const dims = new Array(xdim, ydim, zdim);
-    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"], dims,
+    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"],
         pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds]];
 }
