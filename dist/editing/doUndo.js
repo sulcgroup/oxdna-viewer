@@ -9,8 +9,11 @@ class EditHistory {
     /**
      * Performs revertable edit and add it to the undo history stack
      * @param edit object describing the revertable edit.
+     * @returns false if the edit was refused, in which case nothing is done or recorded
      */
     do(edit) {
+        if (edit.refused)
+            return false;
         edit.do();
         this.undoStack.push(edit);
         // We no longer care about the alternate future:
@@ -21,12 +24,15 @@ class EditHistory {
             drawSystemHierarchy();
         //Return focus to the canvas so undo can be called immediatley
         canvas.focus();
+        return true;
     }
     /**
      * Add revertable edit to the undo history stack without performing it.
      * @param edit object describing the revertable edit.
      */
     add(edit) {
+        if (edit.refused)
+            return;
         this.undoStack.push(edit);
         // Update the hierarchy, since we've made changes
         if (view.isWindowOpen('systemHierarchyWindow'))
@@ -68,6 +74,8 @@ class EditHistory {
 class RevertableEdit {
     undo;
     do;
+    /** Set when the edit was refused while it was being prepared (e.g. invalid selection); it does nothing and isn't recorded */
+    refused = false;
     /**
      * Takes undo and redo functions as arguments.
      * @param undo function that, when applied, will revert the edit
@@ -229,6 +237,7 @@ class RevertableLigation extends RevertableEdit {
         let end5, end3;
         if (!edit.canLigate(e1, e2)) {
             super(() => { }, () => { });
+            this.refused = true;
             return;
         }
         // Find out which is the 5' end and which is 3'
@@ -243,6 +252,7 @@ class RevertableLigation extends RevertableEdit {
         else {
             notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
             super(() => { }, () => { });
+            this.refused = true;
             return;
         }
         let undo = function () { edit.nick(elements.get(end3)); };

@@ -11,8 +11,10 @@ class EditHistory {
     /**
      * Performs revertable edit and add it to the undo history stack
      * @param edit object describing the revertable edit.
+     * @returns false if the edit was refused, in which case nothing is done or recorded
      */
-    public do(edit: RevertableEdit) {
+    public do(edit: RevertableEdit): boolean {
+        if (edit.refused) return false;
         edit.do();
         this.undoStack.push(edit);
 
@@ -26,6 +28,7 @@ class EditHistory {
 
         //Return focus to the canvas so undo can be called immediatley
         canvas.focus()
+        return true;
     }
 
     /**
@@ -33,6 +36,7 @@ class EditHistory {
      * @param edit object describing the revertable edit.
      */
     public add(edit: RevertableEdit) {
+        if (edit.refused) return;
         this.undoStack.push(edit);
 
         // Update the hierarchy, since we've made changes
@@ -79,6 +83,8 @@ class EditHistory {
 class RevertableEdit {
     undo: () => void;
     do: () => void;
+    /** Set when the edit was refused while it was being prepared (e.g. invalid selection); it does nothing and isn't recorded */
+    refused = false;
 
     /**
      * Takes undo and redo functions as arguments.
@@ -251,6 +257,7 @@ class RevertableLigation extends RevertableEdit {
         let end5: number, end3: number;
         if (!edit.canLigate(e1, e2)) {
             super(()=>{}, ()=>{});
+            this.refused = true;
             return;
         }
         // Find out which is the 5' end and which is 3'
@@ -263,6 +270,7 @@ class RevertableLigation extends RevertableEdit {
         } else {
             notify("Please select one nucleotide with an available 3' connection and one with an available 5'");
             super(()=>{}, ()=>{});
+            this.refused = true;
             return;
         }
         let undo = function() {edit.nick(elements.get(end3))};

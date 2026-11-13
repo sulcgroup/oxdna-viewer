@@ -113,8 +113,7 @@ function ligateWrapper() {
         notify("Please select two monomers to ligate", "alert");
         return;
     }
-    editHistory.do(new RevertableLigation(e[0], e[1]))
-    topologyEdited = true;
+    if (editHistory.do(new RevertableLigation(e[0], e[1]))) topologyEdited = true;
 }
 
 function extendWrapper(double: boolean) {
