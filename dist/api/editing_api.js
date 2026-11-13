@@ -132,7 +132,22 @@ var edit;
         render();
     }
     edit.nick = nick;
+    /**
+     * Whether two strands can be joined into one. oxDNA gives every strand a single type, so DNA, RNA and protein
+     * strands can't be ligated to each other. Notifies the user if they can't.
+     */
+    function canLigate(a, b) {
+        const typeA = a.strand.kwdata['type'], typeB = b.strand.kwdata['type'];
+        if (typeA == typeB)
+            return true;
+        const name = (t) => t == 'peptide' ? 'a protein' : t == 'RNA' ? 'an RNA' : `a ${t}`;
+        notify(`Can't ligate ${name(typeA)} strand to ${name(typeB)} strand: oxDNA strands must be a single type (DNA, RNA or protein).`, "alert");
+        return false;
+    }
+    edit.canLigate = canLigate;
     function ligate(a, b) {
+        if (!canLigate(a, b))
+            return;
         let end5, end3;
         //find out which is the 5' end and which is 3'
         if (!a.n5 && !b.n3) {

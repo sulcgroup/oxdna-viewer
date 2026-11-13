@@ -227,6 +227,10 @@ class RevertableNick extends RevertableEdit {
 class RevertableLigation extends RevertableEdit {
     constructor(e1, e2) {
         let end5, end3;
+        if (!edit.canLigate(e1, e2)) {
+            super(() => { }, () => { });
+            return;
+        }
         // Find out which is the 5' end and which is 3'
         if (!e1.n5 && !e2.n3) {
             end5 = e1.id;
