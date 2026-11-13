@@ -777,13 +777,8 @@ function parsePar(lines, system) {
             return
         }
 
-        // if its a torsional ANM then there are additional parameters on some lines
-        let extraParams = []
-        if (l.length > 5) {
-            for (let i = 5; i < l.length; i++) {
-                extraParams.push(l[i])
-            }
-        }
+        // ANMT backbone lines carry the cosines a0 b0 c0 d0, and maybe their own kb kt
+        const extraParams = l.slice(5).filter(x => x !== "").map(parseFloat);
         if(Number.isInteger(p) && Number.isInteger(q)){
             net.reducedEdges.addEdge(p, q, eqDist, type, strength, extraParams);
         }

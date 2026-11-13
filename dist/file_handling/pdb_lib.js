@@ -169,6 +169,178 @@ class pdbinfowrapper {
         this.disulphideBonds = [];
     }
 }
+// Atoms left out of the side chain when orienting amino-acid beads (the same set as oat anm_fluctuation_solver)
+const SIDE_CHAIN_EXCLUDED_ATOMS = ['N', 'C', 'O', 'OXT', 'H', 'H1', 'H2', 'H3', 'HN'];
+const ANGSTROM_PER_SIM_LENGTH = 8.518;
+// Vectors shorter than this are treated as zero when building bead frames
+const FRAME_ZERO_LENGTH = 1e-9;
+/**
+ * The atoms of a residue by name. Where a name has alternate locations, keep the one with the highest occupancy
+ * (the first one on ties), as oat does, so both programs orient the beads from the same atoms.
+ */
+function residueAtomsByName(res) {
+    const occupancy = (a) => {
+        const o = parseFloat(a.occupancy);
+        return isNaN(o) ? 1 : o;
+    };
+    const byName = new Map();
+    res.atoms.forEach(a => {
+        const current = byName.get(a.atomType);
+        if (current === undefined || occupancy(a) > occupancy(current))
+            byName.set(a.atomType, a);
+    });
+    return byName;
+}
+const atomPosition = (a) => new THREE.Vector3(a.x, a.y, a.z);
+// Unit vector along the part of v perpendicular to the unit vector ref, or undefined if v is (nearly) parallel to ref
+function perpendicularUnit(v, ref) {
+    const p = v.clone().addScaledVector(ref, -v.dot(ref));
+    if (p.length() < 1e-3 * Math.max(v.length(), 1e-12))
+        return undefined;
+    return p.normalize();
+}
+// A unit vector perpendicular to v. Last resort only: it depends on how the structure is oriented.
+function anyPerpendicular(v) {
+    const abs = [Math.abs(v.x), Math.abs(v.y), Math.abs(v.z)];
+    const axis = new THREE.Vector3();
+    axis.setComponent(abs.indexOf(Math.min(...abs)), 1);
+    return v.clone().cross(axis).normalize();
+}
+/**
+ * Orientation of the amino-acid beads of one chain, used by the ANMT bending and torsion potentials.
+ * Both vectors are defined by the residue and its chain neighbours, so the ANMT parameters do not depend on how the
+ * structure is oriented in the input file. This is the same definition as oat anm_fluctuation_solver (orientation_vectors).
+ *
+ * a1 points from the C-alpha to the centre of the residue's atoms other than the backbone N, C and O (C-alpha included).
+ * If that is zero (glycine) it points to the ideal C-beta position, computed from the backbone N, CA and C, or, if they
+ * are missing, along the normal to the plane of the C-alpha and its two neighbours.
+ * a3 points along the chain (N to C of the residue, or from the previous to the next C-alpha), made perpendicular to a1.
+ *
+ * @param residues The residues of the chain, in order from the N to the C terminus. Every one must have a CA atom.
+ * @returns The C-alpha position and the orthonormal a1/a3 of each residue
+ */
+function aminoAcidFrames(residues) {
+    const atoms = residues.map(residueAtomsByName);
+    const cas = atoms.map(byName => atomPosition(byName.get('CA')));
+    let arbitrary = 0;
+    const frames = atoms.map((byName, r) => {
+        const ca = cas[r];
+        const prev = r > 0 ? cas[r - 1] : undefined;
+        const next = r < cas.length - 1 ? cas[r + 1] : undefined;
+        const n = byName.get('N'), c = byName.get('C');
+        // in Angstrom, the units of the ideal C-beta coefficients below (pdbatom positions are in simulation units)
+        const nToCa = n && ca.clone().sub(atomPosition(n)).multiplyScalar(ANGSTROM_PER_SIM_LENGTH);
+        const caToC = c && atomPosition(c).sub(ca).multiplyScalar(ANGSTROM_PER_SIM_LENGTH);
+        // a1: towards the side chain
+        const sideChain = Array.from(byName.entries()).filter(([name]) => !SIDE_CHAIN_EXCLUDED_ATOMS.includes(name));
+        let a1 = new THREE.Vector3();
+        sideChain.forEach(([, a]) => a1.add(atomPosition(a)));
+        a1.divideScalar(sideChain.length).sub(ca);
+        if (a1.length() < FRAME_ZERO_LENGTH) {
+            if (nToCa && caToC) {
+                // ideal C-beta position relative to the C-alpha (the coefficients of trRosetta/AlphaFold)
+                a1 = nToCa.clone().cross(caToC).multiplyScalar(-0.58273431)
+                    .addScaledVector(nToCa, 0.56802827)
+                    .addScaledVector(caToC, -0.54067466);
+            }
+            else if (prev && next) {
+                a1 = next.clone().sub(ca).cross(prev.clone().sub(ca));
+            }
+        }
+        if (a1.length() < FRAME_ZERO_LENGTH) {
+            const bond = next ? next.clone().sub(ca) : prev ? ca.clone().sub(prev) : new THREE.Vector3(0, 0, 1);
+            a1 = anyPerpendicular(bond);
+            arbitrary++;
+        }
+        a1.normalize();
+        // a3: along the chain, perpendicular to a1
+        const candidates = [];
+        if (nToCa && caToC)
+            candidates.push(caToC.clone().add(nToCa));
+        if (prev && next)
+            candidates.push(next.clone().sub(prev));
+        if (next)
+            candidates.push(next.clone().sub(ca));
+        if (prev)
+            candidates.push(ca.clone().sub(prev));
+        let a3;
+        for (const v of candidates) {
+            a3 = perpendicularUnit(v, a1);
+            if (a3)
+                break;
+        }
+        if (!a3) {
+            a3 = anyPerpendicular(a1);
+            arbitrary++;
+        }
+        return { ca, a1, a3 };
+    });
+    if (arbitrary > 0) {
+        console.log(`${arbitrary} amino-acid orientation vectors could not be defined from the structure (missing backbone atoms and chain neighbours) and were chosen arbitrarily`);
+    }
+    return frames;
+}
+/**
+ * The rotation that best superimposes the points `from` onto the points `to` (least squares, after centring both),
+ * by Horn's quaternion method. Used to orient repeated copies of a chain like the chain they copy.
+ */
+function superpositionRotation(from, to) {
+    const centre = (pts) => pts.reduce((s, p) => s.add(p), new THREE.Vector3()).divideScalar(pts.length);
+    const cf = centre(from), ct = centre(to);
+    // s[a][b] = sum of (from - cf)_a (to - ct)_b
+    const s = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    from.forEach((p, i) => {
+        const f = p.clone().sub(cf).toArray(), t = to[i].clone().sub(ct).toArray();
+        for (let a = 0; a < 3; a++)
+            for (let b = 0; b < 3; b++)
+                s[a][b] += f[a] * t[b];
+    });
+    const [[xx, xy, xz], [yx, yy, yz], [zx, zy, zz]] = s;
+    const m = [
+        [xx + yy + zz, yz - zy, zx - xz, xy - yx],
+        [yz - zy, xx - yy - zz, xy + yx, zx + xz],
+        [zx - xz, xy + yx, -xx + yy - zz, yz + zy],
+        [xy - yx, zx + xz, yz + zy, -xx - yy + zz],
+    ];
+    // Jacobi eigendecomposition of the symmetric 4x4 matrix; the eigenvector of the largest eigenvalue is (w, x, y, z)
+    const v = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]];
+    for (let sweep = 0; sweep < 50; sweep++) {
+        let off = 0;
+        for (let p = 0; p < 4; p++)
+            for (let q = p + 1; q < 4; q++)
+                off += m[p][q] * m[p][q];
+        if (off < 1e-30)
+            break;
+        for (let p = 0; p < 4; p++)
+            for (let q = p + 1; q < 4; q++) {
+                if (m[p][q] === 0)
+                    continue;
+                const theta = (m[q][q] - m[p][p]) / (2 * m[p][q]);
+                const t = Math.sign(theta || 1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+                const c = 1 / Math.sqrt(t * t + 1), sn = t * c;
+                for (let k = 0; k < 4; k++) {
+                    const mkp = m[k][p], mkq = m[k][q];
+                    m[k][p] = c * mkp - sn * mkq;
+                    m[k][q] = sn * mkp + c * mkq;
+                }
+                for (let k = 0; k < 4; k++) {
+                    const mpk = m[p][k], mqk = m[q][k];
+                    m[p][k] = c * mpk - sn * mqk;
+                    m[q][k] = sn * mpk + c * mqk;
+                }
+                for (let k = 0; k < 4; k++) {
+                    const vkp = v[k][p], vkq = v[k][q];
+                    v[k][p] = c * vkp - sn * vkq;
+                    v[k][q] = sn * vkp + c * vkq;
+                }
+            }
+    }
+    let best = 0;
+    for (let k = 1; k < 4; k++)
+        if (m[k][k] > m[best][best])
+            best = k;
+    return new THREE.Quaternion(v[1][best], v[2][best], v[3][best], v[0][best]).normalize();
+}
 // This Function calculates all necessary info for an Amino Acid in PDB format and writes it to the system
 function FillInfoAA(info, AM, CM) {
     AM.type = info[1];
@@ -221,6 +393,38 @@ var nucleosideColors = [
     new THREE.Color(0x8C704C),
     new THREE.Color(0x4F4600), //W; Olive Brown
 ];
+/**
+ * Splits a chain into consecutive runs of residues of one molecule type (protein, DNA or RNA). Residues of
+ * unsupported types stay in the run they are in (or join the first run), and are skipped when the strands are built.
+ * @param chain A chain whose residues have been classified (res.type is 'pro', 'dna', 'rna' or anything else)
+ * @returns One chain per run, with strandtype set; a single chain if the chain has one molecule type, none if it has none
+ */
+function splitChainByMoleculeType(chain) {
+    const runs = [];
+    let unclassified = []; // unsupported residues before the first supported one
+    chain.residues.forEach(res => {
+        const type = res.type;
+        const current = runs[runs.length - 1];
+        if (!['pro', 'dna', 'rna'].includes(type)) {
+            if (current)
+                current.residues.push(res);
+            else
+                unclassified.push(res);
+            return;
+        }
+        if (!current || current.strandtype != type) {
+            const run = new pdbchain();
+            run.chainID = chain.chainID;
+            run.chainIndx = chain.chainIndx;
+            run.strandtype = type;
+            run.residues = unclassified;
+            unclassified = [];
+            runs.push(run);
+        }
+        runs[runs.length - 1].residues.push(res);
+    });
+    return runs;
+}
 function addPDBToScene(pdbinfo, pindx, elementIndx) {
     let elems = [];
     let strandtype = [];
@@ -228,17 +432,11 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
     let label = pdbinfo.pdbfilename;
     let initlist = pdbinfo.initlist;
     let pdbindices = [];
-    let checker = {
-        DNAPresent: false,
-        proteinPresent: false,
-        RNAPresent: false,
-        mutantStrand: false
-    };
+    // Messages for the user, shown as notifications once the structure is loaded (workers can't notify)
+    const warnings = [];
     //Classify Residue Types
     for (let i = 0; i < initlist.uniqueIDs.length; i++) {
         let strand = strands[i];
-        for (let key in checker)
-            checker[key] = false;
         strand.residues.forEach(res => {
             res.resType = res.resType.replace(/[0-9]/g, '');
             if (recongizedDNAResidues.indexOf(res.resType) > -1 || recongizedDNAStrandEnds.indexOf(res.resType) > -1) {
@@ -251,7 +449,6 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                     return 1;
                 }
                 res.type = 'dna';
-                checker.DNAPresent = true;
             }
             else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                 if (res.resType === 'UNK') {
@@ -259,7 +456,6 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                     res.resType = undefined;
                 }
                 res.type = 'pro';
-                checker.proteinPresent = true;
             }
             else if (recongizedRNAResidues.indexOf(res.resType) > -1 || recongizedRNAStrandEnds.indexOf(res.resType) > -1) {
                 if (res.resType === 'N') {
@@ -274,7 +470,6 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                     res.resType = 'U';
                 }
                 res.type = 'rna';
-                checker.RNAPresent = true;
             }
             else {
                 console.log("Residue type: " + res.resType + " Residue Number: " + res.pdbResIdent + " on chain: " + strand.chainID + " in Provided PDB is Not Supported. " +
@@ -282,71 +477,32 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                 res.type = 'unworthy';
             }
         });
-        if (checker.DNAPresent && checker.RNAPresent) {
-            let restypestmp = strand.residues.map(x => x.resType);
-            let Upresent = restypestmp.indexOf('U') > -1;
-            if (Upresent) {
-                checker.DNAPresent = false;
-            }
-            else {
-                checker.RNAPresent = false;
-            }
-        }
-        checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
-        if (checker.mutantStrand) {
-            console.log("Strand " + strand.chainID + " contains more thank one macromolecule type, no thanks");
-            strand.strandtype = 'bastard';
-        }
-        else {
-            if (checker.proteinPresent)
-                strand.strandtype = 'pro';
-            if (checker.DNAPresent)
-                strand.strandtype = 'dna';
-            if (checker.RNAPresent)
-                strand.strandtype = 'rna';
-        }
     }
-    let bv1 = new THREE.Vector3(1, 0, 0);
-    let bv2 = new THREE.Vector3(0, 1, 0);
-    let bv3 = new THREE.Vector3(0, 0, 1);
-    let type = "";
-    let pdbid = "";
-    let a3 = new THREE.Vector3();
-    let CalcInfoAA = (res) => {
-        type = proelem[res.resType];
-        pdbid = res.pdbResIdent;
-        let scHAcom = new THREE.Vector3;
-        res.atoms.forEach(a => {
-            if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
-                scHAcom.x += a.x;
-                scHAcom.y += a.y;
-                scHAcom.z += a.z;
+    // oxDNA gives every strand a single type, so chains holding more than one kind of molecule (DNA/RNA chimeras,
+    // peptide-nucleic acid conjugates) are split into one strand per run of residues of the same type
+    const splitPieces = new Set();
+    const splitStrands = [];
+    const splitIDs = [];
+    const typeNames = { pro: "protein", dna: "DNA", rna: "RNA" };
+    for (let i = 0; i < initlist.uniqueIDs.length; i++) {
+        const pieces = splitChainByMoleculeType(strands[i]);
+        if (pieces.length > 1) {
+            pieces.forEach(piece => splitPieces.add(piece));
+            const kinds = [...new Set(pieces.map(piece => typeNames[piece.strandtype]))].join(" and ");
+            warnings.push(`Chain ${strands[i].chainID} contains ${kinds}. oxDNA strands have a single type, so it was split into ${pieces.length} strands.`);
+            if (initlist.repeatIDs.some(rid => strands[i].chainID.includes(rid))) {
+                warnings.push(`The repeated copies of chain ${strands[i].chainID} were not built, because the chain was split.`);
             }
-        });
-        if (scHAcom.lengthSq() == 0)
-            scHAcom.x = 1;
-        scHAcom.normalize();
-        let CA = res.atoms.filter(a => a.atomType == 'CA')[0];
-        if (CA) {
-            let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
-            let CABfactor = 0;
-            if (!isNaN(parseFloat(CA.tempFactor))) {
-                CABfactor = parseFloat(CA.tempFactor);
-            }
-            let a1 = scHAcom.clone().sub(CApos).normalize();
-            if (a1.dot(bv1) < 0.99) {
-                a3 = a1.clone().cross(bv1);
-            }
-            else if (a1.dot(bv2) < 0.99) {
-                a3 = a1.clone().cross(bv2);
-            }
-            else if (a1.dot(bv3) < 0.99) {
-                a3 = a1.clone().cross(bv3);
-            }
-            return [pdbid, type, CApos.toArray(), a1.toArray(), a3.toArray(), CABfactor];
         }
-        else
-            return ["NOCA", "NOCA", bv1.toArray(), bv1.toArray(), bv1.toArray(), 0];
+        pieces.forEach(piece => { splitStrands.push(piece); splitIDs.push(initlist.uniqueIDs[i]); });
+    }
+    strands = splitStrands;
+    pdbinfo.pdbsysinfo = splitStrands;
+    initlist.uniqueIDs = splitIDs;
+    // Amino acids are placed on their C-alpha, oriented by aminoAcidFrames
+    const CalcInfoAA = (res, frame) => {
+        const bFactor = parseFloat(residueAtomsByName(res).get('CA').tempFactor);
+        return [res.pdbResIdent, proelem[res.resType], frame.ca.toArray(), frame.a1.toArray(), frame.a3.toArray(), isNaN(bFactor) ? 0 : bFactor];
     };
     let ring_names = ["C2", "C4", "C5", "C6", "N1", "N3"];
     let pairs;
@@ -366,8 +522,8 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
         }
     }
     let CalcInfoNC = (res) => {
-        type = nucelem[res.resType];
-        pdbid = res.pdbResIdent;
+        const type = nucelem[res.resType];
+        const pdbid = res.pdbResIdent;
         let nuccom = new THREE.Vector3;
         let sugarCom = new THREE.Vector3;
         let sugarAtoms = res.atoms.filter(a => a.atomType.includes("'") || a.atomType.includes("*"));
@@ -472,27 +628,28 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
             let currentStrand = sys.addNewPeptideStrand();
             let strandInfo = [];
             strandtype.push("pro");
-            for (let j = 0; j < nstrand.residues.length; j++) {
-                let aa = currentStrand.createBasicElement(nextElementId);
+            // residues without a C-alpha can't be placed and are left out
+            const caResidues = nstrand.residues.filter(res => res.atoms.some(a => a.atomType == 'CA'));
+            const frames = aminoAcidFrames(caResidues);
+            for (let j = 0; j < caResidues.length; j++) {
+                const aa = currentStrand.createBasicElement(nextElementId);
                 aa.sid = nextElementId - oldElementId;
-                let info = CalcInfoAA(nstrand.residues[j]);
-                if (info[1] != "NOCA") {
-                    strandInfo.push(info);
-                    bFactors.push(info[5]);
-                    xdata.push(aa.sid);
-                    com.add(new THREE.Vector3().fromArray(info[2]));
-                    pdbindices.push([pindx, initlist.uniqueIDs[i], info[0]]);
-                    aa.pdbindices = [pindx, initlist.uniqueIDs[i], info[0]];
-                    aa.n3 = null;
-                    aa.n5 = null;
-                    if (j != 0) {
-                        let prevaa = elems[elems.length - 1];
-                        aa.n5 = prevaa;
-                        prevaa.n3 = aa;
-                    }
-                    elems.push(aa);
-                    nextElementId++;
+                const info = CalcInfoAA(caResidues[j], frames[j]);
+                strandInfo.push(info);
+                bFactors.push(info[5]);
+                xdata.push(aa.sid);
+                com.add(new THREE.Vector3().fromArray(info[2]));
+                pdbindices.push([pindx, initlist.uniqueIDs[i], info[0]]);
+                aa.pdbindices = [pindx, initlist.uniqueIDs[i], info[0]];
+                aa.n3 = null;
+                aa.n5 = null;
+                if (j != 0) {
+                    const prevaa = elems[elems.length - 1];
+                    aa.n5 = prevaa;
+                    prevaa.n3 = aa;
                 }
+                elems.push(aa);
+                nextElementId++;
             }
             strandInit.push(strandInfo);
             if (currentStrand.end3 == undefined) {
@@ -502,7 +659,7 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                 currentStrand.updateEnds();
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
-                    if (nstrand.chainID.includes(rid)) {
+                    if (nstrand.chainID.includes(rid) && !splitPieces.has(nstrand)) {
                         let repeatStrand = sys.addNewPeptideStrand();
                         strandtype.push("pro");
                         currentStrand.getMonomers().forEach((mon, mid) => {
@@ -578,7 +735,7 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
                 currentStrand.updateEnds();
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
-                    if (nstrand.chainID.includes(rid)) {
+                    if (nstrand.chainID.includes(rid) && !splitPieces.has(nstrand)) {
                         let repeatStrand = sys.addNewNucleicAcidStrand(currentStrand.kwdata['type']);
                         strandtype.push(tmptype);
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
@@ -618,25 +775,6 @@ function addPDBToScene(pdbinfo, pindx, elementIndx) {
         }
     }
     com.divideScalar(sys.systemLength());
-    const xpos = strandInit.flat().map((info) => { return info[2][0]; });
-    const ypos = strandInit.flat().map((info) => { return info[2][1]; });
-    const zpos = strandInit.flat().map((info) => { return info[2][2]; });
-    const xmax = xpos.reduce((a, b) => { return Math.max(a, b); });
-    const xmin = xpos.reduce((a, b) => { return Math.min(a, b); });
-    const ymax = ypos.reduce((a, b) => { return Math.max(a, b); });
-    const ymin = ypos.reduce((a, b) => { return Math.min(a, b); });
-    const zmax = zpos.reduce((a, b) => { return Math.max(a, b); });
-    const zmin = zpos.reduce((a, b) => { return Math.min(a, b); });
-    let xdim = xmax - xmin;
-    let ydim = ymax - ymin;
-    let zdim = zmax - zmin;
-    if (xdim < 2)
-        xdim = 2.5;
-    if (ydim < 2)
-        ydim = 2.5;
-    if (zdim < 2)
-        zdim = 2.5;
-    const dims = new Array(xdim, ydim, zdim);
-    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"], dims,
-        pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds]];
+    return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"],
+        pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds], warnings];
 }

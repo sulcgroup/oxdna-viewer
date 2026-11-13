@@ -113,8 +113,7 @@ function ligateWrapper() {
         notify("Please select two monomers to ligate", "alert");
         return;
     }
-    editHistory.do(new RevertableLigation(e[0], e[1]))
-    topologyEdited = true;
+    if (editHistory.do(new RevertableLigation(e[0], e[1]))) topologyEdited = true;
 }
 
 function extendWrapper(double: boolean) {
@@ -417,14 +416,17 @@ function moveToWrapper(){
     edit.move_to(e, bases);
 }
 
+/**
+ * Create an ANM network for the selected protein, with springs between residues closer than the Edge Cutoff.
+ */
 function createNetworkWrapper() {
-    // Makes a Network
-    const bases = Array.from(selectedBases);
-    if (!bases.some(e => e.isAminoAcid() || e.isGS())) {
-        notify("Please select a protein to create a network for", "alert");
+    const residues = Array.from(selectedBases).filter(e => e.isAminoAcid() || e.isGS());
+    const cutoff = view.getInputNumber("edgeCutoff");
+    if (residues.length == 0 || !(cutoff > 0 && cutoff < 1000000)) {
+        notify("To create a network, select a protein and enter a value in the Edge Cutoff box", "alert");
         return;
     }
-    editHistory.do(new RevertableNetworkCreation(bases, networks.length));
+    editHistory.do(new RevertableNetworkCreation(residues, networks.length, cutoff));
 }
 
 function deleteNetworkWrapper(nid: number) {
@@ -434,36 +436,6 @@ function deleteNetworkWrapper(nid: number) {
         return;
     }
     removeNetwork(net);
-}
-
-function fillEdgesWrapper(nid: number, edgecase: number) {
-    // Easy expansion for other edge methods
-    if(networks.length == 0 || nid < 0) {
-        notify('No Networks Found, Please Create Network', "alert");
-    } else {
-        let net = networks[nid];
-        switch(edgecase){
-            case 0:
-                let cutoff = view.getInputNumber("edgeCutoff");
-                if(typeof(cutoff) != "number" || cutoff > 1000000 || cutoff <= 0 || isNaN(cutoff)){
-                    notify("Please enter recongized value into 'Edge Cutoff' box", "alert")
-                } else {
-                    net.edgesByCutoff(cutoff);
-                }
-                break;
-            case 1:
-                net.edgesMWCENM();
-                break;
-            case 2:
-                let cutoffe = view.getInputNumber("edgeCutoff");
-                if(typeof(cutoffe) != "number" || cutoffe > 1000000 || cutoffe <= 0 || isNaN(cutoffe)){
-                    notify("Please enter recongized value into 'Edge Cutoff' box", "alert")
-                } else {
-                    net.edgesANMT(cutoffe)
-                }
-                break;
-        }
-    }
 }
 
 function visualizeNetworkWrapper(nid: number) {

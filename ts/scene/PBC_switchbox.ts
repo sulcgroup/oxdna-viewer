@@ -168,6 +168,45 @@ function bringInBox(elems: BasicElement[], boxOption: string, targetBox) {
 }
 
 /**
+ * Grow the global box so that centerAndPBC can center the elements without wrapping any of them, for structures
+ * loaded without a box (PDB, mmCIF). Each side becomes twice the largest distance of an element from the centre of
+ * mass, plus padding on both sides; the box never shrinks.
+ * @param elems The newly loaded elements
+ * @param padding Space left between the outermost element and the box edge (simulation units)
+ */
+function fitBoxAround(elems: BasicElement[], padding = 2.5) {
+    const positions = elems.map(e => e.getPos());
+    const mean = positions.reduce((sum, p) => sum.add(p), new THREE.Vector3()).divideScalar(positions.length);
+    const maxDistance = Math.max(...positions.map(p => {
+        const d = p.clone().sub(mean);
+        return Math.max(Math.abs(d.x), Math.abs(d.y), Math.abs(d.z));
+    }));
+    let side = 2 * (maxDistance + padding);
+
+    // Without a centering goal the elements are not moved before inboxing, so there is no centre to check against
+    if (getCenteringGoal()) {
+        // centerElements uses the periodic centre of mass, which depends on the box and can differ from the mean;
+        // grow the box until every element is within half a box of it
+        const centeringElems = view.centeringElements ?? elems;
+        for (let i = 0; i < 100; i++) {
+            const target = box.clone().max(new THREE.Vector3(side, side, side));
+            const com = calcCOM(centeringElems, target);
+            // calcCOM returns a point inside the box; take its image closest to the elements
+            const offset = com.clone().sub(mean).divide(target);
+            com.sub(new THREE.Vector3(Math.round(offset.x), Math.round(offset.y), Math.round(offset.z)).multiply(target));
+            const fits = positions.every(p => {
+                const d = p.clone().sub(com);
+                return Math.abs(d.x) < target.x / 2 && Math.abs(d.y) < target.y / 2 && Math.abs(d.z) < target.z / 2;
+            });
+            if (fits) break;
+            side *= 1.1;
+        }
+    }
+    box.max(new THREE.Vector3(side, side, side));
+    redrawBox();
+}
+
+/**
  * Center a list of elements around a specified point.
  * @param elems List of elements to center
  * @param origin Optional point to center to, will be read from GUI options if not provided

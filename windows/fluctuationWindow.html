@@ -48,6 +48,17 @@
         <div>
             <label for="temp">Temperature (K)</label><input id="temp" type="text" data-role="input" data-default-value="300" onclick="flux.setTemp(view.getInputNumber('temp'))">
         </div>
+        <div title="ANMT adds bending and torsion terms between neighbouring residues on top of the ANM springs. It is more computationally expensive than plain ANM, but necessary to restrain small peptides.">
+            <div style="display: flex; align-items: center; gap: 6px; white-space: nowrap">
+                <input id="anmtToggle" type="checkbox" data-role="switch"
+                       onchange="document.getElementById('anmtConstants').style.display = this.checked ? 'block' : 'none'">
+                <span>ANMT</span>
+            </div>
+            <div id="anmtConstants" style="display: none">
+                <label for="bendingK">Bending k<sub>b</sub> (sim. units)</label><input id="bendingK" type="text" data-role="input" value="50">
+                <label for="torsionK">Torsion k<sub>t</sub> (sim. units)</label><input id="torsionK" type="text" data-role="input" value="50">
+            </div>
+        </div>
         <button class="button" id="collapse_toggle_3">Available Datasets</button>
         <div class="pos-relative">
             <ul class="items-list" id="datalist" data-role="collapse" data-toggle-element="#collapse_toggle_3"></ul>
