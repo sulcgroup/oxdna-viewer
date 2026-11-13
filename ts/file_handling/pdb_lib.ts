@@ -394,6 +394,37 @@ var nucleosideColors = [
     new THREE.Color(0x4F4600), //W; Olive Brown
 ];
 
+/**
+ * Splits a chain into consecutive runs of residues of one molecule type (protein, DNA or RNA). Residues of
+ * unsupported types stay in the run they are in (or join the first run), and are skipped when the strands are built.
+ * @param chain A chain whose residues have been classified (res.type is 'pro', 'dna', 'rna' or anything else)
+ * @returns One chain per run, with strandtype set; a single chain if the chain has one molecule type, none if it has none
+ */
+function splitChainByMoleculeType(chain: pdbchain): pdbchain[] {
+    const runs: pdbchain[] = [];
+    let unclassified: pdbresidue[] = []; // unsupported residues before the first supported one
+    chain.residues.forEach(res => {
+        const type = res.type;
+        const current = runs[runs.length - 1];
+        if (!['pro', 'dna', 'rna'].includes(type)) {
+            if (current) current.residues.push(res);
+            else unclassified.push(res);
+            return;
+        }
+        if (!current || current.strandtype != type) {
+            const run = new pdbchain();
+            run.chainID = chain.chainID;
+            run.chainIndx = chain.chainIndx;
+            run.strandtype = type;
+            run.residues = unclassified;
+            unclassified = [];
+            runs.push(run);
+        }
+        runs[runs.length - 1].residues.push(res);
+    });
+    return runs;
+}
+
 function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: number) {
     let elems = [];
     let strandtype =[];
@@ -402,17 +433,12 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
     let initlist = pdbinfo.initlist;
     let pdbindices = [];
 
-    let checker = {
-        DNAPresent: false,
-        proteinPresent: false,
-        RNAPresent: false,
-        mutantStrand: false
-    };
+    // Messages for the user, shown as notifications once the structure is loaded (workers can't notify)
+    const warnings: string[] = [];
 
     //Classify Residue Types
     for (let i: number = 0; i < initlist.uniqueIDs.length; i++) {
         let strand: pdbchain = strands[i];
-        for (let key in checker) checker[key] = false;
         strand.residues.forEach(res => {
             res.resType = res.resType.replace(/[0-9]/g, '');
 
@@ -426,7 +452,6 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                     return 1;
                 }
                 res.type = 'dna';
-                checker.DNAPresent = true;
 
             } else if (recongizedProteinResidues.indexOf(res.resType) > -1) {
                 if (res.resType === 'UNK') {
@@ -434,7 +459,6 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                     res.resType = undefined;
                 }
                 res.type = 'pro';
-                checker.proteinPresent = true;
 
             } else if (recongizedRNAResidues.indexOf(res.resType) > -1 || recongizedRNAStrandEnds.indexOf(res.resType) > -1) {
                 if (res.resType === 'N') {
@@ -449,7 +473,6 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                     res.resType = 'U';
                 }
                 res.type = 'rna';
-                checker.RNAPresent = true;
 
             } else {
                 console.log("Residue type: "+res.resType+" Residue Number: "+res.pdbResIdent+ " on chain: " +strand.chainID+" in Provided PDB is Not Supported. " +
@@ -458,27 +481,29 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
             }
         });
 
-        if(checker.DNAPresent && checker.RNAPresent){
-            let restypestmp = strand.residues.map(x=>x.resType);
-            let Upresent = restypestmp.indexOf('U') > -1
-            if(Upresent){
-                checker.DNAPresent = false;
-            } else {
-                checker.RNAPresent = false;
+    }
+
+    // oxDNA gives every strand a single type, so chains holding more than one kind of molecule (DNA/RNA chimeras,
+    // peptide-nucleic acid conjugates) are split into one strand per run of residues of the same type
+    const splitPieces = new Set<pdbchain>();
+    const splitStrands: pdbchain[] = [];
+    const splitIDs: string[] = [];
+    const typeNames = { pro: "protein", dna: "DNA", rna: "RNA" };
+    for (let i = 0; i < initlist.uniqueIDs.length; i++) {
+        const pieces = splitChainByMoleculeType(strands[i]);
+        if (pieces.length > 1) {
+            pieces.forEach(piece => splitPieces.add(piece));
+            const kinds = [...new Set(pieces.map(piece => typeNames[piece.strandtype]))].join(" and ");
+            warnings.push(`Chain ${strands[i].chainID} contains ${kinds}. oxDNA strands have a single type, so it was split into ${pieces.length} strands.`);
+            if (initlist.repeatIDs.some(rid => strands[i].chainID.includes(rid))) {
+                warnings.push(`The repeated copies of chain ${strands[i].chainID} were not built, because the chain was split.`);
             }
         }
-
-        checker.mutantStrand = checker.proteinPresent ? (checker.DNAPresent || checker.RNAPresent) : (checker.DNAPresent && checker.RNAPresent);
-
-        if (checker.mutantStrand) {
-            console.log("Strand " + strand.chainID + " contains more thank one macromolecule type, no thanks");
-            strand.strandtype = 'bastard';
-        } else {
-            if (checker.proteinPresent) strand.strandtype = 'pro';
-            if (checker.DNAPresent) strand.strandtype = 'dna';
-            if (checker.RNAPresent) strand.strandtype = 'rna';
-        }
+        pieces.forEach(piece => { splitStrands.push(piece); splitIDs.push(initlist.uniqueIDs[i]); });
     }
+    strands = splitStrands;
+    pdbinfo.pdbsysinfo = splitStrands;
+    initlist.uniqueIDs = splitIDs;
 
     // Amino acids are placed on their C-alpha, oriented by aminoAcidFrames
     const CalcInfoAA = (res: pdbresidue, frame: { ca: THREE.Vector3, a1: THREE.Vector3, a3: THREE.Vector3 }): [string, string, number[], number[], number[], number] => {
@@ -651,7 +676,7 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                 currentStrand.updateEnds();
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
-                    if (nstrand.chainID.includes(rid)) {
+                    if (nstrand.chainID.includes(rid) && !splitPieces.has(nstrand)) {
                         let repeatStrand: Peptide = sys.addNewPeptideStrand();
                         strandtype.push("pro");
                         currentStrand.getMonomers().forEach((mon, mid) => {
@@ -724,7 +749,7 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
                 currentStrand.updateEnds();
                 initlist.repeatIDs.forEach((rid, indx) => {
                     let repeatInfo = [];
-                    if(nstrand.chainID.includes(rid)){
+                    if (nstrand.chainID.includes(rid) && !splitPieces.has(nstrand)) {
                         let repeatStrand: NucleicAcidStrand = sys.addNewNucleicAcidStrand(currentStrand.kwdata['type']);
                         strandtype.push(tmptype);
                         currentStrand.getMonomers(true).forEach((mon, mid) => {
@@ -766,5 +791,5 @@ function addPDBToScene (pdbinfo: pdbinfowrapper, pindx: number, elementIndx: num
     com.divideScalar(sys.systemLength());
 
     return [strandInit, strandtype, com, [label, bFactors, xdata, "bfactor", "A_sqr"],
-        pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds]];
+        pdbindices, [pdbinfo.pdbfilename, pdbinfo.pdbsysinfo, pdbinfo.initlist, pdbinfo.disulphideBonds], warnings];
 }

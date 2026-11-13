@@ -722,6 +722,8 @@ function readPdbFile(file) {
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
                     let pdbindices = pdbtemp[4];
+                    const loadWarnings = pdbtemp[6];
+                    loadWarnings.forEach(w => notify(w, "warning"));
                     // let pdbinfo = pdbtemp[5]
                     let id = startID;
                     view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
@@ -845,6 +847,8 @@ function readMmcifFile(file) {
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
                     let pdbindices = pdbtemp[4];
+                    const loadWarnings = pdbtemp[6];
+                    loadWarnings.forEach(w => notify(w, "warning"));
                     let id = startID;
                     view.setInputBool("topFormat", true); // PDB/MMCIF strands are 5'→3', match output format
                     // store PDB data

@@ -837,6 +837,8 @@ function readPdbFile(file) {
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
                     let pdbindices = pdbtemp[4];
+                    const loadWarnings: string[] = pdbtemp[6];
+                    loadWarnings.forEach(w => notify(w, "warning"));
                     // let pdbinfo = pdbtemp[5]
 
                     
@@ -978,6 +980,8 @@ function readMmcifFile(file) {
                     let com = pdbtemp[2];
                     let gd = pdbtemp[3];
                     let pdbindices = pdbtemp[4];
+                    const loadWarnings: string[] = pdbtemp[6];
+                    loadWarnings.forEach(w => notify(w, "warning"));
 
                     let id = startID;
 
