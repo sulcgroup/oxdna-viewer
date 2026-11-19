@@ -14,15 +14,20 @@ class AminoAcid extends BasicElement {
     };
 
     /**
-     * Set a1/a3, falling back to (1,0,0)/(0,1,0) if either vector is missing, zero or not finite.
+     * Set a1/a3, orthonormalised the way oxDNA does when it reads a configuration (a3 normalised, a1 made
+     * perpendicular to it), so that ANMT angular parameters computed here match the simulation.
+     * Falls back to (1,0,0)/(0,1,0) if either vector is missing, zero or not finite, or they are parallel.
      * Most sources (PDB, UNF, oxView files without orientations) don't give amino acids an orientation,
      * and oxDNA can't handle zero orientation vectors in a configuration file.
      */
     private setOrientation(a1?: THREE.Vector3, a3?: THREE.Vector3) {
         const isValid = (v?: THREE.Vector3) => v !== undefined && isFinite(v.lengthSq()) && v.lengthSq() > 1e-12;
-        if (isValid(a1) && isValid(a3)) {
-            this.a1 = a1.clone();
-            this.a3 = a3.clone();
+        const unitA3 = isValid(a3) ? a3.clone().normalize() : undefined;
+        const unitA1 = isValid(a1) && unitA3 ? a1.clone().normalize() : undefined;
+        if (unitA1) unitA1.addScaledVector(unitA3, -unitA1.dot(unitA3));
+        if (isValid(unitA1)) {
+            this.a1 = unitA1.normalize();
+            this.a3 = unitA3;
         } else {
             this.a1 = new THREE.Vector3(1, 0, 0);
             this.a3 = new THREE.Vector3(0, 1, 0);

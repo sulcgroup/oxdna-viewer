@@ -198,59 +198,6 @@ function pdb_step1(pdbLines) {
     let na = new pdbatom();
     let nr = new pdbresidue();
     let nc = new pdbchain();
-    // helper functions for calculating a1 vector of nucleotide
-    function contains(target, pattern) {
-        var value = 0;
-        pattern.forEach(function (word) {
-            value = value + target.includes(word);
-        });
-        return (value === 1);
-    }
-    // calculates a1 vector from nucleotide of Amino acid
-    let calcA1FromRes = function (firstresidueunique) {
-        if (recongizedProteinResidues.indexOf(firstresidueunique.resType) > -1) {
-            let scHAcom = new THREE.Vector3; //side chain Heavy atoms Center of Mass
-            firstresidueunique.atoms.forEach(a => {
-                if (['N', 'C', 'O', 'H', 'CA'].indexOf(a.atomType) == -1) {
-                    scHAcom.x += a.x;
-                    scHAcom.y += a.y;
-                    scHAcom.z += a.z;
-                }
-            });
-            // if null vector (glycine) a1 is 1, 0, 0
-            if (scHAcom.lengthSq() == 0)
-                scHAcom.x = 1;
-            scHAcom.normalize();
-            let CA = firstresidueunique.atoms.filter(a => a.atomType == 'CA')[0];
-            if (CA) {
-                let CApos = new THREE.Vector3(CA.x, CA.y, CA.z);
-                return scHAcom.clone().sub(CApos).normalize(); // this is the a1 vector
-            }
-            else {
-                console.log("No CA coordinate found in Repeat Chain");
-                return new THREE.Vector3(1, 0, 0);
-            }
-        }
-        else {
-            let pairs;
-            // Compute a1 Vector
-            if (contains(firstresidueunique.resType, ["C", "T", "U"])) {
-                pairs = [["N3", "C6"], ["C2", "N1"], ["C4", "C5"]];
-            }
-            else {
-                pairs = [["N1", "C4"], ["C2", "N3"], ["C6", "C5"]];
-            }
-            let a1 = new THREE.Vector3(0, 0, 0);
-            for (let i = 0; i < pairs.length; i++) {
-                let p_atom = firstresidueunique.atoms.filter(a => a.atomType == pairs[i][0])[0];
-                let q_atom = firstresidueunique.atoms.filter(a => a.atomType == pairs[i][1])[0];
-                let diff = new THREE.Vector3(p_atom.x - q_atom.x, p_atom.y - q_atom.y, p_atom.z - q_atom.z);
-                a1.add(diff);
-            }
-            a1.normalize();
-            return a1;
-        }
-    };
     let chainindx = 0;
     let loadpdbsection = function (start, end) {
         pdbpositions = [];
@@ -402,72 +349,19 @@ function pdb_step1(pdbLines) {
         // info
         return [Amino, pdbpositions, atoms, residues, chains];
     };
-    let getpdbpositions = function (start, end, Amino) {
-        // reads in pdb text and returns the positions b/t start and end linenumbers and the first residues a1 vector
-        let pdbpositions = [];
-        let atoms = [];
-        let firstres = true;
-        let prevResId;
-        let a1;
+    // positions of the atoms used to align a repeated chain to its unique chain (CA for proteins, N1 for nucleic acids)
+    const getpdbpositions = function (start, end, Amino) {
+        const pdbpositions = [];
         for (let j = start; j < end; j++) {
-            if (pdbLines[j].substr(0, 4) === 'ATOM') {
-                if (firstres) {
-                    let pdbLine = pdbLines[j];
-                    na.atomType = pdbLine.substring(12, 16).trim();
-                    na.resType = pdbLine.substring(17, 20).trim();
-                    let tmp = pdbLine.substring(23, 29); // Usually the residue number
-                    //check for insertion code
-                    na.iCode = "";
-                    if (isNaN(parseInt(tmp[5]))) {
-                        na.iCode = tmp[5];
-                        na.pdbResIdent = tmp.slice(0, 5).trim();
-                    }
-                    else {
-                        na.pdbResIdent = tmp.trim();
-                    }
-                    // Convert From Angstroms to Simulation Units while we're at it
-                    na.x = parseFloat(pdbLine.substring(30, 38)) / 8.518;
-                    na.y = parseFloat(pdbLine.substring(38, 46)) / 8.518;
-                    na.z = parseFloat(pdbLine.substring(46, 54)) / 8.518;
-                    // residue type has to be correct
-                    if (atoms.length == 0)
-                        prevResId = na.pdbResIdent;
-                    //checks if last read atom belongs to a different Residue than the one before it
-                    if (prevResId != na.pdbResIdent) { // will trigger after first residue is read
-                        nr.resType = atoms[0].resType;
-                        nr.pdbResIdent = atoms[0].pdbResIdent;
-                        nr.atoms = atoms;
-                        let nrc = {
-                            ...nr
-                        };
-                        a1 = calcA1FromRes(nrc);
-                        firstres = false;
-                    }
-                    else {
-                        // copy is necessary
-                        let nac = {
-                            ...na
-                        };
-                        atoms.push(nac);
-                    }
-                }
-                // Align via N1 positions for DNA & CA for proteins
-                if (!Amino && pdbLines[j].substring(12, 16).trim() == "N1") {
-                    let x = parseFloat(pdbLines[j].substring(30, 38)) / 8.518;
-                    let y = parseFloat(pdbLines[j].substring(38, 46)) / 8.518;
-                    let z = parseFloat(pdbLines[j].substring(46, 54)) / 8.518;
-                    pdbpositions.push(new THREE.Vector3(x, y, z));
-                }
-                else if (Amino && pdbLines[j].substring(12, 16).trim() == "CA") {
-                    let x = parseFloat(pdbLines[j].substring(30, 38)) / 8.518;
-                    let y = parseFloat(pdbLines[j].substring(38, 46)) / 8.518;
-                    let z = parseFloat(pdbLines[j].substring(46, 54)) / 8.518;
-                    pdbpositions.push(new THREE.Vector3(x, y, z));
-                }
+            if (pdbLines[j].substr(0, 4) !== 'ATOM')
+                continue;
+            const atomType = pdbLines[j].substring(12, 16).trim();
+            if ((Amino && atomType == "CA") || (!Amino && atomType == "N1")) {
+                // Convert From Angstroms to Simulation Units
+                pdbpositions.push(new THREE.Vector3(parseFloat(pdbLines[j].substring(30, 38)) / 8.518, parseFloat(pdbLines[j].substring(38, 46)) / 8.518, parseFloat(pdbLines[j].substring(46, 54)) / 8.518));
             }
         }
-        // nr.atoms = this.atoms; //fill atoms array
-        return [pdbpositions, a1];
+        return pdbpositions;
     };
     // load all Unique Chains
     initList.uniqueIDs.forEach((id, indx) => {
@@ -478,30 +372,14 @@ function pdb_step1(pdbLines) {
         // deal with repeats of each individual unique chain
         initList.repeatIDs.forEach((rid, rindx) => {
             if (id.includes(rid)) { //Makes sure Chain IDs contain original chain identifier
-                let alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0]); // [0] -> pdb positions [1] -> a1 vector of first residue
-                let firstresidueunique = uniqresidues[0];
-                firstresidueunique.atoms = uniqatoms.filter(atom => atom.chainIndx == firstresidueunique.chainIndx && atom.pdbResIdent == firstresidueunique.pdbResIdent);
-                let uniqa1 = calcA1FromRes(firstresidueunique);
-                let repeata1 = alignME[1];
-                if (alignME[0].length != alignTO[1].length)
-                    console.log("PDB Error: Master chain and repeat chain have unequal lengths: " + alignME[0].length.toString() + " " + alignTO[1].length.toString());
-                // currently the rotation doesn't work as desired, but is not necessary at this stage
-                // b/c protein a1 and a3 are arbitrary (for now), and dna repeat strands don't seem to exist in wild pdbs
-                // let alignMEcoord = alignME[0].map(x => {return x.clone()}); //copy our arrays
-                let newcoords = alignME[0].map(x => { return x.clone(); }); //copy our arrays
-                // let alignTOcoord = alignTO[1].map(x => {return x.clone()});//copy our arrays
-                // let uniqueCOM = alignTO[1].reduce((a,b) => a.add(b)).divideScalar(alignTO[1].length);
-                // let repeatCOM = alignME.reduce((a,b) => a.add(b)).divideScalar(alignME.length);
-                //
-                // let aME = alignMEcoord[0].clone().sub(repeatCOM).normalize();
-                // let aTO = alignTOcoord[0].clone().sub(uniqueCOM).normalize();
-                // console.log(aME.x.toString() + " " + aME.y.toString() + " " + aME.z.toString());
-                // console.log(aTO.x.toString() + " " + aTO.y.toString() + " " + aTO.z.toString());
-                //Calc quaternion rotation between vectors
-                // let rotQuat = new THREE.Quaternion().setFromUnitVectors(uniqa1, repeata1);
-                let rotQuat = new THREE.Quaternion().setFromUnitVectors(repeata1, uniqa1);
-                // let rotQuat = new THREE.Quaternion().setFromUnitVectors(aME, aTO);
-                // let newcoords = alignMEcoord;
+                const alignME = getpdbpositions(initList.repeatStart[rindx], initList.repeatEnd[rindx], alignTO[0]);
+                if (alignME.length != alignTO[1].length)
+                    console.log("PDB Error: Master chain and repeat chain have unequal lengths: " + alignME.length.toString() + " " + alignTO[1].length.toString());
+                const newcoords = alignME.map(x => { return x.clone(); }); //copy our arrays
+                // The repeat is a rigid copy of the unique chain: orient its a1/a3 by the rotation that superimposes
+                // the unique chain's alignment atoms (CA or N1) onto the repeat's
+                const rotQuat = alignME.length == alignTO[1].length && alignME.length >= 3 ?
+                    superpositionRotation(alignTO[1], alignME) : new THREE.Quaternion();
                 initList.repeatCoords[rindx] = newcoords;
                 initList.repeatQuatRots[rindx] = rotQuat;
             }

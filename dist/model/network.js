@@ -8,7 +8,7 @@ class Edges {
     types;
     eqDist;
     total; // number of edges
-    extraParams;
+    extraParams; // ANMT backbone edges: [a0, b0, c0, d0] or [a0, b0, c0, d0, kb, kt]
     constructor() {
         this.total = 0;
         this.p1 = [];
@@ -109,6 +109,24 @@ class Edges {
         this.total = 0;
     }
     ;
+}
+const DEFAULT_BENDING_K = 50; // oxDNA bending_k for ANMT, simulation units
+const DEFAULT_TORSION_K = 50; // oxDNA torsion_k for ANMT, simulation units
+/**
+ * True if a and b are neighbours on the same strand. In ANMT these pairs carry bending and torsion terms.
+ */
+function isBackbonePair(a, b) {
+    return a.n3 === b || a.n5 === b;
+}
+/**
+ * Equilibrium cosines [a0, b0, c0, d0] of the ANMT bending/torsion terms between p and q at the current
+ * structure, as oxDNA defines them (DNANMInteraction::_protein_ang_pot), with r̂ pointing from p to q:
+ * a0 = r̂·a1_p, b0 = -r̂·a1_q, c0 = a1_p·a1_q, d0 = a3_p·a3_q
+ */
+function angularCosines(p, q) {
+    const u = q.getPos().clone().sub(p.getPos()).normalize();
+    const clamp = (x) => Math.max(-1, Math.min(1, x));
+    return [u.dot(p.getA1()), -u.dot(q.getA1()), p.getA1().dot(q.getA1()), p.getA3().dot(q.getA3())].map(clamp);
 }
 class Network {
     nid; // network id number as these are stored separate to actual systems
@@ -427,10 +445,17 @@ class Network {
     // Functions above are meant to be more universal
     // Functions below are specific to generating each network, I call these in specific network wrappers in editing.ts
     edgesByCutoff(cutoffValueAngstroms) {
+        this.fillCutoffEdges(cutoffValueAngstroms);
+        this.networktype = "ANM";
+        this.finishEdges();
+    }
+    ;
+    fillCutoffEdges(cutoffValueAngstroms) {
         this.cutoff = cutoffValueAngstroms;
         this.reducedEdges.clearAll();
         this.clearConnections();
         this.selectNetwork();
+        this.refreshCoords();
         //let elems: BasicElement[] = Array.from(selectedBases);
         // go through coordinates and assign connections if 2 particles
         // are less than the cutoff value apart
@@ -445,8 +470,12 @@ class Network {
                 }
             }
         }
-        // network is ready for solving and visualization
-        this.networktype = "ANM";
+    }
+    ;
+    /**
+     * Network is ready for solving and visualization
+     */
+    finishEdges() {
         if (this.reducedEdges.total != 0) {
             this.initInstances(this.reducedEdges.total);
             this.fillConnections();
@@ -456,19 +485,88 @@ class Network {
         }
     }
     ;
-    edgesMWCENM() {
+    /**
+     * True if the network has ANMT bending/torsion parameters.
+     */
+    isTorsional() {
+        return this.reducedEdges.extraParams.some(x => x.length >= 4);
+    }
+    ;
+    /**
+     * Give every edge between backbone neighbours ANMT parameters: the equilibrium cosines (kept if the edge
+     * already has them, e.g. from a .par file) and the bending and torsion constants. Other edges get none.
+     */
+    setTorsion(kb, kt) {
+        const e = this.reducedEdges;
+        for (let i = 0; i < e.total; i++) {
+            const p = this.particles[e.p1[i]], q = this.particles[e.p2[i]];
+            if (isBackbonePair(p, q)) {
+                const cosines = e.extraParams[i].length >= 4 ? e.extraParams[i].slice(0, 4) : angularCosines(p, q);
+                e.extraParams[i] = cosines.concat([kb, kt]);
+            }
+            else {
+                e.extraParams[i] = [];
+            }
+        }
+        if (this.networktype == "ANM")
+            this.networktype = "ANMT";
+    }
+    ;
+    /**
+     * Remove all ANMT bending/torsion parameters, leaving a plain spring network.
+     */
+    clearTorsion() {
+        this.reducedEdges.extraParams = this.reducedEdges.extraParams.map(() => []);
+        if (this.networktype == "ANMT")
+            this.networktype = "ANM";
+    }
+    ;
+    /**
+     * The network in the form the fluctuation solver (anm_worker) takes.
+     * @param torsion bending and torsion constants for ANMT, or null for a plain ANM
+     */
+    fluctuationRequest(temperature, target, torsion) {
+        this.refreshCoords();
+        const e = this.reducedEdges;
+        const coords = [];
+        this.particles.forEach(p => coords.push(...p.getPos().toArray()));
+        let angular = null;
+        if (torsion) {
+            const pairs = e.p1.map((p, i) => [p, e.p2[i]]).filter(([p, q]) => isBackbonePair(this.particles[p], this.particles[q]));
+            const a1 = [], a3 = [];
+            this.particles.forEach(p => { a1.push(...p.getA1().toArray()); a3.push(...p.getA3().toArray()); });
+            angular = {
+                p: pairs.map(x => x[0]), q: pairs.map(x => x[1]), a1, a3,
+                kb: pairs.map(() => torsion.kb), kt: pairs.map(() => torsion.kt),
+            };
+        }
+        return { coords, p1: e.p1.slice(), p2: e.p2.slice(), ks: e.ks.slice(), angular, temperature, target };
+    }
+    ;
+    /*
+     * MWCENM (mixed, weighted coarse-grained elastic network model) was never completed, so it has been
+     * removed from the UI. Known problems if anyone picks it up again:
+     * - it only works on proteins loaded from a PDB, and the check for that never triggers (pdbindices is
+     *   undefined rather than throwing), so other proteins crash it
+     * - hydrogen bonds need a Chimera FindHBond .hb file; without one hydrogenBonds is undefined and it throws
+     * - salt bridges compare PDB atom distances in Å with 4/8.518 (sim units), so they never form
+     * - non-polar contacts use Cα–Cα < 4 Å because the side-chain atom check is commented out, so they
+     *   almost never form
+     * - it calls notify() for every bond it adds
+     */
+    /*
+    edgesMWCENM(){
         this.reducedEdges.clearAll();
         this.clearConnections();
         this.selectNetwork();
         let pdbindices;
-        try {
-            pdbindices = this.particles.map(e => { return e.pdbindices; });
-        }
-        catch (e) {
+        try{
+            pdbindices = this.particles.map(e => {return (e as AminoAcid).pdbindices});
+        } catch (e) {
             notify("PDB Info could not be found. Make sure only AminoAcids are selected and they have been loaded from a PDB file.");
             return;
         }
-        let uniqdatasets = new Set(pdbindices.map((a) => { return a[0]; }));
+        let uniqdatasets = new Set<number>(pdbindices.map((a) => {return a[0]}));
         // let uniqstrands = new Set<Strand>(this.particles.map(x => {return x.strand}));
         // let uniqchains = new Set<any>(pdbindices.map((a) => {return a[1]}));
         this.addBackboneConnections(100);
@@ -476,22 +574,17 @@ class Network {
         this.addDisulphideBonds(uniqdatasets, pdbindices);
         this.addNonpolarBonds();
         this.addSaltBridges(7);
+
         // network is ready for solving and visualization
         this.networktype = "MWCENM";
-        if (this.reducedEdges.total != 0) {
-            // this.reducedEdges.ks = this.reducedEdges.ks.map(x => 10*x) // mwcenm isn't super great
-            this.initInstances(this.reducedEdges.total);
-            this.fillConnections();
-            this.initEdges();
-            this.prepVis();
-            this.sendtoUI();
-        }
+        this.finishEdges();
     }
     ;
-    addHydrogenBonds(uniqdatasets, pdbindices) {
+    addHydrogenBonds(uniqdatasets, pdbindices){
         [...uniqdatasets].forEach(ud => {
             let hbonds = pdbFileInfo[ud].hydrogenBonds;
             // let chains = pdbFileInfo[ud].pdbsysinfo;
+
             let p1, p2; // will be refences to corresponding particles
             let p1found, p2found; // bools
             let hbondk = 100; // strength of h bond
@@ -507,24 +600,26 @@ class Network {
                         p2 = this.particles[pindx];
                         p2found = true;
                     }
-                });
+                })
                 if (p1found && p2found) {
                     let p1indx = this.particles.indexOf(p1);
                     let p2indx = this.particles.indexOf(p2);
                     notify("hbond " + p1indx.toString() + " " + p2indx.toString());
                     this.reducedEdges.addEdge(p1indx, p2indx, this.elemcoords.distance(p1indx, p2indx), 's', hbondk);
-                }
-                else {
+                } else {
                     notify("Hydrogen Bond could not be parsed from pdb info " + hid.toString());
                     return;
                 }
-            });
-        });
+
+            })
+        })
     }
     ;
-    addNonpolarBonds() {
+    addNonpolarBonds(){
         let nonpolark = 1.0;
+
         let np = 12;
+
         // checks for atoms within 4 residues of one another on two amino acids
         // let nonpolarcheck = function(res1, res2){ // looks for pairs of atoms from different residues within 4 Angstroms
         //
@@ -552,12 +647,12 @@ class Network {
         //
         //     return makenonbonded;
         // }
-        for (let i = 0; i < this.particles.length; i++) {
-            for (let j = 0; j < this.particles.length; j++) {
-                if (i >= j)
-                    continue;
-                if (this.elemcoords.distance(i, j) < 4 / 8.518) { // 4 A is the cutoff used in the original MWCENM paper
-                    if (this.particles[i].n3 != this.particles[j] && this.particles[i].n5 != this.particles[j]) {
+
+        for(let i =0; i<this.particles.length; i++){
+            for(let j=0; j<this.particles.length; j++){
+                if(i>=j) continue;
+                if(this.elemcoords.distance(i,j) < 4/8.518){ // 4 A is the cutoff used in the original MWCENM paper
+                    if(this.particles[i].n3 != this.particles[j] && this.particles[i].n5 != this.particles[j]) {
                         notify("nonpolar Bond " + i.toString() + " " + j.toString());
                         this.reducedEdges.addEdge(i, j, this.elemcoords.distance(i, j), 's', nonpolark);
                     }
@@ -566,73 +661,74 @@ class Network {
         }
     }
     ;
-    addSaltBridges(pH = 7) {
+    addSaltBridges(pH=7){ // Assuming pH 7 though other options may later be added
         let saltbridgek = 10;
         let catres;
         let anres;
         let catatoms;
         let anatoms;
-        if (pH == 7) {
+        if(pH == 7){
             catres = ["D", "E"]; // aspartic acid and glutamic acid
-            catatoms = { "D": ["OD1", "OD2"], "E": ["OE1", "AE1", "OE2", "AE2"] }; // Which atoms might hold the charge
+            catatoms = {"D":["OD1", "OD2"], "E": ["OE1", "AE1", "OE2", "AE2"]}; // Which atoms might hold the charge
             anres = ["K", "H", "R"]; // Lysine, histidine and Arginine
-            anatoms = { "H": ["ND1", "AD1"], "K": ["NZ"], "R": ["NH1", "NH2"] }; // Which atoms might hold the charge
-        }
-        else {
+            anatoms = {"H":["ND1", "AD1"], "K":["NZ"], "R":["NH1", "NH2"]}; // Which atoms might hold the charge
+        } else {
             notify("No pH besides 7 currently supported");
         }
-        let posresidues = this.particles.filter(x => { if (catres.indexOf(x.type) != -1)
-            return true; }); // all particles in network that are positive
-        let negresidues = this.particles.filter(x => { if (anres.indexOf(x.type) != -1)
-            return true; }); // all particles in network that are negative
-        let saltbridgecheck = function (posres, negres) {
-            let pi = posres.pdbindices; // location of pdb information
-            let pospdbres = pdbFileInfo[pi[0]].pdbsysinfo.filter(chns => { if (chns.chainID == pi[1])
-                return true; })[0].residues.filter(res => { if (parseInt(res.pdbResIdent) == pi[2]) {
-                return true;
-            } })[0];
-            let posatoms = pospdbres.atoms.filter(atom => { if (catatoms[posres.type].indexOf(atom.atomType) != -1)
-                return true; });
-            let ni = negres.pdbindices; // location of pdb information
-            let negpdbres = pdbFileInfo[ni[0]].pdbsysinfo.filter(chns => { if (chns.chainID == ni[1])
-                return true; })[0].residues.filter(res => { if (parseInt(res.pdbResIdent) == ni[2]) {
-                return true;
-            } })[0];
-            let negatoms = negpdbres.atoms.filter(atom => { if (anatoms[negres.type].indexOf(atom.atomType) != -1)
-                return true; });
-            let pdbdist = function (atom1, atom2) {
-                return Math.sqrt(Math.pow(atom1.x - atom2.x, 2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2));
-            };
-            let makesaltbridge = false;
+
+        let posresidues = this.particles.filter(x => {if(catres.indexOf(x.type) != -1) return true}); // all particles in network that are positive
+        let negresidues = this.particles.filter(x => {if(anres.indexOf(x.type) != -1) return true});  // all particles in network that are negative
+
+
+        let saltbridgecheck = function(posres, negres){
+
+            let pi = (posres as AminoAcid).pdbindices; // location of pdb information
+            let pospdbres = pdbFileInfo[pi[0]].pdbsysinfo.filter(chns => {if(chns.chainID == pi[1]) return true;})[0].residues.filter(res => {if (parseInt(res.pdbResIdent) == pi[2]){ return true;} })[0];
+            let posatoms = pospdbres.atoms.filter(atom => {if(catatoms[posres.type].indexOf(atom.atomType) != -1) return true;});
+
+            let ni = (negres as AminoAcid).pdbindices; // location of pdb information
+            let negpdbres = pdbFileInfo[ni[0]].pdbsysinfo.filter(chns => {if(chns.chainID == ni[1]) return true;})[0].residues.filter(res => {if (parseInt(res.pdbResIdent) == ni[2]){ return true;} })[0];
+            let negatoms = negpdbres.atoms.filter(atom => {if(anatoms[negres.type].indexOf(atom.atomType) != -1) return true;});
+
+            let pdbdist = function(atom1, atom2){
+                return Math.sqrt(Math.pow(atom1.x - atom2.x,2) + Math.pow(atom1.y - atom2.y, 2) + Math.pow(atom1.z - atom2.z, 2))
+            }
+
+            let makesaltbridge=false;
             posatoms.forEach(pa => {
                 negatoms.forEach(na => {
-                    if (pdbdist(pa, na) < 4 / 8.518) { // 4 A is the cutoff used in the original MWCENM paper
-                        makesaltbridge = true;
+                    if(pdbdist(pa, na) < 4/8.518){ // 4 A is the cutoff used in the original MWCENM paper
+                        makesaltbridge=true;
                     }
-                });
-            });
+                })
+            })
+
             return makesaltbridge;
-        };
+        }
+
         // Checks all combinations of paired residues for
         posresidues.forEach(pr => {
             negresidues.forEach(nr => {
-                if (saltbridgecheck(pr, nr)) {
+                if(saltbridgecheck(pr, nr)){
                     let pindx = this.particles.indexOf(pr);
                     let nindx = this.particles.indexOf(nr);
                     notify("salt b " + pindx.toString() + pr.type + " " + nindx.toString() + nr.type);
-                    this.reducedEdges.addEdge(pindx, nindx, this.elemcoords.distance(pindx, nindx), 's', saltbridgek);
+                    this.reducedEdges.addEdge(pindx, nindx, this.elemcoords.distance(pindx, nindx), 's',  saltbridgek);
                 }
-            });
-        });
+            })
+        })
+
     }
     ;
     addDisulphideBonds(uniqdatasets, pdbindices) {
         [...uniqdatasets].forEach(ud => {
             let dsbonds = pdbFileInfo[ud].disulphideBonds;
+
             let p1, p2;
             let p1found, p2found;
             let k = 100; // strength of disulfide bond
-            if (dsbonds.length != 0) {
+
+            if(dsbonds.length != 0) {
                 dsbonds.forEach((db) => {
                     p1found = false;
                     p2found = false;
@@ -640,37 +736,37 @@ class Network {
                         if (pi[0] == ud && pi[1] == db[0] && pi[2] == db[1]) {
                             p1 = this.particles[pindx];
                             p1found = true;
-                        }
-                        else if (pi[0] == ud && pi[1] == db[2] && pi[2] == db[3]) {
+                        } else if (pi[0] == ud && pi[1] == db[2] && pi[2] == db[3]) {
                             p2 = this.particles[pindx];
                             p2found = true;
                         }
-                    });
+                    })
                     if (p1found && p2found) {
                         let p1indx = this.particles.indexOf(p1); // edges filled by particles position in the particles array of network
                         let p2indx = this.particles.indexOf(p2);
                         this.reducedEdges.addEdge(p1indx, p2indx, this.elemcoords.distance(p1indx, p2indx), 's', k);
-                    }
-                    else {
+                    } else {
                         notify("Disulphide Bond could not be parsed from pdb info");
                         return;
                     }
-                });
+
+                })
             }
-        });
+        })
     }
     ;
-    addBackboneConnections(kb) {
+    addBackboneConnections(kb: number) {
         // adds every particles n3 connection if n3 is in the particles array
         let covalentk = kb;
-        for (let i = 0; i < this.particles.length; i++) {
+
+        for(let i =0; i<this.particles.length; i++) {
             let p = this.particles[i];
             if (p.n3 != null) {
                 let qind = this.particles.indexOf(p.n3);
                 if (qind != -1) {
                     notify("backbone Bond " + i.toString() + " " + qind.toString());
                     let dis = this.elemcoords.distance(i, qind);
-                    if (dis < 1) { // removes any obviously incorrect backbone bonds
+                    if(dis < 1){ // removes any obviously incorrect backbone bonds
                         this.reducedEdges.addEdge(qind, i, this.elemcoords.distance(i, qind), 's', covalentk);
                     }
                 }
@@ -678,44 +774,7 @@ class Network {
         }
     }
     ;
-    edgesANMT(cutoffValueAngstroms) {
-        this.cutoff = cutoffValueAngstroms;
-        this.reducedEdges.clearAll();
-        this.clearConnections();
-        this.selectNetwork();
-        //let elems: BasicElement[] = Array.from(selectedBases);
-        // go through coordinates and assign connections if 2 particles
-        // are less than the cutoff value apart
-        let simCutoffValue = cutoffValueAngstroms / 8.518; //sim unit conversion
-        let a1s = this.particles.map(m => m.a1);
-        let a3s = this.particles.map(m => m.a3);
-        let angkb = 1.3;
-        let angkt = 1.4;
-        for (let i = 0; i < this.elemcoords.xI.length; i++) {
-            for (let j = 1; j < this.elemcoords.xI.length; j++) {
-                if (i >= j)
-                    continue;
-                let dij = this.elemcoords.distance(i, j);
-                if (j - i === 1 && dij <= simCutoffValue) {
-                    let rij = this.elemcoords.diff(i, j);
-                    this.reducedEdges.addEdge(i, j, dij, 's', 1, [rij.dot(a1s[i]), rij.multiplyScalar(-1.).dot(a1s[j]), a1s[i].dot(a1s[j]), a3s[i].dot(a3s[j]), angkb, angkt]);
-                }
-                else if (dij <= simCutoffValue) {
-                    this.reducedEdges.addEdge(i, j, dij, 's', 1);
-                }
-            }
-        }
-        // network is ready for solving and visualization
-        this.networktype = "ANMT";
-        if (this.reducedEdges.total != 0) {
-            this.initInstances(this.reducedEdges.total);
-            this.fillConnections();
-            this.initEdges();
-            this.prepVis();
-            this.sendtoUI();
-        }
-    }
-    ;
+    */
     generateHessian() {
         // let hessian : number[][] = [];
         if (this.reducedEdges.total == 0) {
