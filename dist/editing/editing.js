@@ -279,13 +279,13 @@ function getSelectedSeqWrapper() {
     }
 }
 let complement_dict = {
-    "A": "T", "T": "A",
+    "A": "T", "T": "A", "U": "A",
     "C": "G", "G": "C",
     "R": "Y", "Y": "R",
     "S": "S",
     "W": "W",
     "N": "N"
-    // What to do about H, B, V and D? Also U?
+    // What to do about H, B, V and D? Also U on output?
 };
 function rc(seq) {
     let ret = [];
