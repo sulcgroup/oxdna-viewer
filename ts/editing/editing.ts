@@ -128,6 +128,14 @@ function extendWrapper(double: boolean) {
         notify("Please type a sequence into the box", "alert");
         return;
     }
+    if (e.isNucleotide()) {
+        try {
+            edit.validateSequence(seq, e.isRNA());
+        } catch (err) {
+            notify((<Error>err).message, "alert");
+            return;
+        }
+    }
     //let elems = extendDuplex ? edit.extendDuplex(<Nucleotide>e, seq) : edit.extendStrand(e, seq);
     let elems = [];
     if(extendDuplex){
@@ -159,10 +167,22 @@ function extendWrapper(double: boolean) {
 function createWrapper() {
     let seq: string = view.getInputValue("sequence").toUpperCase();
     let createDuplex = view.getInputBool("setCompl");
-    let type: string = view.getInputValue("NA_toggle");
-    let isRNA:boolean = type === 'RNA' ? true : false;
+    const toggle = view.getInputElement("NA_toggle");
     if (seq == "") {
         notify("Please type a sequence into the box", "alert");
+        return;
+    }
+    // A U can only be RNA and a T can only be DNA, so switch the toggle to match.
+    // If both are present, leave the toggle alone and let validation report it.
+    const hasU = seq.includes('U');
+    const hasT = seq.includes('T');
+    if (hasU && !hasT) toggle.value = 'RNA';
+    else if (hasT && !hasU) toggle.value = 'DNA';
+    const isRNA: boolean = toggle.value === 'RNA';
+    try {
+        edit.validateSequence(seq, isRNA);
+    } catch (err) {
+        notify((<Error>err).message, "alert");
         return;
     }
     let elems = edit.createStrand(seq, createDuplex, isRNA);

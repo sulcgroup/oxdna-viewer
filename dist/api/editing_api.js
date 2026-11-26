@@ -132,7 +132,22 @@ var edit;
         render();
     }
     edit.nick = nick;
+    /**
+     * Whether two strands can be joined into one. oxDNA gives every strand a single type, so DNA, RNA and protein
+     * strands can't be ligated to each other. Notifies the user if they can't.
+     */
+    function canLigate(a, b) {
+        const typeA = a.strand.kwdata['type'], typeB = b.strand.kwdata['type'];
+        if (typeA == typeB)
+            return true;
+        const name = (t) => t == 'peptide' ? 'a protein' : t == 'RNA' ? 'an RNA' : `a ${t}`;
+        notify(`Can't ligate ${name(typeA)} strand to ${name(typeB)} strand: oxDNA strands must be a single type (DNA, RNA or protein).`, "alert");
+        return false;
+    }
+    edit.canLigate = canLigate;
     function ligate(a, b) {
+        if (!canLigate(a, b))
+            return;
         let end5, end3;
         //find out which is the 5' end and which is 3'
         if (!a.n5 && !b.n3) {
@@ -624,6 +639,8 @@ var edit;
      * @param sequence
      */
     function extendStrand(end, sequence) {
+        if (end.isNucleotide())
+            validateSequence(sequence, end.isRNA());
         // figure out which way we're going
         let direction;
         let inverse;
@@ -649,12 +666,34 @@ var edit;
     }
     edit.extendStrand = extendStrand;
     /**
+     * Throws if the sequence mixes U and T, contains a U when the target is DNA,
+     * or contains a T when the target is RNA.
+     * @param sequence Sequence to check
+     * @param isRNA Whether the nucleic acid being created or extended is RNA
+     */
+    function validateSequence(sequence, isRNA) {
+        const seq = sequence.toUpperCase();
+        const hasU = seq.includes('U');
+        const hasT = seq.includes('T');
+        if (hasU && hasT) {
+            throw new Error("Sequence cannot contain both U and T");
+        }
+        if (hasU && !isRNA) {
+            throw new Error("Sequence contains U, but DNA cannot contain U");
+        }
+        if (hasT && isRNA) {
+            throw new Error("Sequence contains T, but RNA cannot contain T");
+        }
+    }
+    edit.validateSequence = validateSequence;
+    /**
      * Create double helix of monomers extending from provided helix
      * @param end Nucleotide to extend
      * @param sequence String of base types
      * @returns addedElems Nucleotide[]
      */
     function extendDuplex(end, sequence) {
+        validateSequence(sequence, end.isRNA());
         let end2;
         if (!end.pair) {
             end2 = end.findPair();
@@ -753,7 +792,8 @@ var edit;
      * @param isRNA (optional) Is this an RNA strand?
      */
     function createStrand(sequence, createDuplex, isRNA) {
-        isRNA = (isRNA === undefined) ? false : isRNA;
+        isRNA = (isRNA === undefined) ? sequence.toUpperCase().includes('U') : isRNA;
+        validateSequence(sequence, isRNA);
         let type = isRNA ? 'RNA' : 'DNA';
         // Initialize a dummy system to put the monomers in 
         const tmpSys = new System(tmpSystems.length, 0);

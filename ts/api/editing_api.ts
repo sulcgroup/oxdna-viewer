@@ -701,6 +701,7 @@ module edit{
      * @param sequence 
      */
     export function extendStrand(end: BasicElement, sequence: string): BasicElement[] {
+        if (end.isNucleotide()) validateSequence(sequence, end.isRNA());
         // figure out which way we're going
         let direction: string;
         let inverse: string;
@@ -730,12 +731,34 @@ module edit{
     }
 
     /**
+     * Throws if the sequence mixes U and T, contains a U when the target is DNA,
+     * or contains a T when the target is RNA.
+     * @param sequence Sequence to check
+     * @param isRNA Whether the nucleic acid being created or extended is RNA
+     */
+    export function validateSequence(sequence: string, isRNA: boolean): void {
+        const seq = sequence.toUpperCase();
+        const hasU = seq.includes('U');
+        const hasT = seq.includes('T');
+        if (hasU && hasT) {
+            throw new Error("Sequence cannot contain both U and T");
+        }
+        if (hasU && !isRNA) {
+            throw new Error("Sequence contains U, but DNA cannot contain U");
+        }
+        if (hasT && isRNA) {
+            throw new Error("Sequence contains T, but RNA cannot contain T");
+        }
+    }
+
+    /**
      * Create double helix of monomers extending from provided helix
      * @param end Nucleotide to extend
      * @param sequence String of base types
      * @returns addedElems Nucleotide[]
      */
     export function extendDuplex(end: Nucleotide, sequence: string): BasicElement[] {
+        validateSequence(sequence, end.isRNA());
         let end2: Nucleotide;
         if (!end.pair) {
             end2 = end.findPair();
@@ -841,7 +864,8 @@ module edit{
      * @param isRNA (optional) Is this an RNA strand?
      */
     export function createStrand(sequence: string, createDuplex?: boolean, isRNA?: Boolean) {
-        isRNA = (isRNA === undefined) ? false : isRNA;
+        isRNA = (isRNA === undefined) ? sequence.toUpperCase().includes('U') : isRNA;
+        validateSequence(sequence, isRNA as boolean);
         let type = isRNA ? 'RNA' : 'DNA';
 
         // Initialize a dummy system to put the monomers in 
